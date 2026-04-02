@@ -226,6 +226,10 @@ export default function OpportunitiesManagement() {
               pontos_fortes: data.pontos_fortes,
               pontos_fracos: data.pontos_fracos,
               justificativa_score: data.justificativa_score,
+              analise_site: data.analise_site,
+              analise_redes_sociais: data.analise_redes_sociais,
+              analise_concorrencia_regional: data.analise_concorrencia_regional,
+              analise_demanda_regional: data.analise_demanda_regional,
             },
           } : l));
         }
@@ -273,6 +277,10 @@ export default function OpportunitiesManagement() {
           pontos_fortes: data.pontos_fortes,
           pontos_fracos: data.pontos_fracos,
           justificativa_score: data.justificativa_score,
+          analise_site: data.analise_site,
+          analise_redes_sociais: data.analise_redes_sociais,
+          analise_concorrencia_regional: data.analise_concorrencia_regional,
+          analise_demanda_regional: data.analise_demanda_regional,
         },
       };
       setLeads(prev => prev.map(l => l.id === lead.id ? updated : l));
@@ -612,7 +620,51 @@ export default function OpportunitiesManagement() {
         )}
       </div>
 
-      {/* Market Analysis Card */}
+      {/* Análise de Redes Sociais */}
+      {lead.enrichment_data?.analise_redes_sociais && (
+        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <Globe size={14} className="text-primary" />
+            Análise de Redes Sociais
+          </h4>
+          <p className="text-xs text-muted-foreground leading-relaxed">{lead.enrichment_data.analise_redes_sociais}</p>
+        </div>
+      )}
+
+      {/* Análise do Site */}
+      {lead.enrichment_data?.analise_site && (
+        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <Globe size={14} className="text-primary" />
+            Análise do Site
+          </h4>
+          <p className="text-xs text-muted-foreground leading-relaxed">{lead.enrichment_data.analise_site}</p>
+        </div>
+      )}
+
+      {/* Concorrência Regional */}
+      {lead.enrichment_data?.analise_concorrencia_regional && (
+        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <Target size={14} className="text-primary" />
+            Concorrência Regional (raio de 5km)
+          </h4>
+          <p className="text-xs text-muted-foreground leading-relaxed">{lead.enrichment_data.analise_concorrencia_regional}</p>
+        </div>
+      )}
+
+      {/* Demanda Regional */}
+      {lead.enrichment_data?.analise_demanda_regional && (
+        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <MapPin size={14} className="text-primary" />
+            Demanda Regional
+          </h4>
+          <p className="text-xs text-muted-foreground leading-relaxed">{lead.enrichment_data.analise_demanda_regional}</p>
+        </div>
+      )}
+
+      {/* Market Analysis Card (approach) */}
       {lead.enrichment_data?.approach_analysis && (
         <div className="bg-card border border-border rounded-xl p-4 space-y-3">
           <h4 className="text-sm font-semibold flex items-center gap-2">

@@ -8,6 +8,16 @@ const corsHeaders = {
 
 const AI_MODEL = "google/gemini-2.5-flash";
 
+type NicheContext = {
+  id: string;
+  name: string;
+  analysisFocus: string;
+  keyQuestions: string[];
+  strengthsHint: string;
+  weaknessesHint: string;
+  competitorContext: string;
+};
+
 type SocialLink = {
   url: string;
   platform: string;
@@ -282,56 +292,189 @@ const fetchPageSummary = async (url: string, label: string, platform?: string): 
   }
 };
 
-const inferOfferingLens = (companyProfile: any): OfferingLens => {
-  const text = compact(`${companyProfile?.company_niche || ""} ${companyProfile?.company_products || ""} ${companyProfile?.company_differential || ""}`).toLowerCase();
+const inferNicheContext = (companyProfile: any): NicheContext => {
+  const text = compact(`${companyProfile?.company_niche || ""} ${companyProfile?.company_products || ""} ${companyProfile?.company_differential || ""} ${companyProfile?.company_objective || ""}`).toLowerCase();
 
-  if (/(google meu neg[oó]cio|perfil no google|maps|gmn|avalia[cç][aã]o|visibilidade local|posicionamento local)/.test(text)) {
+  // App / Software / SaaS para segmentos específicos
+  if (/(aplicativo|app|software|sistema|plataforma|saas|erp|pdv|agendamento online)/.test(text)) {
+    const segment = text.match(/(barbearia|sal[aã]o|est[eé]tica|cl[ií]nica|acad[eê]mia|restaurante|pet|loja|com[eé]rcio|escola|im[oó]vel|imobili[aá]ri)/)?.[1] || "negócios";
     return {
-      id: "local_visibility",
-      name: "Visibilidade local e Google Meu Negócio",
-      strengthsHint: "Fale sobre reputação no Google, autoridade local, presença no Maps, volume de avaliações e facilidade de conversão regional.",
-      weaknessesHint: "Fale sobre baixa densidade de avaliações, pouca autoridade local, site fraco para buscas regionais e canais que não sustentam descoberta local.",
-      actionHint: "Priorize melhoria de posicionamento local, otimização do perfil no Google, ganho de avaliações e presença digital para demanda regional.",
+      id: "app_software",
+      name: `Aplicativo/Software para ${segment}`,
+      analysisFocus: `Foco: verificar se o lead já usa algum sistema/app de gestão ou agendamento. Analisar se tem site com agendamento online, se usa link de agendamento no perfil do Google ou redes sociais, se tem sistema de pagamento digital, se aceita reservas online.`,
+      keyQuestions: [
+        "O lead possui sistema de agendamento online visível no site ou redes?",
+        "Usa algum app concorrente (verificar menções a Booksy, Trinks, Vagaro, etc)?",
+        "O site tem integração com pagamento ou reserva online?",
+        "O perfil do Google tem link de agendamento ativo?",
+        "O lead ainda depende de WhatsApp manual para agendar?",
+      ],
+      strengthsHint: "Fale sobre prontidão digital, volume de clientes (avaliações), presença online que facilita adoção de sistema.",
+      weaknessesHint: "Fale sobre dependência de agendamento manual, falta de sistema digital, perda de clientes por não ter reserva online, gestão desorganizada.",
+      competitorContext: `Verifique se existem concorrentes do mesmo segmento (${segment}) próximos que já usam sistemas digitais, pois isso pressiona o lead a adotar também.`,
     };
   }
 
-  if (/(tr[aá]fego pago|ads|an[uú]ncios|google ads|meta ads|campanhas|m[ií]dia paga)/.test(text)) {
+  // Gestão de redes sociais / Social media
+  if (/(gest[aã]o de rede|social media|gerenciamento de rede|conte[uú]do|m[ií]dia social|marketing de conte[uú]do|community manager|social|instagram|cria[cç][aã]o de conte[uú]do)/.test(text)) {
+    return {
+      id: "social_media_management",
+      name: "Gestão de redes sociais",
+      analysisFocus: `Foco PRINCIPAL: acessar as redes sociais do lead e verificar a ÚLTIMA DATA DE PUBLICAÇÃO. Isso é CRÍTICO. Verificar frequência de posts, qualidade visual, se há identidade visual, se usa stories/reels, se tem bio otimizada, se tem link na bio, se responde comentários. Uma empresa que não posta há semanas/meses é uma oportunidade FORTE.`,
+      keyQuestions: [
+        "Quando foi a última publicação nas redes sociais? (ESSENCIAL - procure datas nos posts)",
+        "Qual a frequência de publicação (diária, semanal, irregular, parada)?",
+        "A qualidade visual dos posts é profissional ou amadora?",
+        "Tem identidade visual consistente (cores, fontes, estilo)?",
+        "A bio do Instagram/Facebook está otimizada com CTA e link?",
+        "Responde comentários e mensagens?",
+        "Usa formatos modernos (reels, stories, carrosséis)?",
+      ],
+      strengthsHint: "Fale sobre base de seguidores existente, engajamento atual, conteúdo que pode ser melhorado, presença que já gera visibilidade.",
+      weaknessesHint: "Fale sobre posts irregulares ou parados há X tempo, qualidade visual amadora, falta de estratégia, bio não otimizada, sem identidade visual.",
+      competitorContext: "Verifique se concorrentes locais estão mais ativos nas redes, pois isso mostra que o lead está perdendo visibilidade para a concorrência.",
+    };
+  }
+
+  // Tráfego pago / Anúncios
+  if (/(tr[aá]fego pago|ads|an[uú]ncios|google ads|meta ads|campanhas|m[ií]dia paga|performance|gestor de tr[aá]fego)/.test(text)) {
     return {
       id: "paid_media",
       name: "Tráfego pago e campanhas de anúncios",
-      strengthsHint: "Fale sobre prontidão para campanhas, prova social, qualidade do destino digital, clareza da oferta e capacidade de conversão.",
-      weaknessesHint: "Fale sobre ausência de landing page/site, pouca prova social, baixa atividade social, oferta confusa e gargalos para tráfego pago converter.",
-      actionHint: "Priorize estrutura para campanhas, prova social, páginas de destino e retomada de canais que ajudem remarketing e criativos.",
+      analysisFocus: `Foco: avaliar se o lead tem estrutura para receber tráfego pago (landing page, site com CTA, pixel instalado). Verificar se já tem prova social suficiente para converter, se tem oferta clara, se o site carrega rápido, se tem formulário de contato ou WhatsApp visível.`,
+      keyQuestions: [
+        "O lead tem landing page ou site preparado para receber tráfego?",
+        "Existe CTA claro (WhatsApp, formulário, agendamento)?",
+        "A prova social (avaliações, depoimentos) é suficiente para converter?",
+        "O site/perfil tem oferta clara e diferenciada?",
+        "Já investe em anúncios (verificar biblioteca de anúncios do Meta)?",
+      ],
+      strengthsHint: "Fale sobre prontidão para campanhas, prova social, qualidade do destino digital, clareza da oferta.",
+      weaknessesHint: "Fale sobre ausência de landing page, pouca prova social, baixa atividade social, oferta confusa, gargalos para conversão.",
+      competitorContext: "Verifique se concorrentes locais já anunciam (podem estar capturando a demanda que o lead perde).",
     };
   }
 
-  if (/(site|landing page|seo|cria[cç][aã]o de site|otimiza[cç][aã]o de site|presen[cç]a digital)/.test(text)) {
+  // Google Meu Negócio / Visibilidade local
+  if (/(google meu neg[oó]cio|perfil no google|maps|gmn|avalia[cç][aã]o|visibilidade local|posicionamento local|seo local)/.test(text)) {
+    return {
+      id: "local_visibility",
+      name: "Visibilidade local e Google Meu Negócio",
+      analysisFocus: `Foco: analisar o perfil do Google do lead - completude, fotos, respostas a avaliações, categorização, horários. Verificar se aparece bem posicionado para buscas locais do segmento.`,
+      keyQuestions: [
+        "O perfil do Google está completo (fotos, horários, descrição)?",
+        "O lead responde às avaliações (positivas e negativas)?",
+        "Quantas fotos tem no perfil?",
+        "A categoria está correta e otimizada?",
+        "Aparece nos primeiros resultados para buscas locais do nicho?",
+      ],
+      strengthsHint: "Fale sobre reputação, autoridade local, presença no Maps, volume de avaliações.",
+      weaknessesHint: "Fale sobre poucas avaliações, perfil incompleto, falta de respostas, pouca autoridade local.",
+      competitorContext: "Verifique quantos concorrentes na mesma categoria e região têm mais avaliações e melhor posicionamento.",
+    };
+  }
+
+  // Site / SEO / Presença digital
+  if (/(site|landing page|seo|cria[cç][aã]o de site|otimiza[cç][aã]o|web design|wordpress|desenvolvimento web|loja virtual|e-commerce|ecommerce)/.test(text)) {
     return {
       id: "website_seo",
       name: "Site, SEO e presença digital",
-      strengthsHint: "Fale sobre estrutura do site, clareza institucional, autoridade digital e capacidade de capturar demanda orgânica.",
-      weaknessesHint: "Fale sobre ausência de site, site superficial, arquitetura fraca, pouca indexação percebida e baixa profundidade de conteúdo.",
-      actionHint: "Priorize site, páginas estratégicas, SEO local e melhoria da jornada de contato e conversão.",
+      analysisFocus: `Foco: analisar profundamente o site atual (se existir) - velocidade, responsividade, SEO on-page, meta tags, estrutura de URLs, conteúdo, blog. Se não tem site, isso é a maior dor.`,
+      keyQuestions: [
+        "O site é responsivo e carrega rápido?",
+        "Tem meta tags otimizadas (title, description)?",
+        "Tem blog ou conteúdo que gera tráfego orgânico?",
+        "A estrutura do site facilita conversão?",
+        "O site aparece nos resultados de busca relevantes?",
+      ],
+      strengthsHint: "Fale sobre estrutura existente, conteúdo indexável, autoridade digital.",
+      weaknessesHint: "Fale sobre site inexistente/desatualizado, SEO fraco, ausência de conteúdo estratégico.",
+      competitorContext: "Verifique se concorrentes têm sites mais profissionais e melhor posicionados organicamente.",
     };
   }
 
-  if (/(crm|whatsapp|autom[aá]ção|funil|cad[eê]ncia|prospec[cç][aã]o)/.test(text)) {
+  // CRM / Automação / WhatsApp Business
+  if (/(crm|whatsapp|autom[aá][cç][aã]o|funil|cad[eê]ncia|prospec[cç][aã]o|chatbot|atendimento|relacionamento)/.test(text)) {
     return {
       id: "automation",
       name: "CRM, WhatsApp e automação comercial",
-      strengthsHint: "Fale sobre acessibilidade, canais de contato, velocidade potencial de resposta e prontidão para processos comerciais.",
-      weaknessesHint: "Fale sobre ausência de canais consistentes, baixa padronização digital, pouca recorrência de relacionamento e gargalos de resposta.",
-      actionHint: "Priorize captura de contatos, cadência comercial, automação de resposta e estrutura para follow-up.",
+      analysisFocus: `Foco: verificar se o lead tem processos de atendimento organizados - tempo de resposta no WhatsApp, se usa WhatsApp Business, se tem catálogo, se responde rápido, se tem follow-up.`,
+      keyQuestions: [
+        "Usa WhatsApp Business ou WhatsApp comum?",
+        "Tem catálogo de produtos/serviços no WhatsApp?",
+        "Responde rápido às mensagens (verificar se tem indicador)?",
+        "Tem múltiplos canais de contato organizados?",
+        "Aparenta ter processo de follow-up ou pós-venda?",
+      ],
+      strengthsHint: "Fale sobre canais de contato acessíveis, prontidão operacional.",
+      weaknessesHint: "Fale sobre ausência de processo comercial, resposta lenta, falta de follow-up.",
+      competitorContext: "Verifique se concorrentes demonstram atendimento mais organizado e rápido.",
     };
   }
 
+  // Consultoria / Mentoria
+  if (/(consultoria|mentoria|coaching|assessoria|treinamento|capacita[cç][aã]o)/.test(text)) {
+    return {
+      id: "consulting",
+      name: "Consultoria e assessoria empresarial",
+      analysisFocus: `Foco: avaliar maturidade do negócio, dores operacionais visíveis, gaps de gestão, oportunidades de melhoria em processos, marketing e vendas.`,
+      keyQuestions: [
+        "O negócio demonstra sinais de crescimento desordenado?",
+        "Tem presença digital mas sem estratégia clara?",
+        "As avaliações revelam problemas operacionais recorrentes?",
+        "O lead parece estar estagnado em termos de crescimento?",
+      ],
+      strengthsHint: "Fale sobre base de clientes existente, reputação, potencial de crescimento.",
+      weaknessesHint: "Fale sobre falta de estratégia, processos desorganizados, crescimento estagnado.",
+      competitorContext: "Verifique se concorrentes do mesmo segmento demonstram maior maturidade operacional.",
+    };
+  }
+
+  // Fotografia / Vídeo / Produção de conteúdo visual
+  if (/(fotografia|foto|v[ií]deo|filmagem|produ[cç][aã]o visual|design gr[aá]fico|identidade visual|branding|marca)/.test(text)) {
+    return {
+      id: "visual_content",
+      name: "Fotografia, vídeo e identidade visual",
+      analysisFocus: `Foco: analisar qualidade visual atual do lead - fotos do Google, fotos nas redes sociais, qualidade do logo, consistência visual. Empresas com fotos amadoras são oportunidades FORTES.`,
+      keyQuestions: [
+        "As fotos do perfil do Google são profissionais ou amadoras?",
+        "As redes sociais têm identidade visual consistente?",
+        "O site (se existir) tem fotos de qualidade?",
+        "O logo aparenta ser profissional?",
+        "Usa vídeos em algum canal?",
+      ],
+      strengthsHint: "Fale sobre negócio visualmente atrativo, base para conteúdo visual.",
+      weaknessesHint: "Fale sobre fotos amadoras, falta de identidade visual, conteúdo visual inconsistente.",
+      competitorContext: "Verifique se concorrentes têm imagem visual mais profissional.",
+    };
+  }
+
+  // Fallback genérico
   return {
     id: "generic",
     name: "Crescimento comercial B2B",
-    strengthsHint: "Fale sobre maturidade digital, reputação, acessibilidade e sinais de tração comercial.",
-    weaknessesHint: "Fale sobre lacunas digitais, baixa prova social, canais fracos e oportunidades claras de crescimento.",
-    actionHint: "Priorize a maior dor digital/comercial detectada e conecte isso aos serviços reais da empresa prospectora.",
+    analysisFocus: `Analise de forma abrangente a maturidade digital, comercial e operacional do lead, identificando as maiores dores e oportunidades.`,
+    keyQuestions: [
+      "Qual o maior gap digital/comercial do lead?",
+      "Onde o lead está perdendo oportunidades de negócio?",
+      "Quais são os sinais de tração ou estagnação?",
+    ],
+    strengthsHint: "Fale sobre maturidade digital, reputação, acessibilidade e sinais de tração.",
+    weaknessesHint: "Fale sobre lacunas digitais, baixa prova social, canais fracos.",
+    competitorContext: "Compare com a densidade de concorrentes na região.",
   };
+};
+
+// Keep backward compatibility
+const inferOfferingLens = (companyProfile: any): OfferingLens => {
+  const niche = inferNicheContext(companyProfile);
+  return {
+    id: niche.id === "paid_media" ? "paid_media" : niche.id === "local_visibility" ? "local_visibility" : niche.id === "website_seo" ? "website_seo" : niche.id === "automation" ? "automation" : "generic",
+    name: niche.name,
+    strengthsHint: niche.strengthsHint,
+    weaknessesHint: niche.weaknessesHint,
+    actionHint: niche.analysisFocus,
+  } as OfferingLens;
 };
 
 const computeHeuristicScore = ({
@@ -563,6 +706,8 @@ const normalizeAiResult = ({
     analise_site: compact(toSafeString(raw?.analise_site)) || siteSummary,
     analise_redes_sociais: compact(toSafeString(raw?.analise_redes_sociais)) || socialSummary,
     analise_reputacao_detalhada: compact(toSafeString(raw?.analise_reputacao_detalhada)) || `Avaliação ${heuristic.rating > 0 ? `${heuristic.rating.toFixed(1)}/5` : "não disponível"} com ${heuristic.reviewCount} avaliação(ões).`,
+    analise_concorrencia_regional: compact(toSafeString(raw?.analise_concorrencia_regional)) || "",
+    analise_demanda_regional: compact(toSafeString(raw?.analise_demanda_regional)) || "",
     justificativa_score: compact(toSafeString(raw?.justificativa_score)) || `Score consolidado pelo equilíbrio entre estrutura digital (${estrutura_digital}), reputação (${reputacao}), acessibilidade (${acessibilidade}), engajamento (${engajamento_atividade}) e potencial (${potencial_venda}).`,
   };
 };
@@ -627,11 +772,12 @@ serve(async (req) => {
       : {};
 
     const lens = inferOfferingLens(companyProfile);
+    const nicheCtx = inferNicheContext(companyProfile);
     const { websiteUrl, socialLinks } = extractSocialLinks(site_url, redes_sociais);
 
     const pageTargets = [
       ...(websiteUrl ? [{ url: websiteUrl, label: "site" }] : []),
-      ...socialLinks.slice(0, 2).map((link) => ({ url: link.url, label: "rede_social", platform: link.platform })),
+      ...socialLinks.slice(0, 3).map((link) => ({ url: link.url, label: "rede_social", platform: link.platform })),
     ];
 
     const pageSummaries = await Promise.all(pageTargets.map((target) => fetchPageSummary(target.url, target.label, target.platform)));
@@ -672,22 +818,30 @@ DADOS DA EMPRESA PROSPECTORA:
 - Público-alvo: ${companyProfile.company_target_audience}
 - Diferencial: ${companyProfile.company_differential}
 - Objetivo: ${companyProfile.company_objective}
-- Lente principal de análise: ${lens.name}
+- Tipo de análise adaptada: ${nicheCtx.name}
 ` : "";
 
       const evidenceContext = pageSummaries.length > 0
-        ? pageSummaries.map((page) => `- ${page.label === "site" ? "SITE" : `REDE (${page.platform || "Social"})`}: status=${page.status || 0}; título="${page.title || "sem título"}"; descrição="${page.description || "sem descrição"}"; sinais=${page.activitySignals.join(", ") || "nenhum"}; trecho="${page.textSnippet.slice(0, 450)}"`).join("\n")
+        ? pageSummaries.map((page) => `- ${page.label === "site" ? "SITE" : `REDE (${page.platform || "Social"})`}: status=${page.status || 0}; título="${page.title || "sem título"}"; descrição="${page.description || "sem descrição"}"; sinais=${page.activitySignals.join(", ") || "nenhum"}; trecho="${page.textSnippet.slice(0, 600)}"`).join("\n")
         : "- Nenhum ativo digital adicional pôde ser lido.";
 
-      const prompt = `Você é um analista sênior de qualificação B2B. Analise o lead abaixo e adapte a leitura ao segmento da empresa prospectora.
+      const nicheQuestions = nicheCtx.keyQuestions.map((q, i) => `  ${i + 1}. ${q}`).join("\n");
+
+      const prompt = `Você é um analista sênior de qualificação B2B altamente especializado. Sua análise deve ser TOTALMENTE ADAPTADA ao nicho e serviço da empresa prospectora.
 
 ${companyContext}
 
-LEAD ANALISADO:
+═══ FOCO ADAPTATIVO DA ANÁLISE ═══
+${nicheCtx.analysisFocus}
+
+PERGUNTAS-CHAVE QUE VOCÊ DEVE RESPONDER NA ANÁLISE:
+${nicheQuestions}
+
+═══ LEAD ANALISADO ═══
 - Empresa: ${nome_empresa}
-- Categoria/Nicho: ${categoria || "Não informado"}
-- Cidade: ${cidade || "Não informado"}
-- Endereço: ${endereco || "Não informado"}
+- Categoria/Nicho do lead: ${categoria || "Não informado"}
+- Cidade/Região: ${cidade || "Não informado"}
+- Endereço completo: ${endereco || "Não informado"}
 - Google Maps: ${google_maps_link || "Não disponível"}
 - Avaliação média: ${avaliacao_media > 0 ? `${avaliacao_media}/5` : "Sem avaliação"}
 - Quantidade de avaliações: ${quantidade_avaliacoes}
@@ -695,10 +849,10 @@ LEAD ANALISADO:
 - Possui telefone: ${possui_telefone ? "Sim" : "Não"}
 - Redes sociais brutas: ${JSON.stringify(redes_sociais || [])}
 
-EVIDÊNCIAS EXTRAÍDAS DO SITE/REDES:
+═══ EVIDÊNCIAS EXTRAÍDAS (SITE E REDES) ═══
 ${evidenceContext}
 
-HEURÍSTICA BASE (use como piso de consistência, não ignore):
+═══ HEURÍSTICA BASE (piso de consistência) ═══
 - Estrutura Digital: ${heuristic.estrutura_digital}/25
 - Reputação: ${heuristic.reputacao}/25
 - Acessibilidade: ${heuristic.acessibilidade}/20
@@ -706,19 +860,46 @@ HEURÍSTICA BASE (use como piso de consistência, não ignore):
 - Potencial de Venda: ${heuristic.potencial_venda}/15
 - Score base: ${heuristic.score}/100
 
-REGRAS CRÍTICAS:
-1. Pontos fortes e pontos fracos DEVEM ser relativos ao que a empresa prospectora realmente vende.
-2. NÃO use pontos genéricos. Explique por que aquele sinal é positivo/negativo para os serviços reais da empresa prospectora.
-3. Se a prospectora vende anúncios/tráfego pago, fale de prontidão para campanhas, prova social, página de destino, remarketing e conversão.
-4. Se vende Google Meu Negócio/visibilidade local, fale de Maps, avaliações, autoridade regional e descoberta local.
-5. Se vende site/SEO, fale de estrutura digital, autoridade, profundidade de conteúdo e conversão.
-6. Se vende CRM/automação/WhatsApp, fale de acessibilidade, consistência de canais e prontidão operacional.
-7. Use SOMENTE dados presentes ou inferências razoáveis a partir dos resumos extraídos. Não invente seguidores, tráfego, faturamento ou datas exatas.
-8. O campo engajamento_atividade NÃO deve ser zero se houver sinais reais de atividade no site ou nas redes acima.
-9. Cada dimensão deve respeitar seus limites máximos: 25, 25, 20, 15 e 15.
-10. O score final deve ser a soma exata das dimensões.
+═══ ANÁLISES OBRIGATÓRIAS ═══
 
-Retorne APENAS um JSON válido com estas chaves:
+1. ANÁLISE DE REDES SOCIAIS (DETALHADA):
+   - Procure nos trechos extraídos QUALQUER indicação de data de última publicação, frequência de posts, quantidade de seguidores.
+   - Se encontrar sinais de atividade recente (menções a datas, "postado há X dias", conteúdo recente), REPORTE.
+   - Se NÃO encontrar sinais de atividade recente, indique que a empresa aparenta estar INATIVA ou com posts irregulares nas redes.
+   - Avalie qualidade visual, identidade, bio, links na bio.
+   - NUNCA diga "engajamento zero" se houver perfis ativos detectados. Analise os sinais disponíveis.
+
+2. ANÁLISE DE CONCORRÊNCIA REGIONAL:
+   - Com base na categoria "${categoria || "do lead"}" e cidade "${cidade || "não informada"}", ANALISE a provável densidade de concorrentes na região.
+   - ${nicheCtx.competitorContext}
+   - Considere: é uma região com alta densidade de negócios similares? O lead está em área comercial movimentada ou residencial?
+   - Se o endereço indica zona comercial/centro, há mais concorrência mas também mais demanda.
+   - Estime se num raio de 5km existiriam muitos ou poucos concorrentes do mesmo segmento.
+   - Traga isso como insight no diagnóstico.
+
+3. ANÁLISE DE DEMANDA REGIONAL:
+   - Com base na cidade "${cidade || ""}" e categoria "${categoria || ""}", avalie o potencial de demanda da região.
+   - Considere: é uma cidade grande, média ou pequena? Alta ou baixa densidade demográfica?
+   - Cidades maiores = mais demanda mas mais concorrência. Cidades menores = menos concorrência mas mercado limitado.
+   - Se for capital ou região metropolitana, há alta demanda. Se for interior, avalie o porte.
+   - Inclua essa análise no diagnóstico.
+
+4. ANÁLISE DO SITE (PROFUNDA E ADAPTADA AO NICHO):
+   - Se a prospectora vende apps/software: o site tem agendamento online? Sistema de reservas? Integração com pagamento?
+   - Se a prospectora vende gestão de redes: o site reflete a marca? Tem link para redes sociais?
+   - Se a prospectora vende tráfego: o site serve como landing page? Tem CTA claro? Formulário?
+   - Analise o conteúdo extraído do site com base no que a prospectora realmente precisa identificar.
+
+═══ REGRAS CRÍTICAS ═══
+1. Pontos fortes e fracos DEVEM ser 100% relativos ao que a empresa prospectora vende. Se vende app de barbearia, fale sobre agendamento, gestão, sistema digital. Se vende gestão de redes, fale sobre última publicação, frequência, qualidade visual.
+2. NÃO use pontos genéricos como "boa reputação" sem conectar ao serviço vendido.
+3. O campo engajamento_atividade NÃO deve ser zero se houver qualquer sinal de atividade (perfil de rede social existente, site com conteúdo, avaliações recentes). Mínimo 3 se houver algum sinal.
+4. Cada dimensão: 25, 25, 20, 15 e 15. Score = soma exata.
+5. Use SOMENTE dados presentes ou inferências razoáveis. Não invente números exatos de seguidores ou tráfego.
+6. O diagnóstico DEVE incluir insights sobre concorrência regional e demanda da região.
+7. A análise de redes sociais DEVE mencionar frequência/recência de publicações (mesmo que inferida).
+
+Retorne APENAS um JSON válido:
 {
   "score": <0-100>,
   "estrutura_digital": <0-25>,
@@ -728,14 +909,16 @@ Retorne APENAS um JSON válido com estas chaves:
   "potencial_venda": <0-15>,
   "nivel_oportunidade": "Alta|Média|Baixa",
   "probabilidade_fechamento": "Muito Alta|Alta|Moderada|Baixa",
-  "diagnostico": "3-4 frases objetivas e estratégicas",
+  "diagnostico": "4-6 frases incluindo análise regional, concorrência e demanda",
   "acao_recomendada": "3-5 frases conectando dor principal aos serviços da empresa prospectora",
-  "pontos_fortes": ["...", "..."],
-  "pontos_fracos": ["...", "..."],
-  "analise_site": "...",
-  "analise_redes_sociais": "...",
+  "pontos_fortes": ["ponto adaptado ao nicho 1", "ponto adaptado ao nicho 2", "ponto 3"],
+  "pontos_fracos": ["fraqueza adaptada ao nicho 1", "fraqueza adaptada ao nicho 2", "fraqueza 3"],
+  "analise_site": "análise profunda adaptada ao nicho da prospectora",
+  "analise_redes_sociais": "análise com frequência de publicações, última atividade detectada, qualidade",
   "analise_reputacao_detalhada": "...",
-  "justificativa_score": "1 frase objetiva"
+  "analise_concorrencia_regional": "análise de concorrentes no raio de 5km e posicionamento",
+  "analise_demanda_regional": "análise de demanda baseada na densidade demográfica e porte da cidade",
+  "justificativa_score": "1-2 frases objetivas"
 }`;
 
       try {
@@ -748,8 +931,8 @@ Retorne APENAS um JSON válido com estas chaves:
           body: JSON.stringify({
             model: AI_MODEL,
             messages: [{ role: "user", content: prompt }],
-            temperature: 0.25,
-            max_tokens: 1600,
+            temperature: 0.3,
+            max_tokens: 2500,
             response_format: { type: "json_object" },
           }),
         });
@@ -788,6 +971,7 @@ Retorne APENAS um JSON válido com estas chaves:
           enrichment_data: {
             ...currentEnrichment,
             scored_at: new Date().toISOString(),
+            niche_analysis_type: nicheCtx.name,
             score_breakdown: {
               estrutura_digital: result.estrutura_digital,
               reputacao: result.reputacao,
@@ -800,6 +984,8 @@ Retorne APENAS um JSON válido com estas chaves:
             analise_site: result.analise_site,
             analise_redes_sociais: result.analise_redes_sociais,
             analise_reputacao_detalhada: result.analise_reputacao_detalhada,
+            analise_concorrencia_regional: result.analise_concorrencia_regional,
+            analise_demanda_regional: result.analise_demanda_regional,
             justificativa_score: result.justificativa_score,
             scoring_inputs: {
               avaliacao_media,
@@ -839,6 +1025,8 @@ Retorne APENAS um JSON válido com estas chaves:
       analise_site: result.analise_site,
       analise_redes_sociais: result.analise_redes_sociais,
       analise_reputacao_detalhada: result.analise_reputacao_detalhada,
+      analise_concorrencia_regional: result.analise_concorrencia_regional,
+      analise_demanda_regional: result.analise_demanda_regional,
       justificativa_score: result.justificativa_score,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
