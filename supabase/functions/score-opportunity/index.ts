@@ -1053,7 +1053,7 @@ serve(async (req) => {
 
     let aiResult: any = null;
 
-    if (LOVABLE_API_KEY) {
+    if (OPENAI_API_KEY) {
       const companyContext = companyProfile ? `
 DADOS DA EMPRESA PROSPECTORA:
 - Empresa: ${companyProfile.company_name}
