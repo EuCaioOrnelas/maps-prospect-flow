@@ -120,7 +120,21 @@ serve(async (req) => {
       throw new Error('Invalid user token');
     }
 
-    const { instanceName, phoneNumber, message, numberId } = await req.json();
+    const body = await req.json();
+    const instanceName = body.instanceName ?? body.instance_name;
+    const phoneNumber = body.phoneNumber ?? body.phone;
+    const message = body.message;
+    const numberId = body.numberId ?? body.number_id;
+
+    if (!instanceName || !phoneNumber || !message) {
+      return new Response(JSON.stringify({
+        error: 'Campos obrigatórios: instanceName, phoneNumber e message',
+        success: false,
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Get the correct Evolution API based on the number's api_tier WITH user plan fallback
     const evoCredentials = await getEvolutionCredentialsForNumber(supabase, numberId, user.id);

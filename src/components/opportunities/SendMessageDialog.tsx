@@ -35,6 +35,7 @@ interface Props {
   };
   message: string;
   userId: string;
+  availableNumbers?: WhatsAppNumberOption[];
   onSent: () => void;
   onRequestConnect?: () => void;
 }
@@ -47,7 +48,7 @@ function estimateTypingSeconds(text: string): number {
   return Math.max(5, Math.min(seconds, 45));
 }
 
-export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadName, leadData, message, userId, onSent, onRequestConnect }: Props) {
+export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadName, leadData, message, userId, availableNumbers, onSent, onRequestConnect }: Props) {
   const { toast } = useToast();
   const [state, setState] = useState<SendState>("select_number");
   const [progress, setProgress] = useState(0);
@@ -58,8 +59,31 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
   const [loadingNumbers, setLoadingNumbers] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const applyNumberState = (items: WhatsAppNumberOption[]) => {
+    const connected = items.filter((item) => item.is_connected && item.instance_name);
+    setNumbers(connected);
+
+    if (connected.length === 0) {
+      setSelectedNumberId(null);
+      setState("no_numbers");
+      return;
+    }
+
+    const preservedSelection = connected.find((item) => item.id === selectedNumberId)?.id || null;
+
+    if (connected.length === 1) {
+      setSelectedNumberId(connected[0].id);
+      setState("preview");
+      return;
+    }
+
+    setSelectedNumberId(preservedSelection);
+    setState(preservedSelection ? "preview" : "select_number");
+  };
+
   useEffect(() => {
     if (open) {
+      setState("select_number");
       setProgress(0);
       setElapsed(0);
       setTypingSeconds(estimateTypingSeconds(message));
@@ -68,29 +92,23 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [open, message]);
+  }, [open, message, availableNumbers]);
 
   const loadNumbers = async () => {
     setLoadingNumbers(true);
     try {
+      if (availableNumbers && availableNumbers.length > 0) {
+        applyNumberState(availableNumbers);
+        return;
+      }
+
       // @ts-ignore - deep type instantiation
       const { data } = await supabase
         .from("whatsapp_numbers")
         .select("id, instance_name, phone_number, name, is_connected")
-        .eq("user_id", userId)
-        .eq("status", "connected");
+        .eq("user_id", userId);
 
-      const connected = (data || []).filter(n => n.is_connected);
-      setNumbers(connected);
-
-      if (connected.length === 0) {
-        setState("no_numbers");
-      } else if (connected.length === 1) {
-        setSelectedNumberId(connected[0].id);
-        setState("preview");
-      } else {
-        setState("select_number");
-      }
+      applyNumberState(data || []);
     } catch (err) {
       console.error("Error loading numbers:", err);
       setState("no_numbers");
@@ -106,6 +124,11 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
   };
 
   const handleSend = async () => {
+    if (!selectedNumberId) {
+      toast({ title: "Selecione um número", variant: "destructive" });
+      return;
+    }
+
     setState("typing");
     setProgress(0);
     setElapsed(0);
@@ -130,7 +153,7 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
   const doSend = async () => {
     try {
       const number = numbers.find(n => n.id === selectedNumberId);
-      if (!number) {
+      if (!number || !number.instance_name) {
         setState("error");
         toast({ title: "Número não encontrado", variant: "destructive" });
         return;
@@ -139,9 +162,10 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
       // Send message via evolution
       const { error } = await supabase.functions.invoke("evolution-send-message", {
         body: {
-          instance_name: number.instance_name,
-          phone: leadPhone,
+          instanceName: number.instance_name,
+          phoneNumber: leadPhone,
           message: message,
+          numberId: number.id,
         },
       });
 
