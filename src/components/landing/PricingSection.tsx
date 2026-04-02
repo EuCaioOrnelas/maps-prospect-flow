@@ -280,99 +280,87 @@ export const PricingSection = () => {
             </div>
           </div>
 
-          {/* Free Trial Section */}
+          {/* Trust & Security Section */}
           <div 
             className={`mt-16 transition-all duration-700 delay-600 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-background border border-primary/30 p-4 md:p-10">
-              {/* Background decoration */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/10 rounded-full blur-2xl" />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+            <div className="relative overflow-hidden rounded-2xl border border-border/50 p-6 md:p-10">
+              {/* Subtle background */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-2xl" />
               
               <div className="relative z-10">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-                    <Gift className="h-4 w-4" />
-                    Teste Gratuito por 30 dias
+                <div className="text-center mb-10">
+                  <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+                    <Shield className="h-4 w-4" />
+                    Infraestrutura Profissional
                   </div>
                   
-                   <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
-                     Experimente antes de assinar
-                   </h3>
-                  <p className="text-muted-foreground max-w-lg mx-auto">
-                    Teste todas as funcionalidades da Wiize gratuitamente durante 30 dias. Sem compromisso.
+                  <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
+                    Segurança e confiança em cada etapa
+                  </h3>
+                  <p className="text-muted-foreground max-w-xl mx-auto">
+                    Sua operação protegida por padrões de mercado, com transparência total e suporte dedicado.
                   </p>
                 </div>
                 
-                {/* Features Cards */}
-                <div className="space-y-3 md:space-y-4">
-                  {/* Search card - full width on top */}
-                  <div 
-                    className={`flex items-center gap-2 md:gap-4 p-3 md:p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
-                      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                    }`}
-                    style={{ transitionDelay: '700ms' }}
-                  >
-                    <div className="flex h-9 w-9 md:h-14 md:w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                      <Search className="h-4 w-4 md:h-7 md:w-7 text-primary" />
-                    </div>
-                    <div className="flex items-center gap-1 md:block min-w-0">
-                      <p className="font-bold text-xs md:text-lg text-foreground">10 buscas com IA</p>
-                      <p className="text-xs md:text-sm text-muted-foreground">até 50 leads por busca</p>
-                    </div>
-                  </div>
-                  
-                  {/* Bottom row - messages and whatsapp side by side */}
-                  <div className="grid grid-cols-2 gap-2 md:gap-4">
-                    <div 
-                      className={`flex items-center gap-2 md:gap-4 p-3 md:p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
-                        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                      }`}
-                      style={{ transitionDelay: '800ms' }}
+                {/* Trust Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    {
+                      icon: Shield,
+                      title: "Dados Protegidos",
+                      description: "Criptografia ponta a ponta e armazenamento seguro com padrões internacionais",
+                    },
+                    {
+                      icon: CreditCard,
+                      title: "Pagamento Seguro",
+                      description: "Processamento via Stripe, líder mundial em pagamentos online",
+                    },
+                    {
+                      icon: Clock,
+                      title: "Uptime 99.9%",
+                      description: "Infraestrutura robusta garantindo disponibilidade contínua da plataforma",
+                    },
+                    {
+                      icon: Check,
+                      title: "LGPD Compliant",
+                      description: "Totalmente adequado à Lei Geral de Proteção de Dados brasileira",
+                    },
+                  ].map((item, i) => (
+                    <div
+                      key={i}
+                      className="group p-5 rounded-xl bg-background/60 border border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-sm text-center"
                     >
-                      <div className="flex h-9 w-9 md:h-14 md:w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                        <MessageSquare className="h-4 w-4 md:h-7 md:w-7 text-primary" />
+                      <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/15 transition-colors">
+                        <item.icon className="h-6 w-6 text-primary" />
                       </div>
-                      <div className="min-w-0">
-                        <p className="font-bold text-xs md:text-lg text-foreground">400 disparos grátis</p>
-                        <p className="text-xs md:text-sm text-muted-foreground">limite de 20 por dia</p>
-                      </div>
+                      <p className="font-semibold text-foreground mb-1.5 text-sm">{item.title}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
                     </div>
-                    
-                    <div 
-                      className={`flex items-center gap-2 md:gap-4 p-3 md:p-5 rounded-xl bg-background/90 border border-border/50 shadow-sm transition-all duration-500 hover:shadow-md hover:border-primary/30 ${
-                        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                      }`}
-                      style={{ transitionDelay: '900ms' }}
-                    >
-                      <div className="flex h-9 w-9 md:h-14 md:w-14 items-center justify-center rounded-full bg-primary/15 flex-shrink-0">
-                        <Smartphone className="h-4 w-4 md:h-7 md:w-7 text-primary" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-bold text-xs md:text-lg text-foreground">1 número WhatsApp</p>
-                        <p className="text-xs md:text-sm text-muted-foreground">conecte e dispare</p>
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-                
-                {/* CTA Button */}
-                <div className="mt-8 flex flex-col items-center gap-4 pt-6 border-t border-primary/20">
-                  <Button 
-                    variant="hero" 
-                    size="lg" 
-                    className="gap-2 w-full sm:w-auto"
-                    onClick={() => navigate("/signup")}
-                  >
-                    Começar Teste Grátis
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                  <p className="text-xs sm:text-sm text-muted-foreground text-center">
-                    * Válido apenas durante os 30 dias do período de teste
-                  </p>
+
+                {/* Bottom trust bar */}
+                <div className="mt-8 pt-6 border-t border-border/50 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                    Garantia de 7 dias
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                    Cancele quando quiser
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                    Sem fidelidade
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                    Suporte humanizado
+                  </span>
                 </div>
               </div>
             </div>

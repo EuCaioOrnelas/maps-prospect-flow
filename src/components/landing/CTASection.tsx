@@ -33,16 +33,16 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
             Não perca mais tempo buscando leads manualmente.
-            Experimente grátis e veja os resultados.
+            Automatize sua prospecção e escale seus resultados.
           </p>
           <Link to="/signup" onClick={onSignupClick}>
             <Button variant="hero" size="xl" className="group rounded-full">
-              Criar conta gratuita
+              Começar Agora
               <ArrowRight className="group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
           <p className="text-sm text-muted-foreground mt-6">
-            10 buscas grátis • Sem cartão de crédito • Comece em 30 segundos
+            Garantia de 7 dias • Cancele quando quiser • Setup em 30 segundos
           </p>
         </div>
       </div>
