@@ -1180,9 +1180,7 @@ serve(async (req) => {
       ? socialPages.map((page) => `${page.platform || "Rede social"}: ${page.ok ? `${page.title || "perfil detectado"}${page.contentLength >= 120 ? " com sinais de atividade" : " com poucos sinais de atividade"}` : "não foi possível ler o perfil"}`).join(" | ")
       : "";
 
-    const socialSummary = serpSocialDetails
-      ? `[DADOS REAIS VIA BUSCA] ${serpSocialDetails}${pageSocialDetails ? ` | [DADOS DO PERFIL] ${pageSocialDetails}` : ""}`
-      : pageSocialDetails
+    const socialSummary = pageSocialDetails
         ? pageSocialDetails
         : "Nenhuma rede social válida identificada para análise.";
 
