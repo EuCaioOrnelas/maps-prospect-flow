@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, Loader2, Shield, Clock, CreditCard, ArrowRight, Rocket, TrendingUp, Building2 } from "lucide-react";
+import { Check, Sparkles, Loader2, Shield, Clock, CreditCard, ArrowRight, Rocket, TrendingUp, Building2, Lock, Server, FileCheck, ShieldCheck, BadgeCheck, RotateCcw } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
