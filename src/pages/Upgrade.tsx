@@ -56,7 +56,7 @@ const plans: {
     name: "Growth",
     key: "growth",
     price: "497",
-    anchorPrice: "1.243",
+    anchorPrice: "1.242,50",
     opportunities: "3.000",
     description: "Para escalar e converter oportunidades com IA",
     features: [
@@ -77,7 +77,7 @@ const plans: {
     name: "Scale",
     key: "scale",
     price: "1.297",
-    anchorPrice: "3.505",
+    anchorPrice: "3.505,41",
     opportunities: "10.000",
     description: "Para escalar com inteligência e tomar decisões melhores",
     features: [
@@ -446,7 +446,7 @@ const Upgrade = () => {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-base text-muted-foreground line-through decoration-muted-foreground/50 decoration-2">R$ {plan.anchorPrice}</span>
                     <span className="bg-primary/15 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
-                      -{Math.round((1 - parseInt(plan.price.replace('.', '')) / parseInt(plan.anchorPrice.replace('.', ''))) * 100)}%
+                      -{Math.round((1 - Number(plan.price.replace(/\./g, '').replace(',', '.')) / Number(plan.anchorPrice.replace(/\./g, '').replace(',', '.'))) * 100)}%
                     </span>
                   </div>
                   <div className="flex items-baseline gap-1">
