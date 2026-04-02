@@ -292,56 +292,189 @@ const fetchPageSummary = async (url: string, label: string, platform?: string): 
   }
 };
 
-const inferOfferingLens = (companyProfile: any): OfferingLens => {
-  const text = compact(`${companyProfile?.company_niche || ""} ${companyProfile?.company_products || ""} ${companyProfile?.company_differential || ""}`).toLowerCase();
+const inferNicheContext = (companyProfile: any): NicheContext => {
+  const text = compact(`${companyProfile?.company_niche || ""} ${companyProfile?.company_products || ""} ${companyProfile?.company_differential || ""} ${companyProfile?.company_objective || ""}`).toLowerCase();
 
-  if (/(google meu neg[oó]cio|perfil no google|maps|gmn|avalia[cç][aã]o|visibilidade local|posicionamento local)/.test(text)) {
+  // App / Software / SaaS para segmentos específicos
+  if (/(aplicativo|app|software|sistema|plataforma|saas|erp|pdv|agendamento online)/.test(text)) {
+    const segment = text.match(/(barbearia|sal[aã]o|est[eé]tica|cl[ií]nica|acad[eê]mia|restaurante|pet|loja|com[eé]rcio|escola|im[oó]vel|imobili[aá]ri)/)?.[1] || "negócios";
     return {
-      id: "local_visibility",
-      name: "Visibilidade local e Google Meu Negócio",
-      strengthsHint: "Fale sobre reputação no Google, autoridade local, presença no Maps, volume de avaliações e facilidade de conversão regional.",
-      weaknessesHint: "Fale sobre baixa densidade de avaliações, pouca autoridade local, site fraco para buscas regionais e canais que não sustentam descoberta local.",
-      actionHint: "Priorize melhoria de posicionamento local, otimização do perfil no Google, ganho de avaliações e presença digital para demanda regional.",
+      id: "app_software",
+      name: `Aplicativo/Software para ${segment}`,
+      analysisFocus: `Foco: verificar se o lead já usa algum sistema/app de gestão ou agendamento. Analisar se tem site com agendamento online, se usa link de agendamento no perfil do Google ou redes sociais, se tem sistema de pagamento digital, se aceita reservas online.`,
+      keyQuestions: [
+        "O lead possui sistema de agendamento online visível no site ou redes?",
+        "Usa algum app concorrente (verificar menções a Booksy, Trinks, Vagaro, etc)?",
+        "O site tem integração com pagamento ou reserva online?",
+        "O perfil do Google tem link de agendamento ativo?",
+        "O lead ainda depende de WhatsApp manual para agendar?",
+      ],
+      strengthsHint: "Fale sobre prontidão digital, volume de clientes (avaliações), presença online que facilita adoção de sistema.",
+      weaknessesHint: "Fale sobre dependência de agendamento manual, falta de sistema digital, perda de clientes por não ter reserva online, gestão desorganizada.",
+      competitorContext: `Verifique se existem concorrentes do mesmo segmento (${segment}) próximos que já usam sistemas digitais, pois isso pressiona o lead a adotar também.`,
     };
   }
 
-  if (/(tr[aá]fego pago|ads|an[uú]ncios|google ads|meta ads|campanhas|m[ií]dia paga)/.test(text)) {
+  // Gestão de redes sociais / Social media
+  if (/(gest[aã]o de rede|social media|gerenciamento de rede|conte[uú]do|m[ií]dia social|marketing de conte[uú]do|community manager|social|instagram|cria[cç][aã]o de conte[uú]do)/.test(text)) {
+    return {
+      id: "social_media_management",
+      name: "Gestão de redes sociais",
+      analysisFocus: `Foco PRINCIPAL: acessar as redes sociais do lead e verificar a ÚLTIMA DATA DE PUBLICAÇÃO. Isso é CRÍTICO. Verificar frequência de posts, qualidade visual, se há identidade visual, se usa stories/reels, se tem bio otimizada, se tem link na bio, se responde comentários. Uma empresa que não posta há semanas/meses é uma oportunidade FORTE.`,
+      keyQuestions: [
+        "Quando foi a última publicação nas redes sociais? (ESSENCIAL - procure datas nos posts)",
+        "Qual a frequência de publicação (diária, semanal, irregular, parada)?",
+        "A qualidade visual dos posts é profissional ou amadora?",
+        "Tem identidade visual consistente (cores, fontes, estilo)?",
+        "A bio do Instagram/Facebook está otimizada com CTA e link?",
+        "Responde comentários e mensagens?",
+        "Usa formatos modernos (reels, stories, carrosséis)?",
+      ],
+      strengthsHint: "Fale sobre base de seguidores existente, engajamento atual, conteúdo que pode ser melhorado, presença que já gera visibilidade.",
+      weaknessesHint: "Fale sobre posts irregulares ou parados há X tempo, qualidade visual amadora, falta de estratégia, bio não otimizada, sem identidade visual.",
+      competitorContext: "Verifique se concorrentes locais estão mais ativos nas redes, pois isso mostra que o lead está perdendo visibilidade para a concorrência.",
+    };
+  }
+
+  // Tráfego pago / Anúncios
+  if (/(tr[aá]fego pago|ads|an[uú]ncios|google ads|meta ads|campanhas|m[ií]dia paga|performance|gestor de tr[aá]fego)/.test(text)) {
     return {
       id: "paid_media",
       name: "Tráfego pago e campanhas de anúncios",
-      strengthsHint: "Fale sobre prontidão para campanhas, prova social, qualidade do destino digital, clareza da oferta e capacidade de conversão.",
-      weaknessesHint: "Fale sobre ausência de landing page/site, pouca prova social, baixa atividade social, oferta confusa e gargalos para tráfego pago converter.",
-      actionHint: "Priorize estrutura para campanhas, prova social, páginas de destino e retomada de canais que ajudem remarketing e criativos.",
+      analysisFocus: `Foco: avaliar se o lead tem estrutura para receber tráfego pago (landing page, site com CTA, pixel instalado). Verificar se já tem prova social suficiente para converter, se tem oferta clara, se o site carrega rápido, se tem formulário de contato ou WhatsApp visível.`,
+      keyQuestions: [
+        "O lead tem landing page ou site preparado para receber tráfego?",
+        "Existe CTA claro (WhatsApp, formulário, agendamento)?",
+        "A prova social (avaliações, depoimentos) é suficiente para converter?",
+        "O site/perfil tem oferta clara e diferenciada?",
+        "Já investe em anúncios (verificar biblioteca de anúncios do Meta)?",
+      ],
+      strengthsHint: "Fale sobre prontidão para campanhas, prova social, qualidade do destino digital, clareza da oferta.",
+      weaknessesHint: "Fale sobre ausência de landing page, pouca prova social, baixa atividade social, oferta confusa, gargalos para conversão.",
+      competitorContext: "Verifique se concorrentes locais já anunciam (podem estar capturando a demanda que o lead perde).",
     };
   }
 
-  if (/(site|landing page|seo|cria[cç][aã]o de site|otimiza[cç][aã]o de site|presen[cç]a digital)/.test(text)) {
+  // Google Meu Negócio / Visibilidade local
+  if (/(google meu neg[oó]cio|perfil no google|maps|gmn|avalia[cç][aã]o|visibilidade local|posicionamento local|seo local)/.test(text)) {
+    return {
+      id: "local_visibility",
+      name: "Visibilidade local e Google Meu Negócio",
+      analysisFocus: `Foco: analisar o perfil do Google do lead - completude, fotos, respostas a avaliações, categorização, horários. Verificar se aparece bem posicionado para buscas locais do segmento.`,
+      keyQuestions: [
+        "O perfil do Google está completo (fotos, horários, descrição)?",
+        "O lead responde às avaliações (positivas e negativas)?",
+        "Quantas fotos tem no perfil?",
+        "A categoria está correta e otimizada?",
+        "Aparece nos primeiros resultados para buscas locais do nicho?",
+      ],
+      strengthsHint: "Fale sobre reputação, autoridade local, presença no Maps, volume de avaliações.",
+      weaknessesHint: "Fale sobre poucas avaliações, perfil incompleto, falta de respostas, pouca autoridade local.",
+      competitorContext: "Verifique quantos concorrentes na mesma categoria e região têm mais avaliações e melhor posicionamento.",
+    };
+  }
+
+  // Site / SEO / Presença digital
+  if (/(site|landing page|seo|cria[cç][aã]o de site|otimiza[cç][aã]o|web design|wordpress|desenvolvimento web|loja virtual|e-commerce|ecommerce)/.test(text)) {
     return {
       id: "website_seo",
       name: "Site, SEO e presença digital",
-      strengthsHint: "Fale sobre estrutura do site, clareza institucional, autoridade digital e capacidade de capturar demanda orgânica.",
-      weaknessesHint: "Fale sobre ausência de site, site superficial, arquitetura fraca, pouca indexação percebida e baixa profundidade de conteúdo.",
-      actionHint: "Priorize site, páginas estratégicas, SEO local e melhoria da jornada de contato e conversão.",
+      analysisFocus: `Foco: analisar profundamente o site atual (se existir) - velocidade, responsividade, SEO on-page, meta tags, estrutura de URLs, conteúdo, blog. Se não tem site, isso é a maior dor.`,
+      keyQuestions: [
+        "O site é responsivo e carrega rápido?",
+        "Tem meta tags otimizadas (title, description)?",
+        "Tem blog ou conteúdo que gera tráfego orgânico?",
+        "A estrutura do site facilita conversão?",
+        "O site aparece nos resultados de busca relevantes?",
+      ],
+      strengthsHint: "Fale sobre estrutura existente, conteúdo indexável, autoridade digital.",
+      weaknessesHint: "Fale sobre site inexistente/desatualizado, SEO fraco, ausência de conteúdo estratégico.",
+      competitorContext: "Verifique se concorrentes têm sites mais profissionais e melhor posicionados organicamente.",
     };
   }
 
-  if (/(crm|whatsapp|autom[aá]ção|funil|cad[eê]ncia|prospec[cç][aã]o)/.test(text)) {
+  // CRM / Automação / WhatsApp Business
+  if (/(crm|whatsapp|autom[aá][cç][aã]o|funil|cad[eê]ncia|prospec[cç][aã]o|chatbot|atendimento|relacionamento)/.test(text)) {
     return {
       id: "automation",
       name: "CRM, WhatsApp e automação comercial",
-      strengthsHint: "Fale sobre acessibilidade, canais de contato, velocidade potencial de resposta e prontidão para processos comerciais.",
-      weaknessesHint: "Fale sobre ausência de canais consistentes, baixa padronização digital, pouca recorrência de relacionamento e gargalos de resposta.",
-      actionHint: "Priorize captura de contatos, cadência comercial, automação de resposta e estrutura para follow-up.",
+      analysisFocus: `Foco: verificar se o lead tem processos de atendimento organizados - tempo de resposta no WhatsApp, se usa WhatsApp Business, se tem catálogo, se responde rápido, se tem follow-up.`,
+      keyQuestions: [
+        "Usa WhatsApp Business ou WhatsApp comum?",
+        "Tem catálogo de produtos/serviços no WhatsApp?",
+        "Responde rápido às mensagens (verificar se tem indicador)?",
+        "Tem múltiplos canais de contato organizados?",
+        "Aparenta ter processo de follow-up ou pós-venda?",
+      ],
+      strengthsHint: "Fale sobre canais de contato acessíveis, prontidão operacional.",
+      weaknessesHint: "Fale sobre ausência de processo comercial, resposta lenta, falta de follow-up.",
+      competitorContext: "Verifique se concorrentes demonstram atendimento mais organizado e rápido.",
     };
   }
 
+  // Consultoria / Mentoria
+  if (/(consultoria|mentoria|coaching|assessoria|treinamento|capacita[cç][aã]o)/.test(text)) {
+    return {
+      id: "consulting",
+      name: "Consultoria e assessoria empresarial",
+      analysisFocus: `Foco: avaliar maturidade do negócio, dores operacionais visíveis, gaps de gestão, oportunidades de melhoria em processos, marketing e vendas.`,
+      keyQuestions: [
+        "O negócio demonstra sinais de crescimento desordenado?",
+        "Tem presença digital mas sem estratégia clara?",
+        "As avaliações revelam problemas operacionais recorrentes?",
+        "O lead parece estar estagnado em termos de crescimento?",
+      ],
+      strengthsHint: "Fale sobre base de clientes existente, reputação, potencial de crescimento.",
+      weaknessesHint: "Fale sobre falta de estratégia, processos desorganizados, crescimento estagnado.",
+      competitorContext: "Verifique se concorrentes do mesmo segmento demonstram maior maturidade operacional.",
+    };
+  }
+
+  // Fotografia / Vídeo / Produção de conteúdo visual
+  if (/(fotografia|foto|v[ií]deo|filmagem|produ[cç][aã]o visual|design gr[aá]fico|identidade visual|branding|marca)/.test(text)) {
+    return {
+      id: "visual_content",
+      name: "Fotografia, vídeo e identidade visual",
+      analysisFocus: `Foco: analisar qualidade visual atual do lead - fotos do Google, fotos nas redes sociais, qualidade do logo, consistência visual. Empresas com fotos amadoras são oportunidades FORTES.`,
+      keyQuestions: [
+        "As fotos do perfil do Google são profissionais ou amadoras?",
+        "As redes sociais têm identidade visual consistente?",
+        "O site (se existir) tem fotos de qualidade?",
+        "O logo aparenta ser profissional?",
+        "Usa vídeos em algum canal?",
+      ],
+      strengthsHint: "Fale sobre negócio visualmente atrativo, base para conteúdo visual.",
+      weaknessesHint: "Fale sobre fotos amadoras, falta de identidade visual, conteúdo visual inconsistente.",
+      competitorContext: "Verifique se concorrentes têm imagem visual mais profissional.",
+    };
+  }
+
+  // Fallback genérico
   return {
     id: "generic",
     name: "Crescimento comercial B2B",
-    strengthsHint: "Fale sobre maturidade digital, reputação, acessibilidade e sinais de tração comercial.",
-    weaknessesHint: "Fale sobre lacunas digitais, baixa prova social, canais fracos e oportunidades claras de crescimento.",
-    actionHint: "Priorize a maior dor digital/comercial detectada e conecte isso aos serviços reais da empresa prospectora.",
+    analysisFocus: `Analise de forma abrangente a maturidade digital, comercial e operacional do lead, identificando as maiores dores e oportunidades.`,
+    keyQuestions: [
+      "Qual o maior gap digital/comercial do lead?",
+      "Onde o lead está perdendo oportunidades de negócio?",
+      "Quais são os sinais de tração ou estagnação?",
+    ],
+    strengthsHint: "Fale sobre maturidade digital, reputação, acessibilidade e sinais de tração.",
+    weaknessesHint: "Fale sobre lacunas digitais, baixa prova social, canais fracos.",
+    competitorContext: "Compare com a densidade de concorrentes na região.",
   };
+};
+
+// Keep backward compatibility
+const inferOfferingLens = (companyProfile: any): OfferingLens => {
+  const niche = inferNicheContext(companyProfile);
+  return {
+    id: niche.id === "paid_media" ? "paid_media" : niche.id === "local_visibility" ? "local_visibility" : niche.id === "website_seo" ? "website_seo" : niche.id === "automation" ? "automation" : "generic",
+    name: niche.name,
+    strengthsHint: niche.strengthsHint,
+    weaknessesHint: niche.weaknessesHint,
+    actionHint: niche.analysisFocus,
+  } as OfferingLens;
 };
 
 const computeHeuristicScore = ({
