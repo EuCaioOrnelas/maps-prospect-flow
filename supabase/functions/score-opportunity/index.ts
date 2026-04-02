@@ -1114,13 +1114,21 @@ ${evidenceContext}
    - Analise o conteúdo extraído do site com base no que a prospectora realmente precisa identificar.
 
 ═══ REGRAS CRÍTICAS ═══
-1. Pontos fortes e fracos DEVEM ser 100% relativos ao que a empresa prospectora vende. Se vende app de barbearia, fale sobre agendamento, gestão, sistema digital. Se vende gestão de redes, fale sobre última publicação, frequência, qualidade visual.
-2. NÃO use pontos genéricos como "boa reputação" sem conectar ao serviço vendido.
+1. Pontos fortes e fracos DEVEM ser 100% contextualizados ao que a empresa prospectora vende ("${companyProfile?.company_products || "serviço B2B"}"). NUNCA use pontos genéricos como "boa reputação" ou "tem site" sem explicar como isso se conecta ao serviço vendido. Exemplos:
+   - Se vende app de barbearia → "Não possui sistema de agendamento online, depende de WhatsApp manual"
+   - Se vende gestão de redes → "Última publicação há mais de 3 semanas, feed irregular"
+   - Se vende manutenção → "Sem portfólio de trabalhos realizados visível online"
+   - Se vende consultoria → "Sinais de crescimento desordenado sem processos definidos"
+   - Se vende produtos físicos → "Vende apenas presencialmente, sem e-commerce"
+   - Se vende seguros → "Sem conteúdo educativo sobre proteção financeira"
+   - QUALQUER outro nicho → Conecte CADA ponto à dor que o serviço/produto vendido resolve
+2. NÃO use frases como "boa reputação no Google" como ponto forte A MENOS QUE explique como isso beneficia a venda do serviço específico.
 3. O campo engajamento_atividade NÃO deve ser zero se houver qualquer sinal de atividade (perfil de rede social existente, site com conteúdo, avaliações recentes). Mínimo 3 se houver algum sinal.
 4. Cada dimensão: 25, 25, 20, 15 e 15. Score = soma exata.
 5. Use SOMENTE dados presentes ou inferências razoáveis. Não invente números exatos de seguidores ou tráfego.
 6. O diagnóstico DEVE incluir insights sobre concorrência regional e demanda da região.
 7. A análise de redes sociais DEVE mencionar frequência/recência de publicações (mesmo que inferida).
+8. A ação recomendada DEVE citar especificamente qual produto/serviço da empresa prospectora usar e como conectar à dor principal do lead.
 
 Retorne APENAS um JSON válido:
 {
