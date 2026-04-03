@@ -104,6 +104,7 @@ export default function OpportunitiesManagement() {
 
   // Send message state
   const [sendingLead, setSendingLead] = useState<OpportunityLead | null>(null);
+  const [sendDialogOpen, setSendDialogOpen] = useState(true);
   const [sendCooldown, setSendCooldown] = useState(0);
 
   // WhatsApp numbers management
