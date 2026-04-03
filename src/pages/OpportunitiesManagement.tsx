@@ -27,7 +27,7 @@ import {
   TrendingUp, Target, ChevronLeft, ChevronRight, Sparkles, RefreshCw,
   Info, MessageSquare, Copy, Check, Pencil, Building2, Tag, Map,
   CheckCircle2, Clock, Send, ShieldCheck, Eye, AlertTriangle, Zap, SlidersHorizontal, X,
-  Settings, Wifi,
+  Settings, Wifi, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
