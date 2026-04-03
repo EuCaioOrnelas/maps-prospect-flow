@@ -782,7 +782,7 @@ export default function OpportunitiesManagement() {
               setTimeout(() => setSendingLead(lead), 150);
             }}
             disabled={sendCooldown > 0}
-            className="w-full gap-2"
+            className="w-full gap-2 bg-[#25D366] hover:bg-[#1da851] text-white"
           >
             {sendCooldown > 0 ? (
               <>
@@ -792,7 +792,7 @@ export default function OpportunitiesManagement() {
             ) : (
               <>
                 <Send size={16} />
-                Enviar Mensagem
+                Enviar via WhatsApp
               </>
             )}
           </Button>
