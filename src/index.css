@@ -479,6 +479,7 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    transition: background-color 180ms ease, color 180ms ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -856,9 +857,45 @@
   background: hsl(158 72% 38%) !important;
 }
 
-/* Theme transition - lightweight: only transition on key containers */
-.theme-transition {
-  transition: background-color 0.3s ease, color 0.3s ease !important;
+/* Theme transition - lightweight and scoped to dashboard surfaces */
+:root.theme-transition,
+:root.theme-transition body,
+:root.theme-transition main,
+:root.theme-transition aside,
+:root.theme-transition header,
+:root.theme-transition nav,
+:root.theme-transition section,
+:root.theme-transition article,
+:root.theme-transition button,
+:root.theme-transition [role="button"],
+:root.theme-transition input,
+:root.theme-transition textarea,
+:root.theme-transition select,
+:root.theme-transition svg,
+:root.theme-transition .glass,
+:root.theme-transition .dashboard-card,
+:root.theme-transition [class*="bg-card"],
+:root.theme-transition [class*="bg-background"],
+:root.theme-transition [class*="bg-muted"],
+:root.theme-transition [class*="bg-secondary"],
+:root.theme-transition [class*="border"],
+:root.theme-transition [class*="shadow"],
+:root.theme-transition [class*="text-foreground"],
+:root.theme-transition [class*="text-muted-foreground"] {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    fill 180ms ease,
+    stroke 180ms ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root.theme-transition,
+  :root.theme-transition * {
+    transition: none !important;
+  }
 }
 
 /* Shimmer highlight text effect (AbacatePay style) */

@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, ReactNode } from "react";
 
-type Theme = "dark" | "light" | "system";
-type ResolvedTheme = "dark" | "light";
+type Theme = "dark" | "light";
+type ResolvedTheme = Theme;
 
 interface ThemeContextType {
   theme: Theme;
@@ -11,36 +11,37 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: "dark",
-  resolvedTheme: "dark",
+  theme: "light",
+  resolvedTheme: "light",
   setTheme: () => {},
   toggleTheme: () => {},
 });
 
 export const useTheme = () => useContext(ThemeContext);
 
-const getSystemTheme = (): ResolvedTheme => {
-  if (typeof window === "undefined") return "dark";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-};
+const applyDashboardTheme = (theme: ResolvedTheme) => {
+  if (typeof document === "undefined") return;
 
-const resolveTheme = (theme: Theme): ResolvedTheme => {
-  if (theme === "system") return getSystemTheme();
-  return theme;
+  const useLightTheme = theme === "light";
+  const themeTargets = [document.documentElement, document.body];
+
+  themeTargets.forEach((target) => {
+    target.classList.toggle("landing-light", useLightTheme);
+    target.style.colorScheme = useLightTheme ? "light" : "dark";
+  });
 };
 
 export const DashboardThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
     try {
       const stored = localStorage.getItem("dashboard-theme");
-      if (stored === "light" || stored === "dark" || stored === "system") return stored;
-      return "light";
+      return stored === "dark" ? "dark" : "light";
     } catch {
       return "light";
     }
   });
 
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => resolveTheme(theme));
+  const transitionTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     try {
@@ -48,50 +49,50 @@ export const DashboardThemeProvider = ({ children }: { children: ReactNode }) =>
     } catch {}
   }, [theme]);
 
-  useEffect(() => {
-    setResolvedTheme(resolveTheme(theme));
+  useLayoutEffect(() => {
+    applyDashboardTheme(theme);
   }, [theme]);
 
   useEffect(() => {
-    const applyLightTheme = resolvedTheme === "light";
-    const themeTargets = [document.documentElement, document.body];
-
-    themeTargets.forEach((target) => {
-      target.classList.toggle("landing-light", applyLightTheme);
-    });
-
     return () => {
-      themeTargets.forEach((target) => {
-        target.classList.remove("landing-light");
-      });
+      if (transitionTimeoutRef.current) {
+        window.clearTimeout(transitionTimeoutRef.current);
+      }
+      if (typeof document !== "undefined") {
+        document.documentElement.classList.remove("theme-transition");
+      }
     };
-  }, [resolvedTheme]);
+  }, []);
 
-  // Listen for system theme changes
-  useEffect(() => {
-    if (theme !== "system") return;
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = () => setResolvedTheme(getSystemTheme());
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, [theme]);
+  const startThemeTransition = () => {
+    if (typeof document === "undefined") return;
 
-  const setTheme = (t: Theme) => {
-    setThemeState(t);
+    document.documentElement.classList.add("theme-transition");
+
+    if (transitionTimeoutRef.current) {
+      window.clearTimeout(transitionTimeoutRef.current);
+    }
+
+    transitionTimeoutRef.current = window.setTimeout(() => {
+      document.documentElement.classList.remove("theme-transition");
+      transitionTimeoutRef.current = null;
+    }, 220);
+  };
+
+  const setTheme = (nextTheme: Theme) => {
+    if (nextTheme === theme) return;
+    startThemeTransition();
+    setThemeState(nextTheme);
   };
 
   const toggleTheme = () => {
-    setThemeState((prev) => {
-      const resolved = resolveTheme(prev);
-      return resolved === "dark" ? "light" : "dark";
-    });
+    startThemeTransition();
+    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme }}>
-      <div className={resolvedTheme === "light" ? "landing-light" : ""}>
-        {children}
-      </div>
+    <ThemeContext.Provider value={{ theme, resolvedTheme: theme, setTheme, toggleTheme }}>
+      {children}
     </ThemeContext.Provider>
   );
 };
