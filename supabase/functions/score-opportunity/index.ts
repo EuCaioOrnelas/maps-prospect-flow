@@ -1022,6 +1022,15 @@ serve(async (req) => {
     const websitePage = pageSummaries.find((page) => page.label === "site");
     const socialPages = pageSummaries.filter((page) => page.label === "rede_social");
 
+    const heuristic = computeHeuristicScore({
+      rating: avaliacao_media,
+      reviewCount: quantidade_avaliacoes,
+      hasPhone: possui_telefone,
+      hasAddress: !!endereco,
+      websitePage,
+      socialPages,
+    });
+
     // Enrich social pages with SerpAPI insights for heuristic scoring
     // If SerpAPI found active signals, boost activity detection
     const hasActiveSignalsFromSerp = socialInsights.some(
