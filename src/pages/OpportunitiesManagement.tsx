@@ -584,16 +584,7 @@ export default function OpportunitiesManagement() {
           </div>
         )}
 
-        {/* Recalcular */}
-        <Button
-          onClick={() => selectedLead && scoreLead(selectedLead)}
-          disabled={scoring}
-          variant="outline"
-          className="w-full gap-2"
-        >
-          {scoring && scoringLeadId === selectedLead?.id ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-          Recalcular Score com IA
-        </Button>
+        {/* Recalcular removido */}
       </div>
     );
   };
