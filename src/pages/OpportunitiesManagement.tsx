@@ -781,14 +781,16 @@ export default function OpportunitiesManagement() {
 
           {/* Action buttons */}
       <div className="flex gap-2 pt-1">
-        <Button
-          onClick={() => approachLead(lead)}
-          disabled={approachingLeadId === lead.id}
-          className="flex-1 gap-2"
-        >
-          {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          {lead.ai_approach_message ? "Regenerar Abordagem" : "Gerar abordagem personalizada com IA"}
-        </Button>
+        {!lead.ai_approach_message && (
+          <Button
+            onClick={() => approachLead(lead)}
+            disabled={approachingLeadId === lead.id}
+            className="flex-1 gap-2"
+          >
+            {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+            Gerar abordagem personalizada com IA
+          </Button>
+        )}
         {lead.ai_approach_message && !lead.first_message_sent && (
           <Button
             onClick={() => {
