@@ -83,15 +83,16 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
 
   useEffect(() => {
     if (open) {
-      setState("select_number");
-      setProgress(0);
-      setElapsed(0);
+      // Only reset state if not currently typing (background send)
+      if (state !== "typing") {
+        setState("select_number");
+        setProgress(0);
+        setElapsed(0);
+      }
       setTypingSeconds(estimateTypingSeconds(message));
-      loadNumbers();
+      if (state !== "typing") loadNumbers();
     }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
+    // Don't clear interval on close — allow background sending
   }, [open, message, availableNumbers]);
 
   const loadNumbers = async () => {
