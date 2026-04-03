@@ -25,6 +25,26 @@ interface Props {
   initialData?: CompanyProfile | null;
 }
 
+const createEmptyCompanyProfile = (): CompanyProfile => ({
+  company_name: "",
+  attendant_name: "",
+  company_niche: "",
+  company_differential: "",
+  company_objective: "",
+  company_products: "",
+  company_target_audience: "",
+});
+
+const normalizeCompanyProfile = (data?: Partial<Record<keyof CompanyProfile, unknown>> | null): CompanyProfile => ({
+  company_name: typeof data?.company_name === "string" ? data.company_name : "",
+  attendant_name: typeof data?.attendant_name === "string" ? data.attendant_name : "",
+  company_niche: typeof data?.company_niche === "string" ? data.company_niche : "",
+  company_differential: typeof data?.company_differential === "string" ? data.company_differential : "",
+  company_objective: typeof data?.company_objective === "string" ? data.company_objective : "",
+  company_products: typeof data?.company_products === "string" ? data.company_products : "",
+  company_target_audience: typeof data?.company_target_audience === "string" ? data.company_target_audience : "",
+});
+
 const STEPS = [
   { key: "company_name", label: "Nome da sua empresa", placeholder: "Ex: Agência Digital XYZ", icon: Building2, description: "Como sua empresa se chama?" },
   { key: "attendant_name", label: "Seu nome (atendente)", placeholder: "Ex: João Silva", icon: User, description: "Quem vai fazer o contato com as oportunidades?" },
@@ -41,30 +61,22 @@ export function CompanyProfileOnboarding({ open, userId, onComplete, onClose, in
   const [saving, setSaving] = useState(false);
   const isEditing = !!initialData;
 
-  const [form, setForm] = useState<CompanyProfile>(initialData || {
-    company_name: "",
-    attendant_name: "",
-    company_niche: "",
-    company_differential: "",
-    company_objective: "",
-    company_products: "",
-    company_target_audience: "",
-  });
+  const [form, setForm] = useState<CompanyProfile>(() => normalizeCompanyProfile(initialData));
 
   // Sync form when initialData changes (e.g. opening for edit)
   useEffect(() => {
-    if (initialData && open) {
-      setForm(initialData);
-      setStep(0);
-    }
+    if (!open) return;
+
+    setForm(initialData ? normalizeCompanyProfile(initialData) : createEmptyCompanyProfile());
+    setStep(0);
   }, [initialData, open]);
 
   const currentStep = STEPS[step];
-  const currentValue = form[currentStep.key as keyof CompanyProfile];
+  const currentValue = form[currentStep.key as keyof CompanyProfile] ?? "";
   const isLastStep = step === STEPS.length - 1;
   const canAdvance = currentValue.trim().length >= 2;
 
-  const allFieldsFilled = Object.values(form).every(v => v.trim().length >= 2);
+  const allFieldsFilled = STEPS.every(({ key }) => (form[key as keyof CompanyProfile] ?? "").trim().length >= 2);
 
   const handleNext = async () => {
     if (!canAdvance) return;
@@ -105,6 +117,7 @@ export function CompanyProfileOnboarding({ open, userId, onComplete, onClose, in
   };
 
   const handleClose = () => {
+    if (saving) return;
     if (onClose) onClose();
   };
 
@@ -112,13 +125,13 @@ export function CompanyProfileOnboarding({ open, userId, onComplete, onClose, in
   const isLongField = ["company_differential", "company_objective", "company_products", "company_target_audience"].includes(currentStep.key);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o && isEditing) handleClose(); }}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent
         className="sm:max-w-lg"
         hideCloseButton={!isEditing}
-        onPointerDownOutside={(e) => { if (!isEditing) e.preventDefault(); }}
-        onEscapeKeyDown={(e) => { if (!isEditing) e.preventDefault(); }}
-        onInteractOutside={(e) => { if (!isEditing) e.preventDefault(); }}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
       >
         {isEditing && (
           <button
