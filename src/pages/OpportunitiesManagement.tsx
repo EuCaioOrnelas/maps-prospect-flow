@@ -1138,6 +1138,11 @@ export default function OpportunitiesManagement() {
                                 <Send size={10} />
                                 Enviado
                               </Badge>
+                            ) : sendingLead?.id === lead.id ? (
+                              <Badge variant="outline" className="text-xs gap-1 text-amber-400 border-amber-400/30 animate-pulse">
+                                <Loader2 size={10} className="animate-spin" />
+                                Enviando...
+                              </Badge>
                             ) : lead.ai_approach_message ? (
                               <div className="flex items-center justify-center gap-1">
                                 <Badge variant="outline" className="text-xs gap-1 text-blue-400 border-blue-400/30">
