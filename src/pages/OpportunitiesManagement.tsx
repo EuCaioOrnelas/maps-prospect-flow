@@ -1156,7 +1156,7 @@ export default function OpportunitiesManagement() {
                                   className="h-7 w-7 p-0"
                                   title={sendCooldown > 0 ? `Aguarde ${sendCooldown}s` : "Enviar mensagem"}
                                   disabled={sendCooldown > 0}
-                                  onClick={(e) => { e.stopPropagation(); setSendingLead(lead); }}
+                                  onClick={(e) => { e.stopPropagation(); setSendingLead(lead); setSendDialogOpen(true); }}
                                 >
                                   {sendCooldown > 0 ? (
                                     <Clock size={12} className="text-muted-foreground" />
