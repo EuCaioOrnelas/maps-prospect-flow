@@ -105,11 +105,18 @@ ESTRUTURA OBRIGATÓRIA DA MENSAGEM (siga esta ordem):
 4. PROPOSTA DE VALOR PERSONALIZADA: Explique como seu serviço resolve a dor específica deste lead (não seja genérico — cite dados reais do lead como falta de site, poucas avaliações, nicho, cidade)
 5. FECHAMENTO GENTIL: Termine com uma pergunta leve e sem pressão perguntando se o lead tem interesse em saber mais
 
+FORMATAÇÃO OBRIGATÓRIA DA MENSAGEM:
+- CADA etapa acima (saudação+gancho, apresentação, proposta de valor, fechamento) DEVE ser separada por UMA LINHA EM BRANCO (\\n\\n) para facilitar a leitura no WhatsApp
+- A mensagem final DEVE ter exatamente 4 parágrafos separados por quebras de linha duplas
+- NÃO escreva tudo em um único bloco de texto — a legibilidade é ESSENCIAL no WhatsApp
+- Exemplo de estrutura visual:
+  "${greeting}! [gancho de atenção sobre a empresa]\\n\\n[apresentação breve]\\n\\n[proposta de valor personalizada]\\n\\n[fechamento gentil com pergunta]"
+
 INSTRUÇÕES CRÍTICAS:
 - ${companyProfile ? `Você representa "${companyProfile.attendant_name}" da "${companyProfile.company_name}".` : "Crie uma mensagem genérica de prospecção."}
 - ${companyProfile ? `Analise os serviços "${companyProfile.company_products}" e identifique qual é MAIS RELEVANTE para a dor deste lead.` : ""}
 - ${companyProfile ? `Use o diferencial "${companyProfile.company_differential}" como argumento.` : ""}
-- A mensagem deve ser curta (máx 3 parágrafos), direta e personalizada
+- A mensagem deve ser curta (máx 4 parágrafos curtos), direta e personalizada
 - NÃO use aberturas como "Tudo bem?" ou "Como vai?" — vá direto ao gancho após a saudação
 - Mencione algo específico sobre a empresa do lead para mostrar que pesquisou
 - ${companyProfile ? `Assine como "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : ""}

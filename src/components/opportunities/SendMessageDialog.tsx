@@ -256,7 +256,7 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (state !== "typing") onOpenChange(v); }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
