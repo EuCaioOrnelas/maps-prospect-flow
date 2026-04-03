@@ -1222,7 +1222,7 @@ export default function OpportunitiesManagement() {
 
       {/* Lead Detail Dialog with Tabs */}
       <Dialog open={!!selectedLead} onOpenChange={open => { if (!open) { setSelectedLead(null); setEditingMessage(false); } }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 bg-background">
           {selectedLead && (
             <div className="flex flex-col">
               {/* Header */}
