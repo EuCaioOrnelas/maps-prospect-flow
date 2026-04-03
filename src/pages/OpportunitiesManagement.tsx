@@ -704,34 +704,13 @@ export default function OpportunitiesManagement() {
       <CollapsibleAnalysis icon={<Target size={14} className="text-primary" />} title="Concorrência Regional (raio de 5km)" content={lead.enrichment_data?.analise_concorrencia_regional} />
       <CollapsibleAnalysis icon={<MapPin size={14} className="text-primary" />} title="Demanda Regional" content={lead.enrichment_data?.analise_demanda_regional} />
 
-      {/* Market Analysis Card (approach) */}
+      {/* Market Analysis - each item as collapsible */}
       {lead.enrichment_data?.approach_analysis && (
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <Target size={14} className="text-primary" />
-            Análise de Mercado
-          </h4>
-          <div className="space-y-2">
-            {lead.enrichment_data.approach_analysis.analise_nicho && (
-              <div className="bg-muted/40 rounded-lg p-3">
-                <p className="text-xs font-medium text-foreground mb-0.5">Nicho</p>
-                <p className="text-xs text-muted-foreground">{lead.enrichment_data.approach_analysis.analise_nicho}</p>
-              </div>
-            )}
-            {lead.enrichment_data.approach_analysis.analise_cidade && (
-              <div className="bg-muted/40 rounded-lg p-3">
-                <p className="text-xs font-medium text-foreground mb-0.5">Cidade</p>
-                <p className="text-xs text-muted-foreground">{lead.enrichment_data.approach_analysis.analise_cidade}</p>
-              </div>
-            )}
-            {lead.enrichment_data.approach_analysis.estrategia && (
-              <div className="bg-muted/40 rounded-lg p-3">
-                <p className="text-xs font-medium text-foreground mb-0.5">Estratégia</p>
-                <p className="text-xs text-muted-foreground">{lead.enrichment_data.approach_analysis.estrategia}</p>
-              </div>
-            )}
-          </div>
-        </div>
+        <>
+          <CollapsibleAnalysis icon={<Target size={14} className="text-primary" />} title="Análise de Nicho" content={lead.enrichment_data.approach_analysis.analise_nicho} />
+          <CollapsibleAnalysis icon={<MapPin size={14} className="text-primary" />} title="Análise da Cidade" content={lead.enrichment_data.approach_analysis.analise_cidade} />
+          <CollapsibleAnalysis icon={<Sparkles size={14} className="text-primary" />} title="Estratégia" content={lead.enrichment_data.approach_analysis.estrategia} />
+        </>
       )}
 
       {/* Approach Message Card */}
