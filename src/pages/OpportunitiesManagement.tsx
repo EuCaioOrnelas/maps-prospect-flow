@@ -27,7 +27,7 @@ import {
   TrendingUp, Target, ChevronLeft, ChevronRight, Sparkles, RefreshCw,
   Info, MessageSquare, Copy, Check, Pencil, Building2, Tag, Map,
   CheckCircle2, Clock, Send, ShieldCheck, Eye, AlertTriangle, Zap, SlidersHorizontal, X,
-  Settings, Wifi,
+  Settings, Wifi, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -584,16 +584,7 @@ export default function OpportunitiesManagement() {
           </div>
         )}
 
-        {/* Recalcular */}
-        <Button
-          onClick={() => selectedLead && scoreLead(selectedLead)}
-          disabled={scoring}
-          variant="outline"
-          className="w-full gap-2"
-        >
-          {scoring && scoringLeadId === selectedLead?.id ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-          Recalcular Score com IA
-        </Button>
+        {/* Recalcular removido */}
       </div>
     );
   };
@@ -606,13 +597,13 @@ export default function OpportunitiesManagement() {
           <Building2 size={14} className="text-primary" />
           Informações da Empresa
         </h4>
-        <div className="grid grid-cols-2 gap-3">
-          <DetailItem icon={<MapPin size={13} />} label="Endereço" value={lead.address} />
-          <DetailItem icon={<Phone size={13} />} label="Telefone" value={lead.phone} />
-          <DetailItem icon={<Globe size={13} />} label="Site" value={lead.website} isLink />
-          <DetailItem icon={<Star size={13} className="text-amber-400" />} label="Avaliação" value={lead.rating ? `${lead.rating}/5 (${lead.review_count || 0})` : null} />
-          <DetailItem icon={<Tag size={13} />} label="Categoria" value={lead.category} />
-          <DetailItem icon={<MapPin size={13} />} label="Cidade" value={lead.city} />
+        <div className="grid grid-cols-2 gap-2">
+          <DetailCard icon={<MapPin size={13} />} label="Endereço" value={lead.address} />
+          <DetailCard icon={<Phone size={13} />} label="Telefone" value={lead.phone} />
+          <DetailCard icon={<Globe size={13} />} label="Site" value={lead.website} isLink />
+          <DetailCard icon={<Star size={13} className="text-amber-400" />} label="Avaliação" value={lead.rating ? `${lead.rating}/5 (${lead.review_count || 0})` : null} />
+          <DetailCard icon={<Tag size={13} />} label="Categoria" value={lead.category} />
+          <DetailCard icon={<MapPin size={13} />} label="Cidade" value={lead.city} />
         </div>
         {lead.google_maps_link && lead.google_maps_link !== "-" && (
           <a href={lead.google_maps_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline bg-muted/50 rounded-lg px-3 py-2 mt-2 transition-colors hover:bg-muted">
@@ -707,49 +698,11 @@ export default function OpportunitiesManagement() {
         })()}
       </div>
 
-      {/* Análise de Redes Sociais */}
-      {lead.enrichment_data?.analise_redes_sociais && (
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <Globe size={14} className="text-primary" />
-            Análise de Redes Sociais
-          </h4>
-          <p className="text-xs text-muted-foreground leading-relaxed">{lead.enrichment_data.analise_redes_sociais}</p>
-        </div>
-      )}
-
-      {/* Análise do Site */}
-      {lead.enrichment_data?.analise_site && (
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <Globe size={14} className="text-primary" />
-            Análise do Site
-          </h4>
-          <p className="text-xs text-muted-foreground leading-relaxed">{lead.enrichment_data.analise_site}</p>
-        </div>
-      )}
-
-      {/* Concorrência Regional */}
-      {lead.enrichment_data?.analise_concorrencia_regional && (
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <Target size={14} className="text-primary" />
-            Concorrência Regional (raio de 5km)
-          </h4>
-          <p className="text-xs text-muted-foreground leading-relaxed">{lead.enrichment_data.analise_concorrencia_regional}</p>
-        </div>
-      )}
-
-      {/* Demanda Regional */}
-      {lead.enrichment_data?.analise_demanda_regional && (
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <MapPin size={14} className="text-primary" />
-            Demanda Regional
-          </h4>
-          <p className="text-xs text-muted-foreground leading-relaxed">{lead.enrichment_data.analise_demanda_regional}</p>
-        </div>
-      )}
+      {/* Análises colapsáveis */}
+      <CollapsibleAnalysis icon={<Globe size={14} className="text-primary" />} title="Análise de Redes Sociais" content={lead.enrichment_data?.analise_redes_sociais} />
+      <CollapsibleAnalysis icon={<Globe size={14} className="text-primary" />} title="Análise do Site" content={lead.enrichment_data?.analise_site} />
+      <CollapsibleAnalysis icon={<Target size={14} className="text-primary" />} title="Concorrência Regional (raio de 5km)" content={lead.enrichment_data?.analise_concorrencia_regional} />
+      <CollapsibleAnalysis icon={<MapPin size={14} className="text-primary" />} title="Demanda Regional" content={lead.enrichment_data?.analise_demanda_regional} />
 
       {/* Market Analysis Card (approach) */}
       {lead.enrichment_data?.approach_analysis && (
@@ -828,14 +781,16 @@ export default function OpportunitiesManagement() {
 
           {/* Action buttons */}
       <div className="flex gap-2 pt-1">
-        <Button
-          onClick={() => approachLead(lead)}
-          disabled={approachingLeadId === lead.id}
-          className="flex-1 gap-2"
-        >
-          {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          {lead.ai_approach_message ? "Regenerar Abordagem" : "Gerar abordagem personalizada com IA"}
-        </Button>
+        {!lead.ai_approach_message && (
+          <Button
+            onClick={() => approachLead(lead)}
+            disabled={approachingLeadId === lead.id}
+            className="flex-1 gap-2"
+          >
+            {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+            Gerar abordagem personalizada com IA
+          </Button>
+        )}
         {lead.ai_approach_message && !lead.first_message_sent && (
           <Button
             onClick={() => {
@@ -1394,17 +1349,41 @@ export default function OpportunitiesManagement() {
   );
 }
 
-function DetailItem({ icon, label, value, isLink }: { icon: React.ReactNode; label: string; value: string | number | null | undefined; isLink?: boolean }) {
+function DetailCard({ icon, label, value, isLink }: { icon: React.ReactNode; label: string; value: string | number | null | undefined; isLink?: boolean }) {
   if (!value || value === "-") return null;
   return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{icon}{label}</div>
+    <div className="bg-muted/40 border border-border/50 rounded-lg p-2.5 space-y-1">
+      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">{icon}{label}</div>
       {isLink && typeof value === "string" ? (
         <a href={value.startsWith("http") ? value : `https://${value}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate block">
           {value}
         </a>
       ) : (
-        <p className="text-sm truncate">{value}</p>
+        <p className="text-sm truncate font-medium">{value}</p>
+      )}
+    </div>
+  );
+}
+
+function CollapsibleAnalysis({ icon, title, content }: { icon: React.ReactNode; title: string; content: string | null | undefined }) {
+  const [open, setOpen] = useState(false);
+  if (!content) return null;
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+      >
+        <h4 className="text-sm font-semibold flex items-center gap-2">
+          {icon}
+          {title}
+        </h4>
+        {open ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
+      </button>
+      {open && (
+        <div className="px-4 pb-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">{content}</p>
+        </div>
       )}
     </div>
   );
