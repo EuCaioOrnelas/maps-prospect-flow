@@ -1355,7 +1355,7 @@ function CollapsibleAnalysis({ icon, title, content }: { icon: React.ReactNode; 
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+        className="w-full flex items-center justify-between p-4 transition-colors"
       >
         <h4 className="text-sm font-semibold flex items-center gap-2">
           {icon}
@@ -1364,7 +1364,7 @@ function CollapsibleAnalysis({ icon, title, content }: { icon: React.ReactNode; 
         {open ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
       </button>
       {open && (
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-4 border-t border-border/50 pt-3">
           <p className="text-xs text-muted-foreground leading-relaxed">{content}</p>
         </div>
       )}
