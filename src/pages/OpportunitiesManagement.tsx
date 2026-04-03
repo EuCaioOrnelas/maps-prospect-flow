@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -94,8 +94,7 @@ export default function OpportunitiesManagement() {
   const [batchCurrentName, setBatchCurrentName] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Track leads already attempted to avoid infinite re-scoring loop
-  const scoredAttemptedRef = React.useRef(new Set<string>());
+  const scoredAttemptedRef = useRef(new Set<string>());
 
   // Company profile & onboarding state
   const [companyProfile, setCompanyProfile] = useState<any>(null);
