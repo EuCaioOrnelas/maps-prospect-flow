@@ -575,12 +575,17 @@ export default function OpportunitiesManagement() {
               Diagnóstico IA
             </h4>
             <p className="text-sm text-muted-foreground leading-relaxed">{lead.ai_diagnosis}</p>
-            {lead.ai_recommended_action && (
-              <div className="bg-primary/5 border border-primary/15 rounded-lg p-3 mt-2">
-                <p className="text-xs font-medium text-primary mb-1">Ação Recomendada</p>
-                <p className="text-sm text-muted-foreground">{lead.ai_recommended_action}</p>
-              </div>
-            )}
+          </div>
+        )}
+
+        {/* Oportunidade Encontrada */}
+        {lead.ai_recommended_action && (
+          <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 space-y-2">
+            <h4 className="text-sm font-semibold flex items-center gap-2 text-primary">
+              <Zap size={14} />
+              Oportunidade Encontrada
+            </h4>
+            <p className="text-sm text-muted-foreground">{lead.ai_recommended_action}</p>
           </div>
         )}
 
