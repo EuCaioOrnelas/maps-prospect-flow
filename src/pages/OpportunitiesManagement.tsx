@@ -1222,11 +1222,11 @@ export default function OpportunitiesManagement() {
 
       {/* Lead Detail Dialog with Tabs */}
       <Dialog open={!!selectedLead} onOpenChange={open => { if (!open) { setSelectedLead(null); setEditingMessage(false); } }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0 bg-background">
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 bg-background overflow-hidden">
           {selectedLead && (
-            <div className="flex flex-col">
-              {/* Header */}
-              <div className="p-5 pb-4 border-b border-border">
+            <div className="flex flex-col max-h-[90vh]">
+              {/* Header - fixed */}
+              <div className="p-5 pb-4 border-b border-border shrink-0">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2.5 text-lg">
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -1261,7 +1261,8 @@ export default function OpportunitiesManagement() {
                 </div>
               </div>
 
-              <div className="p-5">
+              {/* Content - scrollable */}
+              <div className="p-5 overflow-y-auto flex-1">
                 {popupTab === "score" ? renderScoreBreakdown(selectedLead) : renderLeadData(selectedLead)}
               </div>
             </div>
