@@ -597,13 +597,13 @@ export default function OpportunitiesManagement() {
           <Building2 size={14} className="text-primary" />
           Informações da Empresa
         </h4>
-        <div className="grid grid-cols-2 gap-3">
-          <DetailItem icon={<MapPin size={13} />} label="Endereço" value={lead.address} />
-          <DetailItem icon={<Phone size={13} />} label="Telefone" value={lead.phone} />
-          <DetailItem icon={<Globe size={13} />} label="Site" value={lead.website} isLink />
-          <DetailItem icon={<Star size={13} className="text-amber-400" />} label="Avaliação" value={lead.rating ? `${lead.rating}/5 (${lead.review_count || 0})` : null} />
-          <DetailItem icon={<Tag size={13} />} label="Categoria" value={lead.category} />
-          <DetailItem icon={<MapPin size={13} />} label="Cidade" value={lead.city} />
+        <div className="grid grid-cols-2 gap-2">
+          <DetailCard icon={<MapPin size={13} />} label="Endereço" value={lead.address} />
+          <DetailCard icon={<Phone size={13} />} label="Telefone" value={lead.phone} />
+          <DetailCard icon={<Globe size={13} />} label="Site" value={lead.website} isLink />
+          <DetailCard icon={<Star size={13} className="text-amber-400" />} label="Avaliação" value={lead.rating ? `${lead.rating}/5 (${lead.review_count || 0})` : null} />
+          <DetailCard icon={<Tag size={13} />} label="Categoria" value={lead.category} />
+          <DetailCard icon={<MapPin size={13} />} label="Cidade" value={lead.city} />
         </div>
         {lead.google_maps_link && lead.google_maps_link !== "-" && (
           <a href={lead.google_maps_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline bg-muted/50 rounded-lg px-3 py-2 mt-2 transition-colors hover:bg-muted">
