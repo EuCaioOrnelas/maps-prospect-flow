@@ -104,6 +104,7 @@ export default function OpportunitiesManagement() {
 
   // Send message state
   const [sendingLead, setSendingLead] = useState<OpportunityLead | null>(null);
+  const [sendDialogOpen, setSendDialogOpen] = useState(true);
   const [sendCooldown, setSendCooldown] = useState(0);
 
   // WhatsApp numbers management
@@ -780,7 +781,7 @@ export default function OpportunitiesManagement() {
           <Button
             onClick={() => {
               setSelectedLead(null);
-              setTimeout(() => setSendingLead(lead), 150);
+              setTimeout(() => { setSendingLead(lead); setSendDialogOpen(true); }, 150);
             }}
             disabled={sendCooldown > 0}
             className="w-full gap-2 bg-[#25D366] hover:bg-[#1da851] text-white"
@@ -1138,6 +1139,11 @@ export default function OpportunitiesManagement() {
                                 <Send size={10} />
                                 Enviado
                               </Badge>
+                            ) : sendingLead?.id === lead.id ? (
+                              <Badge variant="outline" className="text-xs gap-1 text-amber-400 border-amber-400/30 animate-pulse">
+                                <Loader2 size={10} className="animate-spin" />
+                                Enviando...
+                              </Badge>
                             ) : lead.ai_approach_message ? (
                               <div className="flex items-center justify-center gap-1">
                                 <Badge variant="outline" className="text-xs gap-1 text-blue-400 border-blue-400/30">
@@ -1150,7 +1156,7 @@ export default function OpportunitiesManagement() {
                                   className="h-7 w-7 p-0"
                                   title={sendCooldown > 0 ? `Aguarde ${sendCooldown}s` : "Enviar mensagem"}
                                   disabled={sendCooldown > 0}
-                                  onClick={(e) => { e.stopPropagation(); setSendingLead(lead); }}
+                                  onClick={(e) => { e.stopPropagation(); setSendingLead(lead); setSendDialogOpen(true); }}
                                 >
                                   {sendCooldown > 0 ? (
                                     <Clock size={12} className="text-muted-foreground" />
@@ -1296,8 +1302,8 @@ export default function OpportunitiesManagement() {
       {/* Send Message Dialog */}
       {sendingLead && user && (
         <SendMessageDialog
-          open={!!sendingLead}
-          onOpenChange={(open) => { if (!open) setSendingLead(null); }}
+          open={!!sendingLead && sendDialogOpen}
+          onOpenChange={(open) => { if (!open) setSendDialogOpen(false); }}
           leadId={sendingLead.id}
           leadPhone={sendingLead.phone}
           leadName={sendingLead.company_name || "Lead"}
@@ -1323,8 +1329,9 @@ export default function OpportunitiesManagement() {
               setSelectedLead({ ...selectedLead, first_message_sent: true });
             }
             setSendingLead(null);
+            setSendDialogOpen(true);
           }}
-          onRequestConnect={() => { setSendingLead(null); setShowNumbersManager(true); }}
+          onRequestConnect={() => { setSendingLead(null); setSendDialogOpen(true); setShowNumbersManager(true); }}
         />
       )}
 
