@@ -575,12 +575,17 @@ export default function OpportunitiesManagement() {
               Diagnóstico IA
             </h4>
             <p className="text-sm text-muted-foreground leading-relaxed">{lead.ai_diagnosis}</p>
-            {lead.ai_recommended_action && (
-              <div className="bg-primary/5 border border-primary/15 rounded-lg p-3 mt-2">
-                <p className="text-xs font-medium text-primary mb-1">Ação Recomendada</p>
-                <p className="text-sm text-muted-foreground">{lead.ai_recommended_action}</p>
-              </div>
-            )}
+          </div>
+        )}
+
+        {/* Oportunidade Encontrada */}
+        {lead.ai_recommended_action && (
+          <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 space-y-2">
+            <h4 className="text-sm font-semibold flex items-center gap-2 text-primary">
+              <Zap size={14} />
+              Oportunidade Encontrada
+            </h4>
+            <p className="text-sm text-muted-foreground">{lead.ai_recommended_action}</p>
           </div>
         )}
 
@@ -777,7 +782,7 @@ export default function OpportunitiesManagement() {
               setTimeout(() => setSendingLead(lead), 150);
             }}
             disabled={sendCooldown > 0}
-            className="w-full gap-2"
+            className="w-full gap-2 bg-[#25D366] hover:bg-[#1da851] text-white"
           >
             {sendCooldown > 0 ? (
               <>
@@ -787,7 +792,7 @@ export default function OpportunitiesManagement() {
             ) : (
               <>
                 <Send size={16} />
-                Enviar Mensagem
+                Enviar via WhatsApp
               </>
             )}
           </Button>
@@ -1350,7 +1355,7 @@ function CollapsibleAnalysis({ icon, title, content }: { icon: React.ReactNode; 
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+        className="w-full flex items-center justify-between p-4 transition-colors"
       >
         <h4 className="text-sm font-semibold flex items-center gap-2">
           {icon}
@@ -1359,7 +1364,7 @@ function CollapsibleAnalysis({ icon, title, content }: { icon: React.ReactNode; 
         {open ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
       </button>
       {open && (
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-4 border-t border-border/50 pt-3">
           <p className="text-xs text-muted-foreground leading-relaxed">{content}</p>
         </div>
       )}
