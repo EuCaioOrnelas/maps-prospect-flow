@@ -1349,17 +1349,41 @@ export default function OpportunitiesManagement() {
   );
 }
 
-function DetailItem({ icon, label, value, isLink }: { icon: React.ReactNode; label: string; value: string | number | null | undefined; isLink?: boolean }) {
+function DetailCard({ icon, label, value, isLink }: { icon: React.ReactNode; label: string; value: string | number | null | undefined; isLink?: boolean }) {
   if (!value || value === "-") return null;
   return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{icon}{label}</div>
+    <div className="bg-muted/40 border border-border/50 rounded-lg p-2.5 space-y-1">
+      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">{icon}{label}</div>
       {isLink && typeof value === "string" ? (
         <a href={value.startsWith("http") ? value : `https://${value}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate block">
           {value}
         </a>
       ) : (
-        <p className="text-sm truncate">{value}</p>
+        <p className="text-sm truncate font-medium">{value}</p>
+      )}
+    </div>
+  );
+}
+
+function CollapsibleAnalysis({ icon, title, content }: { icon: React.ReactNode; title: string; content: string | null | undefined }) {
+  const [open, setOpen] = useState(false);
+  if (!content) return null;
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+      >
+        <h4 className="text-sm font-semibold flex items-center gap-2">
+          {icon}
+          {title}
+        </h4>
+        {open ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
+      </button>
+      {open && (
+        <div className="px-4 pb-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">{content}</p>
+        </div>
       )}
     </div>
   );
