@@ -94,6 +94,9 @@ export default function OpportunitiesManagement() {
   const [batchCurrentName, setBatchCurrentName] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Track leads already attempted to avoid infinite re-scoring loop
+  const scoredAttemptedRef = React.useRef(new Set<string>());
+
   // Company profile & onboarding state
   const [companyProfile, setCompanyProfile] = useState<any>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -159,8 +162,9 @@ export default function OpportunitiesManagement() {
 
   // Auto-score unscored leads when they appear
   useEffect(() => {
-    const unscored = leads.filter(l => l.ai_score == null || l.ai_score === 0);
+    const unscored = leads.filter(l => (l.ai_score == null || l.ai_score === 0) && !scoredAttemptedRef.current.has(l.id));
     if (unscored.length > 0 && !batchScoring && !loading) {
+      unscored.forEach(l => scoredAttemptedRef.current.add(l.id));
       batchScoreLeads(unscored);
     }
   }, [leads.length, loading]);
