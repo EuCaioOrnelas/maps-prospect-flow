@@ -376,19 +376,27 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
 
           {/* Typing simulation */}
           {state === "typing" && (
-            <div className="space-y-3 bg-primary/5 border border-primary/20 rounded-xl p-4">
-              <div className="flex items-center gap-2">
-                <Loader2 size={16} className="animate-spin text-primary" />
-                <span className="text-sm font-medium">Digitando mensagem...</span>
+            <div className="space-y-4">
+              <div className="space-y-3 bg-primary/5 border border-primary/20 rounded-xl p-4">
+                <div className="flex items-center gap-2">
+                  <Loader2 size={16} className="animate-spin text-primary" />
+                  <span className="text-sm font-medium">Digitando mensagem...</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Clock size={12} />
+                    {elapsed}s / {typingSeconds}s
+                  </span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
               </div>
-              <Progress value={progress} className="h-2" />
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Clock size={12} />
-                  {elapsed}s / {typingSeconds}s
-                </span>
-                <span>{Math.round(progress)}%</span>
-              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Você pode fechar esta janela. O envio continuará em segundo plano.
+              </p>
+              <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full">
+                Fechar e continuar em segundo plano
+              </Button>
             </div>
           )}
 
