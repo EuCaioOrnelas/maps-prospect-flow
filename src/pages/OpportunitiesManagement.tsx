@@ -698,49 +698,11 @@ export default function OpportunitiesManagement() {
         })()}
       </div>
 
-      {/* Análise de Redes Sociais */}
-      {lead.enrichment_data?.analise_redes_sociais && (
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <Globe size={14} className="text-primary" />
-            Análise de Redes Sociais
-          </h4>
-          <p className="text-xs text-muted-foreground leading-relaxed">{lead.enrichment_data.analise_redes_sociais}</p>
-        </div>
-      )}
-
-      {/* Análise do Site */}
-      {lead.enrichment_data?.analise_site && (
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <Globe size={14} className="text-primary" />
-            Análise do Site
-          </h4>
-          <p className="text-xs text-muted-foreground leading-relaxed">{lead.enrichment_data.analise_site}</p>
-        </div>
-      )}
-
-      {/* Concorrência Regional */}
-      {lead.enrichment_data?.analise_concorrencia_regional && (
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <Target size={14} className="text-primary" />
-            Concorrência Regional (raio de 5km)
-          </h4>
-          <p className="text-xs text-muted-foreground leading-relaxed">{lead.enrichment_data.analise_concorrencia_regional}</p>
-        </div>
-      )}
-
-      {/* Demanda Regional */}
-      {lead.enrichment_data?.analise_demanda_regional && (
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <MapPin size={14} className="text-primary" />
-            Demanda Regional
-          </h4>
-          <p className="text-xs text-muted-foreground leading-relaxed">{lead.enrichment_data.analise_demanda_regional}</p>
-        </div>
-      )}
+      {/* Análises colapsáveis */}
+      <CollapsibleAnalysis icon={<Globe size={14} className="text-primary" />} title="Análise de Redes Sociais" content={lead.enrichment_data?.analise_redes_sociais} />
+      <CollapsibleAnalysis icon={<Globe size={14} className="text-primary" />} title="Análise do Site" content={lead.enrichment_data?.analise_site} />
+      <CollapsibleAnalysis icon={<Target size={14} className="text-primary" />} title="Concorrência Regional (raio de 5km)" content={lead.enrichment_data?.analise_concorrencia_regional} />
+      <CollapsibleAnalysis icon={<MapPin size={14} className="text-primary" />} title="Demanda Regional" content={lead.enrichment_data?.analise_demanda_regional} />
 
       {/* Market Analysis Card (approach) */}
       {lead.enrichment_data?.approach_analysis && (
