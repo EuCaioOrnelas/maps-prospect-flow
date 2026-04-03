@@ -781,7 +781,7 @@ export default function OpportunitiesManagement() {
           <Button
             onClick={() => {
               setSelectedLead(null);
-              setTimeout(() => setSendingLead(lead), 150);
+              setTimeout(() => { setSendingLead(lead); setSendDialogOpen(true); }, 150);
             }}
             disabled={sendCooldown > 0}
             className="w-full gap-2 bg-[#25D366] hover:bg-[#1da851] text-white"
