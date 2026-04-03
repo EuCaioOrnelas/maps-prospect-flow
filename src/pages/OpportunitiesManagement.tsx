@@ -1222,7 +1222,16 @@ export default function OpportunitiesManagement() {
 
       {/* Lead Detail Dialog with Tabs */}
       <Dialog open={!!selectedLead} onOpenChange={open => { if (!open) { setSelectedLead(null); setEditingMessage(false); } }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 bg-background overflow-hidden">
+        <DialogContent
+          className="max-w-2xl max-h-[90vh] p-0 gap-0 bg-background overflow-hidden"
+          onWheelCapture={(e) => {
+            const scrollArea = document.getElementById("lead-detail-scroll-area");
+            if (!scrollArea) return;
+
+            e.preventDefault();
+            scrollArea.scrollBy({ top: e.deltaY });
+          }}
+        >
           {selectedLead && (
             <div className="flex flex-col max-h-[90vh]">
               {/* Header - fixed */}
@@ -1262,7 +1271,7 @@ export default function OpportunitiesManagement() {
               </div>
 
               {/* Content - scrollable */}
-              <div className="p-5 overflow-y-auto flex-1">
+              <div id="lead-detail-scroll-area" className="p-5 overflow-y-auto overscroll-contain flex-1">
                 {popupTab === "score" ? renderScoreBreakdown(selectedLead) : renderLeadData(selectedLead)}
               </div>
             </div>
