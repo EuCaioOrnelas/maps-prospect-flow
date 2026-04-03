@@ -604,7 +604,7 @@ export default function OpportunitiesManagement() {
         </h4>
         <div className="grid grid-cols-2 gap-2">
           <DetailCard icon={<MapPin size={13} />} label="Endereço" value={lead.address} />
-          <DetailCard icon={<Phone size={13} />} label="Telefone" value={lead.phone} />
+          <DetailCard icon={<Phone size={13} />} label="Telefone" value={formatPhoneNumber(lead.phone)} />
           <DetailCard icon={<Globe size={13} />} label="Site" value={lead.website} isLink />
           <DetailCard icon={<Star size={13} className="text-amber-400" />} label="Avaliação" value={lead.rating ? `${lead.rating}/5 (${lead.review_count || 0})` : null} />
           <DetailCard icon={<Tag size={13} />} label="Categoria" value={lead.category} />
