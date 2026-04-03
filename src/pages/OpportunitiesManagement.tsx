@@ -35,6 +35,7 @@ import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProf
 import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog";
 import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 
 interface OpportunityLead {
   id: string;
