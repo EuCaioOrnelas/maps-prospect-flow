@@ -1301,8 +1301,8 @@ export default function OpportunitiesManagement() {
       {/* Send Message Dialog */}
       {sendingLead && user && (
         <SendMessageDialog
-          open={!!sendingLead}
-          onOpenChange={(open) => { if (!open) setSendingLead(null); }}
+          open={!!sendingLead && sendDialogOpen}
+          onOpenChange={(open) => { if (!open) setSendDialogOpen(false); }}
           leadId={sendingLead.id}
           leadPhone={sendingLead.phone}
           leadName={sendingLead.company_name || "Lead"}
@@ -1328,8 +1328,9 @@ export default function OpportunitiesManagement() {
               setSelectedLead({ ...selectedLead, first_message_sent: true });
             }
             setSendingLead(null);
+            setSendDialogOpen(true);
           }}
-          onRequestConnect={() => { setSendingLead(null); setShowNumbersManager(true); }}
+          onRequestConnect={() => { setSendingLead(null); setSendDialogOpen(true); setShowNumbersManager(true); }}
         />
       )}
 
