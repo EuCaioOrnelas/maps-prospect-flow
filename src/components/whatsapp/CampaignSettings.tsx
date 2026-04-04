@@ -202,7 +202,7 @@ export const CampaignSettings = ({
             </p>
           </div>
 
-          {delaySecondsMin < 60 && (
+          {delaySecondsMin < 120 && (
             <p className="text-xs text-warning flex items-center gap-1 mt-2">
               <AlertTriangle size={12} />
               Delay mínimo baixo pode aumentar o risco de bloqueio
