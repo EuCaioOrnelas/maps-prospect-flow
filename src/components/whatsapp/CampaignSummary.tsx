@@ -35,6 +35,7 @@ interface CampaignSummaryProps {
   onStartCampaign: () => void;
   canStart: boolean;
   isStarting: boolean;
+  messageMode?: MessageMode;
 }
 
 export const CampaignSummary = ({
