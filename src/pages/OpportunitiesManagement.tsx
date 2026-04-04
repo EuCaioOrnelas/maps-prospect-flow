@@ -1067,7 +1067,7 @@ export default function OpportunitiesManagement() {
                 ].map((kpi) => (
                   <div
                     key={kpi.label}
-                    className="group relative overflow-hidden bg-card border border-border/30 rounded-[10px] px-5 py-4 transition-colors hover:border-border/50"
+                    className="group relative overflow-hidden bg-card border border-border/60 rounded-[10px] px-5 py-4 transition-colors hover:border-border"
                   >
                     {/* Background accent circle */}
                     <div className={`absolute -top-5 -right-4 w-[72px] h-[72px] rounded-full ${kpi.circle} pointer-events-none transition-transform duration-500 group-hover:scale-110`} />
