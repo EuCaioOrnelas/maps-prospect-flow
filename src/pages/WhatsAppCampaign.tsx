@@ -981,7 +981,6 @@ const WhatsAppCampaign = () => {
       </div>
     );
   };
-  );
 
   // Show upgrade prompt for free users
   // Show upgrade modal for free users with expired trial
