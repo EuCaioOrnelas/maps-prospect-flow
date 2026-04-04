@@ -1350,6 +1350,7 @@ const WhatsAppCampaign = () => {
                   onStartCampaign={checkWarmingAndProceed}
                   canStart={canStart}
                   isStarting={isStartingCampaign}
+                  messageMode={messageMode}
                 />
               )}
 
