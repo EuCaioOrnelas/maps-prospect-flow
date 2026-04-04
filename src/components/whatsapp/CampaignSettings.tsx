@@ -89,7 +89,7 @@ export const CampaignSettings = ({
     return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   };
 
-  const canProceed = delaySecondsMin >= 40 && delaySecondsMax >= delaySecondsMin && !!selectedNumberId;
+  const canProceed = delaySecondsMin >= 120 && delaySecondsMax >= delaySecondsMin && !!selectedNumberId;
   
   return (
     <div className="glass rounded-2xl p-6">
