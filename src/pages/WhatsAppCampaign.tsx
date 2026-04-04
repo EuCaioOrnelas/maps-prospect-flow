@@ -24,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadSelector } from "@/components/whatsapp/LeadSelector";
 import { MessageVariations } from "@/components/whatsapp/MessageVariations";
+import { MessageTypeSelector, MessageMode } from "@/components/whatsapp/MessageTypeSelector";
 import { CampaignSettings } from "@/components/whatsapp/CampaignSettings";
 import { CampaignProgress } from "@/components/whatsapp/CampaignProgress";
 import { CampaignHistory } from "@/components/whatsapp/CampaignHistory";
