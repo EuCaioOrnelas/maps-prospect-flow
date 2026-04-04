@@ -956,6 +956,94 @@ serve(async (req) => {
           // Allow enough tokens for multiple messages - generous budget so AI writes full multi-paragraph responses
           const estimatedMaxTokens = Math.max(400, Math.ceil((maxChars * maxConsecutiveMessages) / 2));
 
+          // ============================================================
+          // LEAD DIAGNOSTIC CONTEXT: Fetch lead data for enriched responses
+          // This is SUPPLEMENTARY — the user's configured prompt is always primary
+          // ============================================================
+          let leadDiagnosticContext = '';
+          try {
+            const diagPhoneDigits = conv.lead_phone.replace(/\D/g, '');
+            const diagLast8 = diagPhoneDigits.slice(-8);
+
+            // Fetch matching lead by phone (last 8 digits)
+            const { data: diagUserLeads } = await supabase
+              .from('leads')
+              .select('phone, company_name, category, city, address, rating, review_count, website, social_media, ai_diagnosis, ai_score, ai_recommended_action, opportunity_level, closing_probability, enrichment_data')
+              .eq('user_id', whatsappNumber.user_id);
+
+            const matchedLead = diagUserLeads?.find((l: any) => {
+              const lPhone = (l.phone || '').replace(/\D/g, '');
+              return lPhone.slice(-8) === diagLast8;
+            }) || null;
+
+            // Also fetch company profile for business context
+            const { data: companyProfile } = await supabase
+              .from('company_profiles')
+              .select('company_name, company_niche, company_products, company_differential, company_objective, company_target_audience, attendant_name')
+              .eq('user_id', whatsappNumber.user_id)
+              .maybeSingle();
+
+            if (matchedLead || companyProfile) {
+              leadDiagnosticContext = `\n\n# CONTEXTO SUPLEMENTAR — DIAGNÓSTICO E PERFIL (use como DIRECIONAMENTO, não como verdade absoluta)
+
+⚠️ IMPORTANTE: As informações abaixo são um DIRECIONAMENTO gerado por análise prévia. Use-as para enriquecer suas respostas e quebrar objeções com mais precisão, mas NÃO as trate como verdade absoluta. O PROMPT DO OPERADOR (acima) é sempre a prioridade máxima.
+`;
+
+              if (companyProfile) {
+                leadDiagnosticContext += `
+## PERFIL DA EMPRESA QUE VOCÊ REPRESENTA
+- Empresa: ${companyProfile.company_name || 'N/A'}
+- Nicho: ${companyProfile.company_niche || 'N/A'}
+- Produtos/Serviços: ${companyProfile.company_products || 'N/A'}
+- Diferencial: ${companyProfile.company_differential || 'N/A'}
+- Objetivo comercial: ${companyProfile.company_objective || 'N/A'}
+- Público-alvo: ${companyProfile.company_target_audience || 'N/A'}
+`;
+              }
+
+              if (matchedLead) {
+                leadDiagnosticContext += `
+## DIAGNÓSTICO DO LEAD (análise prévia)
+- Empresa do lead: ${matchedLead.company_name || 'N/A'}
+- Categoria/Nicho do lead: ${matchedLead.category || 'N/A'}
+- Cidade: ${matchedLead.city || 'N/A'}
+${matchedLead.ai_score ? `- Score de oportunidade: ${matchedLead.ai_score}/100` : ''}
+${matchedLead.opportunity_level ? `- Nível: ${matchedLead.opportunity_level}` : ''}
+${matchedLead.closing_probability ? `- Probabilidade de fechamento: ${matchedLead.closing_probability}` : ''}
+${matchedLead.ai_diagnosis ? `- Diagnóstico: ${matchedLead.ai_diagnosis}` : ''}
+${matchedLead.ai_recommended_action ? `- Ação recomendada: ${matchedLead.ai_recommended_action}` : ''}
+`;
+                const enrichment = matchedLead.enrichment_data && typeof matchedLead.enrichment_data === 'object' ? matchedLead.enrichment_data as Record<string, any> : {};
+                const pontosFortes = Array.isArray(enrichment.pontos_fortes) ? enrichment.pontos_fortes : [];
+                const pontosFracos = Array.isArray(enrichment.pontos_fracos) ? enrichment.pontos_fracos : [];
+                const concorrencia = enrichment.analise_concorrencia_regional || '';
+                const demanda = enrichment.analise_demanda_regional || '';
+
+                if (pontosFortes.length > 0) leadDiagnosticContext += `- Pontos fortes identificados: ${pontosFortes.join('; ')}\n`;
+                if (pontosFracos.length > 0) leadDiagnosticContext += `- Pontos fracos/dores identificados: ${pontosFracos.join('; ')}\n`;
+                if (concorrencia) leadDiagnosticContext += `- Concorrência regional: ${concorrencia}\n`;
+                if (demanda) leadDiagnosticContext += `- Demanda regional: ${demanda}\n`;
+
+                const approachAnalysis = enrichment.approach_analysis as Record<string, any> | undefined;
+                if (approachAnalysis) {
+                  if (approachAnalysis.estrategia) leadDiagnosticContext += `- Estratégia sugerida: ${approachAnalysis.estrategia}\n`;
+                  if (approachAnalysis.produto_sugerido) leadDiagnosticContext += `- Produto sugerido: ${approachAnalysis.produto_sugerido}\n`;
+                }
+
+                leadDiagnosticContext += `
+COMO USAR ESTE DIAGNÓSTICO:
+- Use os PONTOS FRACOS como oportunidade para apresentar soluções durante a conversa
+- Use a CONCORRÊNCIA REGIONAL para se diferenciar quando o lead comparar opções
+- Use o SCORE e PROBABILIDADE para calibrar a intensidade do follow-up
+- Se o lead mencionar dores que coincidem com o diagnóstico, reforce com dados contextuais
+- NÃO cite estes dados diretamente ao lead (ex: "nosso sistema identificou que..."). Use de forma natural.
+`;
+              }
+            }
+          } catch (diagErr) {
+            console.error('Error fetching lead diagnostic context:', diagErr);
+          }
+
           // Build CRM context for the prompt so the AI knows how to classify outcomes
           const crmStageEnd = agent.crm_stage_on_end;
           const crmStageLost = (agent as any).crm_stage_on_lost;
