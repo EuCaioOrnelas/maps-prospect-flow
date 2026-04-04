@@ -1048,73 +1048,39 @@ export default function OpportunitiesManagement() {
               )}
 
               {/* KPI Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                 {[
+                  { label: "Total", value: stats.total, icon: <Target size={15} className="text-primary" />, accent: "border-l-primary" },
+                  { label: "Qualificados", value: stats.scored, icon: <Sparkles size={15} className="text-blue-400" />, accent: "border-l-blue-400" },
+                  { label: "Alta Oportunidade", value: stats.highOpp, icon: <TrendingUp size={15} className="text-emerald-400" />, accent: "border-l-emerald-400" },
                   {
-                    label: "Total",
-                    value: stats.total,
-                    icon: <Target size={20} className="text-primary" />,
-                    ring: "bg-primary/8",
-                    dot: "bg-primary",
-                  },
-                  {
-                    label: "Qualificados",
-                    value: stats.scored,
-                    icon: <Sparkles size={20} className="text-blue-400" />,
-                    ring: "bg-blue-500/8",
-                    dot: "bg-blue-400",
-                  },
-                  {
-                    label: "Alta Oportunidade",
-                    value: stats.highOpp,
-                    icon: <TrendingUp size={20} className="text-emerald-400" />,
-                    ring: "bg-emerald-500/8",
-                    dot: "bg-emerald-400",
-                  },
-                  {
-                    label: "Score Médio",
-                    value: stats.avgScore,
-                    icon: <BarChart3 size={20} className="text-amber-400" />,
-                    ring: "bg-amber-500/8",
-                    dot: "bg-amber-400",
+                    label: "Score Médio", value: stats.avgScore, icon: <BarChart3 size={15} className="text-amber-400" />, accent: "border-l-amber-400",
                     extra: (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <button className="ml-auto p-0.5 rounded-md hover:bg-muted/80 transition-colors">
-                            <Info size={13} className="text-muted-foreground/60" />
-                          </button>
+                          <button className="p-0.5 rounded hover:bg-muted/60 transition-colors"><Info size={12} className="text-muted-foreground/50" /></button>
                         </PopoverTrigger>
-                        <PopoverContent side="bottom" align="end" className="w-80">
-                          {scoreInfoContent}
-                        </PopoverContent>
+                        <PopoverContent side="bottom" align="end" className="w-80">{scoreInfoContent}</PopoverContent>
                       </Popover>
                     ),
                   },
                 ].map((kpi) => (
                   <div
                     key={kpi.label}
-                    className="group relative overflow-hidden rounded-xl border border-border/40 bg-card p-5 transition-all duration-300 hover:border-border/80 hover:shadow-lg hover:shadow-black/5"
+                    className={`border-l-2 ${kpi.accent} bg-card border border-border/30 rounded-lg px-4 py-3.5 transition-colors hover:bg-muted/30`}
                   >
-                    {/* Decorative circle */}
-                    <div className={`absolute -top-6 -right-6 w-24 h-24 rounded-full ${kpi.ring} transition-transform duration-500 group-hover:scale-125`} />
-                    
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <div className="transition-transform duration-300 group-hover:scale-110">
-                            {kpi.icon}
-                          </div>
-                          <div className={`w-1.5 h-1.5 rounded-full ${kpi.dot} opacity-60`} />
-                        </div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">{kpi.label}</span>
+                      <div className="flex items-center gap-1">
                         {(kpi as any).extra || null}
+                        {kpi.icon}
                       </div>
-                      {loading ? (
-                        <Skeleton className="h-9 w-16 mb-1.5" />
-                      ) : (
-                        <p className="text-3xl font-bold tracking-tight text-foreground leading-none">{kpi.value}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-1.5 font-medium">{kpi.label}</p>
                     </div>
+                    {loading ? (
+                      <Skeleton className="h-8 w-14" />
+                    ) : (
+                      <p className="text-[28px] font-semibold tracking-tight text-foreground leading-none tabular-nums">{kpi.value}</p>
+                    )}
                   </div>
                 ))}
               </div>
