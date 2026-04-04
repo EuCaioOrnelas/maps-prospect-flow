@@ -746,8 +746,8 @@ const WhatsAppCampaign = () => {
     setSelectedLeads(draft.selected_leads || []);
     setMessages(draft.messages || ["", "", "", "", ""]);
     setCampaignName(draft.campaign_name || "");
-    setDelaySecondsMin(draft.delay_seconds_min || 40);
-    setDelaySecondsMax(draft.delay_seconds_max || 60);
+    setDelaySecondsMin(Math.max(120, draft.delay_seconds_min || 120));
+    setDelaySecondsMax(Math.max(120, draft.delay_seconds_max || 180));
     setPauseAfterContacts(draft.pause_after_contacts || 30);
     setPauseMinutes(draft.pause_minutes || 5);
     setEnableSmartPause(draft.enable_smart_pause ?? true);

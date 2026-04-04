@@ -269,9 +269,9 @@ export const CampaignSettings = ({
                   <Input
                     type="number"
                     value={pauseMinutes}
-                    onChange={(e) => onPauseMinutesChange(Math.max(1, parseInt(e.target.value) || 1))}
+                    onChange={(e) => onPauseMinutesChange(Math.max(5, parseInt(e.target.value) || 5))}
                     className="w-20 text-center"
-                    min={1}
+                    min={5}
                     max={30}
                   />
                   <span className="text-sm text-muted-foreground">minutos</span>
@@ -281,7 +281,7 @@ export const CampaignSettings = ({
               <Slider
                 value={[pauseMinutes]}
                 onValueChange={([value]) => onPauseMinutesChange(value)}
-                min={1}
+                min={5}
                 max={30}
                 step={1}
                 className="w-full"
