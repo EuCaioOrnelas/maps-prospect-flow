@@ -817,7 +817,7 @@ async function processSingleMessage(
     leadIndex: currentIndex + 1,
     totalLeads: leads.length,
     phone: formattedPhone,
-    messageVariation: messageIndex + 1,
+    messageMode: messageMode,
     messagePreview: personalizedMessage.substring(0, 50) + '...'
   });
 
