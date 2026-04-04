@@ -540,8 +540,9 @@ async function processSingleMessage(
   }
 
   const validMessages = messages.filter(m => m?.trim());
-  if (!Array.isArray(leads) || leads.length === 0 || validMessages.length === 0) {
-    campaignLog('❌', `Invalid campaign data`, { leadsCount: leads?.length, messagesCount: validMessages.length });
+  const isAiMode = (campaign as any).message_mode === 'ai_generated';
+  if (!Array.isArray(leads) || leads.length === 0 || (!isAiMode && validMessages.length === 0)) {
+    campaignLog('❌', `Invalid campaign data`, { leadsCount: leads?.length, messagesCount: validMessages.length, mode: isAiMode ? 'ai' : 'custom' });
     return { processed: false, completed: false, skipped: false, error: 'Invalid campaign data' };
   }
 
