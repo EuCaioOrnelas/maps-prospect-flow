@@ -98,8 +98,8 @@ const WhatsAppCampaign = () => {
   const [selectedLeads, setSelectedLeads] = useState<Lead[]>([]);
   const [messages, setMessages] = useState<string[]>(["", "", "", "", ""]);
   const [campaignName, setCampaignName] = useState("");
-  const [delaySecondsMin, setDelaySecondsMin] = useState(40);
-  const [delaySecondsMax, setDelaySecondsMax] = useState(60);
+  const [delaySecondsMin, setDelaySecondsMin] = useState(120);
+  const [delaySecondsMax, setDelaySecondsMax] = useState(180);
   const [pauseAfterContacts, setPauseAfterContacts] = useState(30);
   const [pauseMinutes, setPauseMinutes] = useState(5);
   const [enableSmartPause, setEnableSmartPause] = useState(true);
@@ -677,8 +677,8 @@ const WhatsAppCampaign = () => {
     setSelectedLeads([]);
     setMessages(["", "", "", "", ""]);
     setCampaignName("");
-    setDelaySecondsMin(40);
-    setDelaySecondsMax(60);
+    setDelaySecondsMin(120);
+    setDelaySecondsMax(180);
     setIsScheduled(false);
     setScheduledDate(undefined);
     setScheduledTime("09:00");
@@ -746,8 +746,8 @@ const WhatsAppCampaign = () => {
     setSelectedLeads(draft.selected_leads || []);
     setMessages(draft.messages || ["", "", "", "", ""]);
     setCampaignName(draft.campaign_name || "");
-    setDelaySecondsMin(draft.delay_seconds_min || 40);
-    setDelaySecondsMax(draft.delay_seconds_max || 60);
+    setDelaySecondsMin(Math.max(120, draft.delay_seconds_min || 120));
+    setDelaySecondsMax(Math.max(120, draft.delay_seconds_max || 180));
     setPauseAfterContacts(draft.pause_after_contacts || 30);
     setPauseMinutes(draft.pause_minutes || 5);
     setEnableSmartPause(draft.enable_smart_pause ?? true);

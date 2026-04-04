@@ -89,7 +89,7 @@ export const CampaignSettings = ({
     return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   };
 
-  const canProceed = delaySecondsMin >= 40 && delaySecondsMax >= delaySecondsMin && !!selectedNumberId;
+  const canProceed = delaySecondsMin >= 120 && delaySecondsMax >= delaySecondsMin && !!selectedNumberId;
   
   return (
     <div className="glass rounded-2xl p-6">
@@ -154,19 +154,18 @@ export const CampaignSettings = ({
                 value={[delaySecondsMin]}
                 onValueChange={([value]) => {
                   onDelayMinChange(value);
-                  // Ensure max is always >= min
                   if (value > delaySecondsMax) {
                     onDelayMaxChange(value);
                   }
                 }}
-                min={40}
-                max={180}
+                min={120}
+                max={300}
                 step={5}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>40s</span>
-                <span>180s</span>
+                <span>2min</span>
+                <span>5min</span>
               </div>
             </div>
 
@@ -179,19 +178,18 @@ export const CampaignSettings = ({
               <Slider
                 value={[delaySecondsMax]}
                 onValueChange={([value]) => {
-                  // Ensure max is always >= min
                   if (value >= delaySecondsMin) {
                     onDelayMaxChange(value);
                   }
                 }}
-                min={40}
-                max={300}
+                min={120}
+                max={600}
                 step={5}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>40s</span>
-                <span>5min</span>
+                <span>2min</span>
+                <span>10min</span>
               </div>
             </div>
           </div>
@@ -204,7 +202,7 @@ export const CampaignSettings = ({
             </p>
           </div>
 
-          {delaySecondsMin < 60 && (
+          {delaySecondsMin < 120 && (
             <p className="text-xs text-warning flex items-center gap-1 mt-2">
               <AlertTriangle size={12} />
               Delay mínimo baixo pode aumentar o risco de bloqueio
@@ -242,7 +240,7 @@ export const CampaignSettings = ({
                   <Input
                     type="number"
                     value={pauseAfterContacts}
-                    onChange={(e) => onPauseAfterContactsChange(Math.max(10, parseInt(e.target.value) || 10))}
+                    onChange={(e) => onPauseAfterContactsChange(Math.min(200, Math.max(10, parseInt(e.target.value) || 30)))}
                     className="w-20 text-center"
                     min={10}
                     max={200}
@@ -256,7 +254,7 @@ export const CampaignSettings = ({
                 onValueChange={([value]) => onPauseAfterContactsChange(value)}
                 min={10}
                 max={200}
-                step={10}
+                step={5}
                 className="w-full"
               />
             </div>
@@ -271,9 +269,9 @@ export const CampaignSettings = ({
                   <Input
                     type="number"
                     value={pauseMinutes}
-                    onChange={(e) => onPauseMinutesChange(Math.max(1, parseInt(e.target.value) || 1))}
+                    onChange={(e) => onPauseMinutesChange(Math.max(5, parseInt(e.target.value) || 5))}
                     className="w-20 text-center"
-                    min={1}
+                    min={5}
                     max={30}
                   />
                   <span className="text-sm text-muted-foreground">minutos</span>
@@ -283,7 +281,7 @@ export const CampaignSettings = ({
               <Slider
                 value={[pauseMinutes]}
                 onValueChange={([value]) => onPauseMinutesChange(value)}
-                min={1}
+                min={5}
                 max={30}
                 step={1}
                 className="w-full"
