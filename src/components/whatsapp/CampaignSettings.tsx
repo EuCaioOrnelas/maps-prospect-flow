@@ -154,19 +154,18 @@ export const CampaignSettings = ({
                 value={[delaySecondsMin]}
                 onValueChange={([value]) => {
                   onDelayMinChange(value);
-                  // Ensure max is always >= min
                   if (value > delaySecondsMax) {
                     onDelayMaxChange(value);
                   }
                 }}
-                min={40}
-                max={180}
+                min={120}
+                max={300}
                 step={5}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>40s</span>
-                <span>180s</span>
+                <span>2min</span>
+                <span>5min</span>
               </div>
             </div>
 
