@@ -178,19 +178,18 @@ export const CampaignSettings = ({
               <Slider
                 value={[delaySecondsMax]}
                 onValueChange={([value]) => {
-                  // Ensure max is always >= min
                   if (value >= delaySecondsMin) {
                     onDelayMaxChange(value);
                   }
                 }}
-                min={40}
-                max={300}
+                min={120}
+                max={600}
                 step={5}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>40s</span>
-                <span>5min</span>
+                <span>2min</span>
+                <span>10min</span>
               </div>
             </div>
           </div>
