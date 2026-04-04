@@ -481,7 +481,7 @@ export default function OpportunitiesManagement() {
     setEditRecommendedAction(lead.ai_recommended_action || "");
     setEditPontosFortes(lead.enrichment_data?.pontos_fortes || []);
     setEditPontosFracos(lead.enrichment_data?.pontos_fracos || []);
-    setEditClosingProbability(lead.closing_probability || "");
+    setEditCustomDiagnosis(lead.enrichment_data?.custom_diagnosis || "");
     setEditingDiagnostic(true);
   };
 
