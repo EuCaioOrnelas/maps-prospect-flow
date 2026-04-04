@@ -529,16 +529,31 @@ const WhatsAppCampaign = () => {
       return;
     }
 
-    const validMessages = messages.filter((m) => m.trim());
+    // Validate messages only in custom mode
+    if (messageMode === "custom") {
+      const validMessages = messages.filter((m) => m.trim());
 
-    if (validMessages.length < 5) {
-      toast({
-        title: "Erro",
-        description: "Preencha todas as 5 variações de mensagem.",
-        variant: "destructive",
-      });
-      setIsStartingCampaign(false);
-      return;
+      if (validMessages.length < 5) {
+        toast({
+          title: "Erro",
+          description: "Preencha todas as 5 variações de mensagem.",
+          variant: "destructive",
+        });
+        setIsStartingCampaign(false);
+        return;
+      }
+    } else {
+      // AI mode - validate all leads have aiMessage
+      const leadsWithoutAi = selectedLeads.filter((l) => !l.aiMessage?.trim());
+      if (leadsWithoutAi.length > 0) {
+        toast({
+          title: "Erro",
+          description: `${leadsWithoutAi.length} leads sem mensagem IA. Volte e gere as mensagens.`,
+          variant: "destructive",
+        });
+        setIsStartingCampaign(false);
+        return;
+      }
     }
 
     try {
