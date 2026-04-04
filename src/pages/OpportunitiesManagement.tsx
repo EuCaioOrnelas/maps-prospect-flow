@@ -1053,34 +1053,30 @@ export default function OpportunitiesManagement() {
                   {
                     label: "Total",
                     value: stats.total,
-                    icon: <Target size={18} />,
-                    accent: "from-primary/15 to-primary/5",
-                    iconBg: "bg-primary/10 text-primary",
-                    border: "border-primary/10",
+                    icon: <Target size={20} className="text-primary" />,
+                    ring: "bg-primary/8",
+                    dot: "bg-primary",
                   },
                   {
                     label: "Qualificados",
                     value: stats.scored,
-                    icon: <Sparkles size={18} />,
-                    accent: "from-blue-500/15 to-blue-500/5",
-                    iconBg: "bg-blue-500/10 text-blue-400",
-                    border: "border-blue-500/10",
+                    icon: <Sparkles size={20} className="text-blue-400" />,
+                    ring: "bg-blue-500/8",
+                    dot: "bg-blue-400",
                   },
                   {
                     label: "Alta Oportunidade",
                     value: stats.highOpp,
-                    icon: <TrendingUp size={18} />,
-                    accent: "from-emerald-500/15 to-emerald-500/5",
-                    iconBg: "bg-emerald-500/10 text-emerald-400",
-                    border: "border-emerald-500/10",
+                    icon: <TrendingUp size={20} className="text-emerald-400" />,
+                    ring: "bg-emerald-500/8",
+                    dot: "bg-emerald-400",
                   },
                   {
                     label: "Score Médio",
                     value: stats.avgScore,
-                    icon: <BarChart3 size={18} />,
-                    accent: "from-amber-500/15 to-amber-500/5",
-                    iconBg: "bg-amber-500/10 text-amber-400",
-                    border: "border-amber-500/10",
+                    icon: <BarChart3 size={20} className="text-amber-400" />,
+                    ring: "bg-amber-500/8",
+                    dot: "bg-amber-400",
                     extra: (
                       <Popover>
                         <PopoverTrigger asChild>
@@ -1097,21 +1093,27 @@ export default function OpportunitiesManagement() {
                 ].map((kpi) => (
                   <div
                     key={kpi.label}
-                    className={`relative overflow-hidden rounded-xl border ${kpi.border} bg-gradient-to-br ${kpi.accent} backdrop-blur-sm p-4 transition-all hover:shadow-md hover:shadow-black/5`}
+                    className="group relative overflow-hidden rounded-xl border border-border/40 bg-card p-5 transition-all duration-300 hover:border-border/80 hover:shadow-lg hover:shadow-black/5"
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${kpi.iconBg}`}>
-                        {kpi.icon}
+                    {/* Decorative circle */}
+                    <div className={`absolute -top-6 -right-6 w-24 h-24 rounded-full ${kpi.ring} transition-transform duration-500 group-hover:scale-125`} />
+                    
+                    <div className="relative z-10">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="transition-transform duration-300 group-hover:scale-110">
+                            {kpi.icon}
+                          </div>
+                          <div className={`w-1.5 h-1.5 rounded-full ${kpi.dot} opacity-60`} />
+                        </div>
+                        {(kpi as any).extra || null}
                       </div>
-                      {(kpi as any).extra || null}
-                    </div>
-                    <div>
                       {loading ? (
-                        <Skeleton className="h-8 w-16 mb-1" />
+                        <Skeleton className="h-9 w-16 mb-1.5" />
                       ) : (
-                        <p className="text-2xl font-bold tracking-tight text-foreground">{kpi.value}</p>
+                        <p className="text-3xl font-bold tracking-tight text-foreground leading-none">{kpi.value}</p>
                       )}
-                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">{kpi.label}</p>
+                      <p className="text-xs text-muted-foreground mt-1.5 font-medium">{kpi.label}</p>
                     </div>
                   </div>
                 ))}
