@@ -540,8 +540,9 @@ async function processSingleMessage(
   }
 
   const validMessages = messages.filter(m => m?.trim());
-  if (!Array.isArray(leads) || leads.length === 0 || validMessages.length === 0) {
-    campaignLog('❌', `Invalid campaign data`, { leadsCount: leads?.length, messagesCount: validMessages.length });
+  const isAiMode = (campaign as any).message_mode === 'ai_generated';
+  if (!Array.isArray(leads) || leads.length === 0 || (!isAiMode && validMessages.length === 0)) {
+    campaignLog('❌', `Invalid campaign data`, { leadsCount: leads?.length, messagesCount: validMessages.length, mode: isAiMode ? 'ai' : 'custom' });
     return { processed: false, completed: false, skipped: false, error: 'Invalid campaign data' };
   }
 
@@ -795,18 +796,28 @@ async function processSingleMessage(
     return { processed: true, completed: false, skipped: false };
   }
 
-  // Select message (random variation)
-  const messageIndex = Math.floor(Math.random() * validMessages.length);
-  const randomMessage = validMessages[messageIndex];
-  const personalizedMessage = randomMessage
-    .replace(/\{nome\}/gi, lead.name || 'Cliente')
-    .replace(/\{empresa\}/gi, lead.name || 'Empresa');
+  // Select message based on campaign mode
+  const messageMode = (campaign as any).message_mode || 'custom';
+  let personalizedMessage: string;
+
+  if (messageMode === 'ai_generated' && lead.aiMessage) {
+    // AI mode: use per-lead personalized message from opportunities
+    personalizedMessage = lead.aiMessage;
+    campaignLog('🤖', `Using AI-generated message for lead`, { phone: formattedPhone });
+  } else {
+    // Custom mode: random variation
+    const messageIndex = Math.floor(Math.random() * validMessages.length);
+    const randomMessage = validMessages[messageIndex];
+    personalizedMessage = randomMessage
+      .replace(/\{nome\}/gi, lead.name || 'Cliente')
+      .replace(/\{empresa\}/gi, lead.name || 'Empresa');
+  }
 
   campaignLog('📤', `SENDING MESSAGE`, {
     leadIndex: currentIndex + 1,
     totalLeads: leads.length,
     phone: formattedPhone,
-    messageVariation: messageIndex + 1,
+    messageMode: messageMode,
     messagePreview: personalizedMessage.substring(0, 50) + '...'
   });
 

@@ -24,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadSelector } from "@/components/whatsapp/LeadSelector";
 import { MessageVariations } from "@/components/whatsapp/MessageVariations";
+import { MessageTypeSelector, MessageMode } from "@/components/whatsapp/MessageTypeSelector";
 import { CampaignSettings } from "@/components/whatsapp/CampaignSettings";
 import { CampaignProgress } from "@/components/whatsapp/CampaignProgress";
 import { CampaignHistory } from "@/components/whatsapp/CampaignHistory";
@@ -57,6 +58,7 @@ export interface Lead {
   rating: number;
   reviewCount: number;
   mapsLink: string;
+  aiMessage?: string;
 }
 
 export interface Campaign {
@@ -94,7 +96,8 @@ export interface CampaignState {
 
 const WhatsAppCampaign = () => {
   const [activeTab, setActiveTab] = useState<"new" | "active" | "history">("new");
-  const [step, setStep] = useState<"leads" | "messages" | "settings" | "summary" | "running">("leads");
+  const [step, setStep] = useState<"leads" | "message_type" | "messages" | "settings" | "summary" | "running">("leads");
+  const [messageMode, setMessageMode] = useState<MessageMode>("custom");
   const [selectedLeads, setSelectedLeads] = useState<Lead[]>([]);
   const [messages, setMessages] = useState<string[]>(["", "", "", "", ""]);
   const [campaignName, setCampaignName] = useState("");
@@ -280,13 +283,14 @@ const WhatsAppCampaign = () => {
           pause_after_contacts: pauseAfterContacts,
           pause_minutes: pauseMinutes,
           enable_smart_pause: enableSmartPause,
-          messages: messages,
+          messages: messageMode === "ai_generated" ? [] : messages,
           leads: selectedLeads as unknown as any,
           started_at: scheduled ? null : new Date().toISOString(),
           scheduled_at: scheduledAt,
           whatsapp_number_id: selectedNumberId,
           current_lead_index: 0,
-        })
+          message_mode: messageMode,
+        } as any)
         .select()
         .single();
 
@@ -525,16 +529,31 @@ const WhatsAppCampaign = () => {
       return;
     }
 
-    const validMessages = messages.filter((m) => m.trim());
+    // Validate messages only in custom mode
+    if (messageMode === "custom") {
+      const validMessages = messages.filter((m) => m.trim());
 
-    if (validMessages.length < 5) {
-      toast({
-        title: "Erro",
-        description: "Preencha todas as 5 variações de mensagem.",
-        variant: "destructive",
-      });
-      setIsStartingCampaign(false);
-      return;
+      if (validMessages.length < 5) {
+        toast({
+          title: "Erro",
+          description: "Preencha todas as 5 variações de mensagem.",
+          variant: "destructive",
+        });
+        setIsStartingCampaign(false);
+        return;
+      }
+    } else {
+      // AI mode - validate all leads have aiMessage
+      const leadsWithoutAi = selectedLeads.filter((l) => !l.aiMessage?.trim());
+      if (leadsWithoutAi.length > 0) {
+        toast({
+          title: "Erro",
+          description: `${leadsWithoutAi.length} leads sem mensagem IA. Volte e gere as mensagens.`,
+          variant: "destructive",
+        });
+        setIsStartingCampaign(false);
+        return;
+      }
     }
 
     try {
@@ -677,6 +696,7 @@ const WhatsAppCampaign = () => {
     setSelectedLeads([]);
     setMessages(["", "", "", "", ""]);
     setCampaignName("");
+    setMessageMode("custom");
     setDelaySecondsMin(120);
     setDelaySecondsMax(180);
     setIsScheduled(false);
@@ -937,39 +957,47 @@ const WhatsAppCampaign = () => {
     }
   };
 
-  const renderStepIndicator = () => (
-    <div className="flex items-center justify-center gap-2 mb-8">
-      {["leads", "messages", "settings", "summary"].map((s, i) => {
-        const stepLabels = ["Leads", "Mensagens", "Configurações", "Resumo"];
-        const stepIndex = ["leads", "messages", "settings", "summary"].indexOf(step);
-        const isActive = s === step;
-        const isCompleted = i < stepIndex;
+  const renderStepIndicator = () => {
+    const allSteps = messageMode === "ai_generated"
+      ? ["leads", "message_type", "settings", "summary"]
+      : ["leads", "message_type", "messages", "settings", "summary"];
+    const allLabels = messageMode === "ai_generated"
+      ? ["Leads", "Tipo", "Configurações", "Resumo"]
+      : ["Leads", "Tipo", "Mensagens", "Configurações", "Resumo"];
+    const stepIndex = allSteps.indexOf(step);
 
-        return (
-          <div key={s} className="flex items-center">
-            <div
-              className={`
-              flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all
-              ${
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : isCompleted
-                    ? "bg-primary/20 text-primary"
-                    : "bg-muted text-muted-foreground"
-              }
-            `}
-            >
-              {isCompleted ? <CheckCircle2 size={16} /> : i + 1}
+    return (
+      <div className="flex items-center justify-center gap-2 mb-8">
+        {allSteps.map((s, i) => {
+          const isActive = s === step;
+          const isCompleted = i < stepIndex;
+
+          return (
+            <div key={s} className="flex items-center">
+              <div
+                className={`
+                flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all
+                ${
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : isCompleted
+                      ? "bg-primary/20 text-primary"
+                      : "bg-muted text-muted-foreground"
+                }
+              `}
+              >
+                {isCompleted ? <CheckCircle2 size={16} /> : i + 1}
+              </div>
+              <span className={`ml-2 text-sm hidden sm:inline ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                {allLabels[i]}
+              </span>
+              {i < allSteps.length - 1 && <div className="w-8 sm:w-12 h-px bg-border mx-2" />}
             </div>
-            <span className={`ml-2 text-sm hidden sm:inline ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
-              {stepLabels[i]}
-            </span>
-            {i < 3 && <div className="w-8 sm:w-12 h-px bg-border mx-2" />}
-          </div>
-        );
-      })}
-    </div>
-  );
+          );
+        })}
+      </div>
+    );
+  };
 
   // Show upgrade prompt for free users
   // Show upgrade modal for free users with expired trial
@@ -1226,7 +1254,7 @@ const WhatsAppCampaign = () => {
                 <LeadSelector
                   selectedLeads={selectedLeads}
                   onLeadsChange={setSelectedLeads}
-                  onNext={() => setStep("messages")}
+                  onNext={() => setStep("message_type")}
                   onCancel={handleNewCampaign}
                   canProceed={canProceedToMessages}
                   dailyLimit={dailyLimit}
@@ -1238,12 +1266,30 @@ const WhatsAppCampaign = () => {
                 />
               )}
 
-              {/* Step: Message Variations */}
+              {/* Step: Message Type Selection */}
+              {step === "message_type" && (
+                <MessageTypeSelector
+                  selectedLeads={selectedLeads}
+                  messageMode={messageMode}
+                  onMessageModeChange={setMessageMode}
+                  onBack={() => setStep("leads")}
+                  onNext={() => {
+                    if (messageMode === "ai_generated") {
+                      setStep("settings");
+                    } else {
+                      setStep("messages");
+                    }
+                  }}
+                  onLeadsUpdate={setSelectedLeads}
+                />
+              )}
+
+              {/* Step: Message Variations (only for custom mode) */}
               {step === "messages" && (
                 <MessageVariations
                   messages={messages}
                   onMessagesChange={setMessages}
-                  onBack={() => setStep("leads")}
+                  onBack={() => setStep("message_type")}
                   onNext={() => setStep("settings")}
                   canProceed={canProceedToSettings}
                   selectedLeads={selectedLeads}
@@ -1271,7 +1317,7 @@ const WhatsAppCampaign = () => {
                   onScheduledDateChange={setScheduledDate}
                   scheduledTime={scheduledTime}
                   onScheduledTimeChange={setScheduledTime}
-                  onBack={() => setStep("messages")}
+                  onBack={() => setStep(messageMode === "ai_generated" ? "message_type" : "messages")}
                   onNext={() => setStep("summary")}
                   isConnected={isConnected}
                   totalLeads={selectedLeads.length}
@@ -1304,6 +1350,7 @@ const WhatsAppCampaign = () => {
                   onStartCampaign={checkWarmingAndProceed}
                   canStart={canStart}
                   isStarting={isStartingCampaign}
+                  messageMode={messageMode}
                 />
               )}
 

@@ -10,10 +10,12 @@ import {
   Pause,
   Smartphone,
   Shuffle,
-  Shield
+  Shield,
+  Sparkles
 } from "lucide-react";
 import type { Lead } from "@/pages/WhatsAppCampaign";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
+import type { MessageMode } from "./MessageTypeSelector";
 
 interface CampaignSummaryProps {
   campaignName: string;
@@ -33,6 +35,7 @@ interface CampaignSummaryProps {
   onStartCampaign: () => void;
   canStart: boolean;
   isStarting: boolean;
+  messageMode?: MessageMode;
 }
 
 export const CampaignSummary = ({
@@ -52,7 +55,8 @@ export const CampaignSummary = ({
   onBack,
   onStartCampaign,
   canStart,
-  isStarting
+  isStarting,
+  messageMode = 'custom'
 }: CampaignSummaryProps) => {
   
   const formatTime = (seconds: number) => {
@@ -147,15 +151,29 @@ export const CampaignSummary = ({
         {/* Messages */}
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
           <div className="flex items-center gap-3">
-            <MessageSquare size={18} className="text-primary" />
-            <span className="text-muted-foreground">Variações de mensagem</span>
+            {messageMode === 'ai_generated' ? (
+              <Sparkles size={18} className="text-primary" />
+            ) : (
+              <MessageSquare size={18} className="text-primary" />
+            )}
+            <span className="text-muted-foreground">
+              {messageMode === 'ai_generated' ? 'Mensagens com IA' : 'Variações de mensagem'}
+            </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-medium">{filledMessages}/5</span>
-            {usesNameVariable && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                usa {'{nome}'}
+            {messageMode === 'ai_generated' ? (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-medium">
+                Personalizadas por IA
               </span>
+            ) : (
+              <>
+                <span className="font-medium">{filledMessages}/5</span>
+                {usesNameVariable && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    usa {'{nome}'}
+                  </span>
+                )}
+              </>
             )}
           </div>
         </div>

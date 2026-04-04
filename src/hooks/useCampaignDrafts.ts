@@ -7,7 +7,7 @@ export interface CampaignDraft {
   id: string;
   user_id: string;
   name: string;
-  step: 'leads' | 'messages' | 'settings' | 'summary';
+  step: 'leads' | 'message_type' | 'messages' | 'settings' | 'summary';
   selected_leads: Lead[];
   messages: string[];
   campaign_name: string;
@@ -73,7 +73,7 @@ export const useCampaignDrafts = () => {
   const MAX_DRAFTS = 3;
 
   const saveDraft = useCallback(async (draftData: {
-    step: 'leads' | 'messages' | 'settings' | 'summary';
+    step: 'leads' | 'message_type' | 'messages' | 'settings' | 'summary';
     selectedLeads: Lead[];
     messages: string[];
     campaignName: string;
