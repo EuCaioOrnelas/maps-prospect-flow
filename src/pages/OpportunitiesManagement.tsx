@@ -95,6 +95,15 @@ export default function OpportunitiesManagement() {
   const [batchCurrentName, setBatchCurrentName] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Diagnostic editing state
+  const [editingDiagnostic, setEditingDiagnostic] = useState(false);
+  const [editDiagnosis, setEditDiagnosis] = useState("");
+  const [editRecommendedAction, setEditRecommendedAction] = useState("");
+  const [editPontosFortes, setEditPontosFortes] = useState<string[]>([]);
+  const [editPontosFracos, setEditPontosFracos] = useState<string[]>([]);
+  const [editClosingProbability, setEditClosingProbability] = useState("");
+  const [savingDiagnostic, setSavingDiagnostic] = useState(false);
+
   const scoredAttemptedRef = useRef(new Set<string>());
 
   // Company profile & onboarding state
