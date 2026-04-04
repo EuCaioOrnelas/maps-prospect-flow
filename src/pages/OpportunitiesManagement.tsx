@@ -476,6 +476,63 @@ export default function OpportunitiesManagement() {
     </div>
   );
 
+  const startEditingDiagnostic = (lead: OpportunityLead) => {
+    setEditDiagnosis(lead.ai_diagnosis || "");
+    setEditRecommendedAction(lead.ai_recommended_action || "");
+    setEditPontosFortes(lead.enrichment_data?.pontos_fortes || []);
+    setEditPontosFracos(lead.enrichment_data?.pontos_fracos || []);
+    setEditClosingProbability(lead.closing_probability || "");
+    setEditingDiagnostic(true);
+  };
+
+  const saveDiagnostic = async (lead: OpportunityLead) => {
+    if (!user) return;
+    setSavingDiagnostic(true);
+    try {
+      const updatedEnrichment = {
+        ...(typeof lead.enrichment_data === 'object' && lead.enrichment_data ? lead.enrichment_data : {}),
+        pontos_fortes: editPontosFortes.filter(p => p.trim()),
+        pontos_fracos: editPontosFracos.filter(p => p.trim()),
+      };
+
+      const { error } = await supabase
+        .from('leads')
+        .update({
+          ai_diagnosis: editDiagnosis,
+          ai_recommended_action: editRecommendedAction,
+          closing_probability: editClosingProbability,
+          enrichment_data: updatedEnrichment,
+        })
+        .eq('id', lead.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setLeads(prev => prev.map(l => l.id === lead.id ? {
+        ...l,
+        ai_diagnosis: editDiagnosis,
+        ai_recommended_action: editRecommendedAction,
+        closing_probability: editClosingProbability,
+        enrichment_data: updatedEnrichment,
+      } : l));
+      setSelectedLead(prev => prev && prev.id === lead.id ? {
+        ...prev,
+        ai_diagnosis: editDiagnosis,
+        ai_recommended_action: editRecommendedAction,
+        closing_probability: editClosingProbability,
+        enrichment_data: updatedEnrichment,
+      } : prev);
+      setEditingDiagnostic(false);
+      toast({ title: "Diagnóstico atualizado!" });
+    } catch (err) {
+      console.error('Error saving diagnostic:', err);
+      toast({ title: "Erro ao salvar", description: "Tente novamente.", variant: "destructive" });
+    } finally {
+      setSavingDiagnostic(false);
+    }
+  };
+
   const renderScoreBreakdown = (lead: OpportunityLead) => {
     const breakdown = lead.enrichment_data?.score_breakdown;
     const pontosFortes = lead.enrichment_data?.pontos_fortes || [];
