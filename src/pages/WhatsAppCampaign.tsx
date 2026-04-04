@@ -98,8 +98,8 @@ const WhatsAppCampaign = () => {
   const [selectedLeads, setSelectedLeads] = useState<Lead[]>([]);
   const [messages, setMessages] = useState<string[]>(["", "", "", "", ""]);
   const [campaignName, setCampaignName] = useState("");
-  const [delaySecondsMin, setDelaySecondsMin] = useState(40);
-  const [delaySecondsMax, setDelaySecondsMax] = useState(60);
+  const [delaySecondsMin, setDelaySecondsMin] = useState(120);
+  const [delaySecondsMax, setDelaySecondsMax] = useState(180);
   const [pauseAfterContacts, setPauseAfterContacts] = useState(30);
   const [pauseMinutes, setPauseMinutes] = useState(5);
   const [enableSmartPause, setEnableSmartPause] = useState(true);
