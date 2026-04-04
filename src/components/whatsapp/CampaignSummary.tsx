@@ -10,10 +10,12 @@ import {
   Pause,
   Smartphone,
   Shuffle,
-  Shield
+  Shield,
+  Sparkles
 } from "lucide-react";
 import type { Lead } from "@/pages/WhatsAppCampaign";
 import type { WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
+import type { MessageMode } from "./MessageTypeSelector";
 
 interface CampaignSummaryProps {
   campaignName: string;
