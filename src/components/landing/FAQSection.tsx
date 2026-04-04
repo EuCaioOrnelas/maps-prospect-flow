@@ -19,8 +19,16 @@ const faqs = [
     answer: "Cada busca estratégica retorna até 50 leads pré-qualificados. Nossa IA filtra e seleciona apenas empresas com atividade recente, avaliações reais e informações de contato atualizadas."
   },
   {
-    question: "Como funciona o período gratuito?",
-    answer: "Ao criar sua conta, você recebe 10 buscas estratégicas grátis para testar a plataforma. Não é necessário cartão de crédito. Após usar suas buscas gratuitas, você pode fazer upgrade para um dos nossos planos."
+    question: "Como funciona a geração de mensagens personalizadas com IA?",
+    answer: "O Wiize analisa cada lead encontrado — segmento, localização, perfil do negócio — e gera automaticamente uma mensagem única e personalizada usando inteligência artificial. A mensagem segue uma estrutura de 4 parágrafos (saudação, introdução, proposta de valor e CTA), aumentando drasticamente a taxa de resposta."
+  },
+  {
+    question: "O que é o Índice de Fechamento (Índ. Fech.)?",
+    answer: "O Índice de Fechamento é uma pontuação gerada pela IA que indica a probabilidade de conversão de cada lead. Ele analisa fatores como avaliações no Google Maps, quantidade de reviews, presença digital e perfil do negócio para priorizar os leads com maior potencial de se tornarem clientes."
+  },
+  {
+    question: "O que é o Diagnóstico com IA?",
+    answer: "O Diagnóstico com IA é uma análise automática que o Wiize gera para cada lead prospectado. Ele identifica oportunidades, pontos fracos do negócio e sugere a melhor abordagem comercial. Isso permite que você chegue ao lead com uma proposta relevante e consultiva, não apenas um disparo genérico."
   },
   {
     question: "Posso cancelar minha assinatura a qualquer momento?",
@@ -39,20 +47,12 @@ const faqs = [
     answer: "Sim. Todos os dados são extraídos diretamente do Google Maps em tempo real no momento da sua busca, garantindo informações sempre atualizadas como telefone, site, endereço e avaliações."
   },
   {
-    question: "Como funciona a geração de mensagens personalizadas com IA?",
-    answer: "O Wiize analisa cada lead encontrado — segmento, localização, perfil do negócio — e gera automaticamente uma mensagem única e personalizada usando inteligência artificial. Isso aumenta drasticamente a taxa de resposta e conversão, pois cada contato recebe uma abordagem relevante e humanizada, sem parecer spam."
-  },
-  {
-    question: "Qual plano é ideal para mim?",
-    answer: "O plano Start (R$97/mês) é ideal para freelancers e autônomos com 200 buscas e 1 número WhatsApp. O Growth (R$247/mês) é perfeito para vendedores e pequenas equipes com 600 buscas e 2 números. O Scale (R$497/mês) é indicado para agências com 1.200 buscas e 5 números WhatsApp."
-  },
-  {
     question: "O que é a Meta API Oficial e como o Wiize a utiliza?",
     answer: "A Meta API Oficial (Cloud API v21.0) é a interface autorizada pelo Meta para envio de mensagens via WhatsApp Business. O Wiize é integrado como Meta Business Partner, o que significa que campanhas de relacionamento (inbound) passam pela API oficial com total conformidade. Para prospecção outbound, utilizamos a Evolution API com estratégias de proteção inteligentes para máxima segurança."
   },
   {
-    question: "Minhas mensagens são seguras com a API Oficial?",
-    answer: "Sim. As mensagens enviadas pela Meta API Oficial possuem criptografia de ponta a ponta e seguem todas as diretrizes de privacidade do WhatsApp. Além disso, o Wiize segue as normas da LGPD para garantir a proteção completa dos seus dados e dos seus contatos."
+    question: "Qual plano é ideal para mim?",
+    answer: "O plano Start (R$197/mês) é ideal para freelancers e autônomos com 1.000 oportunidades e 1 número WhatsApp. O Growth (R$497/mês) é perfeito para vendedores e pequenas equipes com 3.000 oportunidades e 2 números. O Scale (R$1.297/mês) é indicado para agências com 10.000 oportunidades e 5 números WhatsApp."
   },
   {
     question: "Preciso de uma conta Meta Business para usar o Wiize?",

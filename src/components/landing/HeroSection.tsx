@@ -309,10 +309,11 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             {/* Trust badge with avatars */}
             <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
               <div className="flex -space-x-2">
-                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
-                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
-                <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
-                <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
+                {["M", "R", "C", "L"].map((initial, i) => (
+                  <div key={i} className="w-7 h-7 rounded-full border-2 border-background bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+                    {initial}
+                  </div>
+                ))}
               </div>
               <span className="text-xs sm:text-sm text-muted-foreground">
                 Escolhido por +500 empresas

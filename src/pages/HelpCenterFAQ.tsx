@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, HelpCircle, Search, Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target, BarChart3, Plug, Wallet } from "lucide-react";
+import { ArrowLeft, HelpCircle, Search, Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target, BarChart3, Plug, Wallet, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -15,15 +15,23 @@ const categories = [
     questions: [
       {
         question: "O que é o Wiize?",
-        answer: "O Wiize é uma plataforma completa de prospecção inteligente que utiliza IA para encontrar leads qualificados no Google Maps e automatizar o contato via WhatsApp. Combinamos busca estratégica, CRM integrado, agentes de IA e disparos em massa em uma única solução."
-      },
-      {
-        question: "Como funciona o período gratuito?",
-        answer: "Ao criar sua conta, você recebe 10 buscas estratégicas grátis para testar a plataforma. Não é necessário cartão de crédito. Após usar suas buscas gratuitas, você pode fazer upgrade para um dos nossos planos."
+        answer: "O Wiize é uma plataforma completa de prospecção inteligente que utiliza IA para encontrar leads qualificados no Google Maps e automatizar o contato via WhatsApp. Combinamos busca estratégica, CRM integrado, agentes de IA, diagnóstico com IA, índice de fechamento e disparos em massa em uma única solução."
       },
       {
         question: "O que é uma busca estratégica?",
         answer: "Uma busca estratégica é uma pesquisa inteligente que utiliza nossa IA para analisar empresas no Google Maps e entregar apenas leads qualificados: empresas ativas, com contatos verificados e alto potencial de conversão. Cada busca retorna até 50 leads pré-qualificados."
+      },
+      {
+        question: "Como funciona a geração de mensagens personalizadas com IA?",
+        answer: "O Wiize analisa cada lead encontrado — nome da empresa, segmento, localização, avaliações e perfil do negócio — e gera automaticamente uma mensagem única e personalizada com 4 parágrafos estruturados: saudação contextualizada, introdução profissional, proposta de valor e chamada para ação. Cada lead recebe uma abordagem consultiva e humanizada."
+      },
+      {
+        question: "O que é o Índice de Fechamento?",
+        answer: "O Índice de Fechamento (Índ. Fech.) é uma pontuação calculada pela IA que indica a probabilidade de conversão de cada lead. Ele considera fatores como avaliações no Google Maps, volume de reviews, presença digital, categoria do negócio e potencial de receita para ajudar você a priorizar os melhores leads."
+      },
+      {
+        question: "O que é o Diagnóstico com IA?",
+        answer: "O Diagnóstico com IA analisa automaticamente cada lead e gera um relatório com oportunidades identificadas, pontos fracos do negócio e a melhor estratégia de abordagem. Isso transforma sua prospecção em algo consultivo, não invasivo."
       },
       {
         question: "Preciso instalar algum software?",
@@ -36,6 +44,37 @@ const categories = [
       {
         question: "Posso usar o Wiize no celular?",
         answer: "O Wiize é otimizado para uso em desktop e notebook. Algumas funcionalidades como o CRM Kanban e os disparos de campanha são melhor aproveitadas em telas maiores. Porém, relatórios e métricas podem ser acompanhados pelo celular."
+      },
+    ]
+  },
+  {
+    id: "ia-prospeccao",
+    title: "IA e Prospecção",
+    icon: Sparkles,
+    questions: [
+      {
+        question: "Como a IA gera mensagens personalizadas?",
+        answer: "A IA do Wiize analisa dados como nome da empresa, segmento, localização, nota no Google Maps e número de avaliações para criar uma mensagem única para cada lead. A estrutura segue 4 parágrafos: saudação contextualizada ao horário, introdução profissional, proposta de valor específica e chamada para ação. Isso garante uma abordagem consultiva, não genérica."
+      },
+      {
+        question: "O que é o Índice de Fechamento (Índ. Fech.)?",
+        answer: "É uma pontuação calculada pela IA que indica a probabilidade de conversão de cada lead. Considera fatores como avaliações, presença digital, categoria do negócio e potencial de receita. Leads com índice mais alto devem ser priorizados na sua estratégia de abordagem."
+      },
+      {
+        question: "Como funciona o Diagnóstico com IA?",
+        answer: "O Diagnóstico com IA analisa automaticamente cada lead e gera um relatório com: oportunidades identificadas no negócio, pontos fracos que você pode resolver, e a melhor estratégia de abordagem comercial. Isso transforma sua prospecção em algo consultivo e relevante para o lead."
+      },
+      {
+        question: "Posso editar a mensagem gerada pela IA antes de enviar?",
+        answer: "Sim. Após a IA gerar a mensagem personalizada, você pode revisar e editar o texto antes de enviar. A mensagem gerada é uma sugestão inteligente que serve como ponto de partida, mas você tem controle total sobre o conteúdo final."
+      },
+      {
+        question: "Como funciona o cooldown entre envios?",
+        answer: "Para segurança da sua conta, o Wiize impõe um intervalo mínimo de 2 minutos entre cada envio de mensagem personalizada. Isso simula comportamento humano natural e protege seu número contra bloqueios."
+      },
+      {
+        question: "O que é a Ação Recomendada pela IA?",
+        answer: "Para cada lead, a IA sugere a melhor ação a tomar: abordar agora, agendar follow-up, ou priorizar outros leads. Essa recomendação é baseada no perfil do negócio, momento do mercado e probabilidade de conversão."
       },
     ]
   },

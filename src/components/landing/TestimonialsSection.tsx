@@ -4,7 +4,6 @@ import { Star, Quote } from "lucide-react";
 
 interface Testimonial {
   text: string;
-  image: string;
   name: string;
   role: string;
   company: string;
@@ -13,64 +12,55 @@ interface Testimonial {
 const testimonials: Testimonial[] = [
   {
     text: "O Wiize revolucionou nossa prospecção. A IA encontra os leads certos e gera mensagens personalizadas que realmente convertem. Em uma semana, 3x mais oportunidades.",
-    image: "https://randomuser.me/api/portraits/women/44.jpg",
-    name: "Mariana Santos",
+    name: "Mariana S.",
     role: "Diretora Comercial",
     company: "AgênciaMax",
   },
   {
     text: "As mensagens geradas pela IA são incríveis. Cada lead recebe uma abordagem única e relevante. Nossa taxa de resposta aumentou 40% logo no primeiro mês.",
-    image: "https://randomuser.me/api/portraits/men/32.jpg",
-    name: "Rafael Oliveira",
+    name: "Rafael O.",
     role: "Gerente de Vendas",
     company: "TechSolutions",
   },
   {
     text: "O agente de IA no WhatsApp é um game-changer. Responde leads automaticamente, faz follow-up inteligente e já converteu clientes enquanto dormíamos.",
-    image: "https://randomuser.me/api/portraits/women/68.jpg",
-    name: "Camila Ferreira",
+    name: "Camila F.",
     role: "Head de Growth",
     company: "StartupHub",
   },
   {
     text: "Antes perdia horas criando mensagens genéricas. Agora a IA analisa cada lead e cria uma abordagem personalizada em segundos. Produtividade no máximo.",
-    image: "https://randomuser.me/api/portraits/men/75.jpg",
-    name: "Lucas Mendes",
+    name: "Lucas M.",
     role: "CEO",
     company: "Vendas Express",
   },
   {
     text: "O ROI foi imediato. A combinação de prospecção inteligente + mensagens personalizadas com IA nos trouxe 5 novos clientes no primeiro mês.",
-    image: "https://randomuser.me/api/portraits/women/33.jpg",
-    name: "Amanda Costa",
+    name: "Amanda C.",
     role: "Empreendedora",
     company: "Costa Marketing",
   },
   {
     text: "A automação de atendimento com IA transformou nosso processo. O agente qualifica leads, responde dúvidas e agenda reuniões sem intervenção humana.",
-    image: "https://randomuser.me/api/portraits/women/21.jpg",
-    name: "Juliana Prado",
+    name: "Juliana P.",
     role: "Coordenadora de Vendas",
     company: "Grupo Êxito",
   },
   {
     text: "Excelente custo-benefício. A IA gera mensagens tão personalizadas que os leads acham que escrevemos uma por uma. Um cliente já pagou 6 meses de plano.",
-    image: "https://randomuser.me/api/portraits/men/46.jpg",
-    name: "Pedro Almeida",
+    name: "Pedro A.",
     role: "Diretor de Marketing",
     company: "Almeida & Cia",
   },
   {
     text: "As campanhas com mensagens personalizadas por IA têm taxa de conversão absurda. Cada lead recebe algo único, não parece automação. Resultados reais.",
-    image: "https://randomuser.me/api/portraits/women/89.jpg",
-    name: "Beatriz Lima",
+    name: "Beatriz L.",
     role: "Gerente de Projetos",
     company: "Lima Digital",
   },
   {
     text: "Encontrar oportunidades + gerar mensagens personalizadas + agente de IA para atender. Tudo integrado. Nunca foi tão fácil converter novos clientes.",
-    image: "https://randomuser.me/api/portraits/men/54.jpg",
-    name: "Thiago Souza",
+    name: "Thiago S.",
     role: "Fundador",
     company: "Agência Impulso",
   },
@@ -103,32 +93,33 @@ const TestimonialsColumn = ({
       >
         {[...new Array(2)].map((_, index) => (
           <div key={index} className="flex flex-col gap-6">
-            {testimonials.map(({ text, image, name, role, company }, i) => (
-              <div
-                key={`${index}-${i}`}
-                className="glass rounded-2xl p-6 hover:bg-card/80 transition-all duration-300"
-              >
-                <Quote size={24} className="text-primary/30 mb-4" />
-                <p className="text-muted-foreground leading-relaxed mb-6 text-sm md:text-base">
-                  {text}
-                </p>
-                <div className="flex items-center gap-4">
-                  <img
-                    src={image}
-                    alt={name}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
-                  />
-                  <div>
-                    <p className="font-semibold text-foreground text-sm md:text-base">
-                      {name}
-                    </p>
-                    <p className="text-muted-foreground text-xs md:text-sm">
-                      {role} • {company}
-                    </p>
+            {testimonials.map(({ text, name, role, company }, i) => {
+              const initials = name.split(" ").map(n => n[0]).join("").toUpperCase();
+              return (
+                <div
+                  key={`${index}-${i}`}
+                  className="glass rounded-2xl p-6 hover:bg-card/80 transition-all duration-300"
+                >
+                  <Quote size={24} className="text-primary/30 mb-4" />
+                  <p className="text-muted-foreground leading-relaxed mb-6 text-sm md:text-base">
+                    {text}
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full border-2 border-primary/20 bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                      {initials}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground text-sm md:text-base">
+                        {name}
+                      </p>
+                      <p className="text-muted-foreground text-xs md:text-sm">
+                        {role} • {company}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ))}
       </motion.div>

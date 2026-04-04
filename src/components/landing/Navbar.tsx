@@ -7,7 +7,7 @@ import { useState } from "react";
 
 const promoItems = [
   { icon: Shield, text: "API Oficial do WhatsApp: Meta Business Partner verificado" },
-  { icon: Gift, text: "Teste gratuito de 30 dias: sem cartão de crédito" },
+  { icon: Gift, text: "Até 63% de desconto nos planos: oferta por tempo limitado" },
   { icon: Zap, text: "Até 50% de desconto nos planos: promoção por tempo limitado" },
   { icon: CreditCard, text: "PIX recorrente: parcele sem cartão, débito automático mensal" },
   { icon: Bot, text: "Agente de IA no WhatsApp: atendimento automático 24h" },
@@ -84,11 +84,11 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                   Entrar
                 </Button>
               </Link>
-              <Link to="/signup" onClick={handleSignupClick}>
+              <a href="#pricing" onClick={handleSignupClick}>
                 <Button variant="hero" size="sm">
-                  Começar Grátis
+                  Começar
                 </Button>
-              </Link>
+              </a>
             </div>
 
             {/* Mobile menu button */}
@@ -138,11 +138,11 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                       Entrar
                     </Button>
                   </Link>
-                  <Link to="/signup" onClick={() => { setMobileMenuOpen(false); handleSignupClick(); }}>
+                  <a href="#pricing" onClick={() => { setMobileMenuOpen(false); handleSignupClick(); }}>
                     <Button variant="hero" size="sm" className="w-full justify-center">
-                      Começar Grátis
+                      Começar
                     </Button>
-                  </Link>
+                  </a>
                 </div>
               </div>
             </div>
