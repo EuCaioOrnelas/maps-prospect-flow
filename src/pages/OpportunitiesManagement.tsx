@@ -1048,45 +1048,73 @@ export default function OpportunitiesManagement() {
               )}
 
               {/* KPI Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target size={16} className="text-primary" />
-                    <span className="text-xs text-muted-foreground">Total</span>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  {
+                    label: "Total",
+                    value: stats.total,
+                    icon: <Target size={18} />,
+                    accent: "from-primary/15 to-primary/5",
+                    iconBg: "bg-primary/10 text-primary",
+                    border: "border-primary/10",
+                  },
+                  {
+                    label: "Qualificados",
+                    value: stats.scored,
+                    icon: <Sparkles size={18} />,
+                    accent: "from-blue-500/15 to-blue-500/5",
+                    iconBg: "bg-blue-500/10 text-blue-400",
+                    border: "border-blue-500/10",
+                  },
+                  {
+                    label: "Alta Oportunidade",
+                    value: stats.highOpp,
+                    icon: <TrendingUp size={18} />,
+                    accent: "from-emerald-500/15 to-emerald-500/5",
+                    iconBg: "bg-emerald-500/10 text-emerald-400",
+                    border: "border-emerald-500/10",
+                  },
+                  {
+                    label: "Score Médio",
+                    value: stats.avgScore,
+                    icon: <BarChart3 size={18} />,
+                    accent: "from-amber-500/15 to-amber-500/5",
+                    iconBg: "bg-amber-500/10 text-amber-400",
+                    border: "border-amber-500/10",
+                    extra: (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="ml-auto p-0.5 rounded-md hover:bg-muted/80 transition-colors">
+                            <Info size={13} className="text-muted-foreground/60" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent side="bottom" align="end" className="w-80">
+                          {scoreInfoContent}
+                        </PopoverContent>
+                      </Popover>
+                    ),
+                  },
+                ].map((kpi) => (
+                  <div
+                    key={kpi.label}
+                    className={`relative overflow-hidden rounded-xl border ${kpi.border} bg-gradient-to-br ${kpi.accent} backdrop-blur-sm p-4 transition-all hover:shadow-md hover:shadow-black/5`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${kpi.iconBg}`}>
+                        {kpi.icon}
+                      </div>
+                      {(kpi as any).extra || null}
+                    </div>
+                    <div>
+                      {loading ? (
+                        <Skeleton className="h-8 w-16 mb-1" />
+                      ) : (
+                        <p className="text-2xl font-bold tracking-tight text-foreground">{kpi.value}</p>
+                      )}
+                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">{kpi.label}</p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-12" /> : stats.total}</p>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles size={16} className="text-blue-400" />
-                    <span className="text-xs text-muted-foreground">Qualificados</span>
-                  </div>
-                  <p className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-12" /> : stats.scored}</p>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp size={16} className="text-emerald-400" />
-                    <span className="text-xs text-muted-foreground">Alta Oportunidade</span>
-                  </div>
-                  <p className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-12" /> : stats.highOpp}</p>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <BarChart3 size={16} className="text-amber-400" />
-                    <span className="text-xs text-muted-foreground">Score Médio</span>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="ml-auto p-0.5 rounded hover:bg-muted transition-colors">
-                          <Info size={14} className="text-muted-foreground" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent side="bottom" align="end" className="w-80">
-                        {scoreInfoContent}
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <p className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-12" /> : stats.avgScore}</p>
-                </div>
+                ))}
               </div>
 
               {/* Filters */}
