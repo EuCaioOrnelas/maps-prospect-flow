@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,47 @@ import { useToast } from "@/hooks/use-toast";
 import { PaymentMethodModal, type CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { LucideIcon } from "lucide-react";
+
+const parsePrice = (price: string) => Number(price.replace(/\./g, '').replace(',', '.'));
+const formatPrice = (value: number) => {
+  if (value >= 1000) {
+    const int = Math.floor(value);
+    const str = int.toString();
+    return str.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  return Math.round(value).toString();
+};
+
+const AnimatedPrice = ({ targetPrice, startMultiplier = 3.5, isVisible }: { targetPrice: string; startMultiplier?: number; isVisible: boolean }) => {
+  const target = parsePrice(targetPrice);
+  const [displayValue, setDisplayValue] = useState(Math.round(target * startMultiplier));
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (!isVisible || hasAnimated.current) return;
+    hasAnimated.current = true;
+
+    const start = Math.round(target * startMultiplier);
+    const duration = 1800;
+    const startTime = performance.now();
+
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // easeOutExpo for dramatic slow-down at the end
+      const eased = 1 - Math.pow(1 - progress, 4);
+      const current = Math.round(start - (start - target) * eased);
+      setDisplayValue(current);
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+
+    // Small delay so user sees the high number first
+    const timeout = setTimeout(() => requestAnimationFrame(animate), 400);
+    return () => clearTimeout(timeout);
+  }, [isVisible, target, startMultiplier]);
+
+  return <span>{formatPrice(displayValue)}</span>;
+};
 
 const PRICE_IDS = {
   start: "price_1SlykAK8CM0R6xMMOCM684rz",
@@ -211,7 +252,9 @@ export const PricingSection = () => {
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-sm text-muted-foreground">R$</span>
-                    <span className="font-display font-bold text-3xl md:text-4xl">{plan.price}</span>
+                    <span className="font-display font-bold text-3xl md:text-4xl tabular-nums">
+                      <AnimatedPrice targetPrice={plan.price} isVisible={isVisible} />
+                    </span>
                     <span className="text-muted-foreground">/mês</span>
                   </div>
                   <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
