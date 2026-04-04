@@ -283,13 +283,14 @@ const WhatsAppCampaign = () => {
           pause_after_contacts: pauseAfterContacts,
           pause_minutes: pauseMinutes,
           enable_smart_pause: enableSmartPause,
-          messages: messages,
+          messages: messageMode === "ai_generated" ? [] : messages,
           leads: selectedLeads as unknown as any,
           started_at: scheduled ? null : new Date().toISOString(),
           scheduled_at: scheduledAt,
           whatsapp_number_id: selectedNumberId,
           current_lead_index: 0,
-        })
+          message_mode: messageMode,
+        } as any)
         .select()
         .single();
 
