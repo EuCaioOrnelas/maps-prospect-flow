@@ -73,7 +73,7 @@ export const useCampaignDrafts = () => {
   const MAX_DRAFTS = 3;
 
   const saveDraft = useCallback(async (draftData: {
-    step: 'leads' | 'messages' | 'settings' | 'summary';
+    step: 'leads' | 'message_type' | 'messages' | 'settings' | 'summary';
     selectedLeads: Lead[];
     messages: string[];
     campaignName: string;
