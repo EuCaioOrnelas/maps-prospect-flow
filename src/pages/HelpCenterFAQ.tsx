@@ -48,6 +48,37 @@ const categories = [
     ]
   },
   {
+    id: "ia-prospeccao",
+    title: "IA e Prospecção",
+    icon: Sparkles,
+    questions: [
+      {
+        question: "Como a IA gera mensagens personalizadas?",
+        answer: "A IA do Wiize analisa dados como nome da empresa, segmento, localização, nota no Google Maps e número de avaliações para criar uma mensagem única para cada lead. A estrutura segue 4 parágrafos: saudação contextualizada ao horário, introdução profissional, proposta de valor específica e chamada para ação. Isso garante uma abordagem consultiva, não genérica."
+      },
+      {
+        question: "O que é o Índice de Fechamento (Índ. Fech.)?",
+        answer: "É uma pontuação calculada pela IA que indica a probabilidade de conversão de cada lead. Considera fatores como avaliações, presença digital, categoria do negócio e potencial de receita. Leads com índice mais alto devem ser priorizados na sua estratégia de abordagem."
+      },
+      {
+        question: "Como funciona o Diagnóstico com IA?",
+        answer: "O Diagnóstico com IA analisa automaticamente cada lead e gera um relatório com: oportunidades identificadas no negócio, pontos fracos que você pode resolver, e a melhor estratégia de abordagem comercial. Isso transforma sua prospecção em algo consultivo e relevante para o lead."
+      },
+      {
+        question: "Posso editar a mensagem gerada pela IA antes de enviar?",
+        answer: "Sim. Após a IA gerar a mensagem personalizada, você pode revisar e editar o texto antes de enviar. A mensagem gerada é uma sugestão inteligente que serve como ponto de partida, mas você tem controle total sobre o conteúdo final."
+      },
+      {
+        question: "Como funciona o cooldown entre envios?",
+        answer: "Para segurança da sua conta, o Wiize impõe um intervalo mínimo de 2 minutos entre cada envio de mensagem personalizada. Isso simula comportamento humano natural e protege seu número contra bloqueios."
+      },
+      {
+        question: "O que é a Ação Recomendada pela IA?",
+        answer: "Para cada lead, a IA sugere a melhor ação a tomar: abordar agora, agendar follow-up, ou priorizar outros leads. Essa recomendação é baseada no perfil do negócio, momento do mercado e probabilidade de conversão."
+      },
+    ]
+  },
+  {
     id: "whatsapp",
     title: "WhatsApp e Disparos",
     icon: MessageSquare,
