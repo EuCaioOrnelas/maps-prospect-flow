@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, HelpCircle, Search, Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target, BarChart3, Plug, Wallet } from "lucide-react";
+import { ArrowLeft, HelpCircle, Search, Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target, BarChart3, Plug, Wallet, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate, useLocation } from "react-router-dom";
