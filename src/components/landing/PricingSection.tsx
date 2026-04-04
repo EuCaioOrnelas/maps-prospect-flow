@@ -247,7 +247,7 @@ export const PricingSection = () => {
                   <div className="flex items-baseline gap-1">
                     <span className="text-sm text-muted-foreground">R$</span>
                     <span className="font-display font-bold text-3xl md:text-4xl tabular-nums">
-                      <AnimatedPrice targetPrice={plan.price} isVisible={isVisible} />
+                      <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
                     </span>
                     <span className="text-muted-foreground">/mês</span>
                   </div>
