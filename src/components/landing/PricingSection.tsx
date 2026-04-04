@@ -252,7 +252,9 @@ export const PricingSection = () => {
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-sm text-muted-foreground">R$</span>
-                    <span className="font-display font-bold text-3xl md:text-4xl">{plan.price}</span>
+                    <span className="font-display font-bold text-3xl md:text-4xl tabular-nums">
+                      <AnimatedPrice targetPrice={plan.price} isVisible={isVisible} />
+                    </span>
                     <span className="text-muted-foreground">/mês</span>
                   </div>
                   <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
