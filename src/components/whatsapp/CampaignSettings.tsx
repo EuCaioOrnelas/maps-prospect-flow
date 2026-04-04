@@ -240,7 +240,7 @@ export const CampaignSettings = ({
                   <Input
                     type="number"
                     value={pauseAfterContacts}
-                    onChange={(e) => onPauseAfterContactsChange(Math.max(10, parseInt(e.target.value) || 10))}
+                    onChange={(e) => onPauseAfterContactsChange(Math.min(200, Math.max(10, parseInt(e.target.value) || 30)))}
                     className="w-20 text-center"
                     min={10}
                     max={200}
@@ -254,7 +254,7 @@ export const CampaignSettings = ({
                 onValueChange={([value]) => onPauseAfterContactsChange(value)}
                 min={10}
                 max={200}
-                step={10}
+                step={5}
                 className="w-full"
               />
             </div>
