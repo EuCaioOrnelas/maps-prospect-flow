@@ -1301,7 +1301,7 @@ const WhatsAppCampaign = () => {
                   onScheduledDateChange={setScheduledDate}
                   scheduledTime={scheduledTime}
                   onScheduledTimeChange={setScheduledTime}
-                  onBack={() => setStep("messages")}
+                  onBack={() => setStep(messageMode === "ai_generated" ? "message_type" : "messages")}
                   onNext={() => setStep("summary")}
                   isConnected={isConnected}
                   totalLeads={selectedLeads.length}
