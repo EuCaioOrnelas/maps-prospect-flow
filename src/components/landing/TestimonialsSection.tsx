@@ -4,7 +4,6 @@ import { Star, Quote } from "lucide-react";
 
 interface Testimonial {
   text: string;
-  image: string;
   name: string;
   role: string;
   company: string;
