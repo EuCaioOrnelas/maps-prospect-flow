@@ -13,41 +13,35 @@ import type { LucideIcon } from "lucide-react";
 
 const parsePrice = (price: string) => Number(price.replace(/\./g, '').replace(',', '.'));
 const formatPrice = (value: number) => {
-  if (value >= 1000) {
-    const int = Math.floor(value);
-    const str = int.toString();
-    return str.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  }
-  return Math.round(value).toString();
+  const rounded = Math.round(value);
+  if (rounded >= 1000) return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return rounded.toString();
 };
 
-const AnimatedPrice = ({ targetPrice, startMultiplier = 3.5, isVisible }: { targetPrice: string; startMultiplier?: number; isVisible: boolean }) => {
+const AnimatedPrice = ({ targetPrice, anchorPrice, isVisible }: { targetPrice: string; anchorPrice: string; isVisible: boolean }) => {
   const target = parsePrice(targetPrice);
-  const [displayValue, setDisplayValue] = useState(Math.round(target * startMultiplier));
+  const start = parsePrice(anchorPrice);
+  const [displayValue, setDisplayValue] = useState(start);
   const hasAnimated = useRef(false);
 
   useEffect(() => {
     if (!isVisible || hasAnimated.current) return;
     hasAnimated.current = true;
 
-    const start = Math.round(target * startMultiplier);
-    const duration = 1800;
+    const duration = 2000;
     const startTime = performance.now();
 
     const animate = (now: number) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // easeOutExpo for dramatic slow-down at the end
       const eased = 1 - Math.pow(1 - progress, 4);
-      const current = Math.round(start - (start - target) * eased);
-      setDisplayValue(current);
+      setDisplayValue(Math.round(start - (start - target) * eased));
       if (progress < 1) requestAnimationFrame(animate);
     };
 
-    // Small delay so user sees the high number first
-    const timeout = setTimeout(() => requestAnimationFrame(animate), 400);
+    const timeout = setTimeout(() => requestAnimationFrame(animate), 500);
     return () => clearTimeout(timeout);
-  }, [isVisible, target, startMultiplier]);
+  }, [isVisible, target, start]);
 
   return <span>{formatPrice(displayValue)}</span>;
 };
