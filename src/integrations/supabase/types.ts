@@ -4018,6 +4018,7 @@ export type Database = {
           is_first_stage: boolean | null
           last_message_sent_at: string | null
           leads: Json
+          message_mode: string
           messages: Json
           name: string
           pause_after_contacts: number | null
@@ -4053,6 +4054,7 @@ export type Database = {
           is_first_stage?: boolean | null
           last_message_sent_at?: string | null
           leads?: Json
+          message_mode?: string
           messages?: Json
           name: string
           pause_after_contacts?: number | null
@@ -4088,6 +4090,7 @@ export type Database = {
           is_first_stage?: boolean | null
           last_message_sent_at?: string | null
           leads?: Json
+          message_mode?: string
           messages?: Json
           name?: string
           pause_after_contacts?: number | null
