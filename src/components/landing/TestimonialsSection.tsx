@@ -93,32 +93,33 @@ const TestimonialsColumn = ({
       >
         {[...new Array(2)].map((_, index) => (
           <div key={index} className="flex flex-col gap-6">
-            {testimonials.map(({ text, image, name, role, company }, i) => (
-              <div
-                key={`${index}-${i}`}
-                className="glass rounded-2xl p-6 hover:bg-card/80 transition-all duration-300"
-              >
-                <Quote size={24} className="text-primary/30 mb-4" />
-                <p className="text-muted-foreground leading-relaxed mb-6 text-sm md:text-base">
-                  {text}
-                </p>
-                <div className="flex items-center gap-4">
-                  <img
-                    src={image}
-                    alt={name}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
-                  />
-                  <div>
-                    <p className="font-semibold text-foreground text-sm md:text-base">
-                      {name}
-                    </p>
-                    <p className="text-muted-foreground text-xs md:text-sm">
-                      {role} • {company}
-                    </p>
+            {testimonials.map(({ text, name, role, company }, i) => {
+              const initials = name.split(" ").map(n => n[0]).join("").toUpperCase();
+              return (
+                <div
+                  key={`${index}-${i}`}
+                  className="glass rounded-2xl p-6 hover:bg-card/80 transition-all duration-300"
+                >
+                  <Quote size={24} className="text-primary/30 mb-4" />
+                  <p className="text-muted-foreground leading-relaxed mb-6 text-sm md:text-base">
+                    {text}
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full border-2 border-primary/20 bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                      {initials}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground text-sm md:text-base">
+                        {name}
+                      </p>
+                      <p className="text-muted-foreground text-xs md:text-sm">
+                        {role} • {company}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ))}
       </motion.div>

@@ -138,11 +138,11 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                       Entrar
                     </Button>
                   </Link>
-                  <Link to="/signup" onClick={() => { setMobileMenuOpen(false); handleSignupClick(); }}>
+                  <a href="#pricing" onClick={() => { setMobileMenuOpen(false); handleSignupClick(); }}>
                     <Button variant="hero" size="sm" className="w-full justify-center">
-                      Começar Grátis
+                      Começar
                     </Button>
-                  </Link>
+                  </a>
                 </div>
               </div>
             </div>
