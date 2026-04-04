@@ -738,6 +738,14 @@ export default function OpportunitiesManagement() {
             </h4>
             <p className="text-sm text-muted-foreground leading-relaxed">{lead.enrichment_data.custom_diagnosis}</p>
           </div>
+        ) : !editingDiagnostic ? (
+          <button
+            onClick={() => startEditingDiagnostic(lead)}
+            className="w-full border border-dashed border-primary/30 rounded-xl p-3 flex items-center justify-center gap-2 text-sm text-primary hover:bg-primary/5 transition-colors"
+          >
+            <Pencil size={13} />
+            Adicionar Diagnóstico Adicional
+          </button>
         ) : null}
 
         {/* Oportunidade Encontrada - sempre no final */}
