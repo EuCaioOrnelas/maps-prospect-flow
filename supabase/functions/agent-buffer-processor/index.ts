@@ -1030,6 +1030,12 @@ ${matchedLead.ai_recommended_action ? `- Ação recomendada: ${matchedLead.ai_re
                   if (approachAnalysis.produto_sugerido) leadDiagnosticContext += `- Produto sugerido: ${approachAnalysis.produto_sugerido}\n`;
                 }
 
+                // Custom diagnosis from user
+                const customDiag = enrichment.custom_diagnosis as string | undefined;
+                if (customDiag) {
+                  leadDiagnosticContext += `\n## OBSERVAÇÕES DO PROSPECTOR (diagnóstico adicional do usuário — PRIORIZE estas informações)\n${customDiag}\n`;
+                }
+
                 leadDiagnosticContext += `
 COMO USAR ESTE DIAGNÓSTICO:
 - Use os PONTOS FRACOS como oportunidade para apresentar soluções durante a conversa

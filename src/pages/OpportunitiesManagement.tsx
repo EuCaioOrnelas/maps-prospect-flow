@@ -101,7 +101,7 @@ export default function OpportunitiesManagement() {
   const [editRecommendedAction, setEditRecommendedAction] = useState("");
   const [editPontosFortes, setEditPontosFortes] = useState<string[]>([]);
   const [editPontosFracos, setEditPontosFracos] = useState<string[]>([]);
-  const [editClosingProbability, setEditClosingProbability] = useState("");
+  const [editCustomDiagnosis, setEditCustomDiagnosis] = useState("");
   const [savingDiagnostic, setSavingDiagnostic] = useState(false);
 
   const scoredAttemptedRef = useRef(new Set<string>());
@@ -481,7 +481,7 @@ export default function OpportunitiesManagement() {
     setEditRecommendedAction(lead.ai_recommended_action || "");
     setEditPontosFortes(lead.enrichment_data?.pontos_fortes || []);
     setEditPontosFracos(lead.enrichment_data?.pontos_fracos || []);
-    setEditClosingProbability(lead.closing_probability || "");
+    setEditCustomDiagnosis(lead.enrichment_data?.custom_diagnosis || "");
     setEditingDiagnostic(true);
   };
 
@@ -493,6 +493,7 @@ export default function OpportunitiesManagement() {
         ...(typeof lead.enrichment_data === 'object' && lead.enrichment_data ? lead.enrichment_data : {}),
         pontos_fortes: editPontosFortes.filter(p => p.trim()),
         pontos_fracos: editPontosFracos.filter(p => p.trim()),
+        custom_diagnosis: editCustomDiagnosis.trim(),
       };
 
       const { error } = await supabase
@@ -500,7 +501,6 @@ export default function OpportunitiesManagement() {
         .update({
           ai_diagnosis: editDiagnosis,
           ai_recommended_action: editRecommendedAction,
-          closing_probability: editClosingProbability,
           enrichment_data: updatedEnrichment,
         })
         .eq('id', lead.id)
@@ -508,19 +508,16 @@ export default function OpportunitiesManagement() {
 
       if (error) throw error;
 
-      // Update local state
       setLeads(prev => prev.map(l => l.id === lead.id ? {
         ...l,
         ai_diagnosis: editDiagnosis,
         ai_recommended_action: editRecommendedAction,
-        closing_probability: editClosingProbability,
         enrichment_data: updatedEnrichment,
       } : l));
       setSelectedLead(prev => prev && prev.id === lead.id ? {
         ...prev,
         ai_diagnosis: editDiagnosis,
         ai_recommended_action: editRecommendedAction,
-        closing_probability: editClosingProbability,
         enrichment_data: updatedEnrichment,
       } : prev);
       setEditingDiagnostic(false);
@@ -742,16 +739,25 @@ export default function OpportunitiesManagement() {
           </div>
         ) : null}
 
-        {/* Probabilidade de Fechamento (edit mode) */}
-        {editingDiagnostic && (
+        {/* Diagnóstico Adicional (custom) */}
+        {editingDiagnostic ? (
           <div className="bg-card border border-border rounded-xl p-4 space-y-2">
             <h4 className="text-sm font-semibold flex items-center gap-2">
-              <Target size={14} className="text-primary" />
-              Probabilidade de Fechamento
+              <Pencil size={14} className="text-primary" />
+              Diagnóstico Adicional
             </h4>
-            <Input value={editClosingProbability} onChange={(e) => setEditClosingProbability(e.target.value)} className="text-sm h-8" placeholder="Ex: Alta, Média, Baixa..." />
+            <p className="text-xs text-muted-foreground">Adicione observações extras da sua análise pessoal. A IA usará isso para melhorar mensagens e respostas.</p>
+            <Textarea value={editCustomDiagnosis} onChange={(e) => setEditCustomDiagnosis(e.target.value)} className="text-sm min-h-[80px]" placeholder="Ex: O dono é muito receptivo, gosta de tecnologia, já tentou contratar serviço similar..." />
           </div>
-        )}
+        ) : lead.enrichment_data?.custom_diagnosis ? (
+          <div className="bg-card border border-border rounded-xl p-4 space-y-2">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <Pencil size={14} className="text-primary" />
+              Diagnóstico Adicional
+            </h4>
+            <p className="text-sm text-muted-foreground leading-relaxed">{lead.enrichment_data.custom_diagnosis}</p>
+          </div>
+        ) : null}
       </div>
     );
   };

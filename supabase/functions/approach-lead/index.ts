@@ -102,8 +102,9 @@ ${pontosFracos.length > 0 ? `- Pontos fracos identificados: ${pontosFracos.join(
 ${analiseConcorrencia ? `- Concorrência regional: ${analiseConcorrencia}` : ""}
 ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
 ${nicheAnalysisType ? `- Tipo de análise aplicada: ${nicheAnalysisType}` : ""}
+${enrichment.custom_diagnosis ? `\n═══ OBSERVAÇÕES DO PROSPECTOR (diagnóstico adicional do usuário) ═══\n${enrichment.custom_diagnosis}` : ""}
 
-IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se não há pontos fracos (nicho específico), use a REGIÃO e o TIPO DE NEGÓCIO como gancho.
+IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se não há pontos fracos (nicho específico), use a REGIÃO e o TIPO DE NEGÓCIO como gancho. Se há observações do prospector, PRIORIZE essas informações pois são análises reais feitas pelo usuário.
 ` : "";
 
     // Determine greeting based on current time (BRT = UTC-3)
