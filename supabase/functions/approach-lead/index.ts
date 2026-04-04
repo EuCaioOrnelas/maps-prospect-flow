@@ -64,16 +64,46 @@ serve(async (req) => {
     const socialMedia = Array.isArray(lead.social_media) ? lead.social_media : [];
     const hasSite = !!lead.website && lead.website !== "-";
 
-    // Build personalized prompt with company context
+    // Extract diagnostic data if available
+    const enrichment = lead.enrichment_data && typeof lead.enrichment_data === "object" ? lead.enrichment_data as Record<string, any> : {};
+    const hasDiagnostic = !!lead.ai_diagnosis || !!lead.ai_score;
+    const pontosFortes = Array.isArray(enrichment.pontos_fortes) ? enrichment.pontos_fortes : [];
+    const pontosFracos = Array.isArray(enrichment.pontos_fracos) ? enrichment.pontos_fracos : [];
+    const analiseSite = enrichment.analise_site || "";
+    const analiseRedes = enrichment.analise_redes_sociais || "";
+    const analiseConcorrencia = enrichment.analise_concorrencia_regional || "";
+    const analiseDemanda = enrichment.analise_demanda_regional || "";
+    const nicheAnalysisType = enrichment.niche_analysis_type || "";
+
+    // Build company context
     const companyContext = companyProfile ? `
-DADOS DA SUA EMPRESA (quem está prospectando):
+⚠️ INSTRUÇÃO PRIMÁRIA — PERFIL DA EMPRESA PROSPECTORA:
 - Empresa: ${companyProfile.company_name}
 - Atendente: ${companyProfile.attendant_name}
-- Nicho: ${companyProfile.company_niche}
-- Diferencial: ${companyProfile.company_differential}
-- Objetivo: ${companyProfile.company_objective}
-- Produtos/Serviços: ${companyProfile.company_products}
+- Nicho de atuação: ${companyProfile.company_niche}
+- Produtos/Serviços que VENDE: ${companyProfile.company_products}
+- Diferencial competitivo: ${companyProfile.company_differential}
+- Objetivo comercial: ${companyProfile.company_objective}
 - Público-alvo: ${companyProfile.company_target_audience}
+
+REGRA ABSOLUTA: A mensagem DEVE girar em torno de "${companyProfile.company_products}". NÃO fale de serviços que a empresa NÃO oferece. Se a empresa vende internet, fale APENAS de internet. Se vende energia solar, fale APENAS de energia solar. Se vende marketing, fale de marketing. NUNCA desvie do que está descrito acima.
+` : "";
+
+    // Build diagnostic context if available
+    const diagnosticContext = hasDiagnostic ? `
+═══ DIAGNÓSTICO JÁ REALIZADO DESTE LEAD (use como base) ═══
+- Score: ${lead.ai_score || "N/A"}/100
+- Nível: ${lead.opportunity_level || "N/A"}
+- Probabilidade de fechamento: ${lead.closing_probability || "N/A"}
+- Diagnóstico: ${lead.ai_diagnosis || "N/A"}
+- Ação recomendada: ${lead.ai_recommended_action || "N/A"}
+${pontosFortes.length > 0 ? `- Pontos fortes identificados: ${pontosFortes.join("; ")}` : ""}
+${pontosFracos.length > 0 ? `- Pontos fracos identificados: ${pontosFracos.join("; ")}` : "- Pontos fracos: não identificados (nicho muito específico — foque na região e tipo de negócio)"}
+${analiseConcorrencia ? `- Concorrência regional: ${analiseConcorrencia}` : ""}
+${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
+${nicheAnalysisType ? `- Tipo de análise aplicada: ${nicheAnalysisType}` : ""}
+
+IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se não há pontos fracos (nicho específico), use a REGIÃO e o TIPO DE NEGÓCIO como gancho.
 ` : "";
 
     // Determine greeting based on current time (BRT = UTC-3)
@@ -81,60 +111,67 @@ DADOS DA SUA EMPRESA (quem está prospectando):
     const brtHour = (now.getUTCHours() - 3 + 24) % 24;
     const greeting = brtHour < 12 ? "Bom dia" : brtHour < 18 ? "Boa tarde" : "Boa noite";
 
-    const prompt = `Você é um especialista em vendas B2B e prospecção comercial atuando em TODOS os segmentos do mercado: agências de marketing, tráfego pago, ads, consultoria empresarial, venda de produtos físicos, representação comercial, SaaS, contabilidade, advocacia, arquitetura, saúde, alimentação, educação, tecnologia, logística, indústria, varejo, serviços profissionais, telecomunicações, internet/provedor, energia solar, segurança, agronegócio — e QUALQUER outro nicho B2B. Adapte sua abordagem ao contexto do segmento.
+    // Determine niche category for approach strategy
+    const nicheText = companyProfile ? `${companyProfile.company_niche || ""} ${companyProfile.company_products || ""}`.toLowerCase() : "";
+    const isDigitalNiche = /(marketing|site|seo|rede social|tr[aá]fego|ads|design|conte[uú]do|social media)/.test(nicheText);
+    const isInfrastructureNiche = /(internet|provedor|fibra|telecom|solar|energia|seguran[cç]a|monitoramento|c[aâ]mera|alarme)/.test(nicheText);
+    const isProductNiche = /(uniforme|embalagem|m[aá]quina|equipamento|auto pe[cç]a|ra[cç][aã]o|insumo|fertilizante|ferramenta)/.test(nicheText);
+    const isServiceNiche = /(limpeza|facilities|bpo|terceiriza|contabilidade|advoc|consultoria|mentoria)/.test(nicheText);
 
-CONTEXTO IMPORTANTE: Esta é uma MENSAGEM FRIA — provavelmente o PRIMEIRO CONTATO com este lead. Ele NÃO te conhece.
+    const nicheStrategy = isDigitalNiche
+      ? "DIGITAL: Use dados do site, redes sociais e avaliações como gancho. Fale sobre presença digital, engajamento, conversão."
+      : isInfrastructureNiche
+      ? "INFRAESTRUTURA: NÃO fale de redes sociais ou site. Foque na REGIÃO, TIPO DE NEGÓCIO e NECESSIDADE OPERACIONAL. Ex: 'negócios como o seu na região de [cidade] costumam ter demanda por [serviço]'."
+      : isProductNiche
+      ? "PRODUTO: Foque na OPERAÇÃO do lead e como o produto resolve uma necessidade prática do dia-a-dia. Mencione o tipo de negócio e a região."
+      : isServiceNiche
+      ? "SERVIÇO: Foque no PORTE e COMPLEXIDADE do negócio do lead. Mostre como o serviço terceirizado otimiza a operação."
+      : "GENÉRICO: Use região, tipo de negócio e qualquer dado disponível. Se não há dados suficientes para personalizar, crie um gancho sobre a região e proponha uma conversa.";
+
+    const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Crie uma MENSAGEM DE ABORDAGEM personalizada para WhatsApp.
+
+CONTEXTO: MENSAGEM FRIA — primeiro contato. O lead NÃO te conhece.
 
 ${companyContext}
+${diagnosticContext}
 
-DADOS DO LEAD (empresa a ser prospectada):
+DADOS DO LEAD:
 - Empresa: ${lead.company_name || "Não informado"}
-- Categoria/Nicho: ${lead.category || "Não informado"}
+- Categoria/Nicho do lead: ${lead.category || "Não informado"}
 - Cidade: ${lead.city || "Não informado"}
 - Endereço: ${lead.address || "Não informado"}
 - Avaliação Google: ${lead.rating || 0}/5 (${lead.review_count || 0} avaliações)
 - Possui site: ${hasSite ? "Sim" : "Não"}
 - Redes sociais: ${socialMedia.length > 0 ? socialMedia.join(", ") : "Nenhuma"}
-- Score de oportunidade: ${lead.ai_score || "Não calculado"}/100
-- Nível de oportunidade: ${lead.opportunity_level || "Não calculado"}
 
-ADAPTAÇÃO OBRIGATÓRIA POR NICHO DO PROSPECTOR:
-- Se o prospector vende serviços digitais (marketing, sites, SEO, redes sociais): use dados digitais do lead (site, redes, avaliações) como gancho.
-- Se o prospector vende infraestrutura/utilidade (internet, energia solar, segurança, monitoramento): NÃO foque em dados digitais. Foque em REGIÃO, TIPO DE NEGÓCIO e NECESSIDADE OPERACIONAL do lead. Ex: "Notei que a [empresa] fica na região de [cidade] e negócios como o seu costumam ter alta demanda por [internet estável/segurança/economia de energia]..."
-- Se o prospector vende produtos/insumos (agro, autopeças, equipamentos): foque na OPERAÇÃO do lead e como o produto resolve uma necessidade do dia-a-dia.
-- Se o nicho é muito específico e os dados do lead não permitem personalização profunda: crie um gancho genérico baseado na LOCALIZAÇÃO e TIPO DE NEGÓCIO, e sugira uma conversa para entender melhor as necessidades.
+═══ ESTRATÉGIA DE ABORDAGEM POR NICHO ═══
+${nicheStrategy}
 
-ESTRUTURA OBRIGATÓRIA DA MENSAGEM (siga esta ordem):
-1. SAUDAÇÃO EDUCADA: Comece SEMPRE com "${greeting}!" — educação é fundamental em mensagem fria
-2. GANCHO DE ATENÇÃO: Logo após a saudação, uma frase curta e impactante que gere CURIOSIDADE sobre uma DOR ou OPORTUNIDADE específica do lead (adaptada ao nicho do prospector — NÃO fale de redes sociais se o prospector vende internet, por exemplo)
-3. APRESENTAÇÃO BREVE: Se apresente de forma natural e rápida (nome + empresa + o que faz em 1 linha)
-4. PROPOSTA DE VALOR PERSONALIZADA: Explique como seu serviço resolve a dor específica deste lead (cite dados reais: região, tipo de negócio, concorrência local)
-5. FECHAMENTO GENTIL: Termine com uma pergunta leve e sem pressão perguntando se o lead tem interesse em saber mais
+═══ ESTRUTURA OBRIGATÓRIA (4 parágrafos, separados por \\n\\n) ═══
+1. "${greeting}!" + GANCHO baseado ${hasDiagnostic && pontosFracos.length > 0 ? "nos PONTOS FRACOS do diagnóstico" : "na REGIÃO e TIPO DE NEGÓCIO do lead"}
+2. Apresentação breve (nome + empresa + o que faz em 1 linha)
+3. Proposta de valor conectada à DOR REAL do lead (use dados do diagnóstico se disponível)
+4. Fechamento gentil com pergunta leve
 
-FORMATAÇÃO OBRIGATÓRIA DA MENSAGEM:
-- CADA etapa acima (saudação+gancho, apresentação, proposta de valor, fechamento) DEVE ser separada por UMA LINHA EM BRANCO (\\n\\n) para facilitar a leitura no WhatsApp
-- A mensagem final DEVE ter exatamente 4 parágrafos separados por quebras de linha duplas
-- NÃO escreva tudo em um único bloco de texto — a legibilidade é ESSENCIAL no WhatsApp
-- Exemplo de estrutura visual:
-  "${greeting}! [gancho de atenção sobre a empresa]\\n\\n[apresentação breve]\\n\\n[proposta de valor personalizada]\\n\\n[fechamento gentil com pergunta]"
-
-INSTRUÇÕES CRÍTICAS:
-- ${companyProfile ? `Você representa "${companyProfile.attendant_name}" da "${companyProfile.company_name}".` : "Crie uma mensagem genérica de prospecção."}
-- ${companyProfile ? `Analise os serviços "${companyProfile.company_products}" e identifique qual é MAIS RELEVANTE para a dor deste lead, considerando o TIPO DE NEGÓCIO e a REGIÃO do lead.` : ""}
-- ${companyProfile ? `Use o diferencial "${companyProfile.company_differential}" como argumento.` : ""}
-- A mensagem deve ser curta (máx 4 parágrafos curtos), direta e personalizada
-- NÃO use aberturas como "Tudo bem?" ou "Como vai?" — vá direto ao gancho após a saudação
-- Mencione algo específico sobre a empresa do lead para mostrar que pesquisou (região, tipo de negócio, ou dados disponíveis)
-- NÃO mencione dados que não sejam relevantes para o nicho do prospector (ex: não fale de "poucas avaliações" se o prospector vende internet)
+═══ REGRAS CRÍTICAS ═══
+- ${companyProfile ? `Represente "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : "Mensagem genérica"}
+- ${companyProfile ? `SOMENTE fale sobre "${companyProfile.company_products}" — NUNCA mencione serviços que a empresa NÃO vende` : ""}
+- ${companyProfile ? `Use "${companyProfile.company_differential}" como argumento` : ""}
+- Máx 4 parágrafos CURTOS separados por \\n\\n
+- NÃO use "Tudo bem?" ou "Como vai?" — vá direto ao gancho
+- NÃO mencione dados irrelevantes ao nicho (ex: não fale de avaliações se vende internet)
+- ${pontosFracos.length === 0 && hasDiagnostic ? "O diagnóstico não identificou pontos fracos específicos — use região e tipo de negócio como gancho" : ""}
 - ${companyProfile ? `Assine como "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : ""}
 
-Retorne APENAS um JSON válido com as chaves:
-- "mensagem": a mensagem de abordagem pronta para enviar
-- "analise_nicho": breve análise do nicho do lead e como se conecta ao serviço vendido (1-2 frases)
-- "analise_cidade": análise do mercado e concorrência na cidade/região (1-2 frases)
-- "pontos_fracos": lista de pontos fracos identificados NO CONTEXTO do serviço vendido (NÃO pontos digitais genéricos)
-- "estrategia": estratégia de abordagem usada (1 frase)
-- "produto_sugerido": qual produto/serviço da empresa foi sugerido para este lead (1 frase)`;
+Retorne APENAS JSON válido:
+{
+  "mensagem": "mensagem pronta para enviar",
+  "analise_nicho": "como o nicho do lead se conecta ao serviço vendido (1-2 frases)",
+  "analise_cidade": "mercado e concorrência na região (1-2 frases)",
+  "pontos_fracos": ["ponto fraco 1 no contexto do serviço vendido"],
+  "estrategia": "estratégia usada (1 frase)",
+  "produto_sugerido": "produto/serviço sugerido para este lead (1 frase)"
+}`;
 
     const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
