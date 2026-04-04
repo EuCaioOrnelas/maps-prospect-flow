@@ -1107,7 +1107,7 @@ MARCADORES DE CLASSIFICAÇÃO (adicione no FINAL da sua resposta, não será env
 O texto abaixo é a instrução principal do seu operador. Ele define QUEM você é, O QUE você vende, COMO você deve conduzir a conversa, QUAIS perguntas fazer e QUAL o objetivo final. SIGA RIGOROSAMENTE estas instruções.
 
 ${baseSystemPrompt}
-
+${leadDiagnosticContext}
 ---
 
 # REGRAS OPERACIONAIS DO SISTEMA
