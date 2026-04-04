@@ -7,7 +7,7 @@ export interface CampaignDraft {
   id: string;
   user_id: string;
   name: string;
-  step: 'leads' | 'messages' | 'settings' | 'summary';
+  step: 'leads' | 'message_type' | 'messages' | 'settings' | 'summary';
   selected_leads: Lead[];
   messages: string[];
   campaign_name: string;
