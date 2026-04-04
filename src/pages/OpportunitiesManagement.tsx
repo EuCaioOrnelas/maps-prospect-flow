@@ -1050,11 +1050,11 @@ export default function OpportunitiesManagement() {
               {/* KPI Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: "Total", value: stats.total, icon: <Target size={17} className="text-primary/80" />, circle: "bg-primary/[0.07]" },
-                  { label: "Qualificados", value: stats.scored, icon: <Sparkles size={17} className="text-blue-400/80" />, circle: "bg-blue-400/[0.07]" },
-                  { label: "Alta Oportunidade", value: stats.highOpp, icon: <TrendingUp size={17} className="text-emerald-400/80" />, circle: "bg-emerald-400/[0.07]" },
+                  { label: "Total", value: stats.total, icon: <Target size={17} className="text-primary" />, circle: "bg-primary/[0.12]" },
+                  { label: "Qualificados", value: stats.scored, icon: <Sparkles size={17} className="text-blue-400" />, circle: "bg-blue-400/[0.12]" },
+                  { label: "Alta Oportunidade", value: stats.highOpp, icon: <TrendingUp size={17} className="text-emerald-400" />, circle: "bg-emerald-400/[0.12]" },
                   {
-                    label: "Score Médio", value: stats.avgScore, icon: <BarChart3 size={17} className="text-amber-400/80" />, circle: "bg-amber-400/[0.07]",
+                    label: "Score Médio", value: stats.avgScore, icon: <BarChart3 size={17} className="text-amber-400" />, circle: "bg-amber-400/[0.12]",
                     extra: (
                       <Popover>
                         <PopoverTrigger asChild>
@@ -1067,14 +1067,14 @@ export default function OpportunitiesManagement() {
                 ].map((kpi) => (
                   <div
                     key={kpi.label}
-                    className="group relative overflow-hidden bg-card border border-border/30 rounded-[10px] px-5 py-4 transition-colors hover:border-border/50"
+                    className="group relative overflow-hidden bg-card border border-border/60 rounded-[10px] px-5 py-4 transition-colors hover:border-border"
                   >
                     {/* Background accent circle */}
                     <div className={`absolute -top-5 -right-4 w-[72px] h-[72px] rounded-full ${kpi.circle} pointer-events-none transition-transform duration-500 group-hover:scale-110`} />
 
                     <div className="relative z-10">
                       <div className="flex items-start justify-between mb-4">
-                        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">{kpi.label}</span>
+                        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{kpi.label}</span>
                         <div className="flex items-center gap-1.5">
                           {(kpi as any).extra || null}
                           {kpi.icon}
