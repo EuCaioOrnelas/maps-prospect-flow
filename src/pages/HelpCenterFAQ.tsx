@@ -15,15 +15,23 @@ const categories = [
     questions: [
       {
         question: "O que é o Wiize?",
-        answer: "O Wiize é uma plataforma completa de prospecção inteligente que utiliza IA para encontrar leads qualificados no Google Maps e automatizar o contato via WhatsApp. Combinamos busca estratégica, CRM integrado, agentes de IA e disparos em massa em uma única solução."
-      },
-      {
-        question: "Como funciona o período gratuito?",
-        answer: "Ao criar sua conta, você recebe 10 buscas estratégicas grátis para testar a plataforma. Não é necessário cartão de crédito. Após usar suas buscas gratuitas, você pode fazer upgrade para um dos nossos planos."
+        answer: "O Wiize é uma plataforma completa de prospecção inteligente que utiliza IA para encontrar leads qualificados no Google Maps e automatizar o contato via WhatsApp. Combinamos busca estratégica, CRM integrado, agentes de IA, diagnóstico com IA, índice de fechamento e disparos em massa em uma única solução."
       },
       {
         question: "O que é uma busca estratégica?",
         answer: "Uma busca estratégica é uma pesquisa inteligente que utiliza nossa IA para analisar empresas no Google Maps e entregar apenas leads qualificados: empresas ativas, com contatos verificados e alto potencial de conversão. Cada busca retorna até 50 leads pré-qualificados."
+      },
+      {
+        question: "Como funciona a geração de mensagens personalizadas com IA?",
+        answer: "O Wiize analisa cada lead encontrado — nome da empresa, segmento, localização, avaliações e perfil do negócio — e gera automaticamente uma mensagem única e personalizada com 4 parágrafos estruturados: saudação contextualizada, introdução profissional, proposta de valor e chamada para ação. Cada lead recebe uma abordagem consultiva e humanizada."
+      },
+      {
+        question: "O que é o Índice de Fechamento?",
+        answer: "O Índice de Fechamento (Índ. Fech.) é uma pontuação calculada pela IA que indica a probabilidade de conversão de cada lead. Ele considera fatores como avaliações no Google Maps, volume de reviews, presença digital, categoria do negócio e potencial de receita para ajudar você a priorizar os melhores leads."
+      },
+      {
+        question: "O que é o Diagnóstico com IA?",
+        answer: "O Diagnóstico com IA analisa automaticamente cada lead e gera um relatório com oportunidades identificadas, pontos fracos do negócio e a melhor estratégia de abordagem. Isso transforma sua prospecção em algo consultivo, não invasivo."
       },
       {
         question: "Preciso instalar algum software?",
