@@ -769,9 +769,191 @@ const inferNicheContext = (companyProfile: any): NicheContext => {
     };
   }
 
+  // ══ UNIFORMES / CAMISETAS / ESTAMPARIA / BORDADO ══
+  if (/(uniforme|camiseta|estampa|bordado|silk|sublima[cç][aã]o|confec[cç][aã]o personaliz|bon[eé]|farda|vestimenta)/.test(text)) {
+    return {
+      id: "uniforms_apparel",
+      name: "Uniformes e estamparia personalizada",
+      analysisFocus: `Foco: avaliar se o lead tem FUNCIONÁRIOS que precisam de uniforme, se a marca se beneficia de identidade visual corporativa, porte do negócio (mais funcionários = mais demanda). Site e redes sociais são SECUNDÁRIOS — o que importa é tipo de empresa, número provável de colaboradores e se já usa uniforme.`,
+      keyQuestions: [
+        "O tipo de negócio do lead costuma usar uniformes (restaurante, clínica, loja, academia, indústria)?",
+        "Qual o porte provável do negócio (mais funcionários = mais demanda)?",
+        "O lead já demonstra ter identidade visual padronizada?",
+        "Há concorrentes do lead que já usam uniformes profissionais?",
+      ],
+      strengthsHint: "Fale sobre tipo de negócio que se beneficia de identidade visual, número provável de funcionários, presença física do lead.",
+      weaknessesHint: "Fale sobre possível porte pequeno (poucos funcionários), já ter fornecedor de uniformes, baixa prioridade para o lead.",
+      competitorContext: "Verifique se negócios similares na região já usam uniformes padronizados.",
+    };
+  }
+
+  // ══ EMBALAGENS / PACKAGING / DESCARTÁVEIS ══
+  if (/(embalagem|packaging|descart[aá]vel|sacola|caixa personaliz|r[oó]tulo|etiqueta|pl[aá]stico|papel[aã]o|isopor)/.test(text)) {
+    return {
+      id: "packaging",
+      name: "Embalagens e packaging",
+      analysisFocus: `Foco: avaliar se o lead é um negócio que CONSOME embalagens em volume (food service, e-commerce, indústria, varejo). O que importa: tipo de operação, volume de vendas/entregas, se já tem embalagem personalizada ou usa genérica. Dados digitais são IRRELEVANTES.`,
+      keyQuestions: [
+        "O lead opera em segmento que consome embalagens (alimentação, delivery, e-commerce, cosméticos)?",
+        "Qual o volume provável de operação do lead (impacta demanda por embalagens)?",
+        "O lead já usa embalagem personalizada ou genérica?",
+        "Há sinal de delivery ou venda online que exija embalagem?",
+      ],
+      strengthsHint: "Fale sobre segmento que consome embalagens em volume, operação ativa, presença em delivery.",
+      weaknessesHint: "Fale sobre possível baixo volume, já ter fornecedor, porte pequeno.",
+      competitorContext: "Verifique se concorrentes do lead usam embalagem personalizada como diferencial de marca.",
+    };
+  }
+
+  // ══ GRÁFICA / IMPRESSÃO / COMUNICAÇÃO VISUAL ══
+  if (/(gr[aá]fica|impress[aã]o|comunica[cç][aã]o visual|banner|adesivo|fachada|letreiro|placa|totem|painel|sinaliza[cç][aã]o|plotagem)/.test(text)) {
+    return {
+      id: "print_signage",
+      name: "Gráfica e comunicação visual",
+      analysisFocus: `Foco: avaliar a PRESENÇA FÍSICA do lead — fachada, sinalização, materiais impressos. Negócios sem fachada profissional ou com sinalização amadora são oportunidades. Dados digitais são COMPLEMENTARES.`,
+      keyQuestions: [
+        "O lead tem ponto comercial físico que precisa de sinalização/fachada?",
+        "As fotos do Google mostram fachada profissional ou amadora?",
+        "O tipo de negócio se beneficia de materiais impressos (cardápio, cartão, folder)?",
+        "Concorrentes do lead na região têm comunicação visual mais profissional?",
+      ],
+      strengthsHint: "Fale sobre ponto comercial com movimento, necessidade de identidade visual física, visibilidade na rua.",
+      weaknessesHint: "Fale sobre fachada amadora, ausência de sinalização, identidade visual inconsistente no ponto físico.",
+      competitorContext: "Verifique se concorrentes próximos têm comunicação visual mais elaborada.",
+    };
+  }
+
+  // ══ CONTABILIDADE DIGITAL / BPO / TERCEIRIZAÇÃO ══
+  if (/(bpo|terceiriza[cç][aã]o|outsourcing|folha de pagamento|departamento pessoal|rh |recursos humanos|recrutamento|sele[cç][aã]o|temporário)/.test(text)) {
+    return {
+      id: "bpo_hr",
+      name: "BPO, RH e terceirização",
+      analysisFocus: `Foco: avaliar o PORTE DO LEAD e se ele tem necessidade de terceirização. Empresas com 5-50 funcionários são o sweet spot — grandes demais já têm RH interno, pequenas demais não justificam. O que importa: tipo de negócio, número provável de funcionários, complexidade operacional.`,
+      keyQuestions: [
+        "O porte do lead sugere necessidade de terceirização (folha, RH, recrutamento)?",
+        "O tipo de negócio tem alta rotatividade de funcionários?",
+        "O lead opera em setor com complexidade trabalhista (restaurante, comércio, indústria)?",
+        "O lead já aparenta ter estrutura administrativa organizada?",
+      ],
+      strengthsHint: "Fale sobre porte que justifica terceirização, setor com complexidade trabalhista, alta rotatividade.",
+      weaknessesHint: "Fale sobre porte muito pequeno, possível RH interno já estruturado.",
+      competitorContext: "Verifique se empresas similares na região já utilizam serviços de BPO/RH terceirizado.",
+    };
+  }
+
+  // ══ LIMPEZA / FACILITIES / MANUTENÇÃO PREDIAL ══
+  if (/(limpeza|facilities|zeladoria|portaria|conserva[cç][aã]o|manuten[cç][aã]o predial|desinsetiza|dedetiza|controle de pragas|impermeabiliza)/.test(text)) {
+    return {
+      id: "facilities",
+      name: "Limpeza, facilities e manutenção predial",
+      analysisFocus: `Foco: avaliar o TIPO DE IMÓVEL/OPERAÇÃO do lead — escritórios, clínicas, condomínios, lojas, indústrias são clientes ideais. O que importa: metragem provável, tipo de operação (exige limpeza profissional?), se opera em espaço próprio ou compartilhado.`,
+      keyQuestions: [
+        "O tipo de negócio do lead opera em espaço que demanda limpeza/manutenção profissional?",
+        "O porte do espaço justifica contratação de serviço terceirizado?",
+        "O lead opera em segmento com exigências sanitárias (alimentação, saúde)?",
+        "Há sinal de múltiplas unidades ou espaço grande?",
+      ],
+      strengthsHint: "Fale sobre tipo de negócio que exige higiene profissional, espaço grande, exigências sanitárias.",
+      weaknessesHint: "Fale sobre possível espaço pequeno, limpeza interna já resolvida, baixo orçamento.",
+      competitorContext: "Verifique se negócios similares na região já utilizam serviço de facilities terceirizado.",
+    };
+  }
+
+  // ══ MÁQUINAS / EQUIPAMENTOS / FERRAMENTAS ══
+  if (/(m[aá]quina|equipamento|ferramenta|compressor|gerador|guindaste|empilhadeira|serra|torno|fresa|solda|industrial|pneum[aá]tic)/.test(text)) {
+    return {
+      id: "equipment",
+      name: "Máquinas e equipamentos",
+      analysisFocus: `Foco: avaliar o TIPO DE OPERAÇÃO do lead — indústria, oficina, construção, manutenção. O que importa: se o lead usa equipamentos no dia-a-dia, se há sinais de operação industrial/técnica, porte da operação. Dados digitais são TOTALMENTE IRRELEVANTES.`,
+      keyQuestions: [
+        "O tipo de negócio do lead utiliza maquinário/equipamentos no dia-a-dia?",
+        "O porte da operação justifica investimento em equipamentos?",
+        "O lead está em setor industrial, construção ou serviços técnicos?",
+        "Há sinais de que o equipamento atual pode estar desatualizado?",
+      ],
+      strengthsHint: "Fale sobre tipo de operação que demanda equipamentos, porte industrial, necessidade de modernização.",
+      weaknessesHint: "Fale sobre possível porte pequeno, equipamentos já recentes, setor não-industrial.",
+      competitorContext: "Verifique se concorrentes do lead na região já utilizam equipamentos mais modernos.",
+    };
+  }
+
+  // ══ TURISMO / HOTELARIA / POUSADA ══
+  if (/(turismo|hotel|pousada|hostel|resort|ag[eê]ncia de viagem|receptivo|transfer|passeio|excurs[aã]o|hospedagem)/.test(text)) {
+    return {
+      id: "tourism_hospitality",
+      name: "Turismo e hotelaria",
+      analysisFocus: `Foco: avaliar a presença do lead em plataformas de reserva (Booking, Airbnb, Google Hotels), qualidade das fotos, avaliações de hóspedes, sazonalidade da região. Para turismo, AVALIAÇÕES e FOTOS são extremamente importantes.`,
+      keyQuestions: [
+        "O lead está presente em plataformas de reserva (Booking, Airbnb, TripAdvisor)?",
+        "As avaliações de hóspedes são positivas ou revelam problemas?",
+        "As fotos do estabelecimento são profissionais ou amadoras?",
+        "A região tem potencial turístico com demanda sazonal?",
+        "O lead oferece reserva online ou só por telefone/WhatsApp?",
+      ],
+      strengthsHint: "Fale sobre localização turística, avaliações de hóspedes, presença em plataformas de reserva.",
+      weaknessesHint: "Fale sobre fotos amadoras, ausência em plataformas, reserva manual, avaliações negativas.",
+      competitorContext: "Verifique se hotéis/pousadas concorrentes têm presença mais forte em plataformas e melhores avaliações.",
+    };
+  }
+
+  // ══ MODA / VESTUÁRIO / ACESSÓRIOS ══
+  if (/(moda|vestu[aá]rio|roupa|acess[oó]rio|j[oó]ia|bijuteria|rel[oó]gio|[oó]culos|cal[cç]ado|sapato|t[eê]nis|bolsa|lingerie|infantil|plus size|fitness wear|sportswear)/.test(text)) {
+    return {
+      id: "fashion",
+      name: "Moda e vestuário",
+      analysisFocus: `Foco: avaliar a presença visual e comercial do lead — qualidade das fotos de produtos, presença em redes sociais (Instagram é CRUCIAL para moda), e-commerce, identidade visual da marca, público-alvo.`,
+      keyQuestions: [
+        "O lead tem presença forte no Instagram (fundamental para moda)?",
+        "As fotos dos produtos são profissionais ou amadoras?",
+        "Vende online (e-commerce ou marketplace) ou apenas presencial?",
+        "A identidade visual da marca é consistente e profissional?",
+        "Qual o público-alvo aparente (feminino, masculino, infantil, plus size)?",
+      ],
+      strengthsHint: "Fale sobre presença visual, marca com identidade, demanda no segmento, fotos de qualidade.",
+      weaknessesHint: "Fale sobre fotos amadoras, sem e-commerce, Instagram fraco, marca sem identidade visual.",
+      competitorContext: "Verifique se lojas de moda concorrentes na região têm presença digital mais forte.",
+    };
+  }
+
+  // ══ BELEZA / BARBEARIA / SALÃO / ESTÉTICA (quando não é saúde) ══
+  if (/(beleza|barbearia|sal[aã]o|cabeleireiro|manicure|nail|depila[cç][aã]o|maquiagem|micropigmenta|lash|c[ií]lio|sobrancelha|bronzeamento)/.test(text)) {
+    return {
+      id: "beauty",
+      name: "Beleza e estética pessoal",
+      analysisFocus: `Foco: avaliar agendamento, presença no Instagram (VITAL para beleza), portfólio de trabalhos (antes/depois), avaliações, fidelização de clientes. Para beleza, REDES SOCIAIS e AGENDAMENTO ONLINE são os fatores decisivos.`,
+      keyQuestions: [
+        "O lead tem agendamento online ou depende de WhatsApp/telefone?",
+        "O Instagram mostra trabalhos realizados (antes/depois, portfólio)?",
+        "As avaliações mencionam qualidade do atendimento?",
+        "Tem identidade visual profissional (logo, ambiente)?",
+        "Usa algum sistema de fidelização ou programa de indicação?",
+      ],
+      strengthsHint: "Fale sobre portfólio visual, avaliações positivas, demanda constante no segmento.",
+      weaknessesHint: "Fale sobre agendamento manual, Instagram sem portfólio, falta de fidelização digital.",
+      competitorContext: "Verifique se salões/barbearias concorrentes têm agendamento online e Instagram mais profissional.",
+    };
+  }
+
+  // ══ COWORKING / ESPAÇO COMPARTILHADO ══
+  if (/(coworking|espa[cç]o compartilhado|sala comercial|escrit[oó]rio virtual|endere[cç]o fiscal|sala de reuni[aã]o)/.test(text)) {
+    return {
+      id: "coworking",
+      name: "Coworking e espaços compartilhados",
+      analysisFocus: `Foco: avaliar se o lead é um profissional/empresa que se beneficiaria de espaço profissional — freelancers, startups, consultores, profissionais liberais. O que importa: tipo de atividade, localização, se trabalha de casa e precisa de endereço comercial.`,
+      keyQuestions: [
+        "O tipo de negócio do lead se beneficia de espaço profissional (consultoria, advocacia, contabilidade)?",
+        "O lead opera como profissional liberal ou microempresa?",
+        "A região do lead tem oferta de coworking ou é carente desse serviço?",
+        "O lead precisa de sala de reunião ou endereço fiscal?",
+      ],
+      strengthsHint: "Fale sobre tipo de profissional que precisa de espaço, necessidade de endereço fiscal, demanda por salas.",
+      weaknessesHint: "Fale sobre possível escritório próprio já estabelecido, localização remota, porte grande demais.",
+      competitorContext: "Verifique se há outros coworkings na região e como se diferenciar.",
+    };
+  }
+
   // ══ FALLBACK DINÂMICO — usa o texto do perfil da empresa para gerar contexto ══
-  // Detecta se o nicho é muito específico para diagnóstico remoto
-  const isHighlySpecificNiche = !/(marketing|site|rede|digital|seo|an[uú]ncio|tr[aá]fego|design|foto|v[ií]deo|consultoria|software|app|crm|automa|restaurante|cl[ií]nica|escola|imobili|contab|advoc|seguro|financ|evento|log[ií]stica|transporte|internet|provedor|solar|seguran[cç]a|pet|vet|agro|automotiv|mec[aâ]nic|alimenta)/.test(text);
+  const isHighlySpecificNiche = !/(marketing|site|rede|digital|seo|an[uú]ncio|tr[aá]fego|design|foto|v[ií]deo|consultoria|software|app|crm|automa|restaurante|cl[ií]nica|escola|imobili|contab|advoc|seguro|financ|evento|log[ií]stica|transporte|internet|provedor|solar|seguran[cç]a|pet|vet|agro|automotiv|mec[aâ]nic|alimenta|uniforme|estampa|embalagem|gr[aá]fica|bpo|terceiriza|limpeza|facilities|m[aá]quina|equipamento|turismo|hotel|pousada|moda|vestu|beleza|barbearia|sal[aã]o|coworking)/.test(text);
 
   return {
     id: "dynamic_b2b",
