@@ -101,7 +101,7 @@ export default function OpportunitiesManagement() {
   const [editRecommendedAction, setEditRecommendedAction] = useState("");
   const [editPontosFortes, setEditPontosFortes] = useState<string[]>([]);
   const [editPontosFracos, setEditPontosFracos] = useState<string[]>([]);
-  const [editClosingProbability, setEditClosingProbability] = useState("");
+  const [editCustomDiagnosis, setEditCustomDiagnosis] = useState("");
   const [savingDiagnostic, setSavingDiagnostic] = useState(false);
 
   const scoredAttemptedRef = useRef(new Set<string>());
