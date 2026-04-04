@@ -58,6 +58,7 @@ export interface Lead {
   rating: number;
   reviewCount: number;
   mapsLink: string;
+  aiMessage?: string;
 }
 
 export interface Campaign {
