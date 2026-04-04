@@ -597,8 +597,77 @@ export default function OpportunitiesManagement() {
           </div>
         )}
 
+        {/* Edit / View toggle button */}
+        <div className="flex justify-end">
+          {!editingDiagnostic ? (
+            <Button variant="outline" size="sm" onClick={() => startEditingDiagnostic(lead)} className="gap-1.5">
+              <Pencil size={13} />
+              Editar Diagnóstico
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setEditingDiagnostic(false)} disabled={savingDiagnostic}>
+                <X size={13} className="mr-1" /> Cancelar
+              </Button>
+              <Button size="sm" onClick={() => saveDiagnostic(lead)} disabled={savingDiagnostic} className="gap-1.5">
+                {savingDiagnostic ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                Salvar
+              </Button>
+            </div>
+          )}
+        </div>
+
         {/* Pontos fortes e fracos */}
-        {(pontosFortes.length > 0 || pontosFracos.length > 0) && (
+        {editingDiagnostic ? (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+              <h4 className="text-sm font-semibold text-primary flex items-center gap-1.5 mb-3">
+                <CheckCircle2 size={14} />
+                Pontos Fortes
+              </h4>
+              <div className="space-y-2">
+                {editPontosFortes.map((p, i) => (
+                  <div key={i} className="flex gap-1.5">
+                    <Input
+                      value={p}
+                      onChange={(e) => { const arr = [...editPontosFortes]; arr[i] = e.target.value; setEditPontosFortes(arr); }}
+                      className="text-sm h-8"
+                    />
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0" onClick={() => setEditPontosFortes(editPontosFortes.filter((_, idx) => idx !== i))}>
+                      <X size={12} />
+                    </Button>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setEditPontosFortes([...editPontosFortes, ""])}>
+                  + Adicionar
+                </Button>
+              </div>
+            </div>
+            <div className="bg-muted/30 border border-border rounded-xl p-4">
+              <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5 mb-3">
+                <AlertTriangle size={14} />
+                Pontos Fracos
+              </h4>
+              <div className="space-y-2">
+                {editPontosFracos.map((p, i) => (
+                  <div key={i} className="flex gap-1.5">
+                    <Input
+                      value={p}
+                      onChange={(e) => { const arr = [...editPontosFracos]; arr[i] = e.target.value; setEditPontosFracos(arr); }}
+                      className="text-sm h-8"
+                    />
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0" onClick={() => setEditPontosFracos(editPontosFracos.filter((_, idx) => idx !== i))}>
+                      <X size={12} />
+                    </Button>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setEditPontosFracos([...editPontosFracos, ""])}>
+                  + Adicionar
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (pontosFortes.length > 0 || pontosFracos.length > 0) ? (
           <div className="grid grid-cols-2 gap-3">
             {pontosFortes.length > 0 && (
               <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
@@ -633,10 +702,18 @@ export default function OpportunitiesManagement() {
               </div>
             )}
           </div>
-        )}
+        ) : null}
 
         {/* Diagnóstico IA */}
-        {lead.ai_diagnosis && (
+        {editingDiagnostic ? (
+          <div className="bg-card border border-border rounded-xl p-4 space-y-2">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <Sparkles size={14} className="text-primary" />
+              Diagnóstico IA
+            </h4>
+            <Textarea value={editDiagnosis} onChange={(e) => setEditDiagnosis(e.target.value)} className="text-sm min-h-[80px]" placeholder="Escreva o diagnóstico..." />
+          </div>
+        ) : lead.ai_diagnosis ? (
           <div className="bg-card border border-border rounded-xl p-4 space-y-2">
             <h4 className="text-sm font-semibold flex items-center gap-2">
               <Sparkles size={14} className="text-primary" />
@@ -644,10 +721,18 @@ export default function OpportunitiesManagement() {
             </h4>
             <p className="text-sm text-muted-foreground leading-relaxed">{lead.ai_diagnosis}</p>
           </div>
-        )}
+        ) : null}
 
         {/* Oportunidade Encontrada */}
-        {lead.ai_recommended_action && (
+        {editingDiagnostic ? (
+          <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 space-y-2">
+            <h4 className="text-sm font-semibold flex items-center gap-2 text-primary">
+              <Zap size={14} />
+              Oportunidade Encontrada
+            </h4>
+            <Textarea value={editRecommendedAction} onChange={(e) => setEditRecommendedAction(e.target.value)} className="text-sm min-h-[60px]" placeholder="Descreva a oportunidade..." />
+          </div>
+        ) : lead.ai_recommended_action ? (
           <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 space-y-2">
             <h4 className="text-sm font-semibold flex items-center gap-2 text-primary">
               <Zap size={14} />
@@ -655,9 +740,18 @@ export default function OpportunitiesManagement() {
             </h4>
             <p className="text-sm text-muted-foreground">{lead.ai_recommended_action}</p>
           </div>
-        )}
+        ) : null}
 
-        {/* Recalcular removido */}
+        {/* Probabilidade de Fechamento (edit mode) */}
+        {editingDiagnostic && (
+          <div className="bg-card border border-border rounded-xl p-4 space-y-2">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <Target size={14} className="text-primary" />
+              Probabilidade de Fechamento
+            </h4>
+            <Input value={editClosingProbability} onChange={(e) => setEditClosingProbability(e.target.value)} className="text-sm h-8" placeholder="Ex: Alta, Média, Baixa..." />
+          </div>
+        )}
       </div>
     );
   };
