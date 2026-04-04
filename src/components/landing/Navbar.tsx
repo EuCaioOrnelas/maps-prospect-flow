@@ -84,11 +84,11 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                   Entrar
                 </Button>
               </Link>
-              <Link to="/signup" onClick={handleSignupClick}>
+              <a href="#pricing" onClick={handleSignupClick}>
                 <Button variant="hero" size="sm">
-                  Começar Grátis
+                  Começar
                 </Button>
-              </Link>
+              </a>
             </div>
 
             {/* Mobile menu button */}
