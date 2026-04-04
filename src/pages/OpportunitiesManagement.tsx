@@ -537,11 +537,11 @@ export default function OpportunitiesManagement() {
     const justificativa = lead.enrichment_data?.justificativa_score || "";
 
     const dimensions = [
-      { label: "Estrutura Digital", value: breakdown?.estrutura_digital ?? 0, max: 25, icon: <Globe size={14} className="text-primary" /> },
-      { label: "Reputação", value: breakdown?.reputacao ?? 0, max: 25, icon: <Star size={14} className="text-primary" /> },
-      { label: "Acessibilidade", value: breakdown?.acessibilidade ?? 0, max: 20, icon: <Phone size={14} className="text-primary" /> },
-      { label: "Engajamento", value: breakdown?.engajamento_atividade ?? 0, max: 15, icon: <Eye size={14} className="text-primary" /> },
-      { label: "Potencial de Venda", value: breakdown?.potencial_venda ?? 0, max: 15, icon: <Zap size={14} className="text-primary" /> },
+      { label: "Estrutura Digital", value: breakdown?.estrutura_digital ?? 0, max: 25, icon: <Globe size={14} className="text-primary" />, tooltip: "Avalia se o lead possui site, blog, landing pages ou presença digital estruturada. Sites profissionais, com SSL e boa velocidade pontuam mais." },
+      { label: "Reputação", value: breakdown?.reputacao ?? 0, max: 25, icon: <Star size={14} className="text-primary" />, tooltip: "Considera avaliações no Google Maps, nota média, quantidade de reviews e sentimento geral dos comentários." },
+      { label: "Acessibilidade", value: breakdown?.acessibilidade ?? 0, max: 20, icon: <Phone size={14} className="text-primary" />, tooltip: "Verifica se o lead possui telefone válido, WhatsApp ativo, e-mail de contato e outros canais de comunicação acessíveis." },
+      { label: "Engajamento", value: breakdown?.engajamento_atividade ?? 0, max: 15, icon: <Eye size={14} className="text-primary" />, tooltip: "Analisa atividade recente em redes sociais, frequência de postagens, interações e presença ativa online." },
+      { label: "Potencial de Venda", value: breakdown?.potencial_venda ?? 0, max: 15, icon: <Zap size={14} className="text-primary" />, tooltip: "Estima a probabilidade de conversão com base no nicho, porte do negócio, localização e compatibilidade com seu produto/serviço." },
     ];
 
     return (
@@ -572,6 +572,16 @@ export default function OpportunitiesManagement() {
                   <span className="flex items-center gap-2 text-muted-foreground">
                     {dim.icon}
                     {dim.label}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="text-muted-foreground/50 hover:text-primary transition-colors">
+                          <Info size={12} />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent side="top" className="text-xs text-muted-foreground max-w-[240px] p-3">
+                        {dim.tooltip}
+                      </PopoverContent>
+                    </Popover>
                   </span>
                   <span className="font-semibold">{dim.value}/{dim.max}</span>
                 </div>
