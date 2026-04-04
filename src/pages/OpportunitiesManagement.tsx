@@ -1074,7 +1074,7 @@ export default function OpportunitiesManagement() {
 
                     <div className="relative z-10">
                       <div className="flex items-start justify-between mb-4">
-                        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">{kpi.label}</span>
+                        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{kpi.label}</span>
                         <div className="flex items-center gap-1.5">
                           {(kpi as any).extra || null}
                           {kpi.icon}
