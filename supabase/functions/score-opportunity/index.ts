@@ -1269,6 +1269,9 @@ ${socialPages.length > 0
    - Se vende consultoria → "Sinais de crescimento desordenado sem processos definidos"
    - Se vende produtos físicos → "Vende apenas presencialmente, sem e-commerce"
    - Se vende seguros → "Sem conteúdo educativo sobre proteção financeira"
+   - Se vende internet/telecom → "Região dominada por grandes operadoras, mas lead em área com possível insatisfação por atendimento local"
+   - Se vende energia solar → "Negócio com alto consumo energético em região com boa irradiação solar"
+   - Se vende segurança → "Comércio em região de risco sem sistema de monitoramento visível"
    - QUALQUER outro nicho → Conecte CADA ponto à dor que o serviço/produto vendido resolve
 2. NÃO use frases como "boa reputação no Google" como ponto forte A MENOS QUE explique como isso beneficia a venda do serviço específico.
 3. O campo engajamento_atividade NÃO deve ser zero se houver qualquer sinal de atividade (perfil de rede social existente, site com conteúdo, avaliações recentes). Mínimo 3 se houver algum sinal.
@@ -1277,6 +1280,15 @@ ${socialPages.length > 0
 6. O diagnóstico DEVE incluir insights sobre concorrência regional e demanda da região.
 7. A análise de redes sociais DEVE focar em presença, bio, identidade visual e sinais de atividade detectáveis — NÃO mencione "última publicação" pois essa informação não está disponível.
 8. A ação recomendada DEVE citar especificamente qual produto/serviço da empresa prospectora usar e como conectar à dor principal do lead.
+9. REGRA PARA NICHOS ESPECÍFICOS/INCOMUNS: Se o nicho da empresa prospectora é muito específico (ex: vende internet, energia solar, segurança, equipamentos industriais, insumos agrícolas, etc.) e os dados digitais do lead (redes sociais, site, avaliações) NÃO SÃO RELEVANTES para a venda, então:
+   a) NÃO force pontos fortes e fracos baseados em presença digital — foque em LOCALIZAÇÃO, PORTE, REGIÃO, DEMANDA e CONCORRÊNCIA
+   b) Se NÃO há dados suficientes para inferir pontos fortes ou fracos REAIS, retorne arrays vazios [] e explique no diagnóstico que "o nicho é muito específico e a prospecção direta (conversa com o lead) é necessária para mapear as dores reais e oportunidades"
+   c) Priorize análise de: concorrência na região, demanda regional pelo produto/serviço, tipo de negócio do lead e se ele se encaixa como cliente ideal
+   d) Para telecomunicações/internet: foque em quais operadoras dominam a região, como se diferenciar (preço, atendimento local, suporte presencial, sem fidelidade), e tipo de negócio do lead (escritório/loja = precisa de internet estável)
+10. ADAPTE O PESO DAS DIMENSÕES do score conforme o nicho:
+    - Nichos digitais (marketing, redes, site, SEO): estrutura_digital e engajamento são mais importantes
+    - Nichos de infraestrutura (internet, solar, segurança): acessibilidade e potencial_venda são mais importantes, estrutura_digital é menos relevante
+    - Nichos de serviço local (mecânica, manutenção, pet): reputação e acessibilidade são mais importantes
 
 Retorne APENAS um JSON válido:
 {
@@ -1288,14 +1300,14 @@ Retorne APENAS um JSON válido:
   "potencial_venda": <0-15>,
   "nivel_oportunidade": "Alta|Média|Baixa",
   "probabilidade_fechamento": "Muito Alta|Alta|Moderada|Baixa",
-  "diagnostico": "4-6 frases incluindo análise regional, concorrência e demanda",
+  "diagnostico": "4-6 frases incluindo análise regional, concorrência e demanda. Se nicho muito específico, mencione que prospecção direta é necessária.",
   "acao_recomendada": "3-5 frases conectando dor principal aos serviços da empresa prospectora",
-  "pontos_fortes": ["ponto adaptado ao nicho 1", "ponto adaptado ao nicho 2", "ponto 3"],
-  "pontos_fracos": ["fraqueza adaptada ao nicho 1", "fraqueza adaptada ao nicho 2", "fraqueza 3"],
+  "pontos_fortes": ["ponto adaptado ao nicho"] OU [] se nicho muito específico sem dados suficientes,
+  "pontos_fracos": ["fraqueza adaptada ao nicho"] OU [] se nicho muito específico sem dados suficientes,
   "analise_site": "análise profunda adaptada ao nicho da prospectora",
-  "analise_redes_sociais": "análise de presença, bio, identidade visual e sinais de atividade detectáveis via crawling",
+  "analise_redes_sociais": "análise adaptada — para nichos não-digitais, mencione que redes sociais não são relevantes para esta análise",
   "analise_reputacao_detalhada": "...",
-  "analise_concorrencia_regional": "análise de concorrentes no raio de 5km e posicionamento",
+  "analise_concorrencia_regional": "análise de concorrentes na região — para telecom, identifique operadoras/provedores locais",
   "analise_demanda_regional": "análise de demanda baseada na densidade demográfica e porte da cidade",
   "justificativa_score": "1-2 frases objetivas"
 }`;
