@@ -1238,7 +1238,7 @@ const WhatsAppCampaign = () => {
                 <LeadSelector
                   selectedLeads={selectedLeads}
                   onLeadsChange={setSelectedLeads}
-                  onNext={() => setStep("messages")}
+                  onNext={() => setStep("message_type")}
                   onCancel={handleNewCampaign}
                   canProceed={canProceedToMessages}
                   dailyLimit={dailyLimit}
@@ -1250,12 +1250,30 @@ const WhatsAppCampaign = () => {
                 />
               )}
 
-              {/* Step: Message Variations */}
+              {/* Step: Message Type Selection */}
+              {step === "message_type" && (
+                <MessageTypeSelector
+                  selectedLeads={selectedLeads}
+                  messageMode={messageMode}
+                  onMessageModeChange={setMessageMode}
+                  onBack={() => setStep("leads")}
+                  onNext={() => {
+                    if (messageMode === "ai_generated") {
+                      setStep("settings");
+                    } else {
+                      setStep("messages");
+                    }
+                  }}
+                  onLeadsUpdate={setSelectedLeads}
+                />
+              )}
+
+              {/* Step: Message Variations (only for custom mode) */}
               {step === "messages" && (
                 <MessageVariations
                   messages={messages}
                   onMessagesChange={setMessages}
-                  onBack={() => setStep("leads")}
+                  onBack={() => setStep("message_type")}
                   onNext={() => setStep("settings")}
                   canProceed={canProceedToSettings}
                   selectedLeads={selectedLeads}
