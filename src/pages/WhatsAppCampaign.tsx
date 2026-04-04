@@ -940,38 +940,47 @@ const WhatsAppCampaign = () => {
     }
   };
 
-  const renderStepIndicator = () => (
-    <div className="flex items-center justify-center gap-2 mb-8">
-      {["leads", "messages", "settings", "summary"].map((s, i) => {
-        const stepLabels = ["Leads", "Mensagens", "Configurações", "Resumo"];
-        const stepIndex = ["leads", "messages", "settings", "summary"].indexOf(step);
-        const isActive = s === step;
-        const isCompleted = i < stepIndex;
+  const renderStepIndicator = () => {
+    const allSteps = messageMode === "ai_generated"
+      ? ["leads", "message_type", "settings", "summary"]
+      : ["leads", "message_type", "messages", "settings", "summary"];
+    const allLabels = messageMode === "ai_generated"
+      ? ["Leads", "Tipo", "Configurações", "Resumo"]
+      : ["Leads", "Tipo", "Mensagens", "Configurações", "Resumo"];
+    const stepIndex = allSteps.indexOf(step);
 
-        return (
-          <div key={s} className="flex items-center">
-            <div
-              className={`
-              flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all
-              ${
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : isCompleted
-                    ? "bg-primary/20 text-primary"
-                    : "bg-muted text-muted-foreground"
-              }
-            `}
-            >
-              {isCompleted ? <CheckCircle2 size={16} /> : i + 1}
+    return (
+      <div className="flex items-center justify-center gap-2 mb-8">
+        {allSteps.map((s, i) => {
+          const isActive = s === step;
+          const isCompleted = i < stepIndex;
+
+          return (
+            <div key={s} className="flex items-center">
+              <div
+                className={`
+                flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all
+                ${
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : isCompleted
+                      ? "bg-primary/20 text-primary"
+                      : "bg-muted text-muted-foreground"
+                }
+              `}
+              >
+                {isCompleted ? <CheckCircle2 size={16} /> : i + 1}
+              </div>
+              <span className={`ml-2 text-sm hidden sm:inline ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                {allLabels[i]}
+              </span>
+              {i < allSteps.length - 1 && <div className="w-8 sm:w-12 h-px bg-border mx-2" />}
             </div>
-            <span className={`ml-2 text-sm hidden sm:inline ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
-              {stepLabels[i]}
-            </span>
-            {i < 3 && <div className="w-8 sm:w-12 h-px bg-border mx-2" />}
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    );
+  };
   );
 
   // Show upgrade prompt for free users
