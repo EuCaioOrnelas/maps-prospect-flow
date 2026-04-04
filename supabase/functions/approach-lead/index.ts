@@ -81,7 +81,7 @@ DADOS DA SUA EMPRESA (quem está prospectando):
     const brtHour = (now.getUTCHours() - 3 + 24) % 24;
     const greeting = brtHour < 12 ? "Bom dia" : brtHour < 18 ? "Boa tarde" : "Boa noite";
 
-    const prompt = `Você é um especialista em vendas B2B e prospecção comercial atuando em TODOS os segmentos do mercado: agências de marketing, tráfego pago, ads, consultoria empresarial, venda de produtos físicos, representação comercial, SaaS, contabilidade, advocacia, arquitetura, saúde, alimentação, educação, tecnologia, logística, indústria, varejo, serviços profissionais — e QUALQUER outro nicho B2B. Adapte sua abordagem ao contexto do segmento. Analise os dados deste lead e crie uma MENSAGEM DE ABORDAGEM personalizada para enviar via WhatsApp.
+    const prompt = `Você é um especialista em vendas B2B e prospecção comercial atuando em TODOS os segmentos do mercado: agências de marketing, tráfego pago, ads, consultoria empresarial, venda de produtos físicos, representação comercial, SaaS, contabilidade, advocacia, arquitetura, saúde, alimentação, educação, tecnologia, logística, indústria, varejo, serviços profissionais, telecomunicações, internet/provedor, energia solar, segurança, agronegócio — e QUALQUER outro nicho B2B. Adapte sua abordagem ao contexto do segmento.
 
 CONTEXTO IMPORTANTE: Esta é uma MENSAGEM FRIA — provavelmente o PRIMEIRO CONTATO com este lead. Ele NÃO te conhece.
 
@@ -98,11 +98,17 @@ DADOS DO LEAD (empresa a ser prospectada):
 - Score de oportunidade: ${lead.ai_score || "Não calculado"}/100
 - Nível de oportunidade: ${lead.opportunity_level || "Não calculado"}
 
+ADAPTAÇÃO OBRIGATÓRIA POR NICHO DO PROSPECTOR:
+- Se o prospector vende serviços digitais (marketing, sites, SEO, redes sociais): use dados digitais do lead (site, redes, avaliações) como gancho.
+- Se o prospector vende infraestrutura/utilidade (internet, energia solar, segurança, monitoramento): NÃO foque em dados digitais. Foque em REGIÃO, TIPO DE NEGÓCIO e NECESSIDADE OPERACIONAL do lead. Ex: "Notei que a [empresa] fica na região de [cidade] e negócios como o seu costumam ter alta demanda por [internet estável/segurança/economia de energia]..."
+- Se o prospector vende produtos/insumos (agro, autopeças, equipamentos): foque na OPERAÇÃO do lead e como o produto resolve uma necessidade do dia-a-dia.
+- Se o nicho é muito específico e os dados do lead não permitem personalização profunda: crie um gancho genérico baseado na LOCALIZAÇÃO e TIPO DE NEGÓCIO, e sugira uma conversa para entender melhor as necessidades.
+
 ESTRUTURA OBRIGATÓRIA DA MENSAGEM (siga esta ordem):
 1. SAUDAÇÃO EDUCADA: Comece SEMPRE com "${greeting}!" — educação é fundamental em mensagem fria
-2. GANCHO DE ATENÇÃO: Logo após a saudação, uma frase curta e impactante que gere CURIOSIDADE sobre uma DOR ou OPORTUNIDADE específica do lead (baseada nos dados dele — ex: "Notei que a [empresa] ainda não aparece nas buscas do Google na região de [cidade]...")
+2. GANCHO DE ATENÇÃO: Logo após a saudação, uma frase curta e impactante que gere CURIOSIDADE sobre uma DOR ou OPORTUNIDADE específica do lead (adaptada ao nicho do prospector — NÃO fale de redes sociais se o prospector vende internet, por exemplo)
 3. APRESENTAÇÃO BREVE: Se apresente de forma natural e rápida (nome + empresa + o que faz em 1 linha)
-4. PROPOSTA DE VALOR PERSONALIZADA: Explique como seu serviço resolve a dor específica deste lead (não seja genérico — cite dados reais do lead como falta de site, poucas avaliações, nicho, cidade)
+4. PROPOSTA DE VALOR PERSONALIZADA: Explique como seu serviço resolve a dor específica deste lead (cite dados reais: região, tipo de negócio, concorrência local)
 5. FECHAMENTO GENTIL: Termine com uma pergunta leve e sem pressão perguntando se o lead tem interesse em saber mais
 
 FORMATAÇÃO OBRIGATÓRIA DA MENSAGEM:
@@ -114,18 +120,19 @@ FORMATAÇÃO OBRIGATÓRIA DA MENSAGEM:
 
 INSTRUÇÕES CRÍTICAS:
 - ${companyProfile ? `Você representa "${companyProfile.attendant_name}" da "${companyProfile.company_name}".` : "Crie uma mensagem genérica de prospecção."}
-- ${companyProfile ? `Analise os serviços "${companyProfile.company_products}" e identifique qual é MAIS RELEVANTE para a dor deste lead.` : ""}
+- ${companyProfile ? `Analise os serviços "${companyProfile.company_products}" e identifique qual é MAIS RELEVANTE para a dor deste lead, considerando o TIPO DE NEGÓCIO e a REGIÃO do lead.` : ""}
 - ${companyProfile ? `Use o diferencial "${companyProfile.company_differential}" como argumento.` : ""}
 - A mensagem deve ser curta (máx 4 parágrafos curtos), direta e personalizada
 - NÃO use aberturas como "Tudo bem?" ou "Como vai?" — vá direto ao gancho após a saudação
-- Mencione algo específico sobre a empresa do lead para mostrar que pesquisou
+- Mencione algo específico sobre a empresa do lead para mostrar que pesquisou (região, tipo de negócio, ou dados disponíveis)
+- NÃO mencione dados que não sejam relevantes para o nicho do prospector (ex: não fale de "poucas avaliações" se o prospector vende internet)
 - ${companyProfile ? `Assine como "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : ""}
 
 Retorne APENAS um JSON válido com as chaves:
 - "mensagem": a mensagem de abordagem pronta para enviar
-- "analise_nicho": breve análise do nicho (1-2 frases)
-- "analise_cidade": análise do mercado na cidade (1-2 frases)
-- "pontos_fracos": lista de pontos fracos identificados
+- "analise_nicho": breve análise do nicho do lead e como se conecta ao serviço vendido (1-2 frases)
+- "analise_cidade": análise do mercado e concorrência na cidade/região (1-2 frases)
+- "pontos_fracos": lista de pontos fracos identificados NO CONTEXTO do serviço vendido (NÃO pontos digitais genéricos)
 - "estrategia": estratégia de abordagem usada (1 frase)
 - "produto_sugerido": qual produto/serviço da empresa foi sugerido para este lead (1 frase)`;
 

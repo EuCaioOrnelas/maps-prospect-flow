@@ -678,21 +678,127 @@ const inferNicheContext = (companyProfile: any): NicheContext => {
     };
   }
 
+  // ══ TELECOMUNICAÇÕES / INTERNET / PROVEDOR / ISP ══
+  if (/(internet|provedor|isp|fibra [oó]ptica|banda larga|telecom|telecomunica|wi-?fi|conectividade|rede de dados|link dedicado|scm|tv por assinatura|tv a cabo)/.test(text)) {
+    return {
+      id: "telecom_isp",
+      name: "Telecomunicações e internet",
+      analysisFocus: `IMPORTANTE: Este é um nicho de INFRAESTRUTURA/UTILIDADE. Redes sociais, avaliações no Google e site NÃO são os fatores decisivos para esta venda. O foco deve ser: REGIÃO DE ATUAÇÃO do lead, DEMANDA por conectividade na área, CONCORRENTES que já atuam no mesmo bairro/região (grandes operadoras como Vivo, Claro, Oi, Ligue, Brisanet, Desktop, etc.), qualidade e preço do serviço atual do lead (se detectável), e COMO se diferenciar da concorrência local (preço, atendimento, velocidade, suporte técnico presencial, sem fidelidade, instalação rápida).`,
+      keyQuestions: [
+        "Quais grandes operadoras/provedores dominam a região do lead?",
+        "O lead está em área residencial, comercial ou rural (impacta demanda e concorrência)?",
+        "Há sinais de insatisfação com provedores atuais na região (avaliações negativas de concorrentes)?",
+        "O lead é um negócio que depende de internet estável (escritório, clínica, loja)?",
+        "A região tem cobertura de fibra ou ainda depende de rádio/satélite?",
+      ],
+      strengthsHint: "Fale sobre localização estratégica do lead (região com demanda), tipo de negócio que precisa de internet estável, possível insatisfação com operadoras grandes.",
+      weaknessesHint: "Fale sobre região já dominada por grandes operadoras, possível contrato de fidelidade do lead com outro provedor, baixa percepção de diferença entre provedores.",
+      competitorContext: "Identifique quais provedores/operadoras provavelmente atuam na região do lead e como o prospector pode se diferenciar (preço, atendimento local, suporte presencial, sem fidelidade).",
+    };
+  }
+
+  // ══ PET / VETERINÁRIO / AGRO ══
+  if (/(pet|veterin[aá]ri|animal|ra[cç][aã]o|banho e tosa|canil|agro|agr[ií]cola|pecu[aá]ria|fertilizante|semente|irriga[cç][aã]o|m[aá]quina agr[ií]cola|insumo)/.test(text)) {
+    return {
+      id: "pet_agro",
+      name: "Pet, veterinário ou agronegócio",
+      analysisFocus: `Foco: avaliar o perfil operacional do lead — se é pet: localização, serviços oferecidos, horário, diferencial. Se é agro: tamanho da operação, região produtora, tipo de cultura/criação, necessidades de insumos ou tecnologia.`,
+      keyQuestions: [
+        "O lead está em região com alta demanda para o produto/serviço vendido?",
+        "Quais concorrentes diretos atuam na mesma região?",
+        "O lead demonstra sinais de operação ativa (avaliações, movimentação)?",
+        "O porte do negócio justifica o investimento no produto/serviço oferecido?",
+      ],
+      strengthsHint: "Fale sobre localização, demanda regional, porte do negócio, operação ativa.",
+      weaknessesHint: "Fale sobre região saturada, porte pequeno, concorrência forte de grandes players.",
+      competitorContext: "Identifique concorrentes diretos na região e como o prospector pode se posicionar.",
+    };
+  }
+
+  // ══ AUTOMOTIVO / MECÂNICA / AUTOPEÇAS ══
+  if (/(automotiv|mec[aâ]nic|oficina|auto pe[cç]as|funilaria|ve[ií]culo|carro|moto|pneu|borracharia|lavagem|polimento|auto center|concession[aá]ria|revis[aã]o)/.test(text)) {
+    return {
+      id: "automotive",
+      name: "Automotivo e mecânica",
+      analysisFocus: `Foco: avaliar como o lead capta clientes na região — presença local, reputação, especialização, confiança. Para este segmento, AVALIAÇÕES e LOCALIZAÇÃO são mais importantes que redes sociais.`,
+      keyQuestions: [
+        "O lead tem boa reputação local (avaliações positivas)?",
+        "Está em localização com fluxo de veículos/fácil acesso?",
+        "Tem especialização clara (marca, tipo de serviço)?",
+        "Depende apenas de indicação ou também capta digitalmente?",
+      ],
+      strengthsHint: "Fale sobre localização, reputação, especialização técnica, demanda constante.",
+      weaknessesHint: "Fale sobre dependência de indicação, falta de diferenciação, região com muitas oficinas.",
+      competitorContext: "Verifique a densidade de oficinas/autopeças na mesma região e como se destacar.",
+    };
+  }
+
+  // ══ ENERGIA SOLAR / SUSTENTABILIDADE ══
+  if (/(solar|fotovoltaic|energia|sustentabilidade|painel solar|placa solar|efici[eê]ncia energ[eé]tica|economia de energia)/.test(text)) {
+    return {
+      id: "solar_energy",
+      name: "Energia solar e sustentabilidade",
+      analysisFocus: `Foco: avaliar o lead como POTENCIAL CLIENTE para energia solar. O que importa: tipo de imóvel (comercial = mais consumo = mais economia), valor provável da conta de energia, região (irradiação solar), área de telhado disponível. Redes sociais e site são SECUNDÁRIOS.`,
+      keyQuestions: [
+        "O lead opera em imóvel próprio (viabiliza instalação)?",
+        "É um negócio com alto consumo de energia (refrigeração, maquinário, ar-condicionado)?",
+        "A região tem boa irradiação solar?",
+        "Concorrentes do lead na região já usam energia solar (pressão competitiva)?",
+      ],
+      strengthsHint: "Fale sobre tipo de negócio com alto consumo, imóvel próprio, região favorável, retorno do investimento.",
+      weaknessesHint: "Fale sobre possível imóvel alugado, baixo consumo, região com pouca irradiação, investimento inicial.",
+      competitorContext: "Verifique se negócios similares na região já adotaram energia solar.",
+    };
+  }
+
+  // ══ SEGURANÇA / MONITORAMENTO / PORTARIA ══
+  if (/(seguran[cç]a|monitoramento|alarme|c[aâ]mera|cftv|portaria|vigilância|cerca el[eé]trica|controle de acesso)/.test(text)) {
+    return {
+      id: "security",
+      name: "Segurança e monitoramento",
+      analysisFocus: `Foco: avaliar a NECESSIDADE DE SEGURANÇA do lead — tipo de negócio (comércio, escritório, indústria), região (índice de criminalidade provável), se já tem sistema de segurança visível. Site e redes sociais são IRRELEVANTES para esta análise.`,
+      keyQuestions: [
+        "O tipo de negócio do lead exige segurança (loja, depósito, escritório com equipamentos)?",
+        "A região do lead tem risco elevado (bairro comercial, periferia, área industrial)?",
+        "O lead já demonstra ter algum sistema de segurança (câmeras, cerca elétrica)?",
+        "O lead opera em horários que exigem monitoramento (noturno, fins de semana)?",
+      ],
+      strengthsHint: "Fale sobre tipo de negócio vulnerável, região de risco, patrimônio a proteger, operação noturna.",
+      weaknessesHint: "Fale sobre possível sistema já instalado, região de baixo risco, orçamento limitado.",
+      competitorContext: "Identifique empresas de segurança que provavelmente atuam na região e como se diferenciar.",
+    };
+  }
+
   // ══ FALLBACK DINÂMICO — usa o texto do perfil da empresa para gerar contexto ══
-  // Em vez de ser genérico, o fallback extrai o que a empresa vende e cria um contexto relevante
+  // Detecta se o nicho é muito específico para diagnóstico remoto
+  const isHighlySpecificNiche = !/(marketing|site|rede|digital|seo|an[uú]ncio|tr[aá]fego|design|foto|v[ií]deo|consultoria|software|app|crm|automa|restaurante|cl[ií]nica|escola|imobili|contab|advoc|seguro|financ|evento|log[ií]stica|transporte|internet|provedor|solar|seguran[cç]a|pet|vet|agro|automotiv|mec[aâ]nic|alimenta)/.test(text);
+
   return {
     id: "dynamic_b2b",
     name: `${niche || products || "Serviço B2B"}`,
-    analysisFocus: `IMPORTANTE: A empresa prospectora atua com "${products || niche}". Adapte TODA a análise para avaliar se o lead é um bom cliente para ESTE serviço/produto específico. Identifique dores, gaps e oportunidades que "${products || niche}" resolve diretamente. Analise a presença digital, operação e maturidade do lead sob a ótica de quem vende "${products || niche}".`,
-    keyQuestions: [
-      `O lead demonstra necessidade real de "${products || niche}"?`,
-      "Quais gaps operacionais ou digitais o lead apresenta que se conectam ao serviço vendido?",
-      "O lead já usa alguma solução concorrente ou alternativa?",
-      "Quais sinais indicam que o lead está pronto (ou não) para comprar?",
-      "O lead tem capacidade financeira aparente para investir no serviço?",
-    ],
-    strengthsHint: `Fale sobre pontos do lead que facilitam a venda de "${products || niche}" — como maturidade, demanda, capacidade de investimento.`,
-    weaknessesHint: `Fale sobre gaps do lead que "${products || niche}" resolve diretamente — dores operacionais, digitais ou comerciais.`,
+    analysisFocus: `IMPORTANTE: A empresa prospectora atua com "${products || niche}". ${isHighlySpecificNiche
+      ? `Este é um nicho MUITO ESPECÍFICO onde dados digitais (redes sociais, site, avaliações) podem NÃO ser relevantes para qualificar o lead. Foque em: REGIÃO/LOCALIZAÇÃO do lead, PORTE DO NEGÓCIO, TIPO DE OPERAÇÃO, possíveis CONCORRENTES na região que vendem algo similar ao prospector, e DEMANDA regional pelo produto/serviço. Se não for possível inferir informações úteis com os dados disponíveis, seja HONESTO e informe que o nicho exige prospecção direta para entender melhor o perfil do lead.`
+      : `Adapte TODA a análise para avaliar se o lead é um bom cliente para ESTE serviço/produto específico. Identifique dores, gaps e oportunidades que "${products || niche}" resolve diretamente.`}`,
+    keyQuestions: isHighlySpecificNiche
+      ? [
+          `O lead está em uma região com demanda provável para "${products || niche}"?`,
+          "O porte/tipo do negócio do lead justifica a compra deste produto/serviço?",
+          "Existem concorrentes do prospector atuando na mesma região?",
+          "Com os dados disponíveis, é possível qualificar este lead ou é necessária prospecção direta?",
+        ]
+      : [
+          `O lead demonstra necessidade real de "${products || niche}"?`,
+          "Quais gaps operacionais ou digitais o lead apresenta que se conectam ao serviço vendido?",
+          "O lead já usa alguma solução concorrente ou alternativa?",
+          "Quais sinais indicam que o lead está pronto (ou não) para comprar?",
+          "O lead tem capacidade financeira aparente para investir no serviço?",
+        ],
+    strengthsHint: isHighlySpecificNiche
+      ? `ATENÇÃO: Se não há dados suficientes para identificar pontos fortes REAIS e CONCRETOS deste lead em relação a "${products || niche}", NÃO INVENTE. Informe que o nicho é muito específico e que a prospecção direta (conversa) é necessária para entender o perfil real do lead. Apenas liste pontos fortes se forem INFERÍVEIS dos dados disponíveis (localização, porte, tipo de negócio).`
+      : `Fale sobre pontos do lead que facilitam a venda de "${products || niche}" — como maturidade, demanda, capacidade de investimento.`,
+    weaknessesHint: isHighlySpecificNiche
+      ? `ATENÇÃO: Se não há dados suficientes para identificar pontos fracos REAIS e CONCRETOS deste lead em relação a "${products || niche}", NÃO INVENTE. Informe que o nicho é muito específico e que a prospecção direta (conversa) é necessária para mapear as dores reais do lead. Apenas liste pontos fracos se forem INFERÍVEIS dos dados disponíveis.`
+      : `Fale sobre gaps do lead que "${products || niche}" resolve diretamente — dores operacionais, digitais ou comerciais.`,
     competitorContext: `Verifique se concorrentes do lead na região já utilizam soluções similares a "${products || niche}", o que pressiona o lead a adotar também.`,
   };
 };
@@ -1163,6 +1269,9 @@ ${socialPages.length > 0
    - Se vende consultoria → "Sinais de crescimento desordenado sem processos definidos"
    - Se vende produtos físicos → "Vende apenas presencialmente, sem e-commerce"
    - Se vende seguros → "Sem conteúdo educativo sobre proteção financeira"
+   - Se vende internet/telecom → "Região dominada por grandes operadoras, mas lead em área com possível insatisfação por atendimento local"
+   - Se vende energia solar → "Negócio com alto consumo energético em região com boa irradiação solar"
+   - Se vende segurança → "Comércio em região de risco sem sistema de monitoramento visível"
    - QUALQUER outro nicho → Conecte CADA ponto à dor que o serviço/produto vendido resolve
 2. NÃO use frases como "boa reputação no Google" como ponto forte A MENOS QUE explique como isso beneficia a venda do serviço específico.
 3. O campo engajamento_atividade NÃO deve ser zero se houver qualquer sinal de atividade (perfil de rede social existente, site com conteúdo, avaliações recentes). Mínimo 3 se houver algum sinal.
@@ -1171,6 +1280,15 @@ ${socialPages.length > 0
 6. O diagnóstico DEVE incluir insights sobre concorrência regional e demanda da região.
 7. A análise de redes sociais DEVE focar em presença, bio, identidade visual e sinais de atividade detectáveis — NÃO mencione "última publicação" pois essa informação não está disponível.
 8. A ação recomendada DEVE citar especificamente qual produto/serviço da empresa prospectora usar e como conectar à dor principal do lead.
+9. REGRA PARA NICHOS ESPECÍFICOS/INCOMUNS: Se o nicho da empresa prospectora é muito específico (ex: vende internet, energia solar, segurança, equipamentos industriais, insumos agrícolas, etc.) e os dados digitais do lead (redes sociais, site, avaliações) NÃO SÃO RELEVANTES para a venda, então:
+   a) NÃO force pontos fortes e fracos baseados em presença digital — foque em LOCALIZAÇÃO, PORTE, REGIÃO, DEMANDA e CONCORRÊNCIA
+   b) Se NÃO há dados suficientes para inferir pontos fortes ou fracos REAIS, retorne arrays vazios [] e explique no diagnóstico que "o nicho é muito específico e a prospecção direta (conversa com o lead) é necessária para mapear as dores reais e oportunidades"
+   c) Priorize análise de: concorrência na região, demanda regional pelo produto/serviço, tipo de negócio do lead e se ele se encaixa como cliente ideal
+   d) Para telecomunicações/internet: foque em quais operadoras dominam a região, como se diferenciar (preço, atendimento local, suporte presencial, sem fidelidade), e tipo de negócio do lead (escritório/loja = precisa de internet estável)
+10. ADAPTE O PESO DAS DIMENSÕES do score conforme o nicho:
+    - Nichos digitais (marketing, redes, site, SEO): estrutura_digital e engajamento são mais importantes
+    - Nichos de infraestrutura (internet, solar, segurança): acessibilidade e potencial_venda são mais importantes, estrutura_digital é menos relevante
+    - Nichos de serviço local (mecânica, manutenção, pet): reputação e acessibilidade são mais importantes
 
 Retorne APENAS um JSON válido:
 {
@@ -1182,14 +1300,14 @@ Retorne APENAS um JSON válido:
   "potencial_venda": <0-15>,
   "nivel_oportunidade": "Alta|Média|Baixa",
   "probabilidade_fechamento": "Muito Alta|Alta|Moderada|Baixa",
-  "diagnostico": "4-6 frases incluindo análise regional, concorrência e demanda",
+  "diagnostico": "4-6 frases incluindo análise regional, concorrência e demanda. Se nicho muito específico, mencione que prospecção direta é necessária.",
   "acao_recomendada": "3-5 frases conectando dor principal aos serviços da empresa prospectora",
-  "pontos_fortes": ["ponto adaptado ao nicho 1", "ponto adaptado ao nicho 2", "ponto 3"],
-  "pontos_fracos": ["fraqueza adaptada ao nicho 1", "fraqueza adaptada ao nicho 2", "fraqueza 3"],
+  "pontos_fortes": ["ponto adaptado ao nicho"] OU [] se nicho muito específico sem dados suficientes,
+  "pontos_fracos": ["fraqueza adaptada ao nicho"] OU [] se nicho muito específico sem dados suficientes,
   "analise_site": "análise profunda adaptada ao nicho da prospectora",
-  "analise_redes_sociais": "análise de presença, bio, identidade visual e sinais de atividade detectáveis via crawling",
+  "analise_redes_sociais": "análise adaptada — para nichos não-digitais, mencione que redes sociais não são relevantes para esta análise",
   "analise_reputacao_detalhada": "...",
-  "analise_concorrencia_regional": "análise de concorrentes no raio de 5km e posicionamento",
+  "analise_concorrencia_regional": "análise de concorrentes na região — para telecom, identifique operadoras/provedores locais",
   "analise_demanda_regional": "análise de demanda baseada na densidade demográfica e porte da cidade",
   "justificativa_score": "1-2 frases objetivas"
 }`;
