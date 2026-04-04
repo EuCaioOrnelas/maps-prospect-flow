@@ -708,7 +708,7 @@ export default function OpportunitiesManagement() {
               <Sparkles size={14} className="text-primary" />
               Diagnóstico IA
             </h4>
-            <Textarea value={editDiagnosis} onChange={(e) => setEditDiagnosis(e.target.value)} className="text-sm min-h-[80px]" placeholder="Escreva o diagnóstico..." />
+            <Textarea value={editDiagnosis} onChange={(e) => setEditDiagnosis(e.target.value)} className="text-sm min-h-[120px]" placeholder="Escreva o diagnóstico..." />
           </div>
         ) : lead.ai_diagnosis ? (
           <div className="bg-card border border-border rounded-xl p-4 space-y-2">
@@ -720,26 +720,7 @@ export default function OpportunitiesManagement() {
           </div>
         ) : null}
 
-        {/* Oportunidade Encontrada */}
-        {editingDiagnostic ? (
-          <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 space-y-2">
-            <h4 className="text-sm font-semibold flex items-center gap-2 text-primary">
-              <Zap size={14} />
-              Oportunidade Encontrada
-            </h4>
-            <Textarea value={editRecommendedAction} onChange={(e) => setEditRecommendedAction(e.target.value)} className="text-sm min-h-[60px]" placeholder="Descreva a oportunidade..." />
-          </div>
-        ) : lead.ai_recommended_action ? (
-          <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 space-y-2">
-            <h4 className="text-sm font-semibold flex items-center gap-2 text-primary">
-              <Zap size={14} />
-              Oportunidade Encontrada
-            </h4>
-            <p className="text-sm text-muted-foreground">{lead.ai_recommended_action}</p>
-          </div>
-        ) : null}
-
-        {/* Diagnóstico Adicional (custom) */}
+        {/* Diagnóstico Adicional (custom) - antes da Oportunidade */}
         {editingDiagnostic ? (
           <div className="bg-card border border-border rounded-xl p-4 space-y-2">
             <h4 className="text-sm font-semibold flex items-center gap-2">
@@ -747,7 +728,7 @@ export default function OpportunitiesManagement() {
               Diagnóstico Adicional
             </h4>
             <p className="text-xs text-muted-foreground">Adicione observações extras da sua análise pessoal. A IA usará isso para melhorar mensagens e respostas.</p>
-            <Textarea value={editCustomDiagnosis} onChange={(e) => setEditCustomDiagnosis(e.target.value)} className="text-sm min-h-[80px]" placeholder="Ex: O dono é muito receptivo, gosta de tecnologia, já tentou contratar serviço similar..." />
+            <Textarea value={editCustomDiagnosis} onChange={(e) => setEditCustomDiagnosis(e.target.value)} className="text-sm min-h-[120px]" placeholder="Ex: O dono é muito receptivo, gosta de tecnologia, já tentou contratar serviço similar..." />
           </div>
         ) : lead.enrichment_data?.custom_diagnosis ? (
           <div className="bg-card border border-border rounded-xl p-4 space-y-2">
@@ -756,6 +737,25 @@ export default function OpportunitiesManagement() {
               Diagnóstico Adicional
             </h4>
             <p className="text-sm text-muted-foreground leading-relaxed">{lead.enrichment_data.custom_diagnosis}</p>
+          </div>
+        ) : null}
+
+        {/* Oportunidade Encontrada - sempre no final */}
+        {editingDiagnostic ? (
+          <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 space-y-2">
+            <h4 className="text-sm font-semibold flex items-center gap-2 text-primary">
+              <Zap size={14} />
+              Oportunidade Encontrada
+            </h4>
+            <Textarea value={editRecommendedAction} onChange={(e) => setEditRecommendedAction(e.target.value)} className="text-sm min-h-[100px]" placeholder="Descreva a oportunidade..." />
+          </div>
+        ) : lead.ai_recommended_action ? (
+          <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 space-y-2">
+            <h4 className="text-sm font-semibold flex items-center gap-2 text-primary">
+              <Zap size={14} />
+              Oportunidade Encontrada
+            </h4>
+            <p className="text-sm text-muted-foreground">{lead.ai_recommended_action}</p>
           </div>
         ) : null}
       </div>
