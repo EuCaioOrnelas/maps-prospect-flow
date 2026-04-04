@@ -95,7 +95,8 @@ export interface CampaignState {
 
 const WhatsAppCampaign = () => {
   const [activeTab, setActiveTab] = useState<"new" | "active" | "history">("new");
-  const [step, setStep] = useState<"leads" | "messages" | "settings" | "summary" | "running">("leads");
+  const [step, setStep] = useState<"leads" | "message_type" | "messages" | "settings" | "summary" | "running">("leads");
+  const [messageMode, setMessageMode] = useState<MessageMode>("custom");
   const [selectedLeads, setSelectedLeads] = useState<Lead[]>([]);
   const [messages, setMessages] = useState<string[]>(["", "", "", "", ""]);
   const [campaignName, setCampaignName] = useState("");
