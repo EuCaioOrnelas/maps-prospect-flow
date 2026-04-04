@@ -55,7 +55,8 @@ export const CampaignSummary = ({
   onBack,
   onStartCampaign,
   canStart,
-  isStarting
+  isStarting,
+  messageMode = 'custom'
 }: CampaignSummaryProps) => {
   
   const formatTime = (seconds: number) => {
