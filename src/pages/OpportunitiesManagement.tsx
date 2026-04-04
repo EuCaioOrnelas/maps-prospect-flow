@@ -739,16 +739,25 @@ export default function OpportunitiesManagement() {
           </div>
         ) : null}
 
-        {/* Probabilidade de Fechamento (edit mode) */}
-        {editingDiagnostic && (
+        {/* Diagnóstico Adicional (custom) */}
+        {editingDiagnostic ? (
           <div className="bg-card border border-border rounded-xl p-4 space-y-2">
             <h4 className="text-sm font-semibold flex items-center gap-2">
-              <Target size={14} className="text-primary" />
-              Probabilidade de Fechamento
+              <Pencil size={14} className="text-primary" />
+              Diagnóstico Adicional
             </h4>
-            <Input value={editClosingProbability} onChange={(e) => setEditClosingProbability(e.target.value)} className="text-sm h-8" placeholder="Ex: Alta, Média, Baixa..." />
+            <p className="text-xs text-muted-foreground">Adicione observações extras da sua análise pessoal. A IA usará isso para melhorar mensagens e respostas.</p>
+            <Textarea value={editCustomDiagnosis} onChange={(e) => setEditCustomDiagnosis(e.target.value)} className="text-sm min-h-[80px]" placeholder="Ex: O dono é muito receptivo, gosta de tecnologia, já tentou contratar serviço similar..." />
           </div>
-        )}
+        ) : lead.enrichment_data?.custom_diagnosis ? (
+          <div className="bg-card border border-border rounded-xl p-4 space-y-2">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <Pencil size={14} className="text-primary" />
+              Diagnóstico Adicional
+            </h4>
+            <p className="text-sm text-muted-foreground leading-relaxed">{lead.enrichment_data.custom_diagnosis}</p>
+          </div>
+        ) : null}
       </div>
     );
   };
