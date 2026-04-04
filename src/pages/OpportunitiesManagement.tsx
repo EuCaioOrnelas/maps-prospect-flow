@@ -1048,17 +1048,17 @@ export default function OpportunitiesManagement() {
               )}
 
               {/* KPI Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: "Total", value: stats.total, icon: <Target size={15} className="text-primary" />, accent: "border-l-primary" },
-                  { label: "Qualificados", value: stats.scored, icon: <Sparkles size={15} className="text-blue-400" />, accent: "border-l-blue-400" },
-                  { label: "Alta Oportunidade", value: stats.highOpp, icon: <TrendingUp size={15} className="text-emerald-400" />, accent: "border-l-emerald-400" },
+                  { label: "Total", value: stats.total, icon: <Target size={17} className="text-primary/80" />, circle: "bg-primary/[0.07]" },
+                  { label: "Qualificados", value: stats.scored, icon: <Sparkles size={17} className="text-blue-400/80" />, circle: "bg-blue-400/[0.07]" },
+                  { label: "Alta Oportunidade", value: stats.highOpp, icon: <TrendingUp size={17} className="text-emerald-400/80" />, circle: "bg-emerald-400/[0.07]" },
                   {
-                    label: "Score Médio", value: stats.avgScore, icon: <BarChart3 size={15} className="text-amber-400" />, accent: "border-l-amber-400",
+                    label: "Score Médio", value: stats.avgScore, icon: <BarChart3 size={17} className="text-amber-400/80" />, circle: "bg-amber-400/[0.07]",
                     extra: (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <button className="p-0.5 rounded hover:bg-muted/60 transition-colors"><Info size={12} className="text-muted-foreground/50" /></button>
+                          <button className="p-0.5 rounded hover:bg-muted/60 transition-colors"><Info size={12} className="text-muted-foreground/40" /></button>
                         </PopoverTrigger>
                         <PopoverContent side="bottom" align="end" className="w-80">{scoreInfoContent}</PopoverContent>
                       </Popover>
@@ -1067,20 +1067,25 @@ export default function OpportunitiesManagement() {
                 ].map((kpi) => (
                   <div
                     key={kpi.label}
-                    className={`border-l-2 ${kpi.accent} bg-card border border-border/30 rounded-lg px-4 py-3.5 transition-colors hover:bg-muted/30`}
+                    className="group relative overflow-hidden bg-card border border-border/30 rounded-[10px] px-5 py-4 transition-colors hover:border-border/50"
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">{kpi.label}</span>
-                      <div className="flex items-center gap-1">
-                        {(kpi as any).extra || null}
-                        {kpi.icon}
+                    {/* Background accent circle */}
+                    <div className={`absolute -top-5 -right-4 w-[72px] h-[72px] rounded-full ${kpi.circle} pointer-events-none transition-transform duration-500 group-hover:scale-110`} />
+
+                    <div className="relative z-10">
+                      <div className="flex items-start justify-between mb-4">
+                        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">{kpi.label}</span>
+                        <div className="flex items-center gap-1.5">
+                          {(kpi as any).extra || null}
+                          {kpi.icon}
+                        </div>
                       </div>
+                      {loading ? (
+                        <Skeleton className="h-8 w-14" />
+                      ) : (
+                        <p className="text-[30px] font-bold tracking-[-0.02em] text-foreground leading-none tabular-nums">{kpi.value}</p>
+                      )}
                     </div>
-                    {loading ? (
-                      <Skeleton className="h-8 w-14" />
-                    ) : (
-                      <p className="text-[28px] font-semibold tracking-tight text-foreground leading-none tabular-nums">{kpi.value}</p>
-                    )}
                   </div>
                 ))}
               </div>
