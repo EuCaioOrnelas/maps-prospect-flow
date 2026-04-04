@@ -294,6 +294,14 @@ export const CampaignSettings = ({
                 A cada {pauseAfterContacts} contatos, o sistema pausará automaticamente por {pauseMinutes} minuto{pauseMinutes > 1 ? 's' : ''} antes de continuar.
               </p>
             </div>
+
+            <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <p className="text-xs text-amber-400 font-medium mb-1">⚠️ Limites mínimos obrigatórios</p>
+              <p className="text-xs text-muted-foreground">
+                Pausa mínima de <strong className="text-foreground">5 minutos</strong> a cada <strong className="text-foreground">30 contatos</strong> no máximo. 
+                Aumentar a pausa e reduzir o número de contatos entre pausas diminui significativamente o risco de bloqueio por spam.
+              </p>
+            </div>
           </div>
         )}
 
