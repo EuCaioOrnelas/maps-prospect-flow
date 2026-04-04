@@ -493,6 +493,7 @@ export default function OpportunitiesManagement() {
         ...(typeof lead.enrichment_data === 'object' && lead.enrichment_data ? lead.enrichment_data : {}),
         pontos_fortes: editPontosFortes.filter(p => p.trim()),
         pontos_fracos: editPontosFracos.filter(p => p.trim()),
+        custom_diagnosis: editCustomDiagnosis.trim(),
       };
 
       const { error } = await supabase
@@ -500,7 +501,6 @@ export default function OpportunitiesManagement() {
         .update({
           ai_diagnosis: editDiagnosis,
           ai_recommended_action: editRecommendedAction,
-          closing_probability: editClosingProbability,
           enrichment_data: updatedEnrichment,
         })
         .eq('id', lead.id)
@@ -508,19 +508,16 @@ export default function OpportunitiesManagement() {
 
       if (error) throw error;
 
-      // Update local state
       setLeads(prev => prev.map(l => l.id === lead.id ? {
         ...l,
         ai_diagnosis: editDiagnosis,
         ai_recommended_action: editRecommendedAction,
-        closing_probability: editClosingProbability,
         enrichment_data: updatedEnrichment,
       } : l));
       setSelectedLead(prev => prev && prev.id === lead.id ? {
         ...prev,
         ai_diagnosis: editDiagnosis,
         ai_recommended_action: editRecommendedAction,
-        closing_probability: editClosingProbability,
         enrichment_data: updatedEnrichment,
       } : prev);
       setEditingDiagnostic(false);
