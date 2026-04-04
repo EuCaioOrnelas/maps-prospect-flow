@@ -680,6 +680,7 @@ const WhatsAppCampaign = () => {
     setSelectedLeads([]);
     setMessages(["", "", "", "", ""]);
     setCampaignName("");
+    setMessageMode("custom");
     setDelaySecondsMin(120);
     setDelaySecondsMax(180);
     setIsScheduled(false);
