@@ -107,10 +107,8 @@ ${enrichment.custom_diagnosis ? `\n═══ OBSERVAÇÕES DO PROSPECTOR (diagn�
 IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se não há pontos fracos (nicho específico), use a REGIÃO e o TIPO DE NEGÓCIO como gancho. Se há observações do prospector, PRIORIZE essas informações pois são análises reais feitas pelo usuário.
 ` : "";
 
-    // Determine greeting based on current time (BRT = UTC-3)
-    const now = new Date();
-    const brtHour = (now.getUTCHours() - 3 + 24) % 24;
-    const greeting = brtHour < 12 ? "Bom dia" : brtHour < 18 ? "Boa tarde" : "Boa noite";
+    // Generate a random seed to force unique messages even for similar diagnostics
+    const uniqueSeed = crypto.randomUUID().slice(0, 8);
 
     // Determine niche category for approach strategy
     const nicheText = companyProfile ? `${companyProfile.company_niche || ""} ${companyProfile.company_products || ""}`.toLowerCase() : "";
