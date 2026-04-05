@@ -1,6 +1,11 @@
 import { motion } from "framer-motion";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { Star, Quote } from "lucide-react";
+import avatar1 from "@/assets/avatars/avatar-1.jpg";
+import avatar2 from "@/assets/avatars/avatar-2.jpg";
+import avatar3 from "@/assets/avatars/avatar-3.jpg";
+import avatar4 from "@/assets/avatars/avatar-4.jpg";
+import avatar5 from "@/assets/avatars/avatar-5.jpg";
 
 interface Testimonial {
   text: string;
