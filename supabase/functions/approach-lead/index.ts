@@ -146,18 +146,27 @@ DADOS DO LEAD:
 ═══ ESTRATÉGIA DE ABORDAGEM POR NICHO ═══
 ${nicheStrategy}
 
+═══ REGRA DE UNICIDADE (SEED: ${uniqueSeed}) ═══
+Cada mensagem DEVE ser completamente diferente de qualquer outra, mesmo que o diagnóstico seja idêntico.
+- Varie a estrutura, o gancho de abertura, os argumentos, as perguntas de fechamento
+- Use abordagens criativas: curiosidade, dado surpreendente, observação específica, pergunta provocativa
+- NUNCA repita padrões como "Percebi que...", "Notei que...", "Vi que..." — encontre formas novas
+- O seed acima garante que esta mensagem é única — use-o como inspiração para variar o tom e estilo
+
 ═══ ESTRUTURA OBRIGATÓRIA (4 parágrafos, separados por \\n\\n) ═══
-1. "${greeting}!" + GANCHO baseado ${hasDiagnostic && pontosFracos.length > 0 ? "nos PONTOS FRACOS do diagnóstico" : "na REGIÃO e TIPO DE NEGÓCIO do lead"}
+1. Abertura ATEMPORAL (ex: "Olá!", "Oi!", "E aí!") + GANCHO baseado ${hasDiagnostic && pontosFracos.length > 0 ? "nos PONTOS FRACOS do diagnóstico" : "na REGIÃO e TIPO DE NEGÓCIO do lead"}
 2. Apresentação breve (nome + empresa + o que faz em 1 linha)
 3. Proposta de valor conectada à DOR REAL do lead (use dados do diagnóstico se disponível)
 4. Fechamento gentil com pergunta leve
 
 ═══ REGRAS CRÍTICAS ═══
+- ⛔ PROIBIDO usar cumprimentos temporais: "Bom dia", "Boa tarde", "Boa noite" — a mensagem pode ser enviada a QUALQUER hora
+- ⛔ PROIBIDO usar "Tudo bem?", "Como vai?", "Como está?" — vá direto ao gancho
+- ⛔ PROIBIDO aberturas genéricas repetitivas — seja criativo e direto
 - ${companyProfile ? `Represente "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : "Mensagem genérica"}
 - ${companyProfile ? `SOMENTE fale sobre "${companyProfile.company_products}" — NUNCA mencione serviços que a empresa NÃO vende` : ""}
 - ${companyProfile ? `Use "${companyProfile.company_differential}" como argumento` : ""}
 - Máx 4 parágrafos CURTOS separados por \\n\\n
-- NÃO use "Tudo bem?" ou "Como vai?" — vá direto ao gancho
 - NÃO mencione dados irrelevantes ao nicho (ex: não fale de avaliações se vende internet)
 - ${pontosFracos.length === 0 && hasDiagnostic ? "O diagnóstico não identificou pontos fracos específicos — use região e tipo de negócio como gancho" : ""}
 - ${companyProfile ? `Assine como "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : ""}
