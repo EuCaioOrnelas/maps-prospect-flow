@@ -1,6 +1,11 @@
 import { motion } from "framer-motion";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { Star, Quote } from "lucide-react";
+import avatar1 from "@/assets/avatars/avatar-1.jpg";
+import avatar2 from "@/assets/avatars/avatar-2.jpg";
+import avatar3 from "@/assets/avatars/avatar-3.jpg";
+import avatar4 from "@/assets/avatars/avatar-4.jpg";
+import avatar5 from "@/assets/avatars/avatar-5.jpg";
 
 interface Testimonial {
   text: string;
@@ -144,7 +149,20 @@ export const TestimonialsSection = () => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
+          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full glass mb-6">
+            <div className="flex -space-x-2">
+              {[avatar1, avatar2, avatar3, avatar4, avatar5].map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  alt={`Cliente ${i + 1}`}
+                  loading="lazy"
+                  width={28}
+                  height={28}
+                  className="w-7 h-7 rounded-full border-2 border-background object-cover"
+                />
+              ))}
+            </div>
             <Star size={16} className="text-primary" />
             <span className="text-sm text-muted-foreground">
               +500 empresas convertendo com IA
