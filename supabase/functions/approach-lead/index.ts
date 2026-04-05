@@ -146,12 +146,11 @@ DADOS DO LEAD:
 ═══ ESTRATÉGIA DE ABORDAGEM POR NICHO ═══
 ${nicheStrategy}
 
-═══ REGRA DE UNICIDADE (SEED: ${uniqueSeed}) ═══
-Cada mensagem DEVE ser completamente diferente de qualquer outra, mesmo que o diagnóstico seja idêntico.
-- Varie a estrutura, o gancho de abertura, os argumentos, as perguntas de fechamento
-- Use abordagens criativas: curiosidade, dado surpreendente, observação específica, pergunta provocativa
-- NUNCA repita padrões como "Percebi que...", "Notei que...", "Vi que..." — encontre formas novas
-- O seed acima garante que esta mensagem é única — use-o como inspiração para variar o tom e estilo
+═══ VARIAÇÃO NATURAL (SEED: ${uniqueSeed}) ═══
+A mensagem deve parecer escrita à mão, de forma única para ESTE lead específico.
+- Use o NOME DA EMPRESA, a CIDADE, o NICHO e os dados disponíveis como diferenciadores naturais
+- Varie levemente o tom, a forma de abordar e a pergunta de fechamento
+- Mantenha a mensagem natural e humana — nada forçado ou robótico
 
 ═══ ESTRUTURA OBRIGATÓRIA (4 parágrafos, separados por \\n\\n) ═══
 1. Abertura ATEMPORAL (ex: "Olá!", "Oi!", "E aí!") + GANCHO baseado ${hasDiagnostic && pontosFracos.length > 0 ? "nos PONTOS FRACOS do diagnóstico" : "na REGIÃO e TIPO DE NEGÓCIO do lead"}
