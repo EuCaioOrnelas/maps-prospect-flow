@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Shield, CheckCircle, Lock, Zap, Globe, ExternalLink, Star } from "lucide-react";
+import { Shield, CheckCircle, Lock, Zap, Globe, ExternalLink, BadgeCheck } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 export const OfficialAPISection = () => {
