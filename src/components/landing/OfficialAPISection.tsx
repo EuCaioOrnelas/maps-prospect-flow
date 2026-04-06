@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Shield, CheckCircle, Lock, Zap, Globe, ExternalLink, Star } from "lucide-react";
+import { Shield, CheckCircle, Lock, Zap, Globe, ExternalLink, BadgeCheck } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 export const OfficialAPISection = () => {
@@ -75,16 +75,17 @@ export const OfficialAPISection = () => {
           <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl" />
 
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
-            {/* Globe Icon area */}
+            {/* Icon with label */}
             <div className="flex-shrink-0">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/30 flex items-center justify-center shadow-lg">
-                <Globe className="w-10 h-10 md:w-12 md:h-12 text-green-500" />
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/30 flex flex-col items-center justify-center shadow-lg gap-1">
+                <Globe className="w-7 h-7 md:w-8 md:h-8 text-green-500" />
+                <span className="text-[8px] md:text-[9px] font-bold text-green-600 uppercase tracking-wide leading-tight text-center">Meta API<br/>Oficial</span>
               </div>
             </div>
 
             <div className="flex-1 text-center md:text-left">
               <div className="flex items-center gap-2 justify-center md:justify-start mb-3">
-                <Star className="w-5 h-5 text-green-500 fill-green-500" />
+                <BadgeCheck className="w-5 h-5 text-green-500" />
                 <h3 className="font-display text-xl md:text-2xl font-bold">
                   Integração Verificada com a Meta
                 </h3>
