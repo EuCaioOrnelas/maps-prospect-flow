@@ -11,13 +11,6 @@ export const Footer = () => {
     <footer className="py-8 sm:py-12 border-t border-border overflow-hidden w-full">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="flex flex-col items-center gap-6 text-center">
-          {/* Selos de qualidade */}
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-            <img src={metaPartner} alt="Meta Business Partner" className="h-12 sm:h-14 object-contain rounded-md" />
-            <img src={googlePartner} alt="Google Partner Premier 2026" className="h-12 sm:h-14 object-contain rounded-md" />
-            <img src={gptwBadge} alt="Great Place To Work Certificado" className="h-12 sm:h-14 object-contain rounded-md" />
-          </div>
-
           <div className="flex flex-col items-center gap-4 sm:gap-6 md:flex-row md:justify-between md:text-left w-full">
             <Logo size="sm" />
             
@@ -41,7 +34,14 @@ export const Footer = () => {
             </p>
           </div>
 
-          <div className="border-t border-border/50 pt-4 w-full">
+          {/* Selos de qualidade - acima do aviso */}
+          <div className="border-t border-border/50 pt-6 w-full">
+            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 mb-6">
+              <img src={metaPartner} alt="Meta Business Partner" className="h-16 sm:h-20 object-contain" />
+              <img src={googlePartner} alt="Google Partner Premier 2026" className="h-16 sm:h-20 object-contain" />
+              <img src={gptwBadge} alt="Great Place To Work Certificado" className="h-16 sm:h-20 object-contain" />
+            </div>
+
             <p className="text-[10px] sm:text-xs text-muted-foreground/40 text-center max-w-3xl mx-auto leading-relaxed">
               <strong className="text-muted-foreground/50">Aviso importante:</strong> O uso de ferramentas de automação para WhatsApp envolve riscos inerentes, incluindo possível bloqueio de números pelo WhatsApp. O Wiize oferece recursos de proteção e limites inteligentes para ajudar a reduzir esses riscos, mas não garante a ausência de bloqueios. Ao utilizar nossos serviços, você concorda em assumir total responsabilidade pelo uso da plataforma.
             </p>
