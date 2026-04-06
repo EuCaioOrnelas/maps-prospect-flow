@@ -18,7 +18,7 @@ export const OfficialAPISection = () => {
       description: "Todas as mensagens são protegidas pela criptografia nativa do WhatsApp. Seus dados e dos seus leads estão seguros.",
     },
     {
-      icon: BadgeCheck,
+      icon: CheckCircle,
       title: "Conta Business Verificada",
       description: "Integração direta com o Meta Business Suite. Seu número é verificado pela Meta, aumentando a confiança e taxa de entrega.",
     },
