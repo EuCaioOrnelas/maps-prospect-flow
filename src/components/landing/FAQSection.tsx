@@ -16,7 +16,7 @@ const faqs = [
   },
   {
     question: "Quantos leads recebo por busca?",
-    answer: "Cada busca estratégica retorna até 50 leads pré-qualificados. Nossa IA filtra e seleciona apenas empresas com atividade recente, avaliações reais e informações de contato atualizadas."
+    answer: "Cada busca estratégica retorna até 60 leads pré-qualificados. Nossa IA filtra e seleciona apenas empresas com atividade recente, avaliações reais e informações de contato atualizadas."
   },
   {
     question: "Como funciona a geração de mensagens personalizadas com IA?",

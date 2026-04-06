@@ -382,7 +382,7 @@ serve(async (req) => {
     console.log(`Searching for: ${keyword} in ${location}`);
 
     // Minimum and maximum targets for valid leads
-    const MIN_VALID_LEADS = 50;
+    const MIN_VALID_LEADS = 60;
     const MAX_LEADS_PER_LOCATION = 60; // Max 3 pages x 20 results = 3 SERP API searches per location
     const resultsPerPage = 20;
     const MAX_SERP_CALLS = 3; // Hard limit: max 3 SerpAPI calls per user search (3x20=60, trim to 50)
@@ -568,8 +568,8 @@ serve(async (req) => {
       }
     }
 
-    // Final trim to max 50 leads
-    const leads = allValidLeads.slice(0, 50);
+    // Final trim to max 60 leads
+    const leads = allValidLeads.slice(0, 60);
     
     console.log(`\n=== SEARCH SUMMARY ===`);
     console.log(`Locations searched: ${searchedLocations.join(', ')}`);
