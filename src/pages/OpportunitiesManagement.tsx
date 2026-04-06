@@ -1381,28 +1381,58 @@ export default function OpportunitiesManagement() {
               </div>
 
               {/* Pagination */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <span className="text-sm text-muted-foreground">
-                  {filteredLeads.length} oportunidade(s) — Página {currentPage} de {totalPages}
+                  {filteredLeads.length.toLocaleString('pt-BR')} oportunidade(s) — Página {currentPage.toLocaleString('pt-BR')} de {totalPages.toLocaleString('pt-BR')}
                 </span>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+                <div className="flex items-center gap-1 flex-wrap justify-center">
+                  {/* First page */}
+                  <Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="h-8 px-2 text-xs">
+                    <ChevronLeft size={14} /><ChevronLeft size={14} className="-ml-2" />
+                  </Button>
+                  {/* Previous */}
+                  <Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="h-8 px-2">
                     <ChevronLeft size={16} />
                   </Button>
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let page: number;
-                    if (totalPages <= 5) page = i + 1;
-                    else if (currentPage <= 3) page = i + 1;
-                    else if (currentPage >= totalPages - 2) page = totalPages - 4 + i;
-                    else page = currentPage - 2 + i;
-                    return (
-                      <Button key={page} size="sm" variant={page === currentPage ? "default" : "outline"} onClick={() => setCurrentPage(page)} className="w-8 h-8 p-0">
-                        {page}
-                      </Button>
-                    );
-                  })}
-                  <Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+
+                  {(() => {
+                    const pages: (number | 'ellipsis-start' | 'ellipsis-end')[] = [];
+                    if (totalPages <= 7) {
+                      for (let i = 1; i <= totalPages; i++) pages.push(i);
+                    } else {
+                      pages.push(1);
+                      if (currentPage > 4) pages.push('ellipsis-start');
+                      const start = Math.max(2, currentPage - 2);
+                      const end = Math.min(totalPages - 1, currentPage + 2);
+                      for (let i = start; i <= end; i++) pages.push(i);
+                      if (currentPage < totalPages - 3) pages.push('ellipsis-end');
+                      pages.push(totalPages);
+                    }
+                    return pages.map((p, idx) => {
+                      if (p === 'ellipsis-start' || p === 'ellipsis-end') {
+                        return <span key={p} className="px-1 text-muted-foreground text-xs select-none">…</span>;
+                      }
+                      return (
+                        <Button
+                          key={`page-${p}-${idx}`}
+                          size="sm"
+                          variant={p === currentPage ? "default" : "outline"}
+                          onClick={() => setCurrentPage(p)}
+                          className="h-8 min-w-[2rem] px-2 text-xs"
+                        >
+                          {p.toLocaleString('pt-BR')}
+                        </Button>
+                      );
+                    });
+                  })()}
+
+                  {/* Next */}
+                  <Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="h-8 px-2">
                     <ChevronRight size={16} />
+                  </Button>
+                  {/* Last page */}
+                  <Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)} className="h-8 px-2 text-xs">
+                    <ChevronRight size={14} /><ChevronRight size={14} className="-ml-2" />
                   </Button>
                 </div>
               </div>
