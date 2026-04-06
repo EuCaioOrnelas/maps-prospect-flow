@@ -165,6 +165,35 @@ const LeadCardComponent = ({
         </div>
       )}
 
+      {/* WhatsApp Score */}
+      {scoreData && scoreData.score_total > 0 && (
+        <div
+          className="mb-2 py-1.5 px-2 rounded-md bg-muted/30 border border-border/30 flex items-center justify-between gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={(e) => { e.stopPropagation(); navigate('/crm/score'); }}
+        >
+          <div className="flex items-center gap-1.5">
+            <Trophy className={cn("w-3 h-3", 
+              scoreData.score_total >= 801 ? "text-emerald-400" :
+              scoreData.score_total >= 601 ? "text-purple-400" :
+              scoreData.score_total >= 401 ? "text-blue-400" :
+              scoreData.score_total >= 201 ? "text-yellow-400" :
+              "text-red-400"
+            )} />
+            <span className={cn("text-xs font-bold tabular-nums",
+              scoreData.score_total >= 801 ? "text-emerald-400" :
+              scoreData.score_total >= 601 ? "text-purple-400" :
+              scoreData.score_total >= 401 ? "text-blue-400" :
+              scoreData.score_total >= 201 ? "text-yellow-400" :
+              "text-red-400"
+            )}>
+              {scoreData.score_total.toLocaleString('pt-BR')}
+            </span>
+            <span className="text-[10px] text-muted-foreground">/1.000</span>
+          </div>
+          <span className="text-[9px] text-primary hover:underline">Ver score →</span>
+        </div>
+      )}
+
       {/* Footer - Status and Response time */}
       <div className="flex items-center justify-between gap-2 min-w-0">
         {lead.whatsapp_status && (
