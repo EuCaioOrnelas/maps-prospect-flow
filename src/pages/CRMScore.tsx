@@ -634,7 +634,7 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar lead..." className="pl-9" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
+          <Input placeholder="Buscar lead..." className="pl-9 rounded-full" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
         </div>
         <AdvancedFiltersPopover filters={filters} onApply={(f) => { setFilters(f); setPage(0); }} activeCount={activeFilterCount} />
       </div>
@@ -895,7 +895,7 @@ const ScoreRulesTab = ({ userId }: { userId: string }) => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between">
         <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar regra..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <Input placeholder="Buscar regra..." className="pl-9 rounded-full" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
         <Link to="/warming">
           <Button variant="outline" size="sm" className="gap-2">
