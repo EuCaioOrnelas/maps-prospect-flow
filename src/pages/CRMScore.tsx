@@ -342,12 +342,18 @@ const ScoreInfoPopover = () => (
 
 // ═══════════════ EMPTY STATE ═══════════════
 
-const EmptyListState = ({ message }: { message: string }) => (
-  <div className="flex flex-col items-center justify-center py-8 text-center">
-    <Minus className="h-8 w-8 text-muted-foreground/30 mb-2" />
-    <p className="text-xs text-muted-foreground">{message}</p>
-  </div>
-);
+const EmptyListState = ({ message, icon: Icon }: { message: string; icon?: React.ElementType }) => {
+  const IconComponent = Icon || Search;
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+      <div className="w-12 h-12 rounded-full bg-muted/40 flex items-center justify-center mb-3">
+        <IconComponent className="h-5 w-5 text-muted-foreground/50" />
+      </div>
+      <p className="text-sm font-medium text-muted-foreground/70 mb-1">Sem dados no momento</p>
+      <p className="text-xs text-muted-foreground/50 max-w-[240px]">{message}</p>
+    </div>
+  );
+};
 
 // ═══════════════ DASHBOARD TAB ═══════════════
 
@@ -444,7 +450,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <EmptyListState message="Nenhum dado ainda" />
+              <EmptyListState message="Os dados aparecerão quando seus leads começarem a interagir" icon={BarChart3} />
             )}
           </CardContent>
         </Card>
@@ -464,7 +470,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <EmptyListState message="Nenhum lead com score" />
+              <EmptyListState message="Conecte seu WhatsApp e comece a interagir com leads" icon={Users} />
             )}
           </CardContent>
         </Card>
@@ -479,7 +485,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
               <AlertTriangle className="h-4 w-4 text-destructive" />
               Leads em Risco do Dia
             </CardTitle>
-            <p className="text-xs text-muted-foreground">Leads engajados+ com maior perda de score hoje</p>
+            <p className="text-xs text-muted-foreground">Leads com score acima de 400 que perderam pontos hoje</p>
           </CardHeader>
           <CardContent>
             {atRiskToday.length > 0 ? (
@@ -509,7 +515,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                 })}
               </div>
             ) : (
-              <EmptyListState message="Sem dados relevantes — nenhum lead qualificado em risco hoje" />
+              <EmptyListState message="Nenhum lead qualificado perdeu pontos hoje — ótimo sinal!" icon={AlertTriangle} />
             )}
           </CardContent>
         </Card>
@@ -521,7 +527,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
               <Zap className="h-4 w-4 text-yellow-400" />
               Top 10 Oportunidades de Venda
             </CardTitle>
-            <p className="text-xs text-muted-foreground">Leads engajados+ com maior potencial de conversão</p>
+            <p className="text-xs text-muted-foreground">Leads com score acima de 400 e maior potencial de conversão</p>
           </CardHeader>
           <CardContent>
             {topOpportunities.length > 0 ? (
@@ -554,7 +560,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                 })}
               </div>
             ) : (
-              <EmptyListState message="Sem dados relevantes — nenhuma oportunidade qualificada encontrada" />
+              <EmptyListState message="Quando seus leads atingirem o nível Engajado ou acima, as oportunidades aparecerão aqui" icon={Zap} />
             )}
           </CardContent>
         </Card>
