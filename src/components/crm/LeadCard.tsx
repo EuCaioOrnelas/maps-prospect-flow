@@ -1,12 +1,14 @@
 import { useState, memo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
-import { Phone, MessageCircle, Pencil, Check, X } from 'lucide-react';
+import { Phone, MessageCircle, Pencil, Check, X, Trophy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatPhoneShort } from '@/lib/phoneUtils';
+import { useLeadScores } from '@/hooks/useLeadScores';
 
 interface LeadCardProps {
   lead: Lead;
