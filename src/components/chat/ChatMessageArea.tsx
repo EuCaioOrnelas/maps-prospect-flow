@@ -344,9 +344,10 @@ export function ChatMessageArea({
                           <div className={cn(
                             "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative",
                             isOutbound
-                              ? "wa-bubble-out rounded-[7.5px] rounded-tr-0"
-                              : "wa-bubble-in rounded-[7.5px] rounded-tl-0",
-                            !showTail && "rounded-[7.5px]"
+                              ? "wa-bubble-out rounded-[7.5px]"
+                              : "wa-bubble-in rounded-[7.5px]",
+                            showTail && isOutbound && "!rounded-tr-none",
+                            showTail && !isOutbound && "!rounded-tl-none"
                           )}>
                             {msg.message_type !== "text" && (
                               <div className="p-[3px]"><MediaPreview msg={msg} /></div>
