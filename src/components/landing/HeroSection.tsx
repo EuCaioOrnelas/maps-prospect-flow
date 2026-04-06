@@ -308,16 +308,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           <div className="text-center xl:text-left">
             {/* Trust badge with avatars */}
             <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
-              <div className="flex -space-x-2">
-                {["M", "R", "C", "L"].map((initial, i) => (
-                  <div key={i} className="w-7 h-7 rounded-full border-2 border-background bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-                    {initial}
-                  </div>
-                ))}
-              </div>
-              <span className="text-xs sm:text-sm text-muted-foreground">
-                Escolhido por +500 empresas
-              </span>
+              <img src={metaPartnerBadge} alt="Meta Business Partner" className="h-7 sm:h-8" />
             </div>
 
             {/* Main heading - always 3 lines */}
