@@ -485,7 +485,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
               <AlertTriangle className="h-4 w-4 text-destructive" />
               Leads em Risco do Dia
             </CardTitle>
-            <p className="text-xs text-muted-foreground">Leads engajados+ com maior perda de score hoje</p>
+            <p className="text-xs text-muted-foreground">Leads com score acima de 400 que perderam pontos hoje</p>
           </CardHeader>
           <CardContent>
             {atRiskToday.length > 0 ? (
@@ -527,7 +527,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
               <Zap className="h-4 w-4 text-yellow-400" />
               Top 10 Oportunidades de Venda
             </CardTitle>
-            <p className="text-xs text-muted-foreground">Leads engajados+ com maior potencial de conversão</p>
+            <p className="text-xs text-muted-foreground">Leads com score acima de 400 e maior potencial de conversão</p>
           </CardHeader>
           <CardContent>
             {topOpportunities.length > 0 ? (
