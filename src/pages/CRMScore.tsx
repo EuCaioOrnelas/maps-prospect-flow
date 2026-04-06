@@ -1157,7 +1157,7 @@ const ScoreRulesTab = ({ userId }: { userId: string }) => {
 const CRMScore = () => {
   const { user, profile } = useAuth();
   const [searchParams] = useSearchParams();
-  const [deepLinkLeadId] = useState(() => searchParams.get("lead"));
+  const [deepLinkPhone] = useState(() => searchParams.get("phone"));
   const [autoOpenedLead, setAutoOpenedLead] = useState<RevenueLead | null>(null);
   useAutoScoreTracking("crm_score");
 
@@ -1186,13 +1186,14 @@ const CRMScore = () => {
     enabled: !!user,
   });
 
-  // Auto-open lead from deep link
+  // Auto-open lead from deep link (by phone)
   useEffect(() => {
-    if (deepLinkLeadId && leads.length > 0 && !autoOpenedLead) {
-      const found = leads.find(l => l.id === deepLinkLeadId);
+    if (deepLinkPhone && leads.length > 0 && !autoOpenedLead) {
+      const phoneKey = deepLinkPhone.replace(/\D/g, "").slice(-8);
+      const found = leads.find(l => l.phone_e164.replace(/\D/g, "").slice(-8) === phoneKey);
       if (found) setAutoOpenedLead(found);
     }
-  }, [deepLinkLeadId, leads, autoOpenedLead]);
+  }, [deepLinkPhone, leads, autoOpenedLead]);
 
   return (
     <div className="min-h-screen bg-background relative">
