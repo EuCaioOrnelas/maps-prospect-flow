@@ -315,7 +315,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="" className="w-6 h-6 rounded-full border-2 border-background object-cover" />
                 <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="" className="w-6 h-6 rounded-full border-2 border-background object-cover" />
               </div>
-              <span className="text-xs font-medium text-foreground tracking-tight">+500 empresas já utilizam a Wiize</span>
+              <span className="text-xs font-medium text-foreground tracking-tight">+500 pessoas já utilizam a Wiize</span>
             </div>
 
             {/* Main heading - always 3 lines */}
