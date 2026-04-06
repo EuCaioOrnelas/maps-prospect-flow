@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { 
   BarChart3, Users, Trophy, Settings, Loader2, 
   Smartphone, Search, TrendingUp, TrendingDown, Minus,
