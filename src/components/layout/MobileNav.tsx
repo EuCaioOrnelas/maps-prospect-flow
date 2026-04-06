@@ -111,7 +111,13 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                   </Button>
                 </Link>
 
-                <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+                <Link to="/chat" onClick={() => setIsOpen(false)}>
+                  <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
+                    <Users size={16} />
+                    Chat
+                  </Button>
+                </Link>
+
                   <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
                     <BarChart3 size={16} />
                     Dashboard
