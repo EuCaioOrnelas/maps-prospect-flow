@@ -1,14 +1,10 @@
-import { useState } from "react";
-import { Search, Pin, Archive, Volume2, VolumeX, MoreVertical } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useState, useRef, useEffect } from "react";
+import { Search, Filter, Pin, Archive, Volume2, VolumeX, MoreVertical, ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 interface ChatSidebarProps {
   conversations: ChatConversation[];
@@ -27,22 +23,38 @@ interface ChatSidebarProps {
 
 function formatTimestamp(dateStr: string | null): string {
   if (!dateStr) return "";
-  const date = parseISO(dateStr);
-  if (isToday(date)) return format(date, "HH:mm");
-  if (isYesterday(date)) return "Ontem";
-  return format(date, "dd/MM/yyyy");
+  try {
+    const date = parseISO(dateStr);
+    if (isToday(date)) return format(date, "HH:mm");
+    if (isYesterday(date)) return "Ontem";
+    return format(date, "dd/MM/yyyy");
+  } catch { return ""; }
 }
 
 function getInitials(name: string | null, phone: string): string {
-  if (name) return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
-  return phone.substring(phone.length - 2);
+  if (name) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  }
+  return phone.slice(-2);
 }
 
 function getLastMessagePreview(conv: ChatConversation): string {
   if (!conv.last_message_text) return "";
-  const prefix = conv.last_message_direction === "outbound" ? "Você: " : "";
   const text = conv.last_message_text;
-  return prefix + (text.length > 40 ? text.substring(0, 40) + "…" : text);
+  return text.length > 45 ? text.substring(0, 45) + "…" : text;
+}
+
+// Avatar colors for consistency
+const AVATAR_COLORS = [
+  "bg-[#00a884]", "bg-[#53bdeb]", "bg-[#7f66ff]", "bg-[#ff6f69]",
+  "bg-[#ffa62b]", "bg-[#25d366]", "bg-[#5f66cd]", "bg-[#ff4081]",
+];
+
+function getAvatarColor(phone: string): string {
+  const hash = phone.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
 export function ChatSidebar({
@@ -50,115 +62,168 @@ export function ChatSidebar({
   searchQuery, onSearchChange, connections, activeConnectionId,
   onConnectionChange, onTogglePin, onArchive, onToggleMute, loading,
 }: ChatSidebarProps) {
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+
   return (
-    <div className="flex flex-col h-full bg-[#111b21] border-r border-[#222d34]">
+    <div className="flex flex-col h-full wa-sidebar-bg">
       {/* Header */}
-      <div className="px-4 py-3 flex items-center justify-between bg-[#202c33]">
-        <h2 className="text-base font-medium text-[#e9edef]">Chat</h2>
-        {connections.length > 1 && (
-          <select
-            value={activeConnectionId || ""}
-            onChange={e => onConnectionChange(e.target.value)}
-            className="text-xs bg-[#2a3942] text-[#e9edef] border border-[#3b4a54] rounded px-2 py-1"
-          >
-            {connections.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.nickname || c.display_phone_number || c.business_name || "Número"}
-              </option>
-            ))}
-          </select>
-        )}
+      <div className="h-[60px] flex items-center justify-between px-4 wa-header-bg">
+        <div className="flex items-center gap-2">
+          <span className="text-[18px] font-semibold wa-text-primary">Conversas</span>
+        </div>
+        <div className="flex items-center gap-1">
+          {connections.length > 1 && (
+            <select
+              value={activeConnectionId || ""}
+              onChange={e => onConnectionChange(e.target.value)}
+              className="text-xs wa-bg-input wa-text-primary border wa-border rounded-md px-2 py-1.5 outline-none"
+            >
+              {connections.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.nickname || c.display_phone_number || c.business_name || "Número"}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
 
-      {/* Search */}
-      <div className="px-3 py-2 bg-[#111b21]">
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8696a0]" />
-          <Input
+      {/* Search bar */}
+      <div className="px-3 py-[7px]">
+        <div className={cn(
+          "flex items-center h-[35px] rounded-lg px-3 gap-3 transition-all duration-200",
+          "wa-bg-search",
+          searchFocused && "wa-search-focused"
+        )}>
+          <div className={cn(
+            "flex items-center justify-center transition-transform duration-200",
+            searchFocused ? "transform -translate-x-1" : ""
+          )}>
+            {searchFocused ? (
+              <button onClick={() => { onSearchChange(""); searchRef.current?.blur(); }}>
+                <svg viewBox="0 0 24 24" width="20" height="20" className="wa-icon-tinted">
+                  <path fill="currentColor" d="m12 4 1.4 1.4L7.8 11H20v2H7.8l5.6 5.6L12 20l-8-8 8-8z" />
+                </svg>
+              </button>
+            ) : (
+              <Search size={16} className="wa-icon-muted" />
+            )}
+          </div>
+          <input
+            ref={searchRef}
             value={searchQuery}
             onChange={e => onSearchChange(e.target.value)}
-            placeholder="Pesquisar ou começar uma nova conversa"
-            className="pl-10 h-[35px] text-sm bg-[#202c33] border-none text-[#e9edef] placeholder:text-[#8696a0] rounded-lg focus-visible:ring-0"
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => { if (!searchQuery) setSearchFocused(false); }}
+            placeholder="Pesquisar"
+            className="flex-1 bg-transparent text-[13px] wa-text-primary placeholder:wa-text-muted outline-none"
           />
         </div>
       </div>
 
       {/* Conversations list */}
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto wa-scrollbar">
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-6 w-6 rounded-full border-2 border-[#00a884]/20 border-t-[#00a884] animate-spin" />
+          <div className="flex items-center justify-center py-16">
+            <div className="h-7 w-7 rounded-full border-[3px] border-[#00a884]/20 border-t-[#00a884] animate-spin" />
           </div>
         ) : conversations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-            <p className="text-sm text-[#8696a0]">Nenhuma conversa ainda</p>
-            <p className="text-xs text-[#8696a0]/60 mt-1">As mensagens recebidas aparecerão aqui</p>
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <p className="text-sm wa-text-muted">Nenhuma conversa</p>
+            <p className="text-xs wa-text-muted mt-1 opacity-60">As mensagens recebidas aparecerão aqui</p>
           </div>
         ) : (
-          conversations.map(conv => (
-            <div
-              key={conv.id}
-              onClick={() => onSelectConversation(conv.id)}
-              className={cn(
-                "flex items-center gap-3 px-3 py-3 cursor-pointer transition-colors border-b border-[#222d34]/50",
-                activeConversationId === conv.id ? "bg-[#2a3942]" : "hover:bg-[#202c33]"
-              )}
-            >
-              <Avatar className="h-[49px] w-[49px] shrink-0">
-                <AvatarFallback className="bg-[#6b7b8d] text-white text-sm font-medium">
-                  {getInitials(conv.contact_name, conv.contact_phone)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="text-[15px] font-normal text-[#e9edef] truncate flex items-center gap-1.5">
-                    {conv.contact_name || conv.contact_phone}
-                    {conv.is_pinned && <Pin size={12} className="text-[#8696a0] shrink-0" />}
-                    {conv.is_muted && <VolumeX size={12} className="text-[#8696a0] shrink-0" />}
-                  </span>
-                  <span className={cn(
-                    "text-xs shrink-0 ml-2",
-                    conv.unread_count > 0 ? "text-[#00a884]" : "text-[#8696a0]"
-                  )}>
-                    {formatTimestamp(conv.last_message_at)}
-                  </span>
+          conversations.map(conv => {
+            const isActive = activeConversationId === conv.id;
+            const hasUnread = conv.unread_count > 0;
+
+            return (
+              <div
+                key={conv.id}
+                onClick={() => onSelectConversation(conv.id)}
+                className={cn(
+                  "flex items-center gap-[13px] pr-[15px] pl-[13px] cursor-pointer group relative",
+                  "h-[72px] transition-colors duration-100",
+                  isActive ? "wa-conv-active" : "wa-conv-hover"
+                )}
+              >
+                {/* Avatar */}
+                <div className={cn(
+                  "w-[49px] h-[49px] rounded-full flex items-center justify-center shrink-0 text-white text-[17px] font-light",
+                  getAvatarColor(conv.contact_phone)
+                )}>
+                  {conv.contact_profile_pic ? (
+                    <img src={conv.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
+                  ) : (
+                    <span>{getInitials(conv.contact_name, conv.contact_phone)}</span>
+                  )}
                 </div>
-                <div className="flex items-center justify-between mt-0.5">
-                  <span className="text-sm text-[#8696a0] truncate">
-                    {getLastMessagePreview(conv)}
-                  </span>
-                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                    {conv.unread_count > 0 && (
-                      <Badge className="bg-[#00a884] text-white text-[11px] font-medium h-5 min-w-5 px-1.5 rounded-full border-0 hover:bg-[#00a884]">
-                        {conv.unread_count}
-                      </Badge>
-                    )}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                        <button className="p-0.5 hover:bg-[#3b4a54] rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                          <MoreVertical size={16} className="text-[#8696a0]" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-[#233138] border-[#3b4a54] text-[#e9edef]">
-                        <DropdownMenuItem onClick={() => onTogglePin(conv.id)} className="hover:bg-[#182229]">
-                          <Pin size={14} className="mr-2" /> {conv.is_pinned ? "Desafixar" : "Fixar"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onToggleMute(conv.id)} className="hover:bg-[#182229]">
-                          {conv.is_muted ? <Volume2 size={14} className="mr-2" /> : <VolumeX size={14} className="mr-2" />}
-                          {conv.is_muted ? "Ativar som" : "Silenciar"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onArchive(conv.id)} className="hover:bg-[#182229]">
-                          <Archive size={14} className="mr-2" /> Arquivar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0 border-b wa-border-conversation py-[14px] h-full flex flex-col justify-center">
+                  <div className="flex items-center justify-between mb-[2px]">
+                    <span className="text-[17px] leading-[21px] wa-text-primary truncate flex items-center gap-1">
+                      {conv.contact_name || conv.contact_phone}
+                    </span>
+                    <span className={cn(
+                      "text-[12px] leading-[14px] shrink-0 ml-2",
+                      hasUnread ? "text-[#00a884] dark:text-[#00a884]" : "wa-text-timestamp"
+                    )}>
+                      {formatTimestamp(conv.last_message_at)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-0 flex-1 min-w-0">
+                      {conv.last_message_direction === "outbound" && (
+                        <span className="wa-text-muted mr-1 shrink-0">
+                          <svg viewBox="0 0 16 11" height="11" width="16" fill="none">
+                            <path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.353.178.477.477 0 0 0-.076.541l2.432 4.31a.494.494 0 0 0 .42.254.457.457 0 0 0 .369-.178l7.07-9.76a.477.477 0 0 0-.076-.559l-.564-.25z" fill="currentColor" />
+                          </svg>
+                        </span>
+                      )}
+                      <span className="text-[14px] leading-[20px] wa-text-secondary truncate">
+                        {getLastMessagePreview(conv)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-[6px] shrink-0 ml-1">
+                      {conv.is_pinned && (
+                        <Pin size={14} className="wa-icon-muted fill-current" />
+                      )}
+                      {conv.is_muted && (
+                        <VolumeX size={14} className="wa-icon-muted" />
+                      )}
+                      {hasUnread && (
+                        <span className="bg-[#00a884] text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
+                          {conv.unread_count}
+                        </span>
+                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                          <button className="p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <ChevronDown size={18} className="wa-icon-muted" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="wa-dropdown-bg wa-border wa-text-primary min-w-[170px] rounded-[3px] shadow-xl py-[9px]">
+                          <DropdownMenuItem onClick={() => onTogglePin(conv.id)} className="wa-dropdown-item text-[14.5px] px-6 py-[9px]">
+                            {conv.is_pinned ? "Desafixar conversa" : "Fixar conversa"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onToggleMute(conv.id)} className="wa-dropdown-item text-[14.5px] px-6 py-[9px]">
+                            {conv.is_muted ? "Ativar notificações" : "Silenciar notificações"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onArchive(conv.id)} className="wa-dropdown-item text-[14.5px] px-6 py-[9px]">
+                            Arquivar conversa
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
-      </ScrollArea>
+      </div>
     </div>
   );
 }

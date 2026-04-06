@@ -19,25 +19,27 @@ const Chat = () => {
       .then(({ data }) => setProfile(data));
   }, [user]);
 
+  const hasNoConnection = chat.connections.length === 0 && !chat.loading;
+
   return (
-    <div className="min-h-screen flex bg-[#111b21]">
+    <div className="min-h-screen flex wa-app-bg">
       <AppSidebar profile={profile} />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <AppHeader profile={profile} />
         <div className="flex-1 flex overflow-hidden">
-          {chat.connections.length === 0 && !chat.loading ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-[#222e35] px-8">
-              <div className="w-16 h-16 rounded-full bg-[#00a884]/10 flex items-center justify-center mb-4">
-                <MessageSquare size={28} className="text-[#00a884]" />
+          {hasNoConnection ? (
+            <div className="flex-1 flex flex-col items-center justify-center wa-empty-bg px-8">
+              <div className="w-[60px] h-[60px] rounded-full bg-[#00a884]/10 flex items-center justify-center mb-5">
+                <MessageSquare size={26} className="text-[#00a884]" />
               </div>
-              <h2 className="text-xl font-medium text-[#e9edef] mb-2">Nenhum número conectado</h2>
-              <p className="text-sm text-[#8696a0] text-center max-w-md">
+              <h2 className="text-[20px] font-normal wa-text-primary mb-[8px]">Nenhum número conectado</h2>
+              <p className="text-[14px] wa-text-secondary text-center max-w-[400px] leading-[20px]">
                 Para usar o chat, conecte um número WhatsApp Business via Meta API na seção de Relacionamento.
               </p>
             </div>
           ) : (
             <>
-              <div className="w-[380px] shrink-0 border-r border-[#222d34]">
+              <div className="w-[360px] shrink-0 wa-sidebar-border">
                 <ChatSidebar
                   conversations={chat.conversations}
                   activeConversationId={chat.activeConversationId}
