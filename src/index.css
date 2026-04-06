@@ -1125,8 +1125,8 @@ input::placeholder, textarea::placeholder {
 .wa-empty-bg { background-color: #0e1820; }
 .landing-light .wa-empty-bg { background-color: #f0f2f5; }
 
-/* ─── Sidebar header (Conversas) ─── */
-.wa-sidebar-header-bg { background-color: #1f2c34; }
+/* ─── Sidebar header (Conversas) — distinct from chat header ─── */
+.wa-sidebar-header-bg { background-color: #15202a; }
 .landing-light .wa-sidebar-header-bg { background-color: #f0f2f5; }
 .wa-sidebar-header-text { color: #e9edef; }
 .landing-light .wa-sidebar-header-text { color: #3b4a54; }
@@ -1137,7 +1137,7 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-sidebar-header-select { background-color: rgba(0,0,0,0.05); color: #3b4a54; border-color: rgba(0,0,0,0.1); }
 
 /* ─── Sidebar search area ─── */
-.wa-sidebar-search-area { background-color: #111b21; }
+.wa-sidebar-search-area { background-color: #0e1820; }
 .landing-light .wa-sidebar-search-area { background-color: #ffffff; }
 
 /* ─── Chat header (contact area) — matching sidebar header ─── */
