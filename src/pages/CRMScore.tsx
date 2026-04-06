@@ -4,7 +4,7 @@ import {
   BarChart3, Users, Trophy, Settings, Loader2, 
   Smartphone, Search, TrendingUp, TrendingDown, Minus,
   ChevronLeft, ChevronRight, Target, AlertTriangle, Zap,
-  ChevronsLeft, ChevronsRight, Info, HelpCircle
+  ChevronsLeft, ChevronsRight, Info, HelpCircle, Filter, X, Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { cn } from "@/lib/utils";
 import { 
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip as RechartsTooltip, ResponsiveContainer 
@@ -95,7 +97,6 @@ const BUCKET_BADGE_COLORS: Record<string, string> = {
   "COLD": "bg-red-500/20 text-red-400 border-red-500/30",
 };
 
-// Map old buckets to new ones for backward compatibility
 const mapBucket = (bucket: string, score: number): string => {
   if (score >= 801) return "READY_TO_SELL";
   if (score >= 601) return "HIGH_VALUE";
@@ -132,6 +133,135 @@ const RULE_LABELS: Record<string, string> = {
   BACK_AND_FORTH_5_TURNS: "5+ turnos de conversa",
 };
 
+// Rule descriptions with triggers — copied from Revenue for consistency
+const RULE_DESCRIPTIONS: Record<string, { description: string; triggers?: string[]; type: "bonus" | "penalty" | "neutral" }> = {
+  INBOUND_MESSAGE: {
+    description: "Toda mensagem recebida do lead soma pontos de engajamento.",
+    triggers: ["Qualquer mensagem enviada pelo lead"],
+    type: "bonus",
+  },
+  INBOUND_STREAK_3: {
+    description: "Quando o lead envia 3 mensagens seguidas sem você responder, indica alto interesse.",
+    triggers: ["3 mensagens consecutivas do lead"],
+    type: "bonus",
+  },
+  INBOUND_AFTER_24H_SILENCE: {
+    description: "Lead que volta a falar após 24h de silêncio demonstra interesse persistente.",
+    triggers: ["Mensagem após 24h sem interação"],
+    type: "bonus",
+  },
+  INBOUND_AFTER_7D_SILENCE: {
+    description: "Lead que retorna após 7 dias é um sinal forte de intenção real.",
+    triggers: ["Mensagem após 7 dias sem interação"],
+    type: "bonus",
+  },
+  OUTBOUND_REPLY_RECEIVED_WITHIN_1H: {
+    description: "Lead responde rápido à sua mensagem, indicando engajamento ativo.",
+    triggers: ["Resposta do lead em menos de 1 hora"],
+    type: "bonus",
+  },
+  INTENT_PRICE: {
+    description: "Lead demonstrou interesse em valores ou orçamento. Classificado como Intenção Positiva (PRICE_REQUEST).",
+    triggers: ["preço", "valor", "quanto custa", "qual o valor", "orçamento", "tabela", "investimento", "custo", "quanto fica"],
+    type: "bonus",
+  },
+  INTENT_BUY_NOW: {
+    description: "Lead sinalizou forte intenção de fechar negócio. Classificado como Intenção Positiva (BUY_INTENT).",
+    triggers: ["quero fechar", "quero contratar", "vamos fechar", "pode mandar contrato", "como assino", "onde pago", "pode emitir", "pode gerar boleto", "faz o pix", "como pagar", "parcelamento", "forma de pagamento"],
+    type: "bonus",
+  },
+  INTENT_AVAILABILITY: {
+    description: "Lead perguntou sobre disponibilidade ou agenda. Classificado como Intenção Positiva (AVAILABILITY).",
+    triggers: ["tem vaga", "quando começa", "disponível", "agenda", "prazo", "entrega quando", "tempo de entrega"],
+    type: "bonus",
+  },
+  INTENT_PAYMENT: {
+    description: "Lead mencionou forma de pagamento — sinal de decisão avançada. Classificado como Intenção Positiva (PAYMENT).",
+    triggers: ["pix", "cartão", "boleto", "parcelar", "pagamento", "parcela"],
+    type: "bonus",
+  },
+  INTENT_PROPOSAL: {
+    description: "Lead solicitou proposta ou material comercial. Classificado como Intenção Positiva (PROPOSAL).",
+    triggers: ["proposta", "cotação", "envia pdf", "manda a proposta", "detalhamento", "escopo", "condições"],
+    type: "bonus",
+  },
+  INTENT_URGENT: {
+    description: "Lead demonstrou urgência na compra. Classificado como Intenção Positiva (URGENT).",
+    triggers: ["urgente", "pra hoje", "imediato", "preciso já", "pra ontem"],
+    type: "bonus",
+  },
+  INTENT_OBJECTION: {
+    description: "Objeção contextual detectada. Inclui objeção de preço, financeira ou adiamento. Score líquido leve negativo.",
+    triggers: ["preço+caro", "preço+alto", "não tenho dinheiro", "não cabe no orçamento", "preciso pensar", "depois eu vejo", "vou analisar", "vou falar com sócio"],
+    type: "penalty",
+  },
+  INTENT_NEGATIVE_MODERATE: {
+    description: "Penalidade moderada — lead demonstrou desinteresse leve. Mantém lead ativo mas reduz score.",
+    triggers: ["não sei", "não tenho certeza", "talvez depois", "não agora", "não é prioridade", "não faz sentido agora"],
+    type: "penalty",
+  },
+  INTENT_NEGATIVE_HARD: {
+    description: "Penalidade forte — desinteresse explícito ou opt-out. Adiciona tag do_not_contact e marca AT_RISK.",
+    triggers: ["não quero", "não tenho interesse", "pode cancelar", "pare", "para de mandar", "remove meu número", "me tira da lista", "bloqueia"],
+    type: "penalty",
+  },
+  LINK_CLICK: {
+    description: "Lead clicou em um link enviado, demonstrando interesse no conteúdo.",
+    triggers: ["Clique em link rastreado"],
+    type: "bonus",
+  },
+  FORM_SUBMIT: {
+    description: "Lead preencheu e enviou um formulário.",
+    triggers: ["Envio de formulário detectado"],
+    type: "bonus",
+  },
+  CALL_REQUEST: {
+    description: "Lead solicitou uma ligação ou chamada.",
+    triggers: ["Pedido de ligação ou chamada"],
+    type: "bonus",
+  },
+  SLA_FIRST_RESPONSE_UNDER_5MIN: {
+    description: "Você respondeu em menos de 5 minutos — excelente atendimento!",
+    triggers: ["Primeira resposta em < 5 minutos"],
+    type: "bonus",
+  },
+  SLA_FIRST_RESPONSE_5_TO_30MIN: {
+    description: "Você respondeu entre 5 e 30 minutos — dentro do aceitável.",
+    triggers: ["Primeira resposta entre 5–30 minutos"],
+    type: "neutral",
+  },
+  SLA_FIRST_RESPONSE_OVER_30MIN: {
+    description: "Resposta demorou mais de 30 minutos — penalidade aplicada.",
+    triggers: ["Primeira resposta acima de 30 minutos"],
+    type: "penalty",
+  },
+  UNREPLIED_INBOUND_OVER_2H: {
+    description: "Lead enviou mensagem e não foi respondido há mais de 2 horas.",
+    triggers: ["Mensagem do lead sem resposta por 2h+"],
+    type: "penalty",
+  },
+  UNREPLIED_INBOUND_OVER_24H: {
+    description: "Lead sem resposta há mais de 24 horas — risco alto de perda.",
+    triggers: ["Mensagem do lead sem resposta por 24h+"],
+    type: "penalty",
+  },
+  CONVERSATION_ACTIVE_3D: {
+    description: "Conversa ativa por 3 dias consecutivos — bom sinal de engajamento.",
+    triggers: ["Troca de mensagens por 3 dias seguidos"],
+    type: "bonus",
+  },
+  CONVERSATION_ACTIVE_5D: {
+    description: "Conversa ativa por 5 dias — lead altamente engajado.",
+    triggers: ["Troca de mensagens por 5 dias seguidos"],
+    type: "bonus",
+  },
+  BACK_AND_FORTH_5_TURNS: {
+    description: "5 trocas de mensagem no diálogo — conversa avançada.",
+    triggers: ["5 mensagens alternadas (ida e volta)"],
+    type: "bonus",
+  },
+};
+
 const RULE_CATEGORIES: Record<string, { label: string; color: string; keys: string[] }> = {
   engagement: {
     label: "Engajamento",
@@ -141,7 +271,7 @@ const RULE_CATEGORIES: Record<string, { label: string; color: string; keys: stri
   intent: {
     label: "Intenção de Compra",
     color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    keys: ["INTENT_PRICE", "INTENT_BUY_NOW", "INTENT_AVAILABILITY", "INTENT_PAYMENT", "INTENT_PROPOSAL", "INTENT_URGENT", "INTENT_OBJECTION", "INTENT_NEGATIVE_MODERATE", "INTENT_NEGATIVE_HARD"],
+    keys: ["INTENT_PRICE", "INTENT_BUY_NOW", "INTENT_AVAILABILITY", "INTENT_PAYMENT", "INTENT_PROPOSAL", "INTENT_URGENT"],
   },
   actions: {
     label: "Ações",
@@ -149,9 +279,14 @@ const RULE_CATEGORIES: Record<string, { label: string; color: string; keys: stri
     keys: ["LINK_CLICK", "FORM_SUBMIT", "CALL_REQUEST"],
   },
   sla: {
-    label: "SLA / Risco",
+    label: "SLA / Tempo de Resposta",
+    color: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+    keys: ["SLA_FIRST_RESPONSE_UNDER_5MIN", "SLA_FIRST_RESPONSE_5_TO_30MIN", "SLA_FIRST_RESPONSE_OVER_30MIN"],
+  },
+  penalty: {
+    label: "Penalidades / Risco",
     color: "bg-red-500/20 text-red-400 border-red-500/30",
-    keys: ["SLA_FIRST_RESPONSE_UNDER_5MIN", "SLA_FIRST_RESPONSE_5_TO_30MIN", "SLA_FIRST_RESPONSE_OVER_30MIN", "UNREPLIED_INBOUND_OVER_2H", "UNREPLIED_INBOUND_OVER_24H"],
+    keys: ["INTENT_OBJECTION", "INTENT_NEGATIVE_MODERATE", "INTENT_NEGATIVE_HARD", "UNREPLIED_INBOUND_OVER_2H", "UNREPLIED_INBOUND_OVER_24H"],
   },
 };
 
@@ -163,6 +298,14 @@ const getScoreColor = (score: number) => {
   if (score >= 401) return "text-blue-400";
   if (score >= 201) return "text-yellow-400";
   return "text-red-400";
+};
+
+const getScoreCircleColor = (score: number) => {
+  if (score >= 801) return "bg-emerald-500/[0.12]";
+  if (score >= 601) return "bg-purple-500/[0.12]";
+  if (score >= 401) return "bg-blue-500/[0.12]";
+  if (score >= 201) return "bg-yellow-500/[0.12]";
+  return "bg-red-500/[0.12]";
 };
 
 const fmtNum = (n: number) => n.toLocaleString('pt-BR');
@@ -190,7 +333,7 @@ const ScoreInfoPopover = () => (
       </div>
       <div className="border-t border-border pt-2">
         <p className="text-xs text-muted-foreground">
-          O score é atualizado automaticamente conforme novas interações acontecem. Cada regra ativa soma ou subtrai pontos.
+          O score é atualizado automaticamente conforme novas interações acontecem. Cada regra ativa soma ou subtrai pontos. Leads inativos perdem score diariamente (decaimento).
         </p>
       </div>
     </PopoverContent>
@@ -216,12 +359,12 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
   const cold = byBucket["COLD"] || 0;
 
   const kpis = [
-    { label: "Total Leads", value: fmtNum(totalLeads), icon: Users, color: "text-primary" },
-    { label: "Score Médio", value: fmtNum(Math.round(avgScore)), icon: BarChart3, color: "text-blue-400" },
-    { label: "Score Mediano", value: fmtNum(Math.round(medianScore)), icon: Target, color: "text-yellow-400" },
-    { label: "Pronto p/ Venda", value: fmtNum(readyToSell), icon: TrendingUp, color: "text-emerald-400" },
-    { label: "Em Risco", value: fmtNum(atRisk), icon: AlertTriangle, color: "text-destructive" },
-    { label: "Frios", value: fmtNum(cold), icon: TrendingDown, color: "text-red-400" },
+    { label: "Total Leads", value: fmtNum(totalLeads), icon: Users, color: "text-primary", circleColor: "bg-primary/[0.12]" },
+    { label: "Score Médio", value: fmtNum(Math.round(avgScore)), icon: BarChart3, color: "text-blue-400", circleColor: "bg-blue-500/[0.12]" },
+    { label: "Score Mediano", value: fmtNum(Math.round(medianScore)), icon: Target, color: "text-yellow-400", circleColor: "bg-yellow-500/[0.12]" },
+    { label: "Pronto p/ Venda", value: fmtNum(readyToSell), icon: TrendingUp, color: "text-emerald-400", circleColor: "bg-emerald-500/[0.12]" },
+    { label: "Em Risco", value: fmtNum(atRisk), icon: AlertTriangle, color: "text-destructive", circleColor: "bg-destructive/[0.12]" },
+    { label: "Frios", value: fmtNum(cold), icon: TrendingDown, color: "text-red-400", circleColor: "bg-red-500/[0.12]" },
   ];
 
   const pieData = Object.entries(byBucket).map(([bucket, count]) => ({
@@ -232,11 +375,10 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
 
   return (
     <div className="space-y-6">
-      {/* KPIs - 3 per row, matching Opportunities design */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {kpis.map((kpi) => (
           <Card key={kpi.label} className="relative overflow-hidden bg-card border-border/60">
-            <div className="absolute -top-5 -right-5 w-[72px] h-[72px] rounded-full bg-primary/[0.07] dark:bg-primary/[0.12]" />
+            <div className={`absolute -top-5 -right-5 w-[72px] h-[72px] rounded-full ${kpi.circleColor}`} />
             <kpi.icon className={`absolute top-3 right-3 h-4 w-4 ${kpi.color}`} />
             <CardContent className="p-5 relative">
               <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2">{kpi.label}</p>
@@ -292,15 +434,145 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
   );
 };
 
+// ═══════════════ ADVANCED FILTERS ═══════════════
+
+interface FilterState {
+  dateFrom: string;
+  dateTo: string;
+  scoreMin: string;
+  scoreMax: string;
+  bucket: string;
+  riskState: string;
+}
+
+const defaultFilters: FilterState = {
+  dateFrom: "",
+  dateTo: "",
+  scoreMin: "",
+  scoreMax: "",
+  bucket: "all",
+  riskState: "all",
+};
+
+const AdvancedFiltersPopover = ({ 
+  filters, 
+  onApply, 
+  activeCount 
+}: { 
+  filters: FilterState; 
+  onApply: (f: FilterState) => void;
+  activeCount: number;
+}) => {
+  const [local, setLocal] = useState<FilterState>(filters);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => { setLocal(filters); }, [filters]);
+
+  const handleApply = () => {
+    onApply(local);
+    setOpen(false);
+  };
+
+  const handleClear = () => {
+    onApply(defaultFilters);
+    setLocal(defaultFilters);
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2 relative">
+          <Filter className="h-4 w-4" />
+          Filtros
+          {activeCount > 0 && (
+            <Badge className="h-5 w-5 p-0 flex items-center justify-center text-[10px] absolute -top-2 -right-2">
+              {activeCount}
+            </Badge>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 space-y-4" align="end">
+        <div className="flex items-center justify-between">
+          <h4 className="font-semibold text-sm">Filtros Avançados</h4>
+          {activeCount > 0 && (
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground" onClick={handleClear}>
+              <X className="h-3 w-3" /> Limpar
+            </Button>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Período - De</Label>
+            <Input type="date" value={local.dateFrom} onChange={(e) => setLocal(l => ({ ...l, dateFrom: e.target.value }))} className="h-8 text-sm" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Período - Até</Label>
+            <Input type="date" value={local.dateTo} onChange={(e) => setLocal(l => ({ ...l, dateTo: e.target.value }))} className="h-8 text-sm" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Score mínimo</Label>
+              <Input type="number" min="0" max="1000" placeholder="0" value={local.scoreMin} onChange={(e) => setLocal(l => ({ ...l, scoreMin: e.target.value }))} className="h-8 text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Score máximo</Label>
+              <Input type="number" min="0" max="1000" placeholder="1000" value={local.scoreMax} onChange={(e) => setLocal(l => ({ ...l, scoreMax: e.target.value }))} className="h-8 text-sm" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Status</Label>
+            <Select value={local.bucket} onValueChange={(v) => setLocal(l => ({ ...l, bucket: v }))}>
+              <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {Object.entries(BUCKET_SHORT_LABELS).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Risco</Label>
+            <Select value={local.riskState} onValueChange={(v) => setLocal(l => ({ ...l, riskState: v }))}>
+              <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="SAFE">Seguro</SelectItem>
+                <SelectItem value="AT_RISK">Em Risco</SelectItem>
+                <SelectItem value="CRITICAL">Crítico</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Button onClick={handleApply} className="w-full" size="sm">Aplicar Filtros</Button>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 // ═══════════════ USERS TAB ═══════════════
 
 const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
   const [search, setSearch] = useState("");
-  const [filterBucket, setFilterBucket] = useState("all");
+  const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [sortBy, setSortBy] = useState("score_total");
   const [sortAsc, setSortAsc] = useState(false);
   const [page, setPage] = useState(0);
   const [selectedLead, setSelectedLead] = useState<RevenueLead | null>(null);
+
+  const activeFilterCount = useMemo(() => {
+    let c = 0;
+    if (filters.dateFrom) c++;
+    if (filters.dateTo) c++;
+    if (filters.scoreMin) c++;
+    if (filters.scoreMax) c++;
+    if (filters.bucket !== "all") c++;
+    if (filters.riskState !== "all") c++;
+    return c;
+  }, [filters]);
 
   const filtered = useMemo(() => {
     let result = leads.filter(l => {
@@ -308,9 +580,27 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
         const s = search.toLowerCase();
         if (!(l.name?.toLowerCase().includes(s) || l.phone_e164.includes(search))) return false;
       }
-      if (filterBucket !== "all") {
+      if (filters.bucket !== "all") {
         const mapped = mapBucket(l.status_bucket, l.score_total);
-        if (mapped !== filterBucket) return false;
+        if (mapped !== filters.bucket) return false;
+      }
+      if (filters.riskState !== "all" && l.risk_state !== filters.riskState) return false;
+      if (filters.scoreMin) {
+        const min = parseInt(filters.scoreMin);
+        if (!isNaN(min) && l.score_total < min) return false;
+      }
+      if (filters.scoreMax) {
+        const max = parseInt(filters.scoreMax);
+        if (!isNaN(max) && l.score_total > max) return false;
+      }
+      if (filters.dateFrom) {
+        const from = new Date(filters.dateFrom);
+        if (new Date(l.last_activity_at) < from) return false;
+      }
+      if (filters.dateTo) {
+        const to = new Date(filters.dateTo);
+        to.setHours(23, 59, 59, 999);
+        if (new Date(l.last_activity_at) > to) return false;
       }
       return true;
     });
@@ -320,7 +610,7 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
       return sortAsc ? aVal - bVal : bVal - aVal;
     });
     return result;
-  }, [leads, search, filterBucket, sortBy, sortAsc]);
+  }, [leads, search, filters, sortBy, sortAsc]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
@@ -346,16 +636,15 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Buscar lead..." className="pl-9" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
         </div>
-        <Select value={filterBucket} onValueChange={(v) => { setFilterBucket(v); setPage(0); }}>
-          <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos Status</SelectItem>
-            {Object.entries(BUCKET_SHORT_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <AdvancedFiltersPopover filters={filters} onApply={(f) => { setFilters(f); setPage(0); }} activeCount={activeFilterCount} />
       </div>
+
+      {activeFilterCount > 0 && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Filter className="h-3 w-3" />
+          <span>{fmtNum(filtered.length)} leads encontrados com {activeFilterCount} filtro(s) ativo(s)</span>
+        </div>
+      )}
 
       <Card className="bg-card border-border/50">
         <CardContent className="p-0">
@@ -543,7 +832,7 @@ const ScoreRankingTab = ({ leads }: { leads: RevenueLead[] }) => {
   );
 };
 
-// ═══════════════ RULES TAB ═══════════════
+// ═══════════════ RULES TAB (with Revenue-style tooltips) ═══════════════
 
 const ScoreRulesTab = ({ userId }: { userId: string }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -633,12 +922,59 @@ const ScoreRulesTab = ({ userId }: { userId: string }) => {
               <div className="space-y-2">
                 {catRules.map((rule) => {
                   const isNegative = rule.points < 0;
+                  const info = RULE_DESCRIPTIONS[rule.rule_key];
                   return (
                     <div key={rule.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-sm">{RULE_LABELS[rule.rule_key] || rule.rule_key}</p>
                           {isNegative && <Badge variant="destructive" className="text-[10px] px-1">NEG</Badge>}
+                          {info && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button className="shrink-0 outline-none">
+                                  <Info size={13} className={cn(
+                                    "cursor-help transition-colors",
+                                    info.type === "penalty" ? "text-destructive/50 hover:text-destructive" :
+                                    info.type === "bonus" ? "text-primary/50 hover:text-primary" :
+                                    "text-muted-foreground/50 hover:text-muted-foreground"
+                                  )} />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[320px] p-3 space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className={cn(
+                                    "text-[9px] px-1.5 py-0",
+                                    info.type === "penalty" ? "border-destructive/40 text-destructive" :
+                                    info.type === "bonus" ? "border-primary/40 text-primary" :
+                                    "border-border text-muted-foreground"
+                                  )}>
+                                    {info.type === "penalty" ? "Penalidade" : info.type === "bonus" ? "Bônus" : "Neutro"}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed">{info.description}</p>
+                                {info.triggers && info.triggers.length > 0 && (
+                                  <div className="pt-1 border-t border-border/40">
+                                    <p className="text-[10px] font-medium text-foreground mb-1">
+                                      {rule.rule_key.startsWith("INTENT_") ? "Palavras-chave detectadas:" : "Gatilho:"}
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {info.triggers.map((t, i) => (
+                                        <span key={i} className={cn(
+                                          "inline-block text-[10px] px-1.5 py-0.5 rounded-md font-mono",
+                                          info.type === "penalty"
+                                            ? "bg-destructive/10 text-destructive"
+                                            : "bg-primary/10 text-primary"
+                                        )}>
+                                          {t}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">{rule.rule_key}</p>
                         {(rule.cooldown_minutes || rule.max_per_day) && (
@@ -721,7 +1057,6 @@ const CRMScore = () => {
 
       <main className="lg:pl-[72px] pt-[42px] lg:pt-0 min-h-screen">
         <div className="container mx-auto px-4 py-6 space-y-6">
-          {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
@@ -739,7 +1074,6 @@ const CRMScore = () => {
             </div>
           </div>
 
-          {/* Score Level Legend */}
           <div className="flex flex-wrap gap-2">
             {Object.entries(BUCKET_LABELS).map(([key, label]) => (
               <div key={key} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium ${BUCKET_BADGE_COLORS[key]}`}>
