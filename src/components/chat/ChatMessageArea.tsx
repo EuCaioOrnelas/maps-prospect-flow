@@ -8,6 +8,24 @@ import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import logoIconNew from "@/assets/logo-icon-new.png";
 
+// Format phone: 5511999887766 → +55 (11) 99988-7766
+function formatPhoneDisplay(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 13 && digits.startsWith("55")) {
+    return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+  }
+  if (digits.length === 12 && digits.startsWith("55")) {
+    return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 8)}-${digits.slice(8)}`;
+  }
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return phone;
+}
+
 interface ChatMessageAreaProps {
   conversation: ChatConversation | null;
   messages: ChatMessage[];
@@ -221,7 +239,7 @@ export function ChatMessageArea({
     <div className="flex-1 flex min-w-0">
       <div className="flex-1 flex flex-col min-w-0">
         {/* ─── Chat Header ─── */}
-        <div className="h-[59px] flex items-center gap-[10px] px-[16px] wa-chat-header-bg border-b wa-border-light shrink-0">
+        <div className="h-[60px] flex items-center gap-[10px] px-[16px] wa-chat-header-bg wa-border-header-bottom shrink-0">
           <div className={cn(
             "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-light",
             avatarColor
@@ -239,10 +257,10 @@ export function ChatMessageArea({
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-[16px] font-normal wa-chat-header-text truncate leading-[21px]">
-              {conversation.contact_name || conversation.contact_phone}
+              {conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
             </h3>
             <p className="text-[13px] wa-chat-header-sub truncate leading-[18px]">
-              {conversation.contact_name ? conversation.contact_phone : "online"}
+              {formatPhoneDisplay(conversation.contact_phone)}
             </p>
           </div>
           <div className="flex items-center gap-[20px]">
