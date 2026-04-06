@@ -370,44 +370,61 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               )}
             </li>
 
-            {/* Aquecimento */}
-            <li>
-              <SidebarNavItem
-                title="Aquecimento"
-                icon={Flame}
-                url="/warming"
-                isActive={currentPath === "/warming"}
-                isExpanded={isExpanded}
-                badge={hasDisconnectedWarming ? (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full flex items-center justify-center animate-pulse">
-                    <AlertTriangle size={8} className="text-destructive-foreground" />
-                  </div>
-                ) : undefined}
-                tooltip={
-                  hasDisconnectedWarming ? (
-                    <div>
-                      <p className="font-medium">Número desconectado</p>
-                      <p className="text-xs opacity-90">
-                        {disconnectedNumbers.length} número(s) precisa(m) reconectar
-                      </p>
-                    </div>
-                  ) : "Aquecimento"
-                }
-              />
-            </li>
-
-            {/* CRM */}
+            {/* CRM with submenu */}
             <li>
               <SidebarNavItem
                 title="CRM"
                 icon={Users}
-                url="/crm"
-                isActive={currentPath === "/crm"}
+                onClick={handleCrmClick}
+                isActive={isOnCrmPage}
                 isExpanded={isExpanded}
+                hasSubmenu
+                isSubmenuOpen={isCrmOpen}
                 tooltip="CRM"
               />
-            </li>
 
+              {isExpanded && (
+                <div
+                  className={cn(
+                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    isCrmOpen
+                      ? "max-h-28 opacity-100 mt-1"
+                      : "max-h-0 opacity-0"
+                  )}
+                >
+                  <ul className="pl-4 space-y-0.5">
+                    <li>
+                      <Link
+                        to="/crm"
+                        className={cn(
+                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          currentPath === "/crm"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Users size={16} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Pipeline</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/crm/score"
+                        className={cn(
+                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          currentPath === "/crm/score"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Trophy size={16} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Score</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </li>
 
             {/* Agentes de IA */}
             <li>
