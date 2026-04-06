@@ -1186,6 +1186,14 @@ const CRMScore = () => {
     enabled: !!user,
   });
 
+  // Auto-open lead from deep link
+  useEffect(() => {
+    if (deepLinkLeadId && leads.length > 0 && !autoOpenedLead) {
+      const found = leads.find(l => l.id === deepLinkLeadId);
+      if (found) setAutoOpenedLead(found);
+    }
+  }, [deepLinkLeadId, leads, autoOpenedLead]);
+
   return (
     <div className="min-h-screen bg-background relative">
       <BackgroundGlow />
