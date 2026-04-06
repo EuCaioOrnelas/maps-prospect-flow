@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import metaPartnerBadge from "@/assets/logos/meta-partner-badge.png";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
