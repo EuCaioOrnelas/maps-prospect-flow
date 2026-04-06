@@ -1143,9 +1143,9 @@ const Admin = () => {
     try {
       const limits: { [key: string]: number } = {
         free: 10,
-        start: 200,
-        growth: 600,
-        scale: 1200,
+        start: 1000,
+        growth: 3000,
+        scale: 10000,
       };
 
       const { error } = await supabase

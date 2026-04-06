@@ -610,7 +610,7 @@ const Profile = () => {
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {profile?.searches_used || 0} de {profile?.searches_limit || 10} buscas utilizadas
+                    {profile?.searches_used || 0} de {profile?.searches_limit || 10} oportunidades utilizadas
                   </p>
                   <TooltipProvider>
                     <Tooltip>
