@@ -1156,6 +1156,9 @@ const ScoreRulesTab = ({ userId }: { userId: string }) => {
 
 const CRMScore = () => {
   const { user, profile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const [deepLinkLeadId] = useState(() => searchParams.get("lead"));
+  const [autoOpenedLead, setAutoOpenedLead] = useState<RevenueLead | null>(null);
   useAutoScoreTracking("crm_score");
 
   const { data: sidebarProfile } = useQuery({
