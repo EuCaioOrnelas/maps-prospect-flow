@@ -133,7 +133,7 @@ const RULE_LABELS: Record<string, string> = {
   BACK_AND_FORTH_5_TURNS: "5+ turnos de conversa",
 };
 
-// Rule descriptions with triggers — copied from Revenue for consistency
+// Rule descriptions with triggers. copied from Revenue for consistency
 const RULE_DESCRIPTIONS: Record<string, { description: string; triggers?: string[]; type: "bonus" | "penalty" | "neutral" }> = {
   INBOUND_MESSAGE: {
     description: "Toda mensagem recebida do lead soma pontos de engajamento.",
@@ -176,7 +176,7 @@ const RULE_DESCRIPTIONS: Record<string, { description: string; triggers?: string
     type: "bonus",
   },
   INTENT_PAYMENT: {
-    description: "Lead mencionou forma de pagamento — sinal de decisão avançada. Classificado como Intenção Positiva (PAYMENT).",
+    description: "Lead mencionou forma de pagamento. sinal de decisão avançada. Classificado como Intenção Positiva (PAYMENT).",
     triggers: ["pix", "cartão", "boleto", "parcelar", "pagamento", "parcela"],
     type: "bonus",
   },
@@ -196,12 +196,12 @@ const RULE_DESCRIPTIONS: Record<string, { description: string; triggers?: string
     type: "penalty",
   },
   INTENT_NEGATIVE_MODERATE: {
-    description: "Penalidade moderada — lead demonstrou desinteresse leve. Mantém lead ativo mas reduz score.",
+    description: "Penalidade moderada. lead demonstrou desinteresse leve. Mantém lead ativo mas reduz score.",
     triggers: ["não sei", "não tenho certeza", "talvez depois", "não agora", "não é prioridade", "não faz sentido agora"],
     type: "penalty",
   },
   INTENT_NEGATIVE_HARD: {
-    description: "Penalidade forte — desinteresse explícito ou opt-out. Adiciona tag do_not_contact e marca AT_RISK.",
+    description: "Penalidade forte. desinteresse explícito ou opt-out. Adiciona tag do_not_contact e marca AT_RISK.",
     triggers: ["não quero", "não tenho interesse", "pode cancelar", "pare", "para de mandar", "remove meu número", "me tira da lista", "bloqueia"],
     type: "penalty",
   },
@@ -221,17 +221,17 @@ const RULE_DESCRIPTIONS: Record<string, { description: string; triggers?: string
     type: "bonus",
   },
   SLA_FIRST_RESPONSE_UNDER_5MIN: {
-    description: "Você respondeu em menos de 5 minutos — excelente atendimento!",
+    description: "Você respondeu em menos de 5 minutos. excelente atendimento!",
     triggers: ["Primeira resposta em < 5 minutos"],
     type: "bonus",
   },
   SLA_FIRST_RESPONSE_5_TO_30MIN: {
-    description: "Você respondeu entre 5 e 30 minutos — dentro do aceitável.",
+    description: "Você respondeu entre 5 e 30 minutos. dentro do aceitável.",
     triggers: ["Primeira resposta entre 5–30 minutos"],
     type: "neutral",
   },
   SLA_FIRST_RESPONSE_OVER_30MIN: {
-    description: "Resposta demorou mais de 30 minutos — penalidade aplicada.",
+    description: "Resposta demorou mais de 30 minutos. penalidade aplicada.",
     triggers: ["Primeira resposta acima de 30 minutos"],
     type: "penalty",
   },
@@ -241,22 +241,22 @@ const RULE_DESCRIPTIONS: Record<string, { description: string; triggers?: string
     type: "penalty",
   },
   UNREPLIED_INBOUND_OVER_24H: {
-    description: "Lead sem resposta há mais de 24 horas — risco alto de perda.",
+    description: "Lead sem resposta há mais de 24 horas. risco alto de perda.",
     triggers: ["Mensagem do lead sem resposta por 24h+"],
     type: "penalty",
   },
   CONVERSATION_ACTIVE_3D: {
-    description: "Conversa ativa por 3 dias consecutivos — bom sinal de engajamento.",
+    description: "Conversa ativa por 3 dias consecutivos. bom sinal de engajamento.",
     triggers: ["Troca de mensagens por 3 dias seguidos"],
     type: "bonus",
   },
   CONVERSATION_ACTIVE_5D: {
-    description: "Conversa ativa por 5 dias — lead altamente engajado.",
+    description: "Conversa ativa por 5 dias. lead altamente engajado.",
     triggers: ["Troca de mensagens por 5 dias seguidos"],
     type: "bonus",
   },
   BACK_AND_FORTH_5_TURNS: {
-    description: "5 trocas de mensagem no diálogo — conversa avançada.",
+    description: "5 trocas de mensagem no diálogo. conversa avançada.",
     triggers: ["5 mensagens alternadas (ida e volta)"],
     type: "bonus",
   },
@@ -325,11 +325,11 @@ const ScoreInfoPopover = () => (
         O score vai de 0 a 1.000 pontos e é calculado automaticamente com base nas interações dos leads no WhatsApp.
       </p>
       <div className="space-y-1.5">
-        <p className="text-xs"><span className="text-red-400 font-medium">0 – 200:</span> Frio — sem interação relevante</p>
-        <p className="text-xs"><span className="text-yellow-400 font-medium">201 – 400:</span> Baixo engajamento — pouca atividade</p>
-        <p className="text-xs"><span className="text-blue-400 font-medium">401 – 600:</span> Engajado — interagindo ativamente</p>
-        <p className="text-xs"><span className="text-purple-400 font-medium">601 – 800:</span> Alto valor — forte interesse</p>
-        <p className="text-xs"><span className="text-emerald-400 font-medium">801 – 1.000:</span> Pronto para venda — lead quente</p>
+        <p className="text-xs"><span className="text-red-400 font-medium">0 – 200:</span> Frio. sem interação relevante</p>
+        <p className="text-xs"><span className="text-yellow-400 font-medium">201 – 400:</span> Baixo engajamento. pouca atividade</p>
+        <p className="text-xs"><span className="text-blue-400 font-medium">401 – 600:</span> Engajado. interagindo ativamente</p>
+        <p className="text-xs"><span className="text-purple-400 font-medium">601 – 800:</span> Alto valor. forte interesse</p>
+        <p className="text-xs"><span className="text-emerald-400 font-medium">801 – 1.000:</span> Pronto para venda. lead quente</p>
       </div>
       <div className="border-t border-border pt-2">
         <p className="text-xs text-muted-foreground">
@@ -515,7 +515,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                 })}
               </div>
             ) : (
-              <EmptyListState message="Nenhum lead qualificado perdeu pontos hoje — ótimo sinal!" icon={AlertTriangle} />
+              <EmptyListState message="Nenhum lead qualificado perdeu pontos hoje. ótimo sinal!" icon={AlertTriangle} />
             )}
           </CardContent>
         </Card>
