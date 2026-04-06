@@ -100,7 +100,14 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                 <Link to="/crm" onClick={() => setIsOpen(false)}>
                   <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
                     <Users size={16} />
-                    CRM
+                    CRM Pipeline
+                  </Button>
+                </Link>
+
+                <Link to="/crm/score" onClick={() => setIsOpen(false)}>
+                  <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
+                    <BarChart3 size={16} />
+                    CRM Score
                   </Button>
                 </Link>
 
