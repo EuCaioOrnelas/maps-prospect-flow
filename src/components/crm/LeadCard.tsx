@@ -169,7 +169,7 @@ const LeadCardComponent = ({
       {scoreData && scoreData.score_total > 0 && (
         <div
           className="mb-2 py-1.5 px-2 rounded-md bg-muted/30 border border-border/30 flex items-center justify-between gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
-          onClick={(e) => { e.stopPropagation(); navigate(`/crm/score?lead=${scoreData.id}`); }}
+          onClick={(e) => { e.stopPropagation(); navigate(`/crm/score?phone=${encodeURIComponent(lead.phone)}`); }}
         >
           <div className="flex items-center gap-1.5">
             <Trophy className={cn("w-3 h-3", 
