@@ -262,7 +262,8 @@ const App = () => (
                       <Chat />
                     </ProtectedRoute>
                   } 
-                />
+                <Route 
+                  path="/warming" 
                   element={
                     <ProtectedRoute>
                       <Warming />
