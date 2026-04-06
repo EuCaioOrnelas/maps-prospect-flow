@@ -1085,7 +1085,9 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-border { border-color: #e9edef; }
 .wa-border-light { border-color: #1e2a32; }
 .landing-light .wa-border-light { border-color: #e9edef; }
-.wa-border-conversation { border-color: #1e2a32; }
+.wa-border-header-bottom { border-bottom: 2px solid #1a252d; }
+.landing-light .wa-border-header-bottom { border-bottom: 2px solid #d9dde0; }
+.wa-border-conversation { border-color: #1a252d; }
 .landing-light .wa-border-conversation { border-color: #e9edef; }
 
 /* ─── Text ─── */

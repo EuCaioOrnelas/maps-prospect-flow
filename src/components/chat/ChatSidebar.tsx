@@ -70,7 +70,7 @@ export function ChatSidebar({
   return (
     <div className="flex flex-col h-full wa-sidebar-bg">
       {/* Header — slightly different tone */}
-      <div className="h-[60px] flex items-center justify-between px-4 wa-sidebar-header-bg border-b border-[#1a252d] landing-light:border-[#d9dde0]">
+      <div className="h-[60px] flex items-center justify-between px-4 wa-sidebar-header-bg wa-border-header-bottom">
         <div className="flex items-center gap-2">
           <span className="text-[18px] font-semibold wa-sidebar-header-text">Conversas</span>
         </div>
