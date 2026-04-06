@@ -439,10 +439,33 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               />
             </li>
 
-
-
-
-
+            {/* Aquecimento */}
+            <li>
+              <SidebarNavItem
+                title="Aquecimento"
+                icon={Flame}
+                url="/warming"
+                isActive={currentPath === "/warming"}
+                isExpanded={isExpanded}
+                badge={hasDisconnectedWarming ? (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full flex items-center justify-center animate-pulse">
+                    <AlertTriangle size={8} className="text-destructive-foreground" />
+                  </div>
+                ) : undefined}
+                tooltip={
+                  hasDisconnectedWarming ? (
+                    <div>
+                      <p className="font-medium">Número desconectado</p>
+                      <p className="text-xs opacity-90">
+                        {disconnectedNumbers.length} número(s) precisa(m) reconectar
+                      </p>
+                    </div>
+                  ) : "Aquecimento"
+                }
+              />
+            </li>
+          </ul>
+        </nav>
 
           </ul>
         </nav>
