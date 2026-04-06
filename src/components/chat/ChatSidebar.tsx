@@ -69,17 +69,17 @@ export function ChatSidebar({
 
   return (
     <div className="flex flex-col h-full wa-sidebar-bg">
-      {/* Header - distinct background */}
-      <div className="h-[60px] flex items-center justify-between px-4 bg-[#008069] dark:bg-[#1f2c34]">
+      {/* Header */}
+      <div className="h-[60px] flex items-center justify-between px-4 wa-sidebar-header-bg">
         <div className="flex items-center gap-2">
-          <span className="text-[18px] font-semibold text-white dark:text-[#e9edef]">Conversas</span>
+          <span className="text-[18px] font-semibold wa-sidebar-header-text">Conversas</span>
         </div>
         <div className="flex items-center gap-2">
           {connections.length > 1 && (
             <select
               value={activeConnectionId || ""}
               onChange={e => onConnectionChange(e.target.value)}
-              className="text-xs bg-white/10 text-white border border-white/20 rounded-md px-2 py-1.5 outline-none"
+              className="text-xs wa-sidebar-header-select border rounded-md px-2 py-1.5 outline-none"
             >
               {connections.map(c => (
                 <option key={c.id} value={c.id} className="text-black">
@@ -91,17 +91,17 @@ export function ChatSidebar({
           {onNewConversation && (
             <button
               onClick={() => setNewConvOpen(true)}
-              className="p-[6px] rounded-full hover:bg-white/10 transition-colors"
+              className="p-[6px] rounded-full wa-sidebar-header-btn transition-colors"
               title="Nova conversa"
             >
-              <MessageSquarePlus size={20} className="text-white/90" />
+              <MessageSquarePlus size={20} className="wa-sidebar-header-icon" />
             </button>
           )}
         </div>
       </div>
 
       {/* Search bar */}
-      <div className="px-3 py-[7px]">
+      <div className="px-3 py-[7px] wa-sidebar-search-area">
         <div className={cn(
           "flex items-center h-[35px] rounded-lg px-3 gap-3 transition-all duration-200",
           "wa-bg-search",
@@ -215,7 +215,7 @@ export function ChatSidebar({
                             <ChevronDown size={18} className="wa-icon-muted" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="wa-dropdown-bg wa-border wa-text-primary min-w-[170px] rounded-[3px] shadow-xl py-[9px]">
+                        <DropdownMenuContent align="end" className="wa-dropdown-bg wa-border wa-text-primary min-w-[200px] rounded-[3px] shadow-xl py-[9px]">
                           <DropdownMenuItem onClick={() => onTogglePin(conv.id)} className="wa-dropdown-item text-[14.5px] px-6 py-[9px]">
                             {conv.is_pinned ? "Desafixar conversa" : "Fixar conversa"}
                           </DropdownMenuItem>
