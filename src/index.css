@@ -1104,8 +1104,8 @@ input::placeholder, textarea::placeholder {
   background-image: url("/images/wa-bg-pattern-dark.png");
   background-repeat: repeat;
   background-position: center top;
-  background-size: 760px auto;
-  opacity: 0.84;
+  background-size: 412px auto;
+  opacity: 0.06;
 }
 .landing-light .wa-chat-pattern {
   background-image: url("/images/wa-bg-pattern.png");
@@ -1127,20 +1127,20 @@ input::placeholder, textarea::placeholder {
   position: absolute;
   top: -20%;
   left: -15%;
-  width: 55%;
-  height: 55%;
-  background: radial-gradient(circle, rgba(2,77,63,0.15) 0%, transparent 70%);
-  filter: blur(80px);
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(2,77,63,0.25) 0%, transparent 70%);
+  filter: blur(100px);
 }
 .wa-chat-glow::after {
   content: '';
   position: absolute;
   bottom: -10%;
   right: -10%;
-  width: 45%;
-  height: 45%;
-  background: radial-gradient(circle, rgba(2,77,63,0.1) 0%, transparent 70%);
-  filter: blur(60px);
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, rgba(2,77,63,0.18) 0%, transparent 70%);
+  filter: blur(80px);
 }
 .landing-light .wa-chat-glow::before {
   background: radial-gradient(circle, rgba(2,77,63,0.06) 0%, transparent 70%);
