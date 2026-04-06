@@ -64,6 +64,10 @@ const Chat = () => {
                   onSendMessage={chat.sendMessage}
                   onSendMedia={chat.sendMedia}
                   messagesEndRef={chat.messagesEndRef as React.RefObject<HTMLDivElement>}
+                  onReopenConversation={(templateName) => {
+                    console.log("Reabrir conversa com template:", templateName);
+                    // TODO: integrate with Meta template API
+                  }}
                 />
               </>
             )}
