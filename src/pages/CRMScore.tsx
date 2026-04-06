@@ -235,18 +235,13 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
       {/* KPIs - 3 per row, matching Opportunities design */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {kpis.map((kpi) => (
-          <Card key={kpi.label} className="group relative overflow-hidden bg-card border-border/60 hover:border-primary/30 transition-all duration-300">
-            <div className="absolute top-3 right-3 w-[72px] h-[72px] rounded-full bg-primary/[0.07] dark:bg-primary/[0.12] group-hover:scale-110 transition-transform duration-500" />
+          <Card key={kpi.label} className="relative overflow-hidden bg-card border-border/60">
+            <div className="absolute top-4 right-4 w-[56px] h-[56px] rounded-full bg-primary/[0.07] dark:bg-primary/[0.12] flex items-center justify-center">
+              <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
+            </div>
             <CardContent className="p-5 relative">
-              <div className="flex items-center gap-4">
-                <div className="p-2.5 rounded-xl bg-muted/30 border border-border/30">
-                  <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
-                </div>
-                <div>
-                  <p className="text-[30px] font-bold leading-none tabular-nums">{kpi.value}</p>
-                  <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mt-1">{kpi.label}</p>
-                </div>
-              </div>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2">{kpi.label}</p>
+              <p className="text-[30px] font-bold leading-none tabular-nums">{kpi.value}</p>
             </CardContent>
           </Card>
         ))}
