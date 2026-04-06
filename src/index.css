@@ -1109,13 +1109,13 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-chat-bg { background-color: #efeae2; }
 
 .wa-chat-pattern {
-  background-image: url("./images/wa-bg-light.png");
+  background-image: url("/images/wa-bg-light.png");
   background-repeat: repeat;
   background-size: 412px auto;
   opacity: 0.06;
 }
 .landing-light .wa-chat-pattern {
-  background-image: url("./images/wa-bg-light.png");
+  background-image: url("/images/wa-bg-light.png");
   background-repeat: repeat;
   background-size: 412px auto;
   opacity: 0.4;
