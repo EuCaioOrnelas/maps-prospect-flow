@@ -2,7 +2,6 @@ import { useChat } from "@/hooks/useChat";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatMessageArea } from "@/components/chat/ChatMessageArea";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { AppHeader } from "@/components/layout/AppHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,10 +23,10 @@ const Chat = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full wa-app-bg">
+      <div className="h-screen flex w-full wa-app-bg overflow-hidden">
         <AppSidebar profile={profile} />
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
-          <AppHeader profile={profile} />
+          {/* No AppHeader - chat uses full height */}
           <div className="flex-1 flex overflow-hidden">
             {hasNoConnection ? (
               <div className="flex-1 flex flex-col items-center justify-center wa-empty-bg px-8">
@@ -65,6 +64,10 @@ const Chat = () => {
                   onSendMessage={chat.sendMessage}
                   onSendMedia={chat.sendMedia}
                   messagesEndRef={chat.messagesEndRef as React.RefObject<HTMLDivElement>}
+                  onReopenConversation={(templateName) => {
+                    console.log("Reabrir conversa com template:", templateName);
+                    // TODO: integrate with Meta template API
+                  }}
                 />
               </>
             )}

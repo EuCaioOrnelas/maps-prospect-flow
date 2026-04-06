@@ -69,20 +69,20 @@ export function ChatSidebar({
 
   return (
     <div className="flex flex-col h-full wa-sidebar-bg">
-      {/* Header */}
-      <div className="h-[60px] flex items-center justify-between px-4 wa-header-bg">
+      {/* Header - distinct background */}
+      <div className="h-[60px] flex items-center justify-between px-4 bg-[#008069] dark:bg-[#1f2c34]">
         <div className="flex items-center gap-2">
-          <span className="text-[18px] font-semibold wa-text-primary">Conversas</span>
+          <span className="text-[18px] font-semibold text-white dark:text-[#e9edef]">Conversas</span>
         </div>
         <div className="flex items-center gap-2">
           {connections.length > 1 && (
             <select
               value={activeConnectionId || ""}
               onChange={e => onConnectionChange(e.target.value)}
-              className="text-xs wa-bg-input wa-text-primary border wa-border rounded-md px-2 py-1.5 outline-none"
+              className="text-xs bg-white/10 text-white border border-white/20 rounded-md px-2 py-1.5 outline-none"
             >
               {connections.map(c => (
-                <option key={c.id} value={c.id}>
+                <option key={c.id} value={c.id} className="text-black">
                   {c.nickname || c.display_phone_number || c.business_name || "Número"}
                 </option>
               ))}
@@ -91,10 +91,10 @@ export function ChatSidebar({
           {onNewConversation && (
             <button
               onClick={() => setNewConvOpen(true)}
-              className="wa-icon-button p-[6px] rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              className="p-[6px] rounded-full hover:bg-white/10 transition-colors"
               title="Nova conversa"
             >
-              <MessageSquarePlus size={20} className="wa-icon-header" />
+              <MessageSquarePlus size={20} className="text-white/90" />
             </button>
           )}
         </div>

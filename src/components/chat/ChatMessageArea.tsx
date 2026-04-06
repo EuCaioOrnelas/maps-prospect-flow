@@ -1,9 +1,10 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Search, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
-import { format, parseISO, isSameDay } from "date-fns";
+import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
+import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import logoIconNew from "@/assets/logo-icon-new.png";
 
 interface ChatMessageAreaProps {
@@ -13,6 +14,7 @@ interface ChatMessageAreaProps {
   onSendMessage: (text: string) => void;
   onSendMedia: (file: File, caption?: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  onReopenConversation?: (templateName: string) => void;
 }
 
 // ─── Status icons (WhatsApp exact SVGs) ───
@@ -149,7 +151,7 @@ function InboundTail() {
 }
 
 export function ChatMessageArea({
-  conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef,
+  conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation,
 }: ChatMessageAreaProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -311,8 +313,25 @@ export function ChatMessageArea({
         </div>
       </div>
 
-      {/* ─── Input ─── */}
-      <ChatInput onSendMessage={onSendMessage} onSendMedia={onSendMedia} />
+      {/* ─── Input or Expired Banner ─── */}
+      {(() => {
+        // Check if 24h window is expired based on last inbound message
+        const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
+        const isWindowExpired = lastInbound
+          ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) > 24
+          : messages.length > 0; // If no inbound messages at all, window is expired
+
+        if (isWindowExpired && onReopenConversation) {
+          return (
+            <ExpiredWindowBanner
+              contactName={conversation.contact_name}
+              contactPhone={conversation.contact_phone}
+              onReopenConversation={onReopenConversation}
+            />
+          );
+        }
+        return <ChatInput onSendMessage={onSendMessage} onSendMedia={onSendMedia} />;
+      })()}
     </div>
   );
 }
