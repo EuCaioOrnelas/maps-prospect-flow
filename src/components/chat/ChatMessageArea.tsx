@@ -151,7 +151,7 @@ function InboundTail() {
 }
 
 export function ChatMessageArea({
-  conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef,
+  conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation,
 }: ChatMessageAreaProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
