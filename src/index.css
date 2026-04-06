@@ -1053,7 +1053,7 @@ input::placeholder, textarea::placeholder {
    ===================================================== */
 
 /* ─── App background ─── */
-.wa-app-bg { background-color: #111b21; }
+.wa-app-bg { background-color: #0b141a; }
 .landing-light .wa-app-bg { background-color: #eae6df; }
 
 /* ─── Sidebar ─── */
@@ -1063,29 +1063,29 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-sidebar-border { border-right: 1px solid #e9edef; }
 
 /* ─── Header (sidebar + chat) ─── */
-.wa-header-bg { background-color: #202c33; }
+.wa-header-bg { background-color: #1f2c34; }
 .landing-light .wa-header-bg { background-color: #f0f2f5; }
 
 /* ─── Search ─── */
-.wa-bg-search { background-color: #202c33; }
+.wa-bg-search { background-color: #1f2c34; }
 .landing-light .wa-bg-search { background-color: #f0f2f5; }
 .wa-search-focused { background-color: #2a3942; }
 .landing-light .wa-search-focused { background-color: #ffffff; box-shadow: inset 0 0 0 1px #00a884; }
 
 /* ─── Input field ─── */
-.wa-bg-input { background-color: #2a3942; }
+.wa-bg-input { background-color: #1e2a32; }
 .landing-light .wa-bg-input { background-color: #f0f2f5; }
-.wa-input-field { background-color: #2a3942; }
+.wa-input-field { background-color: #1e2a32; }
 .landing-light .wa-input-field { background-color: #ffffff; }
-.wa-input-bar { background-color: #202c33; }
+.wa-input-bar { background-color: #1f2c34; }
 .landing-light .wa-input-bar { background-color: #f0f2f5; }
 
 /* ─── Borders ─── */
-.wa-border { border-color: #3b4a54; }
+.wa-border { border-color: #2a3942; }
 .landing-light .wa-border { border-color: #e9edef; }
-.wa-border-light { border-color: #222d34; }
+.wa-border-light { border-color: #1e2a32; }
 .landing-light .wa-border-light { border-color: #e9edef; }
-.wa-border-conversation { border-color: #222d34; }
+.wa-border-conversation { border-color: #1e2a32; }
 .landing-light .wa-border-conversation { border-color: #e9edef; }
 
 /* ─── Text ─── */
@@ -1101,7 +1101,7 @@ input::placeholder, textarea::placeholder {
 /* ─── Active conversation — subtle gray ─── */
 .wa-conv-active { background-color: #2a3942; }
 .landing-light .wa-conv-active { background-color: #e9edef; }
-.wa-conv-hover:hover { background-color: #202c33; }
+.wa-conv-hover:hover { background-color: #1a2830; }
 .landing-light .wa-conv-hover:hover { background-color: #f5f6f6; }
 
 /* ─── Chat area ─── */
@@ -1109,24 +1109,24 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-chat-bg { background-color: #efeae2; }
 
 .wa-chat-pattern {
-  background-image: url("/images/wa-bg-light.png");
+  background-image: url("/images/wa-bg-pattern.png");
   background-repeat: repeat;
   background-size: 412px auto;
   opacity: 0.06;
 }
 .landing-light .wa-chat-pattern {
-  background-image: url("/images/wa-bg-light.png");
+  background-image: url("/images/wa-bg-pattern.png");
   background-repeat: repeat;
   background-size: 412px auto;
   opacity: 0.4;
 }
 
 /* ─── Empty state ─── */
-.wa-empty-bg { background-color: #222e35; }
+.wa-empty-bg { background-color: #0b141a; }
 .landing-light .wa-empty-bg { background-color: #f0f2f5; }
 
-/* ─── Sidebar header (Conversas) — white-gray light / dark bg dark ─── */
-.wa-sidebar-header-bg { background-color: #202c33; }
+/* ─── Sidebar header (Conversas) ─── */
+.wa-sidebar-header-bg { background-color: #1f2c34; }
 .landing-light .wa-sidebar-header-bg { background-color: #f0f2f5; }
 .wa-sidebar-header-text { color: #e9edef; }
 .landing-light .wa-sidebar-header-text { color: #3b4a54; }
@@ -1141,7 +1141,7 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-sidebar-search-area { background-color: #ffffff; }
 
 /* ─── Chat header (contact area) — matching sidebar header ─── */
-.wa-chat-header-bg { background-color: #202c33; }
+.wa-chat-header-bg { background-color: #1f2c34; }
 .landing-light .wa-chat-header-bg { background-color: #f0f2f5; }
 .wa-chat-header-text { color: #e9edef; }
 .landing-light .wa-chat-header-text { color: #111b21; }
@@ -1154,14 +1154,14 @@ input::placeholder, textarea::placeholder {
 .wa-search-panel { background-color: #111b21; }
 .landing-light .wa-search-panel { background-color: #ffffff; }
 
-/* ─── Message bubbles ─── */
-.wa-bubble-out { background-color: #005c4b; }
-.landing-light .wa-bubble-out { background-color: #d9fdd3; }
-.wa-bubble-in { background-color: #202c33; }
+/* ─── Message bubbles — Wiize green ─── */
+.wa-bubble-out { background-color: #024d3f; }
+.landing-light .wa-bubble-out { background-color: #d4f5e2; }
+.wa-bubble-in { background-color: #1f2c34; }
 .landing-light .wa-bubble-in { background-color: #ffffff; }
-.wa-bubble-out-fill { fill: #005c4b; }
-.landing-light .wa-bubble-out-fill { fill: #d9fdd3; }
-.wa-bubble-in-fill { fill: #202c33; }
+.wa-bubble-out-fill { fill: #024d3f; }
+.landing-light .wa-bubble-out-fill { fill: #d4f5e2; }
+.wa-bubble-in-fill { fill: #1f2c34; }
 .landing-light .wa-bubble-in-fill { fill: #ffffff; }
 
 /* ─── Date badge ─── */
@@ -1172,7 +1172,7 @@ input::placeholder, textarea::placeholder {
 .wa-doc-bg { background-color: rgba(0,0,0,0.15); }
 .landing-light .wa-doc-bg { background-color: rgba(0,0,0,0.04); }
 .wa-doc-icon { background-color: rgba(0,168,132,0.1); }
-.wa-doc-preview { background-color: #202c33; }
+.wa-doc-preview { background-color: #1f2c34; }
 .landing-light .wa-doc-preview { background-color: #f0f2f5; }
 
 /* ─── Status icons ─── */
@@ -1201,13 +1201,13 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-icon-button:hover { background-color: rgba(0,0,0,0.05); }
 
 /* ─── Dropdowns ─── */
-.wa-dropdown-bg { background-color: #233138; }
+.wa-dropdown-bg { background-color: #1f2c34; }
 .landing-light .wa-dropdown-bg { background-color: #ffffff; }
-.wa-dropdown-item:hover { background-color: #182229 !important; }
+.wa-dropdown-item:hover { background-color: #111b21 !important; }
 .landing-light .wa-dropdown-item:hover { background-color: #f5f6f6 !important; }
 
 /* ─── Attach menu ─── */
-.wa-attach-bg { background-color: #233138; }
+.wa-attach-bg { background-color: #1f2c34; }
 .landing-light .wa-attach-bg { background-color: #ffffff; }
 
 /* ─── Emoji picker ─── */
