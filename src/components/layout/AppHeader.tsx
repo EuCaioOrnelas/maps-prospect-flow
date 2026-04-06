@@ -66,9 +66,9 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
           <div className="hidden sm:flex items-center gap-2 text-sm">
             <Search size={14} className="text-muted-foreground" />
             <span className="text-muted-foreground">Oportunidades:</span>
-            <span className="font-semibold text-primary">{profile?.searches_used || 0}</span>
+            <span className="font-semibold text-primary">{(profile?.searches_used || 0).toLocaleString('pt-BR')}</span>
             <span className="text-muted-foreground">/</span>
-            <span className="text-muted-foreground">{profile?.searches_limit || 10}</span>
+            <span className="text-muted-foreground">{(profile?.searches_limit || 10).toLocaleString('pt-BR')}</span>
             <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-1">
               <div 
                 className="h-full bg-primary rounded-full transition-all"
@@ -83,9 +83,9 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
           {/* Mobile compact credits */}
           <div className="flex sm:hidden items-center gap-1.5 text-xs bg-secondary/50 px-2 py-1 rounded-lg">
             <Search size={12} className="text-primary" />
-            <span className="font-semibold text-primary">{profile?.searches_used || 0}</span>
+            <span className="font-semibold text-primary">{(profile?.searches_used || 0).toLocaleString('pt-BR')}</span>
             <span className="text-muted-foreground">/</span>
-            <span className="text-muted-foreground">{profile?.searches_limit || 10}</span>
+            <span className="text-muted-foreground">{(profile?.searches_limit || 10).toLocaleString('pt-BR')}</span>
           </div>
 
           {/* Theme toggle - between credits and avatar */}

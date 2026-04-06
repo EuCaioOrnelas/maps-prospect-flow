@@ -2333,8 +2333,8 @@ const Admin = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium">{u.searches_used}</span>
-                              <span className="text-muted-foreground">/ {u.searches_limit}</span>
+                              <span className="font-medium">{u.searches_used.toLocaleString('pt-BR')}</span>
+                              <span className="text-muted-foreground">/ {u.searches_limit.toLocaleString('pt-BR')}</span>
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">
