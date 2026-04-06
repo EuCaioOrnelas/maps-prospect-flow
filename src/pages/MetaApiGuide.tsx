@@ -91,21 +91,21 @@ const MetaApiGuide = () => {
                     <CheckCircle2 size={16} className="text-primary mt-0.5 shrink-0" />
                     <p className="text-sm font-semibold text-foreground">Uso para RELACIONAMENTO (permitido)</p>
                   </div>
-                  <ul className="space-y-2 pl-6">
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-primary mt-1">•</span>
+                  <ul className="space-y-2 ml-6">
+                    <li className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                       Enviar mensagens para clientes e leads que já interagiram com sua empresa
                     </li>
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-primary mt-1">•</span>
+                    <li className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                       Reengajar leads que responderam ou demonstraram interesse
                     </li>
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-primary mt-1">•</span>
+                    <li className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                       Enviar atualizações, promoções e novidades para sua base de contatos
                     </li>
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-primary mt-1">•</span>
+                    <li className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                       Notificações de pedidos, confirmações e lembretes
                     </li>
                   </ul>
@@ -116,17 +116,17 @@ const MetaApiGuide = () => {
                     <AlertTriangle size={16} className="text-destructive mt-0.5 shrink-0" />
                     <p className="text-sm font-semibold text-foreground">Prospecção fria NÃO é permitida</p>
                   </div>
-                  <ul className="space-y-2 pl-6">
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-destructive mt-1">•</span>
+                  <ul className="space-y-2 ml-6">
+                    <li className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
                       Enviar mensagens para números que nunca interagiram com sua empresa
                     </li>
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-destructive mt-1">•</span>
+                    <li className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
                       Comprar listas de números e fazer disparos em massa
                     </li>
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-destructive mt-1">•</span>
+                    <li className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
                       Spam ou mensagens não solicitadas em grande volume
                     </li>
                   </ul>
@@ -158,22 +158,22 @@ const MetaApiGuide = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      <tr className="hover:bg-muted/30 transition-colors">
+                      <tr>
                         <td className="py-3 px-4 font-medium text-foreground">Marketing</td>
                         <td className="py-3 px-4 text-muted-foreground">Promoções, ofertas, novidades de produtos</td>
                         <td className="py-3 px-4 text-foreground font-mono">~R$ 0,50</td>
                       </tr>
-                      <tr className="hover:bg-muted/30 transition-colors">
+                      <tr>
                         <td className="py-3 px-4 font-medium text-foreground">Utilidade</td>
                         <td className="py-3 px-4 text-muted-foreground">Atualizações de pedido, confirmações, lembretes</td>
                         <td className="py-3 px-4 text-foreground font-mono">~R$ 0,15</td>
                       </tr>
-                      <tr className="hover:bg-muted/30 transition-colors">
+                      <tr>
                         <td className="py-3 px-4 font-medium text-foreground">Autenticação</td>
                         <td className="py-3 px-4 text-muted-foreground">Códigos de verificação, senhas temporárias</td>
                         <td className="py-3 px-4 text-foreground font-mono">~R$ 0,15</td>
                       </tr>
-                      <tr className="hover:bg-muted/30 transition-colors">
+                      <tr>
                         <td className="py-3 px-4 font-medium text-foreground">Serviço</td>
                         <td className="py-3 px-4 text-muted-foreground">Quando o cliente inicia a conversa (gratuito!)</td>
                         <td className="py-3 px-4 text-primary font-mono font-semibold">Grátis</td>
@@ -474,6 +474,10 @@ const MetaApiGuide = () => {
                   q="Como adiciono saldo/créditos?"
                   a="Os créditos de envio são gerenciados diretamente no Meta Business Suite, na seção de pagamentos. Adicione um método de pagamento (cartão de crédito) e defina um limite."
                 />
+                <FAQItem
+                  q="Se o número é desvinculado do WhatsApp, como respondo os leads?"
+                  a="Quando um lead responde à sua mensagem, a resposta chega automaticamente na Wiize pelo webhook da Meta. Você visualiza e gerencia todas as respostas diretamente pelo painel de campanhas e pelo CRM, sem precisar do app do WhatsApp. O número funciona 100% pela API, ou seja, toda a comunicação é feita pelo sistema, não pelo celular."
+                />
               </div>
             </GuideSection>
 
@@ -521,7 +525,7 @@ const GuideSection = ({ icon, title, children, defaultOpen = false }: {
 };
 
 const InfoCard = ({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) => (
-  <div className="flex items-start gap-3 p-3.5 rounded-xl bg-muted/30 border border-border">
+  <div className="flex items-start gap-3 p-3.5 rounded-xl bg-muted/30 border border-border transition-shadow hover:shadow-sm">
     <div className="text-primary mt-0.5 shrink-0">{icon}</div>
     <div>
       <p className="text-sm font-medium text-foreground">{title}</p>
