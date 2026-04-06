@@ -342,12 +342,18 @@ const ScoreInfoPopover = () => (
 
 // ═══════════════ EMPTY STATE ═══════════════
 
-const EmptyListState = ({ message }: { message: string }) => (
-  <div className="flex flex-col items-center justify-center py-8 text-center">
-    <Minus className="h-8 w-8 text-muted-foreground/30 mb-2" />
-    <p className="text-xs text-muted-foreground">{message}</p>
-  </div>
-);
+const EmptyListState = ({ message, icon: Icon }: { message: string; icon?: React.ElementType }) => {
+  const IconComponent = Icon || Search;
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+      <div className="w-12 h-12 rounded-full bg-muted/40 flex items-center justify-center mb-3">
+        <IconComponent className="h-5 w-5 text-muted-foreground/50" />
+      </div>
+      <p className="text-sm font-medium text-muted-foreground/70 mb-1">Sem dados no momento</p>
+      <p className="text-xs text-muted-foreground/50 max-w-[240px]">{message}</p>
+    </div>
+  );
+};
 
 // ═══════════════ DASHBOARD TAB ═══════════════
 
