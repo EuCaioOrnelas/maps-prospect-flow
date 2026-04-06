@@ -239,7 +239,7 @@ export function ChatMessageArea({
     <div className="flex-1 flex min-w-0">
       <div className="flex-1 flex flex-col min-w-0">
         {/* ─── Chat Header ─── */}
-        <div className="h-[60px] flex items-center gap-[10px] px-[16px] wa-chat-header-bg wa-border-header-bottom shrink-0">
+        <div className="h-[58px] min-h-[58px] flex items-center gap-[10px] px-[16px] wa-chat-header-bg wa-border-header-bottom shrink-0">
           <div className={cn(
             "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-light",
             avatarColor
