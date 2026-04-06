@@ -308,9 +308,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           {/* LEFT: Text content */}
           <div className="text-center xl:text-left">
             {/* Trust badge with avatars */}
-            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
-              <img src={metaIcon} alt="Meta" className="h-6 sm:h-7 w-auto" />
-              <span className="text-sm sm:text-base font-semibold text-foreground tracking-tight">Meta Business Partner</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
+              <img src={metaIcon} alt="Meta" className="h-4 w-auto" />
+              <span className="text-xs font-medium text-foreground tracking-tight">Meta Business Partner</span>
             </div>
 
             {/* Main heading - always 3 lines */}
