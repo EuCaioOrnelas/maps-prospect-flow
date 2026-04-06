@@ -76,7 +76,7 @@ export function NewConversationDialog({ open, onOpenChange, onStartConversation 
 
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) resetState(); }}>
-      <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[440px] max-w-[calc(100vw-32px)] p-0 gap-0 overflow-hidden rounded-xl">
         <DialogHeader className="px-5 pt-5 pb-3">
           <DialogTitle className="text-lg font-medium">Nova conversa</DialogTitle>
         </DialogHeader>
@@ -92,7 +92,7 @@ export function NewConversationDialog({ open, onOpenChange, onStartConversation 
                 : "border-transparent text-muted-foreground hover:text-foreground"
             )}
           >
-            <Search size={14} className="inline mr-1.5" />
+            <Search size={14} className="inline mr-1.5 -mt-0.5" />
             Buscar no CRM
           </button>
           <button
@@ -104,7 +104,7 @@ export function NewConversationDialog({ open, onOpenChange, onStartConversation 
                 : "border-transparent text-muted-foreground hover:text-foreground"
             )}
           >
-            <UserPlus size={14} className="inline mr-1.5" />
+            <UserPlus size={14} className="inline mr-1.5 -mt-0.5" />
             Novo contato
           </button>
         </div>
@@ -119,7 +119,7 @@ export function NewConversationDialog({ open, onOpenChange, onStartConversation 
                 className="h-9"
               />
             </div>
-            <div className="max-h-[320px] overflow-y-auto">
+            <div className="max-h-[280px] overflow-y-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-10">
                   <div className="h-6 w-6 rounded-full border-2 border-[#00a884]/20 border-t-[#00a884] animate-spin" />
