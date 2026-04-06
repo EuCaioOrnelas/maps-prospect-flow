@@ -93,7 +93,33 @@ export function useChat() {
         .eq("is_archived", false)
         .order("is_pinned", { ascending: false })
         .order("last_message_at", { ascending: false, nullsFirst: false });
-      setConversations((data as ChatConversation[]) || []);
+      
+      const dbConversations = (data as ChatConversation[]) || [];
+      
+      // Add a fake test conversation if none exist
+      if (dbConversations.length === 0) {
+        const fakeConv: ChatConversation = {
+          id: "fake-test-conversation",
+          user_id: user.id,
+          waba_connection_id: activeConnectionId,
+          contact_phone: "5511999887766",
+          contact_name: "Lead Teste (Demo)",
+          contact_profile_pic: null,
+          last_message_text: "Olá, gostaria de saber mais sobre o serviço!",
+          last_message_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(), // 25h ago (expired)
+          last_message_type: "text",
+          last_message_direction: "inbound",
+          unread_count: 1,
+          is_pinned: false,
+          is_archived: false,
+          is_muted: false,
+          created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+          updated_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
+        };
+        dbConversations.push(fakeConv);
+      }
+      
+      setConversations(dbConversations);
       setLoading(false);
     };
     loadConversations();
@@ -102,6 +128,43 @@ export function useChat() {
   // Load messages for active conversation
   useEffect(() => {
     if (!activeConversationId || !user) return;
+    
+    // Handle fake test conversation
+    if (activeConversationId === "fake-test-conversation") {
+      const fakeMessages: ChatMessage[] = [
+        {
+          id: "fake-msg-1",
+          conversation_id: "fake-test-conversation",
+          user_id: user.id,
+          waba_message_id: null,
+          direction: "outbound",
+          message_type: "text",
+          content: "Olá! Somos da Wiize. Vi que você tem interesse em automação de WhatsApp. Posso ajudar?",
+          media_url: null, media_mime_type: null, media_filename: null, media_caption: null,
+          status: "read", status_updated_at: null, reply_to_message_id: null, metadata: {},
+          created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          id: "fake-msg-2",
+          conversation_id: "fake-test-conversation",
+          user_id: user.id,
+          waba_message_id: null,
+          direction: "inbound",
+          message_type: "text",
+          content: "Olá, gostaria de saber mais sobre o serviço!",
+          media_url: null, media_mime_type: null, media_filename: null, media_caption: null,
+          status: "read", status_updated_at: null, reply_to_message_id: null, metadata: {},
+          created_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
+        },
+      ];
+      setMessages(fakeMessages);
+      setLoadingMessages(false);
+      setConversations(prev =>
+        prev.map(c => c.id === activeConversationId ? { ...c, unread_count: 0 } : c)
+      );
+      return;
+    }
+    
     const loadMessages = async () => {
       setLoadingMessages(true);
       const { data } = await supabase
