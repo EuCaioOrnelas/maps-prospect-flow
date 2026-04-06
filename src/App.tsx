@@ -69,7 +69,7 @@ const CancellationFeedback = lazy(() => import("./pages/CancellationFeedback"));
 const MetaAppDocumentation = lazy(() => import("./pages/MetaAppDocumentation"));
 const MetaApiGuide = lazy(() => import("./pages/MetaApiGuide"));
 const OpportunitiesManagement = lazy(() => import("./pages/OpportunitiesManagement"));
-
+const Chat = lazy(() => import("./pages/Chat"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -252,6 +252,14 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <CRMScore />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/chat" 
+                  element={
+                    <ProtectedRoute>
+                      <Chat />
                     </ProtectedRoute>
                   } 
                 />
