@@ -32,6 +32,23 @@ function formatTimestamp(dateStr: string | null): string {
   } catch { return ""; }
 }
 
+function formatPhoneDisplay(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 13 && digits.startsWith("55")) {
+    return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+  }
+  if (digits.length === 12 && digits.startsWith("55")) {
+    return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 8)}-${digits.slice(8)}`;
+  }
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return phone;
+}
+
 function getInitials(name: string | null, phone: string): string {
   if (name) {
     const parts = name.trim().split(/\s+/);
@@ -175,7 +192,7 @@ export function ChatSidebar({
                 <div className="flex-1 min-w-0 border-b wa-border-conversation py-[14px] h-full flex flex-col justify-center">
                   <div className="flex items-center justify-between mb-[2px]">
                     <span className="text-[17px] leading-[21px] wa-text-primary truncate flex items-center gap-1">
-                      {conv.contact_name || conv.contact_phone}
+                      {conv.contact_name || formatPhoneDisplay(conv.contact_phone)}
                     </span>
                     <span className={cn(
                       "text-[12px] leading-[14px] shrink-0 ml-2",
