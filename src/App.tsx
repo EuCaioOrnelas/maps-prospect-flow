@@ -69,7 +69,7 @@ const CancellationFeedback = lazy(() => import("./pages/CancellationFeedback"));
 const MetaAppDocumentation = lazy(() => import("./pages/MetaAppDocumentation"));
 const MetaApiGuide = lazy(() => import("./pages/MetaApiGuide"));
 const OpportunitiesManagement = lazy(() => import("./pages/OpportunitiesManagement"));
-
+const Chat = lazy(() => import("./pages/Chat"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -256,7 +256,13 @@ const App = () => (
                   } 
                 />
                 <Route 
-                  path="/warming" 
+                  path="/chat" 
+                  element={
+                    <ProtectedRoute>
+                      <Chat />
+                    </ProtectedRoute>
+                  } 
+                />
                   element={
                     <ProtectedRoute>
                       <Warming />
