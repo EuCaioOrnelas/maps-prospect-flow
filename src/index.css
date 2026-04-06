@@ -1178,7 +1178,7 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-sidebar-search-area { background-color: #ffffff; }
 
 /* ─── Chat header (contact area) — matching sidebar header ─── */
-.wa-chat-header-bg { background-color: #1f2c34; }
+.wa-chat-header-bg { background-color: #15202a; }
 .landing-light .wa-chat-header-bg { background-color: #f0f2f5; }
 .wa-chat-header-text { color: #e9edef; }
 .landing-light .wa-chat-header-text { color: #111b21; }
