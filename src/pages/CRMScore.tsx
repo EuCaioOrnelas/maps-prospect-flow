@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { 
   BarChart3, Users, Trophy, Settings, Loader2, 
   Smartphone, Search, TrendingUp, TrendingDown, Minus,
@@ -1156,6 +1156,9 @@ const ScoreRulesTab = ({ userId }: { userId: string }) => {
 
 const CRMScore = () => {
   const { user, profile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const [deepLinkLeadId] = useState(() => searchParams.get("lead"));
+  const [autoOpenedLead, setAutoOpenedLead] = useState<RevenueLead | null>(null);
   useAutoScoreTracking("crm_score");
 
   const { data: sidebarProfile } = useQuery({
@@ -1182,6 +1185,14 @@ const CRMScore = () => {
     },
     enabled: !!user,
   });
+
+  // Auto-open lead from deep link
+  useEffect(() => {
+    if (deepLinkLeadId && leads.length > 0 && !autoOpenedLead) {
+      const found = leads.find(l => l.id === deepLinkLeadId);
+      if (found) setAutoOpenedLead(found);
+    }
+  }, [deepLinkLeadId, leads, autoOpenedLead]);
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -1260,6 +1271,42 @@ const CRMScore = () => {
           )}
         </div>
       </main>
+
+      {/* Deep-link lead detail */}
+      {autoOpenedLead && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setAutoOpenedLead(null)}>
+          <Card className="w-full max-w-lg bg-card" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span>{autoOpenedLead.name || autoOpenedLead.phone_e164}</span>
+                <Badge variant="outline" className={BUCKET_BADGE_COLORS[mapBucket(autoOpenedLead.status_bucket, autoOpenedLead.score_total)] || ""}>
+                  {BUCKET_SHORT_LABELS[mapBucket(autoOpenedLead.status_bucket, autoOpenedLead.score_total)] || autoOpenedLead.status_bucket}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 rounded-lg bg-muted/20 border border-border/30">
+                  <p className={`text-3xl font-bold tabular-nums ${getScoreColor(autoOpenedLead.score_total)}`}>{fmtNum(autoOpenedLead.score_total)}</p>
+                  <p className="text-xs text-muted-foreground">Score Total / 1.000</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Engajamento</span><span className="font-medium tabular-nums">{fmtNum(autoOpenedLead.score_engagement)}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Intenção</span><span className="font-medium tabular-nums">{fmtNum(autoOpenedLead.score_intent)}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Urgência</span><span className="font-medium tabular-nums">{fmtNum(autoOpenedLead.score_urgency)}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Risco</span><span className={`font-medium tabular-nums ${autoOpenedLead.score_risk < 0 ? 'text-destructive' : ''}`}>{fmtNum(autoOpenedLead.score_risk)}</span></div>
+                </div>
+              </div>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Telefone</span><span>{autoOpenedLead.phone_e164}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Primeira interação</span><span>{new Date(autoOpenedLead.first_seen_at).toLocaleDateString('pt-BR')}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Última atividade</span><span>{new Date(autoOpenedLead.last_activity_at).toLocaleDateString('pt-BR')}</span></div>
+              </div>
+              <Button variant="outline" className="w-full" onClick={() => setAutoOpenedLead(null)}>Fechar</Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

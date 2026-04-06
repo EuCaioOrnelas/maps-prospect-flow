@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface LeadScoreData {
+  id: string;
   phone_e164: string;
   score_total: number;
   status_bucket: string;
@@ -17,7 +18,7 @@ export function useLeadScores() {
       if (!user) return new Map<string, LeadScoreData>();
       const { data, error } = await supabase
         .from("revenue_leads")
-        .select("phone_e164, score_total, status_bucket")
+        .select("id, phone_e164, score_total, status_bucket")
         .eq("user_id", user.id);
       if (error) throw error;
 
