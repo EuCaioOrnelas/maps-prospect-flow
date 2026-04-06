@@ -341,7 +341,7 @@ serve(async (req) => {
 
     console.log('User authenticated:', user.id);
 
-    // Get user profile to check search limits
+    // Get user profile to check opportunity limits
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('searches_used, searches_limit, plan')
@@ -356,12 +356,14 @@ serve(async (req) => {
       );
     }
 
-    // Check if user has remaining searches
-    if (profile.searches_used >= profile.searches_limit) {
-      console.log('Search limit reached for user:', user.id);
+    // Check remaining opportunities (each lead = 1 opportunity)
+    const remainingOpportunities = profile.searches_limit - profile.searches_used;
+    
+    if (remainingOpportunities <= 0) {
+      console.log('Opportunity limit reached for user:', user.id);
       return new Response(
         JSON.stringify({ 
-          error: 'Limite de buscas atingido',
+          error: 'Limite de oportunidades atingido',
           message: 'Faça upgrade do seu plano para continuar prospectando',
           limitReached: true
         }),
@@ -568,26 +570,27 @@ serve(async (req) => {
       }
     }
 
-    // Final trim to max 60 leads
-    const leads = allValidLeads.slice(0, 60);
+    // Cap leads to remaining opportunities to avoid exceeding the user's limit
+    const maxLeads = Math.min(60, remainingOpportunities);
+    const leads = allValidLeads.slice(0, maxLeads);
     
     console.log(`\n=== SEARCH SUMMARY ===`);
     console.log(`Locations searched: ${searchedLocations.join(', ')}`);
     console.log(`Total raw results: ${totalRawResults}`);
     console.log(`Total with phone: ${totalWithPhone}`);
-    console.log(`Final valid leads: ${leads.length}`);
+    console.log(`Final valid leads: ${leads.length} (capped by remaining: ${remainingOpportunities})`);
     
     const validCount = leads.length;
     const invalidCount = totalWithPhone - allValidLeads.length;
 
-    // Update user's search count
+    // Update user's opportunity count (each lead = 1 opportunity)
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ searches_used: profile.searches_used + 1 })
+      .update({ searches_used: profile.searches_used + leads.length })
       .eq('id', user.id);
 
     if (updateError) {
-      console.error('Error updating search count:', updateError);
+      console.error('Error updating opportunity count:', updateError);
     }
 
     // Save leads to the leads table with enriched data
@@ -667,8 +670,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         leads,
-        searchesUsed: profile.searches_used + 1,
-        searchesLimit: profile.searches_limit,
+        opportunitiesUsed: profile.searches_used + leads.length,
+        opportunitiesLimit: profile.searches_limit,
         resultsCount: leads.length,
         locationsSearched: searchedLocations,
         foundLessThanExpected: foundLess,
