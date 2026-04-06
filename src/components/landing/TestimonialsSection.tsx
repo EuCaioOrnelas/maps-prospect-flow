@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { Quote } from "lucide-react";
-import metaIcon from "@/assets/logos/meta-icon.png";
 
 interface Testimonial {
   text: string;
@@ -145,9 +144,14 @@ export const TestimonialsSection = () => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass mb-6 border border-primary/10">
-            <img src={metaIcon} alt="Meta" className="h-4 w-auto" />
-            <span className="text-xs font-medium text-foreground tracking-tight">Meta Business Partner</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass mb-6 border border-primary/10">
+            <div className="flex -space-x-2">
+              <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" />
+              <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" />
+              <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" />
+              <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" />
+            </div>
+            <span className="text-xs font-medium text-foreground tracking-tight">+500 pessoas já utilizam a Wiize</span>
           </div>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-foreground">
             O que nossos clientes dizem
