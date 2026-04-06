@@ -1199,7 +1199,7 @@ input::placeholder, textarea::placeholder {
 .wa-doc-bg { background-color: rgba(0,0,0,0.15); }
 .landing-light .wa-doc-bg { background-color: rgba(0,0,0,0.04); }
 .wa-doc-icon { background-color: rgba(0,168,132,0.1); }
-.wa-doc-preview { background-color: #1f2c34; }
+.wa-doc-preview { background-color: hsl(220 18% 10%); }
 .landing-light .wa-doc-preview { background-color: #f0f2f5; }
 
 /* ─── Status icons ─── */
@@ -1228,21 +1228,21 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-icon-button:hover { background-color: rgba(0,0,0,0.05); }
 
 /* ─── Dropdowns ─── */
-.wa-dropdown-bg { background-color: #1f2c34; }
+.wa-dropdown-bg { background-color: hsl(220 18% 10%); }
 .landing-light .wa-dropdown-bg { background-color: #ffffff; }
-.wa-dropdown-item:hover { background-color: #111b21 !important; }
+.wa-dropdown-item:hover { background-color: hsl(220 18% 8%) !important; }
 .landing-light .wa-dropdown-item:hover { background-color: #f5f6f6 !important; }
 
 /* ─── Attach menu ─── */
-.wa-attach-bg { background-color: #1f2c34; }
+.wa-attach-bg { background-color: hsl(220 18% 10%); }
 .landing-light .wa-attach-bg { background-color: #ffffff; }
 
 /* ─── Emoji picker ─── */
-.wa-emoji-bg { background-color: #111b21; }
+.wa-emoji-bg { background-color: hsl(220 18% 6%); }
 .landing-light .wa-emoji-bg { background-color: #ffffff; }
 
 /* ─── Preview ─── */
-.wa-preview-bg { background-color: #1e2a30; }
+.wa-preview-bg { background-color: hsl(220 18% 10%); }
 .landing-light .wa-preview-bg { background-color: #f0f2f5; }
 
 /* ─── Scrollbar (WhatsApp style — thin, minimal) ─── */
