@@ -1097,14 +1097,15 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-conv-hover:hover { background-color: #f5f6f6; }
 
 /* ─── Chat area — same tone as sidebar ─── */
-.wa-chat-bg { background-color: hsl(220 18% 6%); }
+.wa-chat-bg { background-color: hsl(220 20% 4%); }
 .landing-light .wa-chat-bg { background-color: #efeae2; }
 
 .wa-chat-pattern {
-  background-image: url("/images/wa-bg-pattern.png");
+  background-image: url("/images/wa-bg-pattern-dark.png");
   background-repeat: repeat;
-  background-size: 412px auto;
-  opacity: 0.06;
+  background-position: center top;
+  background-size: 760px auto;
+  opacity: 0.84;
 }
 .landing-light .wa-chat-pattern {
   background-image: url("/images/wa-bg-pattern.png");
