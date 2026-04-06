@@ -47,6 +47,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isReportsOpen, setIsReportsOpen] = useState(false);
   const [isCampaignsOpen, setIsCampaignsOpen] = useState(false);
   const [isOpportunitiesOpen, setIsOpportunitiesOpen] = useState(false);
+  const [isCrmOpen, setIsCrmOpen] = useState(false);
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const location = useLocation();
   const { signOut } = useAuth();
@@ -62,6 +63,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
   const isOnCampaignsPage = currentPath === "/whatsapp" || currentPath === "/meta-campaigns";
   const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
+  const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
 
   // Sync expanded state with hover, but with delay to prevent glitches
   useEffect(() => {
@@ -149,12 +151,19 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     }
   };
 
+  const handleCrmClick = () => {
+    if (isExpanded) {
+      setIsCrmOpen(!isCrmOpen);
+    }
+  };
+
   // Reset reports submenu when sidebar closes
   const handleMouseLeave = () => {
     setIsHovered(false);
     setIsReportsOpen(false);
     setIsCampaignsOpen(false);
     setIsOpportunitiesOpen(false);
+    setIsCrmOpen(false);
   };
 
   const showUpgrade = profile?.plan !== 'scale';
