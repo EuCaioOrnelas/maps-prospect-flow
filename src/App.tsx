@@ -216,6 +216,14 @@ const App = () => (
                   } 
                 />
                 <Route 
+                  path="/meta-api-guide" 
+                  element={
+                    <ProtectedRoute>
+                      <MetaApiGuide />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
                   path="/whatsapp/reports" 
                   element={
                     <ProtectedRoute>
