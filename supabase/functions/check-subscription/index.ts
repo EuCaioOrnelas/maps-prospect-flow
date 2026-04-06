@@ -28,12 +28,12 @@ const PRICE_TO_PLAN: Record<string, string> = {
   "price_1SkEsoK8CM0R6xMMF72J3hAi": "growth",  // R$497/month (legacy)
 };
 
-// Map plan names to search limits
+// Map plan names to opportunity limits (each lead = 1 opportunity)
 const PLAN_LIMITS: Record<string, number> = {
   "free": 10,
-  "start": 200,
-  "growth": 600,
-  "scale": 1200,
+  "start": 1000,
+  "growth": 3000,
+  "scale": 10000,
 };
 
 const PLAN_NAME_TO_KEY: Record<string, string> = {

@@ -100,7 +100,7 @@ const Dashboard = () => {
   const { showOnboarding, showTrialFeedback, closeOnboarding, closeTrialFeedback } = useOnboardingModals();
   const { trackScoreEvent } = useAutoScoreTracking("dashboard");
 
-  const searchesRemaining = profile ? profile.searches_limit - profile.searches_used : 0;
+  const searchesRemaining = profile ? profile.searches_limit - profile.searches_used : 0;  // opportunities remaining
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
   const showTrialIndicator = isFreePlan && trialDaysRemaining > 0 && !isTrialExpired;
 
@@ -278,7 +278,7 @@ const Dashboard = () => {
       if (data.error) {
         if (data.limitReached) {
           toast({
-            title: "Limite de buscas atingido",
+            title: "Limite de oportunidades atingido",
             description: data.message,
             variant: "destructive",
           });
@@ -635,7 +635,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-center gap-2 mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl">
                   <AlertCircle size={16} className="text-destructive" />
                   <p className="text-destructive text-sm font-medium">
-                    Limite de buscas atingido. Faça upgrade para continuar.
+                    Limite de oportunidades atingido. Faça upgrade para continuar.
                   </p>
                 </div>
               )}

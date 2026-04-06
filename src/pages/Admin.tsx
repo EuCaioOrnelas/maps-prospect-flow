@@ -1143,9 +1143,9 @@ const Admin = () => {
     try {
       const limits: { [key: string]: number } = {
         free: 10,
-        start: 200,
-        growth: 600,
-        scale: 1200,
+        start: 1000,
+        growth: 3000,
+        scale: 10000,
       };
 
       const { error } = await supabase
@@ -1161,7 +1161,7 @@ const Admin = () => {
 
       toast({
         title: "Plano atualizado",
-        description: `Plano alterado para ${newPlan.toUpperCase()} e buscas resetadas`,
+        description: `Plano alterado para ${newPlan.toUpperCase()} e oportunidades resetadas`,
       });
 
       await loadData();
@@ -1188,8 +1188,8 @@ const Admin = () => {
       if (error) throw error;
 
       toast({
-        title: "Buscas resetadas",
-        description: "Contador de buscas zerado com sucesso.",
+        title: "Oportunidades resetadas",
+        description: "Contador de oportunidades zerado com sucesso.",
       });
 
       await loadData();
