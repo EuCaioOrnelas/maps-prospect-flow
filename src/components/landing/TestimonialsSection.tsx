@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { Quote } from "lucide-react";
-import metaPartnerBadge from "@/assets/logos/meta-partner-badge.png";
+import metaIcon from "@/assets/logos/meta-icon.png";
 
 interface Testimonial {
   text: string;
@@ -145,8 +145,9 @@ export const TestimonialsSection = () => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full glass mb-6">
-            <img src={metaPartnerBadge} alt="Meta Business Partner" className="h-7 sm:h-8" />
+          <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full glass mb-6 border border-primary/10">
+            <img src={metaIcon} alt="Meta" className="h-6 sm:h-7 w-auto" />
+            <span className="text-sm sm:text-base font-semibold text-foreground tracking-tight">Meta Business Partner</span>
           </div>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-foreground">
             O que nossos clientes dizem

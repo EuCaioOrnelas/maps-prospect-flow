@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import metaPartnerBadge from "@/assets/logos/meta-partner-badge.png";
+import metaIcon from "@/assets/logos/meta-icon.png";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -308,8 +308,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           {/* LEFT: Text content */}
           <div className="text-center xl:text-left">
             {/* Trust badge with avatars */}
-            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in">
-              <img src={metaPartnerBadge} alt="Meta Business Partner" className="h-7 sm:h-8" />
+            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
+              <img src={metaIcon} alt="Meta" className="h-6 sm:h-7 w-auto" />
+              <span className="text-sm sm:text-base font-semibold text-foreground tracking-tight">Meta Business Partner</span>
             </div>
 
             {/* Main heading - always 3 lines */}
