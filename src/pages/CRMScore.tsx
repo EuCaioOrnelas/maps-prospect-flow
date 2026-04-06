@@ -450,7 +450,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <EmptyListState message="Nenhum dado ainda" />
+              <EmptyListState message="Os dados aparecerão quando seus leads começarem a interagir" icon={BarChart3} />
             )}
           </CardContent>
         </Card>
@@ -470,7 +470,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <EmptyListState message="Nenhum lead com score" />
+              <EmptyListState message="Conecte seu WhatsApp e comece a interagir com leads" icon={Users} />
             )}
           </CardContent>
         </Card>
@@ -515,7 +515,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                 })}
               </div>
             ) : (
-              <EmptyListState message="Sem dados relevantes — nenhum lead qualificado em risco hoje" />
+              <EmptyListState message="Nenhum lead qualificado perdeu pontos hoje — ótimo sinal!" icon={AlertTriangle} />
             )}
           </CardContent>
         </Card>
@@ -560,7 +560,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                 })}
               </div>
             ) : (
-              <EmptyListState message="Sem dados relevantes — nenhuma oportunidade qualificada encontrada" />
+              <EmptyListState message="Quando seus leads atingirem o nível Engajado ou acima, as oportunidades aparecerão aqui" icon={Zap} />
             )}
           </CardContent>
         </Card>
