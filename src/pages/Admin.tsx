@@ -1161,7 +1161,7 @@ const Admin = () => {
 
       toast({
         title: "Plano atualizado",
-        description: `Plano alterado para ${newPlan.toUpperCase()} e buscas resetadas`,
+        description: `Plano alterado para ${newPlan.toUpperCase()} e oportunidades resetadas`,
       });
 
       await loadData();
@@ -1188,8 +1188,8 @@ const Admin = () => {
       if (error) throw error;
 
       toast({
-        title: "Buscas resetadas",
-        description: "Contador de buscas zerado com sucesso.",
+        title: "Oportunidades resetadas",
+        description: "Contador de oportunidades zerado com sucesso.",
       });
 
       await loadData();

@@ -617,7 +617,7 @@ const Profile = () => {
                       <TooltipTrigger asChild>
                         <p className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
                           <RefreshCcw className="h-3 w-3" />
-                          Reset das buscas mensais: {getNextSearchResetLabel()}
+                          Reset das oportunidades mensais: {getNextSearchResetLabel()}
                         </p>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" className="max-w-xs">
