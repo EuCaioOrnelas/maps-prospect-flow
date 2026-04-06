@@ -1,12 +1,14 @@
 import { useState, memo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
-import { Phone, MessageCircle, Pencil, Check, X } from 'lucide-react';
+import { Phone, MessageCircle, Pencil, Check, X, Trophy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatPhoneShort } from '@/lib/phoneUtils';
+import { useLeadScores } from '@/hooks/useLeadScores';
 
 interface LeadCardProps {
   lead: Lead;
@@ -28,7 +30,10 @@ const LeadCardComponent = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.contact_name || '');
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
+  const { getScoreForPhone } = useLeadScores();
   
+  const scoreData = getScoreForPhone(lead.phone);
   const displayName = lead.contact_name || lead.company_name || formatPhoneShort(lead.phone);
   const hasResponse = !!lead.last_response_at;
 
@@ -157,6 +162,35 @@ const LeadCardComponent = ({
           <span className="text-xs font-semibold text-primary">
             R$ {lead.estimated_value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
+        </div>
+      )}
+
+      {/* WhatsApp Score */}
+      {scoreData && scoreData.score_total > 0 && (
+        <div
+          className="mb-2 py-1.5 px-2 rounded-md bg-muted/30 border border-border/30 flex items-center justify-between gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={(e) => { e.stopPropagation(); navigate('/crm/score'); }}
+        >
+          <div className="flex items-center gap-1.5">
+            <Trophy className={cn("w-3 h-3", 
+              scoreData.score_total >= 801 ? "text-emerald-400" :
+              scoreData.score_total >= 601 ? "text-purple-400" :
+              scoreData.score_total >= 401 ? "text-blue-400" :
+              scoreData.score_total >= 201 ? "text-yellow-400" :
+              "text-red-400"
+            )} />
+            <span className={cn("text-xs font-bold tabular-nums",
+              scoreData.score_total >= 801 ? "text-emerald-400" :
+              scoreData.score_total >= 601 ? "text-purple-400" :
+              scoreData.score_total >= 401 ? "text-blue-400" :
+              scoreData.score_total >= 201 ? "text-yellow-400" :
+              "text-red-400"
+            )}>
+              {scoreData.score_total.toLocaleString('pt-BR')}
+            </span>
+            <span className="text-[10px] text-muted-foreground">/1.000</span>
+          </div>
+          <span className="text-[9px] text-primary hover:underline">Ver score →</span>
         </div>
       )}
 
