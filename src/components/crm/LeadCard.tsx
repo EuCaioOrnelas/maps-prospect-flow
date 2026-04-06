@@ -30,7 +30,10 @@ const LeadCardComponent = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.contact_name || '');
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
+  const { getScoreForPhone } = useLeadScores();
   
+  const scoreData = getScoreForPhone(lead.phone);
   const displayName = lead.contact_name || lead.company_name || formatPhoneShort(lead.phone);
   const hasResponse = !!lead.last_response_at;
 
