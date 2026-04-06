@@ -308,8 +308,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           {/* LEFT: Text content */}
           <div className="text-center xl:text-left">
             {/* Trust badge with avatars */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
-              <Users size={14} className="text-primary" />
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
+              <div className="flex -space-x-2">
+                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" className="w-6 h-6 rounded-full border-2 border-background object-cover" />
+                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="" className="w-6 h-6 rounded-full border-2 border-background object-cover" />
+                <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="" className="w-6 h-6 rounded-full border-2 border-background object-cover" />
+                <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="" className="w-6 h-6 rounded-full border-2 border-background object-cover" />
+              </div>
               <span className="text-xs font-medium text-foreground tracking-tight">+500 empresas já utilizam a Wiize</span>
             </div>
 
