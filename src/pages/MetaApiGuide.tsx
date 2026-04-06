@@ -476,7 +476,7 @@ const MetaApiGuide = () => {
                 />
                 <FAQItem
                   q="Se o número é desvinculado do WhatsApp, como respondo os leads?"
-                  a="Quando um lead responde à sua mensagem, a resposta chega automaticamente na Wiize pelo webhook da Meta. Você visualiza e gerencia todas as respostas diretamente pelo painel de campanhas e pelo CRM, sem precisar do app do WhatsApp. O número funciona 100% pela API, ou seja, toda a comunicação é feita pelo sistema, não pelo celular."
+                  a="As respostas dos leads chegam no inbox do Meta Business Suite (business.facebook.com), que é o painel oficial da Meta para gerenciar conversas da API. Lá você pode ler e responder todas as mensagens recebidas. Na Wiize, você acompanha os status de entrega e as métricas das campanhas. Para uma experiência completa, recomendamos manter o Meta Business Suite aberto para gerenciar as conversas em tempo real."
                 />
               </div>
             </GuideSection>
