@@ -77,9 +77,9 @@ export const OfficialAPISection = () => {
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
             {/* Icon with label */}
             <div className="flex-shrink-0">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/30 flex flex-col items-center justify-center shadow-lg gap-1">
-                <Globe className="w-7 h-7 md:w-8 md:h-8 text-green-500" />
-                <span className="text-[8px] md:text-[9px] font-bold text-green-600 uppercase tracking-wide leading-tight text-center">Meta API<br/>Oficial</span>
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 flex flex-col items-center justify-center shadow-lg gap-1">
+                <Globe className="w-7 h-7 md:w-8 md:h-8 text-primary" />
+                <span className="text-[8px] md:text-[9px] font-bold text-primary uppercase tracking-wide leading-tight text-center">Meta API<br/>Oficial</span>
               </div>
             </div>
 
