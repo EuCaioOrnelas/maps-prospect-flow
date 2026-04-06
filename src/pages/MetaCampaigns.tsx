@@ -31,6 +31,7 @@ export interface WabaConnection {
 
 const MetaCampaigns = () => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const { trackScoreEvent } = useAutoScoreTracking("meta-campaigns");
   const { toast } = useToast();
   const [connections, setConnections] = useState<WabaConnection[]>([]);
