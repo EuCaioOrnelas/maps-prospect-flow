@@ -476,7 +476,7 @@ const MetaApiGuide = () => {
                 />
                 <FAQItem
                   q="Se o número é desvinculado do WhatsApp, como respondo os leads?"
-                  a="Quando um lead responde à sua mensagem, a resposta chega automaticamente na Wiize pelo webhook da Meta. Você visualiza e gerencia todas as respostas diretamente pelo painel de campanhas e pelo CRM, sem precisar do app do WhatsApp. O número funciona 100% pela API, ou seja, toda a comunicação é feita pelo sistema, não pelo celular."
+                  a="As respostas dos leads chegam no inbox do Meta Business Suite (business.facebook.com), que é o painel oficial da Meta para gerenciar conversas da API. Lá você pode ler e responder todas as mensagens recebidas. Na Wiize, você acompanha os status de entrega e as métricas das campanhas. Para uma experiência completa, recomendamos manter o Meta Business Suite aberto para gerenciar as conversas em tempo real."
                 />
               </div>
             </GuideSection>
@@ -510,12 +510,12 @@ const GuideSection = ({ icon, title, children, defaultOpen = false }: {
 }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border border-border rounded-2xl overflow-hidden bg-card">
+    <div className="border border-border rounded-2xl overflow-hidden bg-card group">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 p-5 text-left hover:bg-muted/30 transition-colors"
+        className="w-full flex items-center gap-3 p-5 text-left transition-colors"
       >
-        <div className="text-primary shrink-0">{icon}</div>
+        <div className="text-primary shrink-0 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12">{icon}</div>
         <h2 className="text-base md:text-lg font-bold text-foreground flex-1">{title}</h2>
         {open ? <ChevronDown size={18} className="text-muted-foreground" /> : <ChevronRight size={18} className="text-muted-foreground" />}
       </button>
@@ -525,8 +525,8 @@ const GuideSection = ({ icon, title, children, defaultOpen = false }: {
 };
 
 const InfoCard = ({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) => (
-  <div className="flex items-start gap-3 p-3.5 rounded-xl bg-muted/30 border border-border transition-shadow hover:shadow-sm">
-    <div className="text-primary mt-0.5 shrink-0">{icon}</div>
+  <div className="flex items-start gap-3 p-3.5 rounded-xl bg-muted/30 border border-border group/card">
+    <div className="text-primary mt-0.5 shrink-0 transition-transform duration-300 group-hover/card:scale-125 group-hover/card:rotate-12">{icon}</div>
     <div>
       <p className="text-sm font-medium text-foreground">{title}</p>
       <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
@@ -562,7 +562,7 @@ const FAQItem = ({ q, a }: { q: string; a: string }) => {
     <div className="border border-border rounded-xl overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-muted/30 transition-colors"
+        className="w-full flex items-center gap-3 p-3.5 text-left transition-colors"
       >
         <p className="text-sm font-medium text-foreground flex-1">{q}</p>
         {open ? <ChevronDown size={16} className="text-muted-foreground shrink-0" /> : <ChevronRight size={16} className="text-muted-foreground shrink-0" />}
