@@ -322,6 +322,35 @@ export function useChat() {
     await supabase.from("chat_conversations").update({ is_muted: !conv.is_muted }).eq("id", conversationId);
   }, [conversations]);
 
+  // Start new conversation
+  const startNewConversation = useCallback(async (phone: string, name?: string) => {
+    if (!user || !activeConnectionId) return;
+    
+    // Check if conversation already exists
+    const cleanPhone = phone.replace(/\D/g, "");
+    const existing = conversations.find(c => 
+      c.contact_phone.replace(/\D/g, "").endsWith(cleanPhone.slice(-8))
+    );
+    
+    if (existing) {
+      setActiveConversationId(existing.id);
+      return;
+    }
+
+    // Create new conversation
+    const { data } = await supabase.from("chat_conversations").insert({
+      user_id: user.id,
+      waba_connection_id: activeConnectionId,
+      contact_phone: cleanPhone,
+      contact_name: name || null,
+    }).select().single();
+
+    if (data) {
+      setConversations(prev => [data as ChatConversation, ...prev]);
+      setActiveConversationId(data.id);
+    }
+  }, [user, activeConnectionId, conversations]);
+
   // Filter conversations
   const filteredConversations = searchQuery
     ? conversations.filter(c =>
