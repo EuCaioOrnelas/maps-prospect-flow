@@ -340,6 +340,15 @@ const ScoreInfoPopover = () => (
   </Popover>
 );
 
+// ═══════════════ EMPTY STATE ═══════════════
+
+const EmptyListState = ({ message }: { message: string }) => (
+  <div className="flex flex-col items-center justify-center py-8 text-center">
+    <Minus className="h-8 w-8 text-muted-foreground/30 mb-2" />
+    <p className="text-xs text-muted-foreground">{message}</p>
+  </div>
+);
+
 // ═══════════════ DASHBOARD TAB ═══════════════
 
 const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
@@ -357,6 +366,35 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
   const atRisk = leads.filter(l => l.risk_state === "AT_RISK" || l.risk_state === "CRITICAL").length;
   const readyToSell = byBucket["READY_TO_SELL"] || 0;
   const cold = byBucket["COLD"] || 0;
+
+  // Leads em risco do dia: only READY_TO_SELL, HIGH_VALUE, ENGAGED with negative score_risk today
+  const atRiskToday = useMemo(() => {
+    const qualifiedBuckets = ["READY_TO_SELL", "HIGH_VALUE", "ENGAGED"];
+    return leads
+      .filter(l => {
+        const bucket = mapBucket(l.status_bucket, l.score_total);
+        return qualifiedBuckets.includes(bucket) && l.score_risk < 0;
+      })
+      .sort((a, b) => a.score_risk - b.score_risk)
+      .slice(0, 10);
+  }, [leads]);
+
+  // Top oportunidades de venda: leads above ENGAGED (HIGH_VALUE + READY_TO_SELL) with highest score gains
+  const topOpportunities = useMemo(() => {
+    const qualifiedBuckets = ["READY_TO_SELL", "HIGH_VALUE", "ENGAGED"];
+    return leads
+      .filter(l => {
+        const bucket = mapBucket(l.status_bucket, l.score_total);
+        return qualifiedBuckets.includes(bucket) && l.score_total > 0;
+      })
+      .sort((a, b) => {
+        // Sort by intent + engagement (proxies for daily gain)
+        const aGain = a.score_intent + a.score_engagement;
+        const bGain = b.score_intent + b.score_engagement;
+        return bGain - aGain;
+      })
+      .slice(0, 10);
+  }, [leads]);
 
   const kpis = [
     { label: "Total Leads", value: fmtNum(totalLeads), icon: Users, color: "text-primary", circleColor: "bg-primary/[0.12]" },
@@ -388,6 +426,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
         ))}
       </div>
 
+      {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="bg-card border-border/50">
           <CardHeader><CardTitle className="text-base">Distribuição por Status</CardTitle></CardHeader>
@@ -401,11 +440,11 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                       <Cell key={i} fill={entry.color} />
                     ))}
                   </Pie>
-                  <RechartsTooltip />
+                  <RechartsTooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-muted-foreground text-center py-8">Nenhum dado ainda</p>
+              <EmptyListState message="Nenhum dado ainda" />
             )}
           </CardContent>
         </Card>
@@ -417,15 +456,105 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={[...leads].sort((a, b) => b.score_total - a.score_total).slice(0, 10)} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" domain={[0, 1000]} />
-                  <YAxis dataKey="name" type="category" width={120} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }}
-                    tickFormatter={(v) => v || "Sem nome"} />
-                  <RechartsTooltip />
+                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" domain={[0, 1000]} tick={{ fontSize: 11 }} />
+                  <YAxis dataKey="name" type="category" width={100} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }}
+                    tickFormatter={(v) => v ? (v.length > 12 ? v.slice(0, 12) + "…" : v) : "Sem nome"} />
+                  <RechartsTooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
                   <Bar dataKey="score_total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-muted-foreground text-center py-8">Nenhum lead com score</p>
+              <EmptyListState message="Nenhum lead com score" />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* At Risk + Opportunities */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Leads em risco do dia */}
+        <Card className="bg-card border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              Leads em Risco do Dia
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">Leads engajados+ com maior perda de score hoje</p>
+          </CardHeader>
+          <CardContent>
+            {atRiskToday.length > 0 ? (
+              <div className="space-y-2">
+                {atRiskToday.map((lead, i) => {
+                  const bucket = mapBucket(lead.status_bucket, lead.score_total);
+                  return (
+                    <div key={lead.id} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/20 border border-border/30">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">#{i + 1}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{lead.name || "Sem nome"}</p>
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", BUCKET_BADGE_COLORS[bucket])}>
+                              {BUCKET_SHORT_LABELS[bucket]}
+                            </Badge>
+                            <span className="text-[10px] text-muted-foreground tabular-nums">{fmtNum(lead.score_total)} pts</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-bold text-destructive tabular-nums">{lead.score_risk}</p>
+                        <p className="text-[10px] text-muted-foreground">risco</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyListState message="Sem dados relevantes — nenhum lead qualificado em risco hoje" />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top oportunidades de venda */}
+        <Card className="bg-card border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Zap className="h-4 w-4 text-yellow-400" />
+              Top 10 Oportunidades de Venda
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">Leads engajados+ com maior potencial de conversão</p>
+          </CardHeader>
+          <CardContent>
+            {topOpportunities.length > 0 ? (
+              <div className="space-y-2">
+                {topOpportunities.map((lead, i) => {
+                  const bucket = mapBucket(lead.status_bucket, lead.score_total);
+                  const gain = lead.score_intent + lead.score_engagement;
+                  return (
+                    <div key={lead.id} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/20 border border-border/30">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">#{i + 1}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{lead.name || "Sem nome"}</p>
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", BUCKET_BADGE_COLORS[bucket])}>
+                              {BUCKET_SHORT_LABELS[bucket]}
+                            </Badge>
+                            <span className="text-[10px] text-muted-foreground tabular-nums">{fmtNum(lead.score_total)} pts</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className={cn("text-sm font-bold tabular-nums", gain > 0 ? "text-emerald-400" : "text-muted-foreground")}>
+                          {gain > 0 ? `+${fmtNum(gain)}` : fmtNum(gain)}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">potencial</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyListState message="Sem dados relevantes — nenhuma oportunidade qualificada encontrada" />
             )}
           </CardContent>
         </Card>
