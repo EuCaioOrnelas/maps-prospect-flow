@@ -40,7 +40,7 @@ const Chat = () => {
               </div>
             ) : (
               <>
-                <div className="w-[360px] shrink-0 border-r border-[#1e2a32] landing-light:border-[#e9edef]" style={{ borderRight: '1px solid var(--wa-sidebar-divider, #1e2a32)' }}>
+                <div className="w-[360px] shrink-0 wa-sidebar-border">
                   <ChatSidebar
                     conversations={chat.conversations}
                     activeConversationId={chat.activeConversationId}
