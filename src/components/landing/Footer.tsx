@@ -1,8 +1,5 @@
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
-import metaPartner from "@/assets/badges/meta-partner.png";
-import googlePartner from "@/assets/badges/google-partner.png";
-import gptwBadge from "@/assets/badges/gptw.png";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -36,12 +33,6 @@ export const Footer = () => {
 
           {/* Selos de qualidade - acima do aviso */}
           <div className="border-t border-border/50 pt-6 w-full">
-            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 mb-6">
-              <img src={metaPartner} alt="Meta Business Partner" className="h-36 sm:h-44 object-contain" />
-              <img src={googlePartner} alt="Google Partner Premier 2026" className="h-24 sm:h-30 object-contain" />
-              <img src={gptwBadge} alt="Great Place To Work Certificado" className="h-24 sm:h-30 object-contain" />
-            </div>
-
             <p className="text-[10px] sm:text-xs text-muted-foreground/40 text-center max-w-3xl mx-auto leading-relaxed">
               <strong className="text-muted-foreground/50">Aviso importante:</strong> O uso de ferramentas de automação para WhatsApp envolve riscos inerentes, incluindo possível bloqueio de números pelo WhatsApp. O Wiize oferece recursos de proteção e limites inteligentes para ajudar a reduzir esses riscos, mas não garante a ausência de bloqueios. Ao utilizar nossos serviços, você concorda em assumir total responsabilidade pelo uso da plataforma.
             </p>
