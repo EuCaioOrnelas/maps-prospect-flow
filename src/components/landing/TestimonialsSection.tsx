@@ -1,11 +1,7 @@
 import { motion } from "framer-motion";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { Star, Quote } from "lucide-react";
-import avatar1 from "@/assets/avatars/avatar-1.jpg";
-import avatar2 from "@/assets/avatars/avatar-2.jpg";
-import avatar3 from "@/assets/avatars/avatar-3.jpg";
-import avatar4 from "@/assets/avatars/avatar-4.jpg";
-import avatar5 from "@/assets/avatars/avatar-5.jpg";
+import { Quote } from "lucide-react";
+import metaPartnerBadge from "@/assets/logos/meta-partner-badge.png";
 
 interface Testimonial {
   text: string;
@@ -150,23 +146,7 @@ export const TestimonialsSection = () => {
           }`}
         >
           <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full glass mb-6">
-            <div className="flex -space-x-2">
-              {[avatar1, avatar2, avatar3, avatar4, avatar5].map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt={`Cliente ${i + 1}`}
-                  loading="lazy"
-                  width={28}
-                  height={28}
-                  className="w-7 h-7 rounded-full border-2 border-background object-cover"
-                />
-              ))}
-            </div>
-            <Star size={16} className="text-primary" />
-            <span className="text-sm text-muted-foreground">
-              +500 empresas convertendo com IA
-            </span>
+            <img src={metaPartnerBadge} alt="Meta Business Partner" className="h-7 sm:h-8" />
           </div>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-foreground">
             O que nossos clientes dizem
