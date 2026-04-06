@@ -78,17 +78,14 @@ export const OfficialAPISection = () => {
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
             {/* Meta Logo / Icon area */}
             <div className="flex-shrink-0">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center shadow-2xl shadow-primary/30">
-                <div className="text-center text-white">
-                  <Globe className="w-10 h-10 md:w-14 md:h-14 mx-auto mb-1" />
-                  <span className="text-[10px] md:text-xs font-bold tracking-wider uppercase">Meta API</span>
-                </div>
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-card border border-border/50 flex items-center justify-center shadow-lg">
+                <img src={metaIcon} alt="Meta" className="w-10 h-10 md:w-12 md:h-12" />
               </div>
             </div>
 
             <div className="flex-1 text-center md:text-left">
               <div className="flex items-center gap-2 justify-center md:justify-start mb-3">
-                <img src={metaIcon} alt="Meta" className="w-6 h-6" />
+                <CheckCircle className="w-5 h-5 text-primary" />
                 <h3 className="font-display text-xl md:text-2xl font-bold">
                   Integração Verificada com a Meta
                 </h3>
