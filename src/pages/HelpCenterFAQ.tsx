@@ -19,7 +19,7 @@ const categories = [
       },
       {
         question: "O que é uma busca estratégica?",
-        answer: "Uma busca estratégica é uma pesquisa inteligente que utiliza nossa IA para analisar empresas no Google Maps e entregar apenas leads qualificados: empresas ativas, com contatos verificados e alto potencial de conversão. Cada busca retorna até 50 leads pré-qualificados."
+        answer: "Uma busca estratégica é uma pesquisa inteligente que utiliza nossa IA para analisar empresas no Google Maps e entregar apenas leads qualificados: empresas ativas, com contatos verificados e alto potencial de conversão. Cada busca retorna até 60 leads pré-qualificados."
       },
       {
         question: "Como funciona a geração de mensagens personalizadas com IA?",

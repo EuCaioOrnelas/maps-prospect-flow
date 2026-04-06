@@ -32,8 +32,8 @@ const features = [
   },
   {
     icon: Download,
-    title: "Até 50 Leads por Busca",
-    description: "Cada busca estratégica retorna até 50 leads qualificados com nome da empresa, telefone, endereço, categoria e link do Google Maps. Todos prontos para download em planilha Excel, facilitando a organização e o início imediato da sua prospecção.",
+    title: "Até 60 Leads por Busca",
+    description: "Cada busca estratégica retorna até 60 leads qualificados com nome da empresa, telefone, endereço, categoria e link do Google Maps. Todos prontos para download em planilha Excel, facilitando a organização e o início imediato da sua prospecção.",
     highlight: "Export direto para Excel em um clique",
   },
   {
@@ -121,7 +121,7 @@ export const FeaturesSection = () => {
                  Menos leads, mais resultados
                </h3>
               <p className="text-muted-foreground text-sm sm:text-base">
-                Em vez de entregar centenas de contatos desatualizados, o Wiize entrega até 50 leads
+                Em vez de entregar centenas de contatos desatualizados, o Wiize entrega até 60 leads
                 estrategicamente selecionados por busca. Empresas com atividade recente,
                 avaliações positivas e informações de contato verificadas.
               </p>
