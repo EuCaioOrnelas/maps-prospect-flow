@@ -85,7 +85,7 @@ export const OfficialAPISection = () => {
 
             <div className="flex-1 text-center md:text-left">
               <div className="flex items-center gap-2 justify-center md:justify-start mb-3">
-                <BadgeCheck className="w-5 h-5 text-green-500" />
+                <BadgeCheck className="w-5 h-5 text-primary" />
                 <h3 className="font-display text-xl md:text-2xl font-bold">
                   Integração Verificada com a Meta
                 </h3>
