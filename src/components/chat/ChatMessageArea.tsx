@@ -14,6 +14,7 @@ interface ChatMessageAreaProps {
   onSendMessage: (text: string) => void;
   onSendMedia: (file: File, caption?: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  onReopenConversation?: (templateName: string) => void;
 }
 
 // ─── Status icons (WhatsApp exact SVGs) ───
