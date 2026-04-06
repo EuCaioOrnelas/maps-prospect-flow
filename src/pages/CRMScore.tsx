@@ -236,9 +236,8 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {kpis.map((kpi) => (
           <Card key={kpi.label} className="relative overflow-hidden bg-card border-border/60">
-            <div className="absolute top-4 right-4 w-[56px] h-[56px] rounded-full bg-primary/[0.07] dark:bg-primary/[0.12] flex items-center justify-center">
-              <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
-            </div>
+            <div className="absolute -top-5 -right-5 w-[72px] h-[72px] rounded-full bg-primary/[0.07] dark:bg-primary/[0.12]" />
+            <kpi.icon className={`absolute top-3 right-3 h-4 w-4 ${kpi.color}`} />
             <CardContent className="p-5 relative">
               <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2">{kpi.label}</p>
               <p className="text-[30px] font-bold leading-none tabular-nums">{kpi.value}</p>
