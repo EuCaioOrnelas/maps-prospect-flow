@@ -313,8 +313,25 @@ export function ChatMessageArea({
         </div>
       </div>
 
-      {/* ─── Input ─── */}
-      <ChatInput onSendMessage={onSendMessage} onSendMedia={onSendMedia} />
+      {/* ─── Input or Expired Banner ─── */}
+      {(() => {
+        // Check if 24h window is expired based on last inbound message
+        const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
+        const isWindowExpired = lastInbound
+          ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) > 24
+          : messages.length > 0; // If no inbound messages at all, window is expired
+
+        if (isWindowExpired && onReopenConversation) {
+          return (
+            <ExpiredWindowBanner
+              contactName={conversation.contact_name}
+              contactPhone={conversation.contact_phone}
+              onReopenConversation={onReopenConversation}
+            />
+          );
+        }
+        return <ChatInput onSendMessage={onSendMessage} onSendMedia={onSendMedia} />;
+      })()}
     </div>
   );
 }
