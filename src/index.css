@@ -1104,8 +1104,8 @@ input::placeholder, textarea::placeholder {
   background-image: url("/images/wa-bg-pattern-dark.png");
   background-repeat: repeat;
   background-position: center top;
-  background-size: 760px auto;
-  opacity: 0.84;
+  background-size: 412px auto;
+  opacity: 0.06;
 }
 .landing-light .wa-chat-pattern {
   background-image: url("/images/wa-bg-pattern.png");
