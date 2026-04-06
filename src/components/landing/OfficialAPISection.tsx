@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Shield, CheckCircle, Lock, Zap, Globe, BadgeCheck, ExternalLink } from "lucide-react";
+import { Shield, CheckCircle, Lock, Zap, Globe, ExternalLink } from "lucide-react";
+import metaIcon from "@/assets/logos/meta-icon.png";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 export const OfficialAPISection = () => {
@@ -17,7 +18,7 @@ export const OfficialAPISection = () => {
       description: "Todas as mensagens são protegidas pela criptografia nativa do WhatsApp. Seus dados e dos seus leads estão seguros.",
     },
     {
-      icon: BadgeCheck,
+      icon: CheckCircle,
       title: "Conta Business Verificada",
       description: "Integração direta com o Meta Business Suite. Seu número é verificado pela Meta, aumentando a confiança e taxa de entrega.",
     },
@@ -87,7 +88,7 @@ export const OfficialAPISection = () => {
 
             <div className="flex-1 text-center md:text-left">
               <div className="flex items-center gap-2 justify-center md:justify-start mb-3">
-                <BadgeCheck className="w-6 h-6 text-primary" />
+                <img src={metaIcon} alt="Meta" className="w-6 h-6" />
                 <h3 className="font-display text-xl md:text-2xl font-bold">
                   Integração Verificada com a Meta
                 </h3>

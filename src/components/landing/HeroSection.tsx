@@ -309,8 +309,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           <div className="text-center xl:text-left">
             {/* Trust badge with avatars */}
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
-              <img src={metaIcon} alt="Meta" className="h-4 w-auto" />
-              <span className="text-xs font-medium text-foreground tracking-tight">Meta Business Partner</span>
+              <Users size={14} className="text-primary" />
+              <span className="text-xs font-medium text-foreground tracking-tight">+500 empresas já utilizam a Wiize</span>
             </div>
 
             {/* Main heading - always 3 lines */}
