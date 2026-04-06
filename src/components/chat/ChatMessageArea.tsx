@@ -1,9 +1,10 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Search, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
-import { format, parseISO, isSameDay } from "date-fns";
+import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
+import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import logoIconNew from "@/assets/logo-icon-new.png";
 
 interface ChatMessageAreaProps {
