@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { 
-  BarChart3, Users, Trophy, Settings, RefreshCw, Loader2, 
+  BarChart3, Users, Trophy, Settings, Loader2, 
   Smartphone, Search, TrendingUp, TrendingDown, Minus,
   ChevronLeft, ChevronRight, Target, AlertTriangle, Zap,
-  ChevronsLeft, ChevronsRight
+  ChevronsLeft, ChevronsRight, Info, HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -15,6 +15,8 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
@@ -62,24 +64,44 @@ interface ScoreRule {
 // ═══════════════ CONSTANTS ═══════════════
 
 const BUCKET_COLORS: Record<string, string> = {
-  "VERY_HOT": "hsl(158, 72%, 38%)",
-  "HOT": "hsl(262, 83%, 58%)",
+  "READY_TO_SELL": "hsl(158, 72%, 38%)",
+  "HIGH_VALUE": "hsl(262, 83%, 58%)",
   "ENGAGED": "hsl(200, 98%, 39%)",
+  "LOW_ENGAGEMENT": "hsl(38, 92%, 50%)",
   "COLD": "hsl(0, 72%, 51%)",
 };
 
 const BUCKET_LABELS: Record<string, string> = {
-  "VERY_HOT": "Muito Quente",
-  "HOT": "Quente",
-  "ENGAGED": "Engajado",
+  "COLD": "Frio (0-200)",
+  "LOW_ENGAGEMENT": "Baixo engajamento (201-400)",
+  "ENGAGED": "Engajado (401-600)",
+  "HIGH_VALUE": "Alto valor (601-800)",
+  "READY_TO_SELL": "Pronto para venda (801-1000)",
+};
+
+const BUCKET_SHORT_LABELS: Record<string, string> = {
   "COLD": "Frio",
+  "LOW_ENGAGEMENT": "Baixo engaj.",
+  "ENGAGED": "Engajado",
+  "HIGH_VALUE": "Alto valor",
+  "READY_TO_SELL": "Pronto p/ venda",
 };
 
 const BUCKET_BADGE_COLORS: Record<string, string> = {
-  "VERY_HOT": "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  "HOT": "bg-purple-500/20 text-purple-400 border-purple-500/30",
+  "READY_TO_SELL": "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  "HIGH_VALUE": "bg-purple-500/20 text-purple-400 border-purple-500/30",
   "ENGAGED": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  "LOW_ENGAGEMENT": "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
   "COLD": "bg-red-500/20 text-red-400 border-red-500/30",
+};
+
+// Map old buckets to new ones for backward compatibility
+const mapBucket = (bucket: string, score: number): string => {
+  if (score >= 801) return "READY_TO_SELL";
+  if (score >= 601) return "HIGH_VALUE";
+  if (score >= 401) return "ENGAGED";
+  if (score >= 201) return "LOW_ENGAGEMENT";
+  return "COLD";
 };
 
 const RULE_LABELS: Record<string, string> = {
@@ -135,6 +157,46 @@ const RULE_CATEGORIES: Record<string, { label: string; color: string; keys: stri
 
 const PER_PAGE = 20;
 
+const getScoreColor = (score: number) => {
+  if (score >= 801) return "text-emerald-400";
+  if (score >= 601) return "text-purple-400";
+  if (score >= 401) return "text-blue-400";
+  if (score >= 201) return "text-yellow-400";
+  return "text-red-400";
+};
+
+const fmtNum = (n: number) => n.toLocaleString('pt-BR');
+
+// ═══════════════ SCORE INFO POPOVER ═══════════════
+
+const ScoreInfoPopover = () => (
+  <Popover>
+    <PopoverTrigger asChild>
+      <button className="text-muted-foreground hover:text-foreground transition-colors">
+        <HelpCircle className="h-5 w-5" />
+      </button>
+    </PopoverTrigger>
+    <PopoverContent className="w-80 text-sm space-y-3" side="bottom" align="start">
+      <h4 className="font-semibold text-foreground">Como funciona o Score</h4>
+      <p className="text-muted-foreground">
+        O score vai de 0 a 1.000 pontos e é calculado automaticamente com base nas interações dos leads no WhatsApp.
+      </p>
+      <div className="space-y-1.5">
+        <p className="text-xs"><span className="text-red-400 font-medium">0 – 200:</span> Frio — sem interação relevante</p>
+        <p className="text-xs"><span className="text-yellow-400 font-medium">201 – 400:</span> Baixo engajamento — pouca atividade</p>
+        <p className="text-xs"><span className="text-blue-400 font-medium">401 – 600:</span> Engajado — interagindo ativamente</p>
+        <p className="text-xs"><span className="text-purple-400 font-medium">601 – 800:</span> Alto valor — forte interesse</p>
+        <p className="text-xs"><span className="text-emerald-400 font-medium">801 – 1.000:</span> Pronto para venda — lead quente</p>
+      </div>
+      <div className="border-t border-border pt-2">
+        <p className="text-xs text-muted-foreground">
+          O score é atualizado automaticamente conforme novas interações acontecem. Cada regra ativa soma ou subtrai pontos.
+        </p>
+      </div>
+    </PopoverContent>
+  </Popover>
+);
+
 // ═══════════════ DASHBOARD TAB ═══════════════
 
 const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
@@ -144,40 +206,45 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
   const medianScore = totalLeads > 0 ? sortedScores[Math.floor(totalLeads / 2)]?.score_total || 0 : 0;
 
   const byBucket = leads.reduce((acc, l) => {
-    acc[l.status_bucket] = (acc[l.status_bucket] || 0) + 1;
+    const b = mapBucket(l.status_bucket, l.score_total);
+    acc[b] = (acc[b] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
   const atRisk = leads.filter(l => l.risk_state === "AT_RISK" || l.risk_state === "CRITICAL").length;
-  const veryHot = byBucket["VERY_HOT"] || 0;
+  const readyToSell = byBucket["READY_TO_SELL"] || 0;
   const cold = byBucket["COLD"] || 0;
 
   const kpis = [
-    { label: "Total Leads", value: totalLeads.toLocaleString('pt-BR'), icon: Users, color: "text-primary" },
-    { label: "Score Médio", value: avgScore.toFixed(0), icon: BarChart3, color: "text-blue-400" },
-    { label: "Score Mediano", value: medianScore.toFixed(0), icon: Target, color: "text-yellow-400" },
-    { label: "Muito Quentes", value: veryHot, icon: TrendingUp, color: "text-emerald-400" },
-    { label: "Em Risco", value: atRisk, icon: AlertTriangle, color: "text-destructive" },
-    { label: "Frios", value: cold, icon: TrendingDown, color: "text-red-400" },
+    { label: "Total Leads", value: fmtNum(totalLeads), icon: Users, color: "text-primary" },
+    { label: "Score Médio", value: fmtNum(Math.round(avgScore)), icon: BarChart3, color: "text-blue-400" },
+    { label: "Score Mediano", value: fmtNum(Math.round(medianScore)), icon: Target, color: "text-yellow-400" },
+    { label: "Pronto p/ Venda", value: fmtNum(readyToSell), icon: TrendingUp, color: "text-emerald-400" },
+    { label: "Em Risco", value: fmtNum(atRisk), icon: AlertTriangle, color: "text-destructive" },
+    { label: "Frios", value: fmtNum(cold), icon: TrendingDown, color: "text-red-400" },
   ];
 
   const pieData = Object.entries(byBucket).map(([bucket, count]) => ({
-    name: BUCKET_LABELS[bucket] || bucket,
+    name: BUCKET_SHORT_LABELS[bucket] || bucket,
     value: count,
     color: BUCKET_COLORS[bucket] || "hsl(var(--muted))",
   }));
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {/* KPIs - 3 per row, matching Opportunities design */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {kpis.map((kpi) => (
-          <Card key={kpi.label} className="bg-card border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
+          <Card key={kpi.label} className="group relative overflow-hidden bg-card border-border/60 hover:border-primary/30 transition-all duration-300">
+            <div className="absolute top-3 right-3 w-[72px] h-[72px] rounded-full bg-primary/[0.07] dark:bg-primary/[0.12] group-hover:scale-110 transition-transform duration-500" />
+            <CardContent className="p-5 relative">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 rounded-xl bg-muted/30 border border-border/30">
+                  <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
+                </div>
                 <div>
-                  <p className="text-2xl font-bold">{kpi.value}</p>
-                  <p className="text-xs text-muted-foreground">{kpi.label}</p>
+                  <p className="text-[30px] font-bold leading-none tabular-nums">{kpi.value}</p>
+                  <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mt-1">{kpi.label}</p>
                 </div>
               </div>
             </CardContent>
@@ -193,7 +260,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90}
-                    label={({ name, value }) => `${name}: ${value}`}>
+                    label={({ name, value }) => `${name}: ${fmtNum(value)}`}>
                     {pieData.map((entry, i) => (
                       <Cell key={i} fill={entry.color} />
                     ))}
@@ -214,7 +281,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={[...leads].sort((a, b) => b.score_total - a.score_total).slice(0, 10)} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
+                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" domain={[0, 1000]} />
                   <YAxis dataKey="name" type="category" width={120} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }}
                     tickFormatter={(v) => v || "Sem nome"} />
                   <RechartsTooltip />
@@ -247,7 +314,10 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
         const s = search.toLowerCase();
         if (!(l.name?.toLowerCase().includes(s) || l.phone_e164.includes(search))) return false;
       }
-      if (filterBucket !== "all" && l.status_bucket !== filterBucket) return false;
+      if (filterBucket !== "all") {
+        const mapped = mapBucket(l.status_bucket, l.score_total);
+        if (mapped !== filterBucket) return false;
+      }
       return true;
     });
     result.sort((a, b) => {
@@ -283,10 +353,10 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
           <Input placeholder="Buscar lead..." className="pl-9" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
         </div>
         <Select value={filterBucket} onValueChange={(v) => { setFilterBucket(v); setPage(0); }}>
-          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos Status</SelectItem>
-            {Object.entries(BUCKET_LABELS).map(([k, v]) => (
+            {Object.entries(BUCKET_SHORT_LABELS).map(([k, v]) => (
               <SelectItem key={k} value={k}>{v}</SelectItem>
             ))}
           </SelectContent>
@@ -310,30 +380,34 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginated.map((lead) => (
-                <TableRow key={lead.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setSelectedLead(lead)}>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium text-sm">{lead.name || "Sem nome"}</p>
-                      <p className="text-xs text-muted-foreground">{lead.phone_e164}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-lg font-bold">{lead.score_total}</span>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-sm">{lead.score_engagement}</TableCell>
-                  <TableCell className="hidden md:table-cell text-sm">{lead.score_intent}</TableCell>
-                  <TableCell className="hidden lg:table-cell text-sm">{lead.score_risk}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={BUCKET_BADGE_COLORS[lead.status_bucket] || ""}>
-                      {BUCKET_LABELS[lead.status_bucket] || lead.status_bucket}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
-                    {new Date(lead.last_activity_at).toLocaleDateString('pt-BR')}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {paginated.map((lead) => {
+                const bucket = mapBucket(lead.status_bucket, lead.score_total);
+                return (
+                  <TableRow key={lead.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setSelectedLead(lead)}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-sm">{lead.name || "Sem nome"}</p>
+                        <p className="text-xs text-muted-foreground">{lead.phone_e164}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`text-lg font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</span>
+                      <span className="text-xs text-muted-foreground ml-1">/1.000</span>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-sm tabular-nums">{fmtNum(lead.score_engagement)}</TableCell>
+                    <TableCell className="hidden md:table-cell text-sm tabular-nums">{fmtNum(lead.score_intent)}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm tabular-nums">{fmtNum(lead.score_risk)}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
+                        {BUCKET_SHORT_LABELS[bucket] || bucket}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
+                      {new Date(lead.last_activity_at).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {paginated.length === 0 && (
                 <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum lead encontrado</TableCell></TableRow>
               )}
@@ -375,22 +449,22 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center justify-between">
                 <span>{selectedLead.name || selectedLead.phone_e164}</span>
-                <Badge variant="outline" className={BUCKET_BADGE_COLORS[selectedLead.status_bucket] || ""}>
-                  {BUCKET_LABELS[selectedLead.status_bucket] || selectedLead.status_bucket}
+                <Badge variant="outline" className={BUCKET_BADGE_COLORS[mapBucket(selectedLead.status_bucket, selectedLead.score_total)] || ""}>
+                  {BUCKET_SHORT_LABELS[mapBucket(selectedLead.status_bucket, selectedLead.score_total)] || selectedLead.status_bucket}
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 rounded-lg bg-muted/20 border border-border/30">
-                  <p className="text-3xl font-bold text-primary">{selectedLead.score_total}</p>
-                  <p className="text-xs text-muted-foreground">Score Total</p>
+                  <p className={`text-3xl font-bold tabular-nums ${getScoreColor(selectedLead.score_total)}`}>{fmtNum(selectedLead.score_total)}</p>
+                  <p className="text-xs text-muted-foreground">Score Total / 1.000</p>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Engajamento</span><span className="font-medium">{selectedLead.score_engagement}</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Intenção</span><span className="font-medium">{selectedLead.score_intent}</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Urgência</span><span className="font-medium">{selectedLead.score_urgency}</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Risco</span><span className={`font-medium ${selectedLead.score_risk < 0 ? 'text-destructive' : ''}`}>{selectedLead.score_risk}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Engajamento</span><span className="font-medium tabular-nums">{fmtNum(selectedLead.score_engagement)}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Intenção</span><span className="font-medium tabular-nums">{fmtNum(selectedLead.score_intent)}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Urgência</span><span className="font-medium tabular-nums">{fmtNum(selectedLead.score_urgency)}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Risco</span><span className={`font-medium tabular-nums ${selectedLead.score_risk < 0 ? 'text-destructive' : ''}`}>{fmtNum(selectedLead.score_risk)}</span></div>
                 </div>
               </div>
               <div className="space-y-1 text-sm">
@@ -441,23 +515,29 @@ const ScoreRankingTab = ({ leads }: { leads: RevenueLead[] }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ranked.map((lead, i) => (
-                <TableRow key={lead.id}>
-                  <TableCell className="font-bold text-lg">{getMedal(i)}</TableCell>
-                  <TableCell>
-                    <p className="font-medium text-sm">{lead.name || "Sem nome"}</p>
-                    <p className="text-xs text-muted-foreground">{lead.phone_e164}</p>
-                  </TableCell>
-                  <TableCell><span className="text-xl font-bold text-primary">{lead.score_total}</span></TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={BUCKET_BADGE_COLORS[lead.status_bucket] || ""}>
-                      {BUCKET_LABELS[lead.status_bucket] || lead.status_bucket}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">{lead.score_engagement}</TableCell>
-                  <TableCell className="hidden md:table-cell">{lead.score_intent}</TableCell>
-                </TableRow>
-              ))}
+              {ranked.map((lead, i) => {
+                const bucket = mapBucket(lead.status_bucket, lead.score_total);
+                return (
+                  <TableRow key={lead.id}>
+                    <TableCell className="font-bold text-lg">{getMedal(i)}</TableCell>
+                    <TableCell>
+                      <p className="font-medium text-sm">{lead.name || "Sem nome"}</p>
+                      <p className="text-xs text-muted-foreground">{lead.phone_e164}</p>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`text-xl font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</span>
+                      <span className="text-xs text-muted-foreground ml-1">/1.000</span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
+                        {BUCKET_SHORT_LABELS[bucket] || bucket}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell tabular-nums">{fmtNum(lead.score_engagement)}</TableCell>
+                    <TableCell className="hidden md:table-cell tabular-nums">{fmtNum(lead.score_intent)}</TableCell>
+                  </TableRow>
+                );
+              })}
               {ranked.length === 0 && (
                 <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum lead com score</TableCell></TableRow>
               )}
@@ -490,7 +570,6 @@ const ScoreRulesTab = ({ userId }: { userId: string }) => {
     },
   });
 
-  // Seed rules if none exist
   useEffect(() => {
     if (!isLoading && rules.length === 0) {
       supabase.rpc("seed_revenue_score_rules", { p_user_id: userId }).then(() => {
@@ -624,7 +703,7 @@ const CRMScore = () => {
     enabled: !!user,
   });
 
-  const { data: leads = [], isLoading, refetch } = useQuery({
+  const { data: leads = [], isLoading } = useQuery({
     queryKey: ["crm-score-leads", user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -639,25 +718,6 @@ const CRMScore = () => {
     enabled: !!user,
   });
 
-  const [recalculating, setRecalculating] = useState(false);
-
-  const handleRecalculate = async () => {
-    if (!user) return;
-    setRecalculating(true);
-    try {
-      const { error } = await supabase.functions.invoke("revenue-processor", {
-        body: { action: "recalculate", user_id: user.id },
-      });
-      if (error) throw error;
-      await refetch();
-      toast.success("Scores recalculados com sucesso");
-    } catch (err: any) {
-      toast.error("Erro ao recalcular: " + err.message);
-    } finally {
-      setRecalculating(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background relative">
       <BackgroundGlow />
@@ -669,36 +729,33 @@ const CRMScore = () => {
         <div className="container mx-auto px-4 py-6 space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Trophy className="w-6 h-6 text-primary" />
-                </div>
-                <div>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Trophy className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
                   <h1 className="text-xl lg:text-2xl font-bold text-foreground">Score de Leads</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Análise de engajamento e intenção de compra via WhatsApp
-                  </p>
+                  <ScoreInfoPopover />
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  Análise de engajamento e intenção de compra via WhatsApp · Score de 0 a 1.000
+                </p>
               </div>
             </div>
-            <Button onClick={handleRecalculate} disabled={recalculating} variant="outline" size="sm" className="gap-2">
-              {recalculating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              Recalcular
-            </Button>
           </div>
 
           {/* Score Level Legend */}
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {Object.entries(BUCKET_LABELS).map(([key, label]) => (
-              <div key={key} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium ${BUCKET_BADGE_COLORS[key]}`}>
+              <div key={key} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium ${BUCKET_BADGE_COLORS[key]}`}>
                 <span>{label}</span>
               </div>
             ))}
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="bg-card border-border/50"><CardContent className="p-6"><Skeleton className="h-20 w-full" /></CardContent></Card>
               ))}
