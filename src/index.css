@@ -1098,9 +1098,9 @@ input::placeholder, textarea::placeholder {
 .wa-text-timestamp { color: rgba(134,150,160,0.8); }
 .landing-light .wa-text-timestamp { color: rgba(102,119,129,0.7); }
 
-/* ─── Active conversation — soft green (Wiize) ─── */
-.wa-conv-active { background-color: #0c3a2d; }
-.landing-light .wa-conv-active { background-color: #e8f5e9; }
+/* ─── Active conversation — subtle gray ─── */
+.wa-conv-active { background-color: #2a3942; }
+.landing-light .wa-conv-active { background-color: #e9edef; }
 .wa-conv-hover:hover { background-color: #202c33; }
 .landing-light .wa-conv-hover:hover { background-color: #f5f6f6; }
 
@@ -1109,13 +1109,14 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-chat-bg { background-color: #efeae2; }
 
 .wa-chat-pattern {
-  background-image: url("/images/wa-bg-light.png");
+  background-image: url("./images/wa-bg-light.png");
   background-repeat: repeat;
   background-size: 412px auto;
   opacity: 0.06;
 }
 .landing-light .wa-chat-pattern {
-  background-image: url("/images/wa-bg-light.png");
+  background-image: url("./images/wa-bg-light.png");
+  background-repeat: repeat;
   background-size: 412px auto;
   opacity: 0.4;
 }
@@ -1124,30 +1125,30 @@ input::placeholder, textarea::placeholder {
 .wa-empty-bg { background-color: #222e35; }
 .landing-light .wa-empty-bg { background-color: #f0f2f5; }
 
-/* ─── Sidebar header (Conversas) ─── */
-.wa-sidebar-header-bg { background-color: #1a2930; }
-.landing-light .wa-sidebar-header-bg { background-color: #008069; }
+/* ─── Sidebar header (Conversas) — white-gray light / dark bg dark ─── */
+.wa-sidebar-header-bg { background-color: #202c33; }
+.landing-light .wa-sidebar-header-bg { background-color: #f0f2f5; }
 .wa-sidebar-header-text { color: #e9edef; }
-.landing-light .wa-sidebar-header-text { color: #ffffff; }
-.wa-sidebar-header-icon { color: rgba(233,237,239,0.8); }
-.landing-light .wa-sidebar-header-icon { color: rgba(255,255,255,0.9); }
-.wa-sidebar-header-btn:hover { background-color: rgba(255,255,255,0.1); }
-.wa-sidebar-header-select { background-color: rgba(255,255,255,0.1); color: #e9edef; border-color: rgba(255,255,255,0.2); }
-.landing-light .wa-sidebar-header-select { background-color: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.25); }
+.landing-light .wa-sidebar-header-text { color: #3b4a54; }
+.wa-sidebar-header-icon { color: #aebac1; }
+.landing-light .wa-sidebar-header-icon { color: #54656f; }
+.wa-sidebar-header-btn:hover { background-color: rgba(134,150,160,0.15); }
+.wa-sidebar-header-select { background-color: rgba(134,150,160,0.15); color: #e9edef; border-color: rgba(134,150,160,0.3); }
+.landing-light .wa-sidebar-header-select { background-color: rgba(0,0,0,0.05); color: #3b4a54; border-color: rgba(0,0,0,0.1); }
 
 /* ─── Sidebar search area ─── */
 .wa-sidebar-search-area { background-color: #111b21; }
-.landing-light .wa-sidebar-search-area { background-color: #f6f6f6; }
+.landing-light .wa-sidebar-search-area { background-color: #ffffff; }
 
-/* ─── Chat header (contact area) — same bg as sidebar header ─── */
-.wa-chat-header-bg { background-color: #1a2930; }
-.landing-light .wa-chat-header-bg { background-color: #008069; }
+/* ─── Chat header (contact area) — matching sidebar header ─── */
+.wa-chat-header-bg { background-color: #202c33; }
+.landing-light .wa-chat-header-bg { background-color: #f0f2f5; }
 .wa-chat-header-text { color: #e9edef; }
-.landing-light .wa-chat-header-text { color: #ffffff; }
-.wa-chat-header-sub { color: rgba(233,237,239,0.7); }
-.landing-light .wa-chat-header-sub { color: rgba(255,255,255,0.8); }
-.wa-chat-header-icon { color: rgba(233,237,239,0.8); }
-.landing-light .wa-chat-header-icon { color: rgba(255,255,255,0.9); }
+.landing-light .wa-chat-header-text { color: #111b21; }
+.wa-chat-header-sub { color: #8696a0; }
+.landing-light .wa-chat-header-sub { color: #667781; }
+.wa-chat-header-icon { color: #aebac1; }
+.landing-light .wa-chat-header-icon { color: #54656f; }
 
 /* ─── Search messages panel ─── */
 .wa-search-panel { background-color: #111b21; }
