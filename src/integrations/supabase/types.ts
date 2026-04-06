@@ -677,6 +677,146 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_conversations: {
+        Row: {
+          contact_name: string | null
+          contact_phone: string
+          contact_profile_pic: string | null
+          created_at: string
+          id: string
+          is_archived: boolean | null
+          is_muted: boolean | null
+          is_pinned: boolean | null
+          last_message_at: string | null
+          last_message_direction: string | null
+          last_message_text: string | null
+          last_message_type: string | null
+          pinned_at: string | null
+          unread_count: number | null
+          updated_at: string
+          user_id: string
+          waba_connection_id: string
+        }
+        Insert: {
+          contact_name?: string | null
+          contact_phone: string
+          contact_profile_pic?: string | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean | null
+          is_muted?: boolean | null
+          is_pinned?: boolean | null
+          last_message_at?: string | null
+          last_message_direction?: string | null
+          last_message_text?: string | null
+          last_message_type?: string | null
+          pinned_at?: string | null
+          unread_count?: number | null
+          updated_at?: string
+          user_id: string
+          waba_connection_id: string
+        }
+        Update: {
+          contact_name?: string | null
+          contact_phone?: string
+          contact_profile_pic?: string | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean | null
+          is_muted?: boolean | null
+          is_pinned?: boolean | null
+          last_message_at?: string | null
+          last_message_direction?: string | null
+          last_message_text?: string | null
+          last_message_type?: string | null
+          pinned_at?: string | null
+          unread_count?: number | null
+          updated_at?: string
+          user_id?: string
+          waba_connection_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_conversations_waba_connection_id_fkey"
+            columns: ["waba_connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_waba_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          content: string | null
+          conversation_id: string
+          created_at: string
+          direction: string
+          id: string
+          media_caption: string | null
+          media_filename: string | null
+          media_mime_type: string | null
+          media_url: string | null
+          message_type: string
+          metadata: Json | null
+          reply_to_message_id: string | null
+          status: string | null
+          status_updated_at: string | null
+          user_id: string
+          waba_message_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          direction: string
+          id?: string
+          media_caption?: string | null
+          media_filename?: string | null
+          media_mime_type?: string | null
+          media_url?: string | null
+          message_type?: string
+          metadata?: Json | null
+          reply_to_message_id?: string | null
+          status?: string | null
+          status_updated_at?: string | null
+          user_id: string
+          waba_message_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          media_caption?: string | null
+          media_filename?: string | null
+          media_mime_type?: string | null
+          media_url?: string | null
+          message_type?: string
+          metadata?: Json | null
+          reply_to_message_id?: string | null
+          status?: string | null
+          status_updated_at?: string | null
+          user_id?: string
+          waba_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkout_leads: {
         Row: {
           checkout_completed: boolean
