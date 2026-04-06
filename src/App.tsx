@@ -50,6 +50,7 @@ const RenewalSuccess = lazy(() => import("./pages/RenewalSuccess"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Profile = lazy(() => import("./pages/Profile"));
 const CRM = lazy(() => import("./pages/CRM"));
+const CRMScore = lazy(() => import("./pages/CRMScore"));
 const Warming = lazy(() => import("./pages/Warming"));
 const WarmingReports = lazy(() => import("./pages/WarmingReports"));
 const AIAgents = lazy(() => import("./pages/AIAgents"));
@@ -246,6 +247,14 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <CRM />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/crm/score" 
+                  element={
+                    <ProtectedRoute>
+                      <CRMScore />
                     </ProtectedRoute>
                   } 
                 />

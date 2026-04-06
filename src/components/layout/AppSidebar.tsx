@@ -19,6 +19,7 @@ import {
   DollarSign,
   Mail,
   Receipt,
+  Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,6 +48,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isReportsOpen, setIsReportsOpen] = useState(false);
   const [isCampaignsOpen, setIsCampaignsOpen] = useState(false);
   const [isOpportunitiesOpen, setIsOpportunitiesOpen] = useState(false);
+  const [isCrmOpen, setIsCrmOpen] = useState(false);
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const location = useLocation();
   const { signOut } = useAuth();
@@ -62,6 +64,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
   const isOnCampaignsPage = currentPath === "/whatsapp" || currentPath === "/meta-campaigns";
   const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
+  const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
 
   // Sync expanded state with hover, but with delay to prevent glitches
   useEffect(() => {
@@ -149,12 +152,19 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     }
   };
 
+  const handleCrmClick = () => {
+    if (isExpanded) {
+      setIsCrmOpen(!isCrmOpen);
+    }
+  };
+
   // Reset reports submenu when sidebar closes
   const handleMouseLeave = () => {
     setIsHovered(false);
     setIsReportsOpen(false);
     setIsCampaignsOpen(false);
     setIsOpportunitiesOpen(false);
+    setIsCrmOpen(false);
   };
 
   const showUpgrade = profile?.plan !== 'scale';
@@ -361,6 +371,74 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               )}
             </li>
 
+            {/* CRM with submenu */}
+            <li>
+              <SidebarNavItem
+                title="CRM"
+                icon={Users}
+                onClick={handleCrmClick}
+                isActive={isOnCrmPage}
+                isExpanded={isExpanded}
+                hasSubmenu
+                isSubmenuOpen={isCrmOpen}
+                tooltip="CRM"
+              />
+
+              {isExpanded && (
+                <div
+                  className={cn(
+                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    isCrmOpen
+                      ? "max-h-28 opacity-100 mt-1"
+                      : "max-h-0 opacity-0"
+                  )}
+                >
+                  <ul className="pl-4 space-y-0.5">
+                    <li>
+                      <Link
+                        to="/crm"
+                        className={cn(
+                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          currentPath === "/crm"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Users size={16} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Pipeline</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/crm/score"
+                        className={cn(
+                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          currentPath === "/crm/score"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Trophy size={16} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Score</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </li>
+
+            {/* Agentes de IA */}
+            <li>
+              <SidebarNavItem
+                title="Agentes IA"
+                icon={Bot}
+                url="/agents"
+                isActive={currentPath === "/agents"}
+                isExpanded={isExpanded}
+                tooltip="Agentes de IA"
+              />
+            </li>
+
             {/* Aquecimento */}
             <li>
               <SidebarNavItem
@@ -386,39 +464,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 }
               />
             </li>
-
-            {/* CRM */}
-            <li>
-              <SidebarNavItem
-                title="CRM"
-                icon={Users}
-                url="/crm"
-                isActive={currentPath === "/crm"}
-                isExpanded={isExpanded}
-                tooltip="CRM"
-              />
-            </li>
-
-
-            {/* Agentes de IA */}
-            <li>
-              <SidebarNavItem
-                title="Agentes IA"
-                icon={Bot}
-                url="/agents"
-                isActive={currentPath === "/agents"}
-                isExpanded={isExpanded}
-                tooltip="Agentes de IA"
-              />
-            </li>
-
-
-
-
-
-
           </ul>
         </nav>
+
 
         {/* Bottom navigation */}
         <div className="py-4 border-t border-sidebar-border">
