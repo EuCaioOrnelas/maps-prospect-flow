@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Clock, Info, MessageSquare, Send } from "lucide-react";
+import { Clock, Info, MessageSquare, Send } from "lucide-react";
 
 interface ExpiredWindowBannerProps {
   contactName: string | null;
@@ -13,18 +13,24 @@ const TEMPLATES = [
   {
     id: "hello_world",
     name: "Olá (padrão)",
+    category: "utility",
+    cost: "R$ 0,25",
     description: "Template simples de saudação aprovado pela Meta",
     preview: "Olá! Como posso ajudá-lo(a)?",
   },
   {
     id: "follow_up",
     name: "Follow-up",
+    category: "marketing",
+    cost: "R$ 0,62",
     description: "Template de acompanhamento comercial",
     preview: "Olá {{nome}}, tudo bem? Gostaria de retomar nossa conversa...",
   },
   {
     id: "reengagement",
     name: "Reengajamento",
+    category: "marketing",
+    cost: "R$ 0,62",
     description: "Template para retomar contato após período de inatividade",
     preview: "Olá {{nome}}! Faz um tempo que não conversamos. Tenho novidades...",
   },
@@ -73,7 +79,7 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
             <Button
               size="sm"
               onClick={() => setDialogOpen(true)}
-              className="mt-2 h-8 bg-[#024d3f] hover:bg-[#036b56] text-white text-[12px] px-4"
+              className="mt-2 h-8 bg-primary hover:bg-primary/90 text-primary-foreground text-[12px] px-4"
             >
               <Send size={13} className="mr-1.5" />
               Reabrir conversa
@@ -87,7 +93,7 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
         <DialogContent className="sm:max-w-[440px] p-0 gap-0 overflow-hidden rounded-xl bg-background border border-border shadow-2xl [&>button]:hidden">
           <DialogHeader className="px-5 pt-5 pb-3">
             <DialogTitle className="text-lg font-medium flex items-center gap-2 text-foreground">
-              <MessageSquare size={20} className="text-[#024d3f]" />
+              <MessageSquare size={20} className="text-primary" />
               Reabrir conversa
             </DialogTitle>
           </DialogHeader>
@@ -106,11 +112,16 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
                 onClick={() => setSelectedTemplate(template.id)}
                 className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
                   selectedTemplate === template.id
-                    ? "border-[#024d3f] bg-[#024d3f]/5"
+                    ? "border-primary bg-primary/5"
                     : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
                 }`}
               >
-                <p className="text-[13px] font-medium text-foreground">{template.name}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[13px] font-medium text-foreground">{template.name}</p>
+                  <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    {template.cost}
+                  </span>
+                </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">{template.description}</p>
                 <div className="mt-2 bg-muted/50 rounded-md px-3 py-2">
                   <p className="text-[12px] text-muted-foreground italic">"{template.preview}"</p>
@@ -123,15 +134,10 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
           <div className="mx-5 mb-3 p-3 rounded-lg bg-muted/40 border border-border">
             <div className="flex items-start gap-2">
               <Info size={14} className="text-muted-foreground mt-0.5 shrink-0" />
-              <div>
-                <p className="text-[11px] text-muted-foreground leading-[16px]">
-                  <span className="font-medium text-foreground">Custo por conversa: ~R$ 0,25 – R$ 0,80</span>
-                </p>
-                <p className="text-[10px] text-muted-foreground leading-[15px] mt-0.5">
-                  Esse valor é cobrado diretamente pela <span className="font-medium">Meta (WhatsApp)</span>, não pela Wiize. 
-                  O preço varia conforme a categoria do template e o país do destinatário.
-                </p>
-              </div>
+              <p className="text-[10px] text-muted-foreground leading-[15px]">
+                O custo exibido é cobrado diretamente pela <span className="font-medium text-foreground">Meta (WhatsApp)</span>, não pela Wiize.
+                O valor varia conforme a categoria do template e o país do destinatário.
+              </p>
             </div>
           </div>
 
@@ -146,7 +152,7 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
             <Button
               onClick={handleReopen}
               disabled={!selectedTemplate}
-              className="bg-[#024d3f] hover:bg-[#036b56] text-white h-9 px-5"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-5"
             >
               <Send size={14} className="mr-1.5" />
               Enviar template
