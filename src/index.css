@@ -1053,14 +1053,14 @@ input::placeholder, textarea::placeholder {
    ===================================================== */
 
 /* ─── App background ─── */
-.wa-app-bg { background-color: #0b141a; }
+.wa-app-bg { background-color: #0a1014; }
 .landing-light .wa-app-bg { background-color: #eae6df; }
 
 /* ─── Sidebar ─── */
-.wa-sidebar-bg { background-color: #111b21; }
+.wa-sidebar-bg { background-color: #0e1820; }
 .landing-light .wa-sidebar-bg { background-color: #ffffff; }
-.wa-sidebar-border { border-right: 1px solid #222d34; }
-.landing-light .wa-sidebar-border { border-right: 1px solid #e9edef; }
+.wa-sidebar-border { border-right: 2px solid #1a252d; }
+.landing-light .wa-sidebar-border { border-right: 2px solid #d9dde0; }
 
 /* ─── Header (sidebar + chat) ─── */
 .wa-header-bg { background-color: #1f2c34; }
@@ -1104,15 +1104,15 @@ input::placeholder, textarea::placeholder {
 .wa-conv-hover:hover { background-color: #1a2830; }
 .landing-light .wa-conv-hover:hover { background-color: #f5f6f6; }
 
-/* ─── Chat area ─── */
-.wa-chat-bg { background-color: #0b141a; }
+/* ─── Chat area — same tone as sidebar ─── */
+.wa-chat-bg { background-color: #0e1820; }
 .landing-light .wa-chat-bg { background-color: #efeae2; }
 
 .wa-chat-pattern {
   background-image: url("/images/wa-bg-pattern.png");
   background-repeat: repeat;
   background-size: 412px auto;
-  opacity: 0.06;
+  opacity: 0.15;
 }
 .landing-light .wa-chat-pattern {
   background-image: url("/images/wa-bg-pattern.png");
@@ -1122,7 +1122,7 @@ input::placeholder, textarea::placeholder {
 }
 
 /* ─── Empty state ─── */
-.wa-empty-bg { background-color: #0b141a; }
+.wa-empty-bg { background-color: #0e1820; }
 .landing-light .wa-empty-bg { background-color: #f0f2f5; }
 
 /* ─── Sidebar header (Conversas) ─── */
