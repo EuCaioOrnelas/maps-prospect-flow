@@ -37,9 +37,9 @@ export const Footer = () => {
           {/* Selos de qualidade - acima do aviso */}
           <div className="border-t border-border/50 pt-6 w-full">
             <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 mb-6">
-              <img src={metaPartner} alt="Meta Business Partner" className="h-48 sm:h-60 object-contain" />
-              <img src={googlePartner} alt="Google Partner Premier 2026" className="h-32 sm:h-40 object-contain" />
-              <img src={gptwBadge} alt="Great Place To Work Certificado" className="h-32 sm:h-40 object-contain" />
+              <img src={metaPartner} alt="Meta Business Partner" className="h-24 sm:h-30 object-contain" />
+              <img src={googlePartner} alt="Google Partner Premier 2026" className="h-16 sm:h-20 object-contain" />
+              <img src={gptwBadge} alt="Great Place To Work Certificado" className="h-16 sm:h-20 object-contain mix-blend-multiply dark:mix-blend-screen" />
             </div>
 
             <p className="text-[10px] sm:text-xs text-muted-foreground/40 text-center max-w-3xl mx-auto leading-relaxed">
