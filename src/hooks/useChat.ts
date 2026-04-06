@@ -380,6 +380,7 @@ export function useChat() {
     togglePin,
     archiveConversation,
     toggleMute,
+    startNewConversation,
     messagesEndRef,
   };
 }
