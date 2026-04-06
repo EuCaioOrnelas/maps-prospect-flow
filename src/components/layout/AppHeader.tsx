@@ -65,7 +65,7 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
           {/* Credits indicator */}
           <div className="hidden sm:flex items-center gap-2 text-sm">
             <Search size={14} className="text-muted-foreground" />
-            <span className="text-muted-foreground">Buscas:</span>
+            <span className="text-muted-foreground">Oportunidades:</span>
             <span className="font-semibold text-primary">{profile?.searches_used || 0}</span>
             <span className="text-muted-foreground">/</span>
             <span className="text-muted-foreground">{profile?.searches_limit || 10}</span>
