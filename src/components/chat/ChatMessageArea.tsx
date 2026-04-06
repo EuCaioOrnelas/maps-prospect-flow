@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay } from "date-fns";
 import { ChatInput } from "./ChatInput";
+import logoIconNew from "@/assets/logo-icon-new.png";
 
 interface ChatMessageAreaProps {
   conversation: ChatConversation | null;
@@ -163,11 +164,13 @@ export function ChatMessageArea({
     return (
       <div className="flex-1 flex flex-col items-center justify-center wa-empty-bg select-none">
         <div className="text-center max-w-[500px] px-8">
-          {/* WhatsApp-like lock icon + illustration */}
+          {/* Wiize logo in gray with opacity */}
           <div className="mb-[28px]">
-            <svg viewBox="0 0 303 172" width="250" className="mx-auto opacity-[0.06] wa-text-primary">
-              <path fill="currentColor" d="M229.565 160.229c32.647-16.166 55.455-48.497 55.455-85.94C285.02 33.599 251.251 0 209.556 0c-27.124 0-50.93 14.425-64.209 36.071C131.967 14.425 108.161 0 81.037 0 39.342 0 5.573 33.599 5.573 74.289c0 37.443 22.808 69.774 55.455 85.94l84.319 85.791 84.218-85.791z" />
-            </svg>
+            <img
+              src={logoIconNew}
+              alt="Wiize"
+              className="w-[120px] h-[120px] mx-auto opacity-[0.12] grayscale"
+            />
           </div>
           <h1 className="text-[32px] font-light wa-text-primary leading-[38px] mb-[14px]">Wiize Chat</h1>
           <p className="text-[14px] wa-text-secondary leading-[20px]">

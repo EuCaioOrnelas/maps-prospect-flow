@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from "react";
-import { Search, Filter, Pin, Archive, Volume2, VolumeX, MoreVertical, ChevronDown } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState, useRef } from "react";
+import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
+import { NewConversationDialog } from "./NewConversationDialog";
 
 interface ChatSidebarProps {
   conversations: ChatConversation[];
@@ -19,6 +19,7 @@ interface ChatSidebarProps {
   onArchive: (id: string) => void;
   onToggleMute: (id: string) => void;
   loading: boolean;
+  onNewConversation?: (phone: string, name?: string) => void;
 }
 
 function formatTimestamp(dateStr: string | null): string {
@@ -46,7 +47,6 @@ function getLastMessagePreview(conv: ChatConversation): string {
   return text.length > 45 ? text.substring(0, 45) + "…" : text;
 }
 
-// Avatar colors for consistency
 const AVATAR_COLORS = [
   "bg-[#00a884]", "bg-[#53bdeb]", "bg-[#7f66ff]", "bg-[#ff6f69]",
   "bg-[#ffa62b]", "bg-[#25d366]", "bg-[#5f66cd]", "bg-[#ff4081]",
@@ -61,8 +61,10 @@ export function ChatSidebar({
   conversations, activeConversationId, onSelectConversation,
   searchQuery, onSearchChange, connections, activeConnectionId,
   onConnectionChange, onTogglePin, onArchive, onToggleMute, loading,
+  onNewConversation,
 }: ChatSidebarProps) {
   const [searchFocused, setSearchFocused] = useState(false);
+  const [newConvOpen, setNewConvOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -72,7 +74,7 @@ export function ChatSidebar({
         <div className="flex items-center gap-2">
           <span className="text-[18px] font-semibold wa-text-primary">Conversas</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {connections.length > 1 && (
             <select
               value={activeConnectionId || ""}
@@ -85,6 +87,15 @@ export function ChatSidebar({
                 </option>
               ))}
             </select>
+          )}
+          {onNewConversation && (
+            <button
+              onClick={() => setNewConvOpen(true)}
+              className="wa-icon-button p-[6px] rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              title="Nova conversa"
+            >
+              <MessageSquarePlus size={20} className="wa-icon-header" />
+            </button>
           )}
         </div>
       </div>
@@ -224,6 +235,15 @@ export function ChatSidebar({
           })
         )}
       </div>
+
+      {/* New conversation dialog */}
+      {onNewConversation && (
+        <NewConversationDialog
+          open={newConvOpen}
+          onOpenChange={setNewConvOpen}
+          onStartConversation={onNewConversation}
+        />
+      )}
     </div>
   );
 }
