@@ -1,10 +1,11 @@
 import { useRef, useEffect, useState } from "react";
-import { Search, MoreVertical } from "lucide-react";
+import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, List, Trash2, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
 import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import logoIconNew from "@/assets/logo-icon-new.png";
 
 interface ChatMessageAreaProps {
@@ -17,7 +18,7 @@ interface ChatMessageAreaProps {
   onReopenConversation?: (templateName: string) => void;
 }
 
-// ─── Status icons (WhatsApp exact SVGs) ───
+// ─── Status icons ───
 function MessageStatus({ status }: { status: string }) {
   if (status === "pending") {
     return (
@@ -84,15 +85,8 @@ function MediaPreview({ msg }: { msg: ChatMessage }) {
   if (msg.message_type === "image") {
     return (
       <div className="rounded-[6px] overflow-hidden mb-[3px] max-w-[330px]">
-        <img
-          src={msg.media_url || ""}
-          alt={msg.media_caption || "Imagem"}
-          className="w-full max-h-[330px] object-cover cursor-pointer"
-          loading="lazy"
-        />
-        {msg.media_caption && (
-          <p className="text-[14.2px] wa-text-primary mt-[4px] px-[2px] leading-[19px]">{msg.media_caption}</p>
-        )}
+        <img src={msg.media_url || ""} alt={msg.media_caption || "Imagem"} className="w-full max-h-[330px] object-cover cursor-pointer" loading="lazy" />
+        {msg.media_caption && <p className="text-[14.2px] wa-text-primary mt-[4px] px-[2px] leading-[19px]">{msg.media_caption}</p>}
       </div>
     );
   }
@@ -100,25 +94,16 @@ function MediaPreview({ msg }: { msg: ChatMessage }) {
     return (
       <div className="rounded-[6px] overflow-hidden mb-[3px] max-w-[330px]">
         <video src={msg.media_url || ""} controls className="w-full max-h-[330px]" preload="metadata" />
-        {msg.media_caption && (
-          <p className="text-[14.2px] wa-text-primary mt-[4px] px-[2px] leading-[19px]">{msg.media_caption}</p>
-        )}
+        {msg.media_caption && <p className="text-[14.2px] wa-text-primary mt-[4px] px-[2px] leading-[19px]">{msg.media_caption}</p>}
       </div>
     );
   }
   if (msg.message_type === "document") {
     return (
-      <a
-        href={msg.media_url || "#"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-[10px] wa-doc-bg rounded-[8px] p-[10px] mb-[3px] max-w-[330px] group/doc"
-      >
+      <a href={msg.media_url || "#"} target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-[10px] wa-doc-bg rounded-[8px] p-[10px] mb-[3px] max-w-[330px] group/doc">
         <div className="h-[40px] w-[40px] rounded-[4px] wa-doc-icon flex items-center justify-center shrink-0">
-          <svg viewBox="0 0 37 40" width="28" height="30">
-            <path fill="#aaa" d="M22.94 0H5.63C2.52 0 0 2.52 0 5.63v28.74c0 3.11 2.52 5.63 5.63 5.63h25.74c3.11 0 5.63-2.52 5.63-5.63V14.06L22.94 0z" />
-            <path fill="#ccc" d="M37 14.06h-8.43c-3.11 0-5.63-2.52-5.63-5.63V0L37 14.06z" />
-          </svg>
+          <svg viewBox="0 0 37 40" width="28" height="30"><path fill="#aaa" d="M22.94 0H5.63C2.52 0 0 2.52 0 5.63v28.74c0 3.11 2.52 5.63 5.63 5.63h25.74c3.11 0 5.63-2.52 5.63-5.63V14.06L22.94 0z" /><path fill="#ccc" d="M37 14.06h-8.43c-3.11 0-5.63-2.52-5.63-5.63V0L37 14.06z" /></svg>
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[13.6px] wa-text-primary truncate leading-[18px]">{msg.media_filename || "Documento"}</p>
@@ -130,23 +115,64 @@ function MediaPreview({ msg }: { msg: ChatMessage }) {
   return null;
 }
 
-// ─── Tail SVGs (bubble pointer) ───
+// ─── Tail SVGs ───
 function OutboundTail() {
   return (
     <span className="absolute top-0 -right-[8px] w-[8px] h-[13px]">
-      <svg viewBox="0 0 8 13" width="8" height="13">
-        <path className="wa-bubble-out-fill" d="M5.188 1H0v11.193l6.467-8.625C7.526 2.156 6.958 1 5.188 1z" />
-      </svg>
+      <svg viewBox="0 0 8 13" width="8" height="13"><path className="wa-bubble-out-fill" d="M5.188 1H0v11.193l6.467-8.625C7.526 2.156 6.958 1 5.188 1z" /></svg>
     </span>
   );
 }
 function InboundTail() {
   return (
     <span className="absolute top-0 -left-[8px] w-[8px] h-[13px]">
-      <svg viewBox="0 0 8 13" width="8" height="13">
-        <path className="wa-bubble-in-fill" d="M1.533 3.568 8 12.193V1H2.812C1.042 1 .474 2.156 1.533 3.568z" />
-      </svg>
+      <svg viewBox="0 0 8 13" width="8" height="13"><path className="wa-bubble-in-fill" d="M1.533 3.568 8 12.193V1H2.812C1.042 1 .474 2.156 1.533 3.568z" /></svg>
     </span>
+  );
+}
+
+// ─── Search messages bar ───
+function SearchMessagesBar({ messages, onClose }: { messages: ChatMessage[]; onClose: () => void }) {
+  const [query, setQuery] = useState("");
+  const results = query.trim().length >= 2
+    ? messages.filter(m => m.content?.toLowerCase().includes(query.toLowerCase()))
+    : [];
+
+  return (
+    <div className="wa-search-panel flex flex-col border-l wa-border-light w-[360px] shrink-0 h-full">
+      <div className="h-[59px] flex items-center gap-3 px-4 wa-header-bg border-b wa-border-light">
+        <button onClick={onClose} className="wa-icon-button p-2">
+          <X size={20} className="wa-icon-header" />
+        </button>
+        <span className="text-[16px] wa-text-primary font-normal">Pesquisar mensagens</span>
+      </div>
+      <div className="px-3 py-2">
+        <div className="flex items-center h-[35px] rounded-lg px-3 gap-3 wa-bg-search">
+          <Search size={16} className="wa-icon-muted" />
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Pesquisar..."
+            autoFocus
+            className="flex-1 bg-transparent text-[13px] wa-text-primary placeholder:wa-text-muted outline-none"
+          />
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto wa-scrollbar px-3 py-1">
+        {query.trim().length < 2 ? (
+          <p className="text-center text-[13px] wa-text-muted py-8">Pesquise nas mensagens desta conversa</p>
+        ) : results.length === 0 ? (
+          <p className="text-center text-[13px] wa-text-muted py-8">Nenhuma mensagem encontrada</p>
+        ) : (
+          results.map(msg => (
+            <div key={msg.id} className="py-3 border-b wa-border-light">
+              <p className="text-[11px] wa-text-timestamp mb-1">{format(parseISO(msg.created_at), "dd/MM/yyyy HH:mm")}</p>
+              <p className="text-[13px] wa-text-primary leading-[18px] line-clamp-2">{msg.content}</p>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -154,6 +180,7 @@ export function ChatMessageArea({
   conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation,
 }: ChatMessageAreaProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -166,13 +193,8 @@ export function ChatMessageArea({
     return (
       <div className="flex-1 flex flex-col items-center justify-center wa-empty-bg select-none">
         <div className="text-center max-w-[500px] px-8">
-          {/* Wiize logo in gray with opacity */}
           <div className="mb-[28px]">
-            <img
-              src={logoIconNew}
-              alt="Wiize"
-              className="w-[120px] h-[120px] mx-auto opacity-[0.12] grayscale"
-            />
+            <img src={logoIconNew} alt="Wiize" className="w-[120px] h-[120px] mx-auto opacity-[0.12] grayscale" />
           </div>
           <h1 className="text-[32px] font-light wa-text-primary leading-[38px] mb-[14px]">Wiize Chat</h1>
           <p className="text-[14px] wa-text-secondary leading-[20px]">
@@ -190,148 +212,177 @@ export function ChatMessageArea({
     );
   }
 
-  // ─── Avatar color ───
+  // Avatar color
   const AVATAR_COLORS = ["bg-[#00a884]", "bg-[#53bdeb]", "bg-[#7f66ff]", "bg-[#ff6f69]", "bg-[#ffa62b]"];
   const hash = conversation.contact_phone.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const avatarColor = AVATAR_COLORS[hash % AVATAR_COLORS.length];
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
-      {/* ─── Chat Header ─── */}
-      <div className="h-[59px] flex items-center gap-[10px] px-[16px] wa-header-bg border-b wa-border-light shrink-0">
-        <div className={cn(
-          "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-light",
-          avatarColor
-        )}>
-          {conversation.contact_profile_pic ? (
-            <img src={conversation.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
-          ) : (
-            <span>
-              {conversation.contact_name
-                ? conversation.contact_name.split(/\s+/).map(n => n[0]).join("").substring(0, 2).toUpperCase()
-                : conversation.contact_phone.slice(-2)
-              }
-            </span>
-          )}
+    <div className="flex-1 flex min-w-0">
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* ─── Chat Header ─── */}
+        <div className="h-[59px] flex items-center gap-[10px] px-[16px] wa-chat-header-bg border-b wa-border-light shrink-0">
+          <div className={cn(
+            "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-light",
+            avatarColor
+          )}>
+            {conversation.contact_profile_pic ? (
+              <img src={conversation.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
+            ) : (
+              <span>
+                {conversation.contact_name
+                  ? conversation.contact_name.split(/\s+/).map(n => n[0]).join("").substring(0, 2).toUpperCase()
+                  : conversation.contact_phone.slice(-2)
+                }
+              </span>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[16px] font-normal wa-chat-header-text truncate leading-[21px]">
+              {conversation.contact_name || conversation.contact_phone}
+            </h3>
+            <p className="text-[13px] wa-chat-header-sub truncate leading-[18px]">
+              {conversation.contact_name ? conversation.contact_phone : "online"}
+            </p>
+          </div>
+          <div className="flex items-center gap-[20px]">
+            <button className="wa-icon-button p-1" onClick={() => setShowSearch(!showSearch)}>
+              <Search size={20} className="wa-chat-header-icon" />
+            </button>
+            {/* 3-dot menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="wa-icon-button p-1">
+                  <MoreVertical size={20} className="wa-chat-header-icon" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="wa-dropdown-bg wa-text-primary min-w-[220px] rounded-[3px] shadow-xl py-[9px] border wa-border">
+                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3">
+                  <User size={16} className="wa-icon-muted" /> Dados do contato
+                </DropdownMenuItem>
+                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3" onClick={() => setShowSearch(true)}>
+                  <Search size={16} className="wa-icon-muted" /> Pesquisar
+                </DropdownMenuItem>
+                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3">
+                  <MessageSquareText size={16} className="wa-icon-muted" /> Selecionar mensagens
+                </DropdownMenuItem>
+                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3">
+                  <BellOff size={16} className="wa-icon-muted" /> Silenciar notificações
+                </DropdownMenuItem>
+                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3">
+                  <Star size={16} className="wa-icon-muted" /> Adicionar aos Favoritos
+                </DropdownMenuItem>
+                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3">
+                  <List size={16} className="wa-icon-muted" /> Adicionar à lista
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="wa-border-light" />
+                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3">
+                  <Ban size={16} className="wa-icon-muted" /> Bloquear
+                </DropdownMenuItem>
+                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3 text-red-400">
+                  <Trash2 size={16} /> Apagar conversa
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-[16px] font-normal wa-text-primary truncate leading-[21px]">
-            {conversation.contact_name || conversation.contact_phone}
-          </h3>
-          <p className="text-[13px] wa-text-secondary truncate leading-[18px]">
-            {conversation.contact_name ? conversation.contact_phone : "online"}
-          </p>
-        </div>
-        <div className="flex items-center gap-[20px]">
-          <button className="wa-icon-button"><Search size={20} className="wa-icon-header" /></button>
-          <button className="wa-icon-button"><MoreVertical size={20} className="wa-icon-header" /></button>
-        </div>
-      </div>
 
-      {/* ─── Messages area ─── */}
-      <div className="flex-1 overflow-y-auto wa-chat-bg wa-scrollbar relative" ref={scrollContainerRef}>
-        {/* WhatsApp wallpaper doodle pattern */}
-        <div className="absolute inset-0 wa-chat-pattern pointer-events-none" />
+        {/* ─── Messages area ─── */}
+        <div className="flex-1 overflow-y-auto wa-chat-bg wa-scrollbar relative" ref={scrollContainerRef}>
+          {/* WhatsApp wallpaper doodle pattern */}
+          <div className="absolute inset-0 wa-chat-pattern pointer-events-none" />
 
-        <div className="relative z-[1] px-[63px] py-[4px] min-h-full flex flex-col justify-end">
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="h-8 w-8 rounded-full border-[3px] border-[#00a884]/20 border-t-[#00a884] animate-spin" />
-            </div>
-          ) : (
-            <>
-              {messages.map((msg, idx) => {
-                const prevMsg = idx > 0 ? messages[idx - 1] : null;
-                const nextMsg = idx < messages.length - 1 ? messages[idx + 1] : null;
-                const showDate = !prevMsg || !isSameDay(parseISO(msg.created_at), parseISO(prevMsg.created_at));
-                const isOutbound = msg.direction === "outbound";
-                const isSameAuthorAsPrev = prevMsg && prevMsg.direction === msg.direction && !showDate;
-                const isSameAuthorAsNext = nextMsg && nextMsg.direction === msg.direction;
-                const showTail = !isSameAuthorAsPrev;
+          <div className="relative z-[1] px-[63px] py-[4px] min-h-full flex flex-col justify-end">
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="h-8 w-8 rounded-full border-[3px] border-[#00a884]/20 border-t-[#00a884] animate-spin" />
+              </div>
+            ) : (
+              <>
+                {messages.map((msg, idx) => {
+                  const prevMsg = idx > 0 ? messages[idx - 1] : null;
+                  const nextMsg = idx < messages.length - 1 ? messages[idx + 1] : null;
+                  const showDate = !prevMsg || !isSameDay(parseISO(msg.created_at), parseISO(prevMsg.created_at));
+                  const isOutbound = msg.direction === "outbound";
+                  const isSameAuthorAsPrev = prevMsg && prevMsg.direction === msg.direction && !showDate;
+                  const showTail = !isSameAuthorAsPrev;
 
-                return (
-                  <div key={msg.id}>
-                    {showDate && <DateDivider date={parseISO(msg.created_at)} />}
-                    <div className={cn(
-                      "flex",
-                      isOutbound ? "justify-end" : "justify-start",
-                      isSameAuthorAsPrev ? "mt-[2px]" : "mt-[10px]"
-                    )}>
+                  return (
+                    <div key={msg.id}>
+                      {showDate && <DateDivider date={parseISO(msg.created_at)} />}
                       <div className={cn(
-                        "relative max-w-[65%]",
-                        showTail ? (isOutbound ? "mr-0" : "ml-0") : (isOutbound ? "mr-[8px]" : "ml-[8px]")
+                        "flex",
+                        isOutbound ? "justify-end" : "justify-start",
+                        isSameAuthorAsPrev ? "mt-[2px]" : "mt-[10px]"
                       )}>
-                        {/* Tail */}
-                        {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
-
                         <div className={cn(
-                          "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative",
-                          isOutbound
-                            ? "wa-bubble-out rounded-[7.5px] rounded-tr-0"
-                            : "wa-bubble-in rounded-[7.5px] rounded-tl-0",
-                          !showTail && "rounded-[7.5px]"
+                          "relative max-w-[65%]",
+                          showTail ? (isOutbound ? "mr-0" : "ml-0") : (isOutbound ? "mr-[8px]" : "ml-[8px]")
                         )}>
-                          {/* Media */}
-                          {msg.message_type !== "text" && (
-                            <div className="p-[3px]">
-                              <MediaPreview msg={msg} />
-                            </div>
-                          )}
+                          {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
 
-                          {/* Text content */}
-                          {msg.content && msg.message_type === "text" && (
-                            <div className="px-[9px] pt-[6px] pb-[8px]">
-                              <span className="text-[14.2px] wa-text-primary leading-[19px] whitespace-pre-wrap break-words">
-                                {msg.content}
-                              </span>
-                              <span className="float-right h-0 w-1 ml-[4px]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                            </div>
-                          )}
-
-                          {/* Timestamp + status (floating inside bubble) */}
                           <div className={cn(
-                            "flex items-center gap-[3px] float-right",
-                            msg.content && msg.message_type === "text"
-                              ? "relative -mt-[18px] mr-[4px] mb-[4px]"
-                              : "px-[7px] pb-[5px]"
+                            "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative",
+                            isOutbound
+                              ? "wa-bubble-out rounded-[7.5px] rounded-tr-0"
+                              : "wa-bubble-in rounded-[7.5px] rounded-tl-0",
+                            !showTail && "rounded-[7.5px]"
                           )}>
-                            <span className="text-[11px] leading-[15px] wa-text-timestamp select-none">
-                              {format(parseISO(msg.created_at), "HH:mm")}
-                            </span>
-                            {isOutbound && <MessageStatus status={msg.status} />}
+                            {msg.message_type !== "text" && (
+                              <div className="p-[3px]"><MediaPreview msg={msg} /></div>
+                            )}
+
+                            {msg.content && msg.message_type === "text" && (
+                              <div className="px-[9px] pt-[6px] pb-[8px]">
+                                <span className="text-[14.2px] wa-text-primary leading-[19px] whitespace-pre-wrap break-words">
+                                  {msg.content}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Timestamp + status — below text, right-aligned */}
+                            <div className="flex items-center justify-end gap-[3px] px-[7px] pb-[5px] -mt-[2px]">
+                              <span className="text-[11px] leading-[15px] wa-text-timestamp select-none">
+                                {format(parseISO(msg.created_at), "HH:mm")}
+                              </span>
+                              {isOutbound && <MessageStatus status={msg.status} />}
+                            </div>
                           </div>
-                          <div className="clear-both" />
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-              <div ref={messagesEndRef} className="h-[2px]" />
-            </>
-          )}
+                  );
+                })}
+                <div ref={messagesEndRef} className="h-[2px]" />
+              </>
+            )}
+          </div>
         </div>
+
+        {/* ─── Input or Expired Banner ─── */}
+        {(() => {
+          const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
+          const isWindowExpired = lastInbound
+            ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) > 24
+            : messages.length > 0;
+
+          if (isWindowExpired && onReopenConversation) {
+            return (
+              <ExpiredWindowBanner
+                contactName={conversation.contact_name}
+                contactPhone={conversation.contact_phone}
+                onReopenConversation={onReopenConversation}
+              />
+            );
+          }
+          return <ChatInput onSendMessage={onSendMessage} onSendMedia={onSendMedia} />;
+        })()}
       </div>
 
-      {/* ─── Input or Expired Banner ─── */}
-      {(() => {
-        // Check if 24h window is expired based on last inbound message
-        const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
-        const isWindowExpired = lastInbound
-          ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) > 24
-          : messages.length > 0; // If no inbound messages at all, window is expired
-
-        if (isWindowExpired && onReopenConversation) {
-          return (
-            <ExpiredWindowBanner
-              contactName={conversation.contact_name}
-              contactPhone={conversation.contact_phone}
-              onReopenConversation={onReopenConversation}
-            />
-          );
-        }
-        return <ChatInput onSendMessage={onSendMessage} onSendMedia={onSendMedia} />;
-      })()}
+      {/* Search panel */}
+      {showSearch && (
+        <SearchMessagesBar messages={messages} onClose={() => setShowSearch(false)} />
+      )}
     </div>
   );
 }
