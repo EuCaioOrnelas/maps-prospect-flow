@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSidebar } from "@/components/layout/AppSidebar";
@@ -13,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, History, Settings, Loader2, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert } from "lucide-react";
+import { Plus, History, Settings, Loader2, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, BookOpen } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useToast } from "@/hooks/use-toast";
 
@@ -30,6 +31,7 @@ export interface WabaConnection {
 
 const MetaCampaigns = () => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const { trackScoreEvent } = useAutoScoreTracking("meta-campaigns");
   const { toast } = useToast();
   const [connections, setConnections] = useState<WabaConnection[]>([]);
@@ -265,11 +267,16 @@ const MetaCampaigns = () => {
         <BackgroundGlow />
 
         <main className="container max-w-6xl mx-auto px-4 py-8 relative z-10">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold">Relacionamento</h1>
-            <p className="text-muted-foreground mt-1 max-w-3xl">
-              Comunicação de mensagens inbound com leads que já deram opt-in, utilizando canais oficiais da Meta Platforms.
-            </p>
+          <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-3xl font-bold">Relacionamento</h1>
+              <p className="text-muted-foreground mt-1 max-w-3xl">
+                Comunicação de mensagens inbound com leads que já deram opt-in, utilizando canais oficiais da Meta Platforms.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => navigate("/meta-api-guide")}>
+              <BookOpen size={14} /> Documentação
+            </Button>
           </div>
 
           <MetaDisclaimerModal open={showDisclaimer} onAccept={handleDisclaimerAccept} />

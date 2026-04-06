@@ -67,6 +67,7 @@ const AdminEmailFlowEditor = lazy(() => import("./pages/AdminEmailFlowEditor"));
 const AdminPixBilling = lazy(() => import("./pages/AdminPixBilling"));
 const CancellationFeedback = lazy(() => import("./pages/CancellationFeedback"));
 const MetaAppDocumentation = lazy(() => import("./pages/MetaAppDocumentation"));
+const MetaApiGuide = lazy(() => import("./pages/MetaApiGuide"));
 const OpportunitiesManagement = lazy(() => import("./pages/OpportunitiesManagement"));
 
 
@@ -211,6 +212,14 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <MetaCampaigns />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/meta-api-guide" 
+                  element={
+                    <ProtectedRoute>
+                      <MetaApiGuide />
                     </ProtectedRoute>
                   } 
                 />
