@@ -291,6 +291,8 @@ export function ChatMessageArea({
         <div className="flex-1 overflow-y-auto wa-chat-bg wa-scrollbar relative" ref={scrollContainerRef}>
           {/* WhatsApp wallpaper doodle pattern */}
           <div className="absolute inset-0 wa-chat-pattern pointer-events-none" />
+          {/* Glow effects */}
+          <div className="wa-chat-glow" />
 
           <div className="relative z-[1] px-[63px] py-[4px] min-h-full flex flex-col justify-end">
             {loading ? (
