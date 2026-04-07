@@ -380,7 +380,6 @@ export default function WhatsAppFlowEditor() {
         position: { x: newX, y: newY },
         data: { label: nameMap[type] || type, config: defaultConfigs[type] || {} },
       };
-      };
 
       const newNodes = [...nodes, newNode];
       setNodes(newNodes);
