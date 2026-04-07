@@ -606,7 +606,33 @@ export default function WhatsAppFlowEditor() {
         </div>
 
         {/* Canvas */}
-        <div className="flex-1 relative" ref={reactFlowWrapper}>
+        <div
+          className="flex-1 relative"
+          ref={reactFlowWrapper}
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const type = e.dataTransfer.getData("application/wa-node-type");
+            if (!type || !reactFlowWrapper.current) return;
+            const bounds = reactFlowWrapper.current.getBoundingClientRect();
+            const position = { x: e.clientX - bounds.left - 100, y: e.clientY - bounds.top - 40 };
+            const nameMap: Record<string, string> = {
+              entry: "Entrada", message: "Mensagem", buttons: "Botões",
+              condition: "Condição", wait: "Espera", action: "Ação",
+              handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
+            };
+            const newNode: Node = {
+              id: `temp-${Date.now()}`,
+              type,
+              position,
+              data: { label: nameMap[type] || type, config: {} },
+            };
+            const newNodes = [...nodes, newNode];
+            setNodes(newNodes);
+            pushHistory(newNodes, edges);
+            setHasChanges(true);
+          }}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
