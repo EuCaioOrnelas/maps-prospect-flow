@@ -74,6 +74,7 @@ export default function CRM() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addLeadOpen, setAddLeadOpen] = useState(false);
+  const [addLeadDefaultStageId, setAddLeadDefaultStageId] = useState<string | undefined>();
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
@@ -411,7 +412,7 @@ export default function CRM() {
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button size="sm" onClick={() => setAddLeadOpen(true)} className="h-8 sm:h-9">
+                      <Button size="sm" onClick={() => { setAddLeadDefaultStageId(undefined); setAddLeadOpen(true); }} className="h-8 sm:h-9">
                         <Plus className="w-4 h-4 sm:mr-2" />
                         <span className="hidden sm:inline">Adicionar Lead</span>
                       </Button>
@@ -451,7 +452,10 @@ export default function CRM() {
                 }}
                 columnWidth={columnWidth}
                 agentSilencedStages={agentSilencedStages}
-                onAddLead={() => setAddLeadOpen(true)}
+                onAddLead={(stageId) => {
+                  setAddLeadDefaultStageId(stageId);
+                  setAddLeadOpen(true);
+                }}
               />
             )}
           </div>
@@ -489,6 +493,7 @@ export default function CRM() {
         onOpenChange={setAddLeadOpen}
         stages={stages}
         origins={availableOrigins}
+        defaultStageId={addLeadDefaultStageId}
         onAddLead={createLead}
         onAddOrigin={handleAddOrigin}
         checkLeadExists={checkLeadExists}

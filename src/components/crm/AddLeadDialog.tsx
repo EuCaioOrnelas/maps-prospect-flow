@@ -40,6 +40,7 @@ interface AddLeadDialogProps {
   onOpenChange: (open: boolean) => void;
   stages: PipelineStage[];
   origins: string[];
+  defaultStageId?: string;
   onAddLead: (lead: {
     phone: string;
     company_name?: string;
@@ -90,6 +91,7 @@ export const AddLeadDialog = ({
   onOpenChange,
   stages,
   origins,
+  defaultStageId,
   onAddLead,
   onAddOrigin,
   checkLeadExists,
@@ -115,9 +117,9 @@ export const AddLeadDialog = ({
 
   useEffect(() => {
     if (stages.length > 0 && !formData.pipeline_stage_id) {
-      setFormData(prev => ({ ...prev, pipeline_stage_id: stages[0]?.id || '' }));
+      setFormData(prev => ({ ...prev, pipeline_stage_id: defaultStageId || stages[0]?.id || '' }));
     }
-  }, [stages]);
+  }, [stages, defaultStageId]);
 
   useEffect(() => {
     if (!open) {
@@ -129,7 +131,7 @@ export const AddLeadDialog = ({
         city: '',
         region: '',
         website: '',
-        pipeline_stage_id: stages[0]?.id || '',
+        pipeline_stage_id: defaultStageId || stages[0]?.id || '',
         estimated_value: 0,
         origin: '',
       });
