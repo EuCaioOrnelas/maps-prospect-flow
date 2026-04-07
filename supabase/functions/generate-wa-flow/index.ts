@@ -24,10 +24,11 @@ O fluxo deve:
 TIPOS DE NÓS DISPONÍVEIS:
 - entry: Nó de entrada/trigger (trigger_type: keyword|campaign_reply|button_click|webhook|qr_code|first_message|re_entry, keywords: string[])
 - message: Envio de mensagem (message_type: text|image|audio|video|document|template, content: string, media_url: string, template_name: string)
-- buttons: Botões interativos (interaction_type: buttons|list, body_text: string, buttons: [{title: string}], list_items: [{title: string, description: string}])
+- buttons: Botões interativos (interaction_type: buttons|list, body_text: string, buttons: [{id: "btn_0", title: string}], list_items: [{id: "item_0", title: string, description: string}])
 - condition: Condição IF/ELSE (condition_type: button_clicked|keyword_match|has_tag|field_equals|responded|no_response, condition_value: string)
 - wait: Delay/espera (delay_value: number, delay_unit: minutes|hours|days, smart: boolean)
 - action: Ação do sistema (action_type: add_tag|remove_tag|update_field|move_pipeline|send_to_crm|webhook|mark_hot|mark_cold|mark_converted)
+- ai_agent: Agente IA que analisa respostas (system_prompt: string, ai_model: "gpt-4o-mini", ai_output_type: "message_and_route", ai_routes: string, ai_memory: boolean, max_chars: 500)
 - handoff: Transferência para humano (notify_team: boolean)
 - end: Fim do fluxo
 
@@ -142,7 +143,7 @@ serve(async (req) => {
 
     // Insert nodes
     const nodeIdMap: Record<string, string> = {};
-    const validTypes = ["entry", "message", "buttons", "condition", "wait", "action", "handoff", "end"];
+    const validTypes = ["entry", "message", "buttons", "condition", "wait", "action", "handoff", "end", "ai_agent"];
 
     for (const node of flowData.nodes || []) {
       const nodeType = validTypes.includes(node.type) ? node.type : "message";
