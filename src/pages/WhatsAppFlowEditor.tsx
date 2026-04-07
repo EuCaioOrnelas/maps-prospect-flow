@@ -371,7 +371,7 @@ export default function WhatsAppFlowEditor() {
         condition: "Condição", wait: "Espera", action: "Ação",
         handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
         ab_test: "Teste A/B", random_split: "Random Split",
-        integration: "Integração",
+        google_sheets: "Google Sheets", google_calendar: "Google Agenda", gmail: "Gmail",
       };
 
       const defaultConfigs: Record<string, any> = {
