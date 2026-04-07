@@ -590,34 +590,50 @@ export default function WhatsAppFlowEditor() {
             <p className="text-sm font-bold text-foreground">Blocos</p>
             <p className="text-[10px] text-muted-foreground">Arraste ou clique para adicionar</p>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin min-w-[240px]">
-            {sidebarCategories.map((cat) => (
-              <div key={cat.label}>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">{cat.label}</p>
-                <div className="space-y-1.5">
-                  {cat.items.map((item) => (
-                    <div
-                      key={item.type}
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData("application/wa-node-type", item.type);
-                        e.dataTransfer.effectAllowed = "move";
-                      }}
-                      onClick={() => handleAddNode(item.type)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card transition-colors text-left group shadow-sm cursor-grab active:cursor-grabbing"
-                    >
-                      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
-                        <item.icon size={16} className={cn(item.color.split(" ")[0], "transition-transform duration-200 group-hover:scale-125 group-hover:rotate-12")} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold text-foreground">{item.label}</p>
-                        <p className="text-[10px] text-muted-foreground leading-tight">{item.desc}</p>
-                      </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-1 scrollbar-thin min-w-[240px]">
+            {sidebarCategories.map((cat) => {
+              const isOpen = openCategories.has(cat.label);
+              return (
+                <div key={cat.label} className="rounded-lg border border-border/30 overflow-hidden">
+                  <button
+                    onClick={() => setOpenCategories(prev => {
+                      const next = new Set(prev);
+                      if (next.has(cat.label)) next.delete(cat.label);
+                      else next.add(cat.label);
+                      return next;
+                    })}
+                    className="w-full flex items-center justify-between px-3 py-2 hover:bg-muted/50 transition-colors"
+                  >
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{cat.label}</p>
+                    <ChevronDown size={12} className={cn("text-muted-foreground transition-transform duration-200", isOpen && "rotate-180")} />
+                  </button>
+                  {isOpen && (
+                    <div className="px-2 pb-2 space-y-1.5">
+                      {cat.items.map((item) => (
+                        <div
+                          key={item.type}
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData("application/wa-node-type", item.type);
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
+                          onClick={() => handleAddNode(item.type)}
+                          className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card transition-colors text-left group shadow-sm cursor-grab active:cursor-grabbing"
+                        >
+                          <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
+                            <item.icon size={16} className={cn(item.color.split(" ")[0], "transition-transform duration-200 group-hover:scale-125 group-hover:rotate-12")} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-foreground">{item.label}</p>
+                            <p className="text-[10px] text-muted-foreground leading-tight">{item.desc}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -672,11 +688,6 @@ export default function WhatsAppFlowEditor() {
           >
             <Background color="hsl(var(--border))" gap={20} size={1} />
             <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
-            <MiniMap
-              className="!bg-card !border-border"
-              nodeColor="hsl(158, 72%, 38%)"
-              maskColor="hsl(var(--background) / 0.8)"
-            />
           </ReactFlow>
         </div>
       </div>
