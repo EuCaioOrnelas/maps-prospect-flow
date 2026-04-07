@@ -52,18 +52,26 @@ const quickPrompts = [
   },
 ];
 
-// Phone chat simulation messages
-const simulationSteps = [
-  { type: "contact", text: "Definindo nome do fluxo..." },
-  { type: "bot", text: "Olá! 👋 Bem-vindo!" },
-  { type: "user", text: "Oi, quero saber mais" },
-  { type: "bot", text: "Claro! Posso te ajudar. O que procura?" },
-  { type: "buttons", text: "📋 Opções disponíveis", buttons: ["Comprar", "Suporte", "Dúvidas"] },
-  { type: "user", text: "Quero comprar" },
-  { type: "bot", text: "Ótima escolha! Vou te apresentar..." },
-  { type: "bot", text: "🎯 Criando condições e regras..." },
-  { type: "bot", text: "✅ Fluxo completo gerado!" },
-];
+const buildSimulationSteps = (userPrompt: string) => {
+  const shortPrompt = userPrompt.length > 40 ? userPrompt.slice(0, 40) + "..." : userPrompt;
+  return [
+    { type: "contact", text: "🤖 Analisando seu objetivo..." },
+    { type: "contact", text: `📝 "${shortPrompt}"` },
+    { type: "bot", text: "Olá! 👋 Bem-vindo! Como posso te ajudar?" },
+    { type: "user", text: "Oi, quero saber mais sobre vocês" },
+    { type: "bot", text: "Que bom que entrou em contato! Vou te mostrar tudo." },
+    { type: "buttons", text: "Escolha uma opção:", buttons: ["💰 Comprar", "🛠 Suporte", "❓ Dúvidas"] },
+    { type: "user", text: "Quero comprar" },
+    { type: "bot", text: "Perfeito! Vou te qualificar rapidinho 🎯" },
+    { type: "bot", text: "Qual seu orçamento aproximado?" },
+    { type: "user", text: "Entre R$500 e R$1.000" },
+    { type: "bot", text: "Ótimo! Tenho a opção ideal pra você ✨" },
+    { type: "contact", text: "⚡ Adicionando follow-ups automáticos..." },
+    { type: "bot", text: "Vou te enviar a proposta. Posso confirmar?" },
+    { type: "buttons", text: "Confirme:", buttons: ["✅ Sim", "🔄 Outra opção"] },
+    { type: "contact", text: "✅ Fluxo completo gerado com sucesso!" },
+  ];
+};
 
 function useAutoResizeTextarea({ minHeight, maxHeight }: { minHeight: number; maxHeight?: number }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
