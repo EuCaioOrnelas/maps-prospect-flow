@@ -151,6 +151,7 @@ function DeleteFlowDialog({ onConfirm, isPending }: { onConfirm: () => void; isP
   );
 }
 
+export default function WhatsAppFlowEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
