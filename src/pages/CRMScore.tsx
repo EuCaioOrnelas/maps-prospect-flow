@@ -1193,9 +1193,9 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                   </Button>
                 ))}
                 <div className="flex items-center gap-1.5 ml-auto">
-                  <Input type="date" className="h-7 text-xs w-[120px]" value={evoDateFrom} onChange={(e) => setEvoDateFrom(e.target.value)} />
+                  <Input type="date" className="h-7 text-xs w-[120px]" value={evoDateFrom} onChange={(e) => { setEvoDateFrom(e.target.value); setEvoPeriod("custom"); }} />
                   <span className="text-xs text-muted-foreground">até</span>
-                  <Input type="date" className="h-7 text-xs w-[120px]" value={evoDateTo} onChange={(e) => setEvoDateTo(e.target.value)} />
+                  <Input type="date" className="h-7 text-xs w-[120px]" value={evoDateTo} onChange={(e) => { setEvoDateTo(e.target.value); setEvoPeriod("custom"); }} />
                 </div>
               </div>
               {evoLoading ? (
