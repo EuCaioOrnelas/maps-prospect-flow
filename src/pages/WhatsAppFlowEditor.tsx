@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
-  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Plug,
+  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
@@ -131,17 +131,19 @@ const sidebarCategories = [
     ],
   },
   {
-    label: "Integrações",
-    items: [
-      { type: "integration", icon: Plug, label: "Integração", desc: "Sheets, Agenda, Gmail via webhook", color: "text-rose-400 bg-rose-400/10" },
-    ],
-  },
-  {
     label: "Ações",
     items: [
       { type: "action", icon: Settings, label: "Ação", desc: "Tag, campo, webhook, CRM", color: "text-cyan-400 bg-cyan-400/10" },
       { type: "handoff", icon: HeadphonesIcon, label: "Handoff", desc: "Transferir para humano", color: "text-orange-400 bg-orange-400/10" },
       { type: "end", icon: CircleStop, label: "Fim", desc: "Encerrar o fluxo", color: "text-red-400 bg-red-400/10" },
+    ],
+  },
+  {
+    label: "Integrações",
+    items: [
+      { type: "google_sheets", icon: Sheet, label: "Google Sheets", desc: "Salvar lead em planilha", color: "text-green-500 bg-green-500/10" },
+      { type: "google_calendar", icon: CalendarPlus, label: "Google Agenda", desc: "Criar evento no calendário", color: "text-blue-500 bg-blue-500/10" },
+      { type: "gmail", icon: Mail, label: "Gmail", desc: "Enviar email automático", color: "text-red-500 bg-red-500/10" },
     ],
   },
 ];
