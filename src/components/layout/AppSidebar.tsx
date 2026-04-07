@@ -21,6 +21,7 @@ import {
   Receipt,
   Trophy,
   MessageCircle,
+  Workflow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -449,6 +450,18 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 isActive={currentPath === "/agents"}
                 isExpanded={isExpanded}
                 tooltip="Agentes de IA"
+              />
+            </li>
+
+            {/* Automações */}
+            <li>
+              <SidebarNavItem
+                title="Automações"
+                icon={Workflow}
+                url="/automations"
+                isActive={currentPath.startsWith("/automations")}
+                isExpanded={isExpanded}
+                tooltip="Automações WhatsApp"
               />
             </li>
 
