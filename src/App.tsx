@@ -275,6 +275,14 @@ const App = () => (
                   }
                 />
                 <Route 
+                  path="/fluxos/criar-ia" 
+                  element={
+                    <ProtectedRoute>
+                      <CreateFlowAI />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route 
                   path="/fluxos/:id" 
                   element={
                     <ProtectedRoute>
