@@ -1253,3 +1253,10 @@ input::placeholder, textarea::placeholder {
 .wa-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(134,150,160,0.4); }
 .landing-light .wa-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); }
 .landing-light .wa-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(0,0,0,0.25); }
+
+/* ─── Scrollbar thin (sidebar, panels) ─── */
+.scrollbar-thin::-webkit-scrollbar { width: 3px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background-color: hsl(var(--border) / 0.4); border-radius: 2px; }
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background-color: hsl(var(--border) / 0.7); }
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--border) / 0.4) transparent; }

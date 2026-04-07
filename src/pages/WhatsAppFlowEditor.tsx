@@ -574,16 +574,21 @@ export default function WhatsAppFlowEditor() {
             <p className="text-sm font-bold text-foreground">Blocos</p>
             <p className="text-[10px] text-muted-foreground">Arraste ou clique para adicionar</p>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-4">
+          <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
             {sidebarCategories.map((cat) => (
               <div key={cat.label}>
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">{cat.label}</p>
                 <div className="space-y-1.5">
                   {cat.items.map((item) => (
-                    <button
+                    <div
                       key={item.type}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("application/wa-node-type", item.type);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
                       onClick={() => handleAddNode(item.type)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/50 hover:border-border transition-all text-left group shadow-sm hover:shadow-md"
+                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/50 hover:border-border transition-all text-left group shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing"
                     >
                       <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
                         <item.icon size={16} className={cn(item.color.split(" ")[0], "transition-transform group-hover:scale-110")} />
@@ -592,7 +597,7 @@ export default function WhatsAppFlowEditor() {
                         <p className="text-xs font-semibold text-foreground">{item.label}</p>
                         <p className="text-[10px] text-muted-foreground leading-tight">{item.desc}</p>
                       </div>
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -601,7 +606,33 @@ export default function WhatsAppFlowEditor() {
         </div>
 
         {/* Canvas */}
-        <div className="flex-1 relative" ref={reactFlowWrapper}>
+        <div
+          className="flex-1 relative"
+          ref={reactFlowWrapper}
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const type = e.dataTransfer.getData("application/wa-node-type");
+            if (!type || !reactFlowWrapper.current) return;
+            const bounds = reactFlowWrapper.current.getBoundingClientRect();
+            const position = { x: e.clientX - bounds.left - 100, y: e.clientY - bounds.top - 40 };
+            const nameMap: Record<string, string> = {
+              entry: "Entrada", message: "Mensagem", buttons: "Botões",
+              condition: "Condição", wait: "Espera", action: "Ação",
+              handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
+            };
+            const newNode: Node = {
+              id: `temp-${Date.now()}`,
+              type,
+              position,
+              data: { label: nameMap[type] || type, config: {} },
+            };
+            const newNodes = [...nodes, newNode];
+            setNodes(newNodes);
+            pushHistory(newNodes, edges);
+            setHasChanges(true);
+          }}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
