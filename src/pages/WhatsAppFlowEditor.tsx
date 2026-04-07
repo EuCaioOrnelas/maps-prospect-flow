@@ -605,7 +605,7 @@ export default function WhatsAppFlowEditor() {
                     className="w-full flex items-center justify-between mb-2 px-1 group"
                   >
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{cat.label}</p>
-                    <ChevronDown size={10} className={cn("text-muted-foreground transition-transform duration-200 opacity-0 group-hover:opacity-100", isOpen && "rotate-180")} />
+                    <ChevronDown size={14} className={cn("text-muted-foreground transition-transform duration-200", isOpen && "rotate-180")} />
                   </button>
                   {isOpen && (
                     <div className="space-y-1.5">
