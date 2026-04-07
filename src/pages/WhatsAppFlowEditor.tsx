@@ -89,6 +89,8 @@ const nodeTypes = {
   handoff: WAHandoffNode,
   end: WAEndNode,
   ai_agent: WAAgentNode,
+  ab_test: WAABTestNode,
+  random_split: WARandomSplitNode,
 };
 
 const defaultEdgeOptions = {
@@ -116,6 +118,8 @@ const sidebarCategories = [
     items: [
       { type: "condition", icon: GitBranch, label: "Condição", desc: "IF/ELSE para bifurcação", color: "text-purple-400 bg-purple-400/10" },
       { type: "wait", icon: Clock, label: "Espera", desc: "Delay antes do próximo nó", color: "text-amber-400 bg-amber-400/10" },
+      { type: "ab_test", icon: FlaskConical, label: "Teste A/B", desc: "Divide leads e metrifica", color: "text-emerald-400 bg-emerald-400/10" },
+      { type: "random_split", icon: Shuffle, label: "Random Split", desc: "Distribui aleatoriamente", color: "text-sky-400 bg-sky-400/10" },
     ],
   },
   {
