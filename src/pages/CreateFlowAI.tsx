@@ -294,7 +294,7 @@ export default function CreateFlowAI() {
           <MobileNav profile={profile} />
           <BackgroundGlow />
           <main className="flex-1 flex items-center justify-center px-4">
-            <PhoneSimulation flowName={prompt.slice(0, 30)} />
+            <PhoneSimulation flowName={prompt.slice(0, 30)} userPrompt={prompt} />
           </main>
         </div>
       </div>
