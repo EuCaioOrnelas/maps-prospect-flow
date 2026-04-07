@@ -437,7 +437,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
       { label: "Pronto p/ Venda", value: fmtNum(readyToSell), icon: TrendingUp, color: "text-primary", circleColor: "bg-primary/[0.12]" },
     ],
     [
-      { label: "Score Médio", value: fmtNum(Math.round(avgScore)), icon: BarChart3, color: "text-emerald-400", circleColor: "bg-emerald-500/[0.12]" },
+      { label: "Score Médio", value: fmtNum(Math.round(avgScore)), icon: BarChart3, color: "text-primary", circleColor: "bg-primary/[0.12]" },
       { label: "Em Risco", value: fmtNum(atRisk), icon: AlertTriangle, color: "text-destructive", circleColor: "bg-destructive/[0.12]" },
       { label: "Frios", value: fmtNum(cold), icon: TrendingDown, color: "text-red-400", circleColor: "bg-red-500/[0.12]" },
     ],
