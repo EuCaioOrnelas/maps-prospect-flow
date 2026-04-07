@@ -551,11 +551,6 @@ export default function WhatsAppFlowEditor() {
           Testar fluxo
         </Button>
 
-        <Button variant="ghost" size="sm" onClick={resetFlowTest} className="gap-1.5 rounded-full">
-          <RotateCcw size={14} />
-          Resetar fluxo
-        </Button>
-
         <div className="flex-1" />
 
         {/* Activate/Deactivate toggle */}
@@ -579,60 +574,40 @@ export default function WhatsAppFlowEditor() {
 
         {/* Delete flow */}
         <DeleteFlowDialog onConfirm={() => deleteFlow.mutate()} isPending={deleteFlow.isPending} />
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => saveFlow.mutate()}
-          disabled={saveFlow.isPending || !hasChanges}
-          className="gap-1.5 rounded-full btn-shine"
-        >
-          <Save size={14} />
-          {saveFlow.isPending ? "Salvando..." : "Salvar"}
-        </Button>
       </div>
 
       {/* Main area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
-        <div className={cn(
-          "border-r border-border bg-card shrink-0 transition-all duration-200 flex flex-col relative",
-          sidebarOpen ? "w-[220px]" : "w-0"
-        )}>
-          {sidebarOpen && (
-            <div className="flex-1 overflow-y-auto p-3 space-y-3">
-              {sidebarCategories.map((cat) => (
-                <div key={cat.label}>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 px-1">{cat.label}</p>
-                  <div className="space-y-1">
-                    {cat.items.map((item) => (
-                      <button
-                        key={item.type}
-                        onClick={() => handleAddNode(item.type)}
-                        className="w-full flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group"
-                      >
-                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
-                          <item.icon size={15} className={item.color.split(" ")[0]} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-foreground">{item.label}</p>
-                          <p className="text-[10px] text-muted-foreground leading-tight">{item.desc}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+        {/* Sidebar - always open */}
+        <div className="w-[240px] border-r border-border bg-card shrink-0 flex flex-col">
+          <div className="px-4 py-3 border-b border-border/50">
+            <p className="text-sm font-bold text-foreground">Blocos</p>
+            <p className="text-[10px] text-muted-foreground">Arraste ou clique para adicionar</p>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-4">
+            {sidebarCategories.map((cat) => (
+              <div key={cat.label}>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">{cat.label}</p>
+                <div className="space-y-1.5">
+                  {cat.items.map((item) => (
+                    <button
+                      key={item.type}
+                      onClick={() => handleAddNode(item.type)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/50 hover:border-border transition-all text-left group shadow-sm hover:shadow-md"
+                    >
+                      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
+                        <item.icon size={16} className={cn(item.color.split(" ")[0], "transition-transform group-hover:scale-110")} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-foreground">{item.label}</p>
+                        <p className="text-[10px] text-muted-foreground leading-tight">{item.desc}</p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* Toggle sidebar */}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-card border border-border flex items-center justify-center hover:bg-muted transition-colors shadow-sm"
-          >
-            {sidebarOpen ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
-          </button>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Canvas */}
