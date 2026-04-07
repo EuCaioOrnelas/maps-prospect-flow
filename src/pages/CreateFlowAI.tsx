@@ -7,10 +7,12 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
-import { Sparkles, ArrowLeft, SendIcon, MessageSquare } from "lucide-react";
+import { Sparkles, ArrowLeft, SendIcon, MessageSquare, CheckCircle2, AlertTriangle, Settings2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 // Quick prompts: short preview text + full detailed prompt
 const quickPrompts = [
