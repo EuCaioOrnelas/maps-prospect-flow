@@ -5,12 +5,13 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageSquare } from "lucide-react";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { ChatOfficialApiDialog } from "@/components/chat/ChatOfficialApiDialog";
 
 const Chat = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
+  const [showApiDialog, setShowApiDialog] = useState(true);
   const chat = useChat();
 
   useEffect(() => {
@@ -19,26 +20,40 @@ const Chat = () => {
       .then(({ data }) => setProfile(data));
   }, [user]);
 
-  const hasNoConnection = chat.connections.length === 0 && !chat.loading;
+  const hasConnection = chat.connections.length > 0;
+  const hasNoConnection = !hasConnection && !chat.loading;
+
+  // If no connection and dialog dismissed, block access
+  const chatBlocked = hasNoConnection && !showApiDialog;
 
   return (
     <SidebarProvider>
       <div className="h-screen flex w-full wa-app-bg overflow-hidden">
         <AppSidebar profile={profile} />
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
-          {/* No AppHeader - chat uses full height */}
           <div className="flex-1 flex overflow-hidden">
+            {/* Show dialog on entry */}
+            {!chat.loading && (
+              <ChatOfficialApiDialog
+                open={showApiDialog}
+                onClose={() => {
+                  if (hasConnection) {
+                    setShowApiDialog(false);
+                  }
+                }}
+                hasConnection={hasConnection}
+              />
+            )}
+
             {hasNoConnection ? (
               <div className="flex-1 flex flex-col items-center justify-center wa-empty-bg px-8">
-                <div className="w-[60px] h-[60px] rounded-full bg-[#00a884]/10 flex items-center justify-center mb-5">
-                  <MessageSquare size={26} className="text-[#00a884]" />
-                </div>
-                <h2 className="text-[20px] font-normal wa-text-primary mb-[8px]">Nenhum número conectado</h2>
-                <p className="text-[14px] wa-text-secondary text-center max-w-[400px] leading-[20px]">
-                  Para usar o chat, conecte um número WhatsApp Business via Meta API na seção de Relacionamento.
-                </p>
+                <ChatOfficialApiDialog
+                  open={true}
+                  onClose={() => {}}
+                  hasConnection={false}
+                />
               </div>
-            ) : (
+            ) : !showApiDialog ? (
               <>
                 <div className="w-[360px] shrink-0 wa-sidebar-border">
                   <ChatSidebar
@@ -66,11 +81,10 @@ const Chat = () => {
                   messagesEndRef={chat.messagesEndRef as React.RefObject<HTMLDivElement>}
                   onReopenConversation={(templateName) => {
                     console.log("Reabrir conversa com template:", templateName);
-                    // TODO: integrate with Meta template API
                   }}
                 />
               </>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
