@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Shield, Smartphone, ArrowRight, Clock, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { MessageSquare, Shield, Smartphone, ArrowRight, Clock, X, FlaskConical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
@@ -31,12 +32,15 @@ export const ChatOfficialApiDialog = ({ open, onClose, hasConnection }: ChatOffi
           <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
             <MessageSquare className="w-7 h-7 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">
-            Chat — Meta Partners Inbound
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-            O chat da Wiize funciona exclusivamente com números conectados via Meta Partners Inbound (API Oficial da Meta).
-          </p>
+          <div className="flex items-center gap-3 mb-1">
+            <h2 className="text-xl font-semibold text-foreground">
+              Chat — Meta Partners Inbound
+            </h2>
+            <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 text-[10px] font-semibold gap-1">
+              <FlaskConical className="h-2.5 w-2.5" />
+              BETA
+            </Badge>
+          </div>
         </div>
 
         {/* Content */}
