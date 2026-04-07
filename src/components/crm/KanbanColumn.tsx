@@ -3,6 +3,7 @@ import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { LeadCard } from './LeadCard';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Plus } from 'lucide-react';
 
 export type ColumnWidth = 'compact' | 'medium' | 'large';
 
@@ -25,6 +26,7 @@ interface KanbanColumnProps {
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
   columnWidth?: ColumnWidth;
   isAgentSilenced?: boolean;
+  onAddLead?: () => void;
 }
 
 const getColumnWidthClass = (width: ColumnWidth, isExpanded: boolean): string => {
@@ -60,6 +62,7 @@ const KanbanColumnComponent = ({
   onUpdateLeadName,
   columnWidth = 'medium',
   isAgentSilenced = false,
+  onAddLead,
 }: KanbanColumnProps) => {
   const totalValue = useMemo(() => 
     leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0),
@@ -178,6 +181,15 @@ const KanbanColumnComponent = ({
             )}>
               {isDragOver ? "Solte aqui" : "Nenhum lead"}
             </div>
+          )}
+          {onAddLead && (
+            <button
+              onClick={onAddLead}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-1 rounded-lg border-2 border-dashed border-muted-foreground/30 text-muted-foreground/60 hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-colors text-xs font-medium"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Novo lead
+            </button>
           )}
         </div>
       </div>

@@ -451,6 +451,7 @@ export default function CRM() {
                 }}
                 columnWidth={columnWidth}
                 agentSilencedStages={agentSilencedStages}
+                onAddLead={() => setAddLeadOpen(true)}
               />
             )}
           </div>
