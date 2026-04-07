@@ -21,10 +21,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
-  ArrowLeft, Save, Undo2, Redo2, Trash2,
+  ArrowLeft, Save, Undo2, Redo2, Trash2, Power,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
   HeadphonesIcon, CircleStop, ChevronRight, ChevronLeft,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
 import { WAMessageNode } from "@/components/wa-flow/nodes/WAMessageNode";
 import { WAButtonsNode } from "@/components/wa-flow/nodes/WAButtonsNode";
@@ -393,6 +394,25 @@ export default function WhatsAppFlowEditor() {
         </Button>
 
         <div className="flex-1" />
+
+        {/* Activate/Deactivate toggle */}
+        <div className="flex items-center gap-2 mr-2">
+          <span className={cn("text-xs font-medium", flow?.status === "active" ? "text-primary" : "text-muted-foreground")}>
+            {flow?.status === "active" ? "Ativo" : "Inativo"}
+          </span>
+          <Switch
+            checked={flow?.status === "active"}
+            onCheckedChange={async (checked) => {
+              const newStatus = checked ? "active" : "draft";
+              const { error } = await supabase.from("wa_automation_flows").update({ status: newStatus }).eq("id", id!);
+              if (error) { toast.error("Erro ao atualizar status"); return; }
+              queryClient.invalidateQueries({ queryKey: ["wa-flow", id] });
+              toast.success(checked ? "Fluxo ativado!" : "Fluxo desativado");
+            }}
+          />
+        </div>
+
+        <div className="h-6 w-px bg-border mx-1" />
 
         {/* Delete flow */}
         <AlertDialog>

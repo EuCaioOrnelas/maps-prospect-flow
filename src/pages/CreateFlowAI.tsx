@@ -135,15 +135,23 @@ function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPromp
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Phone with frame image */}
-      <div className="relative w-[300px] h-[600px]">
-        {/* Phone frame image */}
-        <img src={phoneFrame} alt="" className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none" />
+      {/* CSS Phone Frame */}
+      <div className="relative w-[280px] h-[560px]">
+        {/* Outer phone body */}
+        <div className="absolute inset-0 rounded-[3rem] bg-[#1a1a1a] shadow-2xl border-[3px] border-[#333]">
+          {/* Top notch */}
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[90px] h-[22px] bg-[#1a1a1a] rounded-full z-20" />
+          {/* Side buttons */}
+          <div className="absolute -left-[3px] top-[100px] w-[3px] h-[30px] bg-[#333] rounded-l-sm" />
+          <div className="absolute -left-[3px] top-[150px] w-[3px] h-[50px] bg-[#333] rounded-l-sm" />
+          <div className="absolute -left-[3px] top-[210px] w-[3px] h-[50px] bg-[#333] rounded-l-sm" />
+          <div className="absolute -right-[3px] top-[140px] w-[3px] h-[60px] bg-[#333] rounded-r-sm" />
+        </div>
 
-        {/* Screen content inside the frame */}
-        <div className="absolute top-[3%] left-[5.5%] right-[5.5%] bottom-[3%] rounded-[2rem] overflow-hidden flex flex-col bg-card">
+        {/* Screen content */}
+        <div className="absolute top-[10px] left-[10px] right-[10px] bottom-[10px] rounded-[2.4rem] overflow-hidden flex flex-col bg-card">
           {/* WhatsApp-style header */}
-          <div className="bg-primary pt-8 pb-3 px-4 flex items-center gap-3">
+          <div className="bg-primary pt-10 pb-3 px-4 flex items-center gap-3 rounded-t-[2.4rem]">
             <div className="w-8 h-8 rounded-full bg-primary-foreground/20 flex items-center justify-center text-primary-foreground text-xs font-bold">
               {flowName?.[0]?.toUpperCase() || "F"}
             </div>
@@ -210,6 +218,7 @@ function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPromp
               <SendIcon size={14} className="text-primary-foreground" />
             </div>
           </div>
+        </div>
         </div>
       </div>
 
