@@ -453,15 +453,15 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               />
             </li>
 
-            {/* Automações */}
+            {/* Fluxos */}
             <li>
               <SidebarNavItem
-                title="Automações"
+                title="Fluxos"
                 icon={Workflow}
-                url="/automations"
-                isActive={currentPath.startsWith("/automations")}
+                url="/fluxos"
+                isActive={currentPath.startsWith("/fluxos")}
                 isExpanded={isExpanded}
-                tooltip="Automações WhatsApp"
+                tooltip="Fluxos de Automação"
               />
             </li>
 
