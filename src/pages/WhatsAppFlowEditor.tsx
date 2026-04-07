@@ -158,7 +158,7 @@ function DeleteFlowDialog({ onConfirm, isPending }: { onConfirm: () => void; isP
               </p>
               <Input
                 value={confirmText}
-                onChange={(e) => setConfirmText(e.target.value)}
+                onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
                 placeholder="EXCLUIR FLUXO"
                 className="mt-2 uppercase"
                 autoFocus
