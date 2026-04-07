@@ -14,6 +14,7 @@ import {
   Building2,
   User,
   Phone,
+  Mail,
   MapPin,
   Globe,
   Tag,
@@ -27,6 +28,7 @@ import {
   Save,
   Plus,
   Pencil,
+  Trophy,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -268,6 +270,7 @@ export const LeadDetailPanel = ({
   const [formData, setFormData] = useState({
     company_name: lead.company_name || '',
     contact_name: lead.contact_name || '',
+    email: (lead as any).email || '',
     category: lead.category || '',
     city: lead.city || '',
     region: lead.region || '',
@@ -485,14 +488,25 @@ export const LeadDetailPanel = ({
             </Select>
           </div>
 
-          {/* WhatsApp Status */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">
-              Status WhatsApp
-            </label>
-            <Badge className={cn("text-xs", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}>
-              {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
-            </Badge>
+          {/* Score + WhatsApp Status */}
+          <div className="flex items-center gap-3">
+            {/* WhatsApp Status */}
+            <div className="flex-1">
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                Status WhatsApp
+              </label>
+              <Badge className={cn("text-xs", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}>
+                {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
+              </Badge>
+            </div>
+            {/* Score */}
+            <div className="text-right">
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Score</label>
+              <div className="flex items-center gap-1.5 justify-end">
+                <Trophy className="w-3.5 h-3.5 text-primary" />
+                <span className="text-sm font-bold text-primary">{lead.ai_score || 0}</span>
+              </div>
+            </div>
           </div>
 
           {/* Quick Actions */}
@@ -539,6 +553,15 @@ export const LeadDetailPanel = ({
                   <p className="text-sm font-medium truncate">{formatPhoneNumber(lead.phone)}</p>
                 </div>
               </div>
+
+              <EditableField
+                icon={<Mail className="w-4 h-4 text-muted-foreground" />}
+                label="Email"
+                value={formData.email}
+                placeholder="Adicionar email"
+                onChange={(value) => setFormData({ ...formData, email: value })}
+                onSave={() => onUpdate(lead.id, { email: formData.email } as any)}
+              />
 
               <EditableField
                 icon={<Building2 className="w-4 h-4 text-muted-foreground" />}

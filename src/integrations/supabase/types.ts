@@ -1644,6 +1644,7 @@ export type Database = {
           contact_id: string | null
           contact_name: string | null
           created_at: string
+          email: string | null
           enrichment_data: Json | null
           estimated_value: number | null
           first_message_sent: boolean | null
@@ -1686,6 +1687,7 @@ export type Database = {
           contact_id?: string | null
           contact_name?: string | null
           created_at?: string
+          email?: string | null
           enrichment_data?: Json | null
           estimated_value?: number | null
           first_message_sent?: boolean | null
@@ -1728,6 +1730,7 @@ export type Database = {
           contact_id?: string | null
           contact_name?: string | null
           created_at?: string
+          email?: string | null
           enrichment_data?: Json | null
           estimated_value?: number | null
           first_message_sent?: boolean | null
