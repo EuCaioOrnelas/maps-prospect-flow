@@ -192,7 +192,7 @@ export default function WhatsAppFlowEditor() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [hasChanges, setHasChanges] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testResetVersion, setTestResetVersion] = useState(0);
   const [clipboard, setClipboard] = useState<Node | null>(null);
