@@ -120,8 +120,8 @@ export const CRMFilters = ({
         <Input
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
-          placeholder="Buscar leads..."
-          className="pl-9"
+          placeholder="Buscar contatos..."
+          className="pl-9 rounded-full"
         />
       </div>
 
