@@ -266,7 +266,7 @@ const App = () => (
                   }
                 />
                 <Route 
-                  path="/automations" 
+                  path="/fluxos" 
                   element={
                     <ProtectedRoute>
                       <WhatsAppAutomations />
@@ -274,7 +274,7 @@ const App = () => (
                   }
                 />
                 <Route 
-                  path="/automations/:id" 
+                  path="/fluxos/:id" 
                   element={
                     <ProtectedRoute>
                       <WhatsAppFlowEditor />

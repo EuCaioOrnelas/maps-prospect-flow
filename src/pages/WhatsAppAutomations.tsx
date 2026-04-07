@@ -57,7 +57,7 @@ export default function WhatsAppAutomations() {
       return data;
     },
     onSuccess: (data) => {
-      navigate(`/automations/${data.id}`);
+      navigate(`/fluxos/${data.id}`);
     },
     onError: () => toast.error("Erro ao criar fluxo"),
   });
@@ -118,7 +118,7 @@ export default function WhatsAppAutomations() {
         <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Automações</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Fluxos</h1>
               <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 font-semibold gap-1">
                 <FlaskConical className="h-3 w-3" />
                 BETA
@@ -145,9 +145,9 @@ export default function WhatsAppAutomations() {
                   <Workflow size={28} className="text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-1">Nenhuma automação criada</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-1">Nenhum fluxo criado</h3>
                   <p className="text-sm text-muted-foreground max-w-md">
-                    Crie fluxos de atendimento automático para WhatsApp com mensagens, botões, condições e ações.
+                    Crie fluxos de atendimento automático para WhatsApp via Meta Partners com mensagens, botões, condições e ações.
                   </p>
                 </div>
                 <Button onClick={() => createFlow.mutate()} disabled={createFlow.isPending}>
@@ -164,7 +164,7 @@ export default function WhatsAppAutomations() {
                   <Card
                     key={flow.id}
                     className="hover:border-primary/30 transition-colors cursor-pointer group"
-                    onClick={() => navigate(`/automations/${flow.id}`)}
+                    onClick={() => navigate(`/fluxos/${flow.id}`)}
                   >
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between mb-3">
