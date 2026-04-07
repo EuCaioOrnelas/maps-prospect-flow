@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,7 +28,13 @@ const quickPrompts = [
 export default function CreateFlowAI() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [prompt, setPrompt] = useState("");
+
+  useEffect(() => {
+    const p = searchParams.get("prompt");
+    if (p) setPrompt(p);
+  }, [searchParams]);
 
   const createWithAI = useMutation({
     mutationFn: async () => {
