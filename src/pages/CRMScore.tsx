@@ -438,10 +438,20 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
           <CardHeader><CardTitle className="text-base">Distribuição por Status</CardTitle></CardHeader>
           <CardContent>
             {pieData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90}
-                    label={({ name, value }) => `${name}: ${fmtNum(value)}`}>
+                    label={({ name, value, cx: cxP, cy: cyP, midAngle, outerRadius: or }) => {
+                      const RADIAN = Math.PI / 180;
+                      const radius = (or || 90) + 30;
+                      const x = (cxP || 0) + radius * Math.cos(-midAngle * RADIAN);
+                      const y = (cyP || 0) + radius * Math.sin(-midAngle * RADIAN);
+                      return (
+                        <text x={x} y={y} fill="hsl(var(--foreground))" textAnchor={x > (cxP || 0) ? 'start' : 'end'} dominantBaseline="central" fontSize={11}>
+                          {`${name}: ${fmtNum(value)}`}
+                        </text>
+                      );
+                    }}>
                     {pieData.map((entry, i) => (
                       <Cell key={i} fill={entry.color} />
                     ))}
@@ -786,14 +796,15 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Lead</TableHead>
+                <TableHead>Contato</TableHead>
                 <TableHead className="cursor-pointer" onClick={() => { setSortBy("score_total"); setSortAsc(sortBy === "score_total" ? !sortAsc : false); }}>
-                  Score Total {sortBy === "score_total" && (sortAsc ? "↑" : "↓")}
+                  Score {sortBy === "score_total" && (sortAsc ? "↑" : "↓")}
                 </TableHead>
+                <TableHead>Classificação</TableHead>
+                <TableHead className="hidden md:table-cell">Tendência</TableHead>
                 <TableHead className="hidden md:table-cell">Engajamento</TableHead>
                 <TableHead className="hidden md:table-cell">Intenção</TableHead>
                 <TableHead className="hidden lg:table-cell">Risco</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead className="hidden lg:table-cell">Última Atividade</TableHead>
               </TableRow>
             </TableHeader>
@@ -812,14 +823,23 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                       <span className={`text-lg font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</span>
                       <span className="text-xs text-muted-foreground ml-1">/1.000</span>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm tabular-nums">{fmtNum(lead.score_engagement)}</TableCell>
-                    <TableCell className="hidden md:table-cell text-sm tabular-nums">{fmtNum(lead.score_intent)}</TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm tabular-nums">{fmtNum(lead.score_risk)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
                         {BUCKET_SHORT_LABELS[bucket] || bucket}
                       </Badge>
                     </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {lead.score_engagement > (lead.score_risk < 0 ? 0 : lead.score_engagement) ? (
+                        <TrendingUp className="h-4 w-4 text-emerald-400" />
+                      ) : lead.score_risk < -50 ? (
+                        <TrendingDown className="h-4 w-4 text-destructive" />
+                      ) : (
+                        <Minus className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-sm tabular-nums">{fmtNum(lead.score_engagement)}</TableCell>
+                    <TableCell className="hidden md:table-cell text-sm tabular-nums">{fmtNum(lead.score_intent)}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm tabular-nums text-destructive">{fmtNum(lead.score_risk)}</TableCell>
                     <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
                       {new Date(lead.last_activity_at).toLocaleDateString('pt-BR')}
                     </TableCell>
@@ -827,7 +847,7 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                 );
               })}
               {paginated.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum lead encontrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum contato encontrado</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -906,63 +926,152 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
 
 // ═══════════════ RANKING TAB ═══════════════
 
-const ScoreRankingTab = ({ leads }: { leads: RevenueLead[] }) => {
-  const ranked = useMemo(() => [...leads].sort((a, b) => b.score_total - a.score_total).slice(0, 50), [leads]);
+const RANKING_PER_PAGE = 50;
 
-  const getMedal = (i: number) => {
-    if (i === 0) return "🥇";
-    if (i === 1) return "🥈";
-    if (i === 2) return "🥉";
-    return `#${i + 1}`;
+const ScoreRankingTab = ({ leads }: { leads: RevenueLead[] }) => {
+  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  const [page, setPage] = useState(0);
+
+  const activeFilterCount = useMemo(() => {
+    let c = 0;
+    if (filters.dateFrom) c++;
+    if (filters.dateTo) c++;
+    if (filters.scoreMin) c++;
+    if (filters.scoreMax) c++;
+    if (filters.bucket !== "all") c++;
+    if (filters.riskState !== "all") c++;
+    return c;
+  }, [filters]);
+
+  const filtered = useMemo(() => {
+    let result = leads.filter(l => {
+      if (search) {
+        const s = search.toLowerCase();
+        if (!(l.name?.toLowerCase().includes(s) || l.phone_e164.includes(search))) return false;
+      }
+      if (filters.bucket !== "all") {
+        const mapped = mapBucket(l.status_bucket, l.score_total);
+        if (mapped !== filters.bucket) return false;
+      }
+      if (filters.riskState !== "all" && l.risk_state !== filters.riskState) return false;
+      if (filters.scoreMin) { const min = parseInt(filters.scoreMin); if (!isNaN(min) && l.score_total < min) return false; }
+      if (filters.scoreMax) { const max = parseInt(filters.scoreMax); if (!isNaN(max) && l.score_total > max) return false; }
+      if (filters.dateFrom) { if (new Date(l.last_activity_at) < new Date(filters.dateFrom)) return false; }
+      if (filters.dateTo) { const to = new Date(filters.dateTo); to.setHours(23, 59, 59, 999); if (new Date(l.last_activity_at) > to) return false; }
+      return true;
+    });
+    result.sort((a, b) => b.score_total - a.score_total);
+    return result;
+  }, [leads, search, filters]);
+
+  const totalPages = Math.ceil(filtered.length / RANKING_PER_PAGE);
+  const paginated = filtered.slice(page * RANKING_PER_PAGE, (page + 1) * RANKING_PER_PAGE);
+
+  const getPages = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 0; i < totalPages; i++) pages.push(i);
+    } else {
+      pages.push(0);
+      if (page > 3) pages.push("...");
+      for (let i = Math.max(1, page - 2); i <= Math.min(totalPages - 2, page + 2); i++) pages.push(i);
+      if (page < totalPages - 4) pages.push("...");
+      pages.push(totalPages - 1);
+    }
+    return pages;
+  };
+
+  const getMedalIcon = (index: number) => {
+    const globalIndex = page * RANKING_PER_PAGE + index;
+    if (globalIndex === 0) return <Trophy className="h-5 w-5 text-yellow-400" />;
+    if (globalIndex === 1) return <Trophy className="h-5 w-5 text-gray-400" />;
+    if (globalIndex === 2) return <Trophy className="h-5 w-5 text-orange-500" />;
+    return <span className="w-5 text-center text-sm text-muted-foreground font-medium">{globalIndex + 1}</span>;
   };
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">Top 50 leads com maior score de engajamento no WhatsApp</p>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Buscar contato..." className="pl-9 rounded-full" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
+        </div>
+        <AdvancedFiltersPopover filters={filters} onApply={(f) => { setFilters(f); setPage(0); }} activeCount={activeFilterCount} />
+      </div>
+
+      {activeFilterCount > 0 && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Filter className="h-3 w-3" />
+          <span>{fmtNum(filtered.length)} contatos encontrados com {activeFilterCount} filtro(s) ativo(s)</span>
+        </div>
+      )}
+
       <Card className="bg-card border-border/50">
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">Pos.</TableHead>
-                <TableHead>Lead</TableHead>
-                <TableHead>Score</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden md:table-cell">Engajamento</TableHead>
-                <TableHead className="hidden md:table-cell">Intenção</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ranked.map((lead, i) => {
-                const bucket = mapBucket(lead.status_bucket, lead.score_total);
-                return (
-                  <TableRow key={lead.id}>
-                    <TableCell className="font-bold text-lg">{getMedal(i)}</TableCell>
-                    <TableCell>
-                      <p className="font-medium text-sm">{lead.name || "Sem nome"}</p>
-                      <p className="text-xs text-muted-foreground">{lead.phone_e164}</p>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`text-xl font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</span>
-                      <span className="text-xs text-muted-foreground ml-1">/1.000</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
-                        {BUCKET_SHORT_LABELS[bucket] || bucket}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell tabular-nums">{fmtNum(lead.score_engagement)}</TableCell>
-                    <TableCell className="hidden md:table-cell tabular-nums">{fmtNum(lead.score_intent)}</TableCell>
-                  </TableRow>
-                );
-              })}
-              {ranked.length === 0 && (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum lead com score</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <div className="divide-y divide-border/30">
+            {paginated.map((lead, i) => {
+              const bucket = mapBucket(lead.status_bucket, lead.score_total);
+              const globalIndex = page * RANKING_PER_PAGE + i;
+              return (
+                <div key={lead.id} className="flex items-center gap-4 p-4 hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => {}}>
+                  <div className="w-8 flex justify-center shrink-0">{getMedalIcon(i)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{lead.name || "Sem nome"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{lead.phone_e164}</p>
+                  </div>
+                  <Badge variant="outline" className={cn("hidden sm:inline-flex", BUCKET_BADGE_COLORS[bucket] || "")}>
+                    {BUCKET_SHORT_LABELS[bucket] || bucket}
+                  </Badge>
+                  <div className="hidden sm:flex items-center w-8 justify-center">
+                    {lead.score_risk < -50 ? (
+                      <TrendingDown className="h-4 w-4 text-destructive" />
+                    ) : lead.score_engagement > 20 ? (
+                      <TrendingUp className="h-4 w-4 text-emerald-400" />
+                    ) : (
+                      <Minus className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="text-right min-w-[60px]">
+                    <p className={`text-xl font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>
+                      {fmtNum(lead.score_total)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+            {paginated.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">Nenhum contato com score</div>
+            )}
+          </div>
         </CardContent>
       </Card>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1 flex-wrap">
+          <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(0)}>
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          {getPages().map((p, i) =>
+            typeof p === "string" ? (
+              <span key={`e${i}`} className="px-1 text-muted-foreground">...</span>
+            ) : (
+              <Button key={p} variant={page === p ? "default" : "outline"} size="sm" className="h-8 min-w-[2rem]" onClick={() => setPage(p)}>
+                {p + 1}
+              </Button>
+            )
+          )}
+          <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(totalPages - 1)}>
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
@@ -1244,7 +1353,7 @@ const CRMScore = () => {
                 </TabsTrigger>
                 <TabsTrigger value="users" className="gap-2">
                   <Users className="h-4 w-4" />
-                  Leads
+                  Contatos
                 </TabsTrigger>
                 <TabsTrigger value="ranking" className="gap-2">
                   <Trophy className="h-4 w-4" />
