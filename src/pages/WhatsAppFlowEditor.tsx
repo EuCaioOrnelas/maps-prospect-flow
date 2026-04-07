@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Save, Undo2, Redo2, Trash2, Power,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
-  HeadphonesIcon, CircleStop, ChevronRight, ChevronLeft,
+  HeadphonesIcon, CircleStop, ChevronRight, ChevronLeft, Bot,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
@@ -34,6 +34,7 @@ import { WAWaitNode } from "@/components/wa-flow/nodes/WAWaitNode";
 import { WAActionNode } from "@/components/wa-flow/nodes/WAActionNode";
 import { WAHandoffNode } from "@/components/wa-flow/nodes/WAHandoffNode";
 import { WAEndNode } from "@/components/wa-flow/nodes/WAEndNode";
+import { WAAgentNode } from "@/components/wa-flow/nodes/WAAgentNode";
 import { WANodeConfigDrawer } from "@/components/wa-flow/WANodeConfigDrawer";
 import {
   AlertDialog,
@@ -57,6 +58,7 @@ const nodeTypes = {
   action: WAActionNode,
   handoff: WAHandoffNode,
   end: WAEndNode,
+  ai_agent: WAAgentNode,
 };
 
 const defaultEdgeOptions = {
@@ -65,15 +67,41 @@ const defaultEdgeOptions = {
   markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(158, 72%, 38%)" },
 };
 
-const sidebarNodes = [
-  { type: "entry", icon: Zap, label: "Entrada", desc: "Trigger inicial do fluxo", color: "text-primary bg-primary/10" },
-  { type: "message", icon: MessageSquare, label: "Mensagem", desc: "Texto, imagem, áudio, vídeo", color: "text-blue-400 bg-blue-400/10" },
-  { type: "buttons", icon: ToggleLeft, label: "Botões", desc: "Respostas rápidas ou lista", color: "text-indigo-400 bg-indigo-400/10" },
-  { type: "condition", icon: GitBranch, label: "Condição", desc: "IF/ELSE para bifurcação", color: "text-purple-400 bg-purple-400/10" },
-  { type: "wait", icon: Clock, label: "Espera", desc: "Delay antes do próximo nó", color: "text-amber-400 bg-amber-400/10" },
-  { type: "action", icon: Settings, label: "Ação", desc: "Tag, campo, webhook, CRM", color: "text-cyan-400 bg-cyan-400/10" },
-  { type: "handoff", icon: HeadphonesIcon, label: "Handoff", desc: "Transferir para humano", color: "text-orange-400 bg-orange-400/10" },
-  { type: "end", icon: CircleStop, label: "Fim", desc: "Encerrar o fluxo", color: "text-red-400 bg-red-400/10" },
+const sidebarCategories = [
+  {
+    label: "Gatilhos",
+    items: [
+      { type: "entry", icon: Zap, label: "Entrada", desc: "Trigger inicial do fluxo", color: "text-primary bg-primary/10" },
+    ],
+  },
+  {
+    label: "Mensagens",
+    items: [
+      { type: "message", icon: MessageSquare, label: "Mensagem", desc: "Texto, imagem, áudio, vídeo", color: "text-blue-400 bg-blue-400/10" },
+      { type: "buttons", icon: ToggleLeft, label: "Botões", desc: "Respostas rápidas ou lista", color: "text-indigo-400 bg-indigo-400/10" },
+    ],
+  },
+  {
+    label: "Lógica",
+    items: [
+      { type: "condition", icon: GitBranch, label: "Condição", desc: "IF/ELSE para bifurcação", color: "text-purple-400 bg-purple-400/10" },
+      { type: "wait", icon: Clock, label: "Espera", desc: "Delay antes do próximo nó", color: "text-amber-400 bg-amber-400/10" },
+    ],
+  },
+  {
+    label: "Inteligência",
+    items: [
+      { type: "ai_agent", icon: Bot, label: "Agente IA", desc: "IA responde e direciona", color: "text-violet-400 bg-violet-400/10" },
+    ],
+  },
+  {
+    label: "Ações",
+    items: [
+      { type: "action", icon: Settings, label: "Ação", desc: "Tag, campo, webhook, CRM", color: "text-cyan-400 bg-cyan-400/10" },
+      { type: "handoff", icon: HeadphonesIcon, label: "Handoff", desc: "Transferir para humano", color: "text-orange-400 bg-orange-400/10" },
+      { type: "end", icon: CircleStop, label: "Fim", desc: "Encerrar o fluxo", color: "text-red-400 bg-red-400/10" },
+    ],
+  },
 ];
 
 // History entry type
@@ -239,7 +267,7 @@ export default function WhatsAppFlowEditor() {
       const nameMap: Record<string, string> = {
         entry: "Entrada", message: "Mensagem", buttons: "Botões",
         condition: "Condição", wait: "Espera", action: "Ação",
-        handoff: "Handoff", end: "Fim",
+        handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
       };
 
       const newNode: Node = {
