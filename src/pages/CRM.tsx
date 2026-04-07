@@ -493,6 +493,7 @@ export default function CRM() {
         onOpenChange={setAddLeadOpen}
         stages={stages}
         origins={availableOrigins}
+        defaultStageId={addLeadDefaultStageId}
         onAddLead={createLead}
         onAddOrigin={handleAddOrigin}
         checkLeadExists={checkLeadExists}
