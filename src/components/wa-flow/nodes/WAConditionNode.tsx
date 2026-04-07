@@ -17,8 +17,8 @@ export function WAConditionNode({ data }: NodeProps) {
   const nodeRef = useRef<HTMLDivElement>(null);
   const yesRef = useRef<HTMLDivElement>(null);
   const noRef = useRef<HTMLDivElement>(null);
-  const [yesTop, setYesTop] = useState(60);
-  const [noTop, setNoTop] = useState(80);
+  const [yesTop, setYesTop] = useState(65);
+  const [noTop, setNoTop] = useState(85);
 
   useLayoutEffect(() => {
     if (!nodeRef.current) return;
@@ -54,18 +54,21 @@ export function WAConditionNode({ data }: NodeProps) {
         </div>
       </div>
 
-      {/* Outcomes - labels on the right side */}
-      <div className="py-2 space-y-1">
-        <div ref={yesRef} className="flex items-center justify-end gap-2 px-4 py-1">
-          <span className="text-[11px] font-medium text-primary">Sim</span>
-          <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" />
+      {/* Outcomes */}
+      <div className="px-3 py-2 space-y-1.5">
+        <div ref={yesRef} className="flex items-center justify-end">
+          <div className="bg-primary/10 rounded-md px-3 py-1 flex items-center justify-center">
+            <span className="text-[11px] font-semibold text-primary">Sim</span>
+          </div>
         </div>
-        <div ref={noRef} className="flex items-center justify-end gap-2 px-4 py-1">
-          <span className="text-[11px] font-medium text-destructive">Não</span>
-          <span className="w-2.5 h-2.5 rounded-full bg-destructive shrink-0" />
+        <div ref={noRef} className="flex items-center justify-end">
+          <div className="bg-destructive/10 rounded-md px-3 py-1 flex items-center justify-center">
+            <span className="text-[11px] font-semibold text-destructive">Não</span>
+          </div>
         </div>
       </div>
 
+      {/* Only input handle on left + two output handles on right */}
       <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-purple-400 !border-2 !border-card !rounded-full" />
       <Handle type="source" position={Position.Right} id="yes" className="!w-3 !h-3 !bg-primary !border-2 !border-card !rounded-full" style={{ top: `${yesTop}%` }} />
       <Handle type="source" position={Position.Right} id="no" className="!w-3 !h-3 !bg-destructive !border-2 !border-card !rounded-full" style={{ top: `${noTop}%` }} />
