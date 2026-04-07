@@ -109,6 +109,8 @@ function TypingDots() {
 
 // Phone loading simulation component
 function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPrompt: string }) {
+  const { profile } = useAuth();
+  const agentName = `Agente ${profile?.name?.split(" ")[0] || "Wiize"}`;
   const simulationSteps = buildSimulationSteps(userPrompt);
   const [messages, setMessages] = useState<typeof simulationSteps>([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -134,94 +136,143 @@ function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPromp
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* CSS Phone Frame */}
-      <div className="relative w-[280px] h-[560px]">
-        {/* Outer phone body */}
-        <div className="absolute inset-0 rounded-[3rem] bg-[#1a1a1a] shadow-2xl border-[3px] border-[#333]">
-          {/* Top notch */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[90px] h-[22px] bg-[#1a1a1a] rounded-full z-20" />
-          {/* Side buttons */}
-          <div className="absolute -left-[3px] top-[100px] w-[3px] h-[30px] bg-[#333] rounded-l-sm" />
-          <div className="absolute -left-[3px] top-[150px] w-[3px] h-[50px] bg-[#333] rounded-l-sm" />
-          <div className="absolute -left-[3px] top-[210px] w-[3px] h-[50px] bg-[#333] rounded-l-sm" />
-          <div className="absolute -right-[3px] top-[140px] w-[3px] h-[60px] bg-[#333] rounded-r-sm" />
-        </div>
+      {/* Glow behind phone */}
+      <div className="absolute w-[400px] h-[600px] bg-primary/15 rounded-full filter blur-[100px] pointer-events-none" />
 
-        {/* Screen content */}
-        <div className="absolute top-[10px] left-[10px] right-[10px] bottom-[10px] rounded-[2.4rem] overflow-hidden flex flex-col bg-card">
-          {/* WhatsApp-style header */}
-          <div className="bg-primary pt-10 pb-3 px-4 flex items-center gap-3 rounded-t-[2.4rem]">
-            <div className="w-8 h-8 rounded-full bg-primary-foreground/20 flex items-center justify-center text-primary-foreground text-xs font-bold">
-              {flowName?.[0]?.toUpperCase() || "F"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-primary-foreground text-sm font-semibold truncate">{flowName || "Fluxo IA"}</p>
-              <p className="text-primary-foreground/60 text-[10px]">online</p>
-            </div>
+      {/* 3D Phone Frame */}
+      <div className="relative" style={{ perspective: "1200px" }}>
+        <div
+          className="relative w-[300px] h-[620px]"
+          style={{
+            transform: "rotateY(-3deg) rotateX(2deg)",
+            transformStyle: "preserve-3d",
+          }}
+        >
+          {/* Phone body - outer shell with 3D depth */}
+          <div
+            className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a]"
+            style={{
+              boxShadow: "0 25px 60px -15px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset, -8px 8px 20px rgba(0,0,0,0.3)",
+            }}
+          >
+            {/* Metallic edge highlight */}
+            <div className="absolute inset-0 rounded-[3rem] border border-[#444] pointer-events-none" />
+            <div className="absolute inset-[1px] rounded-[3rem] border border-[#222] pointer-events-none" />
+
+            {/* Side buttons */}
+            <div className="absolute -left-[2px] top-[100px] w-[3px] h-[28px] bg-gradient-to-r from-[#555] to-[#333] rounded-l-sm shadow-md" />
+            <div className="absolute -left-[2px] top-[145px] w-[3px] h-[50px] bg-gradient-to-r from-[#555] to-[#333] rounded-l-sm shadow-md" />
+            <div className="absolute -left-[2px] top-[205px] w-[3px] h-[50px] bg-gradient-to-r from-[#555] to-[#333] rounded-l-sm shadow-md" />
+            <div className="absolute -right-[2px] top-[150px] w-[3px] h-[55px] bg-gradient-to-l from-[#555] to-[#333] rounded-r-sm shadow-md" />
           </div>
 
-          {/* Chat area */}
-          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 bg-muted/30">
-            {messages.map((msg, i) => {
-              if (msg.type === "contact") {
-                return (
-                  <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center">
-                    <span className="text-[10px] bg-muted text-muted-foreground px-3 py-1 rounded-full">{msg.text}</span>
-                  </motion.div>
-                );
-              }
-              if (msg.type === "user") {
-                return (
-                  <motion.div key={i} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex justify-end">
-                    <div className="max-w-[80%] bg-primary text-primary-foreground text-xs px-3 py-2 rounded-xl rounded-tr-sm">{msg.text}</div>
-                  </motion.div>
-                );
-              }
-              if (msg.type === "buttons") {
+          {/* Screen area */}
+          <div className="absolute top-[8px] left-[8px] right-[8px] bottom-[8px] rounded-[2.6rem] overflow-hidden flex flex-col bg-background">
+            {/* Status bar */}
+            <div className="bg-primary pt-2 px-6 flex items-center justify-between h-8 shrink-0">
+              <span className="text-primary-foreground/80 text-[10px] font-medium">9:41</span>
+              <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-[80px] h-[20px] bg-[#1a1a1a] rounded-full flex items-center justify-center">
+                <div className="w-[8px] h-[8px] rounded-full bg-[#333] border border-[#444]" />
+              </div>
+              <div className="flex items-center gap-1">
+                {/* Signal bars */}
+                <div className="flex items-end gap-[1px]">
+                  {[5, 7, 9, 11].map((h, i) => (
+                    <div key={i} className="w-[2px] bg-primary-foreground/80 rounded-full" style={{ height: `${h}px` }} />
+                  ))}
+                </div>
+                <span className="text-primary-foreground/80 text-[8px] font-semibold ml-0.5">5G</span>
+                {/* Battery */}
+                <div className="ml-1 w-[18px] h-[9px] border border-primary-foreground/60 rounded-[2px] relative">
+                  <div className="absolute inset-[1px] rounded-[1px] bg-primary-foreground/70" style={{ width: "70%" }} />
+                  <div className="absolute -right-[2px] top-[2px] w-[1px] h-[4px] bg-primary-foreground/60 rounded-r-full" />
+                </div>
+              </div>
+            </div>
+
+            {/* WhatsApp-style header */}
+            <div className="bg-primary pb-3 px-4 flex items-center gap-3 pt-1">
+              <div className="w-9 h-9 rounded-full bg-primary-foreground/20 flex items-center justify-center text-primary-foreground text-xs font-bold">
+                🤖
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-primary-foreground text-sm font-semibold truncate">{agentName}</p>
+                <p className="text-primary-foreground/60 text-[10px]">online</p>
+              </div>
+            </div>
+
+            {/* Chat area with WhatsApp-style background pattern */}
+            <div
+              className="flex-1 overflow-y-auto px-3 py-3 space-y-2 relative"
+              style={{
+                backgroundColor: "hsl(var(--muted) / 0.3)",
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              }}
+            >
+              {messages.map((msg, i) => {
+                if (msg.type === "contact") {
+                  return (
+                    <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center">
+                      <span className="text-[10px] bg-muted text-muted-foreground px-3 py-1 rounded-full">{msg.text}</span>
+                    </motion.div>
+                  );
+                }
+                if (msg.type === "user") {
+                  return (
+                    <motion.div key={i} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex justify-end">
+                      <div className="max-w-[80%] bg-primary text-primary-foreground text-xs px-3 py-2 rounded-xl rounded-tr-sm shadow-sm">{msg.text}</div>
+                    </motion.div>
+                  );
+                }
+                if (msg.type === "buttons") {
+                  return (
+                    <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex justify-start">
+                      <div className="max-w-[85%]">
+                        <div className="bg-card border border-border text-foreground text-xs px-3 py-2 rounded-xl rounded-tl-sm mb-1 shadow-sm">{msg.text}</div>
+                        <div className="flex flex-wrap gap-1">
+                          {msg.buttons?.map((b, bi) => (
+                            <span key={bi} className="text-[10px] bg-card text-primary px-2.5 py-1 rounded-lg border border-primary/20 shadow-sm">{b}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                }
                 return (
                   <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex justify-start">
-                    <div className="max-w-[85%]">
-                      <div className="bg-card border border-border text-foreground text-xs px-3 py-2 rounded-xl rounded-tl-sm mb-1">{msg.text}</div>
-                      <div className="flex flex-wrap gap-1">
-                        {msg.buttons?.map((b, bi) => (
-                          <span key={bi} className="text-[10px] bg-card text-primary px-2.5 py-1 rounded-lg border border-primary/20">{b}</span>
-                        ))}
-                      </div>
-                    </div>
+                    <div className="max-w-[80%] bg-card border border-border text-foreground text-xs px-3 py-2 rounded-xl rounded-tl-sm shadow-sm">{msg.text}</div>
                   </motion.div>
                 );
-              }
-              return (
-                <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex justify-start">
-                  <div className="max-w-[80%] bg-card border border-border text-foreground text-xs px-3 py-2 rounded-xl rounded-tl-sm">{msg.text}</div>
+              })}
+
+              {currentStep < simulationSteps.length && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+                  <div className="bg-card border border-border px-3 py-2 rounded-xl rounded-tl-sm flex items-center gap-1 shadow-sm">
+                    <TypingDots />
+                  </div>
                 </motion.div>
-              );
-            })}
-
-            {currentStep < simulationSteps.length && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                <div className="bg-card border border-border px-3 py-2 rounded-xl rounded-tl-sm flex items-center gap-1">
-                  <TypingDots />
-                </div>
-              </motion.div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          {/* Bottom bar */}
-          <div className="h-12 bg-card border-t border-border flex items-center px-3 gap-2 shrink-0">
-            <div className="flex-1 h-8 rounded-full bg-muted px-3 flex items-center">
-              <span className="text-muted-foreground text-[10px]">Mensagem</span>
+              )}
+              <div ref={chatEndRef} />
             </div>
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <SendIcon size={14} className="text-primary-foreground" />
+
+            {/* Bottom bar */}
+            <div className="h-12 bg-card border-t border-border flex items-center px-3 gap-2 shrink-0">
+              <div className="flex-1 h-8 rounded-full bg-muted px-3 flex items-center">
+                <span className="text-muted-foreground text-[10px]">Mensagem</span>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                <SendIcon size={14} className="text-primary-foreground" />
+              </div>
             </div>
           </div>
+
+          {/* Bottom chin indicator */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-[100px] h-[4px] bg-[#444] rounded-full" />
         </div>
       </div>
 
       <motion.p
-        className="mt-6 text-sm text-muted-foreground text-center flex items-center gap-2"
+        className="mt-8 text-sm text-muted-foreground text-center flex items-center gap-2"
         animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 2, repeat: Infinity }}
       >
