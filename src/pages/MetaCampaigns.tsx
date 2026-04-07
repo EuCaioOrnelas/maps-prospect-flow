@@ -619,6 +619,37 @@ const MetaCampaigns = () => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Beta Warning Dialog */}
+      <Dialog open={showBetaWarning} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md w-[95vw] rounded-lg max-h-[90vh] overflow-y-auto" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                <FlaskConical className="w-5 h-5 text-amber-500" />
+              </div>
+              <DialogTitle className="text-xl">Relacionamento em Versão Beta</DialogTitle>
+            </div>
+            <DialogDescription className="text-left space-y-3 pt-2">
+              <p>
+                O sistema de <strong>Relacionamento</strong> está atualmente em versão <span className="text-amber-500 font-semibold">beta</span> e pode apresentar alguns bugs ou comportamentos inesperados.
+              </p>
+              <p>
+                Estamos trabalhando constantemente para melhorar a experiência. Caso encontre algum problema, por favor nos informe pelo suporte.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4">
+            <Button 
+              onClick={() => dismissBetaWarning()}
+              disabled={!canCloseBeta}
+              className="w-full sm:w-auto"
+            >
+              {canCloseBeta ? "Entendi, continuar" : `Aguarde ${betaCountdown}s`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
