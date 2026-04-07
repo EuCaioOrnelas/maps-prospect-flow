@@ -829,10 +829,10 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {lead.score_engagement > (lead.score_risk < 0 ? 0 : lead.score_engagement) ? (
-                        <TrendingUp className="h-4 w-4 text-emerald-400" />
-                      ) : lead.score_risk < -50 ? (
+                      {lead.score_risk < -50 ? (
                         <TrendingDown className="h-4 w-4 text-destructive" />
+                      ) : lead.score_engagement > 20 || lead.score_intent > 0 ? (
+                        <TrendingUp className="h-4 w-4 text-emerald-400" />
                       ) : (
                         <Minus className="h-4 w-4 text-muted-foreground" />
                       )}
