@@ -832,6 +832,82 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
             </div>
           )}
 
+          {/* ===== AI AGENT NODE ===== */}
+          {node.type === "ai_agent" && (
+            <div className="space-y-4">
+              {renderInfoBanner("Configure um agente de IA que analisa a resposta do lead e decide o próximo passo automaticamente.")}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Prompt do sistema (instrução para a IA)</Label>
+                <Textarea
+                  value={config.system_prompt || ""}
+                  onChange={(e) => updateConfig("system_prompt", e.target.value)}
+                  placeholder="Você é um assistente de vendas. Analise a resposta do lead e classifique como: INTERESSADO, INDECISO ou NÃO_INTERESSADO. Responda de forma natural e direcione para o fechamento."
+                  className="text-sm min-h-[120px]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Modelo de IA</Label>
+                <Select value={config.ai_model || "gpt-4o-mini"} onValueChange={(v) => updateConfig("ai_model", v)}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gpt-4o-mini">GPT-4o Mini (rápido)</SelectItem>
+                    <SelectItem value="gpt-4o">GPT-4o (avançado)</SelectItem>
+                    <SelectItem value="gemini-2.5-flash">Gemini Flash (rápido)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">O que a IA deve retornar?</Label>
+                <Select value={config.ai_output_type || "message_and_route"} onValueChange={(v) => updateConfig("ai_output_type", v)}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="message_only">Apenas responder ao lead</SelectItem>
+                    <SelectItem value="route_only">Apenas direcionar (sem resposta)</SelectItem>
+                    <SelectItem value="message_and_route">Responder e direcionar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Direcionamentos possíveis (um por linha)</Label>
+                <Textarea
+                  value={config.ai_routes || ""}
+                  onChange={(e) => updateConfig("ai_routes", e.target.value)}
+                  placeholder={"INTERESSADO → seguir para proposta\nINDECISO → enviar mais informações\nNÃO_INTERESSADO → encerrar fluxo"}
+                  className="text-sm min-h-[80px] font-mono text-xs"
+                />
+                <p className="text-[10px] text-muted-foreground">Cada direcionamento gera uma saída no nó. Conecte ao próximo bloco no canvas.</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Contexto extra (opcional)</Label>
+                <Textarea
+                  value={config.ai_context || ""}
+                  onChange={(e) => updateConfig("ai_context", e.target.value)}
+                  placeholder="Informações sobre a empresa, produtos, preços, etc."
+                  className="text-sm min-h-[60px]"
+                />
+              </div>
+              <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={config.ai_memory || false}
+                    onCheckedChange={(v) => updateConfig("ai_memory", v)}
+                  />
+                  <Label className="text-xs font-medium">Memória de conversa</Label>
+                </div>
+                <p className="text-[10px] text-muted-foreground">A IA recebe todo o histórico da conversa para contexto.</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Máx. caracteres na resposta</Label>
+                <Input
+                  type="number"
+                  value={config.max_chars || "500"}
+                  onChange={(e) => updateConfig("max_chars", parseInt(e.target.value) || 500)}
+                  className="h-9 text-sm"
+                />
+              </div>
+            </div>
+          )
+
           {/* Actions */}
           <div className="flex gap-2 pt-4 border-t border-border">
             <Button onClick={handleSave} className="flex-1 h-9 text-sm">
