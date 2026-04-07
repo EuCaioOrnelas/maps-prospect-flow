@@ -36,7 +36,9 @@ import { WAEndNode } from "@/components/wa-flow/nodes/WAEndNode";
 import { WAAgentNode } from "@/components/wa-flow/nodes/WAAgentNode";
 import { WAABTestNode } from "@/components/wa-flow/nodes/WAABTestNode";
 import { WARandomSplitNode } from "@/components/wa-flow/nodes/WARandomSplitNode";
-import { WAIntegrationNode } from "@/components/wa-flow/nodes/WAIntegrationNode";
+import { WAGoogleSheetsNode } from "@/components/wa-flow/nodes/WAGoogleSheetsNode";
+import { WAGoogleCalendarNode } from "@/components/wa-flow/nodes/WAGoogleCalendarNode";
+import { WAGmailNode } from "@/components/wa-flow/nodes/WAGmailNode";
 import { WANodeConfigDrawer } from "@/components/wa-flow/WANodeConfigDrawer";
 import {
   AlertDialog,
