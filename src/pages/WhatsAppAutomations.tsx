@@ -215,33 +215,6 @@ export default function WhatsAppAutomations() {
             </button>
           </div>
 
-          {/* Draft resume */}
-          {draftFlows > 0 && (
-            <div>
-              {flows
-                .filter((f: any) => f.status === "draft")
-                .slice(0, 1)
-                .map((flow: any) => (
-                  <button
-                    key={flow.id}
-                    onClick={() => navigate(`/fluxos/${flow.id}`)}
-                    className="w-full flex items-center gap-3 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 hover:border-amber-500/40 transition-all text-left"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                      <Workflow size={18} className="text-amber-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-foreground truncate">{flow.name}</p>
-                        <Badge className="bg-amber-500/10 text-amber-500 border-0 text-[10px]">Rascunho</Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">Continuar editando</p>
-                    </div>
-                    <Clock size={14} className="text-muted-foreground shrink-0" />
-                  </button>
-                ))}
-            </div>
-          )}
 
           {/* Metrics */}
           <div>
