@@ -97,6 +97,35 @@ serve(async (req) => {
         status_updated_at: new Date().toISOString(),
       }).eq('id', message_id);
 
+      // === REVENUE SCORING: Fire outbound event ===
+      try {
+        const phoneDigits = String(to || '').replace(/\D/g, '');
+        // Normalize to E.164 BR format
+        let phoneE164 = phoneDigits;
+        if (phoneDigits.length === 12 && phoneDigits.startsWith('55')) {
+          const ddd = phoneDigits.slice(2, 4);
+          const firstDigit = phoneDigits[4];
+          if (['6', '7', '8', '9'].includes(firstDigit)) {
+            phoneE164 = `55${ddd}9${phoneDigits.slice(4)}`;
+          }
+        }
+        if (phoneE164.length >= 12) {
+          await supabase.functions.invoke('revenue-processor', {
+            body: {
+              action: 'process_message',
+              source: 'meta',
+              user_id: userId,
+              phone_e164: phoneE164,
+              direction: 'outbound',
+              message_content: text || caption || undefined,
+            },
+          });
+          console.log(`[send-chat-message] 📊 Revenue outbound event fired for ${phoneE164}`);
+        }
+      } catch (revErr) {
+        console.error('[send-chat-message] Revenue event error (non-blocking):', revErr);
+      }
+
       return new Response(JSON.stringify({ success: true, waba_message_id: wabaMessageId }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
