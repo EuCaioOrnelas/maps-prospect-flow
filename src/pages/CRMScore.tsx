@@ -1099,6 +1099,26 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                   </div>
                 );
               })}
+
+              {/* Insight */}
+              <div className="p-3 rounded-lg bg-muted/20 border border-border/30 mt-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-base">💡</span>
+                  <div>
+                    <p className="text-sm font-semibold mb-1">Insights</p>
+                    <ul className="text-xs text-muted-foreground space-y-0.5 list-disc list-inside">
+                      {lead.score_total >= 801 && <li>Lead pronto para venda. priorize o contato imediato.</li>}
+                      {lead.score_total >= 601 && lead.score_total < 801 && <li>Lead de alto valor. mantenha o engajamento para converter.</li>}
+                      {lead.score_total >= 401 && lead.score_total < 601 && <li>Lead engajado. aumente a frequência de interação.</li>}
+                      {lead.score_total >= 201 && lead.score_total < 401 && <li>Baixo engajamento. envie conteúdo relevante para reativar.</li>}
+                      {lead.score_total < 201 && <li>Lead frio. considere uma campanha de reativação.</li>}
+                      {lead.score_risk < -50 && <li>Risco elevado de perda. ação urgente recomendada.</li>}
+                      {lead.score_intent > 30 && <li>Alta intenção de compra detectada.</li>}
+                      {lead.score_engagement > 50 && <li>Usuário com alto engajamento nas conversas.</li>}
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
