@@ -18,6 +18,7 @@ import {
   Stethoscope, Dumbbell, Car, Utensils, BarChart3, Zap, Clock,
 } from "lucide-react";
 import { CreateFlowDialog } from "@/components/wa-flow/CreateFlowDialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -139,6 +140,7 @@ export default function WhatsAppAutomations() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showTemplatesDialog, setShowTemplatesDialog] = useState(false);
   const [createDialogMode, setCreateDialogMode] = useState<"choose" | "ai">("choose");
   const [createDialogPrompt, setCreateDialogPrompt] = useState("");
   const [templateSearch, setTemplateSearch] = useState("");
