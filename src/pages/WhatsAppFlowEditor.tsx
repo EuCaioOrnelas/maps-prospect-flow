@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
-  HeadphonesIcon, CircleStop, Bot,
+  HeadphonesIcon, CircleStop, Bot, ChevronDown,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
@@ -199,6 +199,7 @@ export default function WhatsAppFlowEditor() {
   const [testResetVersion, setTestResetVersion] = useState(0);
   const [clipboard, setClipboard] = useState<Node | null>(null);
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
+  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
 
   // Undo/Redo history
   const [history, setHistory] = useState<HistoryEntry[]>([]);
