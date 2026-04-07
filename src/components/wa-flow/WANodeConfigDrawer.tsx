@@ -998,6 +998,158 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
             </div>
           )}
 
+          {/* ===== A/B TEST NODE ===== */}
+          {node.type === "ab_test" && (
+            <div className="space-y-4">
+              {renderInfoBanner("Divide os leads igualmente entre variantes e metrifica qual performa melhor no objetivo escolhido.")}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Nome do teste</Label>
+                <Input
+                  value={config.test_name || ""}
+                  onChange={(e) => updateConfig("test_name", e.target.value)}
+                  placeholder="Mensagem inicial de boas-vindas"
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Objetivo de medição</Label>
+                <Select value={config.objective || ""} onValueChange={(v) => updateConfig("objective", v)}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="response_rate">Taxa de resposta</SelectItem>
+                    <SelectItem value="click_rate">Taxa de clique em botão</SelectItem>
+                    <SelectItem value="conversion">Conversão (chegou ao fim)</SelectItem>
+                    <SelectItem value="handoff_rate">Taxa de transferência para humano</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Variantes</Label>
+                <div className="space-y-2">
+                  {(config.variants || []).map((v: any, i: number) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-[10px] font-bold text-emerald-400 shrink-0">
+                        {String.fromCharCode(65 + i)}
+                      </div>
+                      <Input
+                        value={v.name || ""}
+                        onChange={(e) => {
+                          const updated = [...(config.variants || [])];
+                          updated[i] = { ...updated[i], name: e.target.value };
+                          updateConfig("variants", updated);
+                        }}
+                        placeholder={`Variante ${String.fromCharCode(65 + i)}`}
+                        className="h-8 text-sm flex-1"
+                      />
+                      <Input
+                        type="number"
+                        value={v.weight || 0}
+                        onChange={(e) => {
+                          const updated = [...(config.variants || [])];
+                          updated[i] = { ...updated[i], weight: parseInt(e.target.value) || 0 };
+                          updateConfig("variants", updated);
+                        }}
+                        className="h-8 text-sm w-16 text-center"
+                        min={1}
+                        max={100}
+                      />
+                      <span className="text-[10px] text-muted-foreground">%</span>
+                      {(config.variants || []).length > 2 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={() => {
+                            const updated = (config.variants || []).filter((_: any, j: number) => j !== i);
+                            updateConfig("variants", updated);
+                          }}
+                        >
+                          <X size={14} />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  {(config.variants || []).length < 5 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full h-8 text-xs"
+                      onClick={() => {
+                        const current = config.variants || [];
+                        const letter = String.fromCharCode(65 + current.length);
+                        const equalWeight = Math.floor(100 / (current.length + 1));
+                        const updated = current.map((v: any) => ({ ...v, weight: equalWeight }));
+                        updated.push({ id: `var_${letter.toLowerCase()}`, name: `Variante ${letter}`, weight: 100 - equalWeight * current.length });
+                        updateConfig("variants", updated);
+                      }}
+                    >
+                      <Plus size={12} className="mr-1" /> Adicionar variante
+                    </Button>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground">A soma dos pesos deve ser 100%. Os leads são distribuídos proporcionalmente. Cada variante gera uma saída no fluxo.</p>
+              </div>
+            </div>
+          )}
+
+          {/* ===== RANDOM SPLIT NODE ===== */}
+          {node.type === "random_split" && (
+            <div className="space-y-4">
+              {renderInfoBanner("Distribui os leads aleatoriamente entre as saídas configuradas. Ideal para dividir fluxo sem critério específico.")}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Saídas ({(config.outputs || []).length})</Label>
+                <div className="space-y-2">
+                  {(config.outputs || []).map((o: any, i: number) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-sky-500/10 flex items-center justify-center text-[10px] font-bold text-sky-400 shrink-0">
+                        {i + 1}
+                      </div>
+                      <Input
+                        value={o.name || ""}
+                        onChange={(e) => {
+                          const updated = [...(config.outputs || [])];
+                          updated[i] = { ...updated[i], name: e.target.value };
+                          updateConfig("outputs", updated);
+                        }}
+                        placeholder={`Saída ${i + 1}`}
+                        className="h-8 text-sm flex-1"
+                      />
+                      {(config.outputs || []).length > 2 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={() => {
+                            const updated = (config.outputs || []).filter((_: any, j: number) => j !== i);
+                            updateConfig("outputs", updated);
+                          }}
+                        >
+                          <X size={14} />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  {(config.outputs || []).length < 5 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full h-8 text-xs"
+                      onClick={() => {
+                        const current = config.outputs || [];
+                        updateConfig("outputs", [
+                          ...current,
+                          { id: `out_${current.length}`, name: `Saída ${current.length + 1}` },
+                        ]);
+                      }}
+                    >
+                      <Plus size={12} className="mr-1" /> Adicionar saída
+                    </Button>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground">Cada lead é direcionado aleatoriamente para uma das saídas. Máximo de 5 saídas.</p>
+              </div>
+            </div>
+
           {/* Actions */}
           <div className="flex gap-2 pt-4 border-t border-border">
             <Button onClick={handleSave} className="flex-1 h-9 text-sm">
