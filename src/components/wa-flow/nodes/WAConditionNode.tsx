@@ -15,35 +15,39 @@ export function WAConditionNode({ data }: NodeProps) {
   const isConfigured = !!cfg.condition_type;
 
   return (
-    <div className="relative w-32 h-32">
-      {/* Diamond */}
-      <div
-        className="absolute inset-2 bg-card border border-border shadow-sm backdrop-blur-sm"
-        style={{ transform: "rotate(45deg)", borderRadius: "6px" }}
-      />
-      {/* Content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-5 z-10">
-        <GitBranch size={14} className="text-purple-400 mb-1" />
-        <p className="text-[11px] font-bold text-foreground truncate w-full">
-          {String((data as any).label || "Condição")}
-        </p>
-        {isConfigured ? (
-          <p className="text-[9px] text-muted-foreground mt-0.5 leading-tight truncate w-full">
-            {conditionLabels[cfg.condition_type] || cfg.condition_type}
+    <div className="bg-card border border-border rounded-xl shadow-sm w-48">
+      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
+        <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+          <GitBranch size={16} className="text-purple-400" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold text-foreground truncate">
+            {String((data as any).label || "Condição")}
           </p>
-        ) : (
-          <p className="text-[9px] text-muted-foreground/60 mt-0.5 italic">Configurar</p>
-        )}
+          {isConfigured ? (
+            <p className="text-[10px] text-muted-foreground truncate">
+              {conditionLabels[cfg.condition_type] || cfg.condition_type}
+            </p>
+          ) : (
+            <p className="text-[10px] text-muted-foreground/60 italic">Clique para configurar</p>
+          )}
+        </div>
       </div>
-      <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-purple-400 !border-2 !border-card !rounded-full" style={{ left: "-4px", top: "50%" }} />
-      <Handle type="source" position={Position.Right} id="yes" className="!w-3 !h-3 !bg-primary !border-2 !border-card !rounded-full" style={{ right: "-4px", top: "38%" }} />
-      <Handle type="source" position={Position.Right} id="no" className="!w-3 !h-3 !bg-destructive !border-2 !border-card !rounded-full" style={{ right: "-4px", top: "62%" }} />
-      <div className="absolute text-[9px] font-semibold z-10" style={{ right: "-22px", top: "30%" }}>
-        <span className="text-primary/80">Sim</span>
+
+      <div className="px-3 py-2 space-y-1">
+        <div className="flex items-center gap-1.5 text-[10px] text-primary">
+          <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+          Sim
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px] text-destructive">
+          <span className="w-2 h-2 rounded-full bg-destructive shrink-0" />
+          Não
+        </div>
       </div>
-      <div className="absolute text-[9px] font-semibold z-10" style={{ right: "-22px", top: "56%" }}>
-        <span className="text-destructive/80">Não</span>
-      </div>
+
+      <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-purple-400 !border-2 !border-card !rounded-full" />
+      <Handle type="source" position={Position.Right} id="yes" className="!w-3 !h-3 !bg-primary !border-2 !border-card !rounded-full" style={{ top: "58%" }} />
+      <Handle type="source" position={Position.Right} id="no" className="!w-3 !h-3 !bg-destructive !border-2 !border-card !rounded-full" style={{ top: "78%" }} />
     </div>
   );
 }

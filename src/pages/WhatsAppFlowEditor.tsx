@@ -57,7 +57,9 @@ const normalizeStoredHandle = (value?: string | null) => {
 
 const getInteractiveItemIds = (config: any) => {
   const isListMode = config?.interaction_type === "list";
-  const rawItems = isListMode ? (config?.list_items || []) : (config?.buttons || []);
+  const rawItems = isListMode
+    ? (config?.list_items || [])
+    : (config?.buttons || config?.reply_buttons || []);
   const prefix = isListMode ? "item" : "btn";
 
   return rawItems.map((item: any, index: number) => {
