@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
-  ArrowLeft, Save, Undo2, Redo2, Trash2, Power,
+  ArrowLeft, Save, Undo2, Redo2, Trash2, PlayCircle, RotateCcw,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
   HeadphonesIcon, CircleStop, ChevronRight, ChevronLeft, Bot,
 } from "lucide-react";
@@ -38,7 +38,6 @@ import { WAAgentNode } from "@/components/wa-flow/nodes/WAAgentNode";
 import { WANodeConfigDrawer } from "@/components/wa-flow/WANodeConfigDrawer";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -48,6 +47,34 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { WAFlowTestDialog } from "@/components/wa-flow/WAFlowTestDialog";
+
+const normalizeStoredHandle = (value?: string | null) => {
+  if (!value) return null;
+  if (/^(btn|item)-\d+$/i.test(value)) return value.replace("-", "_");
+  return value;
+};
+
+const getInteractiveItemIds = (config: any) => {
+  const isListMode = config?.interaction_type === "list";
+  const rawItems = isListMode ? (config?.list_items || []) : (config?.buttons || []);
+  const prefix = isListMode ? "item" : "btn";
+
+  return rawItems.map((item: any, index: number) => {
+    if (typeof item === "string") return `${prefix}_${index}`;
+    return item?.id || `${prefix}_${index}`;
+  });
+};
+
+const resolveStoredSourceHandle = (sourceHandle: string | null, sourceNode: any) => {
+  if (!sourceHandle || sourceNode?.node_type !== "buttons") return sourceHandle;
+
+  const allowedIds = getInteractiveItemIds(sourceNode.config || {});
+  const normalizedHandle = normalizeStoredHandle(sourceHandle);
+  const match = allowedIds.find((id) => normalizeStoredHandle(id) === normalizedHandle);
+
+  return match || normalizedHandle;
+};
 
 const nodeTypes = {
   entry: WAEntryNode,
@@ -164,6 +191,8 @@ export default function WhatsAppFlowEditor() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
+  const [testResetVersion, setTestResetVersion] = useState(0);
 
   // Undo/Redo history
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -247,43 +276,54 @@ export default function WhatsAppFlowEditor() {
   }, [flow]);
 
   useEffect(() => {
-    if (dbNodes.length > 0) {
-      const mapped: Node[] = dbNodes.map((n: any) => ({
-        id: n.id,
-        type: n.node_type,
-        position: { x: n.position_x, y: n.position_y },
-        data: { label: n.name, config: n.config || {} },
-      }));
-      setNodes(mapped);
-      // Init history
-      const mappedEdges: Edge[] = dbEdges.map((e: any) => ({
-        id: e.id,
-        source: e.source_node_id,
-        target: e.target_node_id,
-        sourceHandle: e.source_handle,
-        targetHandle: e.target_handle,
-        label: e.label,
-        ...defaultEdgeOptions,
-      }));
-      setHistory([{ nodes: JSON.parse(JSON.stringify(mapped)), edges: JSON.parse(JSON.stringify(mappedEdges)) }]);
+    if (dbNodes.length === 0 && dbEdges.length === 0) return;
+
+    const sourceNodeMap = new Map(dbNodes.map((node: any) => [node.id, node]));
+
+    const mappedNodes: Node[] = dbNodes.map((n: any) => ({
+      id: n.id,
+      type: n.node_type,
+      position: { x: n.position_x, y: n.position_y },
+      data: { label: n.name, config: n.config || {} },
+    }));
+
+    const mappedEdges: Edge[] = dbEdges.map((e: any) => ({
+      id: e.id,
+      source: e.source_node_id,
+      target: e.target_node_id,
+      sourceHandle: resolveStoredSourceHandle(e.source_handle, sourceNodeMap.get(e.source_node_id)),
+      targetHandle: e.target_handle,
+      label: e.label,
+      ...defaultEdgeOptions,
+    }));
+
+    setNodes(mappedNodes);
+    setEdges(mappedEdges);
+
+    if (mappedNodes.length > 0 || mappedEdges.length > 0) {
+      setHistory([{ nodes: JSON.parse(JSON.stringify(mappedNodes)), edges: JSON.parse(JSON.stringify(mappedEdges)) }]);
       setHistoryIndex(0);
     }
-  }, [dbNodes]);
+  }, [dbNodes, dbEdges, setEdges, setNodes]);
 
-  useEffect(() => {
-    if (dbEdges.length > 0) {
-      const mapped: Edge[] = dbEdges.map((e: any) => ({
-        id: e.id,
-        source: e.source_node_id,
-        target: e.target_node_id,
-        sourceHandle: e.source_handle,
-        targetHandle: e.target_handle,
-        label: e.label,
-        ...defaultEdgeOptions,
-      }));
-      setEdges(mapped);
+  const openFlowTest = useCallback(() => {
+    if (nodes.length === 0) {
+      toast.error("Adicione pelo menos um bloco para testar o fluxo");
+      return;
     }
-  }, [dbEdges]);
+
+    setTestDialogOpen(true);
+  }, [nodes.length]);
+
+  const resetFlowTest = useCallback(() => {
+    if (nodes.length === 0) {
+      toast.error("Adicione pelo menos um bloco para testar o fluxo");
+      return;
+    }
+
+    setTestResetVersion((prev) => prev + 1);
+    setTestDialogOpen(true);
+  }, [nodes.length]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -465,6 +505,18 @@ export default function WhatsAppFlowEditor() {
           <Redo2 size={15} />
         </Button>
 
+        <div className="h-6 w-px bg-border mx-1" />
+
+        <Button variant="outline" size="sm" onClick={openFlowTest} className="gap-1.5 rounded-full">
+          <PlayCircle size={14} />
+          Testar fluxo
+        </Button>
+
+        <Button variant="ghost" size="sm" onClick={resetFlowTest} className="gap-1.5 rounded-full">
+          <RotateCcw size={14} />
+          Resetar fluxo
+        </Button>
+
         <div className="flex-1" />
 
         {/* Activate/Deactivate toggle */}
@@ -587,6 +639,15 @@ export default function WhatsAppFlowEditor() {
           onDelete={handleDeleteNode}
         />
       )}
+
+      <WAFlowTestDialog
+        open={testDialogOpen}
+        onOpenChange={setTestDialogOpen}
+        flowName={flowName}
+        nodes={nodes}
+        edges={edges}
+        resetVersion={testResetVersion}
+      />
     </div>
   );
 }

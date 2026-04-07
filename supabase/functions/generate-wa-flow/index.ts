@@ -24,7 +24,7 @@ O fluxo deve:
 TIPOS DE NÓS DISPONÍVEIS:
 - entry: Nó de entrada/trigger (trigger_type: keyword|campaign_reply|button_click|webhook|qr_code|first_message|re_entry, keywords: string[])
 - message: Envio de mensagem (message_type: text|image|audio|video|document|template, content: string, media_url: string, template_name: string)
-- buttons: Botões interativos (interaction_type: "reply_buttons"|"list", body_text: string, buttons: [{id: "btn_0", title: string}], list_items: [{id: "item_0", title: string, description: string}]). IMPORTANT: interaction_type MUST be "reply_buttons" for buttons (NOT "buttons").
+- buttons: Botões interativos (interaction_type: "reply_buttons"|"list", body_text: string, header_text?: string, footer_text?: string, buttons: [{id: "btn_0", title: string}], list_items: [{id: "item_0", title: string, description: string}]). IMPORTANT: interaction_type MUST be "reply_buttons" for buttons (NOT "buttons").
 - condition: Condição IF/ELSE (condition_type: button_clicked|keyword_match|has_tag|field_equals|responded|no_response, condition_value: string)
 - wait: Delay/espera (delay_value: number, delay_unit: minutes|hours|days, smart: boolean)
 - action: Ação do sistema (action_type: add_tag|remove_tag|update_field|move_pipeline|send_to_crm|webhook|mark_hot|mark_cold|mark_converted)
@@ -64,10 +64,122 @@ REGRAS DE POSICIONAMENTO:
 
 REGRAS DE CONEXÕES:
 - Nós de condição têm sourceHandle "yes" e "no"
-- Nós de botões têm sourceHandle "btn-0", "btn-1", "btn-2" etc
+- Nós de botões têm sourceHandle "btn_0", "btn_1", "btn_2" etc
 - Outros nós usam sourceHandle e targetHandle null
 
+REGRAS ESPECÍFICAS PARA BOTÕES:
+- Prefira conectar cada botão/lista diretamente ao próximo nó usando o sourceHandle correspondente
+- Use condition com button_clicked apenas quando realmente precisar de uma validação extra depois do clique
+- header_text e footer_text são opcionais; normalmente omita quando não ajudarem
+- Não invente cabeçalho, rodapé ou seções desnecessárias em mensagens simples
+
 RESPONDA APENAS COM O JSON, sem texto extra, sem markdown code blocks.`;
+
+const normalizeHandle = (value?: string | null) => {
+  if (!value) return null;
+  if (/^(btn|item)-\d+$/i.test(value)) return value.replace("-", "_");
+  return value;
+};
+
+const normalizeInteractiveItem = (item: any, index: number, prefix: "btn" | "item") => {
+  if (typeof item === "string") {
+    return {
+      id: `${prefix}_${index}`,
+      title: item,
+      ...(prefix === "item" ? { description: "" } : {}),
+    };
+  }
+
+  return {
+    id: item?.id || `${prefix}_${index}`,
+    title: item?.title || `${prefix === "item" ? "Item" : "Opção"} ${index + 1}`,
+    ...(prefix === "item" ? { description: item?.description || "" } : {}),
+  };
+};
+
+const normalizeButtonsConfig = (config: any = {}) => {
+  const nodeConfig = { ...config };
+
+  if (nodeConfig.interaction_type === "buttons" || !nodeConfig.interaction_type) {
+    nodeConfig.interaction_type = "reply_buttons";
+  }
+
+  if (!nodeConfig.header_text) {
+    nodeConfig.header_text =
+      typeof nodeConfig.header === "string"
+        ? nodeConfig.header
+        : typeof nodeConfig.header?.text === "string"
+          ? nodeConfig.header.text
+          : "";
+  }
+
+  if (!nodeConfig.footer_text) {
+    nodeConfig.footer_text =
+      typeof nodeConfig.footer === "string"
+        ? nodeConfig.footer
+        : typeof nodeConfig.footer?.text === "string"
+          ? nodeConfig.footer.text
+          : "";
+  }
+
+  nodeConfig.header_text = typeof nodeConfig.header_text === "string" ? nodeConfig.header_text.trim() : "";
+  nodeConfig.footer_text = typeof nodeConfig.footer_text === "string" ? nodeConfig.footer_text.trim() : "";
+
+  if (nodeConfig.interaction_type === "list") {
+    const rawItems = Array.isArray(nodeConfig.list_items)
+      ? nodeConfig.list_items
+      : Array.isArray(nodeConfig.items)
+        ? nodeConfig.items
+        : [];
+
+    nodeConfig.list_items = rawItems.map((item: any, index: number) => normalizeInteractiveItem(item, index, "item"));
+    nodeConfig.list_button_text =
+      typeof nodeConfig.list_button_text === "string" && nodeConfig.list_button_text.trim()
+        ? nodeConfig.list_button_text.trim()
+        : "Ver opções";
+    delete nodeConfig.buttons;
+  } else {
+    nodeConfig.interaction_type = "reply_buttons";
+    const rawButtons = Array.isArray(nodeConfig.buttons)
+      ? nodeConfig.buttons
+      : Array.isArray(nodeConfig.options)
+        ? nodeConfig.options
+        : [];
+
+    nodeConfig.buttons = rawButtons.map((button: any, index: number) => normalizeInteractiveItem(button, index, "btn"));
+    delete nodeConfig.list_items;
+  }
+
+  delete nodeConfig.header;
+  delete nodeConfig.footer;
+  delete nodeConfig.items;
+  delete nodeConfig.options;
+
+  return nodeConfig;
+};
+
+const getAllowedButtonHandles = (config: any = {}) => {
+  const isListMode = config.interaction_type === "list";
+  const rawItems = isListMode ? (config.list_items || []) : (config.buttons || []);
+  const prefix = isListMode ? "item" : "btn";
+
+  return rawItems.map((item: any, index: number) => {
+    if (typeof item === "string") return `${prefix}_${index}`;
+    return item?.id || `${prefix}_${index}`;
+  });
+};
+
+const normalizeEdgeSourceHandle = (sourceHandle: string | null, sourceNode: any) => {
+  if (!sourceHandle || !sourceNode || sourceNode.type !== "buttons") {
+    return normalizeHandle(sourceHandle);
+  }
+
+  const normalizedHandle = normalizeHandle(sourceHandle);
+  const allowedHandles = getAllowedButtonHandles(sourceNode.config || {});
+  const matchedHandle = allowedHandles.find((handle: string) => normalizeHandle(handle) === normalizedHandle);
+
+  return matchedHandle || normalizedHandle;
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -143,33 +255,19 @@ serve(async (req) => {
 
     // Insert nodes
     const nodeIdMap: Record<string, string> = {};
+    const normalizedNodesMap: Record<string, any> = {};
     const validTypes = ["entry", "message", "buttons", "condition", "wait", "action", "handoff", "end", "ai_agent"];
 
     for (const node of flowData.nodes || []) {
       const nodeType = validTypes.includes(node.type) ? node.type : "message";
-      const nodeConfig = node.config || {};
+      let nodeConfig = node.config || {};
 
       // Normalize buttons node config
       if (nodeType === "buttons") {
-        // Fix interaction_type: "buttons" → "reply_buttons"
-        if (nodeConfig.interaction_type === "buttons" || !nodeConfig.interaction_type) {
-          nodeConfig.interaction_type = "reply_buttons";
-        }
-        // Ensure buttons array has proper structure
-        if (Array.isArray(nodeConfig.buttons)) {
-          nodeConfig.buttons = nodeConfig.buttons.map((btn: any, i: number) => {
-            if (typeof btn === "string") return { id: `btn_${i}`, title: btn };
-            return { id: btn.id || `btn_${i}`, title: btn.title || `Opção ${i + 1}` };
-          });
-        }
-        // Ensure list_items have proper structure
-        if (Array.isArray(nodeConfig.list_items)) {
-          nodeConfig.list_items = nodeConfig.list_items.map((item: any, i: number) => {
-            if (typeof item === "string") return { id: `item_${i}`, title: item, description: "" };
-            return { id: item.id || `item_${i}`, title: item.title || `Item ${i + 1}`, description: item.description || "" };
-          });
-        }
+        nodeConfig = normalizeButtonsConfig(nodeConfig);
       }
+
+      normalizedNodesMap[node.id] = { ...node, type: nodeType, config: nodeConfig };
 
       const { data, error } = await sb
         .from("wa_flow_nodes")
@@ -201,7 +299,7 @@ serve(async (req) => {
         flow_id,
         source_node_id: sourceId,
         target_node_id: targetId,
-        source_handle: edge.sourceHandle || null,
+        source_handle: normalizeEdgeSourceHandle(edge.sourceHandle || null, normalizedNodesMap[edge.source]) || null,
         target_handle: edge.targetHandle || null,
         label: edge.label || null,
       });
