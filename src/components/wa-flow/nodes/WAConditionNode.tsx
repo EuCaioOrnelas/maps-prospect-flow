@@ -56,13 +56,13 @@ export function WAConditionNode({ data }: NodeProps) {
 
       {/* Outcomes */}
       <div className="px-3 py-2 space-y-1.5">
-        <div ref={yesRef} className="flex items-center justify-end">
-          <div className="bg-primary/10 rounded-md px-3 py-1 flex items-center justify-center">
+        <div ref={yesRef} className="w-full">
+          <div className="bg-primary/10 rounded-md py-1.5 flex items-center justify-center w-full">
             <span className="text-[11px] font-semibold text-primary">Sim</span>
           </div>
         </div>
-        <div ref={noRef} className="flex items-center justify-end">
-          <div className="bg-destructive/10 rounded-md px-3 py-1 flex items-center justify-center">
+        <div ref={noRef} className="w-full">
+          <div className="bg-destructive/10 rounded-md py-1.5 flex items-center justify-center w-full">
             <span className="text-[11px] font-semibold text-destructive">Não</span>
           </div>
         </div>
