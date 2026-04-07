@@ -20,7 +20,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
     queryFn: async () => {
       const { data } = await supabase
         .from("whatsapp_numbers")
-        .select("id, phone_number, display_name, api_tier")
+        .select("id, phone_number, name, api_tier")
         .eq("user_id", user!.id);
       return data || [];
     },
@@ -41,7 +41,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           onValueChange={(v) => {
             const num = numbers.find((n: any) => n.id === v);
             updateConfig("whatsapp_number_id", v);
-            updateConfig("whatsapp_number_name", num?.display_name || num?.phone_number || "");
+            updateConfig("whatsapp_number_name", num?.name || num?.phone_number || "");
             updateConfig("api_type", num?.api_tier === "paid" || num?.api_tier === "meta" ? "meta" : "evolution");
           }}
         >
@@ -49,7 +49,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           <SelectContent>
             {numbers.map((n: any) => (
               <SelectItem key={n.id} value={n.id}>
-                {n.display_name || n.phone_number}
+                {n.name || n.phone_number}
                 {n.api_tier !== "paid" && n.api_tier !== "meta" && " (Outbound)"}
               </SelectItem>
             ))}
