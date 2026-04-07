@@ -11,14 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Plus, Sparkles, Workflow, MoreVertical, Play, Pause, Archive,
   Trash2, Copy, FlaskConical, Search, ShoppingCart, HeadphonesIcon,
   Users, FileText, MessageSquare, Megaphone, GraduationCap, Building2,
   Stethoscope, Dumbbell, Car, Utensils, BarChart3, Zap, Clock,
 } from "lucide-react";
-import { CreateFlowDialog } from "@/components/wa-flow/CreateFlowDialog";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -37,112 +36,25 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 const flowTemplates = [
-  {
-    id: "vendas",
-    name: "Funil de Vendas",
-    icon: ShoppingCart,
-    description: "Qualificação → apresentação → oferta → pagamento",
-    category: "Vendas",
-    prompt: "Crie um funil de vendas completo com qualificação do lead, apresentação do produto, oferta especial e link de pagamento. Inclua follow-up para quem não respondeu.",
-  },
-  {
-    id: "suporte",
-    name: "Suporte com Triagem",
-    icon: HeadphonesIcon,
-    description: "Triagem automática → resolução → escalonamento",
-    category: "Suporte",
-    prompt: "Crie um fluxo de suporte ao cliente com triagem automática por tipo de problema, resolução via FAQ e escalonamento para humano quando necessário.",
-  },
-  {
-    id: "captacao",
-    name: "Captação de Leads",
-    icon: Users,
-    description: "Captar → qualificar → agendar reunião",
-    category: "Marketing",
-    prompt: "Crie um fluxo para captar leads frios, qualificá-los com perguntas estratégicas e agendar uma reunião com o time de vendas.",
-  },
-  {
-    id: "proposta",
-    name: "Envio de Proposta",
-    icon: FileText,
-    description: "Gerar proposta → enviar → follow-up",
-    category: "Vendas",
-    prompt: "Crie um fluxo para envio de proposta comercial personalizada com follow-up automático perguntando se recebeu e se quer fechar.",
-  },
-  {
-    id: "atendimento",
-    name: "Atendimento Geral",
-    icon: MessageSquare,
-    description: "Menu principal → direcionamento → resolução",
-    category: "Atendimento",
-    prompt: "Crie um fluxo de atendimento geral com menu principal com opções de vendas, suporte, dúvidas e falar com humano.",
-  },
-  {
-    id: "campanha",
-    name: "Resposta de Campanha",
-    icon: Megaphone,
-    description: "Capturar resposta → engajar → converter",
-    category: "Marketing",
-    prompt: "Crie um fluxo para responder automaticamente leads que respondem a uma campanha de WhatsApp, engajando e convertendo em venda.",
-  },
-  {
-    id: "academia",
-    name: "Academia / Fitness",
-    icon: Dumbbell,
-    description: "Planos → aula experimental → matrícula",
-    category: "Nicho",
-    prompt: "Crie um fluxo para academia com apresentação de planos, agendamento de aula experimental e matrícula online.",
-  },
-  {
-    id: "imobiliaria",
-    name: "Imobiliária",
-    icon: Building2,
-    description: "Tipo imóvel → filtros → agendamento visita",
-    category: "Nicho",
-    prompt: "Crie um fluxo para imobiliária com seleção de tipo de imóvel, filtros de localização e preço, e agendamento de visita.",
-  },
-  {
-    id: "clinica",
-    name: "Clínica / Saúde",
-    icon: Stethoscope,
-    description: "Especialidade → disponibilidade → agendamento",
-    category: "Nicho",
-    prompt: "Crie um fluxo para clínica médica com seleção de especialidade, verificação de disponibilidade e agendamento de consulta.",
-  },
-  {
-    id: "escola",
-    name: "Escola / Cursos",
-    icon: GraduationCap,
-    description: "Cursos → informações → matrícula",
-    category: "Nicho",
-    prompt: "Crie um fluxo para escola ou curso online com apresentação dos cursos, detalhes e processo de matrícula.",
-  },
-  {
-    id: "restaurante",
-    name: "Restaurante / Delivery",
-    icon: Utensils,
-    description: "Cardápio → pedido → entrega",
-    category: "Nicho",
-    prompt: "Crie um fluxo para restaurante com apresentação do cardápio por categorias, confirmação de pedido e informações de entrega.",
-  },
-  {
-    id: "automotivo",
-    name: "Automotivo",
-    icon: Car,
-    description: "Veículos → financiamento → agendamento",
-    category: "Nicho",
-    prompt: "Crie um fluxo para concessionária com seleção de veículos, simulação de financiamento e agendamento de test drive.",
-  },
+  { id: "vendas", name: "Funil de Vendas", icon: ShoppingCart, description: "Qualificação → apresentação → oferta → pagamento", prompt: "Crie um funil de vendas completo com qualificação do lead, apresentação do produto, oferta especial e link de pagamento. Inclua follow-up para quem não respondeu." },
+  { id: "suporte", name: "Suporte com Triagem", icon: HeadphonesIcon, description: "Triagem automática → resolução → escalonamento", prompt: "Crie um fluxo de suporte ao cliente com triagem automática por tipo de problema, resolução via FAQ e escalonamento para humano quando necessário." },
+  { id: "captacao", name: "Captação de Leads", icon: Users, description: "Captar → qualificar → agendar reunião", prompt: "Crie um fluxo para captar leads frios, qualificá-los com perguntas estratégicas e agendar uma reunião com o time de vendas." },
+  { id: "proposta", name: "Envio de Proposta", icon: FileText, description: "Gerar proposta → enviar → follow-up", prompt: "Crie um fluxo para envio de proposta comercial personalizada com follow-up automático perguntando se recebeu e se quer fechar." },
+  { id: "atendimento", name: "Atendimento Geral", icon: MessageSquare, description: "Menu principal → direcionamento → resolução", prompt: "Crie um fluxo de atendimento geral com menu principal com opções de vendas, suporte, dúvidas e falar com humano." },
+  { id: "campanha", name: "Resposta de Campanha", icon: Megaphone, description: "Capturar resposta → engajar → converter", prompt: "Crie um fluxo para responder automaticamente leads que respondem a uma campanha de WhatsApp, engajando e convertendo em venda." },
+  { id: "academia", name: "Academia / Fitness", icon: Dumbbell, description: "Planos → aula experimental → matrícula", prompt: "Crie um fluxo para academia com apresentação de planos, agendamento de aula experimental e matrícula online." },
+  { id: "imobiliaria", name: "Imobiliária", icon: Building2, description: "Tipo imóvel → filtros → agendamento visita", prompt: "Crie um fluxo para imobiliária com seleção de tipo de imóvel, filtros de localização e preço, e agendamento de visita." },
+  { id: "clinica", name: "Clínica / Saúde", icon: Stethoscope, description: "Especialidade → disponibilidade → agendamento", prompt: "Crie um fluxo para clínica médica com seleção de especialidade, verificação de disponibilidade e agendamento de consulta." },
+  { id: "escola", name: "Escola / Cursos", icon: GraduationCap, description: "Cursos → informações → matrícula", prompt: "Crie um fluxo para escola ou curso online com apresentação dos cursos, detalhes e processo de matrícula." },
+  { id: "restaurante", name: "Restaurante / Delivery", icon: Utensils, description: "Cardápio → pedido → entrega", prompt: "Crie um fluxo para restaurante com apresentação do cardápio por categorias, confirmação de pedido e informações de entrega." },
+  { id: "automotivo", name: "Automotivo", icon: Car, description: "Veículos → financiamento → agendamento", prompt: "Crie um fluxo para concessionária com seleção de veículos, simulação de financiamento e agendamento de test drive." },
 ];
 
 export default function WhatsAppAutomations() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showTemplatesDialog, setShowTemplatesDialog] = useState(false);
-  const [createDialogMode, setCreateDialogMode] = useState<"choose" | "ai">("choose");
-  const [createDialogPrompt, setCreateDialogPrompt] = useState("");
   const [templateSearch, setTemplateSearch] = useState("");
 
   const { data: flows = [], isLoading } = useQuery({
@@ -162,12 +74,23 @@ export default function WhatsAppAutomations() {
     if (!templateSearch.trim()) return flowTemplates;
     const q = templateSearch.toLowerCase();
     return flowTemplates.filter(
-      (t) =>
-        t.name.toLowerCase().includes(q) ||
-        t.category.toLowerCase().includes(q) ||
-        t.description.toLowerCase().includes(q)
+      (t) => t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
     );
   }, [templateSearch]);
+
+  const createBlankFlow = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase
+        .from("wa_automation_flows")
+        .insert({ user_id: user!.id, name: "Novo Fluxo" })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => navigate(`/fluxos/${data.id}`),
+    onError: () => toast.error("Erro ao criar fluxo"),
+  });
 
   const deleteFlow = useMutation({
     mutationFn: async (id: string) => {
@@ -184,11 +107,7 @@ export default function WhatsAppAutomations() {
     mutationFn: async (flow: any) => {
       const { data, error } = await supabase
         .from("wa_automation_flows")
-        .insert({
-          user_id: user!.id,
-          name: `${flow.name} (cópia)`,
-          description: flow.description,
-        })
+        .insert({ user_id: user!.id, name: `${flow.name} (cópia)`, description: flow.description })
         .select()
         .single();
       if (error) throw error;
@@ -214,30 +133,14 @@ export default function WhatsAppAutomations() {
     },
   });
 
-  const handleUseTemplate = (template: typeof flowTemplates[0]) => {
-    setCreateDialogPrompt(template.prompt);
-    setCreateDialogMode("ai");
-    setShowCreateDialog(true);
+  const handleUseTemplate = (tpl: typeof flowTemplates[0]) => {
+    setShowTemplatesDialog(false);
+    navigate(`/fluxos/criar-ia?prompt=${encodeURIComponent(tpl.prompt)}`);
   };
 
-  const handleOpenBlank = () => {
-    setCreateDialogMode("choose");
-    setCreateDialogPrompt("");
-    setShowCreateDialog(true);
-  };
-
-  const handleOpenAI = () => {
-    setCreateDialogMode("ai");
-    setCreateDialogPrompt("");
-    setShowCreateDialog(true);
-  };
-
-  // Greeting
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
   const firstName = profile?.name?.split(" ")[0] || "usuário";
-
-  // Metrics
   const totalFlows = flows.length;
   const activeFlows = flows.filter((f: any) => f.status === "active").length;
   const draftFlows = flows.filter((f: any) => f.status === "draft").length;
@@ -272,8 +175,9 @@ export default function WhatsAppAutomations() {
           {/* Action Buttons */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
-              onClick={handleOpenBlank}
-              className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
+              onClick={() => createBlankFlow.mutate()}
+              disabled={createBlankFlow.isPending}
+              className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left disabled:opacity-50"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
                 <Plus size={20} className="text-primary" />
@@ -285,7 +189,7 @@ export default function WhatsAppAutomations() {
             </button>
 
             <button
-              onClick={handleOpenAI}
+              onClick={() => navigate("/fluxos/criar-ia")}
               className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
@@ -311,7 +215,7 @@ export default function WhatsAppAutomations() {
             </button>
           </div>
 
-          {/* Draft resume (if any) */}
+          {/* Draft resume */}
           {draftFlows > 0 && (
             <div>
               {flows
@@ -339,54 +243,6 @@ export default function WhatsAppAutomations() {
             </div>
           )}
 
-          {/* Templates Dialog */}
-          <Dialog open={showTemplatesDialog} onOpenChange={setShowTemplatesDialog}>
-            <DialogContent className="sm:max-w-[640px] p-0 gap-0 overflow-hidden border-border/50 bg-card max-h-[80vh] flex flex-col">
-              <div className="px-6 pt-6 pb-4 border-b border-border shrink-0">
-                <h2 className="text-lg font-bold text-foreground mb-1">Templates prontos</h2>
-                <p className="text-xs text-muted-foreground mb-3">Escolha um template e a IA irá montar o fluxo completo para você.</p>
-                <div className="relative">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar template..."
-                    value={templateSearch}
-                    onChange={(e) => setTemplateSearch(e.target.value)}
-                    className="pl-9 h-9 text-sm bg-background"
-                  />
-                </div>
-              </div>
-              <div className="overflow-y-auto flex-1 p-4">
-                <div className="grid grid-cols-2 gap-3">
-                  {filteredTemplates.map((tpl) => (
-                    <button
-                      key={tpl.id}
-                      onClick={() => {
-                        setShowTemplatesDialog(false);
-                        handleUseTemplate(tpl);
-                      }}
-                      className="group flex items-start gap-3 p-3.5 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                        <tpl.icon size={16} className="text-primary" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-foreground truncate">{tpl.name}</p>
-                        <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
-                          {tpl.description}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                {filteredTemplates.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    Nenhum template encontrado para "{templateSearch}"
-                  </p>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-
           {/* Metrics */}
           <div>
             <h2 className="text-lg font-bold text-foreground mb-4">Suas métricas</h2>
@@ -394,8 +250,7 @@ export default function WhatsAppAutomations() {
               <Card className="border-border">
                 <CardContent className="p-4 flex flex-col items-center text-center">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-                    <Workflow size={13} />
-                    Fluxos criados
+                    <Workflow size={13} /> Fluxos criados
                   </div>
                   <p className="text-2xl font-bold text-foreground">{totalFlows}</p>
                 </CardContent>
@@ -403,8 +258,7 @@ export default function WhatsAppAutomations() {
               <Card className="border-border">
                 <CardContent className="p-4 flex flex-col items-center text-center">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-                    <Zap size={13} />
-                    Publicados
+                    <Zap size={13} /> Publicados
                   </div>
                   <p className="text-2xl font-bold text-foreground">{activeFlows}</p>
                 </CardContent>
@@ -412,8 +266,7 @@ export default function WhatsAppAutomations() {
               <Card className="border-border">
                 <CardContent className="p-4 flex flex-col items-center text-center">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-                    <BarChart3 size={13} />
-                    Rascunhos
+                    <BarChart3 size={13} /> Rascunhos
                   </div>
                   <p className="text-2xl font-bold text-foreground">{draftFlows}</p>
                 </CardContent>
@@ -492,13 +345,65 @@ export default function WhatsAppAutomations() {
               </div>
             </div>
           )}
+
+          {/* Empty state */}
+          {!isLoading && flows.length === 0 && (
+            <Card className="border-dashed">
+              <CardContent className="p-12 flex flex-col items-center justify-center text-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <Workflow size={28} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-1">Nenhum fluxo criado</h3>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    Crie fluxos de atendimento automático para WhatsApp com mensagens, botões, condições e ações.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </main>
-        <CreateFlowDialog
-          open={showCreateDialog}
-          onOpenChange={setShowCreateDialog}
-          initialMode={createDialogMode}
-          initialPrompt={createDialogPrompt}
-        />
+
+        {/* Templates Dialog */}
+        <Dialog open={showTemplatesDialog} onOpenChange={setShowTemplatesDialog}>
+          <DialogContent className="sm:max-w-[640px] p-0 gap-0 overflow-hidden border-border/50 bg-card max-h-[80vh] flex flex-col">
+            <div className="px-6 pt-6 pb-4 border-b border-border shrink-0">
+              <h2 className="text-lg font-bold text-foreground mb-1">Templates prontos</h2>
+              <p className="text-xs text-muted-foreground mb-3">Escolha um template e a IA irá montar o fluxo completo.</p>
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar template..."
+                  value={templateSearch}
+                  onChange={(e) => setTemplateSearch(e.target.value)}
+                  className="pl-9 h-9 text-sm bg-background"
+                />
+              </div>
+            </div>
+            <div className="overflow-y-auto flex-1 p-4">
+              <div className="grid grid-cols-2 gap-3">
+                {filteredTemplates.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    onClick={() => handleUseTemplate(tpl)}
+                    className="group flex items-start gap-3 p-3.5 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                      <tpl.icon size={16} className="text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-foreground truncate">{tpl.name}</p>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{tpl.description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {filteredTemplates.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-8">Nenhum template encontrado</p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
