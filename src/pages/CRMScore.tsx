@@ -291,7 +291,8 @@ const RULE_CATEGORIES: Record<string, { label: string; color: string; keys: stri
   },
 };
 
-const PER_PAGE = 20;
+const PER_PAGE_OPTIONS = [20, 50, 100];
+const DEFAULT_PER_PAGE = 20;
 
 const getScoreColor = (score: number) => {
   if (score >= 801) return "text-emerald-400";
