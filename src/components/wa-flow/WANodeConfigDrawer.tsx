@@ -72,66 +72,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
 
           {/* ===== ENTRY NODE ===== */}
           {node.type === "entry" && (
-            <div className="space-y-4">
-              {renderInfoBanner("Defina como o lead entra neste fluxo. Compatível com Meta Partners Inbound API.")}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Tipo de gatilho</Label>
-                <Select value={config.trigger_type || ""} onValueChange={(v) => updateConfig("trigger_type", v)}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="keyword">Palavra-chave</SelectItem>
-                    <SelectItem value="campaign_reply">Resposta de campanha</SelectItem>
-                    <SelectItem value="button_click">Clique em botão interativo</SelectItem>
-                    <SelectItem value="webhook">Webhook/API externa</SelectItem>
-                    <SelectItem value="qr_code">QR Code</SelectItem>
-                    <SelectItem value="first_message">1ª mensagem recebida</SelectItem>
-                    <SelectItem value="re_entry">Reentrada de lead existente</SelectItem>
-                    <SelectItem value="template_reply">Resposta a template HSM</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {config.trigger_type === "keyword" && (
-                <div className="space-y-2">
-                  <Label className="text-xs">Palavras-chave (separadas por vírgula)</Label>
-                  <Input
-                    value={config.keywords || ""}
-                    onChange={(e) => updateConfig("keywords", e.target.value)}
-                    placeholder="preço, comprar, orçamento, quero"
-                    className="h-9 text-sm"
-                  />
-                  <div className="flex items-center gap-2 mt-1">
-                    <Switch
-                      checked={config.exact_match || false}
-                      onCheckedChange={(v) => updateConfig("exact_match", v)}
-                    />
-                    <Label className="text-[11px] text-muted-foreground">Correspondência exata</Label>
-                  </div>
-                </div>
-              )}
-              {config.trigger_type === "campaign_reply" && (
-                <div className="space-y-2">
-                  <Label className="text-xs">ID ou nome da campanha (opcional)</Label>
-                  <Input
-                    value={config.campaign_filter || ""}
-                    onChange={(e) => updateConfig("campaign_filter", e.target.value)}
-                    placeholder="Qualquer campanha"
-                    className="h-9 text-sm"
-                  />
-                </div>
-              )}
-              {config.trigger_type === "webhook" && (
-                <div className="space-y-2">
-                  <Label className="text-xs">URL de callback (será gerada automaticamente)</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={config.webhook_url || "Será gerado ao ativar o fluxo"}
-                      readOnly
-                      className="h-9 text-sm bg-muted/30 flex-1"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
+            <EntryNodeConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} />
           )}
 
           {/* ===== MESSAGE NODE ===== */}
