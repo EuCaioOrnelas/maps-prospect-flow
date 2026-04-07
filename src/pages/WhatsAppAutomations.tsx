@@ -180,7 +180,7 @@ export default function WhatsAppAutomations() {
               className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left disabled:opacity-50"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                <Plus size={20} className="text-primary" />
+                <Plus size={20} className="text-primary transition-transform duration-300 group-hover:scale-125 group-hover:rotate-90" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Criar novo fluxo</p>
@@ -193,7 +193,7 @@ export default function WhatsAppAutomations() {
               className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                <Sparkles size={20} className="text-primary" />
+                <Sparkles size={20} className="text-primary transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Criar com IA ✨</p>
@@ -206,7 +206,7 @@ export default function WhatsAppAutomations() {
               className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                <Workflow size={20} className="text-primary" />
+                <Workflow size={20} className="text-primary transition-transform duration-300 group-hover:scale-125 group-hover:-rotate-12" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Usar template</p>
