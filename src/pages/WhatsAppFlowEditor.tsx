@@ -318,15 +318,6 @@ export default function WhatsAppFlowEditor() {
     setTestDialogOpen(true);
   }, [nodes.length]);
 
-  const resetFlowTest = useCallback(() => {
-    if (nodes.length === 0) {
-      toast.error("Adicione pelo menos um bloco para testar o fluxo");
-      return;
-    }
-
-    setTestResetVersion((prev) => prev + 1);
-    setTestDialogOpen(true);
-  }, [nodes.length]);
 
   const onConnect = useCallback(
     (params: Connection) => {
