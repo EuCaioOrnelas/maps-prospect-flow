@@ -236,6 +236,19 @@ serve(async (req) => {
                     status: 'delivered',
                   });
                   console.log(`[meta-webhook] ✅ Chat message saved for conversation ${conversation.id}`);
+
+                  // === REVENUE SCORING: Fire event for inbound messages ===
+                  const normalizedPhone = normalizeBrazilianMobileE164(from);
+                  if (normalizedPhone) {
+                    fireRevenueEvent({
+                      user_id: userId,
+                      phone_e164: normalizedPhone,
+                      direction: 'inbound',
+                      message_content: textContent || undefined,
+                      lead_name: contactName || undefined,
+                    });
+                    console.log(`[meta-webhook] 📊 Revenue event fired for ${normalizedPhone}`);
+                  }
                 }
               }
             }
