@@ -818,7 +818,7 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                   <TableRow key={lead.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setSelectedLead(lead)}>
                     <TableCell>
                       <div>
-                        <p className="font-medium text-sm">{lead.name || "Sem nome"}</p>
+                        <p className="font-medium text-sm">{lead.name || lead.phone_e164}</p>
                         <p className="text-xs text-muted-foreground">{lead.phone_e164}</p>
                       </div>
                     </TableCell>
@@ -863,31 +863,44 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
         </CardContent>
       </Card>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1 flex-wrap">
-          <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(0)}>
-            <ChevronsLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          {getPages().map((p, i) =>
-            typeof p === "string" ? (
-              <span key={`e${i}`} className="px-1 text-muted-foreground">...</span>
-            ) : (
-              <Button key={p} variant={page === p ? "default" : "outline"} size="sm" className="h-8 min-w-[2rem]" onClick={() => setPage(p)}>
-                {p + 1}
-              </Button>
-            )
-          )}
-          <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(totalPages - 1)}>
-            <ChevronsRight className="h-4 w-4" />
-          </Button>
+      {/* Pagination */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Por página:</span>
+          <Select value={String(perPage)} onValueChange={(v) => { setPerPage(Number(v)); setPage(0); }}>
+            <SelectTrigger className="h-8 w-[70px] text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {PER_PAGE_OPTIONS.map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground">{fmtNum(filtered.length)} contatos</span>
         </div>
-      )}
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1 flex-wrap">
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(0)}>
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {getPages().map((p, i) =>
+              typeof p === "string" ? (
+                <span key={`e${i}`} className="px-1 text-muted-foreground">...</span>
+              ) : (
+                <Button key={p} variant={page === p ? "default" : "outline"} size="sm" className="h-8 min-w-[2rem]" onClick={() => setPage(p)}>
+                  {p + 1}
+                </Button>
+              )
+            )}
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(totalPages - 1)}>
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Lead Detail Dialog */}
       {selectedLead && (
