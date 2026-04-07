@@ -650,6 +650,7 @@ export default function WhatsAppFlowEditor() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
+            onPaneClick={() => { setSelectedNode(null); setSelectedNodeIds(new Set()); }}
             nodeTypes={nodeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             fitView
