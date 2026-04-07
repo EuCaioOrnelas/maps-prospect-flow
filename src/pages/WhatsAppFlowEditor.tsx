@@ -15,13 +15,16 @@ import {
   type Edge,
   type Node,
   MarkerType,
-  Panel,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Undo2, Plus } from "lucide-react";
+import {
+  ArrowLeft, Save, Undo2, Redo2, Trash2,
+  Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
+  HeadphonesIcon, CircleStop, ChevronRight, ChevronLeft,
+} from "lucide-react";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
 import { WAMessageNode } from "@/components/wa-flow/nodes/WAMessageNode";
 import { WAButtonsNode } from "@/components/wa-flow/nodes/WAButtonsNode";
@@ -30,8 +33,19 @@ import { WAWaitNode } from "@/components/wa-flow/nodes/WAWaitNode";
 import { WAActionNode } from "@/components/wa-flow/nodes/WAActionNode";
 import { WAHandoffNode } from "@/components/wa-flow/nodes/WAHandoffNode";
 import { WAEndNode } from "@/components/wa-flow/nodes/WAEndNode";
-import { WANodeToolbar } from "@/components/wa-flow/WANodeToolbar";
 import { WANodeConfigDrawer } from "@/components/wa-flow/WANodeConfigDrawer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 const nodeTypes = {
   entry: WAEntryNode,
@@ -50,6 +64,20 @@ const defaultEdgeOptions = {
   markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(158, 72%, 38%)" },
 };
 
+const sidebarNodes = [
+  { type: "entry", icon: Zap, label: "Entrada", desc: "Trigger inicial do fluxo", color: "text-primary bg-primary/10" },
+  { type: "message", icon: MessageSquare, label: "Mensagem", desc: "Texto, imagem, áudio, vídeo", color: "text-blue-400 bg-blue-400/10" },
+  { type: "buttons", icon: ToggleLeft, label: "Botões", desc: "Respostas rápidas ou lista", color: "text-indigo-400 bg-indigo-400/10" },
+  { type: "condition", icon: GitBranch, label: "Condição", desc: "IF/ELSE para bifurcação", color: "text-purple-400 bg-purple-400/10" },
+  { type: "wait", icon: Clock, label: "Espera", desc: "Delay antes do próximo nó", color: "text-amber-400 bg-amber-400/10" },
+  { type: "action", icon: Settings, label: "Ação", desc: "Tag, campo, webhook, CRM", color: "text-cyan-400 bg-cyan-400/10" },
+  { type: "handoff", icon: HeadphonesIcon, label: "Handoff", desc: "Transferir para humano", color: "text-orange-400 bg-orange-400/10" },
+  { type: "end", icon: CircleStop, label: "Fim", desc: "Encerrar o fluxo", color: "text-red-400 bg-red-400/10" },
+];
+
+// History entry type
+type HistoryEntry = { nodes: Node[]; edges: Edge[] };
+
 export default function WhatsAppFlowEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -62,6 +90,43 @@ export default function WhatsAppFlowEditor() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Undo/Redo history
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const isUndoRedo = useRef(false);
+
+  const pushHistory = useCallback((n: Node[], e: Edge[]) => {
+    if (isUndoRedo.current) { isUndoRedo.current = false; return; }
+    setHistory((prev) => {
+      const truncated = prev.slice(0, historyIndex + 1);
+      const next = [...truncated, { nodes: JSON.parse(JSON.stringify(n)), edges: JSON.parse(JSON.stringify(e)) }];
+      if (next.length > 50) next.shift();
+      return next;
+    });
+    setHistoryIndex((prev) => Math.min(prev + 1, 49));
+  }, [historyIndex]);
+
+  const undo = useCallback(() => {
+    if (historyIndex <= 0) return;
+    isUndoRedo.current = true;
+    const prev = history[historyIndex - 1];
+    setNodes(prev.nodes);
+    setEdges(prev.edges);
+    setHistoryIndex((i) => i - 1);
+    setHasChanges(true);
+  }, [history, historyIndex, setNodes, setEdges]);
+
+  const redo = useCallback(() => {
+    if (historyIndex >= history.length - 1) return;
+    isUndoRedo.current = true;
+    const next = history[historyIndex + 1];
+    setNodes(next.nodes);
+    setEdges(next.edges);
+    setHistoryIndex((i) => i + 1);
+    setHasChanges(true);
+  }, [history, historyIndex, setNodes, setEdges]);
 
   // Fetch flow data
   const { data: flow, isLoading } = useQuery({
@@ -104,7 +169,6 @@ export default function WhatsAppFlowEditor() {
     enabled: !!id && !!user,
   });
 
-  // Initialize nodes/edges from DB
   useEffect(() => {
     if (flow) setFlowName(flow.name);
   }, [flow]);
@@ -118,6 +182,18 @@ export default function WhatsAppFlowEditor() {
         data: { label: n.name, config: n.config || {} },
       }));
       setNodes(mapped);
+      // Init history
+      const mappedEdges: Edge[] = dbEdges.map((e: any) => ({
+        id: e.id,
+        source: e.source_node_id,
+        target: e.target_node_id,
+        sourceHandle: e.source_handle,
+        targetHandle: e.target_handle,
+        label: e.label,
+        ...defaultEdgeOptions,
+      }));
+      setHistory([{ nodes: JSON.parse(JSON.stringify(mapped)), edges: JSON.parse(JSON.stringify(mappedEdges)) }]);
+      setHistoryIndex(0);
     }
   }, [dbNodes]);
 
@@ -138,10 +214,14 @@ export default function WhatsAppFlowEditor() {
 
   const onConnect = useCallback(
     (params: Connection) => {
-      setEdges((eds) => addEdge({ ...params, ...defaultEdgeOptions }, eds));
+      setEdges((eds) => {
+        const newEdges = addEdge({ ...params, ...defaultEdgeOptions }, eds);
+        pushHistory(nodes, newEdges);
+        return newEdges;
+      });
       setHasChanges(true);
     },
-    [setEdges]
+    [setEdges, nodes, pushHistory]
   );
 
   const onNodeClick = useCallback((_: any, node: Node) => {
@@ -156,14 +236,9 @@ export default function WhatsAppFlowEditor() {
       const newY = lastNode ? lastNode.position.y : 200;
 
       const nameMap: Record<string, string> = {
-        entry: "Entrada",
-        message: "Mensagem",
-        buttons: "Botões",
-        condition: "Condição",
-        wait: "Espera",
-        action: "Ação",
-        handoff: "Handoff",
-        end: "Fim",
+        entry: "Entrada", message: "Mensagem", buttons: "Botões",
+        condition: "Condição", wait: "Espera", action: "Ação",
+        handoff: "Handoff", end: "Fim",
       };
 
       const newNode: Node = {
@@ -173,51 +248,66 @@ export default function WhatsAppFlowEditor() {
         data: { label: nameMap[type] || type, config: {} },
       };
 
-      setNodes((nds) => [...nds, newNode]);
+      const newNodes = [...nodes, newNode];
+      setNodes(newNodes);
+      pushHistory(newNodes, edges);
       setHasChanges(true);
     },
-    [nodes, setNodes]
+    [nodes, edges, setNodes, pushHistory]
   );
 
   const handleUpdateNodeConfig = useCallback(
     (nodeId: string, config: any, label?: string) => {
-      setNodes((nds) =>
-        nds.map((n) =>
+      setNodes((nds) => {
+        const updated = nds.map((n) =>
           n.id === nodeId
             ? { ...n, data: { ...n.data, config, ...(label ? { label } : {}) } }
             : n
-        )
-      );
+        );
+        pushHistory(updated, edges);
+        return updated;
+      });
       setHasChanges(true);
     },
-    [setNodes]
+    [setNodes, edges, pushHistory]
   );
 
   const handleDeleteNode = useCallback(
     (nodeId: string) => {
-      setNodes((nds) => nds.filter((n) => n.id !== nodeId));
-      setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+      const newNodes = nodes.filter((n) => n.id !== nodeId);
+      const newEdges = edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
+      setNodes(newNodes);
+      setEdges(newEdges);
+      pushHistory(newNodes, newEdges);
       setDrawerOpen(false);
       setSelectedNode(null);
       setHasChanges(true);
     },
-    [setNodes, setEdges]
+    [nodes, edges, setNodes, setEdges, pushHistory]
   );
+
+  // Delete flow
+  const deleteFlow = useMutation({
+    mutationFn: async () => {
+      await supabase.from("wa_flow_edges").delete().eq("flow_id", id!);
+      await supabase.from("wa_flow_nodes").delete().eq("flow_id", id!);
+      await supabase.from("wa_automation_flows").delete().eq("id", id!);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wa-automation-flows"] });
+      toast.success("Fluxo excluído");
+      navigate("/fluxos");
+    },
+    onError: () => toast.error("Erro ao excluir fluxo"),
+  });
 
   // Save flow
   const saveFlow = useMutation({
     mutationFn: async () => {
-      // Update flow name
-      await supabase
-        .from("wa_automation_flows")
-        .update({ name: flowName })
-        .eq("id", id!);
-
-      // Delete old nodes and edges
+      await supabase.from("wa_automation_flows").update({ name: flowName }).eq("id", id!);
       await supabase.from("wa_flow_edges").delete().eq("flow_id", id!);
       await supabase.from("wa_flow_nodes").delete().eq("flow_id", id!);
 
-      // Insert nodes
       const nodeIdMap: Record<string, string> = {};
       for (const node of nodes) {
         const { data, error } = await supabase
@@ -236,7 +326,6 @@ export default function WhatsAppFlowEditor() {
         nodeIdMap[node.id] = data.id;
       }
 
-      // Insert edges with mapped IDs
       if (edges.length > 0) {
         const edgesToInsert = edges.map((e) => ({
           flow_id: id!,
@@ -250,7 +339,6 @@ export default function WhatsAppFlowEditor() {
         if (error) throw error;
       }
 
-      // Refresh
       queryClient.invalidateQueries({ queryKey: ["wa-flow-nodes", id] });
       queryClient.invalidateQueries({ queryKey: ["wa-flow-edges", id] });
     },
@@ -260,6 +348,17 @@ export default function WhatsAppFlowEditor() {
     },
     onError: () => toast.error("Erro ao salvar fluxo"),
   });
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+      if ((e.metaKey || e.ctrlKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) { e.preventDefault(); redo(); }
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") { e.preventDefault(); saveFlow.mutate(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [undo, redo, saveFlow]);
 
   if (isLoading) {
     return (
@@ -272,63 +371,132 @@ export default function WhatsAppFlowEditor() {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Top bar */}
-      <div className="h-14 border-b border-border bg-card flex items-center px-4 gap-3 shrink-0">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/fluxos")}>
+      <div className="h-14 border-b border-border bg-card flex items-center px-4 gap-2 shrink-0">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/fluxos")} className="h-9 w-9">
           <ArrowLeft size={18} />
         </Button>
+
         <Input
           value={flowName}
-          onChange={(e) => {
-            setFlowName(e.target.value);
-            setHasChanges(true);
-          }}
-          className="max-w-[240px] h-9 text-sm font-medium bg-transparent border-transparent hover:border-border focus:border-border"
+          onChange={(e) => { setFlowName(e.target.value); setHasChanges(true); }}
+          className="max-w-[220px] h-9 text-sm font-medium bg-transparent border-transparent hover:border-border focus:border-border"
         />
+
+        <div className="h-6 w-px bg-border mx-1" />
+
+        {/* Undo/Redo */}
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndex <= 0} title="Desfazer (Ctrl+Z)">
+          <Undo2 size={15} />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={historyIndex >= history.length - 1} title="Refazer (Ctrl+Y)">
+          <Redo2 size={15} />
+        </Button>
+
         <div className="flex-1" />
+
+        {/* Delete flow */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir fluxo">
+              <Trash2 size={15} />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir fluxo?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação é irreversível. Todos os nós e conexões serão perdidos permanentemente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => deleteFlow.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <Button
           variant="outline"
           size="sm"
           onClick={() => saveFlow.mutate()}
           disabled={saveFlow.isPending || !hasChanges}
-          className="gap-1.5"
+          className="gap-1.5 rounded-full btn-shine"
         >
           <Save size={14} />
           {saveFlow.isPending ? "Salvando..." : "Salvar"}
         </Button>
       </div>
 
-      {/* Canvas */}
-      <div className="flex-1 relative" ref={reactFlowWrapper}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={(changes) => {
-            onNodesChange(changes);
-            if (changes.some((c) => c.type === "position" && c.dragging === false)) {
-              setHasChanges(true);
-            }
-          }}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={onNodeClick}
-          nodeTypes={nodeTypes}
-          defaultEdgeOptions={defaultEdgeOptions}
-          fitView
-          fitViewOptions={{ padding: 0.3 }}
-          proOptions={{ hideAttribution: true }}
-          className="bg-background"
-        >
-          <Background color="hsl(var(--border))" gap={20} size={1} />
-          <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
-          <MiniMap
-            className="!bg-card !border-border"
-            nodeColor="hsl(158, 72%, 38%)"
-            maskColor="hsl(var(--background) / 0.8)"
-          />
-          <Panel position="top-center">
-            <WANodeToolbar onAddNode={handleAddNode} />
-          </Panel>
-        </ReactFlow>
+      {/* Main area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar */}
+        <div className={cn(
+          "border-r border-border bg-card shrink-0 transition-all duration-200 flex flex-col relative",
+          sidebarOpen ? "w-[220px]" : "w-0"
+        )}>
+          {sidebarOpen && (
+            <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">Blocos</p>
+              {sidebarNodes.map((item) => (
+                <button
+                  key={item.type}
+                  onClick={() => handleAddNode(item.type)}
+                  className="w-full flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group"
+                >
+                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
+                    <item.icon size={15} className={item.color.split(" ")[0]} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-foreground">{item.label}</p>
+                    <p className="text-[10px] text-muted-foreground leading-tight">{item.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Toggle sidebar */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-card border border-border flex items-center justify-center hover:bg-muted transition-colors shadow-sm"
+          >
+            {sidebarOpen ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
+          </button>
+        </div>
+
+        {/* Canvas */}
+        <div className="flex-1 relative" ref={reactFlowWrapper}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={(changes) => {
+              onNodesChange(changes);
+              if (changes.some((c) => c.type === "position" && c.dragging === false)) {
+                pushHistory(nodes, edges);
+                setHasChanges(true);
+              }
+            }}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeClick={onNodeClick}
+            nodeTypes={nodeTypes}
+            defaultEdgeOptions={defaultEdgeOptions}
+            fitView
+            fitViewOptions={{ padding: 0.3 }}
+            proOptions={{ hideAttribution: true }}
+            className="bg-background"
+          >
+            <Background color="hsl(var(--border))" gap={20} size={1} />
+            <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
+            <MiniMap
+              className="!bg-card !border-border"
+              nodeColor="hsl(158, 72%, 38%)"
+              maskColor="hsl(var(--background) / 0.8)"
+            />
+          </ReactFlow>
+        </div>
       </div>
 
       {/* Config drawer */}
