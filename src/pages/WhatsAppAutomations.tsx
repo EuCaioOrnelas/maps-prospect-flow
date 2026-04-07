@@ -134,10 +134,62 @@ export default function WhatsAppAutomations() {
     },
   });
 
-  const handleUseTemplate = (tpl: typeof flowTemplates[0]) => {
+  const handleUseTemplate = useCallback(async (tpl: typeof flowTemplates[0]) => {
     setShowTemplatesDialog(false);
-    navigate(`/fluxos/criar-ia?prompt=${encodeURIComponent(tpl.prompt)}`);
-  };
+    const template = getFlowTemplate(tpl.id);
+    if (!template) {
+      // Fallback to AI if no hardcoded template
+      navigate(`/fluxos/criar-ia?prompt=${encodeURIComponent(tpl.prompt)}`);
+      return;
+    }
+
+    try {
+      // Create the flow
+      const { data: flow, error: flowError } = await supabase
+        .from("wa_automation_flows")
+        .insert({ user_id: user!.id, name: tpl.name, description: tpl.description })
+        .select()
+        .single();
+      if (flowError || !flow) throw flowError;
+
+      // Insert nodes and map temp IDs to real IDs
+      const nodeIdMap: Record<string, string> = {};
+      for (const node of template.nodes) {
+        const { data, error } = await supabase
+          .from("wa_flow_nodes")
+          .insert({
+            flow_id: flow.id,
+            node_type: node.type as any,
+            name: node.label,
+            config: node.config,
+            position_x: node.x,
+            position_y: node.y,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        nodeIdMap[node.id] = data.id;
+      }
+
+      // Insert edges
+      if (template.edges.length > 0) {
+        const edgesToInsert = template.edges.map((e) => ({
+          flow_id: flow.id,
+          source_node_id: nodeIdMap[e.source],
+          target_node_id: nodeIdMap[e.target],
+          source_handle: e.sourceHandle || null,
+        }));
+        const { error } = await supabase.from("wa_flow_edges").insert(edgesToInsert);
+        if (error) throw error;
+      }
+
+      toast.success(`Template "${tpl.name}" criado!`);
+      navigate(`/fluxos/${flow.id}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao criar fluxo a partir do template");
+    }
+  }, [user, navigate]);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
