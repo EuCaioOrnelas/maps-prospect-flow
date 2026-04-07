@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
-  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle,
+  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Plug,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
@@ -36,6 +36,7 @@ import { WAEndNode } from "@/components/wa-flow/nodes/WAEndNode";
 import { WAAgentNode } from "@/components/wa-flow/nodes/WAAgentNode";
 import { WAABTestNode } from "@/components/wa-flow/nodes/WAABTestNode";
 import { WARandomSplitNode } from "@/components/wa-flow/nodes/WARandomSplitNode";
+import { WAIntegrationNode } from "@/components/wa-flow/nodes/WAIntegrationNode";
 import { WANodeConfigDrawer } from "@/components/wa-flow/WANodeConfigDrawer";
 import {
   AlertDialog,
