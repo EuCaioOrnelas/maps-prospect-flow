@@ -258,12 +258,13 @@ export default function CreateFlowAI() {
     setExpandedPrompt(index);
     const full = quickPrompts[index].full;
     setPrompt("");
-    // Type it out character by character
     let i = 0;
     const interval = setInterval(() => {
       setPrompt(full.slice(0, i + 1));
       i++;
       if (i >= full.length) clearInterval(interval);
+      // Trigger resize after React re-renders
+      requestAnimationFrame(() => adjustHeight());
     }, 8);
   };
 
