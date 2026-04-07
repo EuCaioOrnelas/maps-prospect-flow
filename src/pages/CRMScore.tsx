@@ -317,8 +317,8 @@ const fmtPhone = (phone: string) => {
   if (digits.startsWith("55") && digits.length >= 12) {
     const ddd = digits.slice(2, 4);
     const rest = digits.slice(4);
-    if (rest.length === 9) return `+55 (${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
-    if (rest.length === 8) return `+55 (${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+    if (rest.length === 9) return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+    if (rest.length === 8) return `(${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
   }
   return phone;
 };
@@ -332,21 +332,31 @@ const ScoreInfoPopover = () => (
         <HelpCircle className="h-5 w-5" />
       </button>
     </PopoverTrigger>
-    <PopoverContent className="w-80 text-sm space-y-3" side="bottom" align="start">
+    <PopoverContent className="w-[340px] text-sm space-y-3" side="bottom" align="start">
       <h4 className="font-semibold text-foreground">Como funciona o Score</h4>
-      <p className="text-muted-foreground">
-        O score vai de 0 a 1.000 pontos e é calculado automaticamente com base nas interações dos leads no WhatsApp.
+      <p className="text-muted-foreground text-xs">
+        O score vai de 0 a 1.000 pontos e é calculado automaticamente com base nas interações dos contatos no WhatsApp.
       </p>
       <div className="space-y-1.5">
-        <p className="text-xs"><span className="text-red-400 font-medium">0 – 200:</span> Frio. sem interação relevante</p>
-        <p className="text-xs"><span className="text-yellow-400 font-medium">201 – 400:</span> Baixo engajamento. pouca atividade</p>
-        <p className="text-xs"><span className="text-blue-400 font-medium">401 – 600:</span> Engajado. interagindo ativamente</p>
-        <p className="text-xs"><span className="text-purple-400 font-medium">601 – 800:</span> Alto valor. forte interesse</p>
-        <p className="text-xs"><span className="text-emerald-400 font-medium">801 – 1.000:</span> Pronto para venda. lead quente</p>
+        {[
+          { label: "Frio", range: "0 – 200", desc: "Sem interação relevante", color: "border-red-500/40 bg-red-500/10", text: "text-red-400" },
+          { label: "Baixo engajamento", range: "201 – 400", desc: "Pouca atividade", color: "border-yellow-500/40 bg-yellow-500/10", text: "text-yellow-400" },
+          { label: "Engajado", range: "401 – 600", desc: "Interagindo ativamente", color: "border-blue-500/40 bg-blue-500/10", text: "text-blue-400" },
+          { label: "Alto valor", range: "601 – 800", desc: "Forte interesse", color: "border-purple-500/40 bg-purple-500/10", text: "text-purple-400" },
+          { label: "Pronto p/ venda", range: "801 – 1.000", desc: "Contato quente", color: "border-emerald-500/40 bg-emerald-500/10", text: "text-emerald-400" },
+        ].map((b) => (
+          <div key={b.label} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${b.color}`}>
+            <span className={`text-xs font-semibold ${b.text}`}>{b.label}</span>
+            <div className="text-right">
+              <span className="text-[11px] font-medium text-foreground">{b.range}</span>
+              <p className="text-[10px] text-muted-foreground">{b.desc}</p>
+            </div>
+          </div>
+        ))}
       </div>
       <div className="border-t border-border pt-2">
-        <p className="text-xs text-muted-foreground">
-          O score é atualizado automaticamente conforme novas interações acontecem. Cada regra ativa soma ou subtrai pontos. Leads inativos perdem score diariamente (decaimento).
+        <p className="text-[11px] text-muted-foreground">
+          O score é atualizado automaticamente. Cada regra soma ou subtrai pontos. Contatos inativos perdem score diariamente.
         </p>
       </div>
     </PopoverContent>
@@ -1628,7 +1638,7 @@ const CRMScore = () => {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">Score de Leads</h1>
+                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">Score de Contatos</h1>
                   <ScoreInfoPopover />
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -1638,13 +1648,6 @@ const CRMScore = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(BUCKET_LABELS).map(([key, label]) => (
-              <div key={key} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium ${BUCKET_BADGE_COLORS[key]}`}>
-                <span>{label}</span>
-              </div>
-            ))}
-          </div>
 
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
