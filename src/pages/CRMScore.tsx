@@ -31,7 +31,7 @@ import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { cn } from "@/lib/utils";
 import { 
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip as RechartsTooltip, ResponsiveContainer 
+  Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line
 } from "recharts";
 
 // ═══════════════ TYPES ═══════════════
