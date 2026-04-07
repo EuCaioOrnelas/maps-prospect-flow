@@ -14,6 +14,7 @@ import {
   Building2,
   User,
   Phone,
+  Mail,
   MapPin,
   Globe,
   Tag,
@@ -27,6 +28,7 @@ import {
   Save,
   Plus,
   Pencil,
+  Trophy,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -268,6 +270,7 @@ export const LeadDetailPanel = ({
   const [formData, setFormData] = useState({
     company_name: lead.company_name || '',
     contact_name: lead.contact_name || '',
+    email: (lead as any).email || '',
     category: lead.category || '',
     city: lead.city || '',
     region: lead.region || '',
