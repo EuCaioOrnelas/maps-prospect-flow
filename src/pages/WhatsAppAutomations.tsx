@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Workflow, MoreVertical, Play, Pause, Archive, Trash2, Copy, FlaskConical } from "lucide-react";
+import { CreateFlowDialog } from "@/components/wa-flow/CreateFlowDialog";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -32,6 +33,7 @@ export default function WhatsAppAutomations() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const { data: flows = [], isLoading } = useQuery({
     queryKey: ["wa-automation-flows"],
@@ -124,7 +126,7 @@ export default function WhatsAppAutomations() {
                 BETA
               </Badge>
             </div>
-            <Button onClick={() => createFlow.mutate()} disabled={createFlow.isPending}>
+            <Button onClick={() => setShowCreateDialog(true)}>
               <Plus size={16} />
               Novo Fluxo
             </Button>
@@ -150,7 +152,7 @@ export default function WhatsAppAutomations() {
                     Crie fluxos de atendimento automático para WhatsApp via Meta Partners com mensagens, botões, condições e ações.
                   </p>
                 </div>
-                <Button onClick={() => createFlow.mutate()} disabled={createFlow.isPending}>
+                <Button onClick={() => setShowCreateDialog(true)}>
                   <Plus size={16} />
                   Criar primeiro fluxo
                 </Button>
@@ -224,6 +226,7 @@ export default function WhatsAppAutomations() {
             </div>
           )}
         </main>
+        <CreateFlowDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
       </div>
     </div>
   );
