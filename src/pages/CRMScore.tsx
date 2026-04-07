@@ -837,9 +837,15 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                         <Minus className="h-4 w-4 text-muted-foreground" />
                       )}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm tabular-nums">{fmtNum(lead.score_engagement)}</TableCell>
-                    <TableCell className="hidden md:table-cell text-sm tabular-nums">{fmtNum(lead.score_intent)}</TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm tabular-nums text-destructive">{fmtNum(lead.score_risk)}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span className="text-sm font-semibold tabular-nums">{fmtNum(lead.score_engagement)}</span>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span className="text-sm font-semibold tabular-nums">{fmtNum(lead.score_intent)}</span>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <span className={cn("text-sm font-semibold tabular-nums", lead.score_risk < 0 ? "text-destructive" : "text-muted-foreground")}>{fmtNum(lead.score_risk)}</span>
+                    </TableCell>
                     <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
                       {new Date(lead.last_activity_at).toLocaleDateString('pt-BR')}
                     </TableCell>
@@ -984,9 +990,9 @@ const ScoreRankingTab = ({ leads }: { leads: RevenueLead[] }) => {
 
   const getMedalIcon = (index: number) => {
     const globalIndex = page * RANKING_PER_PAGE + index;
-    if (globalIndex === 0) return <Trophy className="h-5 w-5 text-yellow-400" />;
-    if (globalIndex === 1) return <Trophy className="h-5 w-5 text-gray-400" />;
-    if (globalIndex === 2) return <Trophy className="h-5 w-5 text-orange-500" />;
+    if (globalIndex === 0) return <span className="text-xl">🥇</span>;
+    if (globalIndex === 1) return <span className="text-xl">🥈</span>;
+    if (globalIndex === 2) return <span className="text-xl">🥉</span>;
     return <span className="w-5 text-center text-sm text-muted-foreground font-medium">{globalIndex + 1}</span>;
   };
 
