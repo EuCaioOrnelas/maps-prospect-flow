@@ -895,7 +895,292 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
   );
 };
 
-// ═══════════════ RANKING TAB ═══════════════
+// ═══════════════ LEAD DETAIL POPUP ═══════════════
+
+interface ScoreLog {
+  id: string;
+  event_type: string;
+  points_applied: number;
+  score_before: number;
+  score_after: number;
+  category: string;
+  created_at: string;
+}
+
+const SCORE_BAR_CONFIG = [
+  { key: "score_engagement", label: "Engajamento", icon: MessageSquare, color: "bg-blue-500", max: 500 },
+  { key: "score_intent", label: "Intenção Compra", icon: ShoppingCart, color: "bg-yellow-500", max: 500 },
+  { key: "score_urgency", label: "Urgência", icon: Zap, color: "bg-purple-500", max: 300 },
+  { key: "score_risk", label: "Risco", icon: AlertTriangle, color: "bg-destructive", max: 300, isNegative: true },
+];
+
+const HISTORY_PER_PAGE = 15;
+
+const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => void }) => {
+  const [tab, setTab] = useState<"score" | "history" | "evolution">("score");
+  const [logs, setLogs] = useState<ScoreLog[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logPage, setLogPage] = useState(0);
+  const [evoData, setEvoData] = useState<{ date: string; score: number }[]>([]);
+  const [evoLoading, setEvoLoading] = useState(false);
+  const [evoPeriod, setEvoPeriod] = useState("30d");
+  const [evoDateFrom, setEvoDateFrom] = useState("");
+  const [evoDateTo, setEvoDateTo] = useState("");
+
+  const bucket = mapBucket(lead.status_bucket, lead.score_total);
+
+  // Load history
+  useEffect(() => {
+    if (tab === "history" && logs.length === 0) {
+      setLogsLoading(true);
+      supabase
+        .from("revenue_score_logs")
+        .select("*")
+        .eq("lead_id", lead.id)
+        .order("created_at", { ascending: false })
+        .limit(500)
+        .then(({ data }) => {
+          setLogs((data || []) as ScoreLog[]);
+          setLogsLoading(false);
+        });
+    }
+  }, [tab, lead.id]);
+
+  // Load evolution
+  useEffect(() => {
+    if (tab === "evolution") {
+      setEvoLoading(true);
+      let fromDate: Date;
+      let toDate = new Date();
+
+      if (evoDateFrom && evoDateTo) {
+        fromDate = new Date(evoDateFrom);
+        toDate = new Date(evoDateTo);
+        toDate.setHours(23, 59, 59, 999);
+      } else {
+        const days = evoPeriod === "7d" ? 7 : evoPeriod === "14d" ? 14 : evoPeriod === "90d" ? 90 : 30;
+        fromDate = new Date();
+        fromDate.setDate(fromDate.getDate() - days);
+      }
+
+      supabase
+        .from("revenue_score_logs")
+        .select("score_after, created_at")
+        .eq("lead_id", lead.id)
+        .gte("created_at", fromDate.toISOString())
+        .lte("created_at", toDate.toISOString())
+        .order("created_at", { ascending: true })
+        .limit(1000)
+        .then(({ data }) => {
+          const points = (data || []).map((d: any) => ({
+            date: new Date(d.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+            score: d.score_after,
+          }));
+          setEvoData(points);
+          setEvoLoading(false);
+        });
+    }
+  }, [tab, lead.id, evoPeriod, evoDateFrom, evoDateTo]);
+
+  const logTotalPages = Math.ceil(logs.length / HISTORY_PER_PAGE);
+  const paginatedLogs = logs.slice(logPage * HISTORY_PER_PAGE, (logPage + 1) * HISTORY_PER_PAGE);
+
+  const CATEGORY_COLORS: Record<string, string> = {
+    engagement: "bg-blue-500/20 text-blue-400",
+    intent: "bg-yellow-500/20 text-yellow-400",
+    penalty: "bg-red-500/20 text-red-400",
+    sla: "bg-purple-500/20 text-purple-400",
+    actions: "bg-emerald-500/20 text-emerald-400",
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <Card className="w-full max-w-2xl bg-card max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Detalhe do Contato</CardTitle>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-y-auto space-y-4">
+          {/* Lead Header */}
+          <div className="flex items-start justify-between p-4 rounded-xl bg-muted/20 border border-border/30">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <p className="font-bold">{lead.name || "Sem nome"}</p>
+              </div>
+              <p className="text-sm text-muted-foreground">{lead.phone_e164}</p>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
+                  {BUCKET_SHORT_LABELS[bucket]}
+                </Badge>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  Último evento: {new Date(lead.last_activity_at).toLocaleDateString('pt-BR')}
+                </div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <CalendarDays className="h-3 w-3" />
+                  Desde {new Date(lead.first_seen_at).toLocaleDateString('pt-BR')}
+                </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className={`text-4xl font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</p>
+              <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
+                {BUCKET_SHORT_LABELS[bucket]}
+              </Badge>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex rounded-lg bg-muted/30 p-1">
+            {(["score", "history", "evolution"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={cn(
+                  "flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors",
+                  tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t === "score" ? "Score" : t === "history" ? `Histórico (${logs.length || "..."})` : "Evolução"}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          {tab === "score" && (
+            <div className="space-y-4">
+              {SCORE_BAR_CONFIG.map((cfg) => {
+                const value = Math.abs((lead as any)[cfg.key] || 0);
+                const pct = Math.min((value / cfg.max) * 100, 100);
+                const displayValue = (lead as any)[cfg.key] || 0;
+                return (
+                  <div key={cfg.key} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <cfg.icon className={cn("h-4 w-4", cfg.isNegative ? "text-destructive" : "text-muted-foreground")} />
+                        <span className={cn("text-sm font-medium", cfg.isNegative ? "text-destructive" : "")}>{cfg.label}</span>
+                      </div>
+                      <span className={cn("text-sm font-bold tabular-nums", cfg.isNegative ? "text-destructive" : "")}>
+                        {Number(displayValue).toFixed(1)}
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                      <div className={cn("h-full rounded-full transition-all", cfg.color)} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {tab === "history" && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-sm">Histórico de Eventos</h4>
+                {logTotalPages > 1 && (
+                  <span className="text-xs text-muted-foreground">Página {logPage + 1} de {logTotalPages}</span>
+                )}
+              </div>
+              {logsLoading ? (
+                <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
+              ) : paginatedLogs.length === 0 ? (
+                <p className="text-center text-muted-foreground py-6 text-sm">Nenhum evento registrado</p>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    {paginatedLogs.map((log) => (
+                      <div key={log.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/30">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium">{RULE_LABELS[log.event_type] || log.event_type}</p>
+                            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", CATEGORY_COLORS[log.category] || "")}>
+                              {log.category}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className={cn("text-sm font-bold tabular-nums", log.points_applied >= 0 ? "text-emerald-400" : "text-destructive")}>
+                            {log.points_applied >= 0 ? `+${Number(log.points_applied).toFixed(1)}` : Number(log.points_applied).toFixed(1)}
+                          </span>
+                          <p className="text-[10px] text-muted-foreground">
+                            {new Date(log.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })},{" "}
+                            {new Date(log.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {logTotalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2">
+                      <Button variant="outline" size="sm" disabled={logPage === 0} onClick={() => setLogPage(p => p - 1)}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-xs text-muted-foreground">Página {logPage + 1}</span>
+                      <Button variant="outline" size="sm" disabled={logPage >= logTotalPages - 1} onClick={() => setLogPage(p => p + 1)}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {tab === "evolution" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-sm">Evolução do Score</h4>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {["7d", "14d", "30d", "90d"].map((p) => (
+                  <Button
+                    key={p}
+                    variant={evoPeriod === p && !evoDateFrom ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => { setEvoPeriod(p); setEvoDateFrom(""); setEvoDateTo(""); }}
+                  >
+                    {p === "7d" ? "7 dias" : p === "14d" ? "14 dias" : p === "30d" ? "30 dias" : "90 dias"}
+                  </Button>
+                ))}
+                <div className="flex items-center gap-1.5 ml-auto">
+                  <Input type="date" className="h-7 text-xs w-[120px]" value={evoDateFrom} onChange={(e) => setEvoDateFrom(e.target.value)} />
+                  <span className="text-xs text-muted-foreground">até</span>
+                  <Input type="date" className="h-7 text-xs w-[120px]" value={evoDateTo} onChange={(e) => setEvoDateTo(e.target.value)} />
+                </div>
+              </div>
+              {evoLoading ? (
+                <Skeleton className="h-[200px] w-full" />
+              ) : evoData.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8 text-sm">Sem dados de evolução para o período</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={evoData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} domain={[0, 1000]} />
+                    <RechartsTooltip
+                      contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
+                      formatter={(value: number) => [`${fmtNum(value)}`, "Score"]}
+                    />
+                    <Bar dataKey="score" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+
 
 const RANKING_PER_PAGE = 50;
 
