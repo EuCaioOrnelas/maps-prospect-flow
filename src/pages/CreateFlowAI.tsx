@@ -53,24 +53,111 @@ const quickPrompts = [
 ];
 
 const buildSimulationSteps = (userPrompt: string) => {
+  const p = userPrompt.toLowerCase();
   const shortPrompt = userPrompt.length > 40 ? userPrompt.slice(0, 40) + "..." : userPrompt;
-  return [
+
+  // Detect themes from prompt
+  const isVendas = /vend|compra|proposta|preço|orçamento|produto|serviço|loja|ecommerce/i.test(p);
+  const isSuporte = /suport|ajuda|problema|técnic|atendiment|dúvida|reclamaç/i.test(p);
+  const isAgendamento = /agend|consult|clínic|médic|horári|visita|reunião|marcar/i.test(p);
+  const isRestaurante = /restaur|cardápio|pedido|delivery|comida|entrega|pizza/i.test(p);
+  const isImob = /imobili|imóv|casa|apart|alugu|comprar imóv/i.test(p);
+  const isFitness = /academi|fitness|treino|aula|matrícula|gym/i.test(p);
+
+  const steps: { type: string; text: string; buttons?: string[] }[] = [
     { type: "contact", text: "🤖 Analisando seu objetivo..." },
     { type: "contact", text: `📝 "${shortPrompt}"` },
-    { type: "bot", text: "Olá! 👋 Bem-vindo! Como posso te ajudar?" },
-    { type: "user", text: "Oi, quero saber mais sobre vocês" },
-    { type: "bot", text: "Que bom que entrou em contato! Vou te mostrar tudo." },
-    { type: "buttons", text: "Escolha uma opção:", buttons: ["💰 Comprar", "🛠 Suporte", "❓ Dúvidas"] },
-    { type: "user", text: "Quero comprar" },
-    { type: "bot", text: "Perfeito! Vou te qualificar rapidinho 🎯" },
-    { type: "bot", text: "Qual seu orçamento aproximado?" },
-    { type: "user", text: "Entre R$500 e R$1.000" },
-    { type: "bot", text: "Ótimo! Tenho a opção ideal pra você ✨" },
-    { type: "contact", text: "⚡ Adicionando follow-ups automáticos..." },
-    { type: "bot", text: "Vou te enviar a proposta. Posso confirmar?" },
-    { type: "buttons", text: "Confirme:", buttons: ["✅ Sim", "🔄 Outra opção"] },
-    { type: "contact", text: "✅ Fluxo completo gerado com sucesso!" },
   ];
+
+  if (isVendas) {
+    steps.push(
+      { type: "bot", text: "Olá! 👋 Seja muito bem-vindo! Sou o assistente virtual." },
+      { type: "user", text: "Oi, quero saber mais sobre os produtos" },
+      { type: "bot", text: "Ótimo! Temos várias opções. Vou te ajudar a encontrar o ideal!" },
+      { type: "buttons", text: "O que você procura?", buttons: ["💰 Ver preços", "📦 Catálogo", "🤝 Falar com vendedor"] },
+      { type: "user", text: "Ver preços" },
+      { type: "bot", text: "Perfeito! Qual é o seu orçamento aproximado?" },
+      { type: "user", text: "Entre R$500 e R$1.000" },
+      { type: "bot", text: "Tenho a opção ideal pra você! ✨ Vou enviar a proposta." },
+      { type: "contact", text: "⚡ Adicionando follow-up automático (2h)..." },
+      { type: "bot", text: "Posso confirmar o envio da proposta?" },
+      { type: "buttons", text: "Confirme:", buttons: ["✅ Sim, enviar", "🔄 Outras opções"] },
+    );
+  } else if (isSuporte) {
+    steps.push(
+      { type: "bot", text: "Olá! 👋 Bem-vindo ao suporte. Como posso ajudar?" },
+      { type: "buttons", text: "Qual o tipo do seu problema?", buttons: ["🛠 Técnico", "💳 Financeiro", "❓ Dúvida geral"] },
+      { type: "user", text: "Técnico" },
+      { type: "bot", text: "Entendido! Vou tentar resolver rapidamente." },
+      { type: "bot", text: "Pode descrever o problema que está enfrentando?" },
+      { type: "user", text: "Não consigo acessar minha conta" },
+      { type: "bot", text: "Você já tentou redefinir sua senha?" },
+      { type: "buttons", text: "Isso resolveu?", buttons: ["✅ Sim!", "❌ Preciso de mais ajuda"] },
+      { type: "contact", text: "🔄 Configurando escalonamento para atendente..." },
+    );
+  } else if (isAgendamento) {
+    steps.push(
+      { type: "bot", text: "Olá! 👋 Vamos agendar seu horário." },
+      { type: "buttons", text: "Qual especialidade?", buttons: ["🏥 Clínico", "🦷 Dentista", "👁 Oftalmo"] },
+      { type: "user", text: "Clínico" },
+      { type: "bot", text: "Temos horários disponíveis esta semana!" },
+      { type: "buttons", text: "Escolha o melhor dia:", buttons: ["📅 Segunda", "📅 Quarta", "📅 Sexta"] },
+      { type: "user", text: "Quarta" },
+      { type: "bot", text: "✅ Consulta agendada! Enviaremos lembrete 24h antes." },
+      { type: "contact", text: "📋 Criando lembrete automático (24h antes)..." },
+    );
+  } else if (isRestaurante) {
+    steps.push(
+      { type: "bot", text: "Olá! 🍕 Bem-vindo ao nosso delivery!" },
+      { type: "buttons", text: "Veja nosso cardápio:", buttons: ["🍔 Pratos", "🥤 Bebidas", "🍰 Sobremesas"] },
+      { type: "user", text: "Pratos" },
+      { type: "bot", text: "Temos opções incríveis hoje! Vou listar." },
+      { type: "bot", text: "1. Hambúrguer Artesanal - R$32\n2. Pizza Margherita - R$45\n3. Salada Caesar - R$28" },
+      { type: "user", text: "Quero o hambúrguer" },
+      { type: "bot", text: "Ótima escolha! 🍔 Qual o endereço de entrega?" },
+      { type: "contact", text: "📍 Coletando endereço e finalizando pedido..." },
+    );
+  } else if (isImob) {
+    steps.push(
+      { type: "bot", text: "Olá! 🏠 Procurando o imóvel ideal?" },
+      { type: "buttons", text: "Tipo de imóvel:", buttons: ["🏠 Casa", "🏢 Apartamento", "🏪 Comercial"] },
+      { type: "user", text: "Apartamento" },
+      { type: "bot", text: "Qual região e faixa de valor?" },
+      { type: "user", text: "Centro, até R$500 mil" },
+      { type: "bot", text: "Encontrei 3 opções perfeitas! Vou enviar as fotos." },
+      { type: "buttons", text: "Quer agendar visita?", buttons: ["📅 Agendar", "📸 Ver mais fotos"] },
+      { type: "contact", text: "🗓 Agendando visita ao imóvel..." },
+    );
+  } else if (isFitness) {
+    steps.push(
+      { type: "bot", text: "Olá! 💪 Bem-vindo à nossa academia!" },
+      { type: "buttons", text: "Conheça nossos planos:", buttons: ["📅 Mensal", "📅 Trimestral", "📅 Anual"] },
+      { type: "user", text: "Quero saber do mensal" },
+      { type: "bot", text: "Plano mensal: R$99/mês com acesso completo!" },
+      { type: "bot", text: "Quer agendar uma aula experimental gratuita?" },
+      { type: "buttons", text: "Agendar aula?", buttons: ["✅ Quero!", "💬 Tenho dúvidas"] },
+      { type: "contact", text: "🎯 Agendando aula experimental..." },
+    );
+  } else {
+    // Generic flow
+    steps.push(
+      { type: "bot", text: "Olá! 👋 Bem-vindo! Como posso te ajudar?" },
+      { type: "user", text: "Oi, quero saber mais sobre vocês" },
+      { type: "bot", text: "Que bom que entrou em contato! Vou te mostrar tudo." },
+      { type: "buttons", text: "Escolha uma opção:", buttons: ["💰 Comprar", "🛠 Suporte", "❓ Dúvidas"] },
+      { type: "user", text: "Quero comprar" },
+      { type: "bot", text: "Perfeito! Vou te qualificar rapidinho 🎯" },
+      { type: "bot", text: "Qual seu orçamento aproximado?" },
+      { type: "user", text: "Entre R$500 e R$1.000" },
+      { type: "bot", text: "Ótimo! Tenho a opção ideal pra você ✨" },
+      { type: "contact", text: "⚡ Adicionando follow-ups automáticos..." },
+      { type: "bot", text: "Posso enviar a proposta?" },
+      { type: "buttons", text: "Confirme:", buttons: ["✅ Sim", "🔄 Outra opção"] },
+    );
+  }
+
+  steps.push({ type: "contact", text: "✅ Fluxo completo gerado com sucesso!" });
+  return steps;
 };
 
 function useAutoResizeTextarea({ minHeight, maxHeight }: { minHeight: number; maxHeight?: number }) {

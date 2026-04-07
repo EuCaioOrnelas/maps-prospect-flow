@@ -10,6 +10,12 @@ export function WAButtonsNode({ data }: NodeProps) {
   const hasItems = items.length > 0;
   const Icon = isListMode ? List : ToggleLeft;
 
+  // Normalize items to get title string
+  const getItemTitle = (item: any, i: number): string => {
+    if (typeof item === "string") return item;
+    return item.title || `Opção ${i + 1}`;
+  };
+
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm w-52">
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
@@ -23,11 +29,17 @@ export function WAButtonsNode({ data }: NodeProps) {
           </p>
         </div>
       </div>
+      {/* Show body text if present */}
+      {cfg.body_text && (
+        <div className="px-3 pt-2">
+          <p className="text-[10px] text-foreground/70 line-clamp-2">{cfg.body_text}</p>
+        </div>
+      )}
       {hasItems && (
         <div className="px-3 py-2 space-y-1">
           {items.slice(0, 4).map((item: any, i: number) => (
             <div key={i} className="text-[10px] bg-muted/50 rounded px-2 py-1 truncate text-foreground/80">
-              {typeof item === "string" ? item : item.title || `Opção ${i + 1}`}
+              {getItemTitle(item, i)}
             </div>
           ))}
           {items.length > 4 && (
