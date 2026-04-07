@@ -233,7 +233,7 @@ export default function WhatsAppAutomations() {
   // Greeting
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
-  const firstName = profile?.full_name?.split(" ")[0] || "usuário";
+  const firstName = profile?.name?.split(" ")[0] || "usuário";
 
   // Metrics
   const totalFlows = flows.length;
