@@ -19,7 +19,17 @@ O fluxo deve:
 - Ter caminhos alternativos (true/false em condições)
 - Considerar conversão de vendas
 - Ter fallback ("não entendi")
-- Incluir pelo menos: 1 entrada, 3+ mensagens, 1+ condição, 1 follow-up
+
+REGRAS OBRIGATÓRIAS (SEMPRE SEGUIR):
+1. SEMPRE adicionar pelo menos 1 nó "end" (encerrar fluxo) conectando os caminhos finais
+2. Adicionar "wait" (espera) antes de follow-ups — ex: esperar 1h, 4h, 24h antes de reenviar mensagem
+3. Usar "action" para integrar CRM quando relevante:
+   - add_tag para marcar leads (ex: "interessado", "frio", "comprou")
+   - move_pipeline para mover no funil (ex: após qualificação)
+   - mark_hot / mark_cold / mark_converted para classificar o lead
+   - send_to_crm para registrar no CRM
+4. Cada bifurcação (botões/condição) deve ter TODOS os caminhos conectados até um "end"
+5. Incluir pelo menos: 1 entrada, 3+ mensagens, 1+ condição ou botões, 1 follow-up com wait, 1+ action de CRM, 1+ end
 
 TIPOS DE NÓS DISPONÍVEIS:
 - entry: Nó de entrada/trigger (trigger_type: keyword|campaign_reply|button_click|webhook|qr_code|first_message|re_entry, keywords: string[])
@@ -27,10 +37,10 @@ TIPOS DE NÓS DISPONÍVEIS:
 - buttons: Botões interativos (interaction_type: "reply_buttons"|"list", body_text: string, header_text?: string, footer_text?: string, buttons: [{id: "btn_0", title: string}], list_items: [{id: "item_0", title: string, description: string}]). IMPORTANT: interaction_type MUST be "reply_buttons" for buttons (NOT "buttons").
 - condition: Condição IF/ELSE (condition_type: button_clicked|keyword_match|has_tag|field_equals|responded|no_response, condition_value: string)
 - wait: Delay/espera (delay_value: number, delay_unit: minutes|hours|days, smart: boolean)
-- action: Ação do sistema (action_type: add_tag|remove_tag|update_field|move_pipeline|send_to_crm|webhook|mark_hot|mark_cold|mark_converted)
+- action: Ação do sistema (action_type: add_tag|remove_tag|update_field|move_pipeline|send_to_crm|webhook|mark_hot|mark_cold|mark_converted, tag_name?: string, field_name?: string, field_value?: string)
 - ai_agent: Agente IA que analisa respostas (system_prompt: string, ai_model: "gpt-4o-mini", ai_output_type: "message_and_route", ai_routes: string, ai_memory: boolean, max_chars: 500)
 - handoff: Transferência para humano (notify_team: boolean)
-- end: Fim do fluxo
+- end: Fim do fluxo (OBRIGATÓRIO em todo fluxo — pelo menos 1)
 
 FORMATO DE SAÍDA OBRIGATÓRIO (JSON puro, sem markdown):
 {
@@ -72,6 +82,11 @@ REGRAS ESPECÍFICAS PARA BOTÕES:
 - Use condition com button_clicked apenas quando realmente precisar de uma validação extra depois do clique
 - header_text e footer_text são opcionais; normalmente omita quando não ajudarem
 - Não invente cabeçalho, rodapé ou seções desnecessárias em mensagens simples
+
+EXEMPLO DE PADRÃO COM ACTION + WAIT + END:
+- Após qualificação positiva → action (mark_hot + add_tag "qualificado") → mensagem de oferta → wait 24h → follow-up → end
+- Após "sem interesse" → action (mark_cold + add_tag "frio") → mensagem educada → end
+- Após compra/conversão → action (mark_converted) → mensagem de agradecimento → end
 
 RESPONDA APENAS COM O JSON, sem texto extra, sem markdown code blocks.`;
 

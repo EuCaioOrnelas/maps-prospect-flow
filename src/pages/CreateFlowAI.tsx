@@ -7,10 +7,12 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
-import { Sparkles, ArrowLeft, SendIcon, MessageSquare } from "lucide-react";
+import { Sparkles, ArrowLeft, SendIcon, MessageSquare, CheckCircle2, AlertTriangle, Settings2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 // Quick prompts: short preview text + full detailed prompt
 const quickPrompts = [
@@ -378,6 +380,9 @@ export default function CreateFlowAI() {
   const [expandedPrompt, setExpandedPrompt] = useState<number | null>(null);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({ minHeight: 56, maxHeight: 240 });
 
+  const [reviewFlowId, setReviewFlowId] = useState<string | null>(null);
+  const [showReviewPopup, setShowReviewPopup] = useState(false);
+
   useEffect(() => {
     const p = searchParams.get("prompt");
     if (p) setPrompt(p);
@@ -408,11 +413,16 @@ export default function CreateFlowAI() {
       return flow;
     },
     onSuccess: (flow) => {
-      toast.success("Fluxo gerado com IA!");
-      navigate(`/fluxos/${flow.id}`);
+      setReviewFlowId(flow.id);
+      setShowReviewPopup(true);
     },
     onError: (err: any) => toast.error(err.message || "Erro ao gerar fluxo com IA"),
   });
+
+  const handleGoToFlow = () => {
+    setShowReviewPopup(false);
+    if (reviewFlowId) navigate(`/fluxos/${reviewFlowId}`);
+  };
 
   const handleSelectPrompt = (index: number) => {
     if (expandedPrompt === index) {
@@ -566,6 +576,70 @@ export default function CreateFlowAI() {
           </div>
         </main>
       </div>
+
+      {/* Review Popup */}
+      <Dialog open={showReviewPopup} onOpenChange={setShowReviewPopup}>
+        <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden border-border">
+          {/* Success header */}
+          <div className="bg-primary/5 border-b border-border px-6 py-5 text-center">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+              className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center mx-auto mb-3"
+            >
+              <CheckCircle2 className="w-8 h-8 text-primary" />
+            </motion.div>
+            <h2 className="text-lg font-bold text-foreground">Fluxo criado com sucesso!</h2>
+            <p className="text-sm text-muted-foreground mt-1">Seu fluxo está pronto para revisão</p>
+          </div>
+
+          {/* Recommendations */}
+          <div className="px-6 py-5 space-y-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Recomendações</p>
+
+            <div className="space-y-3">
+              <div className="flex gap-3 items-start">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <AlertTriangle size={14} className="text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Confira as conexões</p>
+                  <p className="text-xs text-muted-foreground">Verifique se todos os blocos estão conectados corretamente entre si.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 items-start">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Settings2 size={14} className="text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Personalize as mensagens</p>
+                  <p className="text-xs text-muted-foreground">Ajuste o tom, links e informações específicas do seu negócio.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 items-start">
+                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Zap size={14} className="text-violet-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Teste antes de ativar</p>
+                  <p className="text-xs text-muted-foreground">Use o botão "Testar fluxo" para simular a experiência do lead.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action */}
+          <div className="px-6 py-4 border-t border-border bg-card/50">
+            <Button onClick={handleGoToFlow} className="w-full gap-2 rounded-full">
+              <Sparkles size={14} />
+              Abrir e revisar fluxo
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
