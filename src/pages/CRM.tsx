@@ -74,6 +74,7 @@ export default function CRM() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addLeadOpen, setAddLeadOpen] = useState(false);
+  const [addLeadDefaultStageId, setAddLeadDefaultStageId] = useState<string | undefined>();
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
