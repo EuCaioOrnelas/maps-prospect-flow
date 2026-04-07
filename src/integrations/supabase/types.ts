@@ -3912,6 +3912,138 @@ export type Database = {
         }
         Relationships: []
       }
+      wa_automation_flows: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["wa_flow_status"]
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["wa_flow_status"]
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["wa_flow_status"]
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      wa_flow_edges: {
+        Row: {
+          created_at: string
+          flow_id: string
+          id: string
+          label: string | null
+          source_handle: string | null
+          source_node_id: string
+          target_handle: string | null
+          target_node_id: string
+        }
+        Insert: {
+          created_at?: string
+          flow_id: string
+          id?: string
+          label?: string | null
+          source_handle?: string | null
+          source_node_id: string
+          target_handle?: string | null
+          target_node_id: string
+        }
+        Update: {
+          created_at?: string
+          flow_id?: string
+          id?: string
+          label?: string | null
+          source_handle?: string | null
+          source_node_id?: string
+          target_handle?: string | null
+          target_node_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wa_flow_edges_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "wa_automation_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wa_flow_edges_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "wa_flow_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wa_flow_edges_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "wa_flow_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wa_flow_nodes: {
+        Row: {
+          config: Json | null
+          created_at: string
+          flow_id: string
+          id: string
+          name: string
+          node_type: Database["public"]["Enums"]["wa_flow_node_type"]
+          position_x: number
+          position_y: number
+          updated_at: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          flow_id: string
+          id?: string
+          name?: string
+          node_type: Database["public"]["Enums"]["wa_flow_node_type"]
+          position_x?: number
+          position_y?: number
+          updated_at?: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          flow_id?: string
+          id?: string
+          name?: string
+          node_type?: Database["public"]["Enums"]["wa_flow_node_type"]
+          position_x?: number
+          position_y?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wa_flow_nodes_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "wa_automation_flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warming_interactions: {
         Row: {
           conversation_ended: boolean
@@ -4478,6 +4610,16 @@ export type Database = {
         | "AGENT_OBJECTIVE_COMPLETED"
       revenue_risk_state: "OK" | "COOLING" | "AT_RISK"
       revenue_status_bucket: "COLD" | "ENGAGED" | "HOT" | "VERY_HOT"
+      wa_flow_node_type:
+        | "entry"
+        | "message"
+        | "buttons"
+        | "condition"
+        | "wait"
+        | "action"
+        | "handoff"
+        | "end"
+      wa_flow_status: "draft" | "active" | "paused" | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4620,6 +4762,17 @@ export const Constants = {
       ],
       revenue_risk_state: ["OK", "COOLING", "AT_RISK"],
       revenue_status_bucket: ["COLD", "ENGAGED", "HOT", "VERY_HOT"],
+      wa_flow_node_type: [
+        "entry",
+        "message",
+        "buttons",
+        "condition",
+        "wait",
+        "action",
+        "handoff",
+        "end",
+      ],
+      wa_flow_status: ["draft", "active", "paused", "archived"],
     },
   },
 } as const
