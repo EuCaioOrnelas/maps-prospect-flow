@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
-  ArrowLeft, Undo2, Redo2, Trash2, PlayCircle,
+  ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
   HeadphonesIcon, CircleStop, Bot,
 } from "lucide-react";
@@ -192,6 +192,7 @@ export default function WhatsAppFlowEditor() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testResetVersion, setTestResetVersion] = useState(0);
   const [clipboard, setClipboard] = useState<Node | null>(null);
@@ -567,14 +568,27 @@ export default function WhatsAppFlowEditor() {
       </div>
 
       {/* Main area */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar - always open */}
-        <div className="w-[240px] border-r border-border bg-card shrink-0 flex flex-col">
-          <div className="px-4 py-3 border-b border-border/50">
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Sidebar toggle button */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="absolute top-2 left-2 z-20 w-8 h-8 rounded-lg bg-card border border-border flex items-center justify-center hover:bg-muted transition-colors shadow-sm"
+          style={{ left: sidebarOpen ? "248px" : "8px" }}
+          title={sidebarOpen ? "Fechar painel" : "Abrir painel"}
+        >
+          {sidebarOpen ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
+        </button>
+
+        {/* Sidebar */}
+        <div className={cn(
+          "border-r border-border bg-card shrink-0 flex flex-col transition-all duration-200 overflow-hidden",
+          sidebarOpen ? "w-[240px]" : "w-0 border-r-0"
+        )}>
+          <div className="px-4 py-3 border-b border-border/50 min-w-[240px]">
             <p className="text-sm font-bold text-foreground">Blocos</p>
             <p className="text-[10px] text-muted-foreground">Arraste ou clique para adicionar</p>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
+          <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin min-w-[240px]">
             {sidebarCategories.map((cat) => (
               <div key={cat.label}>
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">{cat.label}</p>
