@@ -380,6 +380,9 @@ export default function CreateFlowAI() {
   const [expandedPrompt, setExpandedPrompt] = useState<number | null>(null);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({ minHeight: 56, maxHeight: 240 });
 
+  const [reviewFlowId, setReviewFlowId] = useState<string | null>(null);
+  const [showReviewPopup, setShowReviewPopup] = useState(false);
+
   useEffect(() => {
     const p = searchParams.get("prompt");
     if (p) setPrompt(p);
@@ -410,11 +413,16 @@ export default function CreateFlowAI() {
       return flow;
     },
     onSuccess: (flow) => {
-      toast.success("Fluxo gerado com IA!");
-      navigate(`/fluxos/${flow.id}`);
+      setReviewFlowId(flow.id);
+      setShowReviewPopup(true);
     },
     onError: (err: any) => toast.error(err.message || "Erro ao gerar fluxo com IA"),
   });
+
+  const handleGoToFlow = () => {
+    setShowReviewPopup(false);
+    if (reviewFlowId) navigate(`/fluxos/${reviewFlowId}`);
+  };
 
   const handleSelectPrompt = (index: number) => {
     if (expandedPrompt === index) {
