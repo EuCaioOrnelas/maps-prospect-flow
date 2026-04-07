@@ -312,6 +312,17 @@ const getScoreCircleColor = (score: number) => {
 
 const fmtNum = (n: number) => Number.isInteger(n) ? n.toLocaleString('pt-BR') : n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
+const fmtPhone = (phone: string) => {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("55") && digits.length >= 12) {
+    const ddd = digits.slice(2, 4);
+    const rest = digits.slice(4);
+    if (rest.length === 9) return `+55 (${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+    if (rest.length === 8) return `+55 (${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+  }
+  return phone;
+};
+
 // ═══════════════ SCORE INFO POPOVER ═══════════════
 
 const ScoreInfoPopover = () => (
