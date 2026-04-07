@@ -36,6 +36,73 @@ serve(async (req) => {
       console.log('[meta-webhook] Received:', JSON.stringify(body).substring(0, 500));
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+      // Helper: normalize Brazilian phone to E.164 for revenue scoring
+      function normalizeBrazilianMobileE164(phone: string): string | null {
+        const digits = String(phone || '').replace(/\D/g, '');
+        if (!digits || digits.length < 10) return null;
+        if (digits.startsWith('120363')) return null; // group IDs
+
+        // Already 13-digit BR mobile: 55 + DD + 9XXXXXXXX
+        if (digits.length === 13 && digits.startsWith('55')) {
+          const ddd = Number(digits.slice(2, 4));
+          if (ddd >= 11 && ddd <= 99 && digits[4] === '9') return digits;
+          return null;
+        }
+
+        // 12-digit BR missing 9th digit: 55 + DD + 8-digit
+        if (digits.length === 12 && digits.startsWith('55')) {
+          const ddd = Number(digits.slice(2, 4));
+          const firstDigit = digits[4];
+          if (ddd >= 11 && ddd <= 99 && ['6', '7', '8', '9'].includes(firstDigit)) {
+            return `55${digits.slice(2, 4)}9${digits.slice(4)}`;
+          }
+          return null;
+        }
+
+        // 11-digit local BR: DD + 9 + 8
+        if (digits.length === 11) {
+          const ddd = Number(digits.slice(0, 2));
+          if (ddd >= 11 && ddd <= 99 && digits[2] === '9') return `55${digits}`;
+        }
+
+        // 10-digit local BR missing 9th digit
+        if (digits.length === 10) {
+          const ddd = Number(digits.slice(0, 2));
+          const firstDigit = digits[2];
+          if (ddd >= 11 && ddd <= 99 && ['6', '7', '8', '9'].includes(firstDigit)) {
+            return `55${digits.slice(0, 2)}9${digits.slice(2)}`;
+          }
+        }
+
+        // International numbers
+        if (digits.length >= 10 && !digits.startsWith('55')) return digits;
+        return null;
+      }
+
+      // Helper: fire revenue event for lead scoring
+      async function fireRevenueEvent(params: {
+        user_id: string;
+        phone_e164: string;
+        direction: 'inbound' | 'outbound';
+        message_content?: string;
+        lead_name?: string;
+      }) {
+        try {
+          const { data: revenueResult, error } = await supabase.functions.invoke('revenue-processor', {
+            body: { action: 'process_message', source: 'meta', ...params },
+          });
+          if (error) {
+            console.error('[meta-webhook] Revenue processor invoke failed:', error);
+          } else if (revenueResult?.success === false) {
+            console.log('[meta-webhook] Revenue processor skipped:', revenueResult);
+          } else {
+            console.log('[meta-webhook] ✅ Revenue event processed:', revenueResult?.score, revenueResult?.bucket);
+          }
+        } catch (e) {
+          console.error('[meta-webhook] Revenue event fire error:', e);
+        }
+      }
+
       if (body.object !== 'whatsapp_business_account') {
         return new Response('OK', { status: 200 });
       }
@@ -169,6 +236,19 @@ serve(async (req) => {
                     status: 'delivered',
                   });
                   console.log(`[meta-webhook] ✅ Chat message saved for conversation ${conversation.id}`);
+
+                  // === REVENUE SCORING: Fire event for inbound messages ===
+                  const normalizedPhone = normalizeBrazilianMobileE164(from);
+                  if (normalizedPhone) {
+                    fireRevenueEvent({
+                      user_id: userId,
+                      phone_e164: normalizedPhone,
+                      direction: 'inbound',
+                      message_content: textContent || undefined,
+                      lead_name: contactName || undefined,
+                    });
+                    console.log(`[meta-webhook] 📊 Revenue event fired for ${normalizedPhone}`);
+                  }
                 }
               }
             }

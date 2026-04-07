@@ -330,6 +330,8 @@ serve(async (req) => {
       number_instance_id,
       direction,
       message_content,
+      source,
+      lead_name,
     } = body;
 
     // === ACTION: process_message ===
@@ -349,7 +351,8 @@ serve(async (req) => {
       }
 
       // 0. Check if number is enabled for Revenue analysis
-      if (number_instance_id) {
+      // Skip check for Meta API sources (they use waba_connections, not whatsapp_numbers)
+      if (number_instance_id && source !== "meta") {
         const { data: numConfig } = await supabase
           .from("revenue_number_config")
           .select("is_enabled")
