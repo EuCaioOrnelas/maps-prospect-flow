@@ -94,7 +94,9 @@ const nodeTypes = {
   ai_agent: WAAgentNode,
   ab_test: WAABTestNode,
   random_split: WARandomSplitNode,
-  integration: WAIntegrationNode,
+  google_sheets: WAGoogleSheetsNode,
+  google_calendar: WAGoogleCalendarNode,
+  gmail: WAGmailNode,
 };
 
 const defaultEdgeOptions = {
