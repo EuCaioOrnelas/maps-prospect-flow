@@ -291,7 +291,8 @@ const RULE_CATEGORIES: Record<string, { label: string; color: string; keys: stri
   },
 };
 
-const PER_PAGE = 20;
+const PER_PAGE_OPTIONS = [20, 50, 100];
+const DEFAULT_PER_PAGE = 20;
 
 const getScoreColor = (score: number) => {
   if (score >= 801) return "text-emerald-400";
@@ -475,7 +476,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis type="number" stroke="hsl(var(--muted-foreground))" domain={[0, 1000]} tick={{ fontSize: 11 }} />
                   <YAxis dataKey="name" type="category" width={100} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }}
-                    tickFormatter={(v) => v ? (v.length > 12 ? v.slice(0, 12) + "…" : v) : "Sem nome"} />
+                    tickFormatter={(v) => v ? (v.length > 12 ? v.slice(0, 12) + "…" : v) : v} />
                   <RechartsTooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
                   <Bar dataKey="score_total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                 </BarChart>
@@ -508,7 +509,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">#{i + 1}</span>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{lead.name || "Sem nome"}</p>
+                          <p className="text-sm font-medium truncate">{lead.name || lead.phone_e164}</p>
                           <div className="flex items-center gap-1.5">
                             <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", BUCKET_BADGE_COLORS[bucket])}>
                               {BUCKET_SHORT_LABELS[bucket]}
@@ -551,7 +552,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">#{i + 1}</span>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{lead.name || "Sem nome"}</p>
+                          <p className="text-sm font-medium truncate">{lead.name || lead.phone_e164}</p>
                           <div className="flex items-center gap-1.5">
                             <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", BUCKET_BADGE_COLORS[bucket])}>
                               {BUCKET_SHORT_LABELS[bucket]}
@@ -707,6 +708,7 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
   const [sortBy, setSortBy] = useState("score_total");
   const [sortAsc, setSortAsc] = useState(false);
   const [page, setPage] = useState(0);
+  const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
   const [selectedLead, setSelectedLead] = useState<RevenueLead | null>(null);
 
   const activeFilterCount = useMemo(() => {
@@ -758,8 +760,8 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
     return result;
   }, [leads, search, filters, sortBy, sortAsc]);
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE);
-  const paginated = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const paginated = filtered.slice(page * perPage, (page + 1) * perPage);
 
   const getPages = () => {
     const pages: (number | string)[] = [];
@@ -816,7 +818,7 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                   <TableRow key={lead.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setSelectedLead(lead)}>
                     <TableCell>
                       <div>
-                        <p className="font-medium text-sm">{lead.name || "Sem nome"}</p>
+                        <p className="font-medium text-sm">{lead.name || lead.phone_e164}</p>
                         <p className="text-xs text-muted-foreground">{lead.phone_e164}</p>
                       </div>
                     </TableCell>
@@ -861,31 +863,44 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
         </CardContent>
       </Card>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1 flex-wrap">
-          <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(0)}>
-            <ChevronsLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          {getPages().map((p, i) =>
-            typeof p === "string" ? (
-              <span key={`e${i}`} className="px-1 text-muted-foreground">...</span>
-            ) : (
-              <Button key={p} variant={page === p ? "default" : "outline"} size="sm" className="h-8 min-w-[2rem]" onClick={() => setPage(p)}>
-                {p + 1}
-              </Button>
-            )
-          )}
-          <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(totalPages - 1)}>
-            <ChevronsRight className="h-4 w-4" />
-          </Button>
+      {/* Pagination */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Por página:</span>
+          <Select value={String(perPage)} onValueChange={(v) => { setPerPage(Number(v)); setPage(0); }}>
+            <SelectTrigger className="h-8 w-[70px] text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {PER_PAGE_OPTIONS.map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground">{fmtNum(filtered.length)} contatos</span>
         </div>
-      )}
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1 flex-wrap">
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(0)}>
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {getPages().map((p, i) =>
+              typeof p === "string" ? (
+                <span key={`e${i}`} className="px-1 text-muted-foreground">...</span>
+              ) : (
+                <Button key={p} variant={page === p ? "default" : "outline"} size="sm" className="h-8 min-w-[2rem]" onClick={() => setPage(p)}>
+                  {p + 1}
+                </Button>
+              )
+            )}
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(totalPages - 1)}>
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Lead Detail Dialog */}
       {selectedLead && (
@@ -1010,7 +1025,7 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
-                <p className="font-bold">{lead.name || "Sem nome"}</p>
+                <p className="font-bold">{lead.name || lead.phone_e164}</p>
               </div>
               <p className="text-sm text-muted-foreground">{lead.phone_e164}</p>
               <div className="flex flex-wrap gap-2">
@@ -1027,11 +1042,20 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                 </div>
               </div>
             </div>
-            <div className="text-right">
+            <div className="flex flex-col items-center gap-1">
               <p className={`text-4xl font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</p>
               <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
                 {BUCKET_SHORT_LABELS[bucket]}
               </Badge>
+              <div className="flex items-center gap-1 mt-1">
+                {lead.score_risk < -50 ? (
+                  <><TrendingDown className="h-3.5 w-3.5 text-destructive" /><span className="text-[10px] text-destructive">Em queda</span></>
+                ) : lead.score_engagement > 20 || lead.score_intent > 0 ? (
+                  <><TrendingUp className="h-3.5 w-3.5 text-emerald-400" /><span className="text-[10px] text-emerald-400">Em alta</span></>
+                ) : (
+                  <><Minus className="h-3.5 w-3.5 text-muted-foreground" /><span className="text-[10px] text-muted-foreground">Estável</span></>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1075,6 +1099,26 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                   </div>
                 );
               })}
+
+              {/* Insight */}
+              <div className="p-3 rounded-lg bg-muted/20 border border-border/30 mt-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-base">💡</span>
+                  <div>
+                    <p className="text-sm font-semibold mb-1">Insights</p>
+                    <ul className="text-xs text-muted-foreground space-y-0.5 list-disc list-inside">
+                      {lead.score_total >= 801 && <li>Lead pronto para venda. priorize o contato imediato.</li>}
+                      {lead.score_total >= 601 && lead.score_total < 801 && <li>Lead de alto valor. mantenha o engajamento para converter.</li>}
+                      {lead.score_total >= 401 && lead.score_total < 601 && <li>Lead engajado. aumente a frequência de interação.</li>}
+                      {lead.score_total >= 201 && lead.score_total < 401 && <li>Baixo engajamento. envie conteúdo relevante para reativar.</li>}
+                      {lead.score_total < 201 && <li>Lead frio. considere uma campanha de reativação.</li>}
+                      {lead.score_risk < -50 && <li>Risco elevado de perda. ação urgente recomendada.</li>}
+                      {lead.score_intent > 30 && <li>Alta intenção de compra detectada.</li>}
+                      {lead.score_engagement > 50 && <li>Usuário com alto engajamento nas conversas.</li>}
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1149,9 +1193,9 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                   </Button>
                 ))}
                 <div className="flex items-center gap-1.5 ml-auto">
-                  <Input type="date" className="h-7 text-xs w-[120px]" value={evoDateFrom} onChange={(e) => setEvoDateFrom(e.target.value)} />
+                  <Input type="date" className="h-7 text-xs w-[120px]" value={evoDateFrom} onChange={(e) => { setEvoDateFrom(e.target.value); setEvoPeriod("custom"); }} />
                   <span className="text-xs text-muted-foreground">até</span>
-                  <Input type="date" className="h-7 text-xs w-[120px]" value={evoDateTo} onChange={(e) => setEvoDateTo(e.target.value)} />
+                  <Input type="date" className="h-7 text-xs w-[120px]" value={evoDateTo} onChange={(e) => { setEvoDateTo(e.target.value); setEvoPeriod("custom"); }} />
                 </div>
               </div>
               {evoLoading ? (
@@ -1273,7 +1317,7 @@ const ScoreRankingTab = ({ leads }: { leads: RevenueLead[] }) => {
                 <div key={lead.id} className="flex items-center gap-4 p-4 hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => {}}>
                   <div className="w-8 flex justify-center shrink-0">{getMedalIcon(i)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{lead.name || "Sem nome"}</p>
+                    <p className="font-medium text-sm truncate">{lead.name || lead.phone_e164}</p>
                     <p className="text-xs text-muted-foreground truncate">{lead.phone_e164}</p>
                   </div>
                   <Badge variant="outline" className={cn("hidden sm:inline-flex", BUCKET_BADGE_COLORS[bucket] || "")}>
