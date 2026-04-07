@@ -139,7 +139,7 @@ type HistoryEntry = { nodes: Node[]; edges: Edge[] };
 function DeleteFlowDialog({ onConfirm, isPending }: { onConfirm: () => void; isPending: boolean }) {
   const [confirmText, setConfirmText] = useState("");
   const [open, setOpen] = useState(false);
-  const canDelete = confirmText.toLowerCase() === "excluir fluxo";
+  const canDelete = confirmText === "EXCLUIR FLUXO";
 
   return (
     <AlertDialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setConfirmText(""); }}>
@@ -151,18 +151,20 @@ function DeleteFlowDialog({ onConfirm, isPending }: { onConfirm: () => void; isP
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Excluir fluxo permanentemente?</AlertDialogTitle>
-          <AlertDialogDescription className="space-y-3">
-            <span>Esta ação é irreversível. Todos os nós e conexões serão perdidos permanentemente.</span>
-            <span className="block mt-3 text-foreground font-medium text-sm">
-              Digite <span className="font-bold text-destructive">excluir fluxo</span> para confirmar:
-            </span>
-            <Input
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              placeholder="excluir fluxo"
-              className="mt-2"
-              autoFocus
-            />
+          <AlertDialogDescription asChild>
+            <div className="space-y-3">
+              <p>Esta ação é irreversível. Todos os nós e conexões serão perdidos permanentemente.</p>
+              <p className="text-foreground font-medium text-sm">
+                Digite <span className="font-bold text-destructive">"EXCLUIR FLUXO"</span> para confirmar:
+              </p>
+              <Input
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="EXCLUIR FLUXO"
+                className="mt-2 uppercase"
+                autoFocus
+              />
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
