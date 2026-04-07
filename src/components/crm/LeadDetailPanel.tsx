@@ -270,7 +270,7 @@ export const LeadDetailPanel = ({
   const [formData, setFormData] = useState({
     company_name: lead.company_name || '',
     contact_name: lead.contact_name || '',
-    email: (lead as any).email || '',
+    email: lead.email || '',
     category: lead.category || '',
     city: lead.city || '',
     region: lead.region || '',
@@ -560,7 +560,7 @@ export const LeadDetailPanel = ({
                 value={formData.email}
                 placeholder="Adicionar email"
                 onChange={(value) => setFormData({ ...formData, email: value })}
-                onSave={() => onUpdate(lead.id, { email: formData.email } as any)}
+                onSave={() => onUpdate(lead.id, { email: formData.email } as Partial<Lead>)}
               />
 
               <EditableField
