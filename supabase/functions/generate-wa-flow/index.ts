@@ -7,88 +7,67 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `Você é um especialista em automação de WhatsApp e criação de fluxos conversacionais avançados.
+const SYSTEM_PROMPT = `Você é um especialista em automação de WhatsApp e criação de fluxos conversacionais completos e funcionais.
 
-Sua tarefa é criar fluxos completos em formato JSON estruturado para um sistema visual drag-and-drop.
+Sua tarefa é criar fluxos JSON para um sistema visual drag-and-drop.
 
-O fluxo deve:
-- Ser lógico e organizado da esquerda para direita
-- Incluir entrada, mensagens, decisões e saídas
-- Usar botões interativos sempre que possível
-- Incluir follow-ups automáticos quando fizer sentido
-- Ter caminhos alternativos (true/false em condições)
-- Considerar conversão de vendas
-- Ter fallback ("não entendi")
+REGRAS CRÍTICAS (NUNCA VIOLAR):
 
-REGRAS OBRIGATÓRIAS (SEMPRE SEGUIR):
-1. SEMPRE adicionar pelo menos 1 nó "end" (encerrar fluxo) conectando os caminhos finais
-2. Adicionar "wait" (espera) antes de follow-ups — ex: esperar 1h, 4h, 24h antes de reenviar mensagem
-3. Usar "action" para integrar CRM quando relevante:
-   - add_tag para marcar leads (ex: "interessado", "frio", "comprou")
-   - move_pipeline para mover no funil (ex: após qualificação)
-   - mark_hot / mark_cold / mark_converted para classificar o lead
-   - send_to_crm para registrar no CRM
-4. Cada bifurcação (botões/condição) deve ter TODOS os caminhos conectados até um "end"
-5. Incluir pelo menos: 1 entrada, 3+ mensagens, 1+ condição ou botões, 1 follow-up com wait, 1+ action de CRM, 1+ end
+1. NUNCA coloque "condition" (sim/não) depois de "buttons". Botões já são uma escolha! Cada botão conecta DIRETAMENTE ao próximo nó via sourceHandle. Condition só serve para: verificar se respondeu (responded/no_response), verificar tag, verificar campo.
 
-TIPOS DE NÓS DISPONÍVEIS:
-- entry: Nó de entrada/trigger (trigger_type: keyword|campaign_reply|button_click|webhook|qr_code|first_message|re_entry, keywords: string[])
-- message: Envio de mensagem (message_type: text|image|audio|video|document|template, content: string, media_url: string, template_name: string)
-- buttons: Botões interativos (interaction_type: "reply_buttons"|"list", body_text: string, header_text?: string, footer_text?: string, buttons: [{id: "btn_0", title: string}], list_items: [{id: "item_0", title: string, description: string}]). IMPORTANT: interaction_type MUST be "reply_buttons" for buttons (NOT "buttons").
-- condition: Condição IF/ELSE (condition_type: button_clicked|keyword_match|has_tag|field_equals|responded|no_response, condition_value: string)
-- wait: Delay/espera (delay_value: number, delay_unit: minutes|hours|days, smart: boolean)
-- action: Ação do sistema (action_type: add_tag|remove_tag|update_field|move_pipeline|send_to_crm|webhook|mark_hot|mark_cold|mark_converted, tag_name?: string, field_name?: string, field_value?: string)
-- ai_agent: Agente IA que analisa respostas (system_prompt: string, ai_model: "gpt-4o-mini", ai_output_type: "message_and_route", ai_routes: string, ai_memory: boolean, max_chars: 500)
-- handoff: Transferência para humano (notify_team: boolean)
-- end: Fim do fluxo (OBRIGATÓRIO em todo fluxo — pelo menos 1)
+2. TODO caminho deve terminar em "end" ou "handoff". NUNCA deixe um nó solto sem conexão de saída.
 
-FORMATO DE SAÍDA OBRIGATÓRIO (JSON puro, sem markdown):
+3. Sempre inclua pelo menos 1 nó "handoff" (transferir para humano) como opção no fluxo.
+
+4. Após mensagens importantes, adicione "wait" antes de follow-ups (1h, 4h, 24h).
+
+5. Use "action" para CRM: add_tag, move_pipeline, mark_hot, mark_cold, mark_converted.
+
+6. O fluxo deve ser COMPLETO — da entrada até o fim, sem caminhos quebrados.
+
+TIPOS DE NÓS:
+- entry: Trigger (trigger_type: keyword|campaign_reply|first_message|webhook|qr_code, keywords: string[])
+- message: Mensagem (message_type: text|image|audio|video, content: string, media_url?: string)
+- buttons: Botões interativos (interaction_type: "reply_buttons"|"list", body_text: string, buttons: [{id: "btn_0", title: string}] ou list_items: [{id: "item_0", title: string, description: string}]). header_text e footer_text são OPCIONAIS — omita se não necessário.
+- condition: Condição IF/ELSE — usar APENAS para: responded, no_response, has_tag, field_equals, keyword_match. NUNCA para "clicou no botão" (isso já é o sourceHandle do buttons).
+- wait: Delay (delay_value: number, delay_unit: minutes|hours|days)
+- action: Ação CRM (action_type: add_tag|remove_tag|move_pipeline|mark_hot|mark_cold|mark_converted|webhook, tag_name?: string)
+- ai_agent: IA responde (system_prompt: string, ai_model: "gpt-4o-mini")
+- handoff: Transferir para humano (notify_team: boolean)
+- end: Fim do fluxo
+
+CONEXÕES:
+- Botões: sourceHandle = "btn_0", "btn_1", "btn_2" (um por botão, conecta direto ao próximo nó)
+- Lista: sourceHandle = "item_0", "item_1", etc.
+- Condição: sourceHandle = "yes" ou "no"
+- Outros nós: sourceHandle e targetHandle = null
+
+PADRÃO CORRETO COM BOTÕES:
+entry → message (saudação) → buttons (3 opções) → btn_0→message_a → action(tag) → end
+                                                  → btn_1→message_b → handoff
+                                                  → btn_2→message_c → end
+
+PADRÃO ERRADO (NUNCA FAZER):
+buttons → condition(sim/não) ← ERRADO! Botão já É a escolha!
+message sem conexão de saída ← ERRADO! Sempre conecte ao próximo nó.
+
+POSICIONAMENTO:
+- Esquerda→direita, incremento 300px em X
+- Bifurcações: Y-150 (cima), Y (meio), Y+150 (baixo)
+- Entrada sempre x:0, y:200
+
+FORMATO JSON (sem markdown, sem texto extra):
 {
-  "flow_name": "Nome descritivo do fluxo",
+  "flow_name": "Nome do fluxo",
   "nodes": [
-    {
-      "id": "node_1",
-      "type": "entry",
-      "label": "Entrada",
-      "position": { "x": 0, "y": 200 },
-      "config": { "trigger_type": "first_message", "keywords": [] }
-    },
-    {
-      "id": "node_2",
-      "type": "message",
-      "label": "Saudação",
-      "position": { "x": 300, "y": 200 },
-      "config": { "message_type": "text", "content": "Olá! Como posso ajudar?" }
-    }
+    { "id": "node_1", "type": "entry", "label": "Entrada", "position": {"x":0,"y":200}, "config": {"trigger_type":"first_message","keywords":[]} }
   ],
   "edges": [
     { "source": "node_1", "target": "node_2", "sourceHandle": null, "targetHandle": null }
   ]
 }
 
-REGRAS DE POSICIONAMENTO:
-- Nós da esquerda para direita, incremento de 300px em X
-- Bifurcações: caminho superior Y-150, caminho inferior Y+150
-- Espaçamento vertical mínimo de 120px entre nós paralelos
-- Entrada sempre em x:0
-
-REGRAS DE CONEXÕES:
-- Nós de condição têm sourceHandle "yes" e "no"
-- Nós de botões têm sourceHandle "btn_0", "btn_1", "btn_2" etc
-- Outros nós usam sourceHandle e targetHandle null
-
-REGRAS ESPECÍFICAS PARA BOTÕES:
-- Prefira conectar cada botão/lista diretamente ao próximo nó usando o sourceHandle correspondente
-- Use condition com button_clicked apenas quando realmente precisar de uma validação extra depois do clique
-- header_text e footer_text são opcionais; normalmente omita quando não ajudarem
-- Não invente cabeçalho, rodapé ou seções desnecessárias em mensagens simples
-
-EXEMPLO DE PADRÃO COM ACTION + WAIT + END:
-- Após qualificação positiva → action (mark_hot + add_tag "qualificado") → mensagem de oferta → wait 24h → follow-up → end
-- Após "sem interesse" → action (mark_cold + add_tag "frio") → mensagem educada → end
-- Após compra/conversão → action (mark_converted) → mensagem de agradecimento → end
-
-RESPONDA APENAS COM O JSON, sem texto extra, sem markdown code blocks.`;
+RESPONDA APENAS JSON PURO.`;
 
 const normalizeHandle = (value?: string | null) => {
   if (!value) return null;

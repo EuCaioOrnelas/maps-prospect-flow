@@ -602,10 +602,10 @@ export default function WhatsAppFlowEditor() {
                       else next.add(cat.label);
                       return next;
                     })}
-                    className="w-full flex items-center justify-between mb-2 px-1 group"
+                    className="w-full flex items-center gap-1.5 mb-2 px-1"
                   >
+                    <ChevronDown size={12} className={cn("text-muted-foreground transition-transform duration-200 shrink-0", isOpen ? "rotate-0" : "-rotate-90")} />
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{cat.label}</p>
-                    <ChevronDown size={14} className={cn("text-muted-foreground transition-transform duration-200", isOpen && "rotate-180")} />
                   </button>
                   {isOpen && (
                     <div className="space-y-1.5">
