@@ -432,12 +432,15 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
   }, [leads]);
 
   const kpis = [
-    { label: "Total Leads", value: fmtNum(totalLeads), icon: Users, color: "text-primary", circleColor: "bg-primary/[0.12]" },
-    { label: "Score Médio", value: fmtNum(Math.round(avgScore)), icon: BarChart3, color: "text-blue-400", circleColor: "bg-blue-500/[0.12]" },
-    { label: "Score Mediano", value: fmtNum(Math.round(medianScore)), icon: Target, color: "text-yellow-400", circleColor: "bg-yellow-500/[0.12]" },
-    { label: "Pronto p/ Venda", value: fmtNum(readyToSell), icon: TrendingUp, color: "text-primary", circleColor: "bg-primary/[0.12]" },
-    { label: "Em Risco", value: fmtNum(atRisk), icon: AlertTriangle, color: "text-destructive", circleColor: "bg-destructive/[0.12]" },
-    { label: "Frios", value: fmtNum(cold), icon: TrendingDown, color: "text-red-400", circleColor: "bg-red-500/[0.12]" },
+    [
+      { label: "Total Contatos", value: fmtNum(totalLeads), icon: Users, color: "text-primary", circleColor: "bg-primary/[0.12]" },
+      { label: "Pronto p/ Venda", value: fmtNum(readyToSell), icon: TrendingUp, color: "text-primary", circleColor: "bg-primary/[0.12]" },
+    ],
+    [
+      { label: "Score Médio", value: fmtNum(Math.round(avgScore)), icon: BarChart3, color: "text-emerald-400", circleColor: "bg-emerald-500/[0.12]" },
+      { label: "Em Risco", value: fmtNum(atRisk), icon: AlertTriangle, color: "text-destructive", circleColor: "bg-destructive/[0.12]" },
+      { label: "Frios", value: fmtNum(cold), icon: TrendingDown, color: "text-red-400", circleColor: "bg-red-500/[0.12]" },
+    ],
   ];
 
   const pieData = Object.entries(byBucket).map(([bucket, count]) => ({
@@ -1645,7 +1648,9 @@ const CRMScore = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-xl lg:text-2xl font-bold text-foreground">Score de Contatos</h1>
-                  <ScoreInfoPopover />
+                  <button onClick={() => setScoreInfoOpen(true)} className="text-muted-foreground hover:text-foreground transition-colors">
+                    <HelpCircle className="h-5 w-5" />
+                  </button>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Análise de engajamento e intenção de compra via WhatsApp · Score de 0 a 1.000
