@@ -1160,7 +1160,7 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                 <p className="text-center text-muted-foreground py-8 text-sm">Sem dados de evolução para o período</p>
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={evoData}>
+                  <LineChart data={evoData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} />
                     <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} domain={[0, 1000]} />
@@ -1168,8 +1168,8 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                       contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
                       formatter={(value: number) => [`${fmtNum(value)}`, "Score"]}
                     />
-                    <Bar dataKey="score" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
-                  </BarChart>
+                    <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3, fill: "hsl(var(--primary))" }} activeDot={{ r: 5 }} />
+                  </LineChart>
                 </ResponsiveContainer>
               )}
             </div>
