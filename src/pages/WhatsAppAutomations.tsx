@@ -33,6 +33,7 @@ export default function WhatsAppAutomations() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const { data: flows = [], isLoading } = useQuery({
     queryKey: ["wa-automation-flows"],
@@ -125,7 +126,7 @@ export default function WhatsAppAutomations() {
                 BETA
               </Badge>
             </div>
-            <Button onClick={() => createFlow.mutate()} disabled={createFlow.isPending}>
+            <Button onClick={() => setShowCreateDialog(true)}>
               <Plus size={16} />
               Novo Fluxo
             </Button>
@@ -151,7 +152,7 @@ export default function WhatsAppAutomations() {
                     Crie fluxos de atendimento automático para WhatsApp via Meta Partners com mensagens, botões, condições e ações.
                   </p>
                 </div>
-                <Button onClick={() => createFlow.mutate()} disabled={createFlow.isPending}>
+                <Button onClick={() => setShowCreateDialog(true)}>
                   <Plus size={16} />
                   Criar primeiro fluxo
                 </Button>
