@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS chat_onboarding_seen boolean NOT NULL DEFAULT false;
