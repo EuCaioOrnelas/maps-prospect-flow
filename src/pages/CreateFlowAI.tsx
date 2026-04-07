@@ -219,7 +219,6 @@ function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPromp
             </div>
           </div>
         </div>
-        </div>
       </div>
 
       <motion.p
