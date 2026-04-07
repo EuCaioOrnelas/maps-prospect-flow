@@ -233,7 +233,7 @@ export const AddLeadDialog = ({
           </p>
         </DialogHeader>
 
-        <div className="overflow-y-auto max-h-[calc(90vh-8rem)] sm:max-h-[calc(85vh-8rem)] pr-1">
+        <div className="overflow-y-auto max-h-[calc(90vh-8rem)] sm:max-h-[calc(85vh-8rem)] -mr-6 pr-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Primary Fields - Name and Phone with emphasis */}
           <div className="space-y-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
