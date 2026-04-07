@@ -428,6 +428,18 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               )}
             </li>
 
+            {/* Chat */}
+            <li>
+              <SidebarNavItem
+                title="Chat"
+                icon={MessageCircle}
+                url="/chat"
+                isActive={currentPath === "/chat"}
+                isExpanded={isExpanded}
+                tooltip="Chat"
+              />
+            </li>
+
             {/* Agentes de IA */}
             <li>
               <SidebarNavItem
