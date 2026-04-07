@@ -13,26 +13,21 @@ interface Metric {
   subValue?: string;
   icon: LucideIcon;
   color: string;
-  bgColor: string;
 }
 
 export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
-  // Count only leads that are assigned to a pipeline stage (visible in the CRM)
   const leadsInPipeline = leads.filter(lead => lead.pipeline_stage_id != null);
   const totalLeads = leadsInPipeline.length;
   
-  // Find the "lost" stage (by name pattern) to exclude from total value
   const lostStage = stages.find(s => 
     s.name.toLowerCase().includes('perdido') || 
     s.name.toLowerCase().includes('lost')
   );
 
-  // Calculate total value excluding lost leads (only from leads in pipeline)
   const totalValue = leadsInPipeline
     .filter(lead => !lostStage || lead.pipeline_stage_id !== lostStage.id)
     .reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
 
-  // Find the "won" stage (by name pattern)
   const wonStage = stages.find(s => 
     s.name.toLowerCase().includes('ganho') || 
     s.name.toLowerCase().includes('fechado') ||
@@ -44,58 +39,54 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
     ? leadsInPipeline.filter(lead => lead.pipeline_stage_id === wonStage.id).length 
     : 0;
 
-  // Count leads that have been contacted (not never_contacted) - only from pipeline
-  const prospectedLeads = leadsInPipeline.filter(lead => lead.whatsapp_status !== 'never_contacted').length;
-
-  // Conversion rate based on total leads vs won leads (rounded to 2 decimal places)
   const conversionRate = totalLeads > 0 
     ? Math.round((wonLeads / totalLeads) * 10000) / 100
     : 0;
 
   const metrics: Metric[] = [
     {
-      label: 'Total de Leads',
+      label: 'Total de Contatos',
       value: totalLeads,
       icon: Users,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      color: 'text-primary',
     },
     {
       label: 'Taxa de Conversão',
       value: conversionRate,
-      subValue: `${wonLeads} leads`,
+      subValue: `${wonLeads} contatos`,
       icon: Target,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
+      color: 'text-primary',
     },
     {
       label: 'Valor Total em Negociação',
       value: `R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`,
       icon: DollarSign,
       color: 'text-primary',
-      bgColor: 'bg-primary/10',
     },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
       {metrics.map((metric) => (
-        <Card key={metric.label} className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${metric.bgColor}`}>
-                <metric.icon className={`w-4 h-4 ${metric.color}`} />
-              </div>
-              <div>
-                <div className="flex items-baseline gap-1.5">
-                  <p className="text-2xl font-bold">
-                    {metric.label === 'Taxa de Conversão' ? `${metric.value}%` : metric.value}
-                  </p>
-                  {metric.subValue && (
-                    <span className="text-[10px] text-muted-foreground">{metric.subValue}</span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">{metric.label}</p>
+        <Card key={metric.label} className="border-border/50 relative overflow-hidden">
+          <CardContent className="p-5">
+            {/* Decorative circle behind the icon */}
+            <div className="absolute -top-5 -right-5 w-[72px] h-[72px] rounded-full bg-primary/[0.07] dark:bg-primary/[0.12]" />
+            {/* Icon on top-right */}
+            <div className="absolute top-3 right-3">
+              <metric.icon className={`w-4 h-4 ${metric.color}`} />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">
+                {metric.label}
+              </p>
+              <div className="flex items-baseline gap-1.5">
+                <p className="text-[30px] font-bold leading-tight" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {metric.label === 'Taxa de Conversão' ? `${metric.value}%` : metric.value}
+                </p>
+                {metric.subValue && (
+                  <span className="text-[10px] text-muted-foreground">{metric.subValue}</span>
+                )}
               </div>
             </div>
           </CardContent>
