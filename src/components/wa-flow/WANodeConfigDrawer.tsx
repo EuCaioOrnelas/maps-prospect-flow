@@ -906,7 +906,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                 />
               </div>
             </div>
-          )
+          )}
 
           {/* Actions */}
           <div className="flex gap-2 pt-4 border-t border-border">
