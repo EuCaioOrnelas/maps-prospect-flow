@@ -65,7 +65,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
   const isOnCampaignsPage = currentPath === "/whatsapp" || currentPath === "/meta-campaigns";
   const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
-  const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score" || currentPath === "/chat";
+  const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
 
   // Sync expanded state with hover, but with delay to prevent glitches
   useEffect(() => {
@@ -390,7 +390,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   className={cn(
                     "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
                     isCrmOpen
-                      ? "max-h-40 opacity-100 mt-1"
+                      ? "max-h-28 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
                   )}
                 >
@@ -421,20 +421,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       >
                         <Trophy size={16} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Score</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/chat"
-                        className={cn(
-                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
-                          currentPath === "/chat"
-                            ? "bg-sidebar-accent/60 text-primary font-medium"
-                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )}
-                      >
-                        <MessageCircle size={16} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Chat</span>
                       </Link>
                     </li>
                   </ul>

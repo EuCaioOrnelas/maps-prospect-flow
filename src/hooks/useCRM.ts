@@ -20,6 +20,7 @@ export interface Lead {
   company_name: string | null;
   contact_name: string | null;
   phone: string;
+  email: string | null;
   category: string | null;
   city: string | null;
   region: string | null;
