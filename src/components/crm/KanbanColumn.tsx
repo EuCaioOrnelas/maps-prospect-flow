@@ -3,6 +3,7 @@ import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { LeadCard } from './LeadCard';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Plus } from 'lucide-react';
 
 export type ColumnWidth = 'compact' | 'medium' | 'large';
 
@@ -25,6 +26,7 @@ interface KanbanColumnProps {
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
   columnWidth?: ColumnWidth;
   isAgentSilenced?: boolean;
+  onAddLead?: () => void;
 }
 
 const getColumnWidthClass = (width: ColumnWidth, isExpanded: boolean): string => {

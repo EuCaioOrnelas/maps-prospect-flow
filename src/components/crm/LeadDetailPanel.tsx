@@ -425,6 +425,10 @@ export const LeadDetailPanel = ({
               <h2 className="font-semibold text-lg truncate flex-1">
                 {lead.contact_name || lead.company_name || formatPhoneNumber(lead.phone)}
               </h2>
+              <div className="flex items-center gap-1.5 bg-primary/10 px-2 py-1 rounded-full shrink-0">
+                <Trophy className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-bold text-primary">{lead.ai_score || 0}</span>
+              </div>
               <Button 
                 variant="ghost" 
                 size="icon" 
