@@ -1,0 +1,5 @@
+DELETE FROM revenue_score_logs WHERE lead_id IN (SELECT id FROM revenue_leads WHERE user_id = '62ba5c53-a297-49cd-9ca3-b44302fc59f4' AND (phone_e164 LIKE '551199988770%' OR phone_e164 = '5511999887766'));
+DELETE FROM revenue_intent_logs WHERE lead_id IN (SELECT id FROM revenue_leads WHERE user_id = '62ba5c53-a297-49cd-9ca3-b44302fc59f4' AND (phone_e164 LIKE '551199988770%' OR phone_e164 = '5511999887766'));
+DELETE FROM revenue_events WHERE lead_id IN (SELECT id FROM revenue_leads WHERE user_id = '62ba5c53-a297-49cd-9ca3-b44302fc59f4' AND (phone_e164 LIKE '551199988770%' OR phone_e164 = '5511999887766'));
+DELETE FROM revenue_conversations WHERE lead_id IN (SELECT id FROM revenue_leads WHERE user_id = '62ba5c53-a297-49cd-9ca3-b44302fc59f4' AND (phone_e164 LIKE '551199988770%' OR phone_e164 = '5511999887766'));
+DELETE FROM revenue_leads WHERE user_id = '62ba5c53-a297-49cd-9ca3-b44302fc59f4' AND (phone_e164 LIKE '551199988770%' OR phone_e164 = '5511999887766');
