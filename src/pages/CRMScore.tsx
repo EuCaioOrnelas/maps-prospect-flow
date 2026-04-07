@@ -310,7 +310,7 @@ const getScoreCircleColor = (score: number) => {
   return "bg-red-500/[0.12]";
 };
 
-const fmtNum = (n: number) => n.toLocaleString('pt-BR');
+const fmtNum = (n: number) => Number.isInteger(n) ? n.toLocaleString('pt-BR') : n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 // ═══════════════ SCORE INFO POPOVER ═══════════════
 
