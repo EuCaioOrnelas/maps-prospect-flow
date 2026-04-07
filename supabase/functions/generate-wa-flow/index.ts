@@ -147,13 +147,37 @@ serve(async (req) => {
 
     for (const node of flowData.nodes || []) {
       const nodeType = validTypes.includes(node.type) ? node.type : "message";
+      const nodeConfig = node.config || {};
+
+      // Normalize buttons node config
+      if (nodeType === "buttons") {
+        // Fix interaction_type: "buttons" → "reply_buttons"
+        if (nodeConfig.interaction_type === "buttons" || !nodeConfig.interaction_type) {
+          nodeConfig.interaction_type = "reply_buttons";
+        }
+        // Ensure buttons array has proper structure
+        if (Array.isArray(nodeConfig.buttons)) {
+          nodeConfig.buttons = nodeConfig.buttons.map((btn: any, i: number) => {
+            if (typeof btn === "string") return { id: `btn_${i}`, title: btn };
+            return { id: btn.id || `btn_${i}`, title: btn.title || `Opção ${i + 1}` };
+          });
+        }
+        // Ensure list_items have proper structure
+        if (Array.isArray(nodeConfig.list_items)) {
+          nodeConfig.list_items = nodeConfig.list_items.map((item: any, i: number) => {
+            if (typeof item === "string") return { id: `item_${i}`, title: item, description: "" };
+            return { id: item.id || `item_${i}`, title: item.title || `Item ${i + 1}`, description: item.description || "" };
+          });
+        }
+      }
+
       const { data, error } = await sb
         .from("wa_flow_nodes")
         .insert({
           flow_id,
           node_type: nodeType,
           name: node.label || node.type,
-          config: node.config || {},
+          config: nodeConfig,
           position_x: node.position?.x || 0,
           position_y: node.position?.y || 200,
         })
