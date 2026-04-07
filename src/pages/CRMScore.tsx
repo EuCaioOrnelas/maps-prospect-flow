@@ -325,43 +325,49 @@ const fmtPhone = (phone: string) => {
 
 // ═══════════════ SCORE INFO POPOVER ═══════════════
 
-const ScoreInfoPopover = () => (
-  <Popover>
-    <PopoverTrigger asChild>
-      <button className="text-muted-foreground hover:text-foreground transition-colors">
-        <HelpCircle className="h-5 w-5" />
-      </button>
-    </PopoverTrigger>
-    <PopoverContent className="w-[340px] text-sm space-y-3" side="bottom" align="start">
-      <h4 className="font-semibold text-foreground">Como funciona o Score</h4>
-      <p className="text-muted-foreground text-xs">
-        O score vai de 0 a 1.000 pontos e é calculado automaticamente com base nas interações dos contatos no WhatsApp.
-      </p>
-      <div className="space-y-1.5">
-        {[
-          { label: "Frio", range: "0 – 200", desc: "Sem interação relevante", color: "border-red-500/40 bg-red-500/10", text: "text-red-400" },
-          { label: "Baixo engajamento", range: "201 – 400", desc: "Pouca atividade", color: "border-yellow-500/40 bg-yellow-500/10", text: "text-yellow-400" },
-          { label: "Engajado", range: "401 – 600", desc: "Interagindo ativamente", color: "border-blue-500/40 bg-blue-500/10", text: "text-blue-400" },
-          { label: "Alto valor", range: "601 – 800", desc: "Forte interesse", color: "border-purple-500/40 bg-purple-500/10", text: "text-purple-400" },
-          { label: "Pronto p/ venda", range: "801 – 1.000", desc: "Contato quente", color: "border-emerald-500/40 bg-emerald-500/10", text: "text-emerald-400" },
-        ].map((b) => (
-          <div key={b.label} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${b.color}`}>
-            <span className={`text-xs font-semibold ${b.text}`}>{b.label}</span>
-            <div className="text-right">
-              <span className="text-[11px] font-medium text-foreground">{b.range}</span>
-              <p className="text-[10px] text-muted-foreground">{b.desc}</p>
-            </div>
+const ScoreInfoModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <Card className="w-full max-w-sm bg-card" onClick={(e) => e.stopPropagation()}>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Como funciona o Score</CardTitle>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-        ))}
-      </div>
-      <div className="border-t border-border pt-2">
-        <p className="text-[11px] text-muted-foreground">
-          O score é atualizado automaticamente. Cada regra soma ou subtrai pontos. Contatos inativos perdem score diariamente.
-        </p>
-      </div>
-    </PopoverContent>
-  </Popover>
-);
+          <p className="text-xs text-muted-foreground">
+            O score vai de 0 a 1.000 pontos e é calculado automaticamente com base nas interações dos contatos no WhatsApp.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-2 pb-4">
+          {[
+            { label: "Frio", range: "0 – 200", desc: "Sem interação relevante", color: "border-red-500/40 bg-red-500/10", text: "text-red-400" },
+            { label: "Baixo engajamento", range: "201 – 400", desc: "Pouca atividade", color: "border-yellow-500/40 bg-yellow-500/10", text: "text-yellow-400" },
+            { label: "Engajado", range: "401 – 600", desc: "Interagindo ativamente", color: "border-blue-500/40 bg-blue-500/10", text: "text-blue-400" },
+            { label: "Alto valor", range: "601 – 800", desc: "Forte interesse", color: "border-purple-500/40 bg-purple-500/10", text: "text-purple-400" },
+            { label: "Pronto p/ venda", range: "801 – 1.000", desc: "Contato quente", color: "border-emerald-500/40 bg-emerald-500/10", text: "text-emerald-400" },
+          ].map((b) => (
+            <div key={b.label} className={`flex items-center justify-between px-3 py-2.5 rounded-lg border ${b.color}`}>
+              <span className={`text-xs font-semibold ${b.text}`}>{b.label}</span>
+              <div className="text-right">
+                <span className="text-[11px] font-medium text-foreground">{b.range}</span>
+                <p className="text-[10px] text-muted-foreground">{b.desc}</p>
+              </div>
+            </div>
+          ))}
+          <div className="border-t border-border pt-2 mt-2">
+            <p className="text-[11px] text-muted-foreground">
+              O score é atualizado automaticamente. Cada regra soma ou subtrai pontos. Contatos inativos perdem score diariamente.
+            </p>
+          </div>
+          <Button variant="outline" className="w-full mt-2" size="sm" onClick={onClose}>Fechar</Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 // ═══════════════ EMPTY STATE ═══════════════
 
@@ -426,12 +432,15 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
   }, [leads]);
 
   const kpis = [
-    { label: "Total Leads", value: fmtNum(totalLeads), icon: Users, color: "text-primary", circleColor: "bg-primary/[0.12]" },
-    { label: "Score Médio", value: fmtNum(Math.round(avgScore)), icon: BarChart3, color: "text-blue-400", circleColor: "bg-blue-500/[0.12]" },
-    { label: "Score Mediano", value: fmtNum(Math.round(medianScore)), icon: Target, color: "text-yellow-400", circleColor: "bg-yellow-500/[0.12]" },
-    { label: "Pronto p/ Venda", value: fmtNum(readyToSell), icon: TrendingUp, color: "text-primary", circleColor: "bg-primary/[0.12]" },
-    { label: "Em Risco", value: fmtNum(atRisk), icon: AlertTriangle, color: "text-destructive", circleColor: "bg-destructive/[0.12]" },
-    { label: "Frios", value: fmtNum(cold), icon: TrendingDown, color: "text-red-400", circleColor: "bg-red-500/[0.12]" },
+    [
+      { label: "Total Contatos", value: fmtNum(totalLeads), icon: Users, color: "text-primary", circleColor: "bg-primary/[0.12]" },
+      { label: "Pronto p/ Venda", value: fmtNum(readyToSell), icon: TrendingUp, color: "text-primary", circleColor: "bg-primary/[0.12]" },
+    ],
+    [
+      { label: "Score Médio", value: fmtNum(Math.round(avgScore)), icon: BarChart3, color: "text-emerald-400", circleColor: "bg-emerald-500/[0.12]" },
+      { label: "Em Risco", value: fmtNum(atRisk), icon: AlertTriangle, color: "text-destructive", circleColor: "bg-destructive/[0.12]" },
+      { label: "Frios", value: fmtNum(cold), icon: TrendingDown, color: "text-red-400", circleColor: "bg-red-500/[0.12]" },
+    ],
   ];
 
   const pieData = Object.entries(byBucket).map(([bucket, count]) => ({
@@ -442,18 +451,20 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {kpis.map((kpi) => (
-          <Card key={kpi.label} className="relative overflow-hidden bg-card border-border/60">
-            <div className={`absolute -top-5 -right-5 w-[72px] h-[72px] rounded-full ${kpi.circleColor}`} />
-            <kpi.icon className={`absolute top-3 right-3 h-4 w-4 ${kpi.color}`} />
-            <CardContent className="p-5 relative">
-              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2">{kpi.label}</p>
-              <p className="text-[30px] font-bold leading-none tabular-nums">{kpi.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {kpis.map((row, ri) => (
+        <div key={ri} className={`grid grid-cols-1 ${row.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-4`}>
+          {row.map((kpi) => (
+            <Card key={kpi.label} className="relative overflow-hidden bg-card border-border/60">
+              <div className={`absolute -top-5 -right-5 w-[72px] h-[72px] rounded-full ${kpi.circleColor}`} />
+              <kpi.icon className={`absolute top-3 right-3 h-4 w-4 ${kpi.color}`} />
+              <CardContent className="p-5 relative">
+                <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2">{kpi.label}</p>
+                <p className="text-[30px] font-bold leading-none tabular-nums">{kpi.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ))}
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1585,6 +1596,7 @@ const CRMScore = () => {
   const { user, profile } = useAuth();
   const [searchParams] = useSearchParams();
   const [deepLinkPhone] = useState(() => searchParams.get("phone"));
+  const [scoreInfoOpen, setScoreInfoOpen] = useState(false);
   const [autoOpenedLead, setAutoOpenedLead] = useState<RevenueLead | null>(null);
   useAutoScoreTracking("crm_score");
 
@@ -1639,7 +1651,9 @@ const CRMScore = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-xl lg:text-2xl font-bold text-foreground">Score de Contatos</h1>
-                  <ScoreInfoPopover />
+                  <button onClick={() => setScoreInfoOpen(true)} className="text-muted-foreground hover:text-foreground transition-colors">
+                    <HelpCircle className="h-5 w-5" />
+                  </button>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Análise de engajamento e intenção de compra via WhatsApp · Score de 0 a 1.000
@@ -1692,6 +1706,9 @@ const CRMScore = () => {
           )}
         </div>
       </main>
+
+      {/* Score Info Modal */}
+      <ScoreInfoModal open={scoreInfoOpen} onClose={() => setScoreInfoOpen(false)} />
 
       {/* Deep-link lead detail */}
       {autoOpenedLead && (
