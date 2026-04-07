@@ -443,27 +443,7 @@ export default function WhatsAppFlowEditor() {
         <div className="h-6 w-px bg-border mx-1" />
 
         {/* Delete flow */}
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir fluxo">
-              <Trash2 size={15} />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Excluir fluxo?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta ação é irreversível. Todos os nós e conexões serão perdidos permanentemente.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={() => deleteFlow.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Excluir
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <DeleteFlowDialog onConfirm={() => deleteFlow.mutate()} isPending={deleteFlow.isPending} />
 
         <Button
           variant="outline"

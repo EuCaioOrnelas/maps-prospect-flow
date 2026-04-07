@@ -543,15 +543,15 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               />
             </li>
 
-            {/* Consultoria */}
+            {/* Ajuda */}
             <li>
               <SidebarNavItem
-                title="Consultoria"
+                title="Ajuda"
                 icon={GraduationCap}
-                url="/consultoria"
-                isActive={currentPath === "/consultoria"}
+                url="/ajuda"
+                isActive={currentPath === "/ajuda" || currentPath === "/ajuda/faq"}
                 isExpanded={isExpanded}
-                tooltip="Consultoria Estratégica"
+                tooltip="Central de Ajuda"
               />
             </li>
 
