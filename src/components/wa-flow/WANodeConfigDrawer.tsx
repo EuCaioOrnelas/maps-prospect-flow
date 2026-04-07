@@ -1151,149 +1151,159 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
             </div>
           )}
 
-          {/* ===== INTEGRATION NODE ===== */}
-          {node.type === "integration" && (
+          {/* ===== GOOGLE SHEETS NODE ===== */}
+          {node.type === "google_sheets" && (
             <div className="space-y-4">
-              {renderInfoBanner("Envie dados do lead para Google Sheets, Agenda ou Gmail via webhook. Use Zapier, Make ou n8n para conectar.")}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Tipo de integração</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { value: "google_sheets", emoji: "📊", label: "Google Sheets" },
-                    { value: "google_calendar", emoji: "📅", label: "Google Agenda" },
-                    { value: "gmail", emoji: "✉️", label: "Gmail" },
-                    { value: "webhook", emoji: "🔗", label: "Webhook genérico" },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs transition-colors ${
-                        config.integration_type === opt.value
-                          ? "border-primary bg-primary/5 text-primary"
-                          : "border-border bg-card text-muted-foreground hover:border-primary/30"
-                      }`}
-                      onClick={() => updateConfig("integration_type", opt.value)}
-                    >
-                      <span className="text-base">{opt.emoji}</span>
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
+              {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets via webhook.")}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">URL do Webhook</Label>
                 <Input
                   value={config.webhook_url || ""}
                   onChange={(e) => updateConfig("webhook_url", e.target.value)}
-                  placeholder={
-                    config.integration_type === "google_sheets"
-                      ? "https://hooks.zapier.com/... ou Make webhook"
-                      : config.integration_type === "google_calendar"
-                      ? "https://n8n.seudominio.com/webhook/..."
-                      : "https://seu-webhook.com/endpoint"
-                  }
+                  placeholder="https://hooks.zapier.com/... ou Make webhook"
                   className="h-9 text-sm"
                 />
-                <p className="text-[10px] text-muted-foreground">
-                  Cole a URL gerada pelo Zapier, Make ou n8n.
-                </p>
+                <p className="text-[10px] text-muted-foreground">Cole a URL gerada pelo Zapier, Make ou n8n.</p>
               </div>
-
-              {config.integration_type === "google_sheets" && (
-                <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
-                  <p className="text-[11px] font-medium text-foreground">📊 Dados enviados automaticamente:</p>
-                  <div className="space-y-1">
-                    {["Nome do contato", "Telefone", "Email", "Empresa", "Cidade", "Origem", "Tags", "Data/hora"].map((field) => (
-                      <div key={field} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                        <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
-                        {field}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="space-y-2 pt-2 border-t border-border/30">
-                    <Label className="text-[10px]">Campos extras (um por linha, chave=valor)</Label>
-                    <Textarea
-                      value={config.extra_fields || ""}
-                      onChange={(e) => updateConfig("extra_fields", e.target.value)}
-                      placeholder={"plano=premium\ninteresse=produto_x"}
-                      className="text-xs min-h-[50px] font-mono"
-                    />
-                  </div>
+              <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+                <p className="text-[11px] font-medium text-foreground">📊 Dados enviados automaticamente:</p>
+                <div className="space-y-1">
+                  {["Nome do contato", "Telefone", "Email", "Empresa", "Cidade", "Origem", "Tags", "Data/hora"].map((field) => (
+                    <div key={field} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                      <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
+                      {field}
+                    </div>
+                  ))}
                 </div>
-              )}
-
-              {config.integration_type === "google_calendar" && (
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Título do evento</Label>
-                    <Input
-                      value={config.event_title || ""}
-                      onChange={(e) => updateConfig("event_title", e.target.value)}
-                      placeholder="Reunião com {nome}"
-                      className="h-9 text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Duração (minutos)</Label>
-                    <Input
-                      type="number"
-                      value={config.event_duration || "30"}
-                      onChange={(e) => updateConfig("event_duration", parseInt(e.target.value) || 30)}
-                      className="h-9 text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Descrição do evento (opcional)</Label>
-                    <Textarea
-                      value={config.event_description || ""}
-                      onChange={(e) => updateConfig("event_description", e.target.value)}
-                      placeholder="Lead: {nome} | Tel: {telefone}"
-                      className="text-sm min-h-[60px]"
-                    />
-                  </div>
+                <div className="space-y-2 pt-2 border-t border-border/30">
+                  <Label className="text-[10px]">Campos extras (um por linha, chave=valor)</Label>
+                  <Textarea
+                    value={config.extra_fields || ""}
+                    onChange={(e) => updateConfig("extra_fields", e.target.value)}
+                    placeholder={"plano=premium\ninteresse=produto_x"}
+                    className="text-xs min-h-[50px] font-mono"
+                  />
                 </div>
-              )}
-
-              {config.integration_type === "gmail" && (
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Assunto do email</Label>
-                    <Input
-                      value={config.email_subject || ""}
-                      onChange={(e) => updateConfig("email_subject", e.target.value)}
-                      placeholder="Novo lead: {nome}"
-                      className="h-9 text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Corpo do email</Label>
-                    <Textarea
-                      value={config.email_body || ""}
-                      onChange={(e) => updateConfig("email_body", e.target.value)}
-                      placeholder={"Novo lead capturado!\n\nNome: {nome}\nTelefone: {telefone}\nEmpresa: {empresa}"}
-                      className="text-sm min-h-[80px]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Email destinatário (opcional)</Label>
-                    <Input
-                      value={config.email_to || ""}
-                      onChange={(e) => updateConfig("email_to", e.target.value)}
-                      placeholder="vendas@suaempresa.com"
-                      className="h-9 text-sm"
-                    />
-                    <p className="text-[10px] text-muted-foreground">Se vazio, o webhook define o destinatário.</p>
-                  </div>
-                </div>
-              )}
-
+              </div>
               <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
                 <p className="text-[11px] text-primary font-medium mb-1">💡 Como configurar</p>
                 <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
-                  <li>Crie uma automação no <strong>Zapier</strong>, <strong>Make</strong> ou <strong>n8n</strong></li>
-                  <li>Use o trigger "Webhook" para receber dados</li>
-                  <li>Conecte à ação desejada (Sheets, Agenda, Gmail)</li>
-                  <li>Cole a URL do webhook aqui</li>
+                  <li>No <strong>Zapier</strong>: Trigger "Webhooks by Zapier" → Action "Google Sheets - Create Spreadsheet Row"</li>
+                  <li>No <strong>Make</strong>: Webhook → Google Sheets "Add a Row"</li>
+                  <li>No <strong>n8n</strong>: Webhook → Google Sheets node</li>
+                  <li>Copie a URL do webhook e cole acima</li>
+                </ol>
+              </div>
+            </div>
+          )}
+
+          {/* ===== GOOGLE CALENDAR NODE ===== */}
+          {node.type === "google_calendar" && (
+            <div className="space-y-4">
+              {renderInfoBanner("Crie eventos automáticos no Google Agenda quando o lead chegar neste ponto do fluxo.")}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">URL do Webhook</Label>
+                <Input
+                  value={config.webhook_url || ""}
+                  onChange={(e) => updateConfig("webhook_url", e.target.value)}
+                  placeholder="https://hooks.zapier.com/... ou n8n webhook"
+                  className="h-9 text-sm"
+                />
+                <p className="text-[10px] text-muted-foreground">Cole a URL gerada pelo Zapier, Make ou n8n.</p>
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Título do evento</Label>
+                  <Input
+                    value={config.event_title || ""}
+                    onChange={(e) => updateConfig("event_title", e.target.value)}
+                    placeholder="Reunião com {nome}"
+                    className="h-9 text-sm"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Use {"{nome}"}, {"{telefone}"}, {"{empresa}"} como variáveis.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Duração (minutos)</Label>
+                  <Input
+                    type="number"
+                    value={config.event_duration || "30"}
+                    onChange={(e) => updateConfig("event_duration", parseInt(e.target.value) || 30)}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Descrição do evento (opcional)</Label>
+                  <Textarea
+                    value={config.event_description || ""}
+                    onChange={(e) => updateConfig("event_description", e.target.value)}
+                    placeholder="Lead: {nome} | Tel: {telefone}"
+                    className="text-sm min-h-[60px]"
+                  />
+                </div>
+              </div>
+              <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
+                <p className="text-[11px] text-primary font-medium mb-1">💡 Como configurar</p>
+                <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
+                  <li>No <strong>Zapier</strong>: Trigger "Webhooks" → Action "Google Calendar - Create Event"</li>
+                  <li>No <strong>Make</strong>: Webhook → Google Calendar "Create an Event"</li>
+                  <li>O título e duração serão enviados junto com os dados do lead</li>
+                  <li>Copie a URL do webhook e cole acima</li>
+                </ol>
+              </div>
+            </div>
+          )}
+
+          {/* ===== GMAIL NODE ===== */}
+          {node.type === "gmail" && (
+            <div className="space-y-4">
+              {renderInfoBanner("Envie um email automático pelo Gmail quando o lead chegar neste ponto do fluxo.")}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">URL do Webhook</Label>
+                <Input
+                  value={config.webhook_url || ""}
+                  onChange={(e) => updateConfig("webhook_url", e.target.value)}
+                  placeholder="https://hooks.zapier.com/... ou Make webhook"
+                  className="h-9 text-sm"
+                />
+                <p className="text-[10px] text-muted-foreground">Cole a URL gerada pelo Zapier, Make ou n8n.</p>
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Email destinatário</Label>
+                  <Input
+                    value={config.email_to || ""}
+                    onChange={(e) => updateConfig("email_to", e.target.value)}
+                    placeholder="vendas@suaempresa.com"
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Assunto do email</Label>
+                  <Input
+                    value={config.email_subject || ""}
+                    onChange={(e) => updateConfig("email_subject", e.target.value)}
+                    placeholder="Novo lead: {nome}"
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Corpo do email</Label>
+                  <Textarea
+                    value={config.email_body || ""}
+                    onChange={(e) => updateConfig("email_body", e.target.value)}
+                    placeholder={"Novo lead capturado!\n\nNome: {nome}\nTelefone: {telefone}\nEmpresa: {empresa}"}
+                    className="text-sm min-h-[80px]"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Use {"{nome}"}, {"{telefone}"}, {"{empresa}"}, {"{email}"} como variáveis.</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
+                <p className="text-[11px] text-primary font-medium mb-1">💡 Como configurar</p>
+                <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
+                  <li>No <strong>Zapier</strong>: Trigger "Webhooks" → Action "Gmail - Send Email"</li>
+                  <li>No <strong>Make</strong>: Webhook → Gmail "Send an Email"</li>
+                  <li>Configure o assunto e corpo no Zapier/Make ou use os dados enviados daqui</li>
+                  <li>Copie a URL do webhook e cole acima</li>
                 </ol>
               </div>
             </div>
