@@ -888,43 +888,7 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
 
       {/* Lead Detail Dialog */}
       {selectedLead && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedLead(null)}>
-          <Card className="w-full max-w-lg bg-card" onClick={(e) => e.stopPropagation()}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center justify-between">
-                <span>{selectedLead.name || selectedLead.phone_e164}</span>
-                <Badge variant="outline" className={BUCKET_BADGE_COLORS[mapBucket(selectedLead.status_bucket, selectedLead.score_total)] || ""}>
-                  {BUCKET_SHORT_LABELS[mapBucket(selectedLead.status_bucket, selectedLead.score_total)] || selectedLead.status_bucket}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 rounded-lg bg-muted/20 border border-border/30">
-                  <p className={`text-3xl font-bold tabular-nums ${getScoreColor(selectedLead.score_total)}`}>{fmtNum(selectedLead.score_total)}</p>
-                  <p className="text-xs text-muted-foreground">Score Total / 1.000</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Engajamento</span><span className="font-medium tabular-nums">{fmtNum(selectedLead.score_engagement)}</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Intenção</span><span className="font-medium tabular-nums">{fmtNum(selectedLead.score_intent)}</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Urgência</span><span className="font-medium tabular-nums">{fmtNum(selectedLead.score_urgency)}</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Risco</span><span className={`font-medium tabular-nums ${selectedLead.score_risk < 0 ? 'text-destructive' : ''}`}>{fmtNum(selectedLead.score_risk)}</span></div>
-                </div>
-              </div>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Telefone</span><span>{selectedLead.phone_e164}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Primeira interação</span><span>{new Date(selectedLead.first_seen_at).toLocaleDateString('pt-BR')}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Última atividade</span><span>{new Date(selectedLead.last_activity_at).toLocaleDateString('pt-BR')}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Risco</span>
-                  <Badge variant="outline" className={selectedLead.risk_state === "SAFE" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}>
-                    {selectedLead.risk_state === "SAFE" ? "Seguro" : selectedLead.risk_state === "AT_RISK" ? "Em Risco" : selectedLead.risk_state}
-                  </Badge>
-                </div>
-              </div>
-              <Button variant="outline" className="w-full" onClick={() => setSelectedLead(null)}>Fechar</Button>
-            </CardContent>
-          </Card>
-        </div>
+        <LeadDetailPopup lead={selectedLead} onClose={() => setSelectedLead(null)} />
       )}
     </div>
   );
