@@ -830,7 +830,7 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                     <TableCell>
                       <div>
                         <p className="font-medium text-sm">{lead.name || lead.phone_e164}</p>
-                        <p className="text-xs text-muted-foreground">{lead.phone_e164}</p>
+                        <p className="text-xs text-muted-foreground">{fmtPhone(lead.phone_e164)}</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -1038,7 +1038,7 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                 <User className="h-4 w-4 text-muted-foreground" />
                 <p className="font-bold">{lead.name || lead.phone_e164}</p>
               </div>
-              <p className="text-sm text-muted-foreground">{lead.phone_e164}</p>
+              <p className="text-sm text-muted-foreground">{fmtPhone(lead.phone_e164)}</p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
                   {BUCKET_SHORT_LABELS[bucket]}
@@ -1329,7 +1329,7 @@ const ScoreRankingTab = ({ leads }: { leads: RevenueLead[] }) => {
                   <div className="w-8 flex justify-center shrink-0">{getMedalIcon(i)}</div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{lead.name || lead.phone_e164}</p>
-                    <p className="text-xs text-muted-foreground truncate">{lead.phone_e164}</p>
+                    <p className="text-xs text-muted-foreground truncate">{fmtPhone(lead.phone_e164)}</p>
                   </div>
                   <Badge variant="outline" className={cn("hidden sm:inline-flex", BUCKET_BADGE_COLORS[bucket] || "")}>
                     {BUCKET_SHORT_LABELS[bucket] || bucket}
