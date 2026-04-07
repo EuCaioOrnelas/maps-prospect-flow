@@ -222,7 +222,7 @@ export const AddLeadDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] overflow-y-auto w-[95vw] sm:w-full rounded-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] overflow-hidden w-[95vw] sm:w-full rounded-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5 text-primary" />
@@ -233,6 +233,7 @@ export const AddLeadDialog = ({
           </p>
         </DialogHeader>
 
+        <div className="overflow-y-auto max-h-[calc(90vh-8rem)] sm:max-h-[calc(85vh-8rem)] pr-1">
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Primary Fields - Name and Phone with emphasis */}
           <div className="space-y-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
@@ -425,7 +426,7 @@ export const AddLeadDialog = ({
             </div>
           </div>
 
-          {/* Negotiation Value - At the end, styled like LeadDetailDialog */}
+          {/* Negotiation Value */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2 text-sm font-medium">
               <DollarSign className="w-4 h-4 text-primary" />
@@ -460,6 +461,7 @@ export const AddLeadDialog = ({
             </Button>
           </div>
         </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
