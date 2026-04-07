@@ -7,117 +7,109 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `Você é um arquiteto de fluxos conversacionais para WhatsApp. Você cria fluxos JSON PERFEITOS para um editor visual drag-and-drop.
+const VALID_NODE_TYPES = ["entry", "message", "buttons", "condition", "wait", "action", "ai_agent", "handoff", "end"];
 
-=== REGRAS ABSOLUTAS (VIOLAÇÃO = ERRO FATAL) ===
+const SYSTEM_PROMPT = `Você é um arquiteto expert em fluxos conversacionais para WhatsApp Business. Gere fluxos PERFEITOS seguindo estas regras:
 
-1. PROIBIDO: "condition" depois de "buttons". Botões JÁ SÃO escolhas! Cada botão conecta DIRETAMENTE ao próximo nó via sourceHandle (btn_0, btn_1, btn_2).
-   - Condition serve APENAS para: verificar se respondeu (responded/no_response), verificar tag (has_tag), verificar campo (field_equals).
+=== TIPOS DE NÓS PERMITIDOS ===
+entry, message, buttons, condition, wait, action, ai_agent, handoff, end
 
-2. ZERO NÓS SOLTOS: Todo nó DEVE ter conexão de entrada E saída. Exceção: "entry" (só saída) e "end"/"handoff" (só entrada).
+=== REGRAS OBRIGATÓRIAS ===
 
-3. TODO CAMINHO TERMINA: Cada ramificação do fluxo DEVE terminar em "end" ou "handoff". Sem exceção.
+1. SEMPRE comece com um nó "entry" e termine TODOS os caminhos com "end" ou "handoff".
 
-4. FLUXO LINEAR SIMPLES: Para prompts complexos com muitas categorias/intenções, use um ÚNICO nó "ai_agent" que processa tudo, em vez de criar dezenas de nós separados. O agente IA já classifica e responde automaticamente.
+2. BOTÕES: Nunca coloque "condition" depois de "buttons". Botões conectam DIRETAMENTE ao próximo nó via sourceHandle (btn_0, btn_1, btn_2).
 
-5. MÁXIMO 25 NÓS: Mantenha fluxos concisos. Se o prompt tem muitas categorias, use "ai_agent" para processar — NÃO crie um nó message para cada categoria.
+3. CONDITION: Use APENAS para verificar se o lead respondeu (responded/no_response). sourceHandle é "yes" ou "no".
 
-=== TIPOS DE NÓS ===
-- entry: Gatilho (config: {trigger_type: "first_message"|"keyword"|"campaign_reply"|"webhook"|"qr_code", keywords: []})
-- message: Mensagem (config: {message_type: "text"|"image"|"audio"|"video", content: "texto"})
-- buttons: Botões interativos (config: {interaction_type: "reply_buttons", body_text: "texto", buttons: [{id: "btn_0", title: "Opção 1"}, {id: "btn_1", title: "Opção 2"}]})
-- condition: Condição (config: {condition_type: "responded"|"no_response"|"has_tag"|"field_equals", condition_value: "valor"})
-- wait: Espera (config: {delay_value: 5, delay_unit: "minutes"|"hours"|"days"})
-- action: Ação CRM (config: {action_type: "add_tag"|"remove_tag"|"move_pipeline"|"mark_hot"|"mark_cold"|"mark_converted"|"webhook", tag_name: "nome"})
-- ai_agent: Agente IA (config: {system_prompt: "instruções completas do agente", ai_model: "gpt-4o-mini"})
-- handoff: Transferir para humano (config: {notify_team: true})
-- end: Fim do fluxo (config: {})
+4. WAIT: Use entre mensagens quando faz sentido dar tempo ao lead (follow-ups, lembretes). Valores: delay_value + delay_unit (minutes/hours/days).
 
-=== CONEXÕES (EDGES) ===
-- Nós normais: sourceHandle = null, targetHandle = null
-- Botões: sourceHandle = "btn_0", "btn_1", "btn_2" (um por botão)
-- Condição: sourceHandle = "yes" ou "no"
+5. ACTION: Use para integração CRM. Tipos: add_tag, remove_tag, move_pipeline, mark_hot, mark_cold, mark_converted, webhook.
 
-=== POSICIONAMENTO (CRÍTICO!) ===
-- Layout esquerda→direita, espaçamento de 300px em X
-- Primeira linha Y=200
-- Bifurcações: cada ramo +200px em Y
-- Entry sempre em x:0, y:200
-- NÓS NUNCA DEVEM SOBREPOR! Calcule Y com cuidado.
+6. AI_AGENT: Para prompts complexos com muitas categorias/intenções, use UM nó ai_agent com o prompt completo como system_prompt. NÃO crie dezenas de message nodes separados.
 
-=== PADRÃO PARA PROMPTS DE SUPORTE/ATENDIMENTO ===
-Quando o prompt descreve um agente de suporte com múltiplas categorias (login, pagamento, técnico, etc.):
+7. HANDOFF: Sempre inclua pelo menos 1 handoff para escalonamento humano.
 
-NÃO FAÇA: Criar um nó message separado para cada categoria → isso gera fluxo gigante e desconexo!
-FAÇA: Use ai_agent com o prompt completo do usuário.
+8. CONECTIVIDADE: TODO nó deve ter pelo menos uma conexão de entrada E uma de saída. Exceções: entry (só saída), end/handoff (só entrada).
 
-Estrutura ideal:
-entry → message(saudação) → ai_agent(com todo o prompt do usuário como system_prompt) → condition(responded?) → yes→message(confirmação) → condition(resolveu?) → yes→action(mark_converted)→end / no→handoff
-                                                                                                                                                                                              → no→wait(1h)→message(follow-up)→end
+9. MÁXIMO 25 NÓS.
 
-=== PADRÃO PARA FLUXOS SIMPLES (vendas, agendamento) ===
-entry → message(saudação) → buttons(opções) → btn_0→message→action→end
-                                             → btn_1→message→handoff
-                                             → btn_2→message→end
+=== POSICIONAMENTO ===
+- Layout esquerda→direita, X incrementa 300px por etapa
+- Entry em x:0, y:300
+- Bifurcações: cada ramo separado por 200px em Y
+- Nós NUNCA devem sobrepor
 
-=== EXEMPLO COMPLETO DE SUPORTE ===
-{
-  "flow_name": "Suporte Automatizado",
-  "nodes": [
-    {"id":"node_1","type":"entry","label":"Entrada","position":{"x":0,"y":300},"config":{"trigger_type":"first_message","keywords":[]}},
-    {"id":"node_2","type":"message","label":"Boas-vindas","position":{"x":300,"y":300},"config":{"message_type":"text","content":"Olá! 👋 Bem-vindo ao suporte. Como posso ajudar?"}},
-    {"id":"node_3","type":"ai_agent","label":"Agente IA","position":{"x":600,"y":300},"config":{"system_prompt":"COLE_AQUI_O_PROMPT_DO_USUARIO","ai_model":"gpt-4o-mini"}},
-    {"id":"node_4","type":"condition","label":"Respondeu?","position":{"x":900,"y":300},"config":{"condition_type":"responded","condition_value":"true"}},
-    {"id":"node_5","type":"message","label":"Confirmação","position":{"x":1200,"y":200},"config":{"message_type":"text","content":"Fico feliz em ajudar! Posso ajudar em mais alguma coisa?"}},
-    {"id":"node_6","type":"action","label":"Tag Resolvido","position":{"x":1500,"y":200},"config":{"action_type":"add_tag","tag_name":"suporte_resolvido"}},
-    {"id":"node_7","type":"end","label":"Fim do Fluxo","position":{"x":1800,"y":200},"config":{}},
-    {"id":"node_8","type":"wait","label":"Espera 1h","position":{"x":1200,"y":450},"config":{"delay_value":1,"delay_unit":"hours"}},
-    {"id":"node_9","type":"handoff","label":"Escalar Atendimento","position":{"x":1500,"y":450},"config":{"notify_team":true}}
-  ],
-  "edges": [
-    {"source":"node_1","target":"node_2","sourceHandle":null,"targetHandle":null},
-    {"source":"node_2","target":"node_3","sourceHandle":null,"targetHandle":null},
-    {"source":"node_3","target":"node_4","sourceHandle":null,"targetHandle":null},
-    {"source":"node_4","target":"node_5","sourceHandle":"yes","targetHandle":null},
-    {"source":"node_4","target":"node_8","sourceHandle":"no","targetHandle":null},
-    {"source":"node_5","target":"node_6","sourceHandle":null,"targetHandle":null},
-    {"source":"node_6","target":"node_7","sourceHandle":null,"targetHandle":null},
-    {"source":"node_8","target":"node_9","sourceHandle":null,"targetHandle":null}
-  ]
-}
+=== PADRÕES DE FLUXO ===
 
-=== EXEMPLO COM BOTÕES (VENDAS) ===
-{
-  "flow_name": "Atendimento Vendas",
-  "nodes": [
-    {"id":"node_1","type":"entry","label":"Entrada","position":{"x":0,"y":300},"config":{"trigger_type":"first_message","keywords":[]}},
-    {"id":"node_2","type":"message","label":"Saudação","position":{"x":300,"y":300},"config":{"message_type":"text","content":"Olá! Seja bem-vindo 😊"}},
-    {"id":"node_3","type":"buttons","label":"Menu Principal","position":{"x":600,"y":300},"config":{"interaction_type":"reply_buttons","body_text":"Como posso ajudar?","buttons":[{"id":"btn_0","title":"Ver produtos"},{"id":"btn_1","title":"Falar com vendedor"},{"id":"btn_2","title":"Suporte"}]}},
-    {"id":"node_4","type":"message","label":"Catálogo","position":{"x":900,"y":100},"config":{"message_type":"text","content":"Confira nosso catálogo: link.com/catalogo"}},
-    {"id":"node_5","type":"action","label":"Tag Interessado","position":{"x":1200,"y":100},"config":{"action_type":"add_tag","tag_name":"interessado"}},
-    {"id":"node_6","type":"end","label":"Fim","position":{"x":1500,"y":100},"config":{}},
-    {"id":"node_7","type":"handoff","label":"Vendedor","position":{"x":900,"y":300},"config":{"notify_team":true}},
-    {"id":"node_8","type":"ai_agent","label":"Suporte IA","position":{"x":900,"y":500},"config":{"system_prompt":"Responda dúvidas de suporte de forma clara e objetiva.","ai_model":"gpt-4o-mini"}},
-    {"id":"node_9","type":"end","label":"Fim Suporte","position":{"x":1200,"y":500},"config":{}}
-  ],
-  "edges": [
-    {"source":"node_1","target":"node_2","sourceHandle":null,"targetHandle":null},
-    {"source":"node_2","target":"node_3","sourceHandle":null,"targetHandle":null},
-    {"source":"node_3","target":"node_4","sourceHandle":"btn_0","targetHandle":null},
-    {"source":"node_3","target":"node_7","sourceHandle":"btn_1","targetHandle":null},
-    {"source":"node_3","target":"node_8","sourceHandle":"btn_2","targetHandle":null},
-    {"source":"node_4","target":"node_5","sourceHandle":null,"targetHandle":null},
-    {"source":"node_5","target":"node_6","sourceHandle":null,"targetHandle":null},
-    {"source":"node_8","target":"node_9","sourceHandle":null,"targetHandle":null}
-  ]
-}
+SUPORTE/ATENDIMENTO COMPLEXO:
+entry → message(saudação) → ai_agent(prompt completo) → condition(responded?) → yes: message(confirmação) → action(tag) → end / no: wait(1h) → handoff
 
-=== INSTRUÇÕES FINAIS ===
-- Analise o prompt do usuário e decida: se é complexo com muitas categorias → use ai_agent. Se é simples com poucas opções → use buttons.
-- SEMPRE inclua pelo menos 1 handoff e 1 end.
-- SEMPRE adicione action nodes para CRM quando fizer sentido.
-- Use wait antes de follow-ups.
-- RESPONDA APENAS JSON PURO, sem markdown, sem texto, sem explicações.`;
+VENDAS COM OPÇÕES:
+entry → message(saudação) → buttons(menu) → btn_0: message → action → end / btn_1: handoff / btn_2: message → end
+
+CAPTAÇÃO DE LEADS:
+entry → message(saudação) → message(pergunta qualificadora) → wait(5min) → condition(responded?) → yes: action(mark_hot) → handoff / no: message(follow-up) → wait(1d) → end
+
+=== CONFIG POR TIPO ===
+- entry: {trigger_type: "first_message"|"keyword"|"campaign_reply", keywords: []}
+- message: {message_type: "text", content: "texto da mensagem"}
+- buttons: {interaction_type: "reply_buttons", body_text: "texto", buttons: [{id: "btn_0", title: "Texto"}]}
+- condition: {condition_type: "responded"|"no_response", condition_value: "true"}
+- wait: {delay_value: number, delay_unit: "minutes"|"hours"|"days"}
+- action: {action_type: "add_tag"|"mark_hot"|"mark_converted"|"move_pipeline"|"webhook", tag_name: "nome"}
+- ai_agent: {system_prompt: "instruções do agente", ai_model: "gpt-4o-mini"}
+- handoff: {notify_team: true}
+- end: {}`;
+
+const FLOW_TOOL = {
+  type: "function",
+  function: {
+    name: "create_whatsapp_flow",
+    description: "Cria um fluxo conversacional completo para WhatsApp com nós e conexões.",
+    parameters: {
+      type: "object",
+      properties: {
+        flow_name: {
+          type: "string",
+          description: "Nome descritivo do fluxo (ex: 'Suporte Automatizado Wiize')"
+        },
+        nodes: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "ID único (node_1, node_2, etc)" },
+              type: { type: "string", enum: VALID_NODE_TYPES },
+              label: { type: "string", description: "Nome exibido no editor" },
+              position_x: { type: "number" },
+              position_y: { type: "number" },
+              config: { type: "object", description: "Configuração específica do tipo de nó" }
+            },
+            required: ["id", "type", "label", "position_x", "position_y", "config"],
+            additionalProperties: false
+          }
+        },
+        edges: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              source: { type: "string", description: "ID do nó de origem" },
+              target: { type: "string", description: "ID do nó de destino" },
+              source_handle: { type: "string", description: "Handle de saída (btn_0, btn_1, yes, no, ou vazio)", nullable: true },
+              target_handle: { type: "string", nullable: true }
+            },
+            required: ["source", "target"],
+            additionalProperties: false
+          }
+        }
+      },
+      required: ["flow_name", "nodes", "edges"],
+      additionalProperties: false
+    }
+  }
+};
 
 const normalizeHandle = (value?: string | null) => {
   if (!value) return null;
@@ -125,72 +117,32 @@ const normalizeHandle = (value?: string | null) => {
   return value;
 };
 
-const normalizeInteractiveItem = (item: any, index: number, prefix: "btn" | "item") => {
-  if (typeof item === "string") {
-    return {
-      id: `${prefix}_${index}`,
-      title: item,
-      ...(prefix === "item" ? { description: "" } : {}),
-    };
-  }
-
-  return {
-    id: item?.id || `${prefix}_${index}`,
-    title: item?.title || `${prefix === "item" ? "Item" : "Opção"} ${index + 1}`,
-    ...(prefix === "item" ? { description: item?.description || "" } : {}),
-  };
-};
-
 const normalizeButtonsConfig = (config: any = {}) => {
   const nodeConfig = { ...config };
 
-  if (nodeConfig.interaction_type === "buttons" || !nodeConfig.interaction_type) {
+  if (!nodeConfig.interaction_type || nodeConfig.interaction_type === "buttons") {
     nodeConfig.interaction_type = "reply_buttons";
-  }
-
-  if (!nodeConfig.header_text) {
-    nodeConfig.header_text =
-      typeof nodeConfig.header === "string"
-        ? nodeConfig.header
-        : typeof nodeConfig.header?.text === "string"
-          ? nodeConfig.header.text
-          : "";
-  }
-
-  if (!nodeConfig.footer_text) {
-    nodeConfig.footer_text =
-      typeof nodeConfig.footer === "string"
-        ? nodeConfig.footer
-        : typeof nodeConfig.footer?.text === "string"
-          ? nodeConfig.footer.text
-          : "";
   }
 
   nodeConfig.header_text = typeof nodeConfig.header_text === "string" ? nodeConfig.header_text.trim() : "";
   nodeConfig.footer_text = typeof nodeConfig.footer_text === "string" ? nodeConfig.footer_text.trim() : "";
 
   if (nodeConfig.interaction_type === "list") {
-    const rawItems = Array.isArray(nodeConfig.list_items)
-      ? nodeConfig.list_items
-      : Array.isArray(nodeConfig.items)
-        ? nodeConfig.items
-        : [];
-
-    nodeConfig.list_items = rawItems.map((item: any, index: number) => normalizeInteractiveItem(item, index, "item"));
-    nodeConfig.list_button_text =
-      typeof nodeConfig.list_button_text === "string" && nodeConfig.list_button_text.trim()
-        ? nodeConfig.list_button_text.trim()
-        : "Ver opções";
+    const rawItems = Array.isArray(nodeConfig.list_items) ? nodeConfig.list_items : Array.isArray(nodeConfig.items) ? nodeConfig.items : [];
+    nodeConfig.list_items = rawItems.map((item: any, i: number) => ({
+      id: item?.id || `item_${i}`,
+      title: (typeof item === "string" ? item : item?.title) || `Item ${i + 1}`,
+      description: item?.description || "",
+    }));
+    nodeConfig.list_button_text = nodeConfig.list_button_text || "Ver opções";
     delete nodeConfig.buttons;
   } else {
     nodeConfig.interaction_type = "reply_buttons";
-    const rawButtons = Array.isArray(nodeConfig.buttons)
-      ? nodeConfig.buttons
-      : Array.isArray(nodeConfig.options)
-        ? nodeConfig.options
-        : [];
-
-    nodeConfig.buttons = rawButtons.map((button: any, index: number) => normalizeInteractiveItem(button, index, "btn"));
+    const rawButtons = Array.isArray(nodeConfig.buttons) ? nodeConfig.buttons : Array.isArray(nodeConfig.options) ? nodeConfig.options : [];
+    nodeConfig.buttons = rawButtons.map((btn: any, i: number) => ({
+      id: btn?.id || `btn_${i}`,
+      title: (typeof btn === "string" ? btn : btn?.title) || `Opção ${i + 1}`,
+    }));
     delete nodeConfig.list_items;
   }
 
@@ -200,29 +152,6 @@ const normalizeButtonsConfig = (config: any = {}) => {
   delete nodeConfig.options;
 
   return nodeConfig;
-};
-
-const getAllowedButtonHandles = (config: any = {}) => {
-  const isListMode = config.interaction_type === "list";
-  const rawItems = isListMode ? (config.list_items || []) : (config.buttons || []);
-  const prefix = isListMode ? "item" : "btn";
-
-  return rawItems.map((item: any, index: number) => {
-    if (typeof item === "string") return `${prefix}_${index}`;
-    return item?.id || `${prefix}_${index}`;
-  });
-};
-
-const normalizeEdgeSourceHandle = (sourceHandle: string | null, sourceNode: any) => {
-  if (!sourceHandle || !sourceNode || sourceNode.type !== "buttons") {
-    return normalizeHandle(sourceHandle);
-  }
-
-  const normalizedHandle = normalizeHandle(sourceHandle);
-  const allowedHandles = getAllowedButtonHandles(sourceNode.config || {});
-  const matchedHandle = allowedHandles.find((handle: string) => normalizeHandle(handle) === normalizedHandle);
-
-  return matchedHandle || normalizedHandle;
 };
 
 serve(async (req) => {
@@ -248,7 +177,8 @@ serve(async (req) => {
       });
     }
 
-    // Call OpenAI
+    console.log("[generate-wa-flow] Calling OpenAI with tool calling...");
+
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -259,16 +189,17 @@ serve(async (req) => {
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: prompt },
+          { role: "user", content: `Crie um fluxo WhatsApp para: ${prompt}` },
         ],
-        temperature: 0.7,
-        max_tokens: 4000,
+        tools: [FLOW_TOOL],
+        tool_choice: { type: "function", function: { name: "create_whatsapp_flow" } },
+        temperature: 0.5,
       }),
     });
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
-      console.error("OpenAI error:", errText);
+      console.error("[generate-wa-flow] OpenAI error:", errText);
       return new Response(JSON.stringify({ error: "Erro na geração com IA" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -276,77 +207,159 @@ serve(async (req) => {
     }
 
     const aiData = await aiResponse.json();
-    let rawContent = aiData.choices?.[0]?.message?.content || "";
-
-    // Clean markdown fences if present
-    rawContent = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    
+    if (!toolCall || toolCall.function.name !== "create_whatsapp_flow") {
+      console.error("[generate-wa-flow] No tool call in response:", JSON.stringify(aiData));
+      return new Response(JSON.stringify({ error: "IA não retornou o fluxo estruturado" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     let flowData: any;
     try {
-      flowData = JSON.parse(rawContent);
+      flowData = JSON.parse(toolCall.function.arguments);
     } catch {
-      console.error("Failed to parse AI response:", rawContent);
+      console.error("[generate-wa-flow] Failed to parse tool args:", toolCall.function.arguments);
       return new Response(JSON.stringify({ error: "Resposta da IA não é JSON válido" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Save to DB
+    console.log(`[generate-wa-flow] Parsed ${flowData.nodes?.length} nodes, ${flowData.edges?.length} edges`);
+
+    // Setup Supabase
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const sb = createClient(supabaseUrl, serviceKey);
 
+    // Clean existing nodes/edges for this flow (in case of retry)
+    await sb.from("wa_flow_edges").delete().eq("flow_id", flow_id);
+    await sb.from("wa_flow_nodes").delete().eq("flow_id", flow_id);
+
+    // Validate and filter nodes
+    const validNodes = (flowData.nodes || []).filter((n: any) => VALID_NODE_TYPES.includes(n.type));
+    
+    // Ensure there's exactly one entry node
+    const entryNodes = validNodes.filter((n: any) => n.type === "entry");
+    if (entryNodes.length === 0) {
+      validNodes.unshift({
+        id: "node_entry",
+        type: "entry",
+        label: "Entrada",
+        position_x: 0,
+        position_y: 300,
+        config: { trigger_type: "first_message", keywords: [] }
+      });
+    }
+
+    // Ensure at least one end node
+    const endNodes = validNodes.filter((n: any) => n.type === "end" || n.type === "handoff");
+    if (endNodes.length === 0) {
+      const maxX = Math.max(...validNodes.map((n: any) => n.position_x || 0));
+      validNodes.push({
+        id: "node_end",
+        type: "end",
+        label: "Fim do Fluxo",
+        position_x: maxX + 300,
+        position_y: 300,
+        config: {}
+      });
+    }
+
     // Insert nodes
     const nodeIdMap: Record<string, string> = {};
-    const normalizedNodesMap: Record<string, any> = {};
-    const validTypes = ["entry", "message", "buttons", "condition", "wait", "action", "handoff", "end", "ai_agent"];
 
-    for (const node of flowData.nodes || []) {
-      const nodeType = validTypes.includes(node.type) ? node.type : "message";
+    for (const node of validNodes) {
       let nodeConfig = node.config || {};
 
-      // Normalize buttons node config
-      if (nodeType === "buttons") {
+      if (node.type === "buttons") {
         nodeConfig = normalizeButtonsConfig(nodeConfig);
       }
-
-      normalizedNodesMap[node.id] = { ...node, type: nodeType, config: nodeConfig };
 
       const { data, error } = await sb
         .from("wa_flow_nodes")
         .insert({
           flow_id,
-          node_type: nodeType,
+          node_type: node.type,
           name: node.label || node.type,
           config: nodeConfig,
-          position_x: node.position?.x || 0,
-          position_y: node.position?.y || 200,
+          position_x: node.position_x || 0,
+          position_y: node.position_y || 200,
         })
         .select("id")
         .single();
 
       if (error) {
-        console.error("Node insert error:", error);
+        console.error(`[generate-wa-flow] Node insert error for ${node.id} (${node.type}):`, error);
         continue;
       }
       nodeIdMap[node.id] = data.id;
     }
 
-    // Insert edges
+    console.log(`[generate-wa-flow] Inserted ${Object.keys(nodeIdMap).length} nodes`);
+
+    // Insert edges - only for nodes that were successfully inserted
+    let edgesInserted = 0;
     for (const edge of flowData.edges || []) {
       const sourceId = nodeIdMap[edge.source];
       const targetId = nodeIdMap[edge.target];
-      if (!sourceId || !targetId) continue;
+      if (!sourceId || !targetId) {
+        console.warn(`[generate-wa-flow] Skipping edge ${edge.source}->${edge.target}: missing node`);
+        continue;
+      }
 
-      await sb.from("wa_flow_edges").insert({
+      const { error } = await sb.from("wa_flow_edges").insert({
         flow_id,
         source_node_id: sourceId,
         target_node_id: targetId,
-        source_handle: normalizeEdgeSourceHandle(edge.sourceHandle || null, normalizedNodesMap[edge.source]) || null,
-        target_handle: edge.targetHandle || null,
-        label: edge.label || null,
+        source_handle: normalizeHandle(edge.source_handle || edge.sourceHandle) || null,
+        target_handle: normalizeHandle(edge.target_handle || edge.targetHandle) || null,
+        label: null,
       });
+
+      if (error) {
+        console.error(`[generate-wa-flow] Edge insert error:`, error);
+      } else {
+        edgesInserted++;
+      }
+    }
+
+    console.log(`[generate-wa-flow] Inserted ${edgesInserted} edges. Flow complete!`);
+
+    // Post-processing: find disconnected nodes and connect them to end
+    const connectedSources = new Set((flowData.edges || []).map((e: any) => e.source));
+    const connectedTargets = new Set((flowData.edges || []).map((e: any) => e.target));
+    
+    // Find terminal nodes (have no outgoing edge, aren't end/handoff)
+    const looseNodes = validNodes.filter((n: any) => 
+      !connectedSources.has(n.id) && 
+      n.type !== "end" && 
+      n.type !== "handoff" && 
+      n.type !== "entry" &&
+      nodeIdMap[n.id]
+    );
+
+    // Find the first end node
+    const endNodeId = validNodes.find((n: any) => n.type === "end" && nodeIdMap[n.id]);
+    
+    if (endNodeId && looseNodes.length > 0) {
+      for (const looseNode of looseNodes) {
+        // Only connect if this node has incoming connections (it's reachable)
+        if (connectedTargets.has(looseNode.id)) {
+          await sb.from("wa_flow_edges").insert({
+            flow_id,
+            source_node_id: nodeIdMap[looseNode.id],
+            target_node_id: nodeIdMap[endNodeId.id],
+            source_handle: null,
+            target_handle: null,
+            label: null,
+          });
+          console.log(`[generate-wa-flow] Auto-connected loose node ${looseNode.id} to end`);
+        }
+      }
     }
 
     return new Response(
@@ -354,7 +367,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("generate-wa-flow error:", err);
+    console.error("[generate-wa-flow] error:", err);
     return new Response(JSON.stringify({ error: err.message || "Erro interno" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
