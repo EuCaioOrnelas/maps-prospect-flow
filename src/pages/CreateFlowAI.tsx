@@ -71,13 +71,16 @@ function useAutoResizeTextarea({ minHeight, maxHeight }: { minHeight: number; ma
     (reset?: boolean) => {
       const ta = textareaRef.current;
       if (!ta) return;
-      if (reset) { ta.style.height = `${minHeight}px`; return; }
+      if (reset) { ta.style.height = `${minHeight}px`; ta.style.overflowY = "hidden"; return; }
       ta.style.height = `${minHeight}px`;
-      ta.style.height = `${Math.max(minHeight, Math.min(ta.scrollHeight, maxHeight ?? Infinity))}px`;
+      const max = maxHeight ?? Infinity;
+      const newHeight = Math.max(minHeight, Math.min(ta.scrollHeight, max));
+      ta.style.height = `${newHeight}px`;
+      ta.style.overflowY = ta.scrollHeight > max ? "auto" : "hidden";
     },
     [minHeight, maxHeight]
   );
-  useEffect(() => { if (textareaRef.current) textareaRef.current.style.height = `${minHeight}px`; }, [minHeight]);
+  useEffect(() => { if (textareaRef.current) { textareaRef.current.style.height = `${minHeight}px`; textareaRef.current.style.overflowY = "hidden"; } }, [minHeight]);
   return { textareaRef, adjustHeight };
 }
 
@@ -214,7 +217,7 @@ export default function CreateFlowAI() {
   const [searchParams] = useSearchParams();
   const [prompt, setPrompt] = useState("");
   const [expandedPrompt, setExpandedPrompt] = useState<number | null>(null);
-  const { textareaRef, adjustHeight } = useAutoResizeTextarea({ minHeight: 56, maxHeight: 180 });
+  const { textareaRef, adjustHeight } = useAutoResizeTextarea({ minHeight: 56, maxHeight: 240 });
 
   useEffect(() => {
     const p = searchParams.get("prompt");
