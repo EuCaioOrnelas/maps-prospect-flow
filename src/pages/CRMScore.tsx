@@ -476,7 +476,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis type="number" stroke="hsl(var(--muted-foreground))" domain={[0, 1000]} tick={{ fontSize: 11 }} />
                   <YAxis dataKey="name" type="category" width={100} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }}
-                    tickFormatter={(v) => v ? (v.length > 12 ? v.slice(0, 12) + "…" : v) : "Sem nome"} />
+                    tickFormatter={(v) => v ? (v.length > 12 ? v.slice(0, 12) + "…" : v) : v} />
                   <RechartsTooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
                   <Bar dataKey="score_total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                 </BarChart>
@@ -509,7 +509,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">#{i + 1}</span>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{lead.name || "Sem nome"}</p>
+                          <p className="text-sm font-medium truncate">{lead.name || lead.phone_e164}</p>
                           <div className="flex items-center gap-1.5">
                             <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", BUCKET_BADGE_COLORS[bucket])}>
                               {BUCKET_SHORT_LABELS[bucket]}
@@ -552,7 +552,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">#{i + 1}</span>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{lead.name || "Sem nome"}</p>
+                          <p className="text-sm font-medium truncate">{lead.name || lead.phone_e164}</p>
                           <div className="flex items-center gap-1.5">
                             <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", BUCKET_BADGE_COLORS[bucket])}>
                               {BUCKET_SHORT_LABELS[bucket]}
@@ -1317,7 +1317,7 @@ const ScoreRankingTab = ({ leads }: { leads: RevenueLead[] }) => {
                 <div key={lead.id} className="flex items-center gap-4 p-4 hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => {}}>
                   <div className="w-8 flex justify-center shrink-0">{getMedalIcon(i)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{lead.name || "Sem nome"}</p>
+                    <p className="font-medium text-sm truncate">{lead.name || lead.phone_e164}</p>
                     <p className="text-xs text-muted-foreground truncate">{lead.phone_e164}</p>
                   </div>
                   <Badge variant="outline" className={cn("hidden sm:inline-flex", BUCKET_BADGE_COLORS[bucket] || "")}>
