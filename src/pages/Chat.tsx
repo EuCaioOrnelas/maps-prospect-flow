@@ -55,7 +55,7 @@ const Chat = () => {
               />
             )}
 
-            {hasNoConnection ? null : !showApiDialog ? (
+            {!shouldShowDialog && hasConnection ? (
               <>
                 <div className="w-[360px] shrink-0 wa-sidebar-border">
                   <ChatSidebar
