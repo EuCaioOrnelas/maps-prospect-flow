@@ -8,7 +8,6 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { Sparkles, ArrowLeft, SendIcon, MessageSquare } from "lucide-react";
-import { Sparkles, ArrowLeft, SendIcon, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
