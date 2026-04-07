@@ -131,10 +131,10 @@ const KanbanColumnComponent = ({
             </h3>
           </div>
           <span className={cn(
-            "text-xs font-medium px-2 py-0.5 rounded-full shrink-0 transition-colors duration-200",
+            "text-xs font-bold px-2 py-0.5 rounded-full shrink-0 transition-colors duration-200",
             isDragOver 
               ? "bg-primary text-primary-foreground" 
-              : "bg-primary/10 text-primary"
+              : "bg-primary/15 text-primary"
           )}>
             {leads.length}
           </span>
