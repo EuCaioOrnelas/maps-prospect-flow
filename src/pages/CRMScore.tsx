@@ -310,7 +310,7 @@ const getScoreCircleColor = (score: number) => {
   return "bg-red-500/[0.12]";
 };
 
-const fmtNum = (n: number) => n.toLocaleString('pt-BR');
+const fmtNum = (n: number) => Number.isInteger(n) ? n.toLocaleString('pt-BR') : n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 // ═══════════════ SCORE INFO POPOVER ═══════════════
 
@@ -1090,7 +1090,7 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                         <span className={cn("text-sm font-medium", cfg.isNegative ? "text-destructive" : "")}>{cfg.label}</span>
                       </div>
                       <span className={cn("text-sm font-bold tabular-nums", cfg.isNegative ? "text-destructive" : "")}>
-                        {Number(displayValue).toFixed(1)}
+                        {fmtNum(Number(displayValue))}
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
@@ -1149,7 +1149,7 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                         </div>
                         <div className="text-right shrink-0">
                           <span className={cn("text-sm font-bold tabular-nums", log.points_applied >= 0 ? "text-emerald-400" : "text-destructive")}>
-                            {log.points_applied >= 0 ? `+${Number(log.points_applied).toFixed(1)}` : Number(log.points_applied).toFixed(1)}
+                            {log.points_applied >= 0 ? `+${fmtNum(Number(log.points_applied))}` : fmtNum(Number(log.points_applied))}
                           </span>
                           <p className="text-[10px] text-muted-foreground">
                             {new Date(log.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })},{" "}
