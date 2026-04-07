@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { GitBranch } from "lucide-react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 const conditionLabels: Record<string, string> = {
   button_clicked: "Clicou botão",
@@ -13,9 +14,28 @@ const conditionLabels: Record<string, string> = {
 export function WAConditionNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
   const isConfigured = !!cfg.condition_type;
+  const nodeRef = useRef<HTMLDivElement>(null);
+  const yesRef = useRef<HTMLDivElement>(null);
+  const noRef = useRef<HTMLDivElement>(null);
+  const [yesTop, setYesTop] = useState(60);
+  const [noTop, setNoTop] = useState(80);
+
+  useLayoutEffect(() => {
+    if (!nodeRef.current) return;
+    const nodeRect = nodeRef.current.getBoundingClientRect();
+    if (yesRef.current) {
+      const r = yesRef.current.getBoundingClientRect();
+      setYesTop(((r.top + r.height / 2 - nodeRect.top) / nodeRect.height) * 100);
+    }
+    if (noRef.current) {
+      const r = noRef.current.getBoundingClientRect();
+      setNoTop(((r.top + r.height / 2 - nodeRect.top) / nodeRect.height) * 100);
+    }
+  }, [cfg.condition_type]);
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-sm w-48">
+    <div ref={nodeRef} className="bg-card border border-border rounded-xl shadow-sm w-52 relative">
+      {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
         <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
           <GitBranch size={16} className="text-purple-400" />
@@ -34,20 +54,21 @@ export function WAConditionNode({ data }: NodeProps) {
         </div>
       </div>
 
-      <div className="px-3 py-2 space-y-1">
-        <div className="flex items-center gap-1.5 text-[10px] text-primary">
-          <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-          Sim
+      {/* Outcomes - labels on the right side */}
+      <div className="py-2 space-y-1">
+        <div ref={yesRef} className="flex items-center justify-end gap-2 px-4 py-1">
+          <span className="text-[11px] font-medium text-primary">Sim</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" />
         </div>
-        <div className="flex items-center gap-1.5 text-[10px] text-destructive">
-          <span className="w-2 h-2 rounded-full bg-destructive shrink-0" />
-          Não
+        <div ref={noRef} className="flex items-center justify-end gap-2 px-4 py-1">
+          <span className="text-[11px] font-medium text-destructive">Não</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-destructive shrink-0" />
         </div>
       </div>
 
       <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-purple-400 !border-2 !border-card !rounded-full" />
-      <Handle type="source" position={Position.Right} id="yes" className="!w-3 !h-3 !bg-primary !border-2 !border-card !rounded-full" style={{ top: "58%" }} />
-      <Handle type="source" position={Position.Right} id="no" className="!w-3 !h-3 !bg-destructive !border-2 !border-card !rounded-full" style={{ top: "78%" }} />
+      <Handle type="source" position={Position.Right} id="yes" className="!w-3 !h-3 !bg-primary !border-2 !border-card !rounded-full" style={{ top: `${yesTop}%` }} />
+      <Handle type="source" position={Position.Right} id="no" className="!w-3 !h-3 !bg-destructive !border-2 !border-card !rounded-full" style={{ top: `${noTop}%` }} />
     </div>
   );
 }
