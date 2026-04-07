@@ -1149,6 +1149,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                 <p className="text-[10px] text-muted-foreground">Cada lead é direcionado aleatoriamente para uma das saídas. Máximo de 5 saídas.</p>
               </div>
             </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-2 pt-4 border-t border-border">
