@@ -356,6 +356,22 @@ export default function WhatsAppFlowEditor() {
         entry: "Entrada", message: "Mensagem", buttons: "Botões",
         condition: "Condição", wait: "Espera", action: "Ação",
         handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
+        ab_test: "Teste A/B", random_split: "Random Split",
+      };
+
+      const defaultConfigs: Record<string, any> = {
+        ab_test: {
+          variants: [
+            { id: "var_a", name: "Variante A", weight: 50 },
+            { id: "var_b", name: "Variante B", weight: 50 },
+          ],
+        },
+        random_split: {
+          outputs: [
+            { id: "out_0", name: "Saída 1" },
+            { id: "out_1", name: "Saída 2" },
+          ],
+        },
       };
 
       const newNode: Node = {
