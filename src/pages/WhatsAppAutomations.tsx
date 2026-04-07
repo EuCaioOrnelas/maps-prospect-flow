@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Workflow, MoreVertical, Play, Pause, Archive, Trash2, Copy, FlaskConical } from "lucide-react";
+import { CreateFlowDialog } from "@/components/wa-flow/CreateFlowDialog";
 import { toast } from "sonner";
 import {
   DropdownMenu,
