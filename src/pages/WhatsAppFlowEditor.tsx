@@ -378,7 +378,8 @@ export default function WhatsAppFlowEditor() {
         id: `temp-${Date.now()}`,
         type,
         position: { x: newX, y: newY },
-        data: { label: nameMap[type] || type, config: {} },
+        data: { label: nameMap[type] || type, config: defaultConfigs[type] || {} },
+      };
       };
 
       const newNodes = [...nodes, newNode];
