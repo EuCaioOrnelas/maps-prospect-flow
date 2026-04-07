@@ -92,6 +92,7 @@ const nodeTypes = {
   ai_agent: WAAgentNode,
   ab_test: WAABTestNode,
   random_split: WARandomSplitNode,
+  integration: WAIntegrationNode,
 };
 
 const defaultEdgeOptions = {
@@ -127,6 +128,12 @@ const sidebarCategories = [
     label: "Inteligência",
     items: [
       { type: "ai_agent", icon: Bot, label: "Agente IA", desc: "IA responde e direciona", color: "text-violet-400 bg-violet-400/10" },
+    ],
+  },
+  {
+    label: "Integrações",
+    items: [
+      { type: "integration", icon: Plug, label: "Integração", desc: "Sheets, Agenda, Gmail via webhook", color: "text-rose-400 bg-rose-400/10" },
     ],
   },
   {
