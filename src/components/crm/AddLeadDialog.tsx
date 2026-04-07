@@ -237,6 +237,231 @@ export const AddLeadDialog = ({
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Primary Fields - Name and Phone with emphasis */}
           <div className="space-y-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+            {/* Contact Name - Prominent */}
+            <div>
+              <Label htmlFor="contact_name" className="flex items-center gap-2 text-base font-medium mb-2">
+                <User className="w-4 h-4 text-primary" />
+                Nome do Contato
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="contact_name"
+                  value={formData.contact_name}
+                  onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+                  placeholder="Nome do contato"
+                  className="pl-10 h-11 text-base"
+                />
+              </div>
+            </div>
+
+            {/* Phone - Prominent */}
+            <div>
+              <Label htmlFor="phone" className="flex items-center gap-2 text-base font-medium mb-2">
+                <Phone className="w-4 h-4 text-primary" />
+                Telefone (WhatsApp) *
+              </Label>
+              <div className="flex gap-2">
+                <CountryCodeSelect value={countryCode} onValueChange={setCountryCode} />
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onBlur={handlePhoneBlur}
+                    placeholder="11999999999"
+                    className="pl-10 h-11 text-base"
+                    required
+                  />
+                </div>
+              </div>
+              {existingLeadWarning && (
+                <div className="flex items-center gap-2 mt-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
+                  <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                  <span className="text-sm text-yellow-600">Este lead já existe no CRM</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Origin - Required */}
+          <div>
+            <Label className="flex items-center gap-2 mb-2">
+              <Navigation className="w-4 h-4 text-muted-foreground" />
+              Origem *
+            </Label>
+            {showNewOrigin ? (
+              <div className="flex gap-2">
+                <Input
+                  value={newOriginName}
+                  onChange={(e) => setNewOriginName(e.target.value)}
+                  placeholder="Nome da nova origem"
+                  className="flex-1"
+                />
+                <Button type="button" size="sm" onClick={handleAddNewOrigin}>
+                  Adicionar
+                </Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => setShowNewOrigin(false)}>
+                  Cancelar
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Select
+                  value={formData.origin}
+                  onValueChange={(value) => setFormData({ ...formData, origin: value })}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Selecionar origem" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allOrigins.map((origin) => (
+                      <SelectItem key={origin} value={origin}>
+                        {origin}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" size="icon" variant="outline" onClick={() => setShowNewOrigin(true)}>
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Secondary Fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="company_name" className="flex items-center gap-2 mb-2">
+                <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                Empresa
+              </Label>
+              <Input
+                id="company_name"
+                value={formData.company_name}
+                onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                placeholder="Nome da empresa"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="category" className="flex items-center gap-2 mb-2">
+                <Tag className="w-3.5 h-3.5 text-muted-foreground" />
+                Categoria
+              </Label>
+              <Input
+                id="category"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                placeholder="Nicho/Categoria"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="city" className="flex items-center gap-2 mb-2">
+                <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                Cidade
+              </Label>
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                placeholder="Cidade"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="region" className="flex items-center gap-2 mb-2">
+                <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                Região
+              </Label>
+              <Input
+                id="region"
+                value={formData.region}
+                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                placeholder="Estado/Região"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="website" className="flex items-center gap-2 mb-2">
+                <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                Website
+              </Label>
+              <Input
+                id="website"
+                value={formData.website}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="pipeline_stage" className="flex items-center gap-2 mb-2">
+                <Layers className="w-3.5 h-3.5 text-muted-foreground" />
+                Etapa do Pipeline
+              </Label>
+              <Select
+                value={formData.pipeline_stage_id}
+                onValueChange={(value) => setFormData({ ...formData, pipeline_stage_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar etapa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {stages.map((stage) => (
+                    <SelectItem key={stage.id} value={stage.id}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: stage.color }}
+                        />
+                        {stage.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Negotiation Value */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 text-sm font-medium">
+              <DollarSign className="w-4 h-4 text-primary" />
+              Valor da Negociação
+            </Label>
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <span className="text-primary font-medium text-lg">R$</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={formatCurrency(formData.estimated_value)}
+                  onChange={(e) => {
+                    const formatted = formatCurrencyInput(e.target.value);
+                    const value = parseCurrency(formatted);
+                    setFormData({ ...formData, estimated_value: value });
+                  }}
+                  className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground"
+                  placeholder="0,00"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isLoading || existingLeadWarning}>
+              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Adicionar
+            </Button>
+          </div>
+        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
