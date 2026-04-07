@@ -1025,7 +1025,7 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
-                <p className="font-bold">{lead.name || "Sem nome"}</p>
+                <p className="font-bold">{lead.name || lead.phone_e164}</p>
               </div>
               <p className="text-sm text-muted-foreground">{lead.phone_e164}</p>
               <div className="flex flex-wrap gap-2">
@@ -1042,11 +1042,20 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                 </div>
               </div>
             </div>
-            <div className="text-right">
+            <div className="flex flex-col items-center gap-1">
               <p className={`text-4xl font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</p>
               <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
                 {BUCKET_SHORT_LABELS[bucket]}
               </Badge>
+              <div className="flex items-center gap-1 mt-1">
+                {lead.score_risk < -50 ? (
+                  <><TrendingDown className="h-3.5 w-3.5 text-destructive" /><span className="text-[10px] text-destructive">Em queda</span></>
+                ) : lead.score_engagement > 20 || lead.score_intent > 0 ? (
+                  <><TrendingUp className="h-3.5 w-3.5 text-emerald-400" /><span className="text-[10px] text-emerald-400">Em alta</span></>
+                ) : (
+                  <><Minus className="h-3.5 w-3.5 text-muted-foreground" /><span className="text-[10px] text-muted-foreground">Estável</span></>
+                )}
+              </div>
             </div>
           </div>
 
