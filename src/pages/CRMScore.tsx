@@ -4,7 +4,8 @@ import {
   BarChart3, Users, Trophy, Settings, Loader2, 
   Smartphone, Search, TrendingUp, TrendingDown, Minus,
   ChevronLeft, ChevronRight, Target, AlertTriangle, Zap,
-  ChevronsLeft, ChevronsRight, Info, HelpCircle, Filter, X, Calendar
+  ChevronsLeft, ChevronsRight, Info, HelpCircle, Filter, X, Calendar,
+  User, Clock, CalendarDays, RefreshCw, Rocket, MessageSquare, Diamond, ShoppingCart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
