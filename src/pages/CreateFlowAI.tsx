@@ -52,18 +52,26 @@ const quickPrompts = [
   },
 ];
 
-// Phone chat simulation messages
-const simulationSteps = [
-  { type: "contact", text: "Definindo nome do fluxo..." },
-  { type: "bot", text: "Olá! 👋 Bem-vindo!" },
-  { type: "user", text: "Oi, quero saber mais" },
-  { type: "bot", text: "Claro! Posso te ajudar. O que procura?" },
-  { type: "buttons", text: "📋 Opções disponíveis", buttons: ["Comprar", "Suporte", "Dúvidas"] },
-  { type: "user", text: "Quero comprar" },
-  { type: "bot", text: "Ótima escolha! Vou te apresentar..." },
-  { type: "bot", text: "🎯 Criando condições e regras..." },
-  { type: "bot", text: "✅ Fluxo completo gerado!" },
-];
+const buildSimulationSteps = (userPrompt: string) => {
+  const shortPrompt = userPrompt.length > 40 ? userPrompt.slice(0, 40) + "..." : userPrompt;
+  return [
+    { type: "contact", text: "🤖 Analisando seu objetivo..." },
+    { type: "contact", text: `📝 "${shortPrompt}"` },
+    { type: "bot", text: "Olá! 👋 Bem-vindo! Como posso te ajudar?" },
+    { type: "user", text: "Oi, quero saber mais sobre vocês" },
+    { type: "bot", text: "Que bom que entrou em contato! Vou te mostrar tudo." },
+    { type: "buttons", text: "Escolha uma opção:", buttons: ["💰 Comprar", "🛠 Suporte", "❓ Dúvidas"] },
+    { type: "user", text: "Quero comprar" },
+    { type: "bot", text: "Perfeito! Vou te qualificar rapidinho 🎯" },
+    { type: "bot", text: "Qual seu orçamento aproximado?" },
+    { type: "user", text: "Entre R$500 e R$1.000" },
+    { type: "bot", text: "Ótimo! Tenho a opção ideal pra você ✨" },
+    { type: "contact", text: "⚡ Adicionando follow-ups automáticos..." },
+    { type: "bot", text: "Vou te enviar a proposta. Posso confirmar?" },
+    { type: "buttons", text: "Confirme:", buttons: ["✅ Sim", "🔄 Outra opção"] },
+    { type: "contact", text: "✅ Fluxo completo gerado com sucesso!" },
+  ];
+};
 
 function useAutoResizeTextarea({ minHeight, maxHeight }: { minHeight: number; maxHeight?: number }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -71,13 +79,16 @@ function useAutoResizeTextarea({ minHeight, maxHeight }: { minHeight: number; ma
     (reset?: boolean) => {
       const ta = textareaRef.current;
       if (!ta) return;
-      if (reset) { ta.style.height = `${minHeight}px`; return; }
+      if (reset) { ta.style.height = `${minHeight}px`; ta.style.overflowY = "hidden"; return; }
       ta.style.height = `${minHeight}px`;
-      ta.style.height = `${Math.max(minHeight, Math.min(ta.scrollHeight, maxHeight ?? Infinity))}px`;
+      const max = maxHeight ?? Infinity;
+      const newHeight = Math.max(minHeight, Math.min(ta.scrollHeight, max));
+      ta.style.height = `${newHeight}px`;
+      ta.style.overflowY = ta.scrollHeight > max ? "auto" : "hidden";
     },
     [minHeight, maxHeight]
   );
-  useEffect(() => { if (textareaRef.current) textareaRef.current.style.height = `${minHeight}px`; }, [minHeight]);
+  useEffect(() => { if (textareaRef.current) { textareaRef.current.style.height = `${minHeight}px`; textareaRef.current.style.overflowY = "hidden"; } }, [minHeight]);
   return { textareaRef, adjustHeight };
 }
 
@@ -97,7 +108,8 @@ function TypingDots() {
 }
 
 // Phone loading simulation component
-function PhoneSimulation({ flowName }: { flowName: string }) {
+function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPrompt: string }) {
+  const simulationSteps = buildSimulationSteps(userPrompt);
   const [messages, setMessages] = useState<typeof simulationSteps>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -109,7 +121,7 @@ function PhoneSimulation({ flowName }: { flowName: string }) {
       setCurrentStep((s) => s + 1);
     }, 1200 + Math.random() * 800);
     return () => clearTimeout(timer);
-  }, [currentStep]);
+  }, [currentStep, simulationSteps.length]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -214,7 +226,7 @@ export default function CreateFlowAI() {
   const [searchParams] = useSearchParams();
   const [prompt, setPrompt] = useState("");
   const [expandedPrompt, setExpandedPrompt] = useState<number | null>(null);
-  const { textareaRef, adjustHeight } = useAutoResizeTextarea({ minHeight: 56, maxHeight: 180 });
+  const { textareaRef, adjustHeight } = useAutoResizeTextarea({ minHeight: 56, maxHeight: 240 });
 
   useEffect(() => {
     const p = searchParams.get("prompt");
@@ -255,12 +267,13 @@ export default function CreateFlowAI() {
     setExpandedPrompt(index);
     const full = quickPrompts[index].full;
     setPrompt("");
-    // Type it out character by character
     let i = 0;
     const interval = setInterval(() => {
       setPrompt(full.slice(0, i + 1));
       i++;
       if (i >= full.length) clearInterval(interval);
+      // Trigger resize after React re-renders
+      requestAnimationFrame(() => adjustHeight());
     }, 8);
   };
 
@@ -281,7 +294,7 @@ export default function CreateFlowAI() {
           <MobileNav profile={profile} />
           <BackgroundGlow />
           <main className="flex-1 flex items-center justify-center px-4">
-            <PhoneSimulation flowName={prompt.slice(0, 30)} />
+            <PhoneSimulation flowName={prompt.slice(0, 30)} userPrompt={prompt} />
           </main>
         </div>
       </div>
@@ -347,7 +360,7 @@ export default function CreateFlowAI() {
                   placeholder="Quero um fluxo para..."
                   className={cn(
                     "w-full px-4 py-3 resize-none bg-transparent border-none text-foreground text-sm",
-                    "focus:outline-none placeholder:text-muted-foreground/40 min-h-[56px] max-h-[180px] overflow-y-auto"
+                    "focus:outline-none placeholder:text-muted-foreground/40 min-h-[56px]"
                   )}
                 />
               </div>
