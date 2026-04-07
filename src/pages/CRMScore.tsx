@@ -312,6 +312,17 @@ const getScoreCircleColor = (score: number) => {
 
 const fmtNum = (n: number) => Number.isInteger(n) ? n.toLocaleString('pt-BR') : n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
+const fmtPhone = (phone: string) => {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("55") && digits.length >= 12) {
+    const ddd = digits.slice(2, 4);
+    const rest = digits.slice(4);
+    if (rest.length === 9) return `+55 (${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+    if (rest.length === 8) return `+55 (${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+  }
+  return phone;
+};
+
 // ═══════════════ SCORE INFO POPOVER ═══════════════
 
 const ScoreInfoPopover = () => (
@@ -509,7 +520,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">#{i + 1}</span>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{lead.name || lead.phone_e164}</p>
+                          <p className="text-sm font-medium truncate">{lead.name || fmtPhone(lead.phone_e164)}</p>
                           <div className="flex items-center gap-1.5">
                             <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", BUCKET_BADGE_COLORS[bucket])}>
                               {BUCKET_SHORT_LABELS[bucket]}
@@ -552,7 +563,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">#{i + 1}</span>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{lead.name || lead.phone_e164}</p>
+                          <p className="text-sm font-medium truncate">{lead.name || fmtPhone(lead.phone_e164)}</p>
                           <div className="flex items-center gap-1.5">
                             <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", BUCKET_BADGE_COLORS[bucket])}>
                               {BUCKET_SHORT_LABELS[bucket]}
@@ -818,8 +829,8 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                   <TableRow key={lead.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setSelectedLead(lead)}>
                     <TableCell>
                       <div>
-                        <p className="font-medium text-sm">{lead.name || lead.phone_e164}</p>
-                        <p className="text-xs text-muted-foreground">{lead.phone_e164}</p>
+                        <p className="font-medium text-sm">{lead.name || fmtPhone(lead.phone_e164)}</p>
+                        <p className="text-xs text-muted-foreground">{fmtPhone(lead.phone_e164)}</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -1025,13 +1036,10 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
-                <p className="font-bold">{lead.name || lead.phone_e164}</p>
+                <p className="font-bold">{lead.name || fmtPhone(lead.phone_e164)}</p>
               </div>
-              <p className="text-sm text-muted-foreground">{lead.phone_e164}</p>
+              <p className="text-sm text-muted-foreground">{fmtPhone(lead.phone_e164)}</p>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
-                  {BUCKET_SHORT_LABELS[bucket]}
-                </Badge>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   Último evento: {new Date(lead.last_activity_at).toLocaleDateString('pt-BR')}
@@ -1317,8 +1325,8 @@ const ScoreRankingTab = ({ leads }: { leads: RevenueLead[] }) => {
                 <div key={lead.id} className="flex items-center gap-4 p-4 hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => {}}>
                   <div className="w-8 flex justify-center shrink-0">{getMedalIcon(i)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{lead.name || lead.phone_e164}</p>
-                    <p className="text-xs text-muted-foreground truncate">{lead.phone_e164}</p>
+                    <p className="font-medium text-sm truncate">{lead.name || fmtPhone(lead.phone_e164)}</p>
+                    <p className="text-xs text-muted-foreground truncate">{fmtPhone(lead.phone_e164)}</p>
                   </div>
                   <Badge variant="outline" className={cn("hidden sm:inline-flex", BUCKET_BADGE_COLORS[bucket] || "")}>
                     {BUCKET_SHORT_LABELS[bucket] || bucket}
