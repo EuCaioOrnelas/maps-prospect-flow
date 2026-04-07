@@ -457,7 +457,6 @@ export default function CRM() {
                   setAddLeadOpen(true);
                 }}
               />
-              />
             )}
           </div>
         </div>
