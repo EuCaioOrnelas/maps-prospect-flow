@@ -760,8 +760,8 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
     return result;
   }, [leads, search, filters, sortBy, sortAsc]);
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE);
-  const paginated = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const paginated = filtered.slice(page * perPage, (page + 1) * perPage);
 
   const getPages = () => {
     const pages: (number | string)[] = [];
