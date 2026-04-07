@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   Bell,
   Bot,
-  GraduationCap,
+  HelpCircle,
   LayoutDashboard,
   DollarSign,
   Mail,
@@ -547,7 +547,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             <li>
               <SidebarNavItem
                 title="Ajuda"
-                icon={GraduationCap}
+                icon={HelpCircle}
                 url="/ajuda"
                 isActive={currentPath === "/ajuda" || currentPath === "/ajuda/faq"}
                 isExpanded={isExpanded}
