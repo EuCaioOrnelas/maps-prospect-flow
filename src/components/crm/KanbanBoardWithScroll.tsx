@@ -16,6 +16,7 @@ interface KanbanBoardWithScrollProps {
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
   columnWidth?: ColumnWidth;
   agentSilencedStages?: Set<string>;
+  onAddLead?: () => void;
 }
 
 const KanbanBoardWithScrollComponent = ({
@@ -31,6 +32,7 @@ const KanbanBoardWithScrollComponent = ({
   onUpdateLeadName,
   columnWidth = 'medium',
   agentSilencedStages,
+  onAddLead,
 }: KanbanBoardWithScrollProps) => {
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -188,6 +190,7 @@ const KanbanBoardWithScrollComponent = ({
           onUpdateLeadName={onUpdateLeadName}
           columnWidth={columnWidth}
           isAgentSilenced={agentSilencedStages?.has(stage.name)}
+          onAddLead={onAddLead}
         />
       ))}
     </div>
