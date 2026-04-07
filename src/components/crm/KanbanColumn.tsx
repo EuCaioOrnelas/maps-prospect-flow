@@ -182,6 +182,15 @@ const KanbanColumnComponent = ({
               {isDragOver ? "Solte aqui" : "Nenhum lead"}
             </div>
           )}
+          {onAddLead && (
+            <button
+              onClick={onAddLead}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-1 rounded-lg border-2 border-dashed border-muted-foreground/30 text-muted-foreground/60 hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-colors text-xs font-medium"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Novo lead
+            </button>
+          )}
         </div>
       </div>
     </div>
