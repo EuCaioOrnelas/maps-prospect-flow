@@ -53,6 +53,12 @@ export const DashboardThemeProvider = ({ children }: { children: ReactNode }) =>
     applyDashboardTheme(theme);
   }, [theme]);
 
+  // Re-apply theme after mount to override any LightThemeWrapper cleanup
+  useEffect(() => {
+    const timer = setTimeout(() => applyDashboardTheme(theme), 50);
+    return () => clearTimeout(timer);
+  }, [theme]);
+
   useEffect(() => {
     return () => {
       if (transitionTimeoutRef.current) {
