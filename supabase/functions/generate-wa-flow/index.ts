@@ -20,7 +20,7 @@ const SYSTEM_PROMPT = `Você é um arquiteto de fluxos conversacionais para What
 
 4. FLUXO LINEAR SIMPLES: Para prompts complexos com muitas categorias/intenções, use um ÚNICO nó "ai_agent" que processa tudo, em vez de criar dezenas de nós separados. O agente IA já classifica e responde automaticamente.
 
-5. MÁXIMO 15 NÓS: Mantenha fluxos concisos. Se o prompt tem muitas categorias, use "ai_agent" para processar — NÃO crie um nó message para cada categoria.
+5. MÁXIMO 25 NÓS: Mantenha fluxos concisos. Se o prompt tem muitas categorias, use "ai_agent" para processar — NÃO crie um nó message para cada categoria.
 
 === TIPOS DE NÓS ===
 - entry: Gatilho (config: {trigger_type: "first_message"|"keyword"|"campaign_reply"|"webhook"|"qr_code", keywords: []})
