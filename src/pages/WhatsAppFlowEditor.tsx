@@ -57,7 +57,9 @@ const normalizeStoredHandle = (value?: string | null) => {
 
 const getInteractiveItemIds = (config: any) => {
   const isListMode = config?.interaction_type === "list";
-  const rawItems = isListMode ? (config?.list_items || []) : (config?.buttons || []);
+  const rawItems = isListMode
+    ? (config?.list_items || [])
+    : (config?.buttons || config?.reply_buttons || []);
   const prefix = isListMode ? "item" : "btn";
 
   return rawItems.map((item: any, index: number) => {
@@ -193,6 +195,8 @@ export default function WhatsAppFlowEditor() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testResetVersion, setTestResetVersion] = useState(0);
+  const [clipboard, setClipboard] = useState<Node | null>(null);
+  const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
 
   // Undo/Redo history
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -339,6 +343,7 @@ export default function WhatsAppFlowEditor() {
 
   const onNodeClick = useCallback((_: any, node: Node) => {
     setSelectedNode(node);
+    setSelectedNodeIds(new Set([node.id]));
     setDrawerOpen(true);
   }, []);
 
@@ -465,13 +470,47 @@ export default function WhatsAppFlowEditor() {
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+
       if ((e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
       if ((e.metaKey || e.ctrlKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) { e.preventDefault(); redo(); }
       if ((e.metaKey || e.ctrlKey) && e.key === "s") { e.preventDefault(); saveFlow.mutate(); }
+
+      if (isInput) return;
+
+      // Delete/Backspace to delete selected node
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedNode && !drawerOpen) {
+        e.preventDefault();
+        handleDeleteNode(selectedNode.id);
+      }
+
+      // Ctrl+C to copy
+      if ((e.metaKey || e.ctrlKey) && e.key === "c" && selectedNode) {
+        e.preventDefault();
+        setClipboard(JSON.parse(JSON.stringify(selectedNode)));
+        toast.success("Bloco copiado");
+      }
+
+      // Ctrl+V to paste
+      if ((e.metaKey || e.ctrlKey) && e.key === "v" && clipboard) {
+        e.preventDefault();
+        const newNode: Node = {
+          ...clipboard,
+          id: `temp-${Date.now()}`,
+          position: { x: clipboard.position.x + 50, y: clipboard.position.y + 50 },
+          selected: false,
+        };
+        const newNodes = [...nodes, newNode];
+        setNodes(newNodes);
+        pushHistory(newNodes, edges);
+        setHasChanges(true);
+        toast.success("Bloco colado");
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [undo, redo, saveFlow]);
+  }, [undo, redo, saveFlow, selectedNode, drawerOpen, clipboard, nodes, edges, handleDeleteNode, setNodes, pushHistory]);
 
   if (isLoading) {
     return (
@@ -611,6 +650,7 @@ export default function WhatsAppFlowEditor() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
+            onPaneClick={() => { setSelectedNode(null); setSelectedNodeIds(new Set()); }}
             nodeTypes={nodeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             fitView
