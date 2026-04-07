@@ -588,10 +588,10 @@ export default function WhatsAppFlowEditor() {
                         e.dataTransfer.effectAllowed = "move";
                       }}
                       onClick={() => handleAddNode(item.type)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/50 hover:border-border transition-all text-left group shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing"
+                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card transition-colors text-left group shadow-sm cursor-grab active:cursor-grabbing"
                     >
                       <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
-                        <item.icon size={16} className={cn(item.color.split(" ")[0], "transition-transform group-hover:scale-110")} />
+                        <item.icon size={16} className={cn(item.color.split(" ")[0], "transition-transform duration-200 group-hover:scale-125 group-hover:rotate-12")} />
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-foreground">{item.label}</p>
