@@ -838,10 +838,10 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                       )}
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <span className={cn("text-sm font-semibold tabular-nums", getScoreColor(lead.score_engagement))}>{fmtNum(lead.score_engagement)}</span>
+                      <span className="text-sm font-semibold tabular-nums">{fmtNum(lead.score_engagement)}</span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <span className={cn("text-sm font-semibold tabular-nums", getScoreColor(lead.score_intent))}>{fmtNum(lead.score_intent)}</span>
+                      <span className="text-sm font-semibold tabular-nums">{fmtNum(lead.score_intent)}</span>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <span className="text-sm font-semibold tabular-nums text-destructive">{fmtNum(lead.score_risk)}</span>
