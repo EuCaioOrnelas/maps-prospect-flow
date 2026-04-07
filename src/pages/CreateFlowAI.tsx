@@ -233,6 +233,11 @@ export default function CreateFlowAI() {
     if (p) setPrompt(p);
   }, [searchParams]);
 
+  // Auto-resize textarea when prompt changes (e.g. typing animation)
+  useEffect(() => {
+    requestAnimationFrame(() => adjustHeight());
+  }, [prompt, adjustHeight]);
+
   const createWithAI = useMutation({
     mutationFn: async () => {
       if (!prompt.trim()) throw new Error("Descreva o que deseja para o fluxo");
