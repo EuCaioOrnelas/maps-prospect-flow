@@ -66,13 +66,13 @@ const FLOW_TOOL = {
   type: "function",
   function: {
     name: "create_whatsapp_flow",
-    description: "Cria um fluxo conversacional completo para WhatsApp com nós e conexões.",
+    description: "Cria um fluxo conversacional completo para WhatsApp com nós e conexões. IMPORTANTE: cada nó DEVE ter config preenchido conforme seu tipo.",
     parameters: {
       type: "object",
       properties: {
         flow_name: {
           type: "string",
-          description: "Nome descritivo do fluxo (ex: 'Suporte Automatizado Wiize')"
+          description: "Nome descritivo do fluxo"
         },
         nodes: {
           type: "array",
@@ -84,10 +84,22 @@ const FLOW_TOOL = {
               label: { type: "string", description: "Nome exibido no editor" },
               position_x: { type: "number" },
               position_y: { type: "number" },
-              config: { type: "object", description: "Configuração específica do tipo de nó" }
+              config: {
+                type: "object",
+                description: `OBRIGATÓRIO conforme tipo do nó:
+- entry: {"trigger_type":"first_message","keywords":[]}
+- message: {"message_type":"text","content":"texto real da mensagem aqui"}
+- buttons: {"interaction_type":"reply_buttons","body_text":"pergunta","buttons":[{"id":"btn_0","title":"Opção 1"},{"id":"btn_1","title":"Opção 2"}]}
+- condition: {"condition_type":"responded","condition_value":"true"}
+- wait: {"delay_value":5,"delay_unit":"minutes"}
+- action: {"action_type":"add_tag","tag_name":"nome_da_tag"}
+- ai_agent: {"system_prompt":"instruções completas do agente de IA aqui","ai_model":"gpt-4o-mini"}
+- handoff: {"notify_team":true}
+- end: {}
+NUNCA deixe config vazio exceto para end!`
+              }
             },
-            required: ["id", "type", "label", "position_x", "position_y", "config"],
-            additionalProperties: false
+            required: ["id", "type", "label", "position_x", "position_y", "config"]
           }
         },
         edges: {
@@ -97,16 +109,14 @@ const FLOW_TOOL = {
             properties: {
               source: { type: "string", description: "ID do nó de origem" },
               target: { type: "string", description: "ID do nó de destino" },
-              source_handle: { type: "string", description: "Handle de saída (btn_0, btn_1, yes, no, ou vazio)", nullable: true },
-              target_handle: { type: "string", nullable: true }
+              source_handle: { type: "string", description: "btn_0, btn_1, yes, no, ou null" },
+              target_handle: { type: "string" }
             },
-            required: ["source", "target"],
-            additionalProperties: false
+            required: ["source", "target"]
           }
         }
       },
-      required: ["flow_name", "nodes", "edges"],
-      additionalProperties: false
+      required: ["flow_name", "nodes", "edges"]
     }
   }
 };
