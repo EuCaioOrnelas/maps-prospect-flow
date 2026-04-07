@@ -24,7 +24,7 @@ O fluxo deve:
 TIPOS DE NÓS DISPONÍVEIS:
 - entry: Nó de entrada/trigger (trigger_type: keyword|campaign_reply|button_click|webhook|qr_code|first_message|re_entry, keywords: string[])
 - message: Envio de mensagem (message_type: text|image|audio|video|document|template, content: string, media_url: string, template_name: string)
-- buttons: Botões interativos (interaction_type: buttons|list, body_text: string, buttons: [{id: "btn_0", title: string}], list_items: [{id: "item_0", title: string, description: string}])
+- buttons: Botões interativos (interaction_type: "reply_buttons"|"list", body_text: string, buttons: [{id: "btn_0", title: string}], list_items: [{id: "item_0", title: string, description: string}]). IMPORTANT: interaction_type MUST be "reply_buttons" for buttons (NOT "buttons").
 - condition: Condição IF/ELSE (condition_type: button_clicked|keyword_match|has_tag|field_equals|responded|no_response, condition_value: string)
 - wait: Delay/espera (delay_value: number, delay_unit: minutes|hours|days, smart: boolean)
 - action: Ação do sistema (action_type: add_tag|remove_tag|update_field|move_pipeline|send_to_crm|webhook|mark_hot|mark_cold|mark_converted)
