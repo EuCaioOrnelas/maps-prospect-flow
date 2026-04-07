@@ -13,10 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, History, Settings, Loader2, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, BookOpen } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Plus, History, Settings, Loader2, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, BookOpen, FlaskConical } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useToast } from "@/hooks/use-toast";
+import { usePagePopupDismiss } from "@/hooks/usePagePopupDismiss";
 
 export interface WabaConnection {
   id: string;
@@ -34,6 +36,7 @@ const MetaCampaigns = () => {
   const navigate = useNavigate();
   const { trackScoreEvent } = useAutoScoreTracking("meta-campaigns");
   const { toast } = useToast();
+  const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("meta_campaigns_beta_warning");
   const [connections, setConnections] = useState<WabaConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
@@ -269,7 +272,13 @@ const MetaCampaigns = () => {
         <main className="container max-w-6xl mx-auto px-4 py-8 relative z-10">
           <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <h1 className="text-3xl font-bold">Relacionamento</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold">Relacionamento</h1>
+                <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 text-[10px] sm:text-xs font-semibold gap-1">
+                  <FlaskConical className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                  BETA
+                </Badge>
+              </div>
               <p className="text-muted-foreground mt-1 max-w-3xl">
                 Comunicação de mensagens inbound com leads que já deram opt-in, utilizando canais oficiais da Meta Platforms.
               </p>
@@ -608,6 +617,37 @@ const MetaCampaigns = () => {
             }}
             isAddingExtra
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Beta Warning Dialog */}
+      <Dialog open={showBetaWarning} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md w-[95vw] rounded-lg max-h-[90vh] overflow-y-auto" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                <FlaskConical className="w-5 h-5 text-amber-500" />
+              </div>
+              <DialogTitle className="text-xl">Relacionamento em Versão Beta</DialogTitle>
+            </div>
+            <DialogDescription className="text-left space-y-3 pt-2">
+              <p>
+                O sistema de <strong>Relacionamento</strong> está atualmente em versão <span className="text-amber-500 font-semibold">beta</span> e pode apresentar alguns bugs ou comportamentos inesperados.
+              </p>
+              <p>
+                Estamos trabalhando constantemente para melhorar a experiência. Caso encontre algum problema, por favor nos informe pelo suporte.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4">
+            <Button 
+              onClick={() => dismissBetaWarning()}
+              disabled={!canCloseBeta}
+              className="w-full sm:w-auto"
+            >
+              {canCloseBeta ? "Entendi, continuar" : `Aguarde ${betaCountdown}s`}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
