@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +10,123 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp } from "lucide-react";
+import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle } from "lucide-react";
 import type { Node } from "@xyflow/react";
+
+function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
+  const { user } = useAuth();
+  const { data: numbers = [] } = useQuery({
+    queryKey: ["wa-numbers-for-flow"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("whatsapp_numbers")
+        .select("id, phone_number, display_name, api_tier")
+        .eq("user_id", user!.id);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const selectedNumber = numbers.find((n: any) => n.id === config.whatsapp_number_id);
+  const isEvolution = selectedNumber?.api_tier !== "paid" && selectedNumber?.api_tier !== "meta";
+
+  return (
+    <div className="space-y-4">
+      {renderInfoBanner("Defina como o lead entra neste fluxo e qual número será utilizado.")}
+
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">Número do WhatsApp</Label>
+        <Select
+          value={config.whatsapp_number_id || ""}
+          onValueChange={(v) => {
+            const num = numbers.find((n: any) => n.id === v);
+            updateConfig("whatsapp_number_id", v);
+            updateConfig("whatsapp_number_name", num?.display_name || num?.phone_number || "");
+            updateConfig("api_type", num?.api_tier === "paid" || num?.api_tier === "meta" ? "meta" : "evolution");
+          }}
+        >
+          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar número..." /></SelectTrigger>
+          <SelectContent>
+            {numbers.map((n: any) => (
+              <SelectItem key={n.id} value={n.id}>
+                {n.display_name || n.phone_number}
+                {n.api_tier !== "paid" && n.api_tier !== "meta" && " (Outbound)"}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {selectedNumber && isEvolution && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-amber-500 leading-relaxed">
+            Esse tipo de API é recomendada para prospecção fria. Devido ao risco de bloqueio por spam, recomendamos o uso da API Inbound de relacionamento para esse fluxo.
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">Tipo de gatilho</Label>
+        <Select value={config.trigger_type || ""} onValueChange={(v) => updateConfig("trigger_type", v)}>
+          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="keyword">Palavra-chave</SelectItem>
+            <SelectItem value="campaign_reply">Resposta de campanha</SelectItem>
+            <SelectItem value="button_click">Clique em botão interativo</SelectItem>
+            <SelectItem value="webhook">Webhook/API externa</SelectItem>
+            <SelectItem value="qr_code">QR Code</SelectItem>
+            <SelectItem value="first_message">1ª mensagem recebida</SelectItem>
+            <SelectItem value="re_entry">Reentrada de lead existente</SelectItem>
+            <SelectItem value="template_reply">Resposta a template HSM</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {config.trigger_type === "keyword" && (
+        <div className="space-y-2">
+          <Label className="text-xs">Palavras-chave (separadas por vírgula)</Label>
+          <Input
+            value={config.keywords || ""}
+            onChange={(e) => updateConfig("keywords", e.target.value)}
+            placeholder="preço, comprar, orçamento, quero"
+            className="h-9 text-sm"
+          />
+          <div className="flex items-center gap-2 mt-1">
+            <Switch
+              checked={config.exact_match || false}
+              onCheckedChange={(v) => updateConfig("exact_match", v)}
+            />
+            <Label className="text-[11px] text-muted-foreground">Correspondência exata</Label>
+          </div>
+        </div>
+      )}
+      {config.trigger_type === "campaign_reply" && (
+        <div className="space-y-2">
+          <Label className="text-xs">ID ou nome da campanha (opcional)</Label>
+          <Input
+            value={config.campaign_filter || ""}
+            onChange={(e) => updateConfig("campaign_filter", e.target.value)}
+            placeholder="Qualquer campanha"
+            className="h-9 text-sm"
+          />
+        </div>
+      )}
+      {config.trigger_type === "webhook" && (
+        <div className="space-y-2">
+          <Label className="text-xs">URL de callback (será gerada automaticamente)</Label>
+          <div className="flex gap-2">
+            <Input
+              value={config.webhook_url || "Será gerado ao ativar o fluxo"}
+              readOnly
+              className="h-9 text-sm bg-muted/30 flex-1"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface Props {
   open: boolean;
