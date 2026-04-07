@@ -193,7 +193,6 @@ export default function WhatsAppFlowEditor() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
-  const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testResetVersion, setTestResetVersion] = useState(0);
   const [clipboard, setClipboard] = useState<Node | null>(null);
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
