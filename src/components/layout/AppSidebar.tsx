@@ -480,20 +480,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   <ul className="pl-4 space-y-0.5">
                     <li>
                       <Link
-                        to="/agents"
-                        className={cn(
-                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
-                          currentPath === "/agents"
-                            ? "bg-sidebar-accent/60 text-primary font-medium"
-                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )}
-                      >
-                        <Bot size={16} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Agentes IA</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
                         to="/fluxos"
                         className={cn(
                           "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
@@ -504,6 +490,20 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       >
                         <Workflow size={16} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Fluxos</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/agents"
+                        className={cn(
+                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          currentPath === "/agents"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Bot size={16} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Agentes IA</span>
                       </Link>
                     </li>
                     <li>
