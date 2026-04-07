@@ -62,9 +62,7 @@ const Chat = () => {
               />
             )}
 
-            {hasNoConnection ? (
-              <div className="flex-1 flex flex-col items-center justify-center wa-empty-bg px-8" />
-            ) : !showApiDialog ? (
+            {hasNoConnection ? null : !showApiDialog ? (
               <>
                 <div className="w-[360px] shrink-0 wa-sidebar-border">
                   <ChatSidebar
