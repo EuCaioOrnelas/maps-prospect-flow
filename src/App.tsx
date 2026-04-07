@@ -72,6 +72,7 @@ const OpportunitiesManagement = lazy(() => import("./pages/OpportunitiesManageme
 const Chat = lazy(() => import("./pages/Chat"));
 const WhatsAppAutomations = lazy(() => import("./pages/WhatsAppAutomations"));
 const WhatsAppFlowEditor = lazy(() => import("./pages/WhatsAppFlowEditor"));
+const CreateFlowAI = lazy(() => import("./pages/CreateFlowAI"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
