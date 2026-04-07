@@ -330,6 +330,8 @@ serve(async (req) => {
       number_instance_id,
       direction,
       message_content,
+      source,
+      lead_name,
     } = body;
 
     // === ACTION: process_message ===
