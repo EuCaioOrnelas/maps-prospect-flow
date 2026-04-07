@@ -648,9 +648,9 @@ const ensureNodeConfig = (
       system_prompt: normalizeText(config.system_prompt) || truncateText(prompt, 4000),
       ai_model: normalizeText(config.ai_model) || "gpt-4o",
       ai_output_type: normalizeText(config.ai_output_type) || "message_and_route",
-      ai_routes: normalizeText(config.ai_routes) || "CONTINUAR → seguir para o próximo bloco
+      ai_routes: normalizeText(config.ai_routes) || `CONTINUAR → seguir para o próximo bloco
 ESCALAR_ATENDIMENTO → encaminhar para handoff
-ENCERRAR_ATENDIMENTO → seguir para end",
+ENCERRAR_ATENDIMENTO → seguir para end`,
       ai_context: normalizeText(config.ai_context) || truncateText(prompt, 800),
     };
   }
@@ -795,9 +795,7 @@ ${prompt}`,
 ${feedback}`);
   }
 
-  return parts.join("
-
-");
+  return parts.join("\n\n");
 };
 
 const callOpenAIForFlow = async (apiKey: string, prompt: string, feedback?: string): Promise<FlowDraft> => {
@@ -972,8 +970,7 @@ serve(async (req) => {
       const rawDraft = await callOpenAIForFlow(
         OPENAI_API_KEY,
         prompt,
-        attempt > 1 && lastIssues.length > 0 ? lastIssues.map((issue) => `- ${issue}`).join("
-") : undefined,
+        attempt > 1 && lastIssues.length > 0 ? lastIssues.map((issue) => `- ${issue}`).join("\n") : undefined,
       );
 
       const normalizedDraft = normalizeFlowDraft(rawDraft, prompt);
