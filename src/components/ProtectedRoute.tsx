@@ -104,5 +104,5 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/upgrade?expired=true" replace />;
   }
 
-  return <DashboardThemeProvider>{children}</DashboardThemeProvider>;
+  return <DashboardThemeProvider key="dashboard-theme">{children}</DashboardThemeProvider>;
 };
