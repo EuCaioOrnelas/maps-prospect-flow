@@ -38,27 +38,20 @@ const Chat = () => {
 
   const isLoading = chat.loading || showApiDialog === null;
 
+  // Always force dialog open when no connection, regardless of DB flag
+  const shouldShowDialog = isLoading ? false : hasNoConnection ? true : !!showApiDialog;
+
   return (
     <SidebarProvider>
       <div className="h-screen flex w-full wa-app-bg overflow-hidden">
         <AppSidebar profile={profile} />
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
           <div className="flex-1 flex overflow-hidden">
-            {/* Always show popup for users without connection */}
-            {!isLoading && hasNoConnection && (
+            {!isLoading && shouldShowDialog && (
               <ChatOfficialApiDialog
                 open={true}
-                onClose={() => {}}
-                hasConnection={false}
-              />
-            )}
-
-            {/* Show onboarding popup once for users WITH connection */}
-            {!isLoading && hasConnection && showApiDialog && (
-              <ChatOfficialApiDialog
-                open={true}
-                onClose={handleDismissDialog}
-                hasConnection={true}
+                onClose={hasConnection ? handleDismissDialog : () => {}}
+                hasConnection={hasConnection}
               />
             )}
 
