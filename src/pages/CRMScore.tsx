@@ -1596,6 +1596,7 @@ const CRMScore = () => {
   const { user, profile } = useAuth();
   const [searchParams] = useSearchParams();
   const [deepLinkPhone] = useState(() => searchParams.get("phone"));
+  const [scoreInfoOpen, setScoreInfoOpen] = useState(false);
   const [autoOpenedLead, setAutoOpenedLead] = useState<RevenueLead | null>(null);
   useAutoScoreTracking("crm_score");
 
