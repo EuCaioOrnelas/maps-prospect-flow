@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
-  HeadphonesIcon, CircleStop, Bot, ChevronDown,
+  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
@@ -34,6 +34,8 @@ import { WAActionNode } from "@/components/wa-flow/nodes/WAActionNode";
 import { WAHandoffNode } from "@/components/wa-flow/nodes/WAHandoffNode";
 import { WAEndNode } from "@/components/wa-flow/nodes/WAEndNode";
 import { WAAgentNode } from "@/components/wa-flow/nodes/WAAgentNode";
+import { WAABTestNode } from "@/components/wa-flow/nodes/WAABTestNode";
+import { WARandomSplitNode } from "@/components/wa-flow/nodes/WARandomSplitNode";
 import { WANodeConfigDrawer } from "@/components/wa-flow/WANodeConfigDrawer";
 import {
   AlertDialog,
@@ -87,6 +89,8 @@ const nodeTypes = {
   handoff: WAHandoffNode,
   end: WAEndNode,
   ai_agent: WAAgentNode,
+  ab_test: WAABTestNode,
+  random_split: WARandomSplitNode,
 };
 
 const defaultEdgeOptions = {
@@ -114,6 +118,8 @@ const sidebarCategories = [
     items: [
       { type: "condition", icon: GitBranch, label: "Condição", desc: "IF/ELSE para bifurcação", color: "text-purple-400 bg-purple-400/10" },
       { type: "wait", icon: Clock, label: "Espera", desc: "Delay antes do próximo nó", color: "text-amber-400 bg-amber-400/10" },
+      { type: "ab_test", icon: FlaskConical, label: "Teste A/B", desc: "Divide leads e metrifica", color: "text-emerald-400 bg-emerald-400/10" },
+      { type: "random_split", icon: Shuffle, label: "Random Split", desc: "Distribui aleatoriamente", color: "text-sky-400 bg-sky-400/10" },
     ],
   },
   {
@@ -350,13 +356,29 @@ export default function WhatsAppFlowEditor() {
         entry: "Entrada", message: "Mensagem", buttons: "Botões",
         condition: "Condição", wait: "Espera", action: "Ação",
         handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
+        ab_test: "Teste A/B", random_split: "Random Split",
+      };
+
+      const defaultConfigs: Record<string, any> = {
+        ab_test: {
+          variants: [
+            { id: "var_a", name: "Variante A", weight: 50 },
+            { id: "var_b", name: "Variante B", weight: 50 },
+          ],
+        },
+        random_split: {
+          outputs: [
+            { id: "out_0", name: "Saída 1" },
+            { id: "out_1", name: "Saída 2" },
+          ],
+        },
       };
 
       const newNode: Node = {
         id: `temp-${Date.now()}`,
         type,
         position: { x: newX, y: newY },
-        data: { label: nameMap[type] || type, config: {} },
+        data: { label: nameMap[type] || type, config: defaultConfigs[type] || {} },
       };
 
       const newNodes = [...nodes, newNode];
