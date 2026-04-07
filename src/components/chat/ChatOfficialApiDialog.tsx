@@ -41,6 +41,9 @@ export const ChatOfficialApiDialog = ({ open, onClose, hasConnection }: ChatOffi
               BETA
             </Badge>
           </div>
+          <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+            O chat da Wiize funciona exclusivamente com números conectados via Meta Partners Inbound.
+          </p>
         </div>
 
         {/* Content */}
