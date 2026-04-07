@@ -2022,6 +2022,7 @@ export type Database = {
         Row: {
           admin_assigned_plan: boolean
           avatar_url: string | null
+          chat_onboarding_seen: boolean
           cpf: string | null
           created_at: string
           device_fingerprint: string | null
@@ -2046,6 +2047,7 @@ export type Database = {
         Insert: {
           admin_assigned_plan?: boolean
           avatar_url?: string | null
+          chat_onboarding_seen?: boolean
           cpf?: string | null
           created_at?: string
           device_fingerprint?: string | null
@@ -2070,6 +2072,7 @@ export type Database = {
         Update: {
           admin_assigned_plan?: boolean
           avatar_url?: string | null
+          chat_onboarding_seen?: boolean
           cpf?: string | null
           created_at?: string
           device_fingerprint?: string | null
