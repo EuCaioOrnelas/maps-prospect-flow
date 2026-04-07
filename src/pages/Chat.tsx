@@ -11,20 +11,32 @@ import { ChatOfficialApiDialog } from "@/components/chat/ChatOfficialApiDialog";
 const Chat = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
-  const [showApiDialog, setShowApiDialog] = useState(true);
+  const [showApiDialog, setShowApiDialog] = useState<boolean | null>(null); // null = loading
   const chat = useChat();
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("plan, name, email, avatar_url").eq("id", user.id).single()
-      .then(({ data }) => setProfile(data));
+    supabase.from("profiles").select("plan, name, email, avatar_url, chat_onboarding_seen").eq("id", user.id).single()
+      .then(({ data }) => {
+        setProfile(data);
+        // Only auto-show if not seen before
+        setShowApiDialog(data?.chat_onboarding_seen ? false : true);
+      });
   }, [user]);
 
   const hasConnection = chat.connections.length > 0;
   const hasNoConnection = !hasConnection && !chat.loading;
 
-  // If no connection and dialog dismissed, block access
-  const chatBlocked = hasNoConnection && !showApiDialog;
+  const handleDismissDialog = async () => {
+    if (!hasConnection) return; // Can't dismiss without connection
+    setShowApiDialog(false);
+    // Mark as seen in DB so it never shows again
+    if (user) {
+      await supabase.from("profiles").update({ chat_onboarding_seen: true } as any).eq("id", user.id);
+    }
+  };
+
+  const isLoading = chat.loading || showApiDialog === null;
 
   return (
     <SidebarProvider>
@@ -32,27 +44,26 @@ const Chat = () => {
         <AppSidebar profile={profile} />
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
           <div className="flex-1 flex overflow-hidden">
-            {/* Show dialog on entry */}
-            {!chat.loading && (
+            {/* Always show popup for users without connection */}
+            {!isLoading && hasNoConnection && (
               <ChatOfficialApiDialog
-                open={showApiDialog}
-                onClose={() => {
-                  if (hasConnection) {
-                    setShowApiDialog(false);
-                  }
-                }}
-                hasConnection={hasConnection}
+                open={true}
+                onClose={() => {}}
+                hasConnection={false}
+              />
+            )}
+
+            {/* Show onboarding popup once for users WITH connection */}
+            {!isLoading && hasConnection && showApiDialog && (
+              <ChatOfficialApiDialog
+                open={true}
+                onClose={handleDismissDialog}
+                hasConnection={true}
               />
             )}
 
             {hasNoConnection ? (
-              <div className="flex-1 flex flex-col items-center justify-center wa-empty-bg px-8">
-                <ChatOfficialApiDialog
-                  open={true}
-                  onClose={() => {}}
-                  hasConnection={false}
-                />
-              </div>
+              <div className="flex-1 flex flex-col items-center justify-center wa-empty-bg px-8" />
             ) : !showApiDialog ? (
               <>
                 <div className="w-[360px] shrink-0 wa-sidebar-border">
