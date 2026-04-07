@@ -350,7 +350,7 @@ export default function CreateFlowAI() {
                   placeholder="Quero um fluxo para..."
                   className={cn(
                     "w-full px-4 py-3 resize-none bg-transparent border-none text-foreground text-sm",
-                    "focus:outline-none placeholder:text-muted-foreground/40 min-h-[56px] max-h-[180px] overflow-y-auto"
+                    "focus:outline-none placeholder:text-muted-foreground/40 min-h-[56px]"
                   )}
                 />
               </div>
