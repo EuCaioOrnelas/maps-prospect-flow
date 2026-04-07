@@ -271,7 +271,7 @@ export default function WhatsAppAutomations() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               onClick={handleOpenBlank}
-              className="group flex items-center gap-3 p-4 rounded-xl border-2 border-primary/30 bg-primary/5 hover:border-primary/60 hover:bg-primary/10 transition-all text-left"
+              className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
                 <Plus size={20} className="text-primary" />
@@ -286,8 +286,8 @@ export default function WhatsAppAutomations() {
               onClick={handleOpenAI}
               className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
             >
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0 group-hover:bg-purple-500/20 transition-colors">
-                <Sparkles size={20} className="text-purple-400" />
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                <Sparkles size={20} className="text-primary" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Criar com IA ✨</p>
@@ -296,11 +296,11 @@ export default function WhatsAppAutomations() {
             </button>
 
             <button
-              onClick={() => document.getElementById("templates-section")?.scrollIntoView({ behavior: "smooth" })}
+              onClick={() => setShowTemplatesDialog(true)}
               className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
             >
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0 group-hover:bg-amber-500/20 transition-colors">
-                <Workflow size={20} className="text-amber-400" />
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                <Workflow size={20} className="text-primary" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Usar template</p>
@@ -337,45 +337,53 @@ export default function WhatsAppAutomations() {
             </div>
           )}
 
-          {/* Templates */}
-          <div id="templates-section">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-foreground">Templates populares</h2>
-              <div className="relative w-56">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar template..."
-                  value={templateSearch}
-                  onChange={(e) => setTemplateSearch(e.target.value)}
-                  className="pl-9 h-9 text-sm bg-card"
-                />
+          {/* Templates Dialog */}
+          <Dialog open={showTemplatesDialog} onOpenChange={setShowTemplatesDialog}>
+            <DialogContent className="sm:max-w-[640px] p-0 gap-0 overflow-hidden border-border/50 bg-card max-h-[80vh] flex flex-col">
+              <div className="px-6 pt-6 pb-4 border-b border-border shrink-0">
+                <h2 className="text-lg font-bold text-foreground mb-1">Templates prontos</h2>
+                <p className="text-xs text-muted-foreground mb-3">Escolha um template e a IA irá montar o fluxo completo para você.</p>
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar template..."
+                    value={templateSearch}
+                    onChange={(e) => setTemplateSearch(e.target.value)}
+                    className="pl-9 h-9 text-sm bg-background"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {filteredTemplates.map((tpl) => (
-                <button
-                  key={tpl.id}
-                  onClick={() => handleUseTemplate(tpl)}
-                  className="group flex items-start gap-3 p-3.5 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
-                    <tpl.icon size={16} className="text-muted-foreground group-hover:text-primary transition-colors" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-foreground truncate">{tpl.name}</p>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
-                      {tpl.description}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-            {filteredTemplates.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                Nenhum template encontrado para "{templateSearch}"
-              </p>
-            )}
-          </div>
+              <div className="overflow-y-auto flex-1 p-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {filteredTemplates.map((tpl) => (
+                    <button
+                      key={tpl.id}
+                      onClick={() => {
+                        setShowTemplatesDialog(false);
+                        handleUseTemplate(tpl);
+                      }}
+                      className="group flex items-start gap-3 p-3.5 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                        <tpl.icon size={16} className="text-primary" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-foreground truncate">{tpl.name}</p>
+                        <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
+                          {tpl.description}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {filteredTemplates.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Nenhum template encontrado para "{templateSearch}"
+                  </p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Metrics */}
           <div>
