@@ -26,7 +26,7 @@ interface KanbanColumnProps {
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
   columnWidth?: ColumnWidth;
   isAgentSilenced?: boolean;
-  onAddLead?: () => void;
+  onAddLead?: (stageId: string) => void;
 }
 
 const getColumnWidthClass = (width: ColumnWidth, isExpanded: boolean): string => {
