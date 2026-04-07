@@ -1,0 +1,1 @@
+ALTER TYPE wa_flow_node_type ADD VALUE IF NOT EXISTS 'ai_agent';
