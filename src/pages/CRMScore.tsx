@@ -317,8 +317,8 @@ const fmtPhone = (phone: string) => {
   if (digits.startsWith("55") && digits.length >= 12) {
     const ddd = digits.slice(2, 4);
     const rest = digits.slice(4);
-    if (rest.length === 9) return `+55 (${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
-    if (rest.length === 8) return `+55 (${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+    if (rest.length === 9) return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+    if (rest.length === 8) return `(${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
   }
   return phone;
 };
@@ -1628,7 +1628,7 @@ const CRMScore = () => {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">Score de Leads</h1>
+                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">Score de Contatos</h1>
                   <ScoreInfoPopover />
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -1638,13 +1638,6 @@ const CRMScore = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(BUCKET_LABELS).map(([key, label]) => (
-              <div key={key} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium ${BUCKET_BADGE_COLORS[key]}`}>
-                <span>{label}</span>
-              </div>
-            ))}
-          </div>
 
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
