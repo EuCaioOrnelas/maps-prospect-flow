@@ -1707,6 +1707,9 @@ const CRMScore = () => {
         </div>
       </main>
 
+      {/* Score Info Modal */}
+      <ScoreInfoModal open={scoreInfoOpen} onClose={() => setScoreInfoOpen(false)} />
+
       {/* Deep-link lead detail */}
       {autoOpenedLead && (
         <LeadDetailPopup lead={autoOpenedLead} onClose={() => setAutoOpenedLead(null)} />
