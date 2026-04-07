@@ -36,6 +36,16 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
     setConfig((prev: any) => ({ ...prev, [key]: value }));
   };
 
+  const getNextInteractiveId = (items: any[], prefix: "btn" | "item") => {
+    const highestIndex = items.reduce((max: number, item: any) => {
+      const rawId = typeof item === "string" ? "" : String(item?.id || "");
+      const match = rawId.match(new RegExp(`^${prefix}[_-](\\d+)$`));
+      return match ? Math.max(max, Number(match[1])) : max;
+    }, -1);
+
+    return `${prefix}_${highestIndex + 1}`;
+  };
+
   const renderInfoBanner = (text: string) => (
     <div className="flex gap-2 items-start p-2.5 rounded-lg bg-muted/60 border border-border/40">
       <Info size={13} className="text-muted-foreground shrink-0 mt-0.5" />
@@ -367,6 +377,9 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                   placeholder="Powered by Wiize"
                   className="h-9 text-sm"
                 />
+                <p className="text-[10px] text-muted-foreground">
+                  Cabeçalho e rodapé são opcionais e só aparecem em blocos interativos; para mensagem comum use o bloco de mensagem.
+                </p>
               </div>
 
               {/* Reply buttons */}
@@ -381,7 +394,11 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                           value={typeof btn === "string" ? btn : btn.title || ""}
                           onChange={(e) => {
                             const updated = [...(config.buttons || [])];
-                            updated[i] = { id: `btn_${i}`, title: e.target.value };
+                              const currentButton = updated[i];
+                              updated[i] = {
+                                id: typeof currentButton === "string" ? `btn_${i}` : currentButton?.id || `btn_${i}`,
+                                title: e.target.value,
+                              };
                             updateConfig("buttons", updated);
                           }}
                           placeholder={`Botão ${i + 1}`}
@@ -406,7 +423,12 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                         variant="outline"
                         size="sm"
                         className="w-full h-8 text-xs"
-                        onClick={() => updateConfig("buttons", [...(config.buttons || []), { id: `btn_${(config.buttons || []).length}`, title: "" }])}
+                        onClick={() =>
+                          updateConfig("buttons", [
+                            ...(config.buttons || []),
+                            { id: getNextInteractiveId(config.buttons || [], "btn"), title: "" },
+                          ])
+                        }
                       >
                         <Plus size={12} className="mr-1" /> Adicionar botão
                       </Button>
@@ -436,7 +458,11 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                             value={item.title || ""}
                             onChange={(e) => {
                               const updated = [...(config.list_items || [])];
-                              updated[i] = { ...updated[i], id: `item_${i}`, title: e.target.value };
+                              updated[i] = {
+                                ...updated[i],
+                                id: updated[i]?.id || `item_${i}`,
+                                title: e.target.value,
+                              };
                               updateConfig("list_items", updated);
                             }}
                             placeholder="Título"
@@ -473,7 +499,12 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                         variant="outline"
                         size="sm"
                         className="w-full h-8 text-xs"
-                        onClick={() => updateConfig("list_items", [...(config.list_items || []), { id: `item_${(config.list_items || []).length}`, title: "", description: "" }])}
+                        onClick={() =>
+                          updateConfig("list_items", [
+                            ...(config.list_items || []),
+                            { id: getNextInteractiveId(config.list_items || [], "item"), title: "", description: "" },
+                          ])
+                        }
                       >
                         <Plus size={12} className="mr-1" /> Adicionar item
                       </Button>

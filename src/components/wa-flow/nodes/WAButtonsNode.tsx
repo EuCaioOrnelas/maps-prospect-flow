@@ -1,20 +1,35 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { ToggleLeft, List } from "lucide-react";
 
+type InteractiveItem = {
+  id: string;
+  title: string;
+  description?: string;
+};
+
+const normalizeItem = (item: any, index: number, prefix: "btn" | "item"): InteractiveItem => {
+  if (typeof item === "string") {
+    return { id: `${prefix}_${index}`, title: item };
+  }
+
+  return {
+    id: item?.id || `${prefix}_${index}`,
+    title: item?.title || `Opção ${index + 1}`,
+    description: item?.description || "",
+  };
+};
+
 export function WAButtonsNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
-  const buttons: any[] = cfg.buttons || [];
-  const listItems: any[] = cfg.list_items || [];
   const isListMode = cfg.interaction_type === "list";
-  const items = isListMode ? listItems : buttons;
+  const items = (isListMode ? (cfg.list_items || []) : (cfg.buttons || [])).map((item: any, index: number) =>
+    normalizeItem(item, index, isListMode ? "item" : "btn")
+  );
   const hasItems = items.length > 0;
   const Icon = isListMode ? List : ToggleLeft;
+  const headerText = typeof cfg.header_text === "string" ? cfg.header_text.trim() : "";
+  const footerText = typeof cfg.footer_text === "string" ? cfg.footer_text.trim() : "";
 
-  // Normalize items to get title string
-  const getItemTitle = (item: any, i: number): string => {
-    if (typeof item === "string") return item;
-    return item.title || `Opção ${i + 1}`;
-  };
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm w-52">
@@ -29,7 +44,11 @@ export function WAButtonsNode({ data }: NodeProps) {
           </p>
         </div>
       </div>
-      {/* Show body text if present */}
+      {headerText && (
+        <div className="px-3 pt-2">
+          <p className="text-[9px] uppercase tracking-wide text-muted-foreground truncate">{headerText}</p>
+        </div>
+      )}
       {cfg.body_text && (
         <div className="px-3 pt-2">
           <p className="text-[10px] text-foreground/70 line-clamp-2">{cfg.body_text}</p>
@@ -37,9 +56,9 @@ export function WAButtonsNode({ data }: NodeProps) {
       )}
       {hasItems && (
         <div className="px-3 py-2 space-y-1">
-          {items.slice(0, 4).map((item: any, i: number) => (
+          {items.slice(0, 4).map((item, i) => (
             <div key={i} className="text-[10px] bg-muted/50 rounded px-2 py-1 truncate text-foreground/80">
-              {getItemTitle(item, i)}
+              {item.title}
             </div>
           ))}
           {items.length > 4 && (
@@ -47,14 +66,19 @@ export function WAButtonsNode({ data }: NodeProps) {
           )}
         </div>
       )}
+      {footerText && (
+        <div className="px-3 pb-2">
+          <p className="text-[9px] text-muted-foreground truncate">{footerText}</p>
+        </div>
+      )}
       <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-indigo-400 !border-2 !border-card !rounded-full" />
       {hasItems ? (
-        items.map((_: any, i: number) => (
+        items.map((item, i: number) => (
           <Handle
-            key={i}
+            key={item.id}
             type="source"
             position={Position.Right}
-            id={`btn-${i}`}
+            id={item.id}
             className="!w-3 !h-3 !bg-indigo-400 !border-2 !border-card !rounded-full"
             style={{ top: `${35 + ((i + 1) * 100) / (items.length + 1)}%` }}
           />
