@@ -226,6 +226,7 @@ export default function WhatsAppAutomations() {
             </div>
           )}
         </main>
+        <CreateFlowDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
       </div>
     </div>
   );
