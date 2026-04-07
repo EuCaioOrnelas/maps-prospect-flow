@@ -108,7 +108,8 @@ function TypingDots() {
 }
 
 // Phone loading simulation component
-function PhoneSimulation({ flowName }: { flowName: string }) {
+function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPrompt: string }) {
+  const simulationSteps = buildSimulationSteps(userPrompt);
   const [messages, setMessages] = useState<typeof simulationSteps>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -120,7 +121,7 @@ function PhoneSimulation({ flowName }: { flowName: string }) {
       setCurrentStep((s) => s + 1);
     }, 1200 + Math.random() * 800);
     return () => clearTimeout(timer);
-  }, [currentStep]);
+  }, [currentStep, simulationSteps.length]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
