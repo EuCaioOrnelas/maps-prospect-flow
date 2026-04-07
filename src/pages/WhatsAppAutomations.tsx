@@ -97,7 +97,7 @@ export default function WhatsAppAutomations() {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase
         .from("wa_automation_flows")
-        .update({ status })
+        .update({ status: status as any })
         .eq("id", id);
       if (error) throw error;
     },
