@@ -7,7 +7,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
-import { Sparkles, ArrowLeft, SendIcon, Paperclip, XIcon } from "lucide-react";
+import { Sparkles, ArrowLeft, SendIcon } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -333,54 +333,41 @@ export default function CreateFlowAI() {
 
             {/* Chat input area */}
             <motion.div
-              className="relative backdrop-blur-2xl bg-card/50 rounded-2xl border border-border/50 shadow-2xl"
+              className="relative backdrop-blur-2xl bg-card/50 rounded-2xl border border-border/50 shadow-2xl flex items-end gap-3 p-3"
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.4 }}
             >
-              <div className="p-4">
+              <div className="flex-1 min-w-0">
                 <textarea
                   ref={textareaRef}
                   value={prompt}
                   onChange={(e) => { setPrompt(e.target.value); adjustHeight(); }}
                   onKeyDown={handleKeyDown}
-                  placeholder="Descreva o fluxo que você quer criar..."
+                  placeholder="Quero um fluxo para..."
                   className={cn(
                     "w-full px-4 py-3 resize-none bg-transparent border-none text-foreground text-sm",
-                    "focus:outline-none placeholder:text-muted-foreground/40 min-h-[56px]"
+                    "focus:outline-none placeholder:text-muted-foreground/40 min-h-[56px] max-h-[180px] overflow-y-auto"
                   )}
-                  style={{ overflow: "hidden" }}
                 />
               </div>
 
-              <div className="p-4 border-t border-border/30 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.94 }}
-                    className="p-2 text-muted-foreground hover:text-foreground rounded-lg transition-colors"
-                  >
-                    <Paperclip className="w-4 h-4" />
-                  </motion.button>
-                </div>
-
-                <motion.button
-                  type="button"
-                  onClick={() => createWithAI.mutate()}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  disabled={!prompt.trim()}
-                  className={cn(
-                    "px-5 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 btn-shine relative overflow-hidden",
-                    prompt.trim()
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Criar fluxo</span>
-                </motion.button>
-              </div>
+              <motion.button
+                type="button"
+                onClick={() => createWithAI.mutate()}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                disabled={!prompt.trim()}
+                className={cn(
+                  "px-5 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 btn-shine relative overflow-hidden shrink-0 mb-1",
+                  prompt.trim()
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Criar fluxo</span>
+              </motion.button>
             </motion.div>
 
             {/* Quick prompts - 3 per row */}
