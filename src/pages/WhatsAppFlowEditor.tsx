@@ -21,9 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
-  ArrowLeft, Save, Undo2, Redo2, Trash2, PlayCircle, RotateCcw,
+  ArrowLeft, Undo2, Redo2, Trash2, PlayCircle,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
-  HeadphonesIcon, CircleStop, ChevronRight, ChevronLeft, Bot,
+  HeadphonesIcon, CircleStop, Bot,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
