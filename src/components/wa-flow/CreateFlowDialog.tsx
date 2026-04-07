@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,8 @@ import { useMutation } from "@tanstack/react-query";
 interface CreateFlowDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialMode?: "choose" | "ai";
+  initialPrompt?: string;
 }
 
 const quickSuggestions = [
@@ -24,11 +26,18 @@ const quickSuggestions = [
   "Quero um funil completo de vendas no WhatsApp",
 ];
 
-export function CreateFlowDialog({ open, onOpenChange }: CreateFlowDialogProps) {
-  const [mode, setMode] = useState<"choose" | "ai">("choose");
-  const [prompt, setPrompt] = useState("");
+export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPrompt }: CreateFlowDialogProps) {
+  const [mode, setMode] = useState<"choose" | "ai">(initialMode || "choose");
+  const [prompt, setPrompt] = useState(initialPrompt || "");
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (open) {
+      if (initialMode) setMode(initialMode);
+      if (initialPrompt) setPrompt(initialPrompt);
+    }
+  }, [open, initialMode, initialPrompt]);
 
   const createBlank = useMutation({
     mutationFn: async () => {
