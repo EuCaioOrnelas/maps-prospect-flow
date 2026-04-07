@@ -222,7 +222,7 @@ export const AddLeadDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] overflow-y-auto w-[95vw] sm:w-full rounded-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] overflow-hidden w-[95vw] sm:w-full rounded-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5 text-primary" />
