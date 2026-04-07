@@ -70,6 +70,8 @@ const MetaAppDocumentation = lazy(() => import("./pages/MetaAppDocumentation"));
 const MetaApiGuide = lazy(() => import("./pages/MetaApiGuide"));
 const OpportunitiesManagement = lazy(() => import("./pages/OpportunitiesManagement"));
 const Chat = lazy(() => import("./pages/Chat"));
+const WhatsAppAutomations = lazy(() => import("./pages/WhatsAppAutomations"));
+const WhatsAppFlowEditor = lazy(() => import("./pages/WhatsAppFlowEditor"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -259,9 +261,25 @@ const App = () => (
                   path="/chat" 
                   element={
                     <ProtectedRoute>
-                      <Chat />
+                  <Chat />
                     </ProtectedRoute>
-                  } 
+                  }
+                />
+                <Route 
+                  path="/automations" 
+                  element={
+                    <ProtectedRoute>
+                      <WhatsAppAutomations />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route 
+                  path="/automations/:id" 
+                  element={
+                    <ProtectedRoute>
+                      <WhatsAppFlowEditor />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route 
                   path="/warming" 
