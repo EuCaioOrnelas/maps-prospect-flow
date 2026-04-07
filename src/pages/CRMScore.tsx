@@ -1040,9 +1040,6 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
               </div>
               <p className="text-sm text-muted-foreground">{fmtPhone(lead.phone_e164)}</p>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
-                  {BUCKET_SHORT_LABELS[bucket]}
-                </Badge>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   Último evento: {new Date(lead.last_activity_at).toLocaleDateString('pt-BR')}
