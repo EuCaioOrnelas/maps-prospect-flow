@@ -242,19 +242,6 @@ export default function WhatsAppAutomations() {
             </button>
 
             <button
-              onClick={() => navigate("/fluxos/criar-ia")}
-              className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
-            >
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                <Sparkles size={20} className="text-primary transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">Criar com IA ✨</p>
-                <p className="text-xs text-muted-foreground">Descreva e a IA monta</p>
-              </div>
-            </button>
-
-            <button
               onClick={() => setShowTemplatesDialog(true)}
               className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
             >
