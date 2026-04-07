@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
-  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle,
+  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Plug,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
@@ -36,6 +36,7 @@ import { WAEndNode } from "@/components/wa-flow/nodes/WAEndNode";
 import { WAAgentNode } from "@/components/wa-flow/nodes/WAAgentNode";
 import { WAABTestNode } from "@/components/wa-flow/nodes/WAABTestNode";
 import { WARandomSplitNode } from "@/components/wa-flow/nodes/WARandomSplitNode";
+import { WAIntegrationNode } from "@/components/wa-flow/nodes/WAIntegrationNode";
 import { WANodeConfigDrawer } from "@/components/wa-flow/WANodeConfigDrawer";
 import {
   AlertDialog,
@@ -91,6 +92,7 @@ const nodeTypes = {
   ai_agent: WAAgentNode,
   ab_test: WAABTestNode,
   random_split: WARandomSplitNode,
+  integration: WAIntegrationNode,
 };
 
 const defaultEdgeOptions = {
@@ -126,6 +128,12 @@ const sidebarCategories = [
     label: "Inteligência",
     items: [
       { type: "ai_agent", icon: Bot, label: "Agente IA", desc: "IA responde e direciona", color: "text-violet-400 bg-violet-400/10" },
+    ],
+  },
+  {
+    label: "Integrações",
+    items: [
+      { type: "integration", icon: Plug, label: "Integração", desc: "Sheets, Agenda, Gmail via webhook", color: "text-rose-400 bg-rose-400/10" },
     ],
   },
   {
@@ -357,6 +365,7 @@ export default function WhatsAppFlowEditor() {
         condition: "Condição", wait: "Espera", action: "Ação",
         handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
         ab_test: "Teste A/B", random_split: "Random Split",
+        integration: "Integração",
       };
 
       const defaultConfigs: Record<string, any> = {
