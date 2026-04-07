@@ -51,6 +51,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isCampaignsOpen, setIsCampaignsOpen] = useState(false);
   const [isOpportunitiesOpen, setIsOpportunitiesOpen] = useState(false);
   const [isCrmOpen, setIsCrmOpen] = useState(false);
+  const [isAutomationOpen, setIsAutomationOpen] = useState(false);
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const location = useLocation();
   const { signOut } = useAuth();
@@ -67,6 +68,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isOnCampaignsPage = currentPath === "/whatsapp" || currentPath === "/meta-campaigns";
   const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
   const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
+  const isOnAutomationPage = currentPath === "/agents" || currentPath.startsWith("/fluxos") || currentPath === "/warming";
 
   // Sync expanded state with hover, but with delay to prevent glitches
   useEffect(() => {
@@ -160,6 +162,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     }
   };
 
+  const handleAutomationClick = () => {
+    if (isExpanded) {
+      setIsAutomationOpen(!isAutomationOpen);
+    }
+  };
+
   // Reset reports submenu when sidebar closes
   const handleMouseLeave = () => {
     setIsHovered(false);
@@ -167,6 +175,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     setIsCampaignsOpen(false);
     setIsOpportunitiesOpen(false);
     setIsCrmOpen(false);
+    setIsAutomationOpen(false);
   };
 
   const showUpgrade = profile?.plan !== 'scale';
@@ -441,54 +450,79 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               />
             </li>
 
-            {/* Agentes de IA */}
+            {/* Automação with submenu */}
             <li>
               <SidebarNavItem
-                title="Agentes IA"
-                icon={Bot}
-                url="/agents"
-                isActive={currentPath === "/agents"}
-                isExpanded={isExpanded}
-                tooltip="Agentes de IA"
-              />
-            </li>
-
-            {/* Fluxos */}
-            <li>
-              <SidebarNavItem
-                title="Fluxos"
+                title="Automação"
                 icon={Workflow}
-                url="/fluxos"
-                isActive={currentPath.startsWith("/fluxos")}
+                onClick={handleAutomationClick}
+                isActive={isOnAutomationPage}
                 isExpanded={isExpanded}
-                tooltip="Fluxos de Automação"
-              />
-            </li>
-
-            {/* Aquecimento */}
-            <li>
-              <SidebarNavItem
-                title="Aquecimento"
-                icon={Flame}
-                url="/warming"
-                isActive={currentPath === "/warming"}
-                isExpanded={isExpanded}
+                hasSubmenu
+                isSubmenuOpen={isAutomationOpen}
                 badge={hasDisconnectedWarming ? (
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full flex items-center justify-center animate-pulse">
                     <AlertTriangle size={8} className="text-destructive-foreground" />
                   </div>
                 ) : undefined}
-                tooltip={
-                  hasDisconnectedWarming ? (
-                    <div>
-                      <p className="font-medium">Número desconectado</p>
-                      <p className="text-xs opacity-90">
-                        {disconnectedNumbers.length} número(s) precisa(m) reconectar
-                      </p>
-                    </div>
-                  ) : "Aquecimento"
-                }
+                tooltip="Automação"
               />
+
+              {isExpanded && (
+                <div
+                  className={cn(
+                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    isAutomationOpen
+                      ? "max-h-40 opacity-100 mt-1"
+                      : "max-h-0 opacity-0"
+                  )}
+                >
+                  <ul className="pl-4 space-y-0.5">
+                    <li>
+                      <Link
+                        to="/agents"
+                        className={cn(
+                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          currentPath === "/agents"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Bot size={16} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Agentes IA</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/fluxos"
+                        className={cn(
+                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          currentPath.startsWith("/fluxos")
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Workflow size={16} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Fluxos</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/warming"
+                        className={cn(
+                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          currentPath === "/warming"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Flame size={16} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Aquecimento</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              )}
             </li>
           </ul>
         </nav>
