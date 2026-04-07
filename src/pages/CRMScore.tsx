@@ -708,6 +708,7 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
   const [sortBy, setSortBy] = useState("score_total");
   const [sortAsc, setSortAsc] = useState(false);
   const [page, setPage] = useState(0);
+  const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
   const [selectedLead, setSelectedLead] = useState<RevenueLead | null>(null);
 
   const activeFilterCount = useMemo(() => {
