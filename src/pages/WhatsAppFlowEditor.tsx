@@ -349,6 +349,17 @@ export default function WhatsAppFlowEditor() {
 
   const onConnect = useCallback(
     (params: Connection) => {
+      // Prevent connections to/from blocked buttons nodes
+      const sourceNode = nodes.find((n) => n.id === params.source);
+      const targetNode = nodes.find((n) => n.id === params.target);
+      if (sourceNode?.type === "buttons" && (sourceNode.data as any).config?._blocked_evolution) {
+        toast.error("Botões bloqueados — exclusivo da API Inbound");
+        return;
+      }
+      if (targetNode?.type === "buttons" && (targetNode.data as any).config?._blocked_evolution) {
+        toast.error("Botões bloqueados — exclusivo da API Inbound");
+        return;
+      }
       setEdges((eds) => {
         const newEdges = addEdge({ ...params, ...defaultEdgeOptions }, eds);
         pushHistory(nodes, newEdges);
