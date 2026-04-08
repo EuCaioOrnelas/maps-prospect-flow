@@ -616,17 +616,15 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
   const isEvolution = !!selectedNumber && !isMeta;
 
   const { data: campaigns = [] } = useQuery({
-    queryKey: ["wa-campaigns-for-trigger", user?.id, isMeta],
+    queryKey: ["wa-campaigns-for-trigger", user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("whatsapp_campaigns")
-        .select("id, name, status, api_type")
+        .select("id, name, status")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(50);
-      return (data || []).filter((c: any) => 
-        isMeta ? (c.api_type === "meta" || c.api_type === "official") : (c.api_type !== "meta" && c.api_type !== "official")
-      );
+      return data || [];
     },
     enabled: !!user && config.trigger_type === "campaign_reply",
   });
