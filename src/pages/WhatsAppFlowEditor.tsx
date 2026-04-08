@@ -24,6 +24,9 @@ import {
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
   HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail,
 } from "lucide-react";
+import gmailIcon from "@/assets/icons/gmail.png";
+import sheetsIcon from "@/assets/icons/google-sheets.png";
+import calendarIcon from "@/assets/icons/google-calendar.png";
 import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
 import { WAMessageNode } from "@/components/wa-flow/nodes/WAMessageNode";
@@ -145,9 +148,9 @@ const sidebarCategories = [
   {
     label: "Integrações",
     items: [
-      { type: "google_sheets", icon: Sheet, label: "Google Sheets", desc: "Salvar lead em planilha", color: "text-green-500 bg-green-500/10" },
-      { type: "google_calendar", icon: CalendarPlus, label: "Google Agenda", desc: "Criar evento no calendário", color: "text-blue-500 bg-blue-500/10" },
-      { type: "gmail", icon: Mail, label: "Gmail", desc: "Enviar email automático", color: "text-red-500 bg-red-500/10" },
+      { type: "google_sheets", icon: Sheet, label: "Google Sheets", desc: "Salvar lead em planilha", color: "text-green-500 bg-green-500/10", iconImg: sheetsIcon },
+      { type: "google_calendar", icon: CalendarPlus, label: "Google Agenda", desc: "Criar evento no calendário", color: "text-blue-500 bg-blue-500/10", iconImg: calendarIcon },
+      { type: "gmail", icon: Mail, label: "Gmail", desc: "Enviar email automático", color: "text-red-500 bg-red-500/10", iconImg: gmailIcon },
     ],
   },
 ];
@@ -658,7 +661,11 @@ export default function WhatsAppFlowEditor() {
                           className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card transition-colors text-left group shadow-sm cursor-grab active:cursor-grabbing"
                         >
                           <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
-                            <item.icon size={16} className={cn(item.color.split(" ")[0], "transition-transform duration-200 group-hover:scale-125 group-hover:rotate-12")} />
+                            {(item as any).iconImg ? (
+                              <img src={(item as any).iconImg} alt={item.label} className="w-5 h-5 object-contain transition-transform duration-200 group-hover:scale-125 group-hover:rotate-12" />
+                            ) : (
+                              <item.icon size={16} className={cn(item.color.split(" ")[0], "transition-transform duration-200 group-hover:scale-125 group-hover:rotate-12")} />
+                            )}
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs font-semibold text-foreground">{item.label}</p>
