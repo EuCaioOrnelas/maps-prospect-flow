@@ -46,6 +46,7 @@ export function WAButtonsNode({ data }: NodeProps) {
 
   return (
     <div ref={nodeRef} className="bg-card border border-border rounded-xl shadow-sm w-56 relative">
+      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-muted-foreground !border-2 !border-card !rounded-full" />
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
         <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
           <Icon size={16} className="text-indigo-400" />
@@ -79,8 +80,6 @@ export function WAButtonsNode({ data }: NodeProps) {
         </div>
       )}
 
-      <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-indigo-400 !border-2 !border-card !rounded-full" />
-
       {hasItems ? (
         items.map((item, i) => (
           <Handle
@@ -88,12 +87,12 @@ export function WAButtonsNode({ data }: NodeProps) {
             type="source"
             position={Position.Right}
             id={item.id}
-            className="!w-3 !h-3 !bg-indigo-400 !border-2 !border-card !rounded-full"
+            className="!w-3 !h-3 !bg-primary !border-2 !border-card !rounded-full"
             style={{ top: handleTops[i] != null ? `${handleTops[i]}%` : `${50}%` }}
           />
         ))
       ) : (
-        <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-indigo-400 !border-2 !border-card !rounded-full" />
+        <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-primary !border-2 !border-card !rounded-full" />
       )}
     </div>
   );

@@ -18,6 +18,7 @@ export function WAMessageNode({ data }: NodeProps) {
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm w-52">
+      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-muted-foreground !border-2 !border-card !rounded-full" />
       <div className="flex items-center gap-2.5 px-4 py-3">
         <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
           <Icon size={16} className="text-blue-400" />
@@ -33,8 +34,7 @@ export function WAMessageNode({ data }: NodeProps) {
           )}
         </div>
       </div>
-      <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-blue-400 !border-2 !border-card !rounded-full" />
-      <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-blue-400 !border-2 !border-card !rounded-full" />
+      <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-primary !border-2 !border-card !rounded-full" />
     </div>
   );
 }
