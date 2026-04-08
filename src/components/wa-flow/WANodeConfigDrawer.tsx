@@ -1294,10 +1294,14 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
       {/* AGENTS SECTION - collapsible */}
       <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
         <button onClick={() => setShowAgentSection(!showAgentSection)} className="flex items-center justify-between w-full">
-          <Label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">🤖 Agente de IA</Label>
+          <Label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+            <BotMessageSquare size={14} className="text-muted-foreground" /> Agente de IA
+          </Label>
           <div className="flex items-center gap-2">
-            {selectedAgentId && savedAgents.find((a: any) => a.id === selectedAgentId) && (
+            {selectedAgentId && savedAgents.find((a: any) => a.id === selectedAgentId) ? (
               <span className="text-[9px] text-emerald-500 font-medium">{savedAgents.find((a: any) => a.id === selectedAgentId)?.name}</span>
+            ) : (
+              <span className="text-[9px] text-muted-foreground font-medium">Selecionar</span>
             )}
             <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", showAgentSection && "rotate-180")} />
           </div>
