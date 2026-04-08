@@ -598,22 +598,65 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
 
 function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
   const { user } = useAuth();
+  const [templateSearch, setTemplateSearch] = useState("");
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [reopenTemplates, setReopenTemplates] = useState<any[]>([]);
+
   const { data: numbers = [] } = useQuery({
     queryKey: ["wa-numbers-for-flow"],
     queryFn: async () => {
       const { data } = await supabase
         .from("whatsapp_numbers")
-        .select("id, phone_number, name, api_tier")
-        .eq("user_id", user!.id);
+        .select("id, phone_number, name, api_tier, is_connected")
+        .eq("user_id", user!.id)
+        .eq("is_connected", true);
       return data || [];
     },
     enabled: !!user,
   });
 
-  // Fetch campaigns based on API type
   const selectedNumber = numbers.find((n: any) => n.id === config.whatsapp_number_id);
   const isMeta = selectedNumber?.api_tier === "paid" || selectedNumber?.api_tier === "meta";
   const isEvolution = !!selectedNumber && !isMeta;
+
+  // Fetch WABA connection for selected Meta number
+  const { data: wabaConn } = useQuery({
+    queryKey: ["waba-conn-for-flow", user?.id, config.whatsapp_number_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_waba_connections")
+        .select("id, waba_id, access_token, phone_number_id, display_phone_number")
+        .eq("user_id", user!.id)
+        .eq("status", "active")
+        .limit(10);
+      return data?.[0] || null;
+    },
+    enabled: !!user && isMeta,
+  });
+
+  // Fetch templates when Meta number selected
+  useEffect(() => {
+    if (!wabaConn || !isMeta) {
+      setReopenTemplates([]);
+      return;
+    }
+    const fetchTemplates = async () => {
+      setLoadingTemplates(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("meta-fetch-templates", {
+          body: { waba_id: wabaConn.waba_id, access_token: wabaConn.access_token },
+        });
+        if (!error && data?.templates) {
+          setReopenTemplates(data.templates.filter((t: any) => t.status === "APPROVED"));
+        }
+      } catch (e) {
+        console.error("Failed to fetch reopen templates:", e);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+    fetchTemplates();
+  }, [wabaConn?.id, isMeta]);
 
   const { data: campaigns = [] } = useQuery({
     queryKey: ["wa-campaigns-for-trigger", user?.id],
@@ -629,11 +672,19 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
     enabled: !!user && config.trigger_type === "campaign_reply",
   });
 
+  const filteredReopenTemplates = reopenTemplates.filter((t: any) =>
+    t.name?.toLowerCase().includes(templateSearch.toLowerCase())
+  );
+
+  // Generate webhook URL
+  const flowId = typeof window !== "undefined" ? window.location.pathname.split("/").pop() : "";
+  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/evolution-webhook`;
+
   return (
     <div className="space-y-4">
       {renderInfoBanner("Defina como o lead entra neste fluxo e qual número será utilizado.")}
 
-      {/* Number selection */}
+      {/* Number selection - only connected */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">Número do WhatsApp</Label>
         <Select
@@ -644,10 +695,14 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             updateConfig("whatsapp_number_id", v);
             updateConfig("whatsapp_number_name", num?.name || num?.phone_number || "");
             updateConfig("api_type", numIsMeta ? "meta" : "evolution");
+            updateConfig("reopen_template_name", "");
           }}
         >
           <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar número..." /></SelectTrigger>
           <SelectContent>
+            {numbers.length === 0 && (
+              <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum número conectado</div>
+            )}
             {numbers.map((n: any) => {
               const nIsMeta = n.api_tier === "paid" || n.api_tier === "meta";
               return (
@@ -670,7 +725,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
         <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
           <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
           <p className="text-[11px] text-amber-500 leading-relaxed">
-            <span className="font-semibold">API Outbound (Evolution)</span> — Recomendada para prospecção fria. Risco de bloqueio por spam. Para fluxos de relacionamento, use a API Inbound.
+            <span className="font-semibold">API Outbound (Evolution)</span> — Recomendada para prospecção fria. Risco de bloqueio por spam.
           </p>
         </div>
       )}
@@ -680,37 +735,70 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
         <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/20">
           <Info size={14} className="text-primary shrink-0 mt-0.5" />
           <p className="text-[11px] text-primary leading-relaxed">
-            <span className="font-semibold">API Inbound (Oficial Meta)</span> — Requer templates HSM para reabrir conversas após 24h sem interação.
+            <span className="font-semibold">API Inbound (Oficial Meta)</span> — Requer template HSM para reabrir conversas após 24h.
           </p>
         </div>
       )}
 
-      {/* Reopen template - only for Meta API */}
+      {/* Reopen template - fetch from Meta API */}
       {selectedNumber && isMeta && (
         <div className="space-y-2 p-3 rounded-lg border border-primary/20 bg-primary/5">
           <Label className="text-xs font-medium text-primary">Template de reabertura (24h)</Label>
           <p className="text-[10px] text-muted-foreground">
-            Quando a conversa ficar parada por +24h, este template será usado para reabrir a sessão.
+            Selecione o template aprovado que será usado para reabrir a conversa após 24h de inatividade.
           </p>
-          <Input
-            value={config.reopen_template_name || ""}
-            onChange={(e) => updateConfig("reopen_template_name", e.target.value)}
-            placeholder="nome_do_template_hsm"
-            className="h-9 text-sm"
-          />
-          <Input
-            value={config.reopen_template_language || "pt_BR"}
-            onChange={(e) => updateConfig("reopen_template_language", e.target.value)}
-            placeholder="pt_BR"
-            className="h-8 text-xs"
-          />
-          <div className="text-[10px] text-muted-foreground space-y-0.5">
-            <p>💰 <span className="font-medium">Custo estimado por mensagem:</span></p>
-            <p>• Marketing: ~R$ 0,25 / msg</p>
-            <p>• Utilidade: ~R$ 0,10 / msg</p>
-            <p>• Autenticação: ~R$ 0,09 / msg</p>
-            <p>• Serviço: Gratuita (dentro da janela)</p>
-          </div>
+          {loadingTemplates ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+              <Loader2 size={14} className="animate-spin" /> Carregando templates...
+            </div>
+          ) : (
+            <>
+              <Input
+                value={templateSearch}
+                onChange={(e) => setTemplateSearch(e.target.value)}
+                placeholder="Buscar template..."
+                className="h-8 text-xs"
+              />
+              <div className="max-h-[180px] overflow-y-auto space-y-1 mt-1">
+                {filteredReopenTemplates.length === 0 && (
+                  <p className="text-[10px] text-muted-foreground py-2 text-center">
+                    {templateSearch ? "Nenhum template encontrado" : "Nenhum template aprovado disponível"}
+                  </p>
+                )}
+                {filteredReopenTemplates.map((t: any) => (
+                  <button
+                    key={t.name}
+                    onClick={() => {
+                      updateConfig("reopen_template_name", t.name);
+                      updateConfig("reopen_template_language", t.language);
+                      updateConfig("reopen_template_category", t.category);
+                    }}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors",
+                      config.reopen_template_name === t.name
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border/40 bg-card hover:border-primary/30 text-muted-foreground"
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-foreground">{t.name}</span>
+                      <Badge variant="secondary" className="text-[8px] h-4">{t.category}</Badge>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground mt-0.5">{t.language}</p>
+                  </button>
+                ))}
+              </div>
+              {config.reopen_template_name && (
+                <div className="flex items-center gap-2 mt-1 p-2 rounded bg-primary/10 border border-primary/20">
+                  <CheckCircle2 size={12} className="text-primary shrink-0" />
+                  <span className="text-[10px] text-foreground font-medium truncate">{config.reopen_template_name}</span>
+                  <button onClick={() => { updateConfig("reopen_template_name", ""); updateConfig("reopen_template_language", ""); }} className="ml-auto">
+                    <X size={12} className="text-muted-foreground hover:text-destructive" />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -738,15 +826,21 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             placeholder="preço, comprar, orçamento, quero"
             className="h-9 text-sm"
           />
-          <p className="text-[10px] text-muted-foreground">
-            A identificação é feita independente de maiúsculas/minúsculas, acentos ou variações.
-          </p>
+          <div className="p-2.5 rounded-lg bg-muted/30 border border-border/30 space-y-1">
+            <p className="text-[10px] font-medium text-foreground">Como funciona a busca parcial:</p>
+            <p className="text-[10px] text-muted-foreground">Se a palavra-chave for <span className="font-mono bg-muted px-1 rounded">preço</span>, a busca encontra em qualquer posição da mensagem:</p>
+            <div className="space-y-0.5 text-[9px] text-muted-foreground">
+              <p>✅ "qual o <strong>preço</strong>?" — contém a palavra</p>
+              <p>✅ "me passa o <strong>PREÇO</strong> por favor" — maiúsculas</p>
+              <p>✅ "quero saber o <strong>preco</strong>" — sem acento</p>
+            </div>
+          </div>
           <div className="flex items-center gap-2 mt-1">
             <Switch
               checked={config.exact_match || false}
               onCheckedChange={(v) => updateConfig("exact_match", v)}
             />
-            <Label className="text-[11px] text-muted-foreground">Correspondência exata (desativa busca parcial)</Label>
+            <Label className="text-[11px] text-muted-foreground">Correspondência exata (mensagem deve ser apenas a palavra-chave)</Label>
           </div>
         </div>
       )}
@@ -764,7 +858,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             }}
           >
             <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Qualquer campanha" /></SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover text-popover-foreground">
               <SelectItem value="any">Qualquer campanha</SelectItem>
               {campaigns.map((c: any) => (
                 <SelectItem key={c.id} value={c.id}>
@@ -784,27 +878,82 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
 
       {/* Webhook config */}
       {config.trigger_type === "webhook" && (
-        <div className="space-y-2">
-          <Label className="text-xs">URL de callback</Label>
-          <div className="flex gap-2">
-            <Input
-              value={config.webhook_url || "Será gerado ao ativar o fluxo"}
-              readOnly
-              className="h-9 text-sm bg-muted/30 flex-1"
-            />
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">URL do Webhook</Label>
+            <div className="flex gap-2">
+              <Input
+                value={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-webhook`}
+                readOnly
+                className="h-9 text-[10px] font-mono bg-muted/30 flex-1"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 text-[10px] shrink-0"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-webhook`);
+                }}
+              >
+                Copiar
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Copie esta URL e configure na sua ferramenta externa (n8n, Make, Zapier, etc.) como destino do webhook.
+            </p>
           </div>
-          <p className="text-[10px] text-muted-foreground">
-            Envie um POST para esta URL com os dados do lead (phone, name, email) para iniciar o fluxo automaticamente.
-          </p>
-          <div className="space-y-1.5 p-2.5 rounded-lg bg-muted/30 border border-border/30">
-            <p className="text-[10px] font-medium text-foreground">Formato esperado (JSON):</p>
-            <pre className="text-[9px] text-muted-foreground font-mono bg-background/50 rounded p-2 overflow-x-auto">
-{`{
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Identificador do fluxo</Label>
+            <Input
+              value={flowId || ""}
+              readOnly
+              className="h-8 text-[10px] font-mono bg-muted/30"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Envie este ID no campo <span className="font-mono bg-muted px-1 rounded">flow_id</span> do payload.
+            </p>
+          </div>
+
+          <div className="space-y-1.5 p-3 rounded-lg bg-muted/30 border border-border/30">
+            <p className="text-[10px] font-medium text-foreground">Exemplo de payload (POST JSON):</p>
+            <pre className="text-[9px] text-muted-foreground font-mono bg-background/80 rounded p-2.5 overflow-x-auto whitespace-pre">
+{`POST ${import.meta.env.VITE_SUPABASE_URL?.replace('https://', '').slice(0, 20)}...
+Content-Type: application/json
+Authorization: Bearer <ANON_KEY>
+
+{
+  "flow_id": "${flowId || "id-do-fluxo"}",
   "phone": "5511999999999",
-  "name": "Nome do Lead",
-  "email": "lead@email.com"
+  "name": "João Silva",
+  "email": "joao@email.com",
+  "custom_data": {
+    "origem": "landing-page",
+    "produto": "plano-pro"
+  }
 }`}
             </pre>
+          </div>
+
+          <div className="space-y-1.5 p-2.5 rounded-lg bg-primary/5 border border-primary/20">
+            <p className="text-[10px] font-medium text-primary">Campos obrigatórios:</p>
+            <div className="text-[9px] text-muted-foreground space-y-0.5">
+              <p>• <span className="font-mono font-medium text-foreground">flow_id</span> — ID deste fluxo (acima)</p>
+              <p>• <span className="font-mono font-medium text-foreground">phone</span> — Telefone do lead (formato E.164)</p>
+            </div>
+            <p className="text-[10px] font-medium text-primary mt-2">Campos opcionais:</p>
+            <div className="text-[9px] text-muted-foreground space-y-0.5">
+              <p>• <span className="font-mono">name</span> — Nome do lead</p>
+              <p>• <span className="font-mono">email</span> — Email do lead</p>
+              <p>• <span className="font-mono">custom_data</span> — Dados extras (objeto)</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 p-2 rounded-lg bg-muted/20 border border-border/30">
+            <Info size={12} className="text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[9px] text-muted-foreground leading-relaxed">
+              O header <span className="font-mono">Authorization</span> deve conter o token anon do projeto. Todas as variáveis enviadas em <span className="font-mono">custom_data</span> ficam disponíveis nos blocos seguintes.
+            </p>
           </div>
         </div>
       )}
