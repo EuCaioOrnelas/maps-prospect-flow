@@ -102,7 +102,7 @@ const nodeTypes = {
 };
 
 const defaultEdgeOptions = {
-  animated: false,
+  animated: true,
   type: "default" as const,
   style: { strokeWidth: 2, stroke: "hsl(var(--border))", strokeLinecap: "round" as const },
 };
