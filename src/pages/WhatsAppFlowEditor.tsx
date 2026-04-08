@@ -473,9 +473,34 @@ export default function WhatsAppFlowEditor() {
   });
 
   // Save flow
+  // Derive entry node's API type from current nodes
+  const entryApiType = useMemo(() => {
+    const entryNode = nodes.find((n) => n.type === "entry");
+    if (!entryNode) return "evolution";
+    const cfg = (entryNode.data as any).config || {};
+    return cfg.api_type || "evolution";
+  }, [nodes]);
+
+  const entryConfig = useMemo(() => {
+    const entryNode = nodes.find((n) => n.type === "entry");
+    if (!entryNode) return {};
+    return (entryNode.data as any).config || {};
+  }, [nodes]);
+
   const saveFlow = useMutation({
     mutationFn: async () => {
-      await supabase.from("wa_automation_flows").update({ name: flowName }).eq("id", id!);
+      // Extract entry node config for flow-level metadata
+      const entryNode = nodes.find((n) => n.type === "entry");
+      const entryCfg = entryNode ? (entryNode.data as any).config || {} : {};
+
+      await supabase.from("wa_automation_flows").update({
+        name: flowName,
+        api_type: entryCfg.api_type || "evolution",
+        whatsapp_number_id: entryCfg.whatsapp_number_id || null,
+        waba_connection_id: entryCfg.waba_connection_id || null,
+        phone_number_id: entryCfg.phone_number_id || null,
+      } as any).eq("id", id!);
+
       await supabase.from("wa_flow_edges").delete().eq("flow_id", id!);
       await supabase.from("wa_flow_nodes").delete().eq("flow_id", id!);
 
