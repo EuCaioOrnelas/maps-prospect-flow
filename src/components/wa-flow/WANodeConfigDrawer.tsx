@@ -746,6 +746,9 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             updateConfig("whatsapp_number_id", v);
             updateConfig("whatsapp_number_name", num?.name || num?.display_phone_number || num?.phone_number || "");
             updateConfig("api_type", numIsMeta ? "meta" : "evolution");
+            updateConfig("waba_connection_id", num?.waba_connection_id || null);
+            updateConfig("phone_number_id", num?.phone_number_id || null);
+            updateConfig("source_id", num?.source_id || null);
             updateConfig("reopen_template_name", "");
           }}
         >
