@@ -1616,6 +1616,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== AI AGENT NODE ===== */}
           {node.type === "ai_agent" && (
             <div className="space-y-4">
+              {renderApiIndicator()}
               {renderInfoBanner("Configure um agente de IA que analisa a resposta do lead e decide o próximo passo automaticamente.")}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Prompt do sistema (instrução para a IA)</Label>
