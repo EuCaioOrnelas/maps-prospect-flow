@@ -1182,8 +1182,8 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
   return (
     <div className="space-y-4">
 
-      {/* CREDENTIALS SECTION - no nested card */}
-      <div className="space-y-3">
+      {/* CREDENTIALS SECTION */}
+      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
         <div className="flex items-center justify-between">
           <Label className="text-xs font-bold flex items-center gap-1.5">🔑 Credenciais de IA</Label>
           <button onClick={() => setShowDocs(!showDocs)} className="text-[10px] text-primary hover:underline flex items-center gap-1">
@@ -1274,8 +1274,8 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
         )}
       </div>
 
-      {/* AGENTS SECTION - no nested card */}
-      <div className="space-y-3">
+      {/* AGENTS SECTION */}
+      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
         <Label className="text-xs font-bold flex items-center gap-1.5">🤖 Agente de IA</Label>
 
         {!creatingAgent && (
