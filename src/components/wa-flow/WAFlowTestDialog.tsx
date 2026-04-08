@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Bot, FlaskConical, RotateCcw, Send } from "lucide-react";
+import { Bot, FlaskConical, List, RotateCcw, Send, X } from "lucide-react";
 
 interface WAFlowTestDialogProps {
   open: boolean;
