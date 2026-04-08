@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Bot, FlaskConical, RotateCcw, Send } from "lucide-react";
+import { Bot, FlaskConical, List, RotateCcw, Send, X } from "lucide-react";
 
 interface WAFlowTestDialogProps {
   open: boolean;
@@ -93,6 +93,7 @@ export function WAFlowTestDialog({
   const [inputText, setInputText] = useState("");
   const [awaitingNodeId, setAwaitingNodeId] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [listPopup, setListPopup] = useState<{ nodeId: string; choices: InteractiveChoice[]; title: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const runtimeRef = useRef<RuntimeContext>(createRuntimeContext());
   const runVersionRef = useRef(0);
@@ -603,25 +604,32 @@ export function WAFlowTestDialog({
                       <p>{message.content}</p>
                     </div>
 
-                    {message.choices && message.choices.length > 0 && (
-                      <div className={cn("mt-1.5", message.choicesMode === "list" ? "space-y-1.5" : "flex flex-wrap gap-1.5")}>
+                    {message.choices && message.choices.length > 0 && message.choicesMode === "list" && (
+                      <div className="mt-1.5">
+                        <button
+                          type="button"
+                          onClick={() => message.nodeId && setListPopup({ nodeId: message.nodeId, choices: message.choices!, title: getNodeConfig(nodeMap.get(message.nodeId))?.header_text || "Opções" })}
+                          disabled={!message.nodeId || awaitingNodeId !== message.nodeId || isRunning}
+                          className="w-full rounded-xl border border-border bg-card text-foreground text-center py-2.5 px-3 text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted flex items-center justify-center gap-2"
+                        >
+                          <List className="h-4 w-4" />
+                          Ver opções
+                        </button>
+                      </div>
+                    )}
+
+                    {message.choices && message.choices.length > 0 && message.choicesMode !== "list" && (
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {message.choices.map((choice) => (
                           <button
                             key={choice.id}
                             type="button"
                             onClick={() => message.nodeId && consumeInteractiveReply(message.nodeId, choice)}
                             disabled={!message.nodeId || awaitingNodeId !== message.nodeId || isRunning}
-                            className={cn(
-                              "rounded-xl border border-primary/30 bg-primary text-primary-foreground text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-[0_4px_16px_hsl(158_72%_38%_/_0.3)] hover:-translate-y-0.5 hover:bg-primary/90",
-                              message.choicesMode === "list"
-                                ? "w-full px-3 py-2"
-                                : "px-3 py-2"
-                            )}
+                            className="group/btn relative rounded-xl border border-primary/30 bg-primary text-primary-foreground text-left px-3 py-2 transition-all overflow-hidden disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 hover:shadow-[0_4px_16px_hsl(var(--primary)_/_0.35)]"
                           >
-                            <p className="text-sm font-medium">{choice.title}</p>
-                            {choice.description && (
-                              <p className="text-xs text-primary-foreground/70 mt-0.5">{choice.description}</p>
-                            )}
+                            <span className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+                            <p className="text-sm font-medium relative z-10">{choice.title}</p>
                           </button>
                         ))}
                       </div>
@@ -675,6 +683,37 @@ export function WAFlowTestDialog({
             </Button>
           </div>
         </div>
+        {listPopup && (
+          <div className="absolute inset-0 z-50 flex items-end justify-center bg-black/40 animate-in fade-in-0 duration-200">
+            <div className="w-full max-w-md bg-card rounded-t-2xl border-t border-border shadow-2xl animate-in slide-in-from-bottom-4 duration-300 max-h-[60%] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b border-border">
+                <h3 className="text-sm font-semibold text-foreground">{listPopup.title}</h3>
+                <button type="button" onClick={() => setListPopup(null)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                {listPopup.choices.map((choice) => (
+                  <button
+                    key={choice.id}
+                    type="button"
+                    onClick={() => {
+                      consumeInteractiveReply(listPopup.nodeId, choice);
+                      setListPopup(null);
+                    }}
+                    disabled={awaitingNodeId !== listPopup.nodeId || isRunning}
+                    className="group/item w-full text-left rounded-xl px-4 py-3 transition-all hover:bg-primary/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <p className="text-sm font-medium text-foreground">{choice.title}</p>
+                    {choice.description && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{choice.description}</p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
