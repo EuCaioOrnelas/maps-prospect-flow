@@ -1,6 +1,6 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
-import { ToggleLeft, List } from "lucide-react";
+import { ToggleLeft, List, AlertTriangle } from "lucide-react";
 import { useRef, useState, useLayoutEffect } from "react";
 
 type InteractiveItem = {
