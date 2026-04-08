@@ -13,139 +13,43 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
 import type { Node } from "@xyflow/react";
 
-function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
-  const { user } = useAuth();
-  const [isConnecting, setIsConnecting] = useState(false);
 
-  const { data: googleToken, refetch: refetchToken } = useQuery({
-    queryKey: ["google-token", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("user_google_tokens" as any)
-        .select("google_email, scopes, token_expires_at")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!user,
-    refetchInterval: 5000,
-  });
-
-  const isConnected = !!googleToken;
-
-  useEffect(() => {
-    if (googleToken) {
-      updateConfig("google_connected", true);
-      updateConfig("google_email", (googleToken as any).google_email);
-    }
-  }, [(googleToken as any)?.google_email]);
-
-  const handleConnect = async () => {
-    setIsConnecting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("google-oauth-start", {
-        body: { scopes: ["https://www.googleapis.com/auth/spreadsheets"] },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "google-oauth", "width=600,height=700,left=200,top=100");
-      }
-    } catch (err) {
-      console.error("Failed to start OAuth:", err);
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const handleDisconnect = async () => {
-    await supabase.from("user_google_tokens" as any).delete().eq("user_id", user!.id);
-    updateConfig("google_connected", false);
-    updateConfig("google_email", "");
-    refetchToken();
-  };
-
+function GoogleConnectionBlock({ isConnected, googleToken, isConnecting, handleConnect, handleDisconnect, label }: {
+  isConnected: boolean; googleToken: any; isConnecting: boolean; handleConnect: () => void; handleDisconnect: () => void; label: string;
+}) {
   return (
-    <div className="space-y-4">
-      {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets.")}
-
-      <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
-        {isConnected ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={14} className="text-green-500" />
-              <span className="text-xs font-medium text-foreground">Google conectado</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground">📧 {(googleToken as any).google_email}</p>
-            <Button variant="ghost" size="sm" className="h-7 text-[10px] text-destructive hover:text-destructive" onClick={handleDisconnect}>
-              Desconectar conta
-            </Button>
+    <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
+      {isConnected ? (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={14} className="text-green-500" />
+            <span className="text-xs font-medium text-foreground">{label} conectado</span>
           </div>
-        ) : (
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">Conecte sua conta Google para salvar leads diretamente no Sheets.</p>
-            <Button onClick={handleConnect} disabled={isConnecting} className="w-full h-9 text-sm gap-2">
-              {isConnecting ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
-              {isConnecting ? "Conectando..." : "Conectar Google"}
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {isConnected && (
-        <>
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">ID da Planilha</Label>
-            <Input
-              value={config.spreadsheet_id || ""}
-              onChange={(e) => updateConfig("spreadsheet_id", e.target.value)}
-              placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
-              className="h-9 text-sm font-mono"
-            />
-            <p className="text-[10px] text-muted-foreground">
-              Abra sua planilha e copie o ID da URL: docs.google.com/spreadsheets/d/<strong>ID_AQUI</strong>/edit
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Nome da aba (opcional)</Label>
-            <Input
-              value={config.sheet_name || ""}
-              onChange={(e) => updateConfig("sheet_name", e.target.value)}
-              placeholder="Sheet1"
-              className="h-9 text-sm"
-            />
-          </div>
-          <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
-            <p className="text-[11px] font-medium text-foreground">📊 Dados enviados automaticamente:</p>
-            <div className="space-y-1">
-              {["Nome do contato", "Telefone", "Email", "Empresa", "Cidade", "Origem", "Tags", "Data/hora"].map((field) => (
-                <div key={field} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
-                  {field}
-                </div>
-              ))}
-            </div>
-            <div className="space-y-2 pt-2 border-t border-border/30">
-              <Label className="text-[10px]">Campos extras (um por linha, chave=valor)</Label>
-              <Textarea
-                value={config.extra_fields || ""}
-                onChange={(e) => updateConfig("extra_fields", e.target.value)}
-                placeholder={"plano=premium\ninteresse=produto_x"}
-                className="text-xs min-h-[50px] font-mono"
-              />
-            </div>
-          </div>
-        </>
+          <p className="text-[10px] text-muted-foreground">📧 {googleToken?.google_email}</p>
+          <Button variant="ghost" size="sm" className="h-7 text-[10px] text-destructive hover:text-destructive" onClick={handleDisconnect}>
+            Desconectar conta
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">Conecte sua conta Google para usar este recurso.</p>
+          <Button onClick={handleConnect} disabled={isConnecting} className="w-full h-9 text-sm gap-2">
+            {isConnecting ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
+            {isConnecting ? "Conectando..." : `Conectar ${label}`}
+          </Button>
+          <p className="text-[9px] text-muted-foreground/60 text-center">⚠️ O popup pode ser bloqueado no preview. Use em produção.</p>
+        </div>
       )}
     </div>
   );
 }
 
-function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
+function useGoogleAuth(queryKeySuffix: string, scopes: string[]) {
   const { user } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
 
   const { data: googleToken, refetch: refetchToken } = useQuery({
-    queryKey: ["google-token-cal", user?.id],
+    queryKey: [`google-token-${queryKeySuffix}`, user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("user_google_tokens" as any)
@@ -160,18 +64,11 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
 
   const isConnected = !!googleToken;
 
-  useEffect(() => {
-    if (googleToken) {
-      updateConfig("google_connected", true);
-      updateConfig("google_email", (googleToken as any).google_email);
-    }
-  }, [(googleToken as any)?.google_email]);
-
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
       const { data, error } = await supabase.functions.invoke("google-oauth-start", {
-        body: { scopes: ["https://www.googleapis.com/auth/calendar", "https://www.googleapis.com/auth/calendar.events"] },
+        body: { scopes },
       });
       if (error) throw error;
       if (data?.url) window.open(data.url, "google-oauth", "width=600,height=700,left=200,top=100");
@@ -184,40 +81,330 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
 
   const handleDisconnect = async () => {
     await supabase.from("user_google_tokens" as any).delete().eq("user_id", user!.id);
-    updateConfig("google_connected", false);
-    updateConfig("google_email", "");
     refetchToken();
   };
+
+  return { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect, refetchToken };
+}
+
+const AVAILABLE_VARIABLES = [
+  { key: "{nome}", label: "Nome do contato" },
+  { key: "{telefone}", label: "Telefone" },
+  { key: "{email}", label: "Email" },
+  { key: "{empresa}", label: "Empresa" },
+  { key: "{cidade}", label: "Cidade" },
+  { key: "{origem}", label: "Origem" },
+  { key: "{data}", label: "Data atual" },
+  { key: "{hora}", label: "Hora atual" },
+];
+
+function VariablesHelper() {
+  return (
+    <div className="p-2 rounded-lg border border-border/30 bg-muted/10">
+      <p className="text-[10px] font-medium text-muted-foreground mb-1.5">📌 Variáveis disponíveis:</p>
+      <div className="flex flex-wrap gap-1">
+        {AVAILABLE_VARIABLES.map((v) => (
+          <Badge key={v.key} variant="secondary" className="text-[9px] px-1.5 py-0 h-5 font-mono cursor-pointer hover:bg-primary/20"
+            onClick={() => navigator.clipboard.writeText(v.key)}
+            title={`Clique para copiar: ${v.key}`}
+          >
+            {v.key}
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
+  const { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect } = useGoogleAuth("sheets", [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive.readonly",
+  ]);
+
+  const [isCreating, setIsCreating] = useState(false);
+  const [newSheetName, setNewSheetName] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+
+  useEffect(() => {
+    if (googleToken) {
+      updateConfig("google_connected", true);
+      updateConfig("google_email", (googleToken as any).google_email);
+    }
+  }, [(googleToken as any)?.google_email]);
+
+  const { data: spreadsheets = [], isLoading: loadingSheets, refetch: refetchSheets } = useQuery({
+    queryKey: ["google-spreadsheets", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
+        body: { user_id: user!.id },
+      });
+      if (error) throw error;
+      return data?.spreadsheets || [];
+    },
+    enabled: !!user && isConnected,
+  });
+
+  const { data: sheetTabs = [] } = useQuery({
+    queryKey: ["google-sheet-tabs", user?.id, config.spreadsheet_id],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
+        body: { user_id: user!.id, action: "get_sheets", spreadsheet_id: config.spreadsheet_id },
+      });
+      if (error) throw error;
+      return data?.sheets || [];
+    },
+    enabled: !!user && isConnected && !!config.spreadsheet_id,
+  });
+
+  const handleCreateSpreadsheet = async () => {
+    setIsCreating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
+        body: { user_id: user!.id, action: "create", title: newSheetName || "Wiize - Leads" },
+      });
+      if (error) throw error;
+      if (data?.spreadsheet) {
+        updateConfig("spreadsheet_id", data.spreadsheet.id);
+        updateConfig("spreadsheet_name", data.spreadsheet.name);
+        setShowCreate(false);
+        setNewSheetName("");
+        refetchSheets();
+      }
+    } catch (err) {
+      console.error("Failed to create spreadsheet:", err);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const columns = config.columns || [
+    { key: "nome", label: "Nome", variable: "{nome}" },
+    { key: "email", label: "Email", variable: "{email}" },
+    { key: "telefone", label: "Telefone", variable: "{telefone}" },
+  ];
+
+  const addColumn = () => {
+    const updated = [...columns, { key: `col_${columns.length}`, label: "", variable: "" }];
+    updateConfig("columns", updated);
+  };
+
+  const removeColumn = (index: number) => {
+    const updated = columns.filter((_: any, i: number) => i !== index);
+    updateConfig("columns", updated);
+  };
+
+  const updateColumn = (index: number, field: string, value: string) => {
+    const updated = columns.map((col: any, i: number) => i === index ? { ...col, [field]: value } : col);
+    updateConfig("columns", updated);
+  };
+
+  return (
+    <div className="space-y-4">
+      {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets.")}
+
+      <GoogleConnectionBlock
+        isConnected={isConnected}
+        googleToken={googleToken}
+        isConnecting={isConnecting}
+        handleConnect={handleConnect}
+        handleDisconnect={() => { handleDisconnect(); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
+        label="Google"
+      />
+
+      {isConnected && (
+        <>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Planilha</Label>
+            {loadingSheets ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+                <Loader2 size={14} className="animate-spin" /> Carregando planilhas...
+              </div>
+            ) : (
+              <Select
+                value={config.spreadsheet_id || ""}
+                onValueChange={(v) => {
+                  const selected = spreadsheets.find((s: any) => s.id === v);
+                  updateConfig("spreadsheet_id", v);
+                  updateConfig("spreadsheet_name", selected?.name || "");
+                  updateConfig("sheet_name", "");
+                }}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Selecionar planilha..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {spreadsheets.map((s: any) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <span className="truncate">{s.name}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1" onClick={() => setShowCreate(!showCreate)}>
+                <Plus size={12} /> Nova planilha
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => refetchSheets()}>
+                Atualizar lista
+              </Button>
+            </div>
+
+            {showCreate && (
+              <div className="flex gap-2 mt-1">
+                <Input
+                  value={newSheetName}
+                  onChange={(e) => setNewSheetName(e.target.value)}
+                  placeholder="Nome da nova planilha"
+                  className="h-8 text-xs flex-1"
+                />
+                <Button size="sm" className="h-8 text-xs" onClick={handleCreateSpreadsheet} disabled={isCreating}>
+                  {isCreating ? <Loader2 size={12} className="animate-spin" /> : "Criar"}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {config.spreadsheet_id && sheetTabs.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Aba da planilha</Label>
+              <Select
+                value={config.sheet_name || sheetTabs[0]?.title || ""}
+                onValueChange={(v) => updateConfig("sheet_name", v)}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {sheetTabs.map((tab: any) => (
+                    <SelectItem key={String(tab.id)} value={tab.title}>{tab.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium">Mapeamento de colunas</Label>
+              <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1" onClick={addColumn}>
+                <Plus size={10} /> Coluna
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              {columns.map((col: any, index: number) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <div className="w-6 h-6 rounded bg-muted flex items-center justify-center text-[9px] font-bold text-muted-foreground shrink-0">
+                    {index + 1}
+                  </div>
+                  <Input
+                    value={col.label}
+                    onChange={(e) => updateColumn(index, "label", e.target.value)}
+                    placeholder="Nome da coluna"
+                    className="h-8 text-xs flex-1"
+                  />
+                  <Select value={col.variable || ""} onValueChange={(v) => updateColumn(index, "variable", v)}>
+                    <SelectTrigger className="h-8 text-xs w-32">
+                      <SelectValue placeholder="Variável" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {AVAILABLE_VARIABLES.map((v) => (
+                        <SelectItem key={v.key} value={v.key}>{v.key} - {v.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" onClick={() => removeColumn(index)}>
+                    <X size={12} />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <VariablesHelper />
+        </>
+      )}
+    </div>
+  );
+}
+
+function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
+  const { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect } = useGoogleAuth("calendar", [
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/calendar.events",
+  ]);
+
+  useEffect(() => {
+    if (googleToken) {
+      updateConfig("google_connected", true);
+      updateConfig("google_email", (googleToken as any).google_email);
+    }
+  }, [(googleToken as any)?.google_email]);
+
+  const { data: calendars = [], isLoading: loadingCalendars } = useQuery({
+    queryKey: ["google-calendars", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("google-list-calendars", {
+        body: { user_id: user!.id },
+      });
+      if (error) throw error;
+      return data?.calendars || [];
+    },
+    enabled: !!user && isConnected,
+  });
 
   return (
     <div className="space-y-4">
       {renderInfoBanner("Crie eventos automáticos no Google Agenda quando o lead chegar neste ponto do fluxo.")}
 
-      <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
-        {isConnected ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={14} className="text-green-500" />
-              <span className="text-xs font-medium text-foreground">Google conectado</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground">📧 {(googleToken as any).google_email}</p>
-            <Button variant="ghost" size="sm" className="h-7 text-[10px] text-destructive hover:text-destructive" onClick={handleDisconnect}>
-              Desconectar conta
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">Conecte sua conta Google para criar eventos automaticamente.</p>
-            <Button onClick={handleConnect} disabled={isConnecting} className="w-full h-9 text-sm gap-2">
-              {isConnecting ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
-              {isConnecting ? "Conectando..." : "Conectar Google"}
-            </Button>
-          </div>
-        )}
-      </div>
+      <GoogleConnectionBlock
+        isConnected={isConnected}
+        googleToken={googleToken}
+        isConnecting={isConnecting}
+        handleConnect={handleConnect}
+        handleDisconnect={() => { handleDisconnect(); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
+        label="Google"
+      />
 
       {isConnected && (
         <>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Agenda</Label>
+            {loadingCalendars ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+                <Loader2 size={14} className="animate-spin" /> Carregando agendas...
+              </div>
+            ) : (
+              <Select
+                value={config.calendar_id || "primary"}
+                onValueChange={(v) => {
+                  const cal = calendars.find((c: any) => c.id === v);
+                  updateConfig("calendar_id", v);
+                  updateConfig("calendar_name", cal?.summary || "Principal");
+                }}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Selecionar agenda..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {calendars.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      <div className="flex items-center gap-2">
+                        {c.backgroundColor && (
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: c.backgroundColor }} />
+                        )}
+                        <span className="truncate">{c.summary}{c.primary ? " (Principal)" : ""}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label className="text-xs font-medium">Título do evento</Label>
             <Input
@@ -226,33 +413,76 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
               placeholder="Reunião com {nome}"
               className="h-9 text-sm"
             />
-            <p className="text-[10px] text-muted-foreground">Use {"{nome}"}, {"{telefone}"}, {"{empresa}"} como variáveis.</p>
           </div>
+
           <div className="space-y-2">
             <Label className="text-xs font-medium">Duração (minutos)</Label>
-            <Input
-              type="number"
-              value={config.event_duration || "30"}
-              onChange={(e) => updateConfig("event_duration", parseInt(e.target.value) || 30)}
-              className="h-9 text-sm"
-            />
+            <Select
+              value={String(config.event_duration || "30")}
+              onValueChange={(v) => updateConfig("event_duration", parseInt(v))}
+            >
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[15, 30, 45, 60, 90, 120].map((d) => (
+                  <SelectItem key={d} value={String(d)}>{d} min</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Descrição do evento (opcional)</Label>
+            <Label className="text-xs font-medium">Descrição do evento</Label>
             <Textarea
               value={config.event_description || ""}
               onChange={(e) => updateConfig("event_description", e.target.value)}
-              placeholder="Lead: {nome} | Tel: {telefone}"
-              className="text-sm min-h-[60px]"
+              placeholder={"Lead: {nome}\nTelefone: {telefone}\nEmpresa: {empresa}"}
+              className="text-sm min-h-[80px]"
             />
           </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Convidar participante (email)</Label>
+            <Input
+              value={config.attendee_email || ""}
+              onChange={(e) => updateConfig("attendee_email", e.target.value)}
+              placeholder="{email} ou vendas@empresa.com"
+              className="h-9 text-sm"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Use {"{email}"} para enviar convite para o lead ou um email fixo.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Lembrete (minutos antes)</Label>
+            <Select
+              value={String(config.reminder_minutes || "30")}
+              onValueChange={(v) => updateConfig("reminder_minutes", parseInt(v))}
+            >
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[5, 10, 15, 30, 60, 120, 1440].map((m) => (
+                  <SelectItem key={m} value={String(m)}>
+                    {m < 60 ? `${m} min` : m === 60 ? "1 hora" : m === 120 ? "2 horas" : "1 dia"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <VariablesHelper />
+
           <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
             <p className="text-[11px] text-primary font-medium mb-1">📅 Como funciona</p>
             <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
-              <li>Conecte sua conta Google acima</li>
-              <li>Configure o título e duração do evento</li>
-              <li>Quando um lead passar por este nó, um evento será criado automaticamente no seu Google Agenda</li>
-              <li>O lead receberá um convite se o email dele estiver disponível</li>
+              <li>Selecione a agenda onde o evento será criado</li>
+              <li>Configure o título, duração e descrição</li>
+              <li>Quando o lead passar por aqui, o evento será criado automaticamente</li>
+              <li>O participante receberá um convite por email</li>
             </ol>
           </div>
         </>
@@ -262,24 +492,9 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
 }
 
 function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
-  const { user } = useAuth();
-  const [isConnecting, setIsConnecting] = useState(false);
-
-  const { data: googleToken, refetch: refetchToken } = useQuery({
-    queryKey: ["google-token-gmail", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("user_google_tokens" as any)
-        .select("google_email, scopes, token_expires_at")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!user,
-    refetchInterval: 5000,
-  });
-
-  const isConnected = !!googleToken;
+  const { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect } = useGoogleAuth("gmail", [
+    "https://www.googleapis.com/auth/gmail.send",
+  ]);
 
   useEffect(() => {
     if (googleToken) {
@@ -288,92 +503,91 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
     }
   }, [(googleToken as any)?.google_email]);
 
-  const handleConnect = async () => {
-    setIsConnecting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("google-oauth-start", {
-        body: { scopes: ["https://www.googleapis.com/auth/gmail.send"] },
-      });
-      if (error) throw error;
-      if (data?.url) window.open(data.url, "google-oauth", "width=600,height=700,left=200,top=100");
-    } catch (err) {
-      console.error("Failed to start OAuth:", err);
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const handleDisconnect = async () => {
-    await supabase.from("user_google_tokens" as any).delete().eq("user_id", user!.id);
-    updateConfig("google_connected", false);
-    updateConfig("google_email", "");
-    refetchToken();
-  };
-
   return (
     <div className="space-y-4">
       {renderInfoBanner("Envie emails automáticos pelo Gmail quando o lead chegar neste ponto do fluxo.")}
 
-      <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
-        {isConnected ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={14} className="text-green-500" />
-              <span className="text-xs font-medium text-foreground">Gmail conectado</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground">📧 {(googleToken as any).google_email}</p>
-            <Button variant="ghost" size="sm" className="h-7 text-[10px] text-destructive hover:text-destructive" onClick={handleDisconnect}>
-              Desconectar conta
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">Conecte sua conta Gmail para enviar emails automaticamente.</p>
-            <Button onClick={handleConnect} disabled={isConnecting} className="w-full h-9 text-sm gap-2">
-              {isConnecting ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
-              {isConnecting ? "Conectando..." : "Conectar Gmail"}
-            </Button>
-          </div>
-        )}
-      </div>
+      <GoogleConnectionBlock
+        isConnected={isConnected}
+        googleToken={googleToken}
+        isConnecting={isConnecting}
+        handleConnect={handleConnect}
+        handleDisconnect={() => { handleDisconnect(); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
+        label="Gmail"
+      />
 
       {isConnected && (
         <>
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Email destinatário</Label>
+            <Label className="text-xs font-medium">Destinatário (Para)</Label>
             <Input
               value={config.email_to || ""}
               onChange={(e) => updateConfig("email_to", e.target.value)}
-              placeholder="vendas@suaempresa.com"
+              placeholder="{email} ou vendas@suaempresa.com"
+              className="h-9 text-sm"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Use {"{email}"} para enviar ao lead ou um email fixo. Separe vários com vírgula.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Cópia (CC)</Label>
+            <Input
+              value={config.email_cc || ""}
+              onChange={(e) => updateConfig("email_cc", e.target.value)}
+              placeholder="gerente@empresa.com"
               className="h-9 text-sm"
             />
           </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Cópia oculta (CCO)</Label>
+            <Input
+              value={config.email_bcc || ""}
+              onChange={(e) => updateConfig("email_bcc", e.target.value)}
+              placeholder="registro@empresa.com"
+              className="h-9 text-sm"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label className="text-xs font-medium">Assunto do email</Label>
             <Input
               value={config.email_subject || ""}
               onChange={(e) => updateConfig("email_subject", e.target.value)}
-              placeholder="Novo lead: {nome}"
+              placeholder="Novo lead: {nome} - {empresa}"
               className="h-9 text-sm"
             />
           </div>
+
           <div className="space-y-2">
             <Label className="text-xs font-medium">Corpo do email</Label>
             <Textarea
               value={config.email_body || ""}
               onChange={(e) => updateConfig("email_body", e.target.value)}
-              placeholder={"Novo lead capturado!\n\nNome: {nome}\nTelefone: {telefone}\nEmpresa: {empresa}"}
-              className="text-sm min-h-[80px]"
+              placeholder={"Olá!\n\nNovo lead capturado:\n\n📋 Nome: {nome}\n📱 Tel: {telefone}\n📧 Email: {email}\n🏢 Empresa: {empresa}\n📍 Cidade: {cidade}\n\nAtt,\nWiize"}
+              className="text-sm min-h-[120px]"
             />
-            <p className="text-[10px] text-muted-foreground">Use {"{nome}"}, {"{telefone}"}, {"{empresa}"}, {"{email}"} como variáveis.</p>
           </div>
+
+          <div className="flex items-center justify-between py-1">
+            <Label className="text-xs">Enviar como HTML</Label>
+            <Switch
+              checked={config.email_html || false}
+              onCheckedChange={(v) => updateConfig("email_html", v)}
+            />
+          </div>
+
+          <VariablesHelper />
+
           <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
             <p className="text-[11px] text-primary font-medium mb-1">✉️ Como funciona</p>
             <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
               <li>Conecte sua conta Gmail acima</li>
-              <li>Configure destinatário, assunto e corpo do email</li>
-              <li>Quando um lead passar por este nó, o email será enviado automaticamente pela sua conta Gmail</li>
-              <li>O email aparecerá nos seus "Enviados" normalmente</li>
+              <li>Configure destinatário, assunto e corpo</li>
+              <li>Use variáveis para personalizar cada email</li>
+              <li>O email será enviado pela sua conta e aparecerá nos "Enviados"</li>
             </ol>
           </div>
         </>
@@ -381,7 +595,6 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
     </div>
   );
 }
-
 
 function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
   const { user } = useAuth();
