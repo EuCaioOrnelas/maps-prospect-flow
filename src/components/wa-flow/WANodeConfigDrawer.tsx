@@ -975,6 +975,14 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
   }, [node]);
 
   const handleSave = () => {
+    // Validate A/B test sum
+    if (node.type === "ab_test") {
+      const total = (config.variants || []).reduce((s: number, v: any) => s + (parseFloat(v.weight) || 0), 0);
+      if (Math.abs(total - 100) >= 0.1) {
+        toast.error("A soma dos pesos deve ser 100%");
+        return;
+      }
+    }
     onUpdate(node.id, config, label);
     onOpenChange(false);
   };
@@ -1057,7 +1065,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        <div className="flex-1 overflow-y-auto p-5 pr-3 space-y-5">
 
           {/* ===== ENTRY NODE ===== */}
           {node.type === "entry" && (
@@ -1816,7 +1824,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                             updated[i] = { ...updated[i], weight: parseFloat(e.target.value) || 0 };
                             updateConfig("variants", updated);
                           }}
-                          className="h-8 text-sm w-20 text-center"
+                          className="h-8 text-sm w-[72px] text-center"
                           min={0.01}
                           max={100}
                           step={0.01}
