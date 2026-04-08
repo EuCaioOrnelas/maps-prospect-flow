@@ -940,6 +940,21 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
         </div>
       )}
 
+      {/* First message config */}
+      {config.trigger_type === "first_message" && (
+        <div className="space-y-2">
+          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/30">
+            <Info size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              O fluxo será acionado apenas na <span className="font-semibold text-foreground">primeira mensagem</span> que o lead enviar para este número. Mensagens subsequentes não reativam o fluxo.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const AI_PROVIDERS = [
   { value: "openai", label: "OpenAI", icon: "🟢" },
   { value: "gemini", label: "Google Gemini", icon: "🔵" },
@@ -972,7 +987,7 @@ const PROVIDER_DOCS: Record<string, { url: string; steps: string[] }> = {
     steps: [
       "Acesse platform.openai.com e faça login",
       "Vá em API Keys no menu lateral",
-      "Clique em \"Create new secret key\"",
+      'Clique em "Create new secret key"',
       "Copie a chave gerada (começa com sk-...)",
       "Cole aqui e salve",
     ],
@@ -982,7 +997,7 @@ const PROVIDER_DOCS: Record<string, { url: string; steps: string[] }> = {
     steps: [
       "Acesse aistudio.google.com",
       "Faça login com sua conta Google",
-      "Clique em \"Get API Key\" no menu",
+      'Clique em "Get API Key" no menu',
       "Crie uma nova chave ou copie uma existente",
       "Cole aqui e salve",
     ],
@@ -993,7 +1008,7 @@ const PROVIDER_DOCS: Record<string, { url: string; steps: string[] }> = {
       "Acesse platform.deepseek.com",
       "Crie uma conta ou faça login",
       "Vá em API Keys",
-      "Clique em \"Create new API key\"",
+      'Clique em "Create new API key"',
       "Copie a chave e cole aqui",
     ],
   },
@@ -1040,7 +1055,7 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
           api_key: newApiKey.trim(),
           is_active: true,
           updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id,provider" });
+        }, { onConflict: "user_id,provider" } as any);
       if (error) throw error;
       toast.success("Credencial salva com segurança!");
       setNewApiKey("");
@@ -1080,14 +1095,10 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
       {renderApiIndicator()}
       {renderInfoBanner("Configure um agente de IA que analisa a mensagem do lead e responde/direciona automaticamente. Use sua própria chave de API.")}
 
-      {/* ── CREDENTIALS SECTION ── */}
       <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
         <div className="flex items-center justify-between">
           <Label className="text-xs font-bold flex items-center gap-1.5">🔑 Credenciais de IA</Label>
-          <button
-            onClick={() => setShowDocs(!showDocs)}
-            className="text-[10px] text-primary hover:underline flex items-center gap-1"
-          >
+          <button onClick={() => setShowDocs(!showDocs)} className="text-[10px] text-primary hover:underline flex items-center gap-1">
             <ExternalLink size={10} /> Como obter?
           </button>
         </div>
@@ -1098,21 +1109,10 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
             {AI_PROVIDERS.map((p) => {
               const hasCred = credentials.find((c: any) => c.provider === p.value && c.is_active);
               return (
-                <button
-                  key={p.value}
-                  onClick={() => updateConfig("ai_provider", p.value)}
-                  className={cn(
-                    "p-2 rounded-lg border text-center transition-colors relative",
-                    selectedProvider === p.value
-                      ? "border-primary/40 bg-primary/10"
-                      : "border-border/40 bg-card hover:border-border"
-                  )}
-                >
+                <button key={p.value} onClick={() => updateConfig("ai_provider", p.value)} className={cn("p-2 rounded-lg border text-center transition-colors relative", selectedProvider === p.value ? "border-primary/40 bg-primary/10" : "border-border/40 bg-card hover:border-border")}>
                   <p className="text-sm">{p.icon}</p>
                   <p className="text-[10px] font-medium text-foreground mt-0.5">{p.label}</p>
-                  {hasCred && (
-                    <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500" />
-                  )}
+                  {hasCred && <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500" />}
                 </button>
               );
             })}
@@ -1121,20 +1121,11 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
 
         {showDocs && providerDocs && (
           <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-2">
-            <p className="text-[11px] font-semibold text-primary">
-              📖 Como obter a chave da {AI_PROVIDERS.find(p => p.value === selectedProvider)?.label}
-            </p>
+            <p className="text-[11px] font-semibold text-primary">📖 Como obter a chave da {AI_PROVIDERS.find(p => p.value === selectedProvider)?.label}</p>
             <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
-              {providerDocs.steps.map((step, i) => (
-                <li key={i}>{step}</li>
-              ))}
+              {providerDocs.steps.map((step, i) => <li key={i}>{step}</li>)}
             </ol>
-            <a
-              href={providerDocs.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline font-medium"
-            >
+            <a href={providerDocs.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline font-medium">
               <ExternalLink size={10} /> Abrir painel do provedor
             </a>
           </div>
@@ -1146,38 +1137,19 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
               <CheckCircle2 size={14} className="text-emerald-500" />
               <span className="text-xs font-medium text-foreground">Chave configurada</span>
             </div>
-            <Button variant="ghost" size="sm" className="h-6 text-[10px] text-destructive hover:text-destructive" onClick={handleDeleteKey}>
-              Remover
-            </Button>
+            <Button variant="ghost" size="sm" className="h-6 text-[10px] text-destructive hover:text-destructive" onClick={handleDeleteKey}>Remover</Button>
           </div>
         ) : (
           <div className="space-y-2">
             <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
               <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
-              <p className="text-[10px] text-amber-500">Nenhuma chave configurada para {AI_PROVIDERS.find(p => p.value === selectedProvider)?.label}. Adicione sua API Key abaixo.</p>
+              <p className="text-[10px] text-amber-500">Nenhuma chave configurada para {AI_PROVIDERS.find(p => p.value === selectedProvider)?.label}.</p>
             </div>
             <div className="flex gap-2">
-              <Input
-                type={showApiKey ? "text" : "password"}
-                value={newApiKey}
-                onChange={(e) => setNewApiKey(e.target.value)}
-                placeholder="Cole sua API Key aqui..."
-                className="h-9 text-xs font-mono flex-1"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 px-2 text-[10px]"
-                onClick={() => setShowApiKey(!showApiKey)}
-              >
-                {showApiKey ? "🙈" : "👁️"}
-              </Button>
+              <Input type={showApiKey ? "text" : "password"} value={newApiKey} onChange={(e) => setNewApiKey(e.target.value)} placeholder="Cole sua API Key aqui..." className="h-9 text-xs font-mono flex-1" />
+              <Button variant="ghost" size="sm" className="h-9 px-2 text-[10px]" onClick={() => setShowApiKey(!showApiKey)}>{showApiKey ? "🙈" : "👁️"}</Button>
             </div>
-            <Button
-              onClick={handleSaveKey}
-              disabled={!newApiKey.trim() || savingKey}
-              className="w-full h-8 text-xs"
-            >
+            <Button onClick={handleSaveKey} disabled={!newApiKey.trim() || savingKey} className="w-full h-8 text-xs">
               {savingKey ? <Loader2 size={12} className="animate-spin mr-1" /> : null}
               Salvar credencial com segurança
             </Button>
@@ -1186,7 +1158,6 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
         )}
       </div>
 
-      {/* ── MODEL SELECTION ── */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">Modelo de IA</Label>
         {!activeCredential ? (
@@ -1194,16 +1165,11 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
         ) : (
           <Select value={config.ai_model || availableModels[0]?.value || ""} onValueChange={(v) => updateConfig("ai_model", v)}>
             <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {availableModels.map((m) => (
-                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-              ))}
-            </SelectContent>
+            <SelectContent>{availableModels.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
           </Select>
         )}
       </div>
 
-      {/* ── AI OUTPUT TYPE ── */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">O que a IA deve retornar?</Label>
         <Select value={config.ai_output_type || "message_and_route"} onValueChange={(v) => updateConfig("ai_output_type", v)}>
@@ -1216,53 +1182,31 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
         </Select>
       </div>
 
-      {/* ── SYSTEM PROMPT ── */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">Prompt completo (instrução para a IA)</Label>
-        <Textarea
-          value={config.system_prompt || ""}
-          onChange={(e) => updateConfig("system_prompt", e.target.value)}
-          placeholder={"Você é um assistente de vendas da [empresa].\n\nSeu objetivo é qualificar o lead e direcioná-lo.\n\nRegras:\n- Seja cordial e objetivo\n- Nunca invente informações\n- Classifique como: INTERESSADO, INDECISO ou NÃO_INTERESSADO"}
-          className="text-sm min-h-[150px]"
-        />
+        <Textarea value={config.system_prompt || ""} onChange={(e) => updateConfig("system_prompt", e.target.value)} placeholder={"Você é um assistente de vendas da [empresa].\n\nSeu objetivo é qualificar o lead e direcioná-lo.\n\nRegras:\n- Seja cordial e objetivo\n- Nunca invente informações\n- Classifique como: INTERESSADO, INDECISO ou NÃO_INTERESSADO"} className="text-sm min-h-[150px]" />
         <p className="text-[10px] text-muted-foreground">Descreva detalhadamente como a IA deve se comportar, qual tom usar e quais informações considerar.</p>
       </div>
 
-      {/* ── DIRECTIONS ── */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">Direcionamentos possíveis (um por linha)</Label>
-        <Textarea
-          value={config.ai_routes || ""}
-          onChange={(e) => updateConfig("ai_routes", e.target.value)}
-          placeholder={"INTERESSADO\nINDECISO\nNÃO_INTERESSADO"}
-          className="text-sm min-h-[80px] font-mono text-xs"
-        />
-        <p className="text-[10px] text-muted-foreground">Cada direcionamento gera uma saída no nó. Conecte ao próximo bloco no canvas. A IA deve retornar exatamente um destes valores.</p>
+        <Textarea value={config.ai_routes || ""} onChange={(e) => updateConfig("ai_routes", e.target.value)} placeholder={"INTERESSADO\nINDECISO\nNÃO_INTERESSADO"} className="text-sm min-h-[80px] font-mono text-xs" />
+        <p className="text-[10px] text-muted-foreground">Cada direcionamento gera uma saída no nó. Conecte ao próximo bloco no canvas.</p>
       </div>
 
-      {/* ── CONTEXT ── */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">Contexto extra (opcional)</Label>
-        <Textarea
-          value={config.ai_context || ""}
-          onChange={(e) => updateConfig("ai_context", e.target.value)}
-          placeholder="Informações sobre a empresa, produtos, preços, objeções comuns, etc."
-          className="text-sm min-h-[60px]"
-        />
+        <Textarea value={config.ai_context || ""} onChange={(e) => updateConfig("ai_context", e.target.value)} placeholder="Informações sobre a empresa, produtos, preços, objeções comuns, etc." className="text-sm min-h-[60px]" />
       </div>
 
-      {/* ── PREVIOUS MESSAGE CONTEXT ── */}
       <div className="space-y-2 p-3 rounded-lg border border-border/50 bg-muted/20">
         <div className="flex items-center gap-2">
           <CheckCircle2 size={14} className="text-emerald-500" />
           <Label className="text-xs font-medium">Mensagem anterior do lead</Label>
         </div>
-        <p className="text-[10px] text-muted-foreground">
-          A IA recebe automaticamente a última mensagem enviada pelo lead na conexão. Isso permite que o agente analise e responda com base no que o lead disse.
-        </p>
+        <p className="text-[10px] text-muted-foreground">A IA recebe automaticamente a última mensagem enviada pelo lead na conexão. Isso permite que o agente analise e responda com base no que o lead disse.</p>
       </div>
 
-      {/* ── MEMORY (always on) ── */}
       <div className="space-y-2 p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5">
         <div className="flex items-center gap-2">
           <CheckCircle2 size={14} className="text-emerald-500" />
@@ -1272,7 +1216,6 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
         <p className="text-[10px] text-muted-foreground">A IA recebe todo o histórico da conversa para manter contexto e coerência nas respostas.</p>
       </div>
 
-      {/* ── MAX CHARS ── */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">Máx. caracteres por resposta</Label>
         <Select value={String(config.max_chars || 500)} onValueChange={(v) => updateConfig("max_chars", parseInt(v))}>
@@ -1294,22 +1237,6 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
 }
 
 
-      {/* First message config */}
-      {config.trigger_type === "first_message" && (
-        <div className="space-y-2">
-          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/30">
-            <Info size={14} className="text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
-              O fluxo será acionado apenas na <span className="font-semibold text-foreground">primeira mensagem</span> que o lead enviar para este número. Mensagens subsequentes não reativam o fluxo.
-            </p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   node: Node;
