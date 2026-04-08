@@ -1019,7 +1019,321 @@ const PROVIDER_DOCS: Record<string, { url: string; steps: string[] }> = {
   },
 };
 
-function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndicator }: {
+function ActionNodeConfig({ config, updateConfig, renderInfoBanner }: {
+  config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element;
+}) {
+  const { user } = useAuth();
+  const { data: stages = [] } = useQuery({
+    queryKey: ["pipeline-stages-action", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("pipeline_stages").select("id, name, color, position").eq("user_id", user!.id).order("position");
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const actions: any[] = config.actions || [];
+
+  const addAction = () => {
+    updateConfig("actions", [...actions, { type: "", id: `act_${Date.now()}` }]);
+  };
+
+  const updateAction = (index: number, key: string, value: any) => {
+    const updated = [...actions];
+    updated[index] = { ...updated[index], [key]: value };
+    updateConfig("actions", updated);
+  };
+
+  const removeAction = (index: number) => {
+    updateConfig("actions", actions.filter((_: any, i: number) => i !== index));
+  };
+
+  const actionTypes = [
+    { value: "add_tag", label: "Adicionar tag" },
+    { value: "remove_tag", label: "Remover tag" },
+    { value: "move_pipeline", label: "Mover no Kanban (CRM)" },
+    { value: "send_to_crm", label: "Criar/atualizar lead no CRM" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {renderInfoBanner("Execute uma ou mais ações no CRM: tags, mover no Kanban, criar/atualizar lead.")}
+
+      {actions.map((action: any, idx: number) => (
+        <div key={action.id || idx} className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-medium">Ação {idx + 1}</Label>
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeAction(idx)}>
+              <X size={12} />
+            </Button>
+          </div>
+
+          <Select value={action.type || ""} onValueChange={(v) => updateAction(idx, "type", v)}>
+            <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar tipo..." /></SelectTrigger>
+            <SelectContent>
+              {actionTypes.map((t) => (
+                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {(action.type === "add_tag" || action.type === "remove_tag") && (
+            <div className="space-y-1">
+              <Label className="text-[10px]">Nome da tag</Label>
+              <Input
+                value={action.tag_value || ""}
+                onChange={(e) => updateAction(idx, "tag_value", e.target.value)}
+                placeholder="qualificado, interessado..."
+                className="h-8 text-xs"
+              />
+            </div>
+          )}
+
+          {action.type === "move_pipeline" && (
+            <div className="space-y-1">
+              <Label className="text-[10px]">Coluna do Kanban</Label>
+              <Select value={action.pipeline_stage_id || ""} onValueChange={(v) => updateAction(idx, "pipeline_stage_id", v)}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar coluna..." /></SelectTrigger>
+                <SelectContent>
+                  {stages.map((s: any) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                        {s.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {action.type === "send_to_crm" && (
+            <div className="space-y-3">
+              <p className="text-[10px] text-muted-foreground">Configure os dados para criar ou atualizar o lead no CRM.</p>
+              <div className="space-y-1">
+                <Label className="text-[10px]">Nome do lead (variável)</Label>
+                <Input
+                  value={action.crm_name || ""}
+                  onChange={(e) => updateAction(idx, "crm_name", e.target.value)}
+                  placeholder="{nome} ou nome fixo"
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px]">Coluna do CRM</Label>
+                <Select value={action.crm_stage_id || ""} onValueChange={(v) => updateAction(idx, "crm_stage_id", v)}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar coluna..." /></SelectTrigger>
+                  <SelectContent>
+                    {stages.map((s: any) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                          {s.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px]">Valor em negociação (opcional)</Label>
+                <Input
+                  value={action.crm_value || ""}
+                  onChange={(e) => updateAction(idx, "crm_value", e.target.value)}
+                  placeholder="{valor} ou 1500"
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={addAction}>
+        <Plus size={12} className="mr-1" /> Adicionar ação
+      </Button>
+    </div>
+  );
+}
+
+function HandoffNodeConfig({ config, updateConfig, renderInfoBanner, renderApiIndicator }: {
+  config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; renderApiIndicator: () => JSX.Element | null;
+}) {
+  const { user } = useAuth();
+  const { data: stages = [] } = useQuery({
+    queryKey: ["pipeline-stages-handoff", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("pipeline_stages").select("id, name, color, position").eq("user_id", user!.id).order("position");
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const ccEmails: string[] = config.cc_emails || [];
+
+  return (
+    <div className="space-y-4">
+      {renderApiIndicator()}
+      {renderInfoBanner("Transfere a conversa para atendimento humano e encerra a automação neste lead.")}
+
+      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+        <div className="flex items-center gap-2">
+          <Switch checked={config.stop_automation !== false} onCheckedChange={(v) => updateConfig("stop_automation", v)} />
+          <Label className="text-xs font-medium">Encerrar automação neste lead</Label>
+        </div>
+        <p className="text-[10px] text-muted-foreground">Se o lead disparar novamente, ele entra no início do fluxo.</p>
+      </div>
+
+      {/* Move no CRM */}
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">Mover lead no Kanban (CRM)</Label>
+        <Select value={config.crm_stage_id || ""} onValueChange={(v) => updateConfig("crm_stage_id", v)}>
+          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar coluna..." /></SelectTrigger>
+          <SelectContent>
+            {stages.map((s: any) => (
+              <SelectItem key={s.id} value={s.id}>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                  {s.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Notify team */}
+      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+        <div className="flex items-center gap-2">
+          <Switch checked={config.notify_team || false} onCheckedChange={(v) => updateConfig("notify_team", v)} />
+          <Label className="text-xs font-medium">Notificar equipe por email</Label>
+        </div>
+        {config.notify_team && (
+          <div className="space-y-3">
+            <p className="text-[10px] text-muted-foreground">Um email será enviado de no-reply@wiize.com.br.</p>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Título do email</Label>
+              <Input
+                value={config.email_subject || ""}
+                onChange={(e) => updateConfig("email_subject", e.target.value)}
+                placeholder="Lead {nome} aguardando atendimento"
+                className="h-8 text-xs"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Conteúdo do email</Label>
+              <Textarea
+                value={config.email_body || ""}
+                onChange={(e) => updateConfig("email_body", e.target.value)}
+                placeholder="O lead {nome} ({telefone}) foi transferido para atendimento humano."
+                className="text-xs min-h-[60px]"
+              />
+              <p className="text-[9px] text-muted-foreground">Use variáveis: {"{nome}"}, {"{telefone}"}, {"{email}"}, {"{empresa}"}</p>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Emails em cópia (opcional)</Label>
+              <div className="space-y-1">
+                {ccEmails.map((email: string, idx: number) => (
+                  <div key={idx} className="flex items-center gap-1">
+                    <Input
+                      value={email}
+                      onChange={(e) => {
+                        const updated = [...ccEmails];
+                        updated[idx] = e.target.value;
+                        updateConfig("cc_emails", updated);
+                      }}
+                      placeholder="email@empresa.com"
+                      className="h-7 text-[10px] flex-1"
+                    />
+                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => updateConfig("cc_emails", ccEmails.filter((_: any, i: number) => i !== idx))}>
+                      <X size={10} />
+                    </Button>
+                  </div>
+                ))}
+                <Button variant="ghost" size="sm" className="h-6 text-[10px] w-full" onClick={() => updateConfig("cc_emails", [...ccEmails, ""])}>
+                  <Plus size={10} className="mr-1" /> Adicionar email
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Message to lead - required */}
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">Mensagem ao lead <span className="text-destructive">*</span></Label>
+        <Textarea
+          value={config.handoff_message || ""}
+          onChange={(e) => updateConfig("handoff_message", e.target.value)}
+          placeholder="Um de nossos especialistas vai te atender em breve!"
+          className="text-sm min-h-[60px]"
+        />
+        <p className="text-[10px] text-muted-foreground">O lead receberá esta mensagem ao ser transferido para atendimento humano.</p>
+      </div>
+    </div>
+  );
+}
+
+function EndNodeConfig({ config, updateConfig, renderInfoBanner, renderApiIndicator }: {
+  config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; renderApiIndicator: () => JSX.Element | null;
+}) {
+  const { user } = useAuth();
+  const { data: stages = [] } = useQuery({
+    queryKey: ["pipeline-stages-end", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("pipeline_stages").select("id, name, color, position").eq("user_id", user!.id).order("position");
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  return (
+    <div className="space-y-4">
+      {renderApiIndicator()}
+      {renderInfoBanner("Encerra o fluxo para este lead. Ao entrar no fluxo o lead recebe a tag 'Em atendimento'. Ao encerrar, pode receber 'Atendido'.")}
+
+      <div className="space-y-2">
+        <Label className="text-xs">Mensagem de encerramento (opcional)</Label>
+        <Textarea
+          value={config.end_message || ""}
+          onChange={(e) => updateConfig("end_message", e.target.value)}
+          placeholder="Obrigado pelo contato! Até a próxima."
+          className="text-sm min-h-[60px]"
+        />
+      </div>
+
+      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+        <div className="flex items-center gap-2">
+          <Switch checked={config.mark_completed || false} onCheckedChange={(v) => updateConfig("mark_completed", v)} />
+          <Label className="text-xs font-medium">Marcar como "Atendido" no CRM</Label>
+        </div>
+        <p className="text-[10px] text-muted-foreground">Adiciona a tag "Atendido" ao lead no CRM ao encerrar o fluxo.</p>
+      </div>
+
+      {/* Move no CRM */}
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">Mover lead no Kanban (CRM)</Label>
+        <Select value={config.crm_stage_id || ""} onValueChange={(v) => updateConfig("crm_stage_id", v)}>
+          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar coluna (opcional)..." /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Não mover</SelectItem>
+            {stages.map((s: any) => (
+              <SelectItem key={s.id} value={s.id}>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                  {s.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
+
+
   config: any;
   updateConfig: (k: string, v: any) => void;
   renderInfoBanner: (t: string) => JSX.Element;
