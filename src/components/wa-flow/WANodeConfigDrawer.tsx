@@ -1395,16 +1395,17 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== WAIT NODE ===== */}
           {node.type === "wait" && (
             <div className="space-y-4">
-              {renderInfoBanner("Pause o fluxo por um período. A espera inteligente verifica se o lead respondeu antes de continuar.")}
+              {renderInfoBanner("Pause o fluxo por um período antes de continuar para o próximo bloco.")}
               <div className="flex gap-3">
                 <div className="flex-1 space-y-2">
-                  <Label className="text-xs font-medium">Tempo</Label>
+                  <Label className="text-xs font-medium">Tempo de espera</Label>
                   <Input
                     type="number"
                     value={config.delay_value || ""}
                     onChange={(e) => updateConfig("delay_value", parseInt(e.target.value) || 0)}
                     placeholder="0"
                     className="h-9 text-sm"
+                    min={1}
                   />
                 </div>
                 <div className="flex-1 space-y-2">
@@ -1415,6 +1416,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                       <SelectItem value="minutes">Minutos</SelectItem>
                       <SelectItem value="hours">Horas</SelectItem>
                       <SelectItem value="days">Dias</SelectItem>
+                      <SelectItem value="weeks">Semanas</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1422,14 +1424,16 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
               <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
                 <div className="flex items-center gap-2">
                   <Switch
-                    checked={config.smart || false}
+                    checked={config.smart !== false}
                     onCheckedChange={(v) => updateConfig("smart", v)}
                   />
                   <Label className="text-xs font-medium">Espera inteligente</Label>
                 </div>
-                {config.smart && (
-                  <p className="text-[10px] text-muted-foreground">Se o lead responder antes do tempo, o fluxo avança imediatamente. Se não responder, segue após o timeout.</p>
-                )}
+                <p className="text-[10px] text-muted-foreground">
+                  {config.smart !== false
+                    ? "Se o lead responder antes do tempo, o fluxo avança imediatamente. Se não responder, segue após o timeout."
+                    : "A espera será fixa, independente de o lead responder."}
+                </p>
               </div>
               <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
                 <div className="flex items-center gap-2">
@@ -1439,6 +1443,11 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                   />
                   <Label className="text-xs font-medium">Apenas horário comercial</Label>
                 </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {config.business_hours_only
+                    ? "O timer só conta durante o horário comercial. Ex: delay de 2h = 2h úteis (fora do horário o timer pausa)."
+                    : "O delay conta normalmente, incluindo fora do horário comercial."}
+                </p>
                 {config.business_hours_only && (
                   <div className="flex gap-2">
                     <div className="flex-1 space-y-1">
