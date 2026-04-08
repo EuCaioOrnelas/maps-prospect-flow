@@ -1011,21 +1011,27 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
-          <h3 className="text-base font-semibold text-foreground">Configurar Bloco</h3>
+          <div className="flex-1 min-w-0 mr-3">
+            <Input
+              value={label}
+              onChange={(e) => {
+                if (e.target.value.length <= 30) setLabel(e.target.value);
+              }}
+              maxLength={30}
+              className="h-8 text-base font-semibold border-transparent bg-transparent px-1 hover:border-border focus:border-border transition-colors"
+              placeholder="Nome do bloco"
+            />
+            <span className="text-[10px] text-muted-foreground/50 px-1">{label.length}/30</span>
+          </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors shrink-0"
           >
             <X size={16} className="text-muted-foreground" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
-          {/* Name */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Nome do bloco</Label>
-            <Input value={label} onChange={(e) => setLabel(e.target.value)} className="h-9 text-sm" />
-          </div>
 
           {/* ===== ENTRY NODE ===== */}
           {node.type === "entry" && (
