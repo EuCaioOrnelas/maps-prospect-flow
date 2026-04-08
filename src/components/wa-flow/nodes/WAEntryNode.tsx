@@ -19,7 +19,7 @@ export function WAEntryNode({ data }: NodeProps) {
   return (
     <div className="bg-card border-2 border-primary/40 rounded-2xl shadow-[0_2px_16px_hsl(158,72%,38%,0.15)] w-60 backdrop-blur-sm">
       {/* Target handle - top center */}
-      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-muted-foreground !border-2 !border-card !rounded-full" />
+      <Handle type="target" position={Position.Left} />
 
       <div className="flex items-center gap-2.5 px-4 py-3">
         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -72,7 +72,7 @@ export function WAEntryNode({ data }: NodeProps) {
       )}
 
       {/* Source handle - right center, green */}
-      <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-primary !border-2 !border-card !rounded-full" />
+      <Handle type="source" position={Position.Right} />
     </div>
   );
 }
