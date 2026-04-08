@@ -1185,13 +1185,22 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
     <div className="space-y-4">
 
       {/* CREDENTIALS SECTION */}
-      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-bold flex items-center gap-1.5">🔑 Credenciais de IA</Label>
-          <button onClick={() => setShowDocs(!showDocs)} className="text-[10px] text-primary hover:underline flex items-center gap-1">
-            <ExternalLink size={10} /> Como obter?
-          </button>
-        </div>
+      <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
+        <button onClick={() => setShowCredSection(!showCredSection)} className="flex items-center justify-between w-full">
+          <Label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">🔑 Credenciais de IA</Label>
+          <div className="flex items-center gap-2">
+            {selectedCred && <span className="text-[9px] text-emerald-500 font-medium">{selectedCred.name}</span>}
+            <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", showCredSection && "rotate-180")} />
+          </div>
+        </button>
+
+        {showCredSection && (
+        <div className="space-y-3 mt-3">
+          <div className="flex justify-end">
+            <button onClick={() => setShowDocs(!showDocs)} className="text-[10px] text-primary hover:underline flex items-center gap-1">
+              <ExternalLink size={10} /> Como obter?
+            </button>
+          </div>
 
         {showDocs && (
           <div className="space-y-2">
