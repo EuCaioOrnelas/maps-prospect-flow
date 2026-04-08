@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { SEO } from "@/components/SEO";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { supabase } from "@/integrations/supabase/client";
+import { Separator } from "@/components/ui/separator";
 
 const getLoginErrorMessage = (error: Error): { title: string; description: string } => {
   const msg = error.message?.toLowerCase() || "";

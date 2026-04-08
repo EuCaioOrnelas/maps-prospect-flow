@@ -12,6 +12,7 @@ import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-str
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
+import { Separator } from "@/components/ui/separator";
 
 const getSignupErrorMessage = (error: Error): { title: string; description: string } => {
   const msg = error.message?.toLowerCase() || "";
