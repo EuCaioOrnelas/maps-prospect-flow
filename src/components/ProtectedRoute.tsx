@@ -99,8 +99,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/404" replace />;
   }
 
-  // Redirect trial expired users to upgrade page (except if already on upgrade page)
-  if (isTrialExpired && profile?.plan === 'free' && location.pathname !== '/upgrade' && location.pathname !== '/consultoria') {
+  // Redirect users without active paid subscription to upgrade page
+  if (profile?.plan === 'free' && location.pathname !== '/upgrade' && location.pathname !== '/consultoria') {
     return <Navigate to="/upgrade?expired=true" replace />;
   }
 
