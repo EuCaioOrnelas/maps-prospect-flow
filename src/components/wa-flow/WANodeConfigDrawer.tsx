@@ -1732,74 +1732,111 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== A/B TEST NODE ===== */}
           {node.type === "ab_test" && (
             <div className="space-y-4">
-              {renderInfoBanner("Divide os leads igualmente entre variantes e metrifica qual performa melhor no objetivo escolhido.")}
+              {renderInfoBanner("Divide os leads entre variantes e metrifica qual performa melhor. A medição é feita nos blocos conectados após cada variante.")}
               <div className="space-y-2">
-                <Label className="text-xs font-medium">Nome do teste</Label>
-                <Input
-                  value={config.test_name || ""}
-                  onChange={(e) => updateConfig("test_name", e.target.value)}
-                  placeholder="Mensagem inicial de boas-vindas"
-                  className="h-9 text-sm"
+                <Label className="text-xs font-medium">Descrição do teste</Label>
+                <Textarea
+                  value={config.test_description || ""}
+                  onChange={(e) => updateConfig("test_description", e.target.value)}
+                  placeholder="Teste de abertura: mensagem formal vs informal"
+                  className="text-sm min-h-[50px]"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-medium">Objetivo de medição</Label>
-                <Select value={config.objective || ""} onValueChange={(v) => updateConfig("objective", v)}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="response_rate">Taxa de resposta</SelectItem>
-                    <SelectItem value="click_rate">Taxa de clique em botão</SelectItem>
-                    <SelectItem value="conversion">Conversão (chegou ao fim)</SelectItem>
-                    <SelectItem value="handoff_rate">Taxa de transferência para humano</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium">Medições ({(config.objectives || [config.objective].filter(Boolean)).length}/4)</Label>
+                  {(config.objectives || [config.objective].filter(Boolean)).length < 4 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-[10px] gap-1"
+                      onClick={() => {
+                        const current = config.objectives || (config.objective ? [config.objective] : []);
+                        updateConfig("objectives", [...current, ""]);
+                      }}
+                    >
+                      <Plus size={10} /> Adicionar medição
+                    </Button>
+                  )}
+                </div>
+                {(config.objectives || (config.objective ? [config.objective] : [""])).map((obj: string, idx: number) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Select value={obj || ""} onValueChange={(v) => {
+                      const objs = [...(config.objectives || (config.objective ? [config.objective] : [""]))];
+                      objs[idx] = v;
+                      updateConfig("objectives", objs);
+                      if (idx === 0) updateConfig("objective", v);
+                    }}>
+                      <SelectTrigger className="h-9 text-sm flex-1"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="response_rate">Taxa de resposta (TR)</SelectItem>
+                        <SelectItem value="click_rate">Taxa de clique (CTR)</SelectItem>
+                        <SelectItem value="conversion">Conversão (TC)</SelectItem>
+                        <SelectItem value="handoff_rate">Transferência humano (TH)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {(config.objectives || []).length > 1 && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => {
+                        const objs = (config.objectives || []).filter((_: any, j: number) => j !== idx);
+                        updateConfig("objectives", objs);
+                      }}>
+                        <X size={12} />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <p className="text-[10px] text-muted-foreground">A medição analisa os blocos conectados após cada variante.</p>
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Variantes</Label>
                 <div className="space-y-2">
-                  {(config.variants || []).map((v: any, i: number) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-[10px] font-bold text-emerald-400 shrink-0">
-                        {String.fromCharCode(65 + i)}
-                      </div>
-                      <Input
-                        value={v.name || ""}
-                        onChange={(e) => {
-                          const updated = [...(config.variants || [])];
-                          updated[i] = { ...updated[i], name: e.target.value };
-                          updateConfig("variants", updated);
-                        }}
-                        placeholder={`Variante ${String.fromCharCode(65 + i)}`}
-                        className="h-8 text-sm flex-1"
-                      />
-                      <Input
-                        type="number"
-                        value={v.weight || 0}
-                        onChange={(e) => {
-                          const updated = [...(config.variants || [])];
-                          updated[i] = { ...updated[i], weight: parseInt(e.target.value) || 0 };
-                          updateConfig("variants", updated);
-                        }}
-                        className="h-8 text-sm w-16 text-center"
-                        min={1}
-                        max={100}
-                      />
-                      <span className="text-[10px] text-muted-foreground">%</span>
-                      {(config.variants || []).length > 2 && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 shrink-0"
-                          onClick={() => {
-                            const updated = (config.variants || []).filter((_: any, j: number) => j !== i);
+                  {(config.variants || []).map((v: any, i: number) => {
+                    const isProtected = i < 2;
+                    return (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-[10px] font-bold text-emerald-400 shrink-0">
+                          {String.fromCharCode(65 + i)}
+                        </div>
+                        <Input
+                          value={v.name || ""}
+                          onChange={(e) => {
+                            const updated = [...(config.variants || [])];
+                            updated[i] = { ...updated[i], name: e.target.value };
                             updateConfig("variants", updated);
                           }}
-                        >
-                          <X size={14} />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                          placeholder={`Variante ${String.fromCharCode(65 + i)}`}
+                          className="h-8 text-sm flex-1"
+                        />
+                        <Input
+                          type="number"
+                          value={v.weight ?? 0}
+                          onChange={(e) => {
+                            const updated = [...(config.variants || [])];
+                            updated[i] = { ...updated[i], weight: parseFloat(e.target.value) || 0 };
+                            updateConfig("variants", updated);
+                          }}
+                          className="h-8 text-sm w-20 text-center"
+                          min={0.01}
+                          max={100}
+                          step={0.01}
+                        />
+                        <span className="text-[10px] text-muted-foreground">%</span>
+                        {!isProtected && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            onClick={() => {
+                              const updated = (config.variants || []).filter((_: any, j: number) => j !== i);
+                              updateConfig("variants", updated);
+                            }}
+                          >
+                            <X size={14} />
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
                   {(config.variants || []).length < 5 && (
                     <Button
                       variant="outline"
@@ -1808,9 +1845,9 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                       onClick={() => {
                         const current = config.variants || [];
                         const letter = String.fromCharCode(65 + current.length);
-                        const equalWeight = Math.floor(100 / (current.length + 1));
+                        const equalWeight = parseFloat((100 / (current.length + 1)).toFixed(2));
                         const updated = current.map((v: any) => ({ ...v, weight: equalWeight }));
-                        updated.push({ id: `var_${letter.toLowerCase()}`, name: `Variante ${letter}`, weight: 100 - equalWeight * current.length });
+                        updated.push({ id: `var_${letter.toLowerCase()}`, name: `Variante ${letter}`, weight: parseFloat((100 - equalWeight * current.length).toFixed(2)) });
                         updateConfig("variants", updated);
                       }}
                     >
@@ -1818,7 +1855,16 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                     </Button>
                   )}
                 </div>
-                <p className="text-[10px] text-muted-foreground">A soma dos pesos deve ser 100%. Os leads são distribuídos proporcionalmente. Cada variante gera uma saída no fluxo.</p>
+                {(() => {
+                  const total = (config.variants || []).reduce((s: number, v: any) => s + (parseFloat(v.weight) || 0), 0);
+                  const isValid = Math.abs(total - 100) < 0.1;
+                  return (
+                    <p className={cn("text-[10px] font-medium", isValid ? "text-primary" : "text-destructive")}>
+                      Soma: {total.toFixed(2)}% {isValid ? "✓" : "— deve ser 100%"}
+                    </p>
+                  );
+                })()}
+                <p className="text-[10px] text-muted-foreground">Números quebrados são permitidos (ex: 33.33%). A variante A e B não podem ser excluídas.</p>
               </div>
             </div>
           )}
