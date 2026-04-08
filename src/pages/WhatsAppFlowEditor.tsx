@@ -855,8 +855,13 @@ export default function WhatsAppFlowEditor() {
             onNodesChange={(changes) => {
               onNodesChange(changes);
               if (changes.some((c) => c.type === "position" && c.dragging === false)) {
-                pushHistory(nodes, edges);
-                setHasChanges(true);
+                // Use setTimeout to capture nodes AFTER React applies the position change
+                setTimeout(() => {
+                  const currentNodes = document.querySelectorAll('.react-flow__node');
+                  // nodes state will be updated by then via onNodesChange
+                  pushHistory(nodes, edges);
+                  setHasChanges(true);
+                }, 0);
               }
             }}
             onEdgesChange={onEdgesChange}
