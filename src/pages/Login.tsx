@@ -40,10 +40,25 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, user, isTrialExpired, profile, loading } = useAuth();
   useAutoScoreTracking("login");
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    });
+    if (error) {
+      setIsGoogleLoading(false);
+      toast({ title: "Erro ao entrar com Google", description: error.message, variant: "destructive" });
+    }
+  };
 
   useEffect(() => {
     // Wait for profile to load before redirecting
