@@ -683,6 +683,37 @@ export function WAFlowTestDialog({
             </Button>
           </div>
         </div>
+        {listPopup && (
+          <div className="absolute inset-0 z-50 flex items-end justify-center bg-black/40 animate-in fade-in-0 duration-200">
+            <div className="w-full max-w-md bg-card rounded-t-2xl border-t border-border shadow-2xl animate-in slide-in-from-bottom-4 duration-300 max-h-[60%] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b border-border">
+                <h3 className="text-sm font-semibold text-foreground">{listPopup.title}</h3>
+                <button type="button" onClick={() => setListPopup(null)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                {listPopup.choices.map((choice) => (
+                  <button
+                    key={choice.id}
+                    type="button"
+                    onClick={() => {
+                      consumeInteractiveReply(listPopup.nodeId, choice);
+                      setListPopup(null);
+                    }}
+                    disabled={awaitingNodeId !== listPopup.nodeId || isRunning}
+                    className="group/item w-full text-left rounded-xl px-4 py-3 transition-all hover:bg-primary/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <p className="text-sm font-medium text-foreground">{choice.title}</p>
+                    {choice.description && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{choice.description}</p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
