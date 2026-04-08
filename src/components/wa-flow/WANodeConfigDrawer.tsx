@@ -1867,6 +1867,155 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
             <GmailConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} />
           )}
 
+          {/* ===== DATA COLLECT NODE ===== */}
+          {node.type === "data_collect" && (
+            <div className="space-y-4">
+              {renderApiIndicator()}
+              {renderInfoBanner("Envie uma pergunta ao lead e colete a resposta usando IA. O dado extraído é armazenado em uma variável para uso no restante do fluxo.")}
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Tipo de dado a coletar</Label>
+                <Select value={config.collect_type || ""} onValueChange={(v) => updateConfig("collect_type", v)}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Nome</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="phone">Telefone</SelectItem>
+                    <SelectItem value="cpf">CPF</SelectItem>
+                    <SelectItem value="address">Endereço</SelectItem>
+                    <SelectItem value="custom">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {config.collect_type === "custom" && (
+                <div className="space-y-2">
+                  <Label className="text-xs">Descrição do dado</Label>
+                  <Input
+                    value={config.custom_description || ""}
+                    onChange={(e) => updateConfig("custom_description", e.target.value)}
+                    placeholder="Ex: data de nascimento, cidade de interesse..."
+                    className="h-9 text-sm"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Descreva o que a IA deve extrair da resposta do lead.</p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Nome da variável</Label>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-muted-foreground">{"{"}</span>
+                  <Input
+                    value={config.variable_name || ""}
+                    onChange={(e) => updateConfig("variable_name", e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))}
+                    placeholder="nome_do_lead"
+                    className="h-9 text-sm font-mono flex-1"
+                    maxLength={30}
+                  />
+                  <span className="text-sm text-muted-foreground">{"}"}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground">Use essa variável nos próximos blocos. Ex: {"{nome_do_lead}"}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Conteúdo da pergunta</Label>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { value: "text", label: "Mensagem de texto" },
+                      { value: "audio", label: "Áudio" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => updateConfig("question_type", opt.value)}
+                        className={cn(
+                          "p-2.5 rounded-lg border text-xs font-medium text-center transition-colors",
+                          (config.question_type || "text") === opt.value
+                            ? "border-teal-500/40 bg-teal-500/10 text-foreground"
+                            : "border-border/40 bg-muted/20 text-muted-foreground hover:border-border"
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {(config.question_type || "text") === "text" && (
+                    <Textarea
+                      value={config.question_text || ""}
+                      onChange={(e) => updateConfig("question_text", e.target.value)}
+                      placeholder="Qual é o seu nome completo?"
+                      className="text-sm min-h-[60px]"
+                    />
+                  )}
+
+                  {config.question_type === "audio" && (
+                    <div className="p-3 rounded-lg border border-border/40 bg-muted/20">
+                      <p className="text-[10px] text-muted-foreground">Configure o áudio na seção de mídia do construtor de mensagens ao salvar.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium">Smart Delay</Label>
+                  <Switch
+                    checked={config.use_delay || false}
+                    onCheckedChange={(v) => updateConfig("use_delay", v)}
+                  />
+                </div>
+                {config.use_delay && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Mínimo (seg)</Label>
+                      <Input
+                        type="number"
+                        value={config.delay_min || 5}
+                        onChange={(e) => updateConfig("delay_min", Math.max(5, parseInt(e.target.value) || 5))}
+                        className="h-8 text-xs"
+                        min={5}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Máximo (seg)</Label>
+                      <Input
+                        type="number"
+                        value={config.delay_max || 15}
+                        onChange={(e) => updateConfig("delay_max", Math.max(5, parseInt(e.target.value) || 15))}
+                        className="h-8 text-xs"
+                        min={5}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Tentativas de coleta</Label>
+                <Select value={String(config.max_retries || 2)} onValueChange={(v) => updateConfig("max_retries", parseInt(v))}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 tentativa</SelectItem>
+                    <SelectItem value="2">2 tentativas</SelectItem>
+                    <SelectItem value="3">3 tentativas</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">Se a IA não conseguir extrair o dado, reenvia a pergunta até o limite de tentativas.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Mensagem de erro (se não conseguir coletar)</Label>
+                <Input
+                  value={config.error_message || ""}
+                  onChange={(e) => updateConfig("error_message", e.target.value)}
+                  placeholder="Desculpe, não entendi. Poderia repetir?"
+                  className="h-9 text-sm"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex gap-2 pt-4 border-t border-border">
             <Button onClick={handleSave} className="flex-1 h-9 text-sm">
