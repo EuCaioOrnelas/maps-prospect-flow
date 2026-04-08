@@ -1104,7 +1104,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                           className={cn(
                             "p-3 rounded-lg border text-left transition-colors",
                             (config.interaction_type || "reply_buttons") === opt.value
-                              ? "border-indigo-500/40 bg-indigo-500/10"
+                              ? "border-primary/40 bg-primary/10"
                               : "border-border/40 bg-muted/20 hover:border-border"
                           )}
                         >
@@ -1134,7 +1134,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                       placeholder="Menu de opções"
                       className="h-9 text-sm"
                     />
-                    <p className="text-[10px] text-muted-foreground">Título exibido acima da mensagem no WhatsApp. Aparece em destaque.</p>
+                    <p className="text-[10px] text-muted-foreground">Título exibido acima dos botões/menu no WhatsApp. Aparece em destaque.</p>
                   </div>
 
               {/* Reply buttons */}
