@@ -1016,19 +1016,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
         </div>
       );
     }
-    return (
-      <div className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-medium",
-        isMeta
-          ? "bg-primary/5 border-primary/20 text-primary"
-          : "bg-amber-500/5 border-amber-500/20 text-amber-500"
-      )}>
-        <div className={cn("w-2 h-2 rounded-full", isMeta ? "bg-primary" : "bg-amber-500")} />
-        {isMeta ? "API Inbound (Meta Oficial)" : "API Outbound (Evolution)"}
-        {isMeta && <span className="text-muted-foreground ml-auto">→ send-chat-message</span>}
-        {isEvolution && <span className="text-muted-foreground ml-auto">→ evolution-send-message</span>}
-      </div>
-    );
+    return null;
   };
 
   return (
