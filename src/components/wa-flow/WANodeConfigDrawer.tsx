@@ -603,55 +603,73 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
   const [reopenTemplates, setReopenTemplates] = useState<any[]>([]);
   const [tokenExpired, setTokenExpired] = useState(false);
 
-  // Fetch numbers - only connected
+  // Build available numbers list from two sources:
+  // - Evolution: whatsapp_numbers connected
+  // - Meta oficial: active WABA connections only
   const { data: numbers = [] } = useQuery({
-    queryKey: ["wa-numbers-for-flow"],
+    queryKey: ["wa-numbers-for-flow", user?.id],
     queryFn: async () => {
-      const { data: nums } = await supabase
-        .from("whatsapp_numbers")
-        .select("id, phone_number, name, api_tier, is_connected")
-        .eq("user_id", user!.id)
-        .eq("is_connected", true);
-      
-      // For Meta numbers, also verify WABA connection is active
-      const { data: wabaConns } = await supabase
-        .from("user_waba_connections")
-        .select("id, status, phone_number_id")
-        .eq("user_id", user!.id)
-        .eq("status", "active");
-      
-      const activeWabaIds = new Set((wabaConns || []).map((c: any) => c.id));
-      
-      return (nums || []).filter((n: any) => {
-        const nIsMeta = n.api_tier === "paid" || n.api_tier === "meta";
-        if (nIsMeta) {
-          // Meta numbers need an active WABA connection
-          return activeWabaIds.size > 0;
-        }
-        return true; // Evolution numbers just need is_connected
-      });
+      const [{ data: evoNumbers }, { data: wabaConns }] = await Promise.all([
+        supabase
+          .from("whatsapp_numbers")
+          .select("id, phone_number, name, api_tier, is_connected")
+          .eq("user_id", user!.id)
+          .eq("is_connected", true),
+        supabase
+          .from("user_waba_connections")
+          .select("id, waba_id, access_token, phone_number_id, display_phone_number, status, nickname")
+          .eq("user_id", user!.id)
+          .eq("status", "active"),
+      ]);
+
+      const evolutionOptions = (evoNumbers || [])
+        .filter((n: any) => n.api_tier !== "paid" && n.api_tier !== "meta")
+        .map((n: any) => ({
+          id: n.id,
+          phone_number: n.phone_number,
+          name: n.name,
+          api_tier: n.api_tier,
+          api_type: "evolution" as const,
+          source_id: n.id,
+          phone_number_id: null,
+          waba_connection_id: null,
+          display_phone_number: null,
+          access_token: null,
+          waba_id: null,
+        }));
+
+      const metaOptions = (wabaConns || []).map((conn: any) => ({
+        id: `meta:${conn.id}`,
+        phone_number: conn.display_phone_number,
+        name: conn.nickname || conn.display_phone_number || conn.phone_number_id,
+        api_tier: "meta",
+        api_type: "meta" as const,
+        source_id: conn.id,
+        phone_number_id: conn.phone_number_id,
+        waba_connection_id: conn.id,
+        display_phone_number: conn.display_phone_number,
+        access_token: conn.access_token,
+        waba_id: conn.waba_id,
+      }));
+
+      return [...metaOptions, ...evolutionOptions];
     },
     enabled: !!user,
   });
 
   const selectedNumber = numbers.find((n: any) => n.id === config.whatsapp_number_id);
-  const isMeta = selectedNumber?.api_tier === "paid" || selectedNumber?.api_tier === "meta";
-  const isEvolution = !!selectedNumber && !isMeta;
+  const isMeta = selectedNumber?.api_type === "meta";
+  const isEvolution = selectedNumber?.api_type === "evolution";
 
-  // Fetch WABA connection for selected Meta number
-  const { data: wabaConn } = useQuery({
-    queryKey: ["waba-conn-for-flow", user?.id, config.whatsapp_number_id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("user_waba_connections")
-        .select("id, waba_id, access_token, phone_number_id, display_phone_number")
-        .eq("user_id", user!.id)
-        .eq("status", "active")
-        .limit(10);
-      return data?.[0] || null;
-    },
-    enabled: !!user && isMeta,
-  });
+  const wabaConn = isMeta && selectedNumber
+    ? {
+        id: selectedNumber.waba_connection_id,
+        waba_id: selectedNumber.waba_id,
+        access_token: selectedNumber.access_token,
+        phone_number_id: selectedNumber.phone_number_id,
+        display_phone_number: selectedNumber.display_phone_number,
+      }
+    : null;
 
   // Fetch templates when Meta number selected
   useEffect(() => {
@@ -723,9 +741,9 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           value={config.whatsapp_number_id || ""}
           onValueChange={(v) => {
             const num = numbers.find((n: any) => n.id === v);
-            const numIsMeta = num?.api_tier === "paid" || num?.api_tier === "meta";
+            const numIsMeta = num?.api_type === "meta";
             updateConfig("whatsapp_number_id", v);
-            updateConfig("whatsapp_number_name", num?.name || num?.phone_number || "");
+            updateConfig("whatsapp_number_name", num?.name || num?.display_phone_number || num?.phone_number || "");
             updateConfig("api_type", numIsMeta ? "meta" : "evolution");
             updateConfig("reopen_template_name", "");
           }}
@@ -736,11 +754,11 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
               <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum número conectado</div>
             )}
             {numbers.map((n: any) => {
-              const nIsMeta = n.api_tier === "paid" || n.api_tier === "meta";
+              const nIsMeta = n.api_type === "meta";
               return (
                 <SelectItem key={n.id} value={n.id}>
                   <div className="flex items-center gap-2">
-                    <span>{n.name || n.phone_number}</span>
+                    <span>{n.name || n.display_phone_number || n.phone_number}</span>
                     <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${nIsMeta ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-500"}`}>
                       {nIsMeta ? "API Inbound" : "API Outbound"}
                     </span>
