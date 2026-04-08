@@ -1084,6 +1084,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== BUTTONS NODE ===== */}
           {node.type === "buttons" && (
             <div className="space-y-4">
+              {renderApiIndicator()}
               {renderInfoBanner("Botões interativos da WhatsApp API. Até 3 botões de resposta rápida ou 1 lista com até 10 opções.")}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Tipo de interação</Label>
