@@ -31,11 +31,17 @@ export function WAGoogleSheetsNode({ data }: NodeProps) {
         </div>
       </div>
 
-      {isConnected && cfg.google_email && (
+      {isConnected && (
         <div className="px-3 py-2">
           <p className="text-[10px] text-muted-foreground truncate">📧 {cfg.google_email}</p>
-          {cfg.spreadsheet_id && (
-            <p className="text-[9px] text-muted-foreground truncate mt-0.5">📊 {cfg.sheet_name || "Sheet1"}</p>
+          {cfg.spreadsheet_name && (
+            <p className="text-[9px] text-muted-foreground truncate mt-0.5">📊 {cfg.spreadsheet_name}</p>
+          )}
+          {cfg.sheet_name && (
+            <p className="text-[9px] text-muted-foreground truncate mt-0.5">📋 Aba: {cfg.sheet_name}</p>
+          )}
+          {cfg.columns && (
+            <p className="text-[9px] text-muted-foreground mt-0.5">🔢 {cfg.columns.length} colunas</p>
           )}
         </div>
       )}

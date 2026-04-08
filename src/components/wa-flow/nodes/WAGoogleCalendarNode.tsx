@@ -31,9 +31,14 @@ export function WAGoogleCalendarNode({ data }: NodeProps) {
         </div>
       </div>
 
-      {isConfigured && (
+      {isConnected && (
         <div className="px-3 py-2">
-          <p className="text-[10px] text-muted-foreground truncate">📅 {cfg.event_title}</p>
+          {cfg.calendar_name && (
+            <p className="text-[10px] text-muted-foreground truncate">📅 {cfg.calendar_name}</p>
+          )}
+          {cfg.event_title && (
+            <p className="text-[9px] text-muted-foreground truncate mt-0.5">📝 {cfg.event_title}</p>
+          )}
           {cfg.event_duration && (
             <p className="text-[9px] text-muted-foreground mt-0.5">⏱ {cfg.event_duration} min</p>
           )}
