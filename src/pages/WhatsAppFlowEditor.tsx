@@ -104,7 +104,7 @@ const nodeTypes = {
 const defaultEdgeOptions = {
   animated: true,
   type: "default" as const,
-  style: { strokeWidth: 2, stroke: "hsl(var(--border))", strokeLinecap: "round" as const },
+  style: { strokeWidth: 2, stroke: "hsl(var(--muted-foreground) / 0.4)", strokeLinecap: "round" as const },
 };
 
 const sidebarCategories = [
