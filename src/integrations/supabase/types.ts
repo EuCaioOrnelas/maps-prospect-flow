@@ -4668,6 +4668,7 @@ export type Database = {
         | "handoff"
         | "end"
         | "ai_agent"
+        | "data_collect"
       wa_flow_status: "draft" | "active" | "paused" | "archived"
     }
     CompositeTypes: {
@@ -4821,6 +4822,7 @@ export const Constants = {
         "handoff",
         "end",
         "ai_agent",
+        "data_collect",
       ],
       wa_flow_status: ["draft", "active", "paused", "archived"],
     },

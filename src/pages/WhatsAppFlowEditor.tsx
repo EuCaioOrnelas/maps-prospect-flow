@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
-  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail,
+  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail, Database,
 } from "lucide-react";
 import gmailIcon from "@/assets/icons/gmail.png";
 import sheetsIcon from "@/assets/icons/google-sheets.png";
@@ -41,6 +41,7 @@ import { WARandomSplitNode } from "@/components/wa-flow/nodes/WARandomSplitNode"
 import { WAGoogleSheetsNode } from "@/components/wa-flow/nodes/WAGoogleSheetsNode";
 import { WAGoogleCalendarNode } from "@/components/wa-flow/nodes/WAGoogleCalendarNode";
 import { WAGmailNode } from "@/components/wa-flow/nodes/WAGmailNode";
+import { WADataCollectNode } from "@/components/wa-flow/nodes/WADataCollectNode";
 import { WANodeConfigDrawer } from "@/components/wa-flow/WANodeConfigDrawer";
 import {
   AlertDialog,
@@ -99,6 +100,7 @@ const nodeTypes = {
   google_sheets: WAGoogleSheetsNode,
   google_calendar: WAGoogleCalendarNode,
   gmail: WAGmailNode,
+  data_collect: WADataCollectNode,
 };
 
 const defaultEdgeOptions = {
@@ -126,6 +128,7 @@ const sidebarCategories = [
     items: [
       { type: "condition", icon: GitBranch, label: "Condição", desc: "IF/ELSE para bifurcação", color: "text-purple-400 bg-purple-400/10" },
       { type: "wait", icon: Clock, label: "Espera", desc: "Delay antes do próximo nó", color: "text-amber-400 bg-amber-400/10" },
+      { type: "data_collect", icon: Database, label: "Coleta de Dados", desc: "Pergunta e salva em variável", color: "text-teal-400 bg-teal-400/10" },
       { type: "ab_test", icon: FlaskConical, label: "Teste A/B", desc: "Divide leads e metrifica", color: "text-emerald-400 bg-emerald-400/10" },
       { type: "random_split", icon: Shuffle, label: "Random Split", desc: "Distribui aleatoriamente", color: "text-sky-400 bg-sky-400/10" },
     ],
@@ -374,6 +377,7 @@ export default function WhatsAppFlowEditor() {
         handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
         ab_test: "Teste A/B", random_split: "Random Split",
         google_sheets: "Google Sheets", google_calendar: "Google Agenda", gmail: "Gmail",
+        data_collect: "Coleta de Dados",
       };
 
       const defaultConfigs: Record<string, any> = {
@@ -486,6 +490,40 @@ export default function WhatsAppFlowEditor() {
     if (!entryNode) return {};
     return (entryNode.data as any).config || {};
   }, [nodes]);
+
+  // Auto-block buttons nodes when using Evolution API
+  useEffect(() => {
+    const isEvolution = entryApiType === "evolution";
+    let changed = false;
+    const updatedNodes = nodes.map((n) => {
+      if (n.type !== "buttons") return n;
+      const cfg = (n.data as any).config || {};
+      const currentlyBlocked = cfg._blocked_evolution === true;
+      if (isEvolution && !currentlyBlocked) {
+        changed = true;
+        return { ...n, data: { ...n.data, config: { ...cfg, _blocked_evolution: true } } };
+      }
+      if (!isEvolution && currentlyBlocked) {
+        changed = true;
+        const { _blocked_evolution, ...rest } = cfg;
+        return { ...n, data: { ...n.data, config: rest } };
+      }
+      return n;
+    });
+
+    if (changed) {
+      setNodes(updatedNodes);
+      if (isEvolution) {
+        // Cut all edges connected to buttons nodes
+        const buttonIds = new Set(updatedNodes.filter((n) => n.type === "buttons").map((n) => n.id));
+        const newEdges = edges.filter((e) => !buttonIds.has(e.source) && !buttonIds.has(e.target));
+        if (newEdges.length !== edges.length) {
+          setEdges(newEdges);
+        }
+      }
+      setHasChanges(true);
+    }
+  }, [entryApiType]); // intentionally only on entryApiType change
 
   const saveFlow = useMutation({
     mutationFn: async () => {

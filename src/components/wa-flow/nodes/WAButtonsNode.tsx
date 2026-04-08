@@ -1,6 +1,6 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
-import { ToggleLeft, List } from "lucide-react";
+import { ToggleLeft, List, AlertTriangle } from "lucide-react";
 import { useRef, useState, useLayoutEffect } from "react";
 
 type InteractiveItem = {
@@ -29,6 +29,7 @@ export function WAButtonsNode({ data }: NodeProps) {
   );
   const hasItems = items.length > 0;
   const Icon = isListMode ? List : ToggleLeft;
+  const isBlocked = cfg._blocked_evolution === true;
 
   const nodeRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -46,7 +47,15 @@ export function WAButtonsNode({ data }: NodeProps) {
   }, [items.length, hasItems, cfg.body_text]);
 
   return (
-    <div ref={nodeRef} className="bg-card border border-border rounded-xl shadow-sm w-56 relative">
+    <div ref={nodeRef} className={`bg-card border rounded-xl shadow-sm w-56 relative ${isBlocked ? "border-amber-500/40 opacity-60" : "border-border"}`}>
+      {isBlocked && (
+        <div className="absolute inset-0 z-10 rounded-xl bg-background/60 backdrop-blur-[1px] flex flex-col items-center justify-center gap-1.5 cursor-pointer" title="Funcionalidade exclusiva da API Inbound (Meta)">
+          <div className="w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center">
+            <AlertTriangle size={16} className="text-amber-500" />
+          </div>
+          <p className="text-[9px] text-amber-500 font-medium text-center px-3">API Inbound apenas</p>
+        </div>
+      )}
       <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
         <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
