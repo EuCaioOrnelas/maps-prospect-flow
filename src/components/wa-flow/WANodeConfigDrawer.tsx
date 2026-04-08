@@ -1033,6 +1033,8 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
   const [showDocs, setShowDocs] = useState(false);
   const [showContextInfo, setShowContextInfo] = useState(false);
   const [creatingCred, setCreatingCred] = useState(false);
+  const [showCredSection, setShowCredSection] = useState(false);
+  const [showAgentSection, setShowAgentSection] = useState(false);
   const [creatingAgent, setCreatingAgent] = useState(false);
   const [editingAgent, setEditingAgent] = useState<any>(null);
   const [agentForm, setAgentForm] = useState<any>({});
@@ -1182,125 +1184,63 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
   return (
     <div className="space-y-4">
 
-      {/* CREDENTIALS SECTION */}
-      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-bold flex items-center gap-1.5">🔑 Credenciais de IA</Label>
-          <button onClick={() => setShowDocs(!showDocs)} className="text-[10px] text-primary hover:underline flex items-center gap-1">
-            <ExternalLink size={10} /> Como obter?
-          </button>
-        </div>
-
-        {showDocs && (
-          <div className="space-y-2">
-            {AI_PROVIDERS.map(p => {
-              const docs = PROVIDER_DOCS[p.value];
-              return (
-                <div key={p.value} className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 space-y-1.5">
-                  <p className="text-[11px] font-semibold text-primary flex items-center gap-1.5">
-                    <img src={p.icon} alt={p.label} className="w-4 h-4 rounded-sm" /> {p.label}
-                  </p>
-                  <ol className="text-[10px] text-muted-foreground space-y-0.5 list-decimal list-inside">
-                    {docs.steps.map((s, i) => <li key={i}>{s}</li>)}
-                  </ol>
-                  <a href={docs.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline font-medium">
-                    <ExternalLink size={10} /> Abrir painel
-                  </a>
-                </div>
-              );
-            })}
+      {/* CREDENTIALS SECTION - collapsible */}
+      <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
+        <button onClick={() => setShowCredSection(!showCredSection)} className="flex items-center justify-between w-full">
+          <Label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">🔑 Credenciais de IA</Label>
+          <div className="flex items-center gap-2">
+            {selectedCred && <span className="text-[9px] text-emerald-500 font-medium">{selectedCred.name}</span>}
+            <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", showCredSection && "rotate-180")} />
           </div>
-        )}
+        </button>
 
-        {/* Saved credentials list */}
-        {credentials.length > 0 && !creatingCred && (
-          <div className="space-y-1.5">
-            <Label className="text-[11px] text-muted-foreground">Credenciais salvas</Label>
-            {credentials.map((cred: any) => {
-              const prov = AI_PROVIDERS.find(p => p.value === cred.provider);
-              const isSelected = selectedCredId === cred.id;
-              return (
-                <div key={cred.id} onClick={() => updateConfig("credential_id", cred.id)} className={cn("flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors", isSelected ? "border-emerald-500/40 bg-emerald-500/5" : "border-border/40 bg-card hover:border-border")}>
-                  <div className="flex items-center gap-2">
-                    {prov && <img src={prov.icon} alt={prov.label} className="w-5 h-5 rounded-sm" />}
-                    <div>
-                      <p className="text-[11px] font-medium text-foreground">{cred.name || prov?.label}</p>
-                      <p className="text-[9px] text-muted-foreground">{prov?.label}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {isSelected && <CheckCircle2 size={12} className="text-emerald-500" />}
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteCred(cred.id); }}>
-                      <Trash2 size={12} />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Add new credential - flat, no nested card */}
-        {creatingCred ? (
-          <div className="space-y-2">
-            <Label className="text-[11px] font-medium">Nova credencial</Label>
-            <Input value={newCredName} onChange={(e) => setNewCredName(e.target.value)} placeholder="Nome da credencial (ex: Minha OpenAI)" className="h-8 text-xs" />
-            <div className="grid grid-cols-3 gap-1.5">
-              {AI_PROVIDERS.map((p) => (
-                <button key={p.value} onClick={() => updateConfig("new_cred_provider", p.value)} className={cn("p-1.5 rounded-lg border text-center transition-colors", (config.new_cred_provider || "openai") === p.value ? "border-primary/40 bg-primary/10" : "border-border/40 bg-card hover:border-border")}>
-                  <img src={p.icon} alt={p.label} className="w-5 h-5 mx-auto rounded-sm" />
-                  <p className="text-[9px] font-medium text-foreground mt-0.5">{p.label}</p>
-                </button>
-              ))}
+        {showCredSection && (
+          <div className="space-y-3 mt-3">
+            <div className="flex justify-end">
+              <button onClick={() => setShowDocs(!showDocs)} className="text-[10px] text-primary hover:underline flex items-center gap-1">
+                <ExternalLink size={10} /> Como obter?
+              </button>
             </div>
-            <div className="flex gap-2">
-              <Input type={showApiKey ? "text" : "password"} value={newApiKey} onChange={(e) => setNewApiKey(e.target.value)} placeholder="Cole sua API Key aqui..." className="h-8 text-xs flex-1" />
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setShowApiKey(!showApiKey)}>
-                {showApiKey ? <EyeOff size={14} className="text-muted-foreground" /> : <Eye size={14} className="text-muted-foreground" />}
-              </Button>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={handleSaveKey} disabled={!newApiKey.trim() || !newCredName.trim() || savingKey} className="flex-1 h-8 text-xs">
-                {savingKey ? <Loader2 size={12} className="animate-spin mr-1" /> : <Save size={12} className="mr-1" />}
-                Salvar
-              </Button>
-              <Button variant="ghost" onClick={() => { setCreatingCred(false); setNewApiKey(""); setNewCredName(""); }} className="h-8 text-xs">Cancelar</Button>
-            </div>
-          </div>
-        ) : (
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={() => { setCreatingCred(true); updateConfig("new_cred_provider", "openai"); }}>
-            <Plus size={12} className="mr-1" /> Adicionar credencial
-          </Button>
-        )}
-      </div>
 
-      {/* AGENTS SECTION */}
-      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
-        <Label className="text-xs font-bold flex items-center gap-1.5">🤖 Agente de IA</Label>
-
-        {!creatingAgent && (
-          <>
-            {savedAgents.length > 0 ? (
-              <div className="space-y-1.5">
-                <Label className="text-[11px] text-muted-foreground">Selecionar agente salvo</Label>
-                {savedAgents.map((agent: any) => {
-                  const prov = AI_PROVIDERS.find(p => p.value === agent.ai_provider);
-                  const isSelected = selectedAgentId === agent.id;
+            {showDocs && (
+              <div className="space-y-2">
+                {AI_PROVIDERS.map(p => {
+                  const docs = PROVIDER_DOCS[p.value];
                   return (
-                    <div key={agent.id} onClick={() => handleSelectAgent(agent.id)} className={cn("flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors", isSelected ? "border-emerald-500/40 bg-emerald-500/5" : "border-border/40 bg-card hover:border-border")}>
+                    <div key={p.value} className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 space-y-1.5">
+                      <p className="text-[11px] font-semibold text-primary flex items-center gap-1.5">
+                        <img src={p.icon} alt={p.label} className="w-4 h-4 rounded-sm" /> {p.label}
+                      </p>
+                      <ol className="text-[10px] text-muted-foreground space-y-0.5 list-decimal list-inside">
+                        {docs.steps.map((s, i) => <li key={i}>{s}</li>)}
+                      </ol>
+                      <a href={docs.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline font-medium">
+                        <ExternalLink size={10} /> Abrir painel
+                      </a>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {credentials.length > 0 && !creatingCred && (
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-muted-foreground">Credenciais salvas</Label>
+                {credentials.map((cred: any) => {
+                  const prov = AI_PROVIDERS.find(p => p.value === cred.provider);
+                  const isSelected = selectedCredId === cred.id;
+                  return (
+                    <div key={cred.id} onClick={() => updateConfig("credential_id", cred.id)} className={cn("flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors", isSelected ? "border-emerald-500/40 bg-emerald-500/5" : "border-border/40 bg-card hover:border-border")}>
                       <div className="flex items-center gap-2">
                         {prov && <img src={prov.icon} alt={prov.label} className="w-5 h-5 rounded-sm" />}
                         <div>
-                          <p className="text-[11px] font-medium text-foreground">{agent.name}</p>
-                          <p className="text-[9px] text-muted-foreground">{agent.ai_model} · {agent.max_chars}c</p>
+                          <p className="text-[11px] font-medium text-foreground">{cred.name || prov?.label}</p>
+                          <p className="text-[9px] text-muted-foreground">{prov?.label}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
                         {isSelected && <CheckCircle2 size={12} className="text-emerald-500" />}
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); handleEditAgent(agent); }}>
-                          <Pencil size={12} className="text-muted-foreground" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteAgent(agent.id); }}>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteCred(cred.id); }}>
                           <Trash2 size={12} />
                         </Button>
                       </div>
@@ -1308,99 +1248,179 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
                   );
                 })}
               </div>
+            )}
+
+            {creatingCred ? (
+              <div className="space-y-2">
+                <Label className="text-[11px] font-medium">Nova credencial</Label>
+                <Input value={newCredName} onChange={(e) => setNewCredName(e.target.value)} placeholder="Nome da credencial (ex: Minha OpenAI)" className="h-8 text-xs" />
+                <div className="grid grid-cols-3 gap-1.5">
+                  {AI_PROVIDERS.map((p) => (
+                    <button key={p.value} onClick={() => updateConfig("new_cred_provider", p.value)} className={cn("p-1.5 rounded-lg border text-center transition-colors", (config.new_cred_provider || "openai") === p.value ? "border-primary/40 bg-primary/10" : "border-border/40 bg-card hover:border-border")}>
+                      <img src={p.icon} alt={p.label} className="w-5 h-5 mx-auto rounded-sm" />
+                      <p className="text-[9px] font-medium text-foreground mt-0.5">{p.label}</p>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input type={showApiKey ? "text" : "password"} value={newApiKey} onChange={(e) => setNewApiKey(e.target.value)} placeholder="Cole sua API Key aqui..." className="h-8 text-xs flex-1" />
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setShowApiKey(!showApiKey)}>
+                    {showApiKey ? <EyeOff size={14} className="text-muted-foreground" /> : <Eye size={14} className="text-muted-foreground" />}
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveKey} disabled={!newApiKey.trim() || !newCredName.trim() || savingKey} className="flex-1 h-8 text-xs">
+                    {savingKey ? <Loader2 size={12} className="animate-spin mr-1" /> : <Save size={12} className="mr-1" />}
+                    Salvar
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setCreatingCred(false); setNewApiKey(""); setNewCredName(""); }} className="h-8 text-xs">Cancelar</Button>
+                </div>
+              </div>
             ) : (
-              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/30">
-                <Info size={14} className="text-muted-foreground shrink-0 mt-0.5" />
-                <p className="text-[10px] text-muted-foreground">Nenhum agente criado. Crie um agente com prompt, modelo e direcionamentos para reutilizar em diferentes blocos.</p>
-              </div>
-            )}
-
-            <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={() => { setCreatingAgent(true); setEditingAgent(null); setAgentForm({ ai_provider: "openai", ai_model: "gpt-4o-mini", ai_output_type: "message_and_route", max_chars: 500 }); }}>
-              <Plus size={12} className="mr-1" /> Criar novo agente
-            </Button>
-          </>
-        )}
-
-        {/* Agent creation/editing form - flat */}
-        {creatingAgent && (
-          <div className="space-y-3">
-            <Label className="text-[11px] font-semibold">{editingAgent ? "Editar agente" : "Novo agente"}</Label>
-
-            <Input value={agentForm.name || ""} onChange={(e) => setAgentForm({ ...agentForm, name: e.target.value })} placeholder="Nome do agente (ex: Vendedor IA)" className="h-8 text-xs" />
-
-            <div className="space-y-1">
-              <Label className="text-[11px] text-muted-foreground">Credencial vinculada</Label>
-              <Select value={agentForm.credential_id || ""} onValueChange={(v) => {
-                const cred = credentials.find((c: any) => c.id === v);
-                if (cred) {
-                  const models = AI_MODELS[cred.provider] || [];
-                  setAgentForm((prev: any) => ({ ...prev, credential_id: v, ai_provider: cred.provider, ai_model: models[0]?.value || "" }));
-                }
-              }}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecionar credencial" /></SelectTrigger>
-                <SelectContent>
-                  {credentials.map((c: any) => {
-                    const prov = AI_PROVIDERS.find(p => p.value === c.provider);
-                    return <SelectItem key={c.id} value={c.id}>{c.name || prov?.label} ({prov?.label})</SelectItem>;
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Model only shows after credential is selected */}
-            {agentForm.credential_id && (
-              <div className="space-y-1">
-                <Label className="text-[11px] text-muted-foreground">Modelo de IA</Label>
-                <Select value={agentForm.ai_model || agentFormModels[0]?.value || ""} onValueChange={(v) => setAgentForm({ ...agentForm, ai_model: v })}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>{agentFormModels.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="space-y-1">
-              <Label className="text-[11px] text-muted-foreground">O que a IA deve retornar?</Label>
-              <Select value={agentForm.ai_output_type || "message_and_route"} onValueChange={(v) => setAgentForm({ ...agentForm, ai_output_type: v })}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="message_only">Apenas responder ao lead</SelectItem>
-                  <SelectItem value="route_only">Apenas direcionar (sem resposta)</SelectItem>
-                  <SelectItem value="message_and_route">Responder e direcionar</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-[11px] text-muted-foreground">Prompt completo (instrução para a IA)</Label>
-              <Textarea value={agentForm.system_prompt || ""} onChange={(e) => setAgentForm({ ...agentForm, system_prompt: e.target.value })} placeholder={"Você é um assistente de vendas...\n\nRegras:\n- Seja cordial e objetivo\n- Classifique como: INTERESSADO, INDECISO ou NÃO_INTERESSADO"} className="text-xs min-h-[120px]" />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-[11px] text-muted-foreground">Direcionamentos possíveis (um por linha)</Label>
-              <Textarea value={agentForm.ai_routes || ""} onChange={(e) => setAgentForm({ ...agentForm, ai_routes: e.target.value })} placeholder={"INTERESSADO\nINDECISO\nNÃO_INTERESSADO"} className="text-xs min-h-[60px] font-mono" />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-[11px] text-muted-foreground">Máx. caracteres por resposta</Label>
-              <Select value={String(agentForm.max_chars || 500)} onValueChange={(v) => setAgentForm({ ...agentForm, max_chars: parseInt(v) })}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="100">100 caracteres</SelectItem>
-                  <SelectItem value="200">200 caracteres</SelectItem>
-                  <SelectItem value="300">300 caracteres</SelectItem>
-                  <SelectItem value="400">400 caracteres</SelectItem>
-                  <SelectItem value="500">500 caracteres</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={handleSaveAgent} disabled={!agentForm.name?.trim() || savingAgent} className="flex-1 h-8 text-xs">
-                {savingAgent ? <Loader2 size={12} className="animate-spin mr-1" /> : <Save size={12} className="mr-1" />}
-                {editingAgent ? "Salvar alterações" : "Criar agente"}
+              <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={() => { setCreatingCred(true); updateConfig("new_cred_provider", "openai"); }}>
+                <Plus size={12} className="mr-1" /> Adicionar credencial
               </Button>
-              <Button variant="ghost" onClick={() => { setCreatingAgent(false); setEditingAgent(null); setAgentForm({}); }} className="h-8 text-xs">Cancelar</Button>
-            </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* AGENTS SECTION - collapsible */}
+      <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
+        <button onClick={() => setShowAgentSection(!showAgentSection)} className="flex items-center justify-between w-full">
+          <Label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">🤖 Agente de IA</Label>
+          <div className="flex items-center gap-2">
+            {selectedAgentId && savedAgents.find((a: any) => a.id === selectedAgentId) && (
+              <span className="text-[9px] text-emerald-500 font-medium">{savedAgents.find((a: any) => a.id === selectedAgentId)?.name}</span>
+            )}
+            <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", showAgentSection && "rotate-180")} />
+          </div>
+        </button>
+
+        {showAgentSection && (
+          <div className="space-y-3 mt-3">
+            {!creatingAgent && (
+              <>
+                {savedAgents.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] text-muted-foreground">Selecionar agente salvo</Label>
+                    {savedAgents.map((agent: any) => {
+                      const prov = AI_PROVIDERS.find(p => p.value === agent.ai_provider);
+                      const isSelected = selectedAgentId === agent.id;
+                      return (
+                        <div key={agent.id} onClick={() => handleSelectAgent(agent.id)} className={cn("flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors", isSelected ? "border-emerald-500/40 bg-emerald-500/5" : "border-border/40 bg-card hover:border-border")}>
+                          <div className="flex items-center gap-2">
+                            {prov && <img src={prov.icon} alt={prov.label} className="w-5 h-5 rounded-sm" />}
+                            <div>
+                              <p className="text-[11px] font-medium text-foreground">{agent.name}</p>
+                              <p className="text-[9px] text-muted-foreground">{agent.ai_model} · {agent.max_chars}c</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {isSelected && <CheckCircle2 size={12} className="text-emerald-500" />}
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); handleEditAgent(agent); }}>
+                              <Pencil size={12} className="text-muted-foreground" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteAgent(agent.id); }}>
+                              <Trash2 size={12} />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/30">
+                    <Info size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-muted-foreground">Nenhum agente criado. Crie um agente com prompt, modelo e direcionamentos para reutilizar em diferentes blocos.</p>
+                  </div>
+                )}
+
+                <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={() => { setCreatingAgent(true); setEditingAgent(null); setAgentForm({ ai_provider: "openai", ai_model: "gpt-4o-mini", ai_output_type: "message_and_route", max_chars: 500 }); }}>
+                  <Plus size={12} className="mr-1" /> Criar novo agente
+                </Button>
+              </>
+            )}
+
+            {creatingAgent && (
+              <div className="space-y-3">
+                <Label className="text-[11px] font-semibold">{editingAgent ? "Editar agente" : "Novo agente"}</Label>
+                <Input value={agentForm.name || ""} onChange={(e) => setAgentForm({ ...agentForm, name: e.target.value })} placeholder="Nome do agente (ex: Vendedor IA)" className="h-8 text-xs" />
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Credencial vinculada</Label>
+                  <Select value={agentForm.credential_id || ""} onValueChange={(v) => {
+                    const cred = credentials.find((c: any) => c.id === v);
+                    if (cred) {
+                      const models = AI_MODELS[cred.provider] || [];
+                      setAgentForm((prev: any) => ({ ...prev, credential_id: v, ai_provider: cred.provider, ai_model: models[0]?.value || "" }));
+                    }
+                  }}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecionar credencial" /></SelectTrigger>
+                    <SelectContent>
+                      {credentials.map((c: any) => {
+                        const prov = AI_PROVIDERS.find(p => p.value === c.provider);
+                        return <SelectItem key={c.id} value={c.id}>{c.name || prov?.label} ({prov?.label})</SelectItem>;
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {agentForm.credential_id && (
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">Modelo de IA</Label>
+                    <Select value={agentForm.ai_model || agentFormModels[0]?.value || ""} onValueChange={(v) => setAgentForm({ ...agentForm, ai_model: v })}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>{agentFormModels.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">O que a IA deve retornar?</Label>
+                  <Select value={agentForm.ai_output_type || "message_and_route"} onValueChange={(v) => setAgentForm({ ...agentForm, ai_output_type: v })}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="message_only">Apenas responder ao lead</SelectItem>
+                      <SelectItem value="route_only">Apenas direcionar (sem resposta)</SelectItem>
+                      <SelectItem value="message_and_route">Responder e direcionar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Prompt completo (instrução para a IA)</Label>
+                  <Textarea value={agentForm.system_prompt || ""} onChange={(e) => setAgentForm({ ...agentForm, system_prompt: e.target.value })} placeholder={"Você é um assistente de vendas...\n\nRegras:\n- Seja cordial e objetivo\n- Classifique como: INTERESSADO, INDECISO ou NÃO_INTERESSADO"} className="text-xs min-h-[120px]" />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Direcionamentos possíveis (um por linha)</Label>
+                  <Textarea value={agentForm.ai_routes || ""} onChange={(e) => setAgentForm({ ...agentForm, ai_routes: e.target.value })} placeholder={"INTERESSADO\nINDECISO\nNÃO_INTERESSADO"} className="text-xs min-h-[60px] font-mono" />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Máx. caracteres por resposta</Label>
+                  <Select value={String(agentForm.max_chars || 500)} onValueChange={(v) => setAgentForm({ ...agentForm, max_chars: parseInt(v) })}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="100">100 caracteres</SelectItem>
+                      <SelectItem value="200">200 caracteres</SelectItem>
+                      <SelectItem value="300">300 caracteres</SelectItem>
+                      <SelectItem value="400">400 caracteres</SelectItem>
+                      <SelectItem value="500">500 caracteres</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveAgent} disabled={!agentForm.name?.trim() || savingAgent} className="flex-1 h-8 text-xs">
+                    {savingAgent ? <Loader2 size={12} className="animate-spin mr-1" /> : <Save size={12} className="mr-1" />}
+                    {editingAgent ? "Salvar alterações" : "Criar agente"}
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setCreatingAgent(false); setEditingAgent(null); setAgentForm({}); }} className="h-8 text-xs">Cancelar</Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1412,7 +1432,7 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
         <p className="text-[10px] text-muted-foreground">Contexto adicional enviado junto com o prompt do agente apenas neste bloco.</p>
       </div>
 
-      {/* Memory toggle - at the end */}
+      {/* Memory toggle */}
       <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -1424,7 +1444,7 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
         <p className="text-[10px] text-muted-foreground mt-1">A IA recebe o histórico da conversa para manter contexto.</p>
       </div>
 
-      {/* Context info - at the end, discreet */}
+      {/* Context info - discreet */}
       <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
         <button onClick={() => setShowContextInfo(!showContextInfo)} className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
