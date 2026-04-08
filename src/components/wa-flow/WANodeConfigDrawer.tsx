@@ -639,15 +639,31 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
   useEffect(() => {
     if (!wabaConn || !isMeta) {
       setReopenTemplates([]);
+      setTokenExpired(false);
       return;
     }
     const fetchTemplates = async () => {
       setLoadingTemplates(true);
+      setTokenExpired(false);
       try {
         const { data, error } = await supabase.functions.invoke("meta-fetch-templates", {
           body: { waba_id: wabaConn.waba_id, access_token: wabaConn.access_token },
         });
-        if (!error && data?.templates) {
+        if (error) {
+          const errStr = typeof error === 'object' && error.message ? error.message : String(error);
+          if (errStr.includes("Session has expired") || errStr.includes("OAuthException") || errStr.includes("access token")) {
+            setTokenExpired(true);
+            return;
+          }
+        }
+        if (data?.error) {
+          const details = data?.details?.error;
+          if (details?.code === 190 || details?.error_subcode === 463) {
+            setTokenExpired(true);
+            return;
+          }
+        }
+        if (data?.templates) {
           setReopenTemplates(data.templates.filter((t: any) => t.status === "APPROVED"));
         }
       } catch (e) {
