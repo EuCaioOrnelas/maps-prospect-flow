@@ -1075,51 +1075,67 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== BUTTONS NODE ===== */}
           {node.type === "buttons" && (
             <div className="space-y-4">
-              {renderApiIndicator()}
-              {renderInfoBanner("Botões interativos da WhatsApp API. Até 3 botões de resposta rápida ou 1 lista com até 10 opções.")}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Tipo de interação</Label>
-                <Select value={config.interaction_type || "reply_buttons"} onValueChange={(v) => updateConfig("interaction_type", v)}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="reply_buttons">Botões de resposta rápida (máx. 3)</SelectItem>
-                    <SelectItem value="list">Lista interativa (menu)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {isEvolution && (
+                <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/30 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle size={16} className="text-amber-500" />
+                    <p className="text-sm font-semibold text-amber-500">Funcionalidade indisponível</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Botões interativos são exclusivos da <span className="font-semibold text-foreground">API Inbound (Oficial)</span>. A API Outbound não suporta mensagens interativas com botões ou listas. Altere o número na Entrada do fluxo para um número conectado à API Oficial.
+                  </p>
+                </div>
+              )}
+              {!isEvolution && (
+                <>
+                  {renderApiIndicator()}
+                  {renderInfoBanner("Botões interativos da WhatsApp API. Até 3 botões de resposta rápida ou 1 lista com até 10 opções.")}
 
-              <div className="space-y-2">
-                <Label className="text-xs">Mensagem do corpo</Label>
-                <Textarea
-                  value={config.body_text || ""}
-                  onChange={(e) => updateConfig("body_text", e.target.value)}
-                  placeholder="Escolha uma opção abaixo:"
-                  className="text-sm min-h-[60px]"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Tipo de interação</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { value: "reply_buttons", label: "Botões rápidos", desc: "Até 3 botões" },
+                        { value: "list", label: "Menu de seleção", desc: "Até 10 opções" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => updateConfig("interaction_type", opt.value)}
+                          className={cn(
+                            "p-3 rounded-lg border text-left transition-colors",
+                            (config.interaction_type || "reply_buttons") === opt.value
+                              ? "border-indigo-500/40 bg-indigo-500/10"
+                              : "border-border/40 bg-muted/20 hover:border-border"
+                          )}
+                        >
+                          <p className="text-xs font-medium text-foreground">{opt.label}</p>
+                          <p className="text-[10px] text-muted-foreground">{opt.desc}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs">Cabeçalho (opcional)</Label>
-                <Input
-                  value={config.header_text || ""}
-                  onChange={(e) => updateConfig("header_text", e.target.value)}
-                  placeholder="Menu de opções"
-                  className="h-9 text-sm"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Mensagem do corpo</Label>
+                    <Textarea
+                      value={config.body_text || ""}
+                      onChange={(e) => updateConfig("body_text", e.target.value)}
+                      placeholder="Escolha uma opção abaixo:"
+                      className="text-sm min-h-[60px]"
+                    />
+                    <p className="text-[10px] text-muted-foreground">Texto enviado antes dos botões. Obrigatório.</p>
+                  </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs">Rodapé (opcional)</Label>
-                <Input
-                  value={config.footer_text || ""}
-                  onChange={(e) => updateConfig("footer_text", e.target.value)}
-                  placeholder="Powered by Wiize"
-                  className="h-9 text-sm"
-                />
-                <p className="text-[10px] text-muted-foreground">
-                  Cabeçalho e rodapé são opcionais e só aparecem em blocos interativos; para mensagem comum use o bloco de mensagem.
-                </p>
-              </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Cabeçalho (opcional)</Label>
+                    <Input
+                      value={config.header_text || ""}
+                      onChange={(e) => updateConfig("header_text", e.target.value)}
+                      placeholder="Menu de opções"
+                      className="h-9 text-sm"
+                    />
+                    <p className="text-[10px] text-muted-foreground">Título exibido acima da mensagem no WhatsApp. Aparece em destaque.</p>
+                  </div>
 
               {/* Reply buttons */}
               {(config.interaction_type || "reply_buttons") === "reply_buttons" && (
