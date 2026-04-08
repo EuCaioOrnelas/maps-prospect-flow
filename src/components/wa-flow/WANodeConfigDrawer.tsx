@@ -711,9 +711,6 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
     t.name?.toLowerCase().includes(templateSearch.toLowerCase())
   );
 
-  // Generate webhook URL
-  const flowId = typeof window !== "undefined" ? window.location.pathname.split("/").pop() : "";
-  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/evolution-webhook`;
 
   return (
     <div className="space-y-4">
