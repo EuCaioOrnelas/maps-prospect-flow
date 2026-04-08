@@ -1275,21 +1275,19 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== CONDITION NODE ===== */}
           {node.type === "condition" && (
             <div className="space-y-4">
-              {renderInfoBanner("Crie bifurcações no fluxo baseadas em respostas, tags ou dados do lead.")}
+              {renderInfoBanner("Crie bifurcações no fluxo. Se a condição for verdadeira → Sim. Se falsa → Não.")}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Tipo de condição</Label>
                 <Select value={config.condition_type || ""} onValueChange={(v) => updateConfig("condition_type", v)}>
                   <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="button_clicked">Clicou botão específico</SelectItem>
-                    <SelectItem value="keyword_match">Contém palavra-chave</SelectItem>
+                    <SelectItem value="button_clicked">Clicou no botão</SelectItem>
+                    <SelectItem value="keyword_match">Respondeu com palavra-chave</SelectItem>
                     <SelectItem value="responded">Respondeu qualquer coisa</SelectItem>
-                    <SelectItem value="no_response">Não respondeu (timeout)</SelectItem>
-                    <SelectItem value="has_tag">Possui tag</SelectItem>
-                    <SelectItem value="field_equals">Campo do lead = valor</SelectItem>
+                    <SelectItem value="no_response">Não respondeu em X tempo</SelectItem>
+                    <SelectItem value="has_tag">Possui tag (CRM)</SelectItem>
                     <SelectItem value="score_above">Score acima de</SelectItem>
-                    <SelectItem value="is_customer">É cliente</SelectItem>
-                    <SelectItem value="pipeline_stage">Está na etapa</SelectItem>
+                    <SelectItem value="is_customer">É cliente (vendas fechadas)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1306,53 +1304,75 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
               )}
               {config.condition_type === "keyword_match" && (
                 <div className="space-y-2">
-                  <Label className="text-xs">Palavras (separadas por vírgula)</Label>
+                  <Label className="text-xs">Palavras-chave (separadas por vírgula)</Label>
                   <Input
                     value={config.condition_value || ""}
                     onChange={(e) => updateConfig("condition_value", e.target.value)}
                     placeholder="sim, quero, comprar"
                     className="h-9 text-sm"
                   />
+                  <p className="text-[10px] text-muted-foreground">Busca parcial, sem distinção de maiúsculas/acentos.</p>
                 </div>
               )}
-              {(config.condition_type === "has_tag" || config.condition_type === "pipeline_stage") && (
+              {config.condition_type === "has_tag" && (
                 <div className="space-y-2">
-                  <Label className="text-xs">{config.condition_type === "has_tag" ? "Nome da tag" : "Nome da etapa"}</Label>
+                  <Label className="text-xs">Nome da tag no CRM</Label>
                   <Input
                     value={config.condition_value || ""}
                     onChange={(e) => updateConfig("condition_value", e.target.value)}
+                    placeholder="qualificado, VIP, etc."
                     className="h-9 text-sm"
                   />
+                  <p className="text-[10px] text-muted-foreground">Verifica se o lead possui esta tag no CRM.</p>
                 </div>
               )}
               {config.condition_type === "score_above" && (
-                <div className="space-y-2">
-                  <Label className="text-xs">Score mínimo</Label>
-                  <Input
-                    type="number"
-                    value={config.condition_value || ""}
-                    onChange={(e) => updateConfig("condition_value", e.target.value)}
-                    placeholder="500"
-                    className="h-9 text-sm"
-                  />
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Tipo de verificação</Label>
+                    <Select value={config.score_check_type || "number"} onValueChange={(v) => updateConfig("score_check_type", v)}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="number">Por número (score mínimo)</SelectItem>
+                        <SelectItem value="category">Por categoria</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {(config.score_check_type || "number") === "number" && (
+                    <div className="space-y-2">
+                      <Label className="text-xs">Score mínimo</Label>
+                      <Input
+                        type="number"
+                        value={config.condition_value || ""}
+                        onChange={(e) => updateConfig("condition_value", e.target.value)}
+                        placeholder="500"
+                        className="h-9 text-sm"
+                      />
+                    </div>
+                  )}
+                  {config.score_check_type === "category" && (
+                    <div className="space-y-2">
+                      <Label className="text-xs">Categoria mínima</Label>
+                      <Select value={config.score_category || ""} onValueChange={(v) => updateConfig("score_category", v)}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="hot">🔥 Quente</SelectItem>
+                          <SelectItem value="warm">🟡 Morno</SelectItem>
+                          <SelectItem value="cold">❄️ Frio</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               )}
-              {config.condition_type === "field_equals" && (
+              {config.condition_type === "is_customer" && (
                 <div className="space-y-2">
-                  <Label className="text-xs">Nome do campo</Label>
-                  <Input
-                    value={config.field_name || ""}
-                    onChange={(e) => updateConfig("field_name", e.target.value)}
-                    placeholder="cidade"
-                    className="h-9 text-sm"
-                  />
-                  <Label className="text-xs">Valor esperado</Label>
-                  <Input
-                    value={config.condition_value || ""}
-                    onChange={(e) => updateConfig("condition_value", e.target.value)}
-                    placeholder="São Paulo"
-                    className="h-9 text-sm"
-                  />
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/30">
+                    <Info size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Verifica se o lead possui <span className="font-semibold text-foreground">vendas fechadas</span> no CRM. Se sim → <span className="text-primary font-semibold">Sim</span>, senão → <span className="text-destructive font-semibold">Não</span>.
+                    </p>
+                  </div>
                 </div>
               )}
               {config.condition_type === "no_response" && (
@@ -1365,6 +1385,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                     placeholder="60"
                     className="h-9 text-sm"
                   />
+                  <p className="text-[10px] text-muted-foreground">Se o lead não responder dentro deste tempo, segue pelo caminho "Não".</p>
                 </div>
               )}
               <p className="text-[10px] text-muted-foreground">Saída <span className="text-primary font-semibold">Sim</span> = condição verdadeira · <span className="text-destructive font-semibold">Não</span> = falsa</p>
