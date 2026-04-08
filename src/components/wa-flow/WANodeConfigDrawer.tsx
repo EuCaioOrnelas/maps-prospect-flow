@@ -1031,8 +1031,9 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
       <div
         className={cn(
           "absolute top-0 left-0 z-50 h-full w-[400px] sm:w-[440px] bg-card border-r border-border flex flex-col transition-all duration-300 ease-out",
-          open ? "translate-x-0 shadow-2xl" : "-translate-x-full pointer-events-none shadow-none"
+          open ? "translate-x-0 shadow-2xl" : "-translate-x-full pointer-events-none"
         )}
+        style={!open ? { boxShadow: 'none' } : undefined}
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3 border-b border-border shrink-0">
