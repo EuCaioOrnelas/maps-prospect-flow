@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import {
   MessageSquare, Image, FileAudio, Video, FileText,
   X, Upload, Trash2, Play, Pause, Square, Mic,
-  Clock, GripVertical, ChevronUp, ChevronDown,
+  Clock, Shuffle,
 } from "lucide-react";
 
 // ===== CONTENT TYPES (3x2 grid) =====
@@ -33,6 +33,8 @@ interface ContentItem {
   media_url?: string;
   media_filename?: string;
   delay_seconds?: number;
+  delay_min?: number;
+  delay_max?: number;
 }
 
 // ===== CUSTOM AUDIO PLAYER =====
@@ -79,7 +81,7 @@ function CustomAudioPlayer({ src, onRemove }: { src: string; onRemove: () => voi
   const progress = duration ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-muted/10">
+    <div className="flex items-center gap-3 p-3 rounded-xl border border-border/40 bg-muted/10">
       <audio ref={audioRef} src={src} preload="metadata" />
       <button
         onClick={toggle}
@@ -181,7 +183,6 @@ function AudioRecorder({ onRecorded }: { onRecorded: (blob: Blob) => void }) {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      // Setup analyser for waveform
       const audioCtx = new AudioContext();
       const source = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
@@ -206,7 +207,6 @@ function AudioRecorder({ onRecorded }: { onRecorded: (blob: Blob) => void }) {
       setSeconds(0);
       timerRef.current = window.setInterval(() => setSeconds(s => s + 1), 1000);
 
-      // Animate waveform
       const updateWave = () => {
         if (!analyserRef.current) return;
         const data = new Uint8Array(analyserRef.current.frequencyBinCount);
@@ -290,20 +290,20 @@ function ContentItemEditor({
   onUpload: (file: File, type: string) => Promise<string | null>;
   onAudioRecorded: (blob: Blob) => Promise<string | null>;
 }) {
-  const typeConfig: Record<string, { label: string; icon: any; borderColor: string }> = {
-    text: { label: "Texto", icon: MessageSquare, borderColor: "border-blue-400/20" },
-    image: { label: "Imagem", icon: Image, borderColor: "border-emerald-400/20" },
-    audio: { label: "Áudio", icon: FileAudio, borderColor: "border-orange-400/20" },
-    video: { label: "Vídeo", icon: Video, borderColor: "border-purple-400/20" },
-    document: { label: "Documento", icon: FileText, borderColor: "border-amber-400/20" },
-    delay: { label: "Delay", icon: Clock, borderColor: "border-muted-foreground/20" },
+  const typeConfig: Record<string, { label: string; icon: any }> = {
+    text: { label: "Texto", icon: MessageSquare },
+    image: { label: "Imagem", icon: Image },
+    audio: { label: "Áudio", icon: FileAudio },
+    video: { label: "Vídeo", icon: Video },
+    document: { label: "Documento", icon: FileText },
+    delay: { label: "Delay Inteligente", icon: Shuffle },
   };
 
   const cfg = typeConfig[item.type] || typeConfig.text;
   const Icon = cfg.icon;
 
   return (
-    <div className={cn("rounded-xl border bg-card/50 overflow-hidden", cfg.borderColor)}>
+    <div className="rounded-xl border border-border/40 bg-card/50 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/30 bg-muted/10">
         <div className="flex items-center gap-2">
@@ -332,7 +332,7 @@ function ContentItemEditor({
           <>
             {item.media_url ? (
               <div className="space-y-2">
-                <div className="relative rounded-lg overflow-hidden border border-border bg-muted/20">
+                <div className="relative rounded-lg overflow-hidden border border-border/40 bg-muted/20">
                   <img src={item.media_url} alt="Preview" className="w-full max-h-40 object-contain" />
                   <button
                     onClick={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }}
@@ -394,7 +394,7 @@ function ContentItemEditor({
           <>
             {item.media_url ? (
               <div className="space-y-2">
-                <div className="relative rounded-lg overflow-hidden border border-border bg-muted/20">
+                <div className="relative rounded-lg overflow-hidden border border-border/40 bg-muted/20">
                   <video src={item.media_url} controls className="w-full max-h-40" />
                   <button
                     onClick={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }}
@@ -413,7 +413,7 @@ function ContentItemEditor({
             ) : (
               <MediaDropZone
                 accept="video/mp4,video/webm"
-                maxSizeMB={16}
+                maxSizeMB={50}
                 label="Arraste ou clique para enviar"
                 onFileSelected={async (f) => {
                   const video = document.createElement("video");
@@ -437,7 +437,7 @@ function ContentItemEditor({
           <>
             {item.media_url ? (
               <div className="space-y-2">
-                <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/20">
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-muted/20">
                   <FileText size={18} className="text-amber-400 shrink-0" />
                   <span className="text-xs text-foreground truncate flex-1">{item.media_filename || "Documento"}</span>
                   <button
@@ -469,28 +469,67 @@ function ContentItemEditor({
           </>
         )}
 
-        {/* DELAY */}
+        {/* DELAY - Smart with min/max */}
         {item.type === "delay" && (
-          <div className="flex items-center gap-3">
-            <Clock size={16} className="text-muted-foreground shrink-0" />
-            <div className="flex-1 space-y-1">
-              <div className="flex items-center gap-2">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 flex-1">
+                <Label className="text-[11px] text-muted-foreground shrink-0 w-8">Mín</Label>
                 <Input
                   type="number"
                   min={5}
-                  value={item.delay_seconds || 5}
-                  onChange={(e) => onUpdate("delay_seconds", Math.max(5, parseInt(e.target.value) || 5))}
-                  className="h-8 w-24 text-sm bg-background/50"
+                  value={item.delay_min ?? item.delay_seconds ?? 5}
+                  onChange={(e) => {
+                    const v = Math.max(5, parseInt(e.target.value) || 5);
+                    onUpdate("delay_min", v);
+                    if (v > (item.delay_max ?? v)) onUpdate("delay_max", v);
+                  }}
+                  className="h-8 text-sm bg-background/50"
                 />
-                <span className="text-xs text-muted-foreground">segundos</span>
+                <span className="text-[10px] text-muted-foreground shrink-0">s</span>
               </div>
-              <p className="text-[10px] text-muted-foreground/60">Mínimo: 5 segundos</p>
+              <div className="flex items-center gap-2 flex-1">
+                <Label className="text-[11px] text-muted-foreground shrink-0 w-8">Máx</Label>
+                <Input
+                  type="number"
+                  min={item.delay_min ?? 5}
+                  value={item.delay_max ?? item.delay_seconds ?? 10}
+                  onChange={(e) => {
+                    const min = item.delay_min ?? 5;
+                    const v = Math.max(min, parseInt(e.target.value) || min);
+                    onUpdate("delay_max", v);
+                  }}
+                  className="h-8 text-sm bg-background/50"
+                />
+                <span className="text-[10px] text-muted-foreground shrink-0">s</span>
+              </div>
             </div>
+            <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1.5">
+              <Shuffle size={10} className="shrink-0" />
+              O sistema escolherá um tempo aleatório entre o mínimo e o máximo
+            </p>
           </div>
         )}
       </div>
     </div>
   );
+}
+
+// ===== Helper: compute send groups =====
+function computeGroups(contents: ContentItem[]): number[] {
+  // Assign a group number to each item. Items separated by a delay belong to different groups.
+  // Delay items themselves get their own "separator" group (rendered differently).
+  const groups: number[] = [];
+  let g = 1;
+  for (let i = 0; i < contents.length; i++) {
+    if (contents[i].type === "delay") {
+      groups.push(-1); // separator marker
+      g++;
+    } else {
+      groups.push(g);
+    }
+  }
+  return groups;
 }
 
 // ===== MAIN COMPONENT =====
@@ -503,7 +542,6 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
 
-  // Initialize contents array from config
   const contents: ContentItem[] = config.contents || [];
 
   const setContents = (newContents: ContentItem[]) => {
@@ -545,7 +583,7 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
     const newItem: ContentItem = {
       id: `${type}-${Date.now()}`,
       type,
-      ...(type === "delay" ? { delay_seconds: 5 } : {}),
+      ...(type === "delay" ? { delay_min: 5, delay_max: 15 } : {}),
     };
     setContents([...contents, newItem]);
   };
@@ -556,7 +594,6 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
 
   const removeItem = (id: string) => {
     const item = contents.find(c => c.id === id);
-    // Cleanup storage if media
     if (item?.media_url) {
       try {
         const bucket = "wa-flow-media";
@@ -567,6 +604,14 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
     }
     setContents(contents.filter(c => c.id !== id));
   };
+
+  const groups = computeGroups(contents);
+  // Build content number (only non-delay items are numbered)
+  let contentNum = 0;
+  const contentNumbers = contents.map(c => {
+    if (c.type !== "delay") { contentNum++; return contentNum; }
+    return -1;
+  });
 
   return (
     <div className="space-y-4">
@@ -601,28 +646,80 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
 
       {/* Content items list */}
       {contents.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 mb-2">
             <div className="w-1 h-4 rounded-full bg-primary" />
             <Label className="text-xs font-medium">Conteúdos ({contents.length})</Label>
           </div>
-          <p className="text-[10px] text-muted-foreground/60">Enviados na ordem de cima para baixo</p>
-          <div className="space-y-2">
-            {contents.map((item, index) => (
-              <div key={item.id} className="relative">
-                <div className="absolute -left-5 top-3 text-[9px] text-muted-foreground/40 font-mono">
-                  {index + 1}
+          <p className="text-[10px] text-muted-foreground/60 mb-3">
+            Conteúdos contínuos são enviados juntos. Adicione delay para separar envios.
+          </p>
+          <div className="space-y-1.5">
+            {contents.map((item, index) => {
+              const isDelay = item.type === "delay";
+              const num = contentNumbers[index];
+
+              // Check if this starts a new send group
+              const prevIsDelay = index > 0 && contents[index - 1].type === "delay";
+              const isFirstInGroup = index === 0 || prevIsDelay;
+              const nextIsDelay = index < contents.length - 1 && contents[index + 1].type === "delay";
+              const isLastInGroup = index === contents.length - 1 || nextIsDelay;
+
+              if (isDelay) {
+                return (
+                  <div key={item.id} className="relative py-1">
+                    {/* Delay separator line */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-px bg-border/40" />
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/30 border border-border/30">
+                        <Clock size={10} className="text-muted-foreground/60" />
+                        <span className="text-[9px] text-muted-foreground/60 font-mono">
+                          {item.delay_min ?? item.delay_seconds ?? 5}s – {item.delay_max ?? item.delay_seconds ?? 10}s
+                        </span>
+                      </div>
+                      <div className="flex-1 h-px bg-border/40" />
+                    </div>
+                    {/* Hidden editor - click to expand */}
+                    <div className="mt-1.5">
+                      <ContentItemEditor
+                        item={item}
+                        onUpdate={(key, value) => updateItem(item.id, key, value)}
+                        onRemove={() => removeItem(item.id)}
+                        uploading={uploading}
+                        onUpload={uploadFile}
+                        onAudioRecorded={handleAudioRecorded}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={item.id} className="relative flex items-start gap-2.5">
+                  {/* Green numbered circle */}
+                  <div className="flex flex-col items-center pt-3 shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+                      <span className="text-[10px] font-bold text-emerald-400">{num}</span>
+                    </div>
+                    {/* Connecting line to next item in same group */}
+                    {!isLastInGroup && (
+                      <div className="w-px h-full min-h-[8px] bg-emerald-500/20 mt-1" />
+                    )}
+                  </div>
+                  {/* Card */}
+                  <div className="flex-1 min-w-0">
+                    <ContentItemEditor
+                      item={item}
+                      onUpdate={(key, value) => updateItem(item.id, key, value)}
+                      onRemove={() => removeItem(item.id)}
+                      uploading={uploading}
+                      onUpload={uploadFile}
+                      onAudioRecorded={handleAudioRecorded}
+                    />
+                  </div>
                 </div>
-                <ContentItemEditor
-                  item={item}
-                  onUpdate={(key, value) => updateItem(item.id, key, value)}
-                  onRemove={() => removeItem(item.id)}
-                  uploading={uploading}
-                  onUpload={uploadFile}
-                  onAudioRecorded={handleAudioRecorded}
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
