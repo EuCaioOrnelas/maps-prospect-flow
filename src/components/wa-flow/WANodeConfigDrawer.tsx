@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
 import type { Node } from "@xyflow/react";
+import { cn } from "@/lib/utils";
 
 
 function GoogleConnectionBlock({ isConnected, googleToken, isConnecting, handleConnect, handleDisconnect, label }: {
