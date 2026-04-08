@@ -1267,6 +1267,8 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                   </div>
                 </div>
               )}
+                </>
+              )}
             </div>
           )}
 
