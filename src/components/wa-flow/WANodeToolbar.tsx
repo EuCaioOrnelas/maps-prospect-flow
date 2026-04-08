@@ -16,8 +16,8 @@ const nodeButtons = [
   { type: "condition", icon: GitBranch, label: "Condição", color: "text-purple-400" },
   { type: "wait", icon: Clock, label: "Espera", color: "text-amber-400" },
   { type: "action", icon: Settings, label: "Ação", color: "text-cyan-400" },
-  { type: "handoff", icon: HeadphonesIcon, label: "Handoff", color: "text-orange-400" },
-  { type: "end", icon: CircleStop, label: "Fim", color: "text-red-400" },
+  { type: "handoff", icon: HeadphonesIcon, label: "Humano", color: "text-orange-400" },
+  { type: "end", icon: CircleStop, label: "Encerramento", color: "text-red-400" },
 ];
 
 export function WANodeToolbar({ onAddNode }: WANodeToolbarProps) {
