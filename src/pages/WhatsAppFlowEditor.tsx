@@ -502,9 +502,11 @@ export default function WhatsAppFlowEditor() {
     return (entryNode.data as any).config || {};
   }, [nodes]);
 
-  // Auto-block buttons nodes when using Evolution API
+  // Auto-block buttons nodes when using Evolution API (only if a number is actually configured)
   useEffect(() => {
+    const hasNumberConfigured = !!entryConfig.whatsapp_number_id;
     const isEvolution = entryApiType === "evolution";
+    const shouldBlock = isEvolution && hasNumberConfigured;
     const buttonNodes = nodes.filter((n) => n.type === "buttons");
     if (buttonNodes.length === 0) return;
 
@@ -513,11 +515,11 @@ export default function WhatsAppFlowEditor() {
       if (n.type !== "buttons") return n;
       const cfg = (n.data as any).config || {};
       const currentlyBlocked = cfg._blocked_evolution === true;
-      if (isEvolution && !currentlyBlocked) {
+      if (shouldBlock && !currentlyBlocked) {
         nodesChanged = true;
         return { ...n, data: { ...n.data, config: { ...cfg, _blocked_evolution: true } } };
       }
-      if (!isEvolution && currentlyBlocked) {
+      if (!shouldBlock && currentlyBlocked) {
         nodesChanged = true;
         const { _blocked_evolution, ...rest } = cfg;
         return { ...n, data: { ...n.data, config: rest } };
@@ -530,7 +532,7 @@ export default function WhatsAppFlowEditor() {
       setHasChanges(true);
     }
 
-    if (isEvolution) {
+    if (shouldBlock) {
       const buttonIds = new Set(buttonNodes.map((n) => n.id));
       const newEdges = edges.filter((e) => !buttonIds.has(e.source) && !buttonIds.has(e.target));
       if (newEdges.length !== edges.length) {
@@ -538,7 +540,7 @@ export default function WhatsAppFlowEditor() {
         setHasChanges(true);
       }
     }
-  }, [entryApiType, nodes.length]); // trigger on api change AND when nodes are added/removed
+  }, [entryApiType, entryConfig.whatsapp_number_id, nodes.length]);
 
   const saveFlow = useMutation({
     mutationFn: async () => {
