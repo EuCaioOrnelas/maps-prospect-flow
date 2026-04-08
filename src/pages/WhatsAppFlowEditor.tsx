@@ -13,7 +13,6 @@ import {
   type Connection,
   type Edge,
   type Node,
-  MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Button } from "@/components/ui/button";
@@ -105,8 +104,7 @@ const nodeTypes = {
 const defaultEdgeOptions = {
   animated: false,
   type: "default" as const,
-  style: { strokeWidth: 2, stroke: "hsl(var(--border))" },
-  markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(158, 72%, 38%)", width: 16, height: 16 },
+  style: { strokeWidth: 2, stroke: "hsl(var(--border))", strokeLinecap: "round" as const },
 };
 
 const sidebarCategories = [

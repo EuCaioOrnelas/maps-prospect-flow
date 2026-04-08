@@ -1,4 +1,5 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Position, type NodeProps } from "@xyflow/react";
+import { FlowHandle } from "./FlowHandle";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import gmailIcon from "@/assets/icons/gmail.png";
 
@@ -9,7 +10,7 @@ export function WAGmailNode({ data }: NodeProps) {
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm w-52 relative">
-      <Handle type="target" position={Position.Left} />
+      <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
         <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
           <img src={gmailIcon} alt="Gmail" className="w-5 h-5 object-contain" />
@@ -42,7 +43,7 @@ export function WAGmailNode({ data }: NodeProps) {
         </div>
       )}
 
-      <Handle type="source" position={Position.Right} />
+      <FlowHandle type="source" position={Position.Right} />
     </div>
   );
 }
