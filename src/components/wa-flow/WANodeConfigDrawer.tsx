@@ -1977,24 +1977,22 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Nome da variável</Label>
-                <div className="flex items-center gap-1">
-                  <span className="text-sm text-muted-foreground">{"{"}</span>
-                  <Input
-                    value={config.variable_name || ""}
-                    onChange={(e) => updateConfig("variable_name", e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))}
-                    placeholder="nome_do_lead"
-                    className="h-9 text-sm font-mono flex-1"
-                    maxLength={30}
-                  />
-                  <span className="text-sm text-muted-foreground">{"}"}</span>
+              {/* AI Explanation */}
+              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/20">
+                <Info size={14} className="text-primary shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-[11px] text-primary font-medium">🤖 Como a IA funciona aqui</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Com base no <span className="font-semibold text-foreground">tipo de informação</span> selecionado acima, a IA vai analisar a resposta do lead, identificar o dado correspondente e armazená-lo na variável configurada. A IA não responde nada ao lead — apenas extrai a informação silenciosamente.
+                  </p>
                 </div>
-                <p className="text-[10px] text-muted-foreground">Use essa variável nos próximos blocos. Ex: {"{nome_do_lead}"}</p>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-medium">Conteúdo da pergunta</Label>
+                <div className="flex items-center gap-2">
+                  <MessageSquare size={14} className="text-muted-foreground" />
+                  <Label className="text-xs font-medium">Conteúdo da pergunta</Label>
+                </div>
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     {[
@@ -2031,11 +2029,14 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                     </div>
                   )}
                 </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Você pode usar variáveis como {"{nome}"}, {"{empresa}"}, {"{telefone}"} e também as criadas por você em outros blocos de coleta.
+                </p>
               </div>
 
               <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs font-medium">Smart Delay</Label>
+                  <Label className="text-xs font-medium">Delay inteligente</Label>
                   <Switch
                     checked={config.use_delay || false}
                     onCheckedChange={(v) => updateConfig("use_delay", v)}
@@ -2088,6 +2089,22 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                   placeholder="Desculpe, não entendi. Poderia repetir?"
                   className="h-9 text-sm"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Nome da variável</Label>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-muted-foreground">{"{"}</span>
+                  <Input
+                    value={config.variable_name || ""}
+                    onChange={(e) => updateConfig("variable_name", e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))}
+                    placeholder="nome_do_lead"
+                    className="h-9 text-sm font-mono flex-1"
+                    maxLength={30}
+                  />
+                  <span className="text-sm text-muted-foreground">{"}"}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground">Use essa variável nos próximos blocos. Ex: {"{nome_do_lead}"}</p>
               </div>
             </div>
           )}
