@@ -394,7 +394,7 @@ export default function WhatsAppFlowEditor() {
       const nameMap: Record<string, string> = {
         entry: "Entrada", message: "Mensagem", buttons: "Botões",
         condition: "Condição", wait: "Espera", action: "Ação",
-        handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
+        handoff: "Humano", end: "Encerramento", ai_agent: "Agente IA",
         ab_test: "Teste A/B", random_split: "Random Split",
         google_sheets: "Google Sheets", google_calendar: "Google Agenda", gmail: "Gmail",
         data_collect: "Coleta de Dados",
@@ -822,7 +822,7 @@ export default function WhatsAppFlowEditor() {
             const nameMap: Record<string, string> = {
               entry: "Entrada", message: "Mensagem", buttons: "Botões",
               condition: "Condição", wait: "Espera", action: "Ação",
-              handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
+              handoff: "Humano", end: "Encerramento", ai_agent: "Agente IA",
               ab_test: "Teste A/B", random_split: "Random Split",
               data_collect: "Coleta de Dados",
               google_sheets: "Google Sheets", google_calendar: "Google Agenda", gmail: "Gmail",
