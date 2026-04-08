@@ -603,15 +603,33 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
   const [reopenTemplates, setReopenTemplates] = useState<any[]>([]);
   const [tokenExpired, setTokenExpired] = useState(false);
 
+  // Fetch numbers - only connected
   const { data: numbers = [] } = useQuery({
     queryKey: ["wa-numbers-for-flow"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: nums } = await supabase
         .from("whatsapp_numbers")
         .select("id, phone_number, name, api_tier, is_connected")
         .eq("user_id", user!.id)
         .eq("is_connected", true);
-      return data || [];
+      
+      // For Meta numbers, also verify WABA connection is active
+      const { data: wabaConns } = await supabase
+        .from("user_waba_connections")
+        .select("id, status, phone_number_id")
+        .eq("user_id", user!.id)
+        .eq("status", "active");
+      
+      const activeWabaIds = new Set((wabaConns || []).map((c: any) => c.id));
+      
+      return (nums || []).filter((n: any) => {
+        const nIsMeta = n.api_tier === "paid" || n.api_tier === "meta";
+        if (nIsMeta) {
+          // Meta numbers need an active WABA connection
+          return activeWabaIds.size > 0;
+        }
+        return true; // Evolution numbers just need is_connected
+      });
     },
     enabled: !!user,
   });
@@ -693,9 +711,6 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
     t.name?.toLowerCase().includes(templateSearch.toLowerCase())
   );
 
-  // Generate webhook URL
-  const flowId = typeof window !== "undefined" ? window.location.pathname.split("/").pop() : "";
-  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/evolution-webhook`;
 
   return (
     <div className="space-y-4">
@@ -837,7 +852,6 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           <SelectContent>
             <SelectItem value="keyword">Palavra-chave</SelectItem>
             <SelectItem value="campaign_reply">Resposta de campanha</SelectItem>
-            <SelectItem value="webhook">Webhook / API externa</SelectItem>
             <SelectItem value="first_message">1ª mensagem recebida</SelectItem>
           </SelectContent>
         </Select>
@@ -903,87 +917,6 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
         </div>
       )}
 
-      {/* Webhook config */}
-      {config.trigger_type === "webhook" && (
-        <div className="space-y-3">
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">URL do Webhook</Label>
-            <div className="flex gap-2">
-              <Input
-                value={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-webhook`}
-                readOnly
-                className="h-9 text-[10px] font-mono bg-muted/30 flex-1"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 text-[10px] shrink-0"
-                onClick={() => {
-                  navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-webhook`);
-                }}
-              >
-                Copiar
-              </Button>
-            </div>
-            <p className="text-[10px] text-muted-foreground">
-              Copie esta URL e configure na sua ferramenta externa (n8n, Make, Zapier, etc.) como destino do webhook.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Identificador do fluxo</Label>
-            <Input
-              value={flowId || ""}
-              readOnly
-              className="h-8 text-[10px] font-mono bg-muted/30"
-            />
-            <p className="text-[10px] text-muted-foreground">
-              Envie este ID no campo <span className="font-mono bg-muted px-1 rounded">flow_id</span> do payload.
-            </p>
-          </div>
-
-          <div className="space-y-1.5 p-3 rounded-lg bg-muted/30 border border-border/30">
-            <p className="text-[10px] font-medium text-foreground">Exemplo de payload (POST JSON):</p>
-            <pre className="text-[9px] text-muted-foreground font-mono bg-background/80 rounded p-2.5 overflow-x-auto whitespace-pre">
-{`POST ${import.meta.env.VITE_SUPABASE_URL?.replace('https://', '').slice(0, 20)}...
-Content-Type: application/json
-Authorization: Bearer <ANON_KEY>
-
-{
-  "flow_id": "${flowId || "id-do-fluxo"}",
-  "phone": "5511999999999",
-  "name": "João Silva",
-  "email": "joao@email.com",
-  "custom_data": {
-    "origem": "landing-page",
-    "produto": "plano-pro"
-  }
-}`}
-            </pre>
-          </div>
-
-          <div className="space-y-1.5 p-2.5 rounded-lg bg-primary/5 border border-primary/20">
-            <p className="text-[10px] font-medium text-primary">Campos obrigatórios:</p>
-            <div className="text-[9px] text-muted-foreground space-y-0.5">
-              <p>• <span className="font-mono font-medium text-foreground">flow_id</span> — ID deste fluxo (acima)</p>
-              <p>• <span className="font-mono font-medium text-foreground">phone</span> — Telefone do lead (formato E.164)</p>
-            </div>
-            <p className="text-[10px] font-medium text-primary mt-2">Campos opcionais:</p>
-            <div className="text-[9px] text-muted-foreground space-y-0.5">
-              <p>• <span className="font-mono">name</span> — Nome do lead</p>
-              <p>• <span className="font-mono">email</span> — Email do lead</p>
-              <p>• <span className="font-mono">custom_data</span> — Dados extras (objeto)</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2 p-2 rounded-lg bg-muted/20 border border-border/30">
-            <Info size={12} className="text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-[9px] text-muted-foreground leading-relaxed">
-              O header <span className="font-mono">Authorization</span> deve conter o token anon do projeto. Todas as variáveis enviadas em <span className="font-mono">custom_data</span> ficam disponíveis nos blocos seguintes.
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* First message config */}
       {config.trigger_type === "first_message" && (
