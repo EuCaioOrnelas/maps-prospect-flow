@@ -800,6 +800,8 @@ export default function WhatsAppFlowEditor() {
             node={selectedNode}
             onUpdate={handleUpdateNodeConfig}
             onDelete={handleDeleteNode}
+            entryApiType={entryApiType}
+            entryConfig={entryConfig}
           />
         )}
       </div>
