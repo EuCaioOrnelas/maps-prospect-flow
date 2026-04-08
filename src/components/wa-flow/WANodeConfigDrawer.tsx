@@ -1010,8 +1010,8 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
-          <div className="flex-1 min-w-0 mr-3 group/name">
+        <div className="flex items-center gap-2 px-5 py-3 border-b border-border shrink-0">
+          <div className="flex-1 min-w-0">
             <Input
               value={label}
               onChange={(e) => {
@@ -1021,11 +1021,11 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
               className="h-8 text-base font-semibold border-transparent bg-transparent px-1 hover:border-border focus:border-border transition-colors peer"
               placeholder="Nome do bloco"
             />
-            <span className="text-[10px] text-muted-foreground/40 px-1 hidden peer-focus:inline">{label.length}/30</span>
+            <span className="text-[10px] text-muted-foreground/40 px-1 opacity-0 peer-focus:opacity-100 transition-opacity">{label.length}/30</span>
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors shrink-0"
+            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors shrink-0 z-10"
           >
             <X size={16} className="text-muted-foreground" />
           </button>
