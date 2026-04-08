@@ -209,7 +209,7 @@ const Login = () => {
             <p className="text-center text-muted-foreground mt-4 sm:mt-6 text-xs sm:text-sm">
               Não tem uma conta?{" "}
               <Link to="/signup" className="text-primary hover:underline">
-                Criar conta grátis
+                Criar conta
               </Link>
             </p>
           </div>
