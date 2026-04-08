@@ -3950,34 +3950,46 @@ export type Database = {
       }
       wa_automation_flows: {
         Row: {
+          api_type: string | null
           created_at: string
           description: string | null
           id: string
           name: string
+          phone_number_id: string | null
           status: Database["public"]["Enums"]["wa_flow_status"]
           updated_at: string
           user_id: string
           version: number
+          waba_connection_id: string | null
+          whatsapp_number_id: string | null
         }
         Insert: {
+          api_type?: string | null
           created_at?: string
           description?: string | null
           id?: string
           name?: string
+          phone_number_id?: string | null
           status?: Database["public"]["Enums"]["wa_flow_status"]
           updated_at?: string
           user_id: string
           version?: number
+          waba_connection_id?: string | null
+          whatsapp_number_id?: string | null
         }
         Update: {
+          api_type?: string | null
           created_at?: string
           description?: string | null
           id?: string
           name?: string
+          phone_number_id?: string | null
           status?: Database["public"]["Enums"]["wa_flow_status"]
           updated_at?: string
           user_id?: string
           version?: number
+          waba_connection_id?: string | null
+          whatsapp_number_id?: string | null
         }
         Relationships: []
       }

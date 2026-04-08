@@ -746,6 +746,9 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             updateConfig("whatsapp_number_id", v);
             updateConfig("whatsapp_number_name", num?.name || num?.display_phone_number || num?.phone_number || "");
             updateConfig("api_type", numIsMeta ? "meta" : "evolution");
+            updateConfig("waba_connection_id", num?.waba_connection_id || null);
+            updateConfig("phone_number_id", num?.phone_number_id || null);
+            updateConfig("source_id", num?.source_id || null);
             updateConfig("reopen_template_name", "");
           }}
         >
@@ -958,9 +961,11 @@ interface Props {
   node: Node;
   onUpdate: (nodeId: string, config: any, label?: string) => void;
   onDelete: (nodeId: string) => void;
+  entryApiType?: string;
+  entryConfig?: any;
 }
 
-export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete }: Props) {
+export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete, entryApiType = "evolution", entryConfig = {} }: Props) {
   const [config, setConfig] = useState<any>({});
   const [label, setLabel] = useState("");
 
@@ -994,6 +999,37 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
       <p className="text-[11px] text-muted-foreground leading-relaxed">{text}</p>
     </div>
   );
+
+  const isMeta = entryApiType === "meta";
+  const isEvolution = entryApiType === "evolution";
+  const noEntryConfigured = !entryConfig.whatsapp_number_id;
+
+  const renderApiIndicator = () => {
+    if (node.type === "entry") return null;
+    if (noEntryConfigured) {
+      return (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-[10px] text-amber-500 leading-relaxed">
+            <span className="font-semibold">Nenhum número configurado.</span> Configure o bloco de Entrada para definir qual API será usada.
+          </p>
+        </div>
+      );
+    }
+    return (
+      <div className={cn(
+        "flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-medium",
+        isMeta
+          ? "bg-primary/5 border-primary/20 text-primary"
+          : "bg-amber-500/5 border-amber-500/20 text-amber-500"
+      )}>
+        <div className={cn("w-2 h-2 rounded-full", isMeta ? "bg-primary" : "bg-amber-500")} />
+        {isMeta ? "API Inbound (Meta Oficial)" : "API Outbound (Evolution)"}
+        {isMeta && <span className="text-muted-foreground ml-auto">→ send-chat-message</span>}
+        {isEvolution && <span className="text-muted-foreground ml-auto">→ evolution-send-message</span>}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -1042,6 +1078,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== MESSAGE NODE ===== */}
           {node.type === "message" && (
             <div className="space-y-4">
+              {renderApiIndicator()}
               {renderInfoBanner("Configure o conteúdo da mensagem: texto, imagem, áudio, vídeo ou documento.")}
               <MessageContentBuilder config={config} updateConfig={updateConfig} />
             </div>
@@ -1050,6 +1087,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== BUTTONS NODE ===== */}
           {node.type === "buttons" && (
             <div className="space-y-4">
+              {renderApiIndicator()}
               {renderInfoBanner("Botões interativos da WhatsApp API. Até 3 botões de resposta rápida ou 1 lista com até 10 opções.")}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Tipo de interação</Label>
@@ -1511,6 +1549,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== HANDOFF NODE ===== */}
           {node.type === "handoff" && (
             <div className="space-y-4">
+              {renderApiIndicator()}
               {renderInfoBanner("Transfere a conversa para atendimento humano e pausa a automação neste lead.")}
               <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
                 <div className="flex items-center gap-2">
@@ -1556,6 +1595,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== END NODE ===== */}
           {node.type === "end" && (
             <div className="space-y-4">
+              {renderApiIndicator()}
               {renderInfoBanner("Encerra o fluxo para este lead. Opcionalmente envie uma mensagem final.")}
               <div className="space-y-2">
                 <Label className="text-xs">Mensagem de encerramento (opcional)</Label>
@@ -1579,6 +1619,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== AI AGENT NODE ===== */}
           {node.type === "ai_agent" && (
             <div className="space-y-4">
+              {renderApiIndicator()}
               {renderInfoBanner("Configure um agente de IA que analisa a resposta do lead e decide o próximo passo automaticamente.")}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Prompt do sistema (instrução para a IA)</Label>
