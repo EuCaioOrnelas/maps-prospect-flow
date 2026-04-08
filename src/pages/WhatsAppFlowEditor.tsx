@@ -336,8 +336,9 @@ export default function WhatsAppFlowEditor() {
     setEdges(mappedEdges);
 
     if (mappedNodes.length > 0 || mappedEdges.length > 0) {
-      setHistory([{ nodes: JSON.parse(JSON.stringify(mappedNodes)), edges: JSON.parse(JSON.stringify(mappedEdges)) }]);
-      setHistoryIndex(0);
+      historyRef.current = [{ nodes: JSON.parse(JSON.stringify(mappedNodes)), edges: JSON.parse(JSON.stringify(mappedEdges)) }];
+      historyIndexRef.current = 0;
+      forceHistoryRender((v) => v + 1);
     }
   }, [dbNodes, dbEdges, setEdges, setNodes]);
 
