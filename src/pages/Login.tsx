@@ -184,6 +184,28 @@ const Login = () => {
               </Button>
             </form>
 
+            <div className="flex items-center gap-3 my-4">
+              <Separator className="flex-1" />
+              <span className="text-xs text-muted-foreground">ou</span>
+              <Separator className="flex-1" />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full h-11 sm:h-12 text-sm sm:text-base gap-3 border-border rounded-full"
+              onClick={handleGoogleSignIn}
+              disabled={isGoogleLoading}
+            >
+              {isGoogleLoading ? (
+                <Loader2 className="animate-spin" size={18} />
+              ) : (
+                <img src={googleLogo} alt="Google" className="w-7 h-7" />
+              )}
+              Entrar com Google
+            </Button>
+
             <p className="text-center text-muted-foreground mt-4 sm:mt-6 text-xs sm:text-sm">
               Não tem uma conta?{" "}
               <Link to="/signup" className="text-primary hover:underline">
