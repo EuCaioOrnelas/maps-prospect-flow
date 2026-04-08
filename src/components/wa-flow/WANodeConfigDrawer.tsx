@@ -1333,7 +1333,7 @@ function EndNodeConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
   );
 }
 
-
+function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndicator }: {
   config: any;
   updateConfig: (k: string, v: any) => void;
   renderInfoBanner: (t: string) => JSX.Element;
