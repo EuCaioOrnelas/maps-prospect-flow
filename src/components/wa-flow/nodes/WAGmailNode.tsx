@@ -34,7 +34,10 @@ export function WAGmailNode({ data }: NodeProps) {
       {isConfigured && (
         <div className="px-3 py-2">
           <p className="text-[10px] text-muted-foreground truncate">✉️ {cfg.email_subject || "Email configurado"}</p>
-          <p className="text-[9px] text-muted-foreground truncate mt-0.5">📧 {cfg.email_to}</p>
+          <p className="text-[9px] text-muted-foreground truncate mt-0.5">📧 Para: {cfg.email_to}</p>
+          {cfg.email_cc && (
+            <p className="text-[9px] text-muted-foreground truncate mt-0.5">📋 CC: {cfg.email_cc}</p>
+          )}
         </div>
       )}
 
