@@ -1033,6 +1033,8 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
   const [showDocs, setShowDocs] = useState(false);
   const [showContextInfo, setShowContextInfo] = useState(false);
   const [creatingCred, setCreatingCred] = useState(false);
+  const [showCredSection, setShowCredSection] = useState(false);
+  const [showAgentSection, setShowAgentSection] = useState(false);
   const [creatingAgent, setCreatingAgent] = useState(false);
   const [editingAgent, setEditingAgent] = useState<any>(null);
   const [agentForm, setAgentForm] = useState<any>({});
