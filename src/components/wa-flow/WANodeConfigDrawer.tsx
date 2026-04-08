@@ -962,7 +962,7 @@ interface Props {
   entryConfig?: any;
 }
 
-export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete }: Props) {
+export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete, entryApiType = "evolution", entryConfig = {} }: Props) {
   const [config, setConfig] = useState<any>({});
   const [label, setLabel] = useState("");
 
