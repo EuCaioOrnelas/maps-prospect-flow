@@ -2,7 +2,7 @@ import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
 import { Clock } from "lucide-react";
 
-const unitLabels: Record<string, string> = { minutes: "min", hours: "h", days: "dias" };
+const unitLabels: Record<string, string> = { minutes: "min", hours: "h", days: "dias", weeks: "sem" };
 
 export function WAWaitNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
@@ -20,7 +20,7 @@ export function WAWaitNode({ data }: NodeProps) {
           {isConfigured ? (
             <p className="text-[10px] text-muted-foreground">
               {cfg.delay_value} {unitLabels[cfg.delay_unit] || cfg.delay_unit}
-              {cfg.smart && " (inteligente)"}
+              {cfg.smart !== false && " (inteligente)"}
             </p>
           ) : (
             <p className="text-[10px] text-muted-foreground/60 italic">Definir tempo</p>
