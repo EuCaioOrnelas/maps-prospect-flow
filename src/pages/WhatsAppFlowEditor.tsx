@@ -213,6 +213,10 @@ export default function WhatsAppFlowEditor() {
   const queryClient = useQueryClient();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const nodesRef = useRef<Node[]>([]);
+  const edgesRef = useRef<Edge[]>([]);
+  nodesRef.current = nodes;
+  edgesRef.current = edges;
   const [flowName, setFlowName] = useState("Novo Fluxo");
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -226,41 +230,44 @@ export default function WhatsAppFlowEditor() {
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
   const [edgeToDelete, setEdgeToDelete] = useState<string | null>(null);
 
-  // Undo/Redo history
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  // Undo/Redo history – use refs to avoid stale closures
+  const historyRef = useRef<HistoryEntry[]>([]);
+  const historyIndexRef = useRef(-1);
+  const [, forceHistoryRender] = useState(0);
   const isUndoRedo = useRef(false);
 
   const pushHistory = useCallback((n: Node[], e: Edge[]) => {
     if (isUndoRedo.current) { isUndoRedo.current = false; return; }
-    setHistory((prev) => {
-      const truncated = prev.slice(0, historyIndex + 1);
-      const next = [...truncated, { nodes: JSON.parse(JSON.stringify(n)), edges: JSON.parse(JSON.stringify(e)) }];
-      if (next.length > 50) next.shift();
-      return next;
-    });
-    setHistoryIndex((prev) => Math.min(prev + 1, 49));
-  }, [historyIndex]);
+    const truncated = historyRef.current.slice(0, historyIndexRef.current + 1);
+    const entry: HistoryEntry = { nodes: JSON.parse(JSON.stringify(n)), edges: JSON.parse(JSON.stringify(e)) };
+    truncated.push(entry);
+    if (truncated.length > 50) truncated.shift();
+    historyRef.current = truncated;
+    historyIndexRef.current = truncated.length - 1;
+    forceHistoryRender((v) => v + 1);
+  }, []);
 
   const undo = useCallback(() => {
-    if (historyIndex <= 0) return;
+    if (historyIndexRef.current <= 0) return;
     isUndoRedo.current = true;
-    const prev = history[historyIndex - 1];
-    setNodes(prev.nodes);
-    setEdges(prev.edges);
-    setHistoryIndex((i) => i - 1);
+    historyIndexRef.current -= 1;
+    const prev = historyRef.current[historyIndexRef.current];
+    setNodes(JSON.parse(JSON.stringify(prev.nodes)));
+    setEdges(JSON.parse(JSON.stringify(prev.edges)));
     setHasChanges(true);
-  }, [history, historyIndex, setNodes, setEdges]);
+    forceHistoryRender((v) => v + 1);
+  }, [setNodes, setEdges]);
 
   const redo = useCallback(() => {
-    if (historyIndex >= history.length - 1) return;
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
     isUndoRedo.current = true;
-    const next = history[historyIndex + 1];
-    setNodes(next.nodes);
-    setEdges(next.edges);
-    setHistoryIndex((i) => i + 1);
+    historyIndexRef.current += 1;
+    const next = historyRef.current[historyIndexRef.current];
+    setNodes(JSON.parse(JSON.stringify(next.nodes)));
+    setEdges(JSON.parse(JSON.stringify(next.edges)));
     setHasChanges(true);
-  }, [history, historyIndex, setNodes, setEdges]);
+    forceHistoryRender((v) => v + 1);
+  }, [setNodes, setEdges]);
 
   // Fetch flow data
   const { data: flow, isLoading } = useQuery({
@@ -333,8 +340,9 @@ export default function WhatsAppFlowEditor() {
     setEdges(mappedEdges);
 
     if (mappedNodes.length > 0 || mappedEdges.length > 0) {
-      setHistory([{ nodes: JSON.parse(JSON.stringify(mappedNodes)), edges: JSON.parse(JSON.stringify(mappedEdges)) }]);
-      setHistoryIndex(0);
+      historyRef.current = [{ nodes: JSON.parse(JSON.stringify(mappedNodes)), edges: JSON.parse(JSON.stringify(mappedEdges)) }];
+      historyIndexRef.current = 0;
+      forceHistoryRender((v) => v + 1);
     }
   }, [dbNodes, dbEdges, setEdges, setNodes]);
 
@@ -671,10 +679,10 @@ export default function WhatsAppFlowEditor() {
         <div className="h-6 w-px bg-border mx-1" />
 
         {/* Undo/Redo */}
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndex <= 0} title="Desfazer (Ctrl+Z)">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndexRef.current <= 0} title="Desfazer (Ctrl+Z)">
           <Undo2 size={15} />
         </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={historyIndex >= history.length - 1} title="Refazer (Ctrl+Y)">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={historyIndexRef.current >= historyRef.current.length - 1} title="Refazer (Ctrl+Y)">
           <Redo2 size={15} />
         </Button>
 
@@ -851,8 +859,10 @@ export default function WhatsAppFlowEditor() {
             onNodesChange={(changes) => {
               onNodesChange(changes);
               if (changes.some((c) => c.type === "position" && c.dragging === false)) {
-                pushHistory(nodes, edges);
-                setHasChanges(true);
+                setTimeout(() => {
+                  pushHistory(nodesRef.current, edgesRef.current);
+                  setHasChanges(true);
+                }, 0);
               }
             }}
             onEdgesChange={onEdgesChange}
