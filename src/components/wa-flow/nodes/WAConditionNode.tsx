@@ -35,6 +35,7 @@ export function WAConditionNode({ data }: NodeProps) {
 
   return (
     <div ref={nodeRef} className="bg-card border border-border rounded-xl shadow-sm w-52 relative">
+      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-muted-foreground !border-2 !border-card !rounded-full" />
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
         <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
@@ -68,8 +69,6 @@ export function WAConditionNode({ data }: NodeProps) {
         </div>
       </div>
 
-      {/* Only input handle on left + two output handles on right */}
-      <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-purple-400 !border-2 !border-card !rounded-full" />
       <Handle type="source" position={Position.Right} id="yes" className="!w-3 !h-3 !bg-primary !border-2 !border-card !rounded-full" style={{ top: `${yesTop}%` }} />
       <Handle type="source" position={Position.Right} id="no" className="!w-3 !h-3 !bg-destructive !border-2 !border-card !rounded-full" style={{ top: `${noTop}%` }} />
     </div>

@@ -9,6 +9,7 @@ export function WAGoogleSheetsNode({ data }: NodeProps) {
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm w-52 relative">
+      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-muted-foreground !border-2 !border-card !rounded-full" />
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
         <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
           <img src={sheetsIcon} alt="Google Sheets" className="w-5 h-5 object-contain" />
@@ -46,8 +47,7 @@ export function WAGoogleSheetsNode({ data }: NodeProps) {
         </div>
       )}
 
-      <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-green-500 !border-2 !border-card !rounded-full" />
-      <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-green-500 !border-2 !border-card !rounded-full" />
+      <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-primary !border-2 !border-card !rounded-full" />
     </div>
   );
 }

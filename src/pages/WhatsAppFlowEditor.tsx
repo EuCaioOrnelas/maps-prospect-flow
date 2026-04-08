@@ -103,9 +103,10 @@ const nodeTypes = {
 };
 
 const defaultEdgeOptions = {
-  animated: true,
-  style: { strokeWidth: 2, stroke: "hsl(158, 72%, 38%)" },
-  markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(158, 72%, 38%)" },
+  animated: false,
+  type: "default" as const,
+  style: { strokeWidth: 2, stroke: "hsl(var(--border))" },
+  markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(158, 72%, 38%)", width: 16, height: 16 },
 };
 
 const sidebarCategories = [

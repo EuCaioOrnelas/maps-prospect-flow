@@ -1,14 +1,11 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Zap, Phone, AlertTriangle } from "lucide-react";
+import { Zap, Phone, AlertTriangle, Radio, Wifi } from "lucide-react";
 
 const triggerLabels: Record<string, string> = {
   keyword: "Palavra-chave",
   campaign_reply: "Resposta campanha",
-  button_click: "Clique em botão",
   webhook: "Webhook/API",
-  qr_code: "QR Code",
   first_message: "1ª mensagem",
-  re_entry: "Reentrada",
 };
 
 export function WAEntryNode({ data }: NodeProps) {
@@ -17,9 +14,13 @@ export function WAEntryNode({ data }: NodeProps) {
   const numberName = cfg.whatsapp_number_name;
   const apiType = cfg.api_type; // "evolution" | "meta"
   const isEvolution = apiType === "evolution";
+  const isMeta = apiType === "meta";
 
   return (
-    <div className="bg-card border-2 border-primary/40 rounded-2xl shadow-[0_2px_16px_hsl(158,72%,38%,0.15)] w-56 backdrop-blur-sm">
+    <div className="bg-card border-2 border-primary/40 rounded-2xl shadow-[0_2px_16px_hsl(158,72%,38%,0.15)] w-60 backdrop-blur-sm">
+      {/* Target handle - top center */}
+      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-muted-foreground !border-2 !border-card !rounded-full" />
+
       <div className="flex items-center gap-2.5 px-4 py-3">
         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <Zap size={16} className="text-primary" />
@@ -38,7 +39,17 @@ export function WAEntryNode({ data }: NodeProps) {
         <div className="px-3 pb-2">
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground bg-muted/40 rounded-lg px-2 py-1.5">
             <Phone size={10} className="shrink-0" />
-            <span className="truncate">{numberName}</span>
+            <span className="truncate flex-1">{numberName}</span>
+            {isMeta && (
+              <span className="flex items-center gap-0.5 text-[8px] font-semibold text-primary bg-primary/10 rounded px-1 py-0.5 shrink-0">
+                <Wifi size={7} /> Inbound
+              </span>
+            )}
+            {isEvolution && (
+              <span className="flex items-center gap-0.5 text-[8px] font-semibold text-amber-500 bg-amber-500/10 rounded px-1 py-0.5 shrink-0">
+                <Radio size={7} /> Outbound
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -52,6 +63,15 @@ export function WAEntryNode({ data }: NodeProps) {
         </div>
       )}
 
+      {isMeta && cfg.reopen_template_name && (
+        <div className="px-3 pb-2">
+          <div className="text-[9px] text-primary bg-primary/5 border border-primary/20 rounded-lg px-2 py-1.5">
+            📋 Template reabertura: {cfg.reopen_template_name}
+          </div>
+        </div>
+      )}
+
+      {/* Source handle - right center, green */}
       <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-primary !border-2 !border-card !rounded-full" />
     </div>
   );
