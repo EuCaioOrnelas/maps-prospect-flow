@@ -595,14 +595,16 @@ export function WAFlowTestDialog({
                     <Bot className="h-4 w-4 text-muted-foreground" />
                   </div>
 
-                  <div className="bg-muted px-3 py-2 rounded-2xl rounded-bl-md text-sm whitespace-pre-wrap border border-border/60 min-w-[220px]">
-                    {message.meta && (
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">{message.meta}</p>
-                    )}
-                    <p>{message.content}</p>
+                  <div className="min-w-[220px]">
+                    <div className="bg-muted px-3 py-2 rounded-2xl rounded-bl-md text-sm whitespace-pre-wrap border border-border/60">
+                      {message.meta && (
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">{message.meta}</p>
+                      )}
+                      <p>{message.content}</p>
+                    </div>
 
                     {message.choices && message.choices.length > 0 && (
-                      <div className={cn("mt-3", message.choicesMode === "list" ? "space-y-2" : "flex flex-wrap gap-2") }>
+                      <div className={cn("mt-1.5", message.choicesMode === "list" ? "space-y-1.5" : "flex flex-wrap gap-1.5")}>
                         {message.choices.map((choice) => (
                           <button
                             key={choice.id}
@@ -610,15 +612,15 @@ export function WAFlowTestDialog({
                             onClick={() => message.nodeId && consumeInteractiveReply(message.nodeId, choice)}
                             disabled={!message.nodeId || awaitingNodeId !== message.nodeId || isRunning}
                             className={cn(
-                              "rounded-xl border border-border bg-background text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                              "rounded-xl border border-primary/30 bg-primary text-primary-foreground text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-[0_4px_16px_hsl(158_72%_38%_/_0.3)] hover:-translate-y-0.5 hover:bg-primary/90",
                               message.choicesMode === "list"
-                                ? "w-full px-3 py-2 hover:bg-accent"
-                                : "px-3 py-2 hover:bg-accent"
+                                ? "w-full px-3 py-2"
+                                : "px-3 py-2"
                             )}
                           >
-                            <p className="text-sm font-medium text-foreground">{choice.title}</p>
+                            <p className="text-sm font-medium">{choice.title}</p>
                             {choice.description && (
-                              <p className="text-xs text-muted-foreground mt-0.5">{choice.description}</p>
+                              <p className="text-xs text-primary-foreground/70 mt-0.5">{choice.description}</p>
                             )}
                           </button>
                         ))}
