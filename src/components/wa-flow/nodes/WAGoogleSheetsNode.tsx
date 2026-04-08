@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Sheet, CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
+import sheetsIcon from "@/assets/icons/google-sheets.png";
 
 export function WAGoogleSheetsNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
@@ -10,7 +11,7 @@ export function WAGoogleSheetsNode({ data }: NodeProps) {
     <div className="bg-card border border-border rounded-xl shadow-sm w-52 relative">
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
         <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
-          <Sheet size={16} className="text-green-500" />
+          <img src={sheetsIcon} alt="Google Sheets" className="w-5 h-5 object-contain" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground truncate">
