@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +36,7 @@ function GoogleConnectionBlock({ isConnected, googleToken, isConnecting, handleC
             {isConnecting ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
             {isConnecting ? "Conectando..." : `Conectar ${label}`}
           </Button>
-          <p className="text-[9px] text-muted-foreground/60 text-center">⚠️ O popup pode ser bloqueado no preview. Use em produção.</p>
+          
         </div>
       )}
     </div>
@@ -755,16 +754,32 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
   );
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[400px] sm:w-[440px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="text-base flex items-center gap-2">
-            Configurar Bloco
-            <Badge variant="outline" className="text-[10px] font-normal">Meta Partners</Badge>
-          </SheetTitle>
-        </SheetHeader>
+    <>
+      {/* Backdrop - click to close, no blur */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => onOpenChange(false)}
+        />
+      )}
+      <div
+        className={cn(
+          "fixed top-0 right-0 z-50 h-full w-[400px] sm:w-[440px] bg-card border-l border-border shadow-2xl flex flex-col transition-transform duration-300 ease-out",
+          open ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+          <h3 className="text-base font-semibold text-foreground">Configurar Bloco</h3>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
+          >
+            <X size={16} className="text-muted-foreground" />
+          </button>
+        </div>
 
-        <div className="space-y-5 mt-6">
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* Name */}
           <div className="space-y-2">
             <Label className="text-xs font-medium">Nome do bloco</Label>
@@ -1764,7 +1779,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
             </Button>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </div>
+    </>
   );
 }

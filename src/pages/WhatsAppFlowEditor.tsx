@@ -611,24 +611,34 @@ export default function WhatsAppFlowEditor() {
 
       {/* Main area */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Sidebar toggle button */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="absolute top-2 left-2 z-20 w-8 h-8 rounded-lg bg-card border border-border flex items-center justify-center hover:bg-muted transition-colors shadow-sm"
-          style={{ left: sidebarOpen ? "248px" : "8px" }}
-          title={sidebarOpen ? "Fechar painel" : "Abrir painel"}
-        >
-          {sidebarOpen ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
-        </button>
+        {/* Sidebar toggle button - only visible when sidebar is closed */}
+        {!sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="absolute top-2 left-2 z-20 w-8 h-8 rounded-lg bg-card border border-border flex items-center justify-center hover:bg-muted transition-colors shadow-sm"
+            title="Abrir painel"
+          >
+            <PanelLeftOpen size={14} />
+          </button>
+        )}
 
         {/* Sidebar */}
         <div className={cn(
-          "border-r border-border bg-card shrink-0 flex flex-col transition-all duration-200 overflow-hidden",
+          "border-r border-border bg-card shrink-0 flex flex-col transition-all duration-300 ease-out overflow-hidden",
           sidebarOpen ? "w-[240px]" : "w-0 border-r-0"
         )}>
-          <div className="px-4 py-3 border-b border-border/50 min-w-[240px]">
-            <p className="text-sm font-bold text-foreground">Blocos</p>
-            <p className="text-[10px] text-muted-foreground">Arraste ou clique para adicionar</p>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 min-w-[240px]">
+            <div>
+              <p className="text-sm font-bold text-foreground">Blocos</p>
+              <p className="text-[10px] text-muted-foreground">Arraste ou clique para adicionar</p>
+            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
+              title="Fechar painel"
+            >
+              <PanelLeftClose size={14} className="text-muted-foreground" />
+            </button>
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin min-w-[240px]">
             {sidebarCategories.map((cat) => {
