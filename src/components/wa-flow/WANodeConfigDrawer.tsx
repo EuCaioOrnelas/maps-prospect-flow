@@ -383,6 +383,7 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
 }
 
 
+function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
   const { user } = useAuth();
   const { data: numbers = [] } = useQuery({
     queryKey: ["wa-numbers-for-flow"],
