@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
-  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail,
+  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail, Database,
 } from "lucide-react";
 import gmailIcon from "@/assets/icons/gmail.png";
 import sheetsIcon from "@/assets/icons/google-sheets.png";
@@ -41,6 +41,7 @@ import { WARandomSplitNode } from "@/components/wa-flow/nodes/WARandomSplitNode"
 import { WAGoogleSheetsNode } from "@/components/wa-flow/nodes/WAGoogleSheetsNode";
 import { WAGoogleCalendarNode } from "@/components/wa-flow/nodes/WAGoogleCalendarNode";
 import { WAGmailNode } from "@/components/wa-flow/nodes/WAGmailNode";
+import { WADataCollectNode } from "@/components/wa-flow/nodes/WADataCollectNode";
 import { WANodeConfigDrawer } from "@/components/wa-flow/WANodeConfigDrawer";
 import {
   AlertDialog,
@@ -99,6 +100,7 @@ const nodeTypes = {
   google_sheets: WAGoogleSheetsNode,
   google_calendar: WAGoogleCalendarNode,
   gmail: WAGmailNode,
+  data_collect: WADataCollectNode,
 };
 
 const defaultEdgeOptions = {
