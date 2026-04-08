@@ -1546,6 +1546,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== HANDOFF NODE ===== */}
           {node.type === "handoff" && (
             <div className="space-y-4">
+              {renderApiIndicator()}
               {renderInfoBanner("Transfere a conversa para atendimento humano e pausa a automação neste lead.")}
               <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
                 <div className="flex items-center gap-2">
