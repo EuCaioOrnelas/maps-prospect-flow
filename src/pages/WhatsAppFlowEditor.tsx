@@ -126,7 +126,7 @@ const sidebarCategories = [
   {
     label: "Lógica",
     items: [
-      { type: "condition", icon: GitBranch, label: "Condição", desc: "IF/ELSE para bifurcação", color: "text-purple-400 bg-purple-400/10" },
+      { type: "condition", icon: GitBranch, label: "Condição", desc: "Sim/Não para bifurcação", color: "text-purple-400 bg-purple-400/10" },
       { type: "wait", icon: Clock, label: "Espera", desc: "Delay antes do próximo nó", color: "text-amber-400 bg-amber-400/10" },
       { type: "data_collect", icon: Database, label: "Coleta de Dados", desc: "Pergunta e salva em variável", color: "text-teal-400 bg-teal-400/10" },
       { type: "ab_test", icon: FlaskConical, label: "Teste A/B", desc: "Divide leads e metrifica", color: "text-emerald-400 bg-emerald-400/10" },
