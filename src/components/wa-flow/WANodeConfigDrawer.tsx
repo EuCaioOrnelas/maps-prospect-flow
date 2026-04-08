@@ -1153,48 +1153,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
 
           {/* ===== GOOGLE SHEETS NODE ===== */}
           {node.type === "google_sheets" && (
-            <div className="space-y-4">
-              {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets via webhook.")}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">URL do Webhook</Label>
-                <Input
-                  value={config.webhook_url || ""}
-                  onChange={(e) => updateConfig("webhook_url", e.target.value)}
-                  placeholder="https://hooks.zapier.com/... ou Make webhook"
-                  className="h-9 text-sm"
-                />
-                <p className="text-[10px] text-muted-foreground">Cole a URL gerada pelo Zapier, Make ou n8n.</p>
-              </div>
-              <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
-                <p className="text-[11px] font-medium text-foreground">📊 Dados enviados automaticamente:</p>
-                <div className="space-y-1">
-                  {["Nome do contato", "Telefone", "Email", "Empresa", "Cidade", "Origem", "Tags", "Data/hora"].map((field) => (
-                    <div key={field} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                      <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
-                      {field}
-                    </div>
-                  ))}
-                </div>
-                <div className="space-y-2 pt-2 border-t border-border/30">
-                  <Label className="text-[10px]">Campos extras (um por linha, chave=valor)</Label>
-                  <Textarea
-                    value={config.extra_fields || ""}
-                    onChange={(e) => updateConfig("extra_fields", e.target.value)}
-                    placeholder={"plano=premium\ninteresse=produto_x"}
-                    className="text-xs min-h-[50px] font-mono"
-                  />
-                </div>
-              </div>
-              <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
-                <p className="text-[11px] text-primary font-medium mb-1">💡 Como configurar</p>
-                <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
-                  <li>No <strong>Zapier</strong>: Trigger "Webhooks by Zapier" → Action "Google Sheets - Create Spreadsheet Row"</li>
-                  <li>No <strong>Make</strong>: Webhook → Google Sheets "Add a Row"</li>
-                  <li>No <strong>n8n</strong>: Webhook → Google Sheets node</li>
-                  <li>Copie a URL do webhook e cole acima</li>
-                </ol>
-              </div>
-            </div>
+            <GoogleSheetsConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} />
           )}
 
           {/* ===== GOOGLE CALENDAR NODE ===== */}
