@@ -603,15 +603,33 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
   const [reopenTemplates, setReopenTemplates] = useState<any[]>([]);
   const [tokenExpired, setTokenExpired] = useState(false);
 
+  // Fetch numbers - only connected
   const { data: numbers = [] } = useQuery({
     queryKey: ["wa-numbers-for-flow"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: nums } = await supabase
         .from("whatsapp_numbers")
         .select("id, phone_number, name, api_tier, is_connected")
         .eq("user_id", user!.id)
         .eq("is_connected", true);
-      return data || [];
+      
+      // For Meta numbers, also verify WABA connection is active
+      const { data: wabaConns } = await supabase
+        .from("user_waba_connections")
+        .select("id, status, phone_number_id")
+        .eq("user_id", user!.id)
+        .eq("status", "active");
+      
+      const activeWabaIds = new Set((wabaConns || []).map((c: any) => c.id));
+      
+      return (nums || []).filter((n: any) => {
+        const nIsMeta = n.api_tier === "paid" || n.api_tier === "meta";
+        if (nIsMeta) {
+          // Meta numbers need an active WABA connection
+          return activeWabaIds.size > 0;
+        }
+        return true; // Evolution numbers just need is_connected
+      });
     },
     enabled: !!user,
   });
@@ -837,7 +855,6 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           <SelectContent>
             <SelectItem value="keyword">Palavra-chave</SelectItem>
             <SelectItem value="campaign_reply">Resposta de campanha</SelectItem>
-            <SelectItem value="webhook">Webhook / API externa</SelectItem>
             <SelectItem value="first_message">1ª mensagem recebida</SelectItem>
           </SelectContent>
         </Select>
