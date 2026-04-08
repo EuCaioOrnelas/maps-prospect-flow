@@ -439,6 +439,27 @@ export default function WhatsAppFlowEditor() {
   // Delete flow
   const deleteFlow = useMutation({
     mutationFn: async () => {
+      // Collect media URLs from message nodes to clean up storage
+      const mediaUrls: string[] = [];
+      nodes.forEach((n) => {
+        if (n.type === "message") {
+          const cfg = (n.data as any).config || {};
+          if (cfg.media_url && cfg.media_url.includes("wa-flow-media")) {
+            mediaUrls.push(cfg.media_url);
+          }
+        }
+      });
+
+      // Delete media files from storage
+      if (mediaUrls.length > 0 && user) {
+        const bucket = "wa-flow-media";
+        const prefix = supabase.storage.from(bucket).getPublicUrl("").data.publicUrl;
+        const paths = mediaUrls.map((url) => url.replace(prefix, "")).filter(Boolean);
+        if (paths.length > 0) {
+          await supabase.storage.from(bucket).remove(paths);
+        }
+      }
+
       await supabase.from("wa_flow_edges").delete().eq("flow_id", id!);
       await supabase.from("wa_flow_nodes").delete().eq("flow_id", id!);
       await supabase.from("wa_automation_flows").delete().eq("id", id!);
