@@ -1285,114 +1285,12 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
 
           {/* ===== GOOGLE CALENDAR NODE ===== */}
           {node.type === "google_calendar" && (
-            <div className="space-y-4">
-              {renderInfoBanner("Crie eventos automáticos no Google Agenda quando o lead chegar neste ponto do fluxo.")}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">URL do Webhook</Label>
-                <Input
-                  value={config.webhook_url || ""}
-                  onChange={(e) => updateConfig("webhook_url", e.target.value)}
-                  placeholder="https://hooks.zapier.com/... ou n8n webhook"
-                  className="h-9 text-sm"
-                />
-                <p className="text-[10px] text-muted-foreground">Cole a URL gerada pelo Zapier, Make ou n8n.</p>
-              </div>
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label className="text-xs">Título do evento</Label>
-                  <Input
-                    value={config.event_title || ""}
-                    onChange={(e) => updateConfig("event_title", e.target.value)}
-                    placeholder="Reunião com {nome}"
-                    className="h-9 text-sm"
-                  />
-                  <p className="text-[10px] text-muted-foreground">Use {"{nome}"}, {"{telefone}"}, {"{empresa}"} como variáveis.</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Duração (minutos)</Label>
-                  <Input
-                    type="number"
-                    value={config.event_duration || "30"}
-                    onChange={(e) => updateConfig("event_duration", parseInt(e.target.value) || 30)}
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Descrição do evento (opcional)</Label>
-                  <Textarea
-                    value={config.event_description || ""}
-                    onChange={(e) => updateConfig("event_description", e.target.value)}
-                    placeholder="Lead: {nome} | Tel: {telefone}"
-                    className="text-sm min-h-[60px]"
-                  />
-                </div>
-              </div>
-              <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
-                <p className="text-[11px] text-primary font-medium mb-1">💡 Como configurar</p>
-                <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
-                  <li>No <strong>Zapier</strong>: Trigger "Webhooks" → Action "Google Calendar - Create Event"</li>
-                  <li>No <strong>Make</strong>: Webhook → Google Calendar "Create an Event"</li>
-                  <li>O título e duração serão enviados junto com os dados do lead</li>
-                  <li>Copie a URL do webhook e cole acima</li>
-                </ol>
-              </div>
-            </div>
+            <GoogleCalendarConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} />
           )}
 
           {/* ===== GMAIL NODE ===== */}
           {node.type === "gmail" && (
-            <div className="space-y-4">
-              {renderInfoBanner("Envie um email automático pelo Gmail quando o lead chegar neste ponto do fluxo.")}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">URL do Webhook</Label>
-                <Input
-                  value={config.webhook_url || ""}
-                  onChange={(e) => updateConfig("webhook_url", e.target.value)}
-                  placeholder="https://hooks.zapier.com/... ou Make webhook"
-                  className="h-9 text-sm"
-                />
-                <p className="text-[10px] text-muted-foreground">Cole a URL gerada pelo Zapier, Make ou n8n.</p>
-              </div>
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label className="text-xs">Email destinatário</Label>
-                  <Input
-                    value={config.email_to || ""}
-                    onChange={(e) => updateConfig("email_to", e.target.value)}
-                    placeholder="vendas@suaempresa.com"
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Assunto do email</Label>
-                  <Input
-                    value={config.email_subject || ""}
-                    onChange={(e) => updateConfig("email_subject", e.target.value)}
-                    placeholder="Novo lead: {nome}"
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Corpo do email</Label>
-                  <Textarea
-                    value={config.email_body || ""}
-                    onChange={(e) => updateConfig("email_body", e.target.value)}
-                    placeholder={"Novo lead capturado!\n\nNome: {nome}\nTelefone: {telefone}\nEmpresa: {empresa}"}
-                    className="text-sm min-h-[80px]"
-                  />
-                  <p className="text-[10px] text-muted-foreground">Use {"{nome}"}, {"{telefone}"}, {"{empresa}"}, {"{email}"} como variáveis.</p>
-                </div>
-              </div>
-              <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
-                <p className="text-[11px] text-primary font-medium mb-1">💡 Como configurar</p>
-                <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
-                  <li>No <strong>Zapier</strong>: Trigger "Webhooks" → Action "Gmail - Send Email"</li>
-                  <li>No <strong>Make</strong>: Webhook → Gmail "Send an Email"</li>
-                  <li>Configure o assunto e corpo no Zapier/Make ou use os dados enviados daqui</li>
-                  <li>Copie a URL do webhook e cole acima</li>
-                </ol>
-              </div>
-            </div>
+            <GmailConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} />
           )}
 
           {/* Actions */}
