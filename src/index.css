@@ -1331,9 +1331,19 @@ input::placeholder, textarea::placeholder {
   color: hsl(var(--primary-foreground));
 }
 
-/* No hover scale — keep handles fixed */
-.react-flow .wa-flow-handle.connectionindicator:hover,
-.react-flow .wa-flow-handle.connectingfrom,
-.react-flow .wa-flow-handle.connectingto {
-  transform: none;
+/* Keep handles fixed in place on hover/connection states */
+.react-flow .wa-flow-handle.react-flow__handle-left,
+.react-flow .wa-flow-handle.react-flow__handle-left:hover,
+.react-flow .wa-flow-handle.react-flow__handle-left.connectionindicator,
+.react-flow .wa-flow-handle.react-flow__handle-left.connectingfrom,
+.react-flow .wa-flow-handle.react-flow__handle-left.connectingto {
+  transform: translate(-50%, -50%) !important;
+}
+
+.react-flow .wa-flow-handle.react-flow__handle-right,
+.react-flow .wa-flow-handle.react-flow__handle-right:hover,
+.react-flow .wa-flow-handle.react-flow__handle-right.connectionindicator,
+.react-flow .wa-flow-handle.react-flow__handle-right.connectingfrom,
+.react-flow .wa-flow-handle.react-flow__handle-right.connectingto {
+  transform: translate(50%, -50%) !important;
 }
