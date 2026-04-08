@@ -148,9 +148,9 @@ const sidebarCategories = [
   {
     label: "Integrações",
     items: [
-      { type: "google_sheets", icon: Sheet, label: "Google Sheets", desc: "Salvar lead em planilha", color: "text-green-500 bg-green-500/10", iconImage: "/src/assets/icons/google-sheets.png" },
-      { type: "google_calendar", icon: CalendarPlus, label: "Google Agenda", desc: "Criar evento no calendário", color: "text-blue-500 bg-blue-500/10", iconImage: "/src/assets/icons/google-calendar.png" },
-      { type: "gmail", icon: Mail, label: "Gmail", desc: "Enviar email automático", color: "text-red-500 bg-red-500/10", iconImage: "/src/assets/icons/gmail.png" },
+      { type: "google_sheets", icon: Sheet, label: "Google Sheets", desc: "Salvar lead em planilha", color: "text-green-500 bg-green-500/10", iconImg: sheetsIcon },
+      { type: "google_calendar", icon: CalendarPlus, label: "Google Agenda", desc: "Criar evento no calendário", color: "text-blue-500 bg-blue-500/10", iconImg: calendarIcon },
+      { type: "gmail", icon: Mail, label: "Gmail", desc: "Enviar email automático", color: "text-red-500 bg-red-500/10", iconImg: gmailIcon },
     ],
   },
 ];
