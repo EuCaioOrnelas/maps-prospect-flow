@@ -997,6 +997,37 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
     </div>
   );
 
+  const isMeta = entryApiType === "meta";
+  const isEvolution = entryApiType === "evolution";
+  const noEntryConfigured = !entryConfig.whatsapp_number_id;
+
+  const renderApiIndicator = () => {
+    if (node.type === "entry") return null;
+    if (noEntryConfigured) {
+      return (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-[10px] text-amber-500 leading-relaxed">
+            <span className="font-semibold">Nenhum número configurado.</span> Configure o bloco de Entrada para definir qual API será usada.
+          </p>
+        </div>
+      );
+    }
+    return (
+      <div className={cn(
+        "flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-medium",
+        isMeta
+          ? "bg-primary/5 border-primary/20 text-primary"
+          : "bg-amber-500/5 border-amber-500/20 text-amber-500"
+      )}>
+        <div className={cn("w-2 h-2 rounded-full", isMeta ? "bg-primary" : "bg-amber-500")} />
+        {isMeta ? "API Inbound (Meta Oficial)" : "API Outbound (Evolution)"}
+        {isMeta && <span className="text-muted-foreground ml-auto">→ send-chat-message</span>}
+        {isEvolution && <span className="text-muted-foreground ml-auto">→ evolution-send-message</span>}
+      </div>
+    );
+  };
+
   return (
     <>
       {/* Backdrop - click to close, no blur */}
