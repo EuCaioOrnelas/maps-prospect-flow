@@ -5,18 +5,14 @@ import { Settings } from "lucide-react";
 const actionLabels: Record<string, string> = {
   add_tag: "Adicionar tag",
   remove_tag: "Remover tag",
-  update_field: "Atualizar campo",
-  move_pipeline: "Mover pipeline",
-  send_to_crm: "Enviar ao CRM",
-  webhook: "Disparar webhook",
-  mark_hot: "Marcar quente",
-  mark_cold: "Marcar frio",
-  mark_converted: "Marcar convertido",
+  move_pipeline: "Mover no Kanban",
+  send_to_crm: "Criar/atualizar lead",
 };
 
 export function WAActionNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
-  const isConfigured = !!cfg.action_type;
+  const actions = cfg.actions || [];
+  const hasActions = actions.length > 0;
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm w-48">
@@ -27,12 +23,12 @@ export function WAActionNode({ data }: NodeProps) {
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground truncate">{String((data as any).label || "Ação")}</p>
-          {isConfigured ? (
+          {hasActions ? (
             <p className="text-[10px] text-muted-foreground truncate">
-              {actionLabels[cfg.action_type] || cfg.action_type}
+              {actions.length} {actions.length === 1 ? "ação" : "ações"}
             </p>
           ) : (
-            <p className="text-[10px] text-muted-foreground/60 italic">Configurar ação</p>
+            <p className="text-[10px] text-muted-foreground/60 italic">Configurar ações</p>
           )}
         </div>
       </div>

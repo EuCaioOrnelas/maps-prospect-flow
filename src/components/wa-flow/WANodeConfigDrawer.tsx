@@ -1019,6 +1019,320 @@ const PROVIDER_DOCS: Record<string, { url: string; steps: string[] }> = {
   },
 };
 
+function ActionNodeConfig({ config, updateConfig, renderInfoBanner }: {
+  config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element;
+}) {
+  const { user } = useAuth();
+  const { data: stages = [] } = useQuery({
+    queryKey: ["pipeline-stages-action", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("pipeline_stages").select("id, name, color, position").eq("user_id", user!.id).order("position");
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const actions: any[] = config.actions || [];
+
+  const addAction = () => {
+    updateConfig("actions", [...actions, { type: "", id: `act_${Date.now()}` }]);
+  };
+
+  const updateAction = (index: number, key: string, value: any) => {
+    const updated = [...actions];
+    updated[index] = { ...updated[index], [key]: value };
+    updateConfig("actions", updated);
+  };
+
+  const removeAction = (index: number) => {
+    updateConfig("actions", actions.filter((_: any, i: number) => i !== index));
+  };
+
+  const actionTypes = [
+    { value: "add_tag", label: "Adicionar tag" },
+    { value: "remove_tag", label: "Remover tag" },
+    { value: "move_pipeline", label: "Mover no Kanban (CRM)" },
+    { value: "send_to_crm", label: "Criar/atualizar lead no CRM" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {renderInfoBanner("Execute uma ou mais ações no CRM: tags, mover no Kanban, criar/atualizar lead.")}
+
+      {actions.map((action: any, idx: number) => (
+        <div key={action.id || idx} className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-medium">Ação {idx + 1}</Label>
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeAction(idx)}>
+              <X size={12} />
+            </Button>
+          </div>
+
+          <Select value={action.type || ""} onValueChange={(v) => updateAction(idx, "type", v)}>
+            <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar tipo..." /></SelectTrigger>
+            <SelectContent>
+              {actionTypes.map((t) => (
+                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {(action.type === "add_tag" || action.type === "remove_tag") && (
+            <div className="space-y-1">
+              <Label className="text-[10px]">Nome da tag</Label>
+              <Input
+                value={action.tag_value || ""}
+                onChange={(e) => updateAction(idx, "tag_value", e.target.value)}
+                placeholder="qualificado, interessado..."
+                className="h-8 text-xs"
+              />
+            </div>
+          )}
+
+          {action.type === "move_pipeline" && (
+            <div className="space-y-1">
+              <Label className="text-[10px]">Coluna do Kanban</Label>
+              <Select value={action.pipeline_stage_id || ""} onValueChange={(v) => updateAction(idx, "pipeline_stage_id", v)}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar coluna..." /></SelectTrigger>
+                <SelectContent>
+                  {stages.map((s: any) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                        {s.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {action.type === "send_to_crm" && (
+            <div className="space-y-3">
+              <p className="text-[10px] text-muted-foreground">Configure os dados para criar ou atualizar o lead no CRM.</p>
+              <div className="space-y-1">
+                <Label className="text-[10px]">Nome do lead (variável)</Label>
+                <Input
+                  value={action.crm_name || ""}
+                  onChange={(e) => updateAction(idx, "crm_name", e.target.value)}
+                  placeholder="{nome} ou nome fixo"
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px]">Coluna do CRM</Label>
+                <Select value={action.crm_stage_id || ""} onValueChange={(v) => updateAction(idx, "crm_stage_id", v)}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar coluna..." /></SelectTrigger>
+                  <SelectContent>
+                    {stages.map((s: any) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                          {s.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px]">Valor em negociação (opcional)</Label>
+                <Input
+                  value={action.crm_value || ""}
+                  onChange={(e) => updateAction(idx, "crm_value", e.target.value)}
+                  placeholder="{valor} ou 1500"
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={addAction}>
+        <Plus size={12} className="mr-1" /> Adicionar ação
+      </Button>
+    </div>
+  );
+}
+
+function HandoffNodeConfig({ config, updateConfig, renderInfoBanner, renderApiIndicator }: {
+  config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; renderApiIndicator: () => JSX.Element | null;
+}) {
+  const { user } = useAuth();
+  const { data: stages = [] } = useQuery({
+    queryKey: ["pipeline-stages-handoff", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("pipeline_stages").select("id, name, color, position").eq("user_id", user!.id).order("position");
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const ccEmails: string[] = config.cc_emails || [];
+
+  return (
+    <div className="space-y-4">
+      {renderApiIndicator()}
+      {renderInfoBanner("Transfere a conversa para atendimento humano e encerra a automação neste lead.")}
+
+      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+        <div className="flex items-center gap-2">
+          <Switch checked={config.stop_automation !== false} onCheckedChange={(v) => updateConfig("stop_automation", v)} />
+          <Label className="text-xs font-medium">Encerrar automação neste lead</Label>
+        </div>
+        <p className="text-[10px] text-muted-foreground">Se o lead disparar novamente, ele entra no início do fluxo.</p>
+      </div>
+
+      {/* Move no CRM */}
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">Mover lead no Kanban (CRM)</Label>
+        <Select value={config.crm_stage_id || ""} onValueChange={(v) => updateConfig("crm_stage_id", v)}>
+          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar coluna..." /></SelectTrigger>
+          <SelectContent>
+            {stages.map((s: any) => (
+              <SelectItem key={s.id} value={s.id}>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                  {s.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Notify team */}
+      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+        <div className="flex items-center gap-2">
+          <Switch checked={config.notify_team || false} onCheckedChange={(v) => updateConfig("notify_team", v)} />
+          <Label className="text-xs font-medium">Notificar equipe por email</Label>
+        </div>
+        {config.notify_team && (
+          <div className="space-y-3">
+            <p className="text-[10px] text-muted-foreground">Um email será enviado de no-reply@wiize.com.br.</p>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Título do email</Label>
+              <Input
+                value={config.email_subject || ""}
+                onChange={(e) => updateConfig("email_subject", e.target.value)}
+                placeholder="Lead {nome} aguardando atendimento"
+                className="h-8 text-xs"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Conteúdo do email</Label>
+              <Textarea
+                value={config.email_body || ""}
+                onChange={(e) => updateConfig("email_body", e.target.value)}
+                placeholder="O lead {nome} ({telefone}) foi transferido para atendimento humano."
+                className="text-xs min-h-[60px]"
+              />
+              <p className="text-[9px] text-muted-foreground">Use variáveis: {"{nome}"}, {"{telefone}"}, {"{email}"}, {"{empresa}"}</p>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Emails em cópia (opcional)</Label>
+              <div className="space-y-1">
+                {ccEmails.map((email: string, idx: number) => (
+                  <div key={idx} className="flex items-center gap-1">
+                    <Input
+                      value={email}
+                      onChange={(e) => {
+                        const updated = [...ccEmails];
+                        updated[idx] = e.target.value;
+                        updateConfig("cc_emails", updated);
+                      }}
+                      placeholder="email@empresa.com"
+                      className="h-7 text-[10px] flex-1"
+                    />
+                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => updateConfig("cc_emails", ccEmails.filter((_: any, i: number) => i !== idx))}>
+                      <X size={10} />
+                    </Button>
+                  </div>
+                ))}
+                <Button variant="ghost" size="sm" className="h-6 text-[10px] w-full" onClick={() => updateConfig("cc_emails", [...ccEmails, ""])}>
+                  <Plus size={10} className="mr-1" /> Adicionar email
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Message to lead - required */}
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">Mensagem ao lead <span className="text-destructive">*</span></Label>
+        <Textarea
+          value={config.handoff_message || ""}
+          onChange={(e) => updateConfig("handoff_message", e.target.value)}
+          placeholder="Um de nossos especialistas vai te atender em breve!"
+          className="text-sm min-h-[60px]"
+        />
+        <p className="text-[10px] text-muted-foreground">O lead receberá esta mensagem ao ser transferido para atendimento humano.</p>
+      </div>
+    </div>
+  );
+}
+
+function EndNodeConfig({ config, updateConfig, renderInfoBanner, renderApiIndicator }: {
+  config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; renderApiIndicator: () => JSX.Element | null;
+}) {
+  const { user } = useAuth();
+  const { data: stages = [] } = useQuery({
+    queryKey: ["pipeline-stages-end", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("pipeline_stages").select("id, name, color, position").eq("user_id", user!.id).order("position");
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  return (
+    <div className="space-y-4">
+      {renderApiIndicator()}
+      {renderInfoBanner("Encerra o fluxo para este lead. Ao entrar no fluxo o lead recebe a tag 'Em atendimento'. Ao encerrar, pode receber 'Atendido'.")}
+
+      <div className="space-y-2">
+        <Label className="text-xs">Mensagem de encerramento (opcional)</Label>
+        <Textarea
+          value={config.end_message || ""}
+          onChange={(e) => updateConfig("end_message", e.target.value)}
+          placeholder="Obrigado pelo contato! Até a próxima."
+          className="text-sm min-h-[60px]"
+        />
+      </div>
+
+      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+        <div className="flex items-center gap-2">
+          <Switch checked={config.mark_completed || false} onCheckedChange={(v) => updateConfig("mark_completed", v)} />
+          <Label className="text-xs font-medium">Marcar como "Atendido" no CRM</Label>
+        </div>
+        <p className="text-[10px] text-muted-foreground">Adiciona a tag "Atendido" ao lead no CRM ao encerrar o fluxo.</p>
+      </div>
+
+      {/* Move no CRM */}
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">Mover lead no Kanban (CRM)</Label>
+        <Select value={config.crm_stage_id || ""} onValueChange={(v) => updateConfig("crm_stage_id", v)}>
+          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar coluna (opcional)..." /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Não mover</SelectItem>
+            {stages.map((s: any) => (
+              <SelectItem key={s.id} value={s.id}>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                  {s.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
+
 function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndicator }: {
   config: any;
   updateConfig: (k: string, v: any) => void;
@@ -1496,6 +1810,17 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
       const total = (config.variants || []).reduce((s: number, v: any) => s + (parseFloat(v.weight) || 0), 0);
       if (Math.abs(total - 100) >= 0.1) {
         toast.error("A soma dos pesos deve ser 100%");
+        return;
+      }
+    }
+    // Validate handoff requires message
+    if (node.type === "handoff") {
+      if (!config.handoff_message?.trim()) {
+        toast.error("A mensagem ao lead é obrigatória");
+        return;
+      }
+      if (config.notify_team && !config.email_subject?.trim()) {
+        toast.error("Preencha o título do email de notificação");
         return;
       }
     }
@@ -1990,180 +2315,17 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
 
           {/* ===== ACTION NODE ===== */}
           {node.type === "action" && (
-            <div className="space-y-4">
-              {renderInfoBanner("Execute ações no sistema: CRM, tags, pipeline, webhooks.")}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Tipo de ação</Label>
-                <Select value={config.action_type || ""} onValueChange={(v) => updateConfig("action_type", v)}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="add_tag">Adicionar tag</SelectItem>
-                    <SelectItem value="remove_tag">Remover tag</SelectItem>
-                    <SelectItem value="update_field">Atualizar campo do lead</SelectItem>
-                    <SelectItem value="move_pipeline">Mover para etapa do pipeline</SelectItem>
-                    <SelectItem value="send_to_crm">Criar/atualizar lead no CRM</SelectItem>
-                    <SelectItem value="webhook">Disparar webhook externo</SelectItem>
-                    <SelectItem value="mark_hot">Marcar como quente 🔥</SelectItem>
-                    <SelectItem value="mark_cold">Marcar como frio ❄️</SelectItem>
-                    <SelectItem value="mark_converted">Marcar como convertido ✅</SelectItem>
-                    <SelectItem value="update_score">Atualizar score</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {(config.action_type === "add_tag" || config.action_type === "remove_tag") && (
-                <div className="space-y-2">
-                  <Label className="text-xs">Nome da tag</Label>
-                  <Input
-                    value={config.tag_value || ""}
-                    onChange={(e) => updateConfig("tag_value", e.target.value)}
-                    placeholder="qualificado, interessado, etc."
-                    className="h-9 text-sm"
-                  />
-                </div>
-              )}
-              {config.action_type === "update_field" && (
-                <div className="space-y-2">
-                  <Label className="text-xs">Campo</Label>
-                  <Select value={config.field_name || ""} onValueChange={(v) => updateConfig("field_name", v)}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="contact_name">Nome</SelectItem>
-                      <SelectItem value="email">Email</SelectItem>
-                      <SelectItem value="company_name">Empresa</SelectItem>
-                      <SelectItem value="city">Cidade</SelectItem>
-                      <SelectItem value="origin">Origem</SelectItem>
-                      <SelectItem value="category">Categoria</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Label className="text-xs">Novo valor</Label>
-                  <Input
-                    value={config.field_value || ""}
-                    onChange={(e) => updateConfig("field_value", e.target.value)}
-                    className="h-9 text-sm"
-                  />
-                </div>
-              )}
-              {config.action_type === "move_pipeline" && (
-                <div className="space-y-2">
-                  <Label className="text-xs">Nome da etapa de destino</Label>
-                  <Input
-                    value={config.pipeline_stage || ""}
-                    onChange={(e) => updateConfig("pipeline_stage", e.target.value)}
-                    placeholder="Em negociação"
-                    className="h-9 text-sm"
-                  />
-                </div>
-              )}
-              {config.action_type === "webhook" && (
-                <div className="space-y-2">
-                  <Label className="text-xs">URL do Webhook</Label>
-                  <Input
-                    value={config.webhook_url || ""}
-                    onChange={(e) => updateConfig("webhook_url", e.target.value)}
-                    placeholder="https://seu-webhook.com/endpoint"
-                    className="h-9 text-sm"
-                  />
-                  <Label className="text-xs">Método</Label>
-                  <Select value={config.webhook_method || "POST"} onValueChange={(v) => updateConfig("webhook_method", v)}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="POST">POST</SelectItem>
-                      <SelectItem value="GET">GET</SelectItem>
-                      <SelectItem value="PUT">PUT</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Label className="text-xs">Headers extras (JSON, opcional)</Label>
-                  <Textarea
-                    value={config.webhook_headers || ""}
-                    onChange={(e) => updateConfig("webhook_headers", e.target.value)}
-                    placeholder='{"Authorization": "Bearer ..."}'
-                    className="text-xs min-h-[50px] font-mono"
-                  />
-                </div>
-              )}
-              {config.action_type === "update_score" && (
-                <div className="space-y-2">
-                  <Label className="text-xs">Pontos a adicionar (+) ou remover (-)</Label>
-                  <Input
-                    type="number"
-                    value={config.score_delta || ""}
-                    onChange={(e) => updateConfig("score_delta", parseInt(e.target.value) || 0)}
-                    placeholder="50"
-                    className="h-9 text-sm"
-                  />
-                </div>
-              )}
-            </div>
+            <ActionNodeConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} />
           )}
 
           {/* ===== HANDOFF NODE ===== */}
           {node.type === "handoff" && (
-            <div className="space-y-4">
-              {renderApiIndicator()}
-              {renderInfoBanner("Transfere a conversa para atendimento humano e pausa a automação neste lead.")}
-              <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={config.stop_automation !== false}
-                    onCheckedChange={(v) => updateConfig("stop_automation", v)}
-                  />
-                  <Label className="text-xs font-medium">Parar automação neste lead</Label>
-                </div>
-              </div>
-              <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={config.notify_team || false}
-                    onCheckedChange={(v) => updateConfig("notify_team", v)}
-                  />
-                  <Label className="text-xs font-medium">Notificar equipe</Label>
-                </div>
-                {config.notify_team && (
-                  <div className="space-y-2">
-                    <Label className="text-[10px]">Mensagem de notificação</Label>
-                    <Input
-                      value={config.notification_message || ""}
-                      onChange={(e) => updateConfig("notification_message", e.target.value)}
-                      placeholder="Lead qualificado aguardando atendimento"
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Mensagem ao lead (opcional)</Label>
-                <Textarea
-                  value={config.handoff_message || ""}
-                  onChange={(e) => updateConfig("handoff_message", e.target.value)}
-                  placeholder="Um de nossos especialistas vai te atender em breve!"
-                  className="text-sm min-h-[60px]"
-                />
-              </div>
-            </div>
+            <HandoffNodeConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} renderApiIndicator={renderApiIndicator} />
           )}
 
           {/* ===== END NODE ===== */}
           {node.type === "end" && (
-            <div className="space-y-4">
-              {renderApiIndicator()}
-              {renderInfoBanner("Encerra o fluxo para este lead. Opcionalmente envie uma mensagem final.")}
-              <div className="space-y-2">
-                <Label className="text-xs">Mensagem de encerramento (opcional)</Label>
-                <Textarea
-                  value={config.end_message || ""}
-                  onChange={(e) => updateConfig("end_message", e.target.value)}
-                  placeholder="Obrigado pelo contato! Até a próxima."
-                  className="text-sm min-h-[60px]"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={config.mark_completed || false}
-                  onCheckedChange={(v) => updateConfig("mark_completed", v)}
-                />
-                <Label className="text-xs">Marcar lead como "atendido" no CRM</Label>
-              </div>
-            </div>
+            <EndNodeConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} renderApiIndicator={renderApiIndicator} />
           )}
 
           {/* ===== AI AGENT NODE ===== */}

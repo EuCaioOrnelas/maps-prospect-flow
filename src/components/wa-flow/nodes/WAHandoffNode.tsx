@@ -13,7 +13,7 @@ export function WAHandoffNode({ data }: NodeProps) {
           <HeadphonesIcon size={16} className="text-orange-400" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-foreground truncate">{String((data as any).label || "Handoff")}</p>
+          <p className="text-xs font-bold text-foreground truncate">{String((data as any).label || "Humano")}</p>
           <p className="text-[10px] text-muted-foreground">
             {cfg.notify_team ? "Notificar equipe" : "Transferir para humano"}
           </p>

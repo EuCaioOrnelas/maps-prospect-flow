@@ -142,9 +142,9 @@ const sidebarCategories = [
   {
     label: "Ações",
     items: [
-      { type: "action", icon: Settings, label: "Ação", desc: "Tag, campo, webhook, CRM", color: "text-cyan-400 bg-cyan-400/10" },
-      { type: "handoff", icon: HeadphonesIcon, label: "Handoff", desc: "Transferir para humano", color: "text-orange-400 bg-orange-400/10" },
-      { type: "end", icon: CircleStop, label: "Fim", desc: "Encerrar o fluxo", color: "text-red-400 bg-red-400/10" },
+      { type: "action", icon: Settings, label: "Ação", desc: "Tag, Kanban, CRM", color: "text-cyan-400 bg-cyan-400/10" },
+      { type: "handoff", icon: HeadphonesIcon, label: "Humano", desc: "Transferir para humano", color: "text-orange-400 bg-orange-400/10" },
+      { type: "end", icon: CircleStop, label: "Encerramento", desc: "Encerrar o fluxo", color: "text-red-400 bg-red-400/10" },
     ],
   },
   {
@@ -394,7 +394,7 @@ export default function WhatsAppFlowEditor() {
       const nameMap: Record<string, string> = {
         entry: "Entrada", message: "Mensagem", buttons: "Botões",
         condition: "Condição", wait: "Espera", action: "Ação",
-        handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
+        handoff: "Humano", end: "Encerramento", ai_agent: "Agente IA",
         ab_test: "Teste A/B", random_split: "Random Split",
         google_sheets: "Google Sheets", google_calendar: "Google Agenda", gmail: "Gmail",
         data_collect: "Coleta de Dados",
@@ -822,7 +822,7 @@ export default function WhatsAppFlowEditor() {
             const nameMap: Record<string, string> = {
               entry: "Entrada", message: "Mensagem", buttons: "Botões",
               condition: "Condição", wait: "Espera", action: "Ação",
-              handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
+              handoff: "Humano", end: "Encerramento", ai_agent: "Agente IA",
               ab_test: "Teste A/B", random_split: "Random Split",
               data_collect: "Coleta de Dados",
               google_sheets: "Google Sheets", google_calendar: "Google Agenda", gmail: "Gmail",
