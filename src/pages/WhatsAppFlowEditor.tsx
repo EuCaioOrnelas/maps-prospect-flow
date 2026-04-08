@@ -675,10 +675,10 @@ export default function WhatsAppFlowEditor() {
         <div className="h-6 w-px bg-border mx-1" />
 
         {/* Undo/Redo */}
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndex <= 0} title="Desfazer (Ctrl+Z)">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndexRef.current <= 0} title="Desfazer (Ctrl+Z)">
           <Undo2 size={15} />
         </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={historyIndex >= history.length - 1} title="Refazer (Ctrl+Y)">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={historyIndexRef.current >= historyRef.current.length - 1} title="Refazer (Ctrl+Y)">
           <Redo2 size={15} />
         </Button>
 
