@@ -800,17 +800,41 @@ export default function WhatsAppFlowEditor() {
             const type = e.dataTransfer.getData("application/wa-node-type");
             if (!type || !reactFlowWrapper.current) return;
             const bounds = reactFlowWrapper.current.getBoundingClientRect();
-            const position = { x: e.clientX - bounds.left - 100, y: e.clientY - bounds.top - 40 };
+            // Use screenToFlowPosition if available via ref, otherwise fallback with viewport calc
+            const rfInstance = (reactFlowWrapper.current as any).__rfInstance;
+            let position: { x: number; y: number };
+            if (rfInstance?.screenToFlowPosition) {
+              position = rfInstance.screenToFlowPosition({ x: e.clientX, y: e.clientY });
+            } else {
+              position = { x: e.clientX - bounds.left - 100, y: e.clientY - bounds.top - 40 };
+            }
             const nameMap: Record<string, string> = {
               entry: "Entrada", message: "Mensagem", buttons: "Botões",
               condition: "Condição", wait: "Espera", action: "Ação",
               handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
+              ab_test: "Teste A/B", random_split: "Random Split",
+              data_collect: "Coleta de Dados",
+              google_sheets: "Google Sheets", google_calendar: "Google Agenda", gmail: "Gmail",
+            };
+            const defaultConfigs: Record<string, any> = {
+              ab_test: {
+                variants: [
+                  { id: "var_a", name: "Variante A", weight: 50 },
+                  { id: "var_b", name: "Variante B", weight: 50 },
+                ],
+              },
+              random_split: {
+                outputs: [
+                  { id: "out_0", name: "Saída 1" },
+                  { id: "out_1", name: "Saída 2" },
+                ],
+              },
             };
             const newNode: Node = {
               id: `temp-${Date.now()}`,
               type,
               position,
-              data: { label: nameMap[type] || type, config: {} },
+              data: { label: nameMap[type] || type, config: defaultConfigs[type] || {} },
             };
             const newNodes = [...nodes, newNode];
             setNodes(newNodes);
@@ -832,6 +856,17 @@ export default function WhatsAppFlowEditor() {
             onConnect={onConnect}
             onNodeClick={onNodeClick}
             onPaneClick={() => { setSelectedNode(null); setSelectedNodeIds(new Set()); }}
+            onEdgeClick={(_event, edge) => {
+              // Show disconnect button by selecting the edge
+              setEdges((eds) => eds.map((e) => ({ ...e, selected: e.id === edge.id })));
+            }}
+            onInit={(instance) => {
+              // Store instance on wrapper for screenToFlowPosition
+              if (reactFlowWrapper.current) {
+                (reactFlowWrapper.current as any).__rfInstance = instance;
+              }
+            }}
+            deleteKeyCode={null}
             nodeTypes={nodeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             fitView
