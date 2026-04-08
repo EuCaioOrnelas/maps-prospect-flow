@@ -1261,12 +1261,20 @@ input::placeholder, textarea::placeholder {
 .scrollbar-thin::-webkit-scrollbar-thumb:hover { background-color: hsl(var(--border) / 0.7); }
 .scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--border) / 0.4) transparent; }
 
+/* ─── React Flow Node Selection — remove default shadow ─── */
+.react-flow .react-flow__node.selected,
+.react-flow .react-flow__node:focus,
+.react-flow .react-flow__node:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 /* ─── React Flow Handle Styling ─── */
 .react-flow .wa-flow-handle {
-  min-width: 7px !important;
-  min-height: 7px !important;
-  width: 7px !important;
-  height: 7px !important;
+  min-width: 12px !important;
+  min-height: 12px !important;
+  width: 12px !important;
+  height: 12px !important;
   border-radius: 9999px !important;
   border: 1.5px solid hsl(var(--background)) !important;
   display: flex !important;
@@ -1278,8 +1286,7 @@ input::placeholder, textarea::placeholder {
     height 0.18s ease,
     background-color 0.18s ease,
     border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    transform 0.18s ease;
+    box-shadow 0.18s ease;
 }
 
 .react-flow .wa-flow-handle.target {
@@ -1324,8 +1331,9 @@ input::placeholder, textarea::placeholder {
   color: hsl(var(--primary-foreground));
 }
 
+/* No hover scale — keep handles fixed */
 .react-flow .wa-flow-handle.connectionindicator:hover,
 .react-flow .wa-flow-handle.connectingfrom,
 .react-flow .wa-flow-handle.connectingto {
-  transform: scale(1.08);
+  transform: none;
 }
