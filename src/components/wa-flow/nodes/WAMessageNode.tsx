@@ -1,6 +1,6 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
-import { MessageSquare, Image, FileAudio, Video, FileText } from "lucide-react";
+import { MessageSquare, Image, FileAudio, Video, FileText, Clock } from "lucide-react";
 
 const typeIcons: Record<string, any> = {
   text: MessageSquare,
@@ -8,13 +8,18 @@ const typeIcons: Record<string, any> = {
   audio: FileAudio,
   video: Video,
   document: FileText,
+  delay: Clock,
 };
 
 export function WAMessageNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
-  const msgType = cfg.message_type || "text";
-  const Icon = typeIcons[msgType] || MessageSquare;
-  const hasContent = !!cfg.content || !!cfg.template_name;
+  const contents: any[] = cfg.contents || [];
+  const contentCount = contents.filter((c: any) => c.type !== "delay").length;
+  const hasContent = contents.length > 0;
+
+  // Show first non-delay content type icon
+  const firstContent = contents.find((c: any) => c.type !== "delay");
+  const Icon = firstContent ? (typeIcons[firstContent.type] || MessageSquare) : MessageSquare;
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm w-52">
@@ -27,7 +32,7 @@ export function WAMessageNode({ data }: NodeProps) {
           <p className="text-xs font-bold text-foreground truncate">{String((data as any).label || "Mensagem")}</p>
           {hasContent ? (
             <p className="text-[10px] text-muted-foreground truncate">
-              {cfg.content?.substring(0, 40) || cfg.template_name || msgType}
+              {contentCount} conteúdo{contentCount !== 1 ? "s" : ""}
             </p>
           ) : (
             <p className="text-[10px] text-muted-foreground/60 italic">Clique para editar</p>

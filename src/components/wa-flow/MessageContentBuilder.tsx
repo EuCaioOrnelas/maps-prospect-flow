@@ -5,151 +5,147 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   MessageSquare, Image, FileAudio, Video, FileText,
-  Plus, X, Upload, Trash2, Play, Pause, Square, Mic,
-  FileUp, GripVertical, Eye,
+  X, Upload, Trash2, Play, Pause, Square, Mic,
+  Clock, GripVertical, ChevronUp, ChevronDown,
 } from "lucide-react";
 
-const AVAILABLE_VARIABLES = [
-  { key: "{nome}", label: "Nome do contato" },
-  { key: "{telefone}", label: "Telefone" },
-  { key: "{email}", label: "Email" },
-  { key: "{empresa}", label: "Empresa" },
-  { key: "{cidade}", label: "Cidade" },
-  { key: "{origem}", label: "Origem" },
-  { key: "{data}", label: "Data atual" },
-  { key: "{hora}", label: "Hora atual" },
+// ===== CONTENT TYPES (3x2 grid) =====
+const CONTENT_TYPES = [
+  { value: "text", icon: MessageSquare, label: "Texto" },
+  { value: "image", icon: Image, label: "Imagem" },
+  { value: "audio", icon: FileAudio, label: "Áudio" },
+  { value: "video", icon: Video, label: "Vídeo" },
+  { value: "document", icon: FileText, label: "Documento" },
+  { value: "delay", icon: Clock, label: "Delay" },
 ];
 
-const CONTENT_TYPES = [
-  { value: "text", icon: MessageSquare, label: "Texto", color: "text-blue-400 bg-blue-400/10 border-blue-400/20" },
-  { value: "image", icon: Image, label: "Imagem", color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20" },
-  { value: "audio", icon: FileAudio, label: "Áudio", color: "text-orange-400 bg-orange-400/10 border-orange-400/20" },
-  { value: "video", icon: Video, label: "Vídeo", color: "text-purple-400 bg-purple-400/10 border-purple-400/20" },
-  { value: "document", icon: FileText, label: "Documento", color: "text-amber-400 bg-amber-400/10 border-amber-400/20" },
-];
+const MAX_CONTENT_ITEMS = 5; // delay doesn't count
+
+interface ContentItem {
+  id: string;
+  type: "text" | "image" | "audio" | "video" | "document" | "delay";
+  content?: string;
+  caption?: string;
+  media_url?: string;
+  media_filename?: string;
+  delay_seconds?: number;
+}
+
+// ===== CUSTOM AUDIO PLAYER =====
+function CustomAudioPlayer({ src, onRemove }: { src: string; onRemove: () => void }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onTime = () => setCurrentTime(audio.currentTime);
+    const onMeta = () => setDuration(audio.duration);
+    const onEnd = () => setPlaying(false);
+    audio.addEventListener("timeupdate", onTime);
+    audio.addEventListener("loadedmetadata", onMeta);
+    audio.addEventListener("ended", onEnd);
+    return () => {
+      audio.removeEventListener("timeupdate", onTime);
+      audio.removeEventListener("loadedmetadata", onMeta);
+      audio.removeEventListener("ended", onEnd);
+    };
+  }, [src]);
+
+  const toggle = () => {
+    if (!audioRef.current) return;
+    if (playing) { audioRef.current.pause(); } else { audioRef.current.play(); }
+    setPlaying(!playing);
+  };
+
+  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    audioRef.current.currentTime = pct * duration;
+  };
+
+  const fmt = (s: number) => {
+    if (!s || !isFinite(s)) return "0:00";
+    return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  };
+
+  const progress = duration ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-muted/10">
+      <audio ref={audioRef} src={src} preload="metadata" />
+      <button
+        onClick={toggle}
+        className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 hover:bg-primary/20 transition-colors"
+      >
+        {playing ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+      </button>
+      <div className="flex-1 min-w-0 space-y-1">
+        <div className="h-1.5 rounded-full bg-muted/40 cursor-pointer relative overflow-hidden" onClick={seek}>
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+        </div>
+        <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
+          <span>{fmt(currentTime)}</span>
+          <span>{fmt(duration)}</span>
+        </div>
+      </div>
+      <button
+        onClick={onRemove}
+        className="w-7 h-7 rounded-full bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors shrink-0"
+      >
+        <X size={12} />
+      </button>
+    </div>
+  );
+}
 
 // ===== DRAG & DROP UPLOAD =====
 function MediaDropZone({
-  accept,
-  maxSizeMB,
-  label,
-  onFileSelected,
-  currentUrl,
-  onRemove,
-  previewType,
-  uploading,
+  accept, maxSizeMB, label, onFileSelected, uploading,
 }: {
-  accept: string;
-  maxSizeMB: number;
-  label: string;
-  onFileSelected: (file: File) => void;
-  currentUrl?: string;
-  onRemove?: () => void;
-  previewType: "image" | "video" | "audio" | "document";
-  uploading: boolean;
+  accept: string; maxSizeMB: number; label: string;
+  onFileSelected: (file: File) => void; uploading: boolean;
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-      const file = e.dataTransfer.files[0];
-      if (file) {
-        if (file.size > maxSizeMB * 1024 * 1024) {
-          toast.error(`Arquivo muito grande. Máximo: ${maxSizeMB}MB`);
-          return;
-        }
-        onFileSelected(file);
-      }
-    },
-    [maxSizeMB, onFileSelected]
-  );
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); setIsDragging(false);
+    const file = e.dataTransfer.files[0];
     if (file) {
-      if (file.size > maxSizeMB * 1024 * 1024) {
-        toast.error(`Arquivo muito grande. Máximo: ${maxSizeMB}MB`);
-        return;
-      }
+      if (file.size > maxSizeMB * 1024 * 1024) { toast.error(`Máximo: ${maxSizeMB}MB`); return; }
       onFileSelected(file);
     }
-    if (inputRef.current) inputRef.current.value = "";
-  };
-
-  if (currentUrl) {
-    return (
-      <div className="space-y-2">
-        {previewType === "image" && (
-          <div className="relative rounded-lg overflow-hidden border border-border bg-muted/20">
-            <img src={currentUrl} alt="Preview" className="w-full max-h-48 object-contain" />
-            <button
-              onClick={onRemove}
-              className="absolute top-2 right-2 w-7 h-7 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
-        {previewType === "video" && (
-          <div className="relative rounded-lg overflow-hidden border border-border bg-muted/20">
-            <video src={currentUrl} controls className="w-full max-h-48" />
-            <button
-              onClick={onRemove}
-              className="absolute top-2 right-2 w-7 h-7 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
-        {previewType === "document" && (
-          <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/20">
-            <FileText size={20} className="text-amber-400 shrink-0" />
-            <span className="text-xs text-foreground truncate flex-1">{currentUrl.split("/").pop()}</span>
-            <button
-              onClick={onRemove}
-              className="w-7 h-7 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors shrink-0"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
-        {previewType === "audio" && (
-          <div className="relative p-3 rounded-lg border border-border bg-muted/20 space-y-2">
-            <audio src={currentUrl} controls className="w-full h-10" />
-            <button
-              onClick={onRemove}
-              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
-            >
-              <X size={12} />
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
+  }, [maxSizeMB, onFileSelected]);
 
   return (
     <div
       className={cn(
         "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors",
         isDragging
-          ? "border-primary bg-primary/5"
-          : "border-border/50 bg-muted/10 hover:border-primary/30 hover:bg-muted/20"
+          ? "border-primary/40 bg-primary/5"
+          : "border-muted-foreground/20 bg-muted/20 hover:border-muted-foreground/30 hover:bg-muted/30"
       )}
       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
     >
-      <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handleFileChange} />
+      <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          if (file.size > maxSizeMB * 1024 * 1024) { toast.error(`Máximo: ${maxSizeMB}MB`); return; }
+          onFileSelected(file);
+        }
+        if (inputRef.current) inputRef.current.value = "";
+      }} />
       {uploading ? (
         <div className="flex flex-col items-center gap-2">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -157,7 +153,7 @@ function MediaDropZone({
         </div>
       ) : (
         <div className="flex flex-col items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-muted/40 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center">
             <Upload size={18} className="text-muted-foreground" />
           </div>
           <p className="text-xs text-muted-foreground">{label}</p>
@@ -168,35 +164,61 @@ function MediaDropZone({
   );
 }
 
-// ===== AUDIO RECORDER =====
+// ===== AUDIO RECORDER WITH WAVEFORM =====
 function AudioRecorder({ onRecorded }: { onRecorded: (blob: Blob) => void }) {
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
+  const [waveformLevels, setWaveformLevels] = useState<number[]>(new Array(20).fill(4));
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number>(0);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animFrameRef = useRef<number>(0);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      // Setup analyser for waveform
+      const audioCtx = new AudioContext();
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
       const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         onRecorded(blob);
-        stream.getTracks().forEach((t) => t.stop());
+        stream.getTracks().forEach(t => t.stop());
+        audioCtx.close();
       };
 
       mediaRecorder.start();
       setRecording(true);
       setSeconds(0);
-      timerRef.current = window.setInterval(() => setSeconds((s) => s + 1), 1000);
+      timerRef.current = window.setInterval(() => setSeconds(s => s + 1), 1000);
+
+      // Animate waveform
+      const updateWave = () => {
+        if (!analyserRef.current) return;
+        const data = new Uint8Array(analyserRef.current.frequencyBinCount);
+        analyserRef.current.getByteFrequencyData(data);
+        const bars = Array.from({ length: 20 }, (_, i) => {
+          const idx = Math.floor((i / 20) * data.length);
+          return Math.max(4, (data[idx] / 255) * 28);
+        });
+        setWaveformLevels(bars);
+        animFrameRef.current = requestAnimationFrame(updateWave);
+      };
+      updateWave();
     } catch {
       toast.error("Não foi possível acessar o microfone");
     }
@@ -206,65 +228,266 @@ function AudioRecorder({ onRecorded }: { onRecorded: (blob: Blob) => void }) {
     mediaRecorderRef.current?.stop();
     setRecording(false);
     clearInterval(timerRef.current);
+    cancelAnimationFrame(animFrameRef.current);
+    setWaveformLevels(new Array(20).fill(4));
   };
 
-  useEffect(() => () => clearInterval(timerRef.current), []);
+  useEffect(() => () => {
+    clearInterval(timerRef.current);
+    cancelAnimationFrame(animFrameRef.current);
+  }, []);
 
-  const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   return (
-    <div className={cn(
-      "flex items-center gap-3 p-3 rounded-xl border transition-colors",
-      recording ? "border-red-500/40 bg-red-500/5" : "border-border/50 bg-muted/10"
-    )}>
-      <button
-        onClick={recording ? stopRecording : startRecording}
-        className={cn(
-          "w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0",
-          recording
-            ? "bg-red-500 text-white hover:bg-red-600"
-            : "bg-primary/10 text-primary hover:bg-primary/20"
-        )}
-      >
-        {recording ? <Square size={16} /> : <Mic size={16} />}
-      </button>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-foreground">
-          {recording ? "Gravando..." : "Gravar áudio"}
-        </p>
-        {recording ? (
-          <p className="text-[10px] text-red-400 font-mono">{formatTime(seconds)}</p>
-        ) : (
-          <p className="text-[10px] text-muted-foreground">Clique para iniciar a gravação</p>
-        )}
-      </div>
-      {recording && (
-        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+    <div
+      onClick={recording ? stopRecording : startRecording}
+      className={cn(
+        "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors flex flex-col items-center gap-3",
+        recording
+          ? "border-red-500/30 bg-red-500/5"
+          : "border-muted-foreground/20 bg-muted/20 hover:border-muted-foreground/30 hover:bg-muted/30"
+      )}
+    >
+      {recording ? (
+        <>
+          <div className="flex items-center gap-[2px] h-8">
+            {waveformLevels.map((h, i) => (
+              <div
+                key={i}
+                className="w-[3px] rounded-full bg-red-400 transition-all duration-75"
+                style={{ height: `${h}px` }}
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-xs font-mono text-red-400">{fmt(seconds)}</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground">Clique para parar</p>
+        </>
+      ) : (
+        <>
+          <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center">
+            <Mic size={18} className="text-muted-foreground" />
+          </div>
+          <p className="text-xs text-muted-foreground">Gravar áudio</p>
+          <p className="text-[10px] text-muted-foreground/60">Clique para iniciar</p>
+        </>
       )}
     </div>
   );
 }
 
-// ===== VARIABLES HELPER =====
-function VariablesInline({ onInsert }: { onInsert?: (v: string) => void }) {
+// ===== CONTENT ITEM EDITOR =====
+function ContentItemEditor({
+  item, onUpdate, onRemove, uploading, onUpload, onAudioRecorded,
+}: {
+  item: ContentItem;
+  onUpdate: (key: string, value: any) => void;
+  onRemove: () => void;
+  uploading: boolean;
+  onUpload: (file: File, type: string) => Promise<string | null>;
+  onAudioRecorded: (blob: Blob) => Promise<string | null>;
+}) {
+  const typeConfig: Record<string, { label: string; icon: any; borderColor: string }> = {
+    text: { label: "Texto", icon: MessageSquare, borderColor: "border-blue-400/20" },
+    image: { label: "Imagem", icon: Image, borderColor: "border-emerald-400/20" },
+    audio: { label: "Áudio", icon: FileAudio, borderColor: "border-orange-400/20" },
+    video: { label: "Vídeo", icon: Video, borderColor: "border-purple-400/20" },
+    document: { label: "Documento", icon: FileText, borderColor: "border-amber-400/20" },
+    delay: { label: "Delay", icon: Clock, borderColor: "border-muted-foreground/20" },
+  };
+
+  const cfg = typeConfig[item.type] || typeConfig.text;
+  const Icon = cfg.icon;
+
   return (
-    <div className="p-2.5 rounded-lg border border-border/30 bg-muted/10">
-      <p className="text-[10px] font-medium text-muted-foreground mb-1.5">📌 Variáveis disponíveis:</p>
-      <div className="flex flex-wrap gap-1">
-        {AVAILABLE_VARIABLES.map((v) => (
-          <Badge
-            key={v.key}
-            variant="secondary"
-            className="text-[9px] px-1.5 py-0 h-5 font-mono cursor-pointer hover:bg-primary/20"
-            onClick={() => {
-              if (onInsert) onInsert(v.key);
-              else navigator.clipboard.writeText(v.key);
-            }}
-            title={`Clique para copiar: ${v.key}`}
-          >
-            {v.key}
-          </Badge>
-        ))}
+    <div className={cn("rounded-xl border bg-card/50 overflow-hidden", cfg.borderColor)}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/30 bg-muted/10">
+        <div className="flex items-center gap-2">
+          <Icon size={13} className="text-muted-foreground" />
+          <span className="text-[11px] font-medium text-foreground">{cfg.label}</span>
+        </div>
+        <button onClick={onRemove} className="w-6 h-6 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive flex items-center justify-center transition-colors">
+          <Trash2 size={12} />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="p-3 space-y-3">
+        {/* TEXT */}
+        {item.type === "text" && (
+          <Textarea
+            value={item.content || ""}
+            onChange={(e) => onUpdate("content", e.target.value)}
+            placeholder="Olá {nome}! Como posso te ajudar?"
+            className="text-sm min-h-[80px] bg-background/50"
+          />
+        )}
+
+        {/* IMAGE */}
+        {item.type === "image" && (
+          <>
+            {item.media_url ? (
+              <div className="space-y-2">
+                <div className="relative rounded-lg overflow-hidden border border-border bg-muted/20">
+                  <img src={item.media_url} alt="Preview" className="w-full max-h-40 object-contain" />
+                  <button
+                    onClick={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }}
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+                <Textarea
+                  value={item.caption || ""}
+                  onChange={(e) => onUpdate("caption", e.target.value)}
+                  placeholder="Legenda da imagem..."
+                  className="text-sm min-h-[50px] bg-background/50"
+                />
+              </div>
+            ) : (
+              <MediaDropZone
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                maxSizeMB={5}
+                label="Arraste ou clique para enviar"
+                onFileSelected={async (f) => {
+                  const url = await onUpload(f, "image");
+                  if (url) { onUpdate("media_url", url); onUpdate("media_filename", f.name); }
+                }}
+                uploading={uploading}
+              />
+            )}
+          </>
+        )}
+
+        {/* AUDIO */}
+        {item.type === "audio" && (
+          <>
+            {item.media_url ? (
+              <CustomAudioPlayer src={item.media_url} onRemove={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }} />
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <AudioRecorder onRecorded={async (blob) => {
+                  const url = await onAudioRecorded(blob);
+                  if (url) { onUpdate("media_url", url); onUpdate("media_filename", `gravacao-${Date.now()}.webm`); }
+                }} />
+                <MediaDropZone
+                  accept="audio/ogg,audio/mpeg,audio/mp4,audio/webm,audio/wav"
+                  maxSizeMB={16}
+                  label="Enviar arquivo"
+                  onFileSelected={async (f) => {
+                    const url = await onUpload(f, "audio");
+                    if (url) { onUpdate("media_url", url); onUpdate("media_filename", f.name); }
+                  }}
+                  uploading={uploading}
+                />
+              </div>
+            )}
+          </>
+        )}
+
+        {/* VIDEO */}
+        {item.type === "video" && (
+          <>
+            {item.media_url ? (
+              <div className="space-y-2">
+                <div className="relative rounded-lg overflow-hidden border border-border bg-muted/20">
+                  <video src={item.media_url} controls className="w-full max-h-40" />
+                  <button
+                    onClick={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }}
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+                <Textarea
+                  value={item.caption || ""}
+                  onChange={(e) => onUpdate("caption", e.target.value)}
+                  placeholder="Legenda do vídeo..."
+                  className="text-sm min-h-[50px] bg-background/50"
+                />
+              </div>
+            ) : (
+              <MediaDropZone
+                accept="video/mp4,video/webm"
+                maxSizeMB={16}
+                label="Arraste ou clique para enviar"
+                onFileSelected={async (f) => {
+                  const video = document.createElement("video");
+                  video.preload = "metadata";
+                  video.onloadedmetadata = async () => {
+                    URL.revokeObjectURL(video.src);
+                    if (video.duration > 120) { toast.error("Máximo 2 minutos"); return; }
+                    const url = await onUpload(f, "video");
+                    if (url) { onUpdate("media_url", url); onUpdate("media_filename", f.name); }
+                  };
+                  video.src = URL.createObjectURL(f);
+                }}
+                uploading={uploading}
+              />
+            )}
+          </>
+        )}
+
+        {/* DOCUMENT */}
+        {item.type === "document" && (
+          <>
+            {item.media_url ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/20">
+                  <FileText size={18} className="text-amber-400 shrink-0" />
+                  <span className="text-xs text-foreground truncate flex-1">{item.media_filename || "Documento"}</span>
+                  <button
+                    onClick={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }}
+                    className="w-6 h-6 rounded-full bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors shrink-0"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+                <Textarea
+                  value={item.caption || ""}
+                  onChange={(e) => onUpdate("caption", e.target.value)}
+                  placeholder="Legenda do documento..."
+                  className="text-sm min-h-[50px] bg-background/50"
+                />
+              </div>
+            ) : (
+              <MediaDropZone
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                maxSizeMB={20}
+                label="Arraste ou clique para enviar"
+                onFileSelected={async (f) => {
+                  const url = await onUpload(f, "document");
+                  if (url) { onUpdate("media_url", url); onUpdate("media_filename", f.name); }
+                }}
+                uploading={uploading}
+              />
+            )}
+          </>
+        )}
+
+        {/* DELAY */}
+        {item.type === "delay" && (
+          <div className="flex items-center gap-3">
+            <Clock size={16} className="text-muted-foreground shrink-0" />
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={5}
+                  value={item.delay_seconds || 5}
+                  onChange={(e) => onUpdate("delay_seconds", Math.max(5, parseInt(e.target.value) || 5))}
+                  className="h-8 w-24 text-sm bg-background/50"
+                />
+                <span className="text-xs text-muted-foreground">segundos</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground/60">Mínimo: 5 segundos</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -279,7 +502,15 @@ interface MessageContentBuilderProps {
 export function MessageContentBuilder({ config, updateConfig }: MessageContentBuilderProps) {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+
+  // Initialize contents array from config
+  const contents: ContentItem[] = config.contents || [];
+
+  const setContents = (newContents: ContentItem[]) => {
+    updateConfig("contents", newContents);
+  };
+
+  const contentCount = contents.filter(c => c.type !== "delay").length;
 
   const uploadFile = async (file: File, folder: string): Promise<string | null> => {
     if (!user) return null;
@@ -288,305 +519,111 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
       const ext = file.name.split(".").pop() || "bin";
       const path = `${user.id}/${folder}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("wa-flow-media").upload(path, file, {
-        cacheControl: "3600",
-        upsert: false,
+        cacheControl: "3600", upsert: false,
       });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("wa-flow-media").getPublicUrl(path);
       return urlData.publicUrl;
     } catch (err: any) {
-      toast.error("Erro ao enviar arquivo: " + (err.message || "Tente novamente"));
+      toast.error("Erro ao enviar: " + (err.message || "Tente novamente"));
       return null;
     } finally {
       setUploading(false);
     }
   };
 
-  const removeFile = async (url: string) => {
-    if (!user || !url) return;
-    try {
-      const bucket = "wa-flow-media";
-      const prefix = supabase.storage.from(bucket).getPublicUrl("").data.publicUrl;
-      const path = url.replace(prefix, "");
-      if (path) await supabase.storage.from(bucket).remove([path]);
-    } catch {
-      // silent fail on cleanup
-    }
-  };
-
-  const handleMediaUpload = async (file: File, type: string) => {
-    const url = await uploadFile(file, type);
-    if (url) {
-      updateConfig("message_type", type);
-      updateConfig("media_url", url);
-      updateConfig("media_filename", file.name);
-      setActiveMenu(null);
-    }
-  };
-
-  const handleAudioRecorded = async (blob: Blob) => {
+  const handleAudioRecorded = async (blob: Blob): Promise<string | null> => {
     const file = new File([blob], `gravacao-${Date.now()}.webm`, { type: "audio/webm" });
-    const url = await uploadFile(file, "audio");
-    if (url) {
-      updateConfig("message_type", "audio");
-      updateConfig("media_url", url);
-      updateConfig("media_filename", file.name);
-      setActiveMenu(null);
+    return await uploadFile(file, "audio");
+  };
+
+  const addContent = (type: ContentItem["type"]) => {
+    if (type !== "delay" && contentCount >= MAX_CONTENT_ITEMS) {
+      toast.error(`Máximo de ${MAX_CONTENT_ITEMS} conteúdos por mensagem (delay não conta)`);
+      return;
     }
+    const newItem: ContentItem = {
+      id: `${type}-${Date.now()}`,
+      type,
+      ...(type === "delay" ? { delay_seconds: 5 } : {}),
+    };
+    setContents([...contents, newItem]);
   };
 
-  const handleRemoveMedia = () => {
-    if (config.media_url) removeFile(config.media_url);
-    updateConfig("media_url", "");
-    updateConfig("media_filename", "");
+  const updateItem = (id: string, key: string, value: any) => {
+    setContents(contents.map(c => c.id === id ? { ...c, [key]: value } : c));
   };
 
-  const handleAddText = () => {
-    updateConfig("message_type", "text");
-    setActiveMenu(null);
+  const removeItem = (id: string) => {
+    const item = contents.find(c => c.id === id);
+    // Cleanup storage if media
+    if (item?.media_url) {
+      try {
+        const bucket = "wa-flow-media";
+        const prefix = supabase.storage.from(bucket).getPublicUrl("").data.publicUrl;
+        const path = item.media_url.replace(prefix, "");
+        if (path) supabase.storage.from(bucket).remove([path]);
+      } catch { /* silent */ }
+    }
+    setContents(contents.filter(c => c.id !== id));
   };
-
-  const hasContent = config.message_type && (
-    config.message_type === "text" ? !!config.content :
-    !!config.media_url
-  );
 
   return (
     <div className="space-y-4">
-      {/* Content menu */}
+      {/* Content type grid - 3x2 */}
       <div className="space-y-2">
-        <Label className="text-xs font-medium text-muted-foreground">Adicionar conteúdo à mensagem</Label>
-        <div className="grid grid-cols-5 gap-1.5">
-          {CONTENT_TYPES.map((ct) => (
-            <button
-              key={ct.value}
-              className={cn(
-                "flex flex-col items-center gap-1 p-2 rounded-lg border text-[10px] transition-all",
-                activeMenu === ct.value
-                  ? "border-primary bg-primary/10 text-primary scale-[1.02]"
-                  : `border-border/30 hover:border-primary/30 text-muted-foreground hover:text-foreground`
-              )}
-              onClick={() => {
-                if (ct.value === "text") {
-                  handleAddText();
-                } else {
-                  setActiveMenu(activeMenu === ct.value ? null : ct.value);
-                }
-              }}
-            >
-              <ct.icon size={15} />
-              {ct.label}
-            </button>
-          ))}
+        <Label className="text-xs font-medium text-muted-foreground">Adicionar conteúdo</Label>
+        <div className="grid grid-cols-3 gap-1.5">
+          {CONTENT_TYPES.map((ct) => {
+            const disabled = ct.value !== "delay" && contentCount >= MAX_CONTENT_ITEMS;
+            return (
+              <button
+                key={ct.value}
+                disabled={disabled}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 p-2.5 rounded-lg border text-[10px] transition-all",
+                  disabled
+                    ? "border-border/20 text-muted-foreground/40 cursor-not-allowed"
+                    : "border-border/30 hover:border-primary/30 text-muted-foreground hover:text-foreground hover:bg-muted/20"
+                )}
+                onClick={() => addContent(ct.value as ContentItem["type"])}
+              >
+                <ct.icon size={15} />
+                {ct.label}
+              </button>
+            );
+          })}
         </div>
+        <p className="text-[10px] text-muted-foreground/60">
+          Use variáveis como {"{nome}"}, {"{telefone}"}, {"{empresa}"}, {"{email}"}, {"{cidade}"}, {"{data}"}, {"{hora}"} ou crie as suas. • {contentCount}/{MAX_CONTENT_ITEMS} conteúdos
+        </p>
       </div>
 
-      {/* Active content type configuration */}
-      {activeMenu === "image" && !config.media_url && (
-        <div className="space-y-3 p-3 rounded-xl border border-emerald-400/20 bg-emerald-400/5 animate-in slide-in-from-top-2">
-          <Label className="text-xs font-medium text-emerald-400">📷 Adicionar imagem</Label>
-          <MediaDropZone
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            maxSizeMB={5}
-            label="Arraste ou clique para enviar uma imagem"
-            onFileSelected={(f) => handleMediaUpload(f, "image")}
-            previewType="image"
-            uploading={uploading}
-          />
-          <p className="text-[10px] text-muted-foreground">Formatos: JPEG, PNG, WebP, GIF. Máx: 5MB</p>
-        </div>
-      )}
-
-      {activeMenu === "audio" && !config.media_url && (
-        <div className="space-y-3 p-3 rounded-xl border border-orange-400/20 bg-orange-400/5 animate-in slide-in-from-top-2">
-          <Label className="text-xs font-medium text-orange-400">🎙️ Adicionar áudio</Label>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <p className="text-[10px] text-muted-foreground font-medium">Gravar</p>
-              <AudioRecorder onRecorded={handleAudioRecorded} />
-            </div>
-            <div className="space-y-2">
-              <p className="text-[10px] text-muted-foreground font-medium">Enviar arquivo</p>
-              <MediaDropZone
-                accept="audio/ogg,audio/mpeg,audio/mp4,audio/webm,audio/wav"
-                maxSizeMB={16}
-                label="Arraste um áudio"
-                onFileSelected={(f) => handleMediaUpload(f, "audio")}
-                previewType="audio"
-                uploading={uploading}
-              />
-            </div>
-          </div>
-          <p className="text-[10px] text-muted-foreground">Formato recomendado: OGG/OPUS. Máx: 16MB</p>
-        </div>
-      )}
-
-      {activeMenu === "video" && !config.media_url && (
-        <div className="space-y-3 p-3 rounded-xl border border-purple-400/20 bg-purple-400/5 animate-in slide-in-from-top-2">
-          <Label className="text-xs font-medium text-purple-400">🎬 Adicionar vídeo</Label>
-          <MediaDropZone
-            accept="video/mp4,video/webm"
-            maxSizeMB={16}
-            label="Arraste ou clique para enviar um vídeo"
-            onFileSelected={(f) => {
-              // Check duration via video element
-              const video = document.createElement("video");
-              video.preload = "metadata";
-              video.onloadedmetadata = () => {
-                URL.revokeObjectURL(video.src);
-                if (video.duration > 120) {
-                  toast.error("O vídeo deve ter no máximo 2 minutos");
-                  return;
-                }
-                handleMediaUpload(f, "video");
-              };
-              video.src = URL.createObjectURL(f);
-            }}
-            previewType="video"
-            uploading={uploading}
-          />
-          <p className="text-[10px] text-muted-foreground">Formato: MP4, WebM. Máx: 2 minutos, 16MB</p>
-        </div>
-      )}
-
-      {activeMenu === "document" && !config.media_url && (
-        <div className="space-y-3 p-3 rounded-xl border border-amber-400/20 bg-amber-400/5 animate-in slide-in-from-top-2">
-          <Label className="text-xs font-medium text-amber-400">📄 Adicionar documento</Label>
-          <MediaDropZone
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-            maxSizeMB={20}
-            label="Arraste ou clique para enviar um documento"
-            onFileSelected={(f) => handleMediaUpload(f, "document")}
-            previewType="document"
-            uploading={uploading}
-          />
-          <p className="text-[10px] text-muted-foreground">Formatos: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX. Máx: 20MB</p>
-        </div>
-      )}
-
-      {/* ===== CONFIGURED CONTENT DISPLAY ===== */}
-      {config.message_type && (
-        <div className="space-y-3 pt-1">
+      {/* Content items list */}
+      {contents.length > 0 && (
+        <div className="space-y-2">
           <div className="flex items-center gap-2">
             <div className="w-1 h-4 rounded-full bg-primary" />
-            <Label className="text-xs font-medium">Conteúdo configurado</Label>
+            <Label className="text-xs font-medium">Conteúdos ({contents.length})</Label>
           </div>
-
-          {/* TEXT */}
-          {config.message_type === "text" && (
-            <div className="space-y-3">
-              <Textarea
-                value={config.content || ""}
-                onChange={(e) => updateConfig("content", e.target.value)}
-                placeholder="Olá {nome}! Como posso te ajudar?&#10;&#10;Use variáveis para personalizar"
-                className="text-sm min-h-[100px]"
-              />
-              <VariablesInline />
-            </div>
-          )}
-
-          {/* IMAGE */}
-          {config.message_type === "image" && config.media_url && (
-            <div className="space-y-3">
-              <MediaDropZone
-                accept="image/*"
-                maxSizeMB={5}
-                label=""
-                onFileSelected={(f) => handleMediaUpload(f, "image")}
-                currentUrl={config.media_url}
-                onRemove={handleRemoveMedia}
-                previewType="image"
-                uploading={uploading}
-              />
-              <div className="space-y-2">
-                <Label className="text-xs">Legenda (texto da imagem)</Label>
-                <Textarea
-                  value={config.caption || ""}
-                  onChange={(e) => updateConfig("caption", e.target.value)}
-                  placeholder="Texto que acompanha a imagem..."
-                  className="text-sm min-h-[60px]"
+          <p className="text-[10px] text-muted-foreground/60">Enviados na ordem de cima para baixo</p>
+          <div className="space-y-2">
+            {contents.map((item, index) => (
+              <div key={item.id} className="relative">
+                <div className="absolute -left-5 top-3 text-[9px] text-muted-foreground/40 font-mono">
+                  {index + 1}
+                </div>
+                <ContentItemEditor
+                  item={item}
+                  onUpdate={(key, value) => updateItem(item.id, key, value)}
+                  onRemove={() => removeItem(item.id)}
+                  uploading={uploading}
+                  onUpload={uploadFile}
+                  onAudioRecorded={handleAudioRecorded}
                 />
               </div>
-              <VariablesInline />
-            </div>
-          )}
-
-          {/* AUDIO */}
-          {config.message_type === "audio" && config.media_url && (
-            <div className="space-y-3">
-              <MediaDropZone
-                accept="audio/*"
-                maxSizeMB={16}
-                label=""
-                onFileSelected={(f) => handleMediaUpload(f, "audio")}
-                currentUrl={config.media_url}
-                onRemove={handleRemoveMedia}
-                previewType="audio"
-                uploading={uploading}
-              />
-            </div>
-          )}
-
-          {/* VIDEO */}
-          {config.message_type === "video" && config.media_url && (
-            <div className="space-y-3">
-              <MediaDropZone
-                accept="video/*"
-                maxSizeMB={16}
-                label=""
-                onFileSelected={(f) => handleMediaUpload(f, "video")}
-                currentUrl={config.media_url}
-                onRemove={handleRemoveMedia}
-                previewType="video"
-                uploading={uploading}
-              />
-              <div className="space-y-2">
-                <Label className="text-xs">Legenda (texto do vídeo)</Label>
-                <Textarea
-                  value={config.caption || ""}
-                  onChange={(e) => updateConfig("caption", e.target.value)}
-                  placeholder="Texto que acompanha o vídeo..."
-                  className="text-sm min-h-[60px]"
-                />
-              </div>
-              <VariablesInline />
-            </div>
-          )}
-
-          {/* DOCUMENT */}
-          {config.message_type === "document" && config.media_url && (
-            <div className="space-y-3">
-              <MediaDropZone
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                maxSizeMB={20}
-                label=""
-                onFileSelected={(f) => handleMediaUpload(f, "document")}
-                currentUrl={config.media_url}
-                onRemove={handleRemoveMedia}
-                previewType="document"
-                uploading={uploading}
-              />
-              <div className="space-y-2">
-                <Label className="text-xs">Nome do arquivo</Label>
-                <Input
-                  value={config.filename || config.media_filename || ""}
-                  onChange={(e) => updateConfig("filename", e.target.value)}
-                  placeholder="proposta-comercial.pdf"
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Legenda (texto do documento)</Label>
-                <Textarea
-                  value={config.caption || ""}
-                  onChange={(e) => updateConfig("caption", e.target.value)}
-                  placeholder="Texto que acompanha o documento..."
-                  className="text-sm min-h-[60px]"
-                />
-              </div>
-              <VariablesInline />
-            </div>
-          )}
+            ))}
+          </div>
         </div>
       )}
     </div>
