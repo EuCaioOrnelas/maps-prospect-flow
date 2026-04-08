@@ -1181,36 +1181,9 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
 
   return (
     <div className="space-y-4">
-      {renderApiIndicator()}
 
-      {/* Context info - top, discreet */}
-      <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
-        <button onClick={() => setShowContextInfo(!showContextInfo)} className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={14} className="text-emerald-500" />
-            <span className="text-xs font-medium text-foreground">Mensagem anterior do lead</span>
-          </div>
-          <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", showContextInfo && "rotate-180")} />
-        </button>
-        {showContextInfo && (
-          <p className="text-[10px] text-muted-foreground mt-2">A IA recebe automaticamente a última mensagem enviada pelo lead na conexão. Isso permite que o agente analise e responda com base no que o lead disse, considerando também o histórico anterior.</p>
-        )}
-      </div>
-
-      {/* Memory toggle */}
-      <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={14} className={config.memory_enabled === false ? "text-muted-foreground" : "text-emerald-500"} />
-            <Label className="text-xs font-medium">Memória de conversa</Label>
-          </div>
-          <Switch checked={config.memory_enabled !== false} onCheckedChange={(v) => updateConfig("memory_enabled", v)} />
-        </div>
-        <p className="text-[10px] text-muted-foreground mt-1">A IA recebe o histórico da conversa para manter contexto.</p>
-      </div>
-
-      {/* CREDENTIALS SECTION */}
-      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+      {/* CREDENTIALS SECTION - no nested card */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <Label className="text-xs font-bold flex items-center gap-1.5">🔑 Credenciais de IA</Label>
           <button onClick={() => setShowDocs(!showDocs)} className="text-[10px] text-primary hover:underline flex items-center gap-1">
@@ -1267,9 +1240,9 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
           </div>
         )}
 
-        {/* Add new credential */}
+        {/* Add new credential - flat, no nested card */}
         {creatingCred ? (
-          <div className="space-y-2 p-2.5 rounded-lg border border-primary/20 bg-primary/5">
+          <div className="space-y-2">
             <Label className="text-[11px] font-medium">Nova credencial</Label>
             <Input value={newCredName} onChange={(e) => setNewCredName(e.target.value)} placeholder="Nome da credencial (ex: Minha OpenAI)" className="h-8 text-xs" />
             <div className="grid grid-cols-3 gap-1.5">
@@ -1281,7 +1254,7 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
               ))}
             </div>
             <div className="flex gap-2">
-              <Input type={showApiKey ? "text" : "password"} value={newApiKey} onChange={(e) => setNewApiKey(e.target.value)} placeholder="Cole sua API Key aqui..." className="h-8 text-xs font-mono flex-1" />
+              <Input type={showApiKey ? "text" : "password"} value={newApiKey} onChange={(e) => setNewApiKey(e.target.value)} placeholder="Cole sua API Key aqui..." className="h-8 text-xs flex-1" />
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setShowApiKey(!showApiKey)}>
                 {showApiKey ? <EyeOff size={14} className="text-muted-foreground" /> : <Eye size={14} className="text-muted-foreground" />}
               </Button>
@@ -1301,8 +1274,8 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
         )}
       </div>
 
-      {/* AGENTS SECTION */}
-      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+      {/* AGENTS SECTION - no nested card */}
+      <div className="space-y-3">
         <Label className="text-xs font-bold flex items-center gap-1.5">🤖 Agente de IA</Label>
 
         {!creatingAgent && (
@@ -1348,9 +1321,9 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
           </>
         )}
 
-        {/* Agent creation/editing form */}
+        {/* Agent creation/editing form - flat */}
         {creatingAgent && (
-          <div className="space-y-3 p-2.5 rounded-lg border border-primary/20 bg-primary/5">
+          <div className="space-y-3">
             <Label className="text-[11px] font-semibold">{editingAgent ? "Editar agente" : "Novo agente"}</Label>
 
             <Input value={agentForm.name || ""} onChange={(e) => setAgentForm({ ...agentForm, name: e.target.value })} placeholder="Nome do agente (ex: Vendedor IA)" className="h-8 text-xs" />
@@ -1358,10 +1331,10 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
             <div className="space-y-1">
               <Label className="text-[11px] text-muted-foreground">Credencial vinculada</Label>
               <Select value={agentForm.credential_id || ""} onValueChange={(v) => {
-                setAgentForm({ ...agentForm, credential_id: v });
                 const cred = credentials.find((c: any) => c.id === v);
                 if (cred) {
-                  setAgentForm((prev: any) => ({ ...prev, credential_id: v, ai_provider: cred.provider }));
+                  const models = AI_MODELS[cred.provider] || [];
+                  setAgentForm((prev: any) => ({ ...prev, credential_id: v, ai_provider: cred.provider, ai_model: models[0]?.value || "" }));
                 }
               }}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecionar credencial" /></SelectTrigger>
@@ -1374,13 +1347,16 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
               </Select>
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-[11px] text-muted-foreground">Modelo de IA</Label>
-              <Select value={agentForm.ai_model || agentFormModels[0]?.value || ""} onValueChange={(v) => setAgentForm({ ...agentForm, ai_model: v })}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>{agentFormModels.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+            {/* Model only shows after credential is selected */}
+            {agentForm.credential_id && (
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">Modelo de IA</Label>
+                <Select value={agentForm.ai_model || agentFormModels[0]?.value || ""} onValueChange={(v) => setAgentForm({ ...agentForm, ai_model: v })}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>{agentFormModels.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-1">
               <Label className="text-[11px] text-muted-foreground">O que a IA deve retornar?</Label>
@@ -1434,6 +1410,32 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
         <Label className="text-xs font-medium">Contexto extra deste bloco (opcional)</Label>
         <Textarea value={config.ai_context || ""} onChange={(e) => updateConfig("ai_context", e.target.value)} placeholder="Informações específicas para este ponto do fluxo..." className="text-sm min-h-[60px]" />
         <p className="text-[10px] text-muted-foreground">Contexto adicional enviado junto com o prompt do agente apenas neste bloco.</p>
+      </div>
+
+      {/* Memory toggle - at the end */}
+      <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={14} className={config.memory_enabled === false ? "text-muted-foreground" : "text-emerald-500"} />
+            <Label className="text-xs font-medium">Memória de conversa</Label>
+          </div>
+          <Switch checked={config.memory_enabled !== false} onCheckedChange={(v) => updateConfig("memory_enabled", v)} />
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-1">A IA recebe o histórico da conversa para manter contexto.</p>
+      </div>
+
+      {/* Context info - at the end, discreet */}
+      <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
+        <button onClick={() => setShowContextInfo(!showContextInfo)} className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={14} className="text-emerald-500" />
+            <span className="text-xs font-medium text-foreground">Mensagem anterior do lead</span>
+          </div>
+          <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", showContextInfo && "rotate-180")} />
+        </button>
+        {showContextInfo && (
+          <p className="text-[10px] text-muted-foreground mt-2">A IA recebe automaticamente a última mensagem enviada pelo lead na conexão. Isso permite que o agente analise e responda com base no que o lead disse, considerando também o histórico anterior.</p>
+        )}
       </div>
     </div>
   );
@@ -1497,17 +1499,6 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
   const noEntryConfigured = !entryConfig.whatsapp_number_id;
 
   const renderApiIndicator = () => {
-    if (node.type === "entry") return null;
-    if (noEntryConfigured) {
-      return (
-        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
-          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-[10px] text-amber-500 leading-relaxed">
-            <span className="font-semibold">Nenhum número configurado.</span> Configure o bloco de Entrada para definir qual API será usada.
-          </p>
-        </div>
-      );
-    }
     return null;
   };
 
