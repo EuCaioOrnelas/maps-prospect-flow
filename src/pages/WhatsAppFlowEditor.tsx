@@ -128,6 +128,7 @@ const sidebarCategories = [
     items: [
       { type: "condition", icon: GitBranch, label: "Condição", desc: "IF/ELSE para bifurcação", color: "text-purple-400 bg-purple-400/10" },
       { type: "wait", icon: Clock, label: "Espera", desc: "Delay antes do próximo nó", color: "text-amber-400 bg-amber-400/10" },
+      { type: "data_collect", icon: Database, label: "Coleta de Dados", desc: "Pergunta e salva em variável", color: "text-teal-400 bg-teal-400/10" },
       { type: "ab_test", icon: FlaskConical, label: "Teste A/B", desc: "Divide leads e metrifica", color: "text-emerald-400 bg-emerald-400/10" },
       { type: "random_split", icon: Shuffle, label: "Random Split", desc: "Distribui aleatoriamente", color: "text-sky-400 bg-sky-400/10" },
     ],
@@ -376,6 +377,7 @@ export default function WhatsAppFlowEditor() {
         handoff: "Handoff", end: "Fim", ai_agent: "Agente IA",
         ab_test: "Teste A/B", random_split: "Random Split",
         google_sheets: "Google Sheets", google_calendar: "Google Agenda", gmail: "Gmail",
+        data_collect: "Coleta de Dados",
       };
 
       const defaultConfigs: Record<string, any> = {
