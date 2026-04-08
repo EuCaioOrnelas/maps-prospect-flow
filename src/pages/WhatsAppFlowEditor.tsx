@@ -224,6 +224,7 @@ export default function WhatsAppFlowEditor() {
   const [clipboard, setClipboard] = useState<Node | null>(null);
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
+  const [edgeToDelete, setEdgeToDelete] = useState<string | null>(null);
 
   // Undo/Redo history
   const [history, setHistory] = useState<HistoryEntry[]>([]);
