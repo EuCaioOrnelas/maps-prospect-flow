@@ -1,4 +1,5 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Position, type NodeProps } from "@xyflow/react";
+import { FlowHandle } from "./FlowHandle";
 import { Shuffle } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 
@@ -34,7 +35,7 @@ export function WARandomSplitNode({ data }: NodeProps) {
 
   return (
     <div ref={nodeRef} className="bg-card border border-border rounded-xl shadow-sm w-52 relative">
-      <Handle type="target" position={Position.Left} />
+      <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
         <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center shrink-0">
           <Shuffle size={16} className="text-sky-400" />
@@ -63,7 +64,7 @@ export function WARandomSplitNode({ data }: NodeProps) {
       </div>
 
       {outputs.map((o, i) => (
-        <Handle
+        <FlowHandle
           key={o.id}
           type="source"
           position={Position.Right}

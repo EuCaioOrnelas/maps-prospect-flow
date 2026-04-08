@@ -1,4 +1,5 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Position, type NodeProps } from "@xyflow/react";
+import { FlowHandle } from "./FlowHandle";
 import { Zap, Phone, AlertTriangle, Radio, Wifi } from "lucide-react";
 
 const triggerLabels: Record<string, string> = {
@@ -19,7 +20,7 @@ export function WAEntryNode({ data }: NodeProps) {
   return (
     <div className="bg-card border-2 border-primary/40 rounded-2xl shadow-[0_2px_16px_hsl(158,72%,38%,0.15)] w-60 backdrop-blur-sm">
       {/* Target handle - top center */}
-      <Handle type="target" position={Position.Left} />
+      <FlowHandle type="target" position={Position.Left} />
 
       <div className="flex items-center gap-2.5 px-4 py-3">
         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -72,7 +73,7 @@ export function WAEntryNode({ data }: NodeProps) {
       )}
 
       {/* Source handle - right center, green */}
-      <Handle type="source" position={Position.Right} />
+      <FlowHandle type="source" position={Position.Right} />
     </div>
   );
 }
