@@ -93,6 +93,7 @@ export function WAFlowTestDialog({
   const [inputText, setInputText] = useState("");
   const [awaitingNodeId, setAwaitingNodeId] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [listPopup, setListPopup] = useState<{ nodeId: string; choices: InteractiveChoice[]; title: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const runtimeRef = useRef<RuntimeContext>(createRuntimeContext());
   const runVersionRef = useRef(0);
