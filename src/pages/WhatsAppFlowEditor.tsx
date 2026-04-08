@@ -611,16 +611,17 @@ export default function WhatsAppFlowEditor() {
 
       {/* Main area */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Sidebar toggle button - only visible when sidebar is closed */}
-        {!sidebarOpen && (
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="absolute top-2 left-2 z-20 w-8 h-8 rounded-lg bg-card border border-border flex items-center justify-center hover:bg-muted transition-colors shadow-sm"
-            title="Abrir painel"
-          >
-            <PanelLeftOpen size={14} />
-          </button>
-        )}
+        {/* Sidebar toggle button - appears after sidebar closes */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className={cn(
+            "absolute top-2 left-2 z-20 w-8 h-8 rounded-lg bg-card border border-border flex items-center justify-center hover:bg-muted shadow-sm transition-all duration-200",
+            sidebarOpen ? "opacity-0 pointer-events-none scale-90 delay-0" : "opacity-100 pointer-events-auto scale-100 delay-300"
+          )}
+          title="Abrir painel"
+        >
+          <PanelLeftOpen size={14} />
+        </button>
 
         {/* Sidebar */}
         <div className={cn(
