@@ -1187,9 +1187,15 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
       {/* CREDENTIALS SECTION - collapsible */}
       <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
         <button onClick={() => setShowCredSection(!showCredSection)} className="flex items-center justify-between w-full">
-          <Label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">🔑 Credenciais de IA</Label>
+          <Label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+            <KeyRound size={14} className="text-muted-foreground" /> Credenciais de IA
+          </Label>
           <div className="flex items-center gap-2">
-            {selectedCred && <span className="text-[9px] text-emerald-500 font-medium">{selectedCred.name}</span>}
+            {selectedCred ? (
+              <span className="text-[9px] text-emerald-500 font-medium">{selectedCred.name}</span>
+            ) : (
+              <span className="text-[9px] text-muted-foreground font-medium">Selecionar</span>
+            )}
             <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", showCredSection && "rotate-180")} />
           </div>
         </button>
