@@ -3,6 +3,14 @@ import { FlowHandle } from "./FlowHandle";
 import { Shuffle } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 
+const dotColors = [
+  "bg-sky-400",
+  "bg-violet-400",
+  "bg-rose-400",
+  "bg-amber-400",
+  "bg-teal-400",
+];
+
 export function WARandomSplitNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
   const outputs: { id: string; name: string }[] = cfg.outputs || [
@@ -24,14 +32,6 @@ export function WARandomSplitNode({ data }: NodeProps) {
     });
     setHandleTops(tops);
   }, [outputs.length]);
-
-  const colors = [
-    "bg-sky-400/10 text-sky-400",
-    "bg-violet-400/10 text-violet-400",
-    "bg-rose-400/10 text-rose-400",
-    "bg-amber-400/10 text-amber-400",
-    "bg-teal-400/10 text-teal-400",
-  ];
 
   return (
     <div ref={nodeRef} className="bg-card border border-border rounded-xl shadow-sm w-52 relative">
@@ -55,9 +55,9 @@ export function WARandomSplitNode({ data }: NodeProps) {
           <div
             key={o.id}
             ref={(el) => { outputRefs.current[i] = el; }}
-            className={`text-[10px] ${colors[i % colors.length]} rounded px-2 py-1.5 truncate flex items-center gap-1.5 font-semibold`}
+            className="text-[10px] bg-muted/30 border border-border/30 rounded px-2 py-1.5 truncate flex items-center gap-1.5 font-semibold text-foreground"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
+            <span className={`w-1.5 h-1.5 rounded-full ${dotColors[i % dotColors.length]} shrink-0`} />
             {o.name}
           </div>
         ))}

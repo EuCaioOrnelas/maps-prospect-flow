@@ -1030,8 +1030,8 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
       )}
       <div
         className={cn(
-          "absolute top-0 left-0 z-50 h-full w-[400px] sm:w-[440px] bg-card border-r border-border shadow-2xl flex flex-col transition-transform duration-300 ease-out",
-          open ? "translate-x-0" : "-translate-x-full pointer-events-none"
+          "absolute top-0 left-0 z-50 h-full w-[400px] sm:w-[440px] bg-card border-r border-border flex flex-col transition-all duration-300 ease-out",
+          open ? "translate-x-0 shadow-2xl" : "-translate-x-full pointer-events-none shadow-none"
         )}
       >
         {/* Header */}
@@ -1275,21 +1275,19 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== CONDITION NODE ===== */}
           {node.type === "condition" && (
             <div className="space-y-4">
-              {renderInfoBanner("Crie bifurcações no fluxo baseadas em respostas, tags ou dados do lead.")}
+              {renderInfoBanner("Crie bifurcações no fluxo. Se a condição for verdadeira → Sim. Se falsa → Não.")}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Tipo de condição</Label>
                 <Select value={config.condition_type || ""} onValueChange={(v) => updateConfig("condition_type", v)}>
                   <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="button_clicked">Clicou botão específico</SelectItem>
-                    <SelectItem value="keyword_match">Contém palavra-chave</SelectItem>
+                    <SelectItem value="button_clicked">Clicou no botão</SelectItem>
+                    <SelectItem value="keyword_match">Respondeu com palavra-chave</SelectItem>
                     <SelectItem value="responded">Respondeu qualquer coisa</SelectItem>
-                    <SelectItem value="no_response">Não respondeu (timeout)</SelectItem>
-                    <SelectItem value="has_tag">Possui tag</SelectItem>
-                    <SelectItem value="field_equals">Campo do lead = valor</SelectItem>
+                    <SelectItem value="no_response">Não respondeu em X tempo</SelectItem>
+                    <SelectItem value="has_tag">Possui tag (CRM)</SelectItem>
                     <SelectItem value="score_above">Score acima de</SelectItem>
-                    <SelectItem value="is_customer">É cliente</SelectItem>
-                    <SelectItem value="pipeline_stage">Está na etapa</SelectItem>
+                    <SelectItem value="is_customer">É cliente (vendas fechadas)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1306,53 +1304,75 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
               )}
               {config.condition_type === "keyword_match" && (
                 <div className="space-y-2">
-                  <Label className="text-xs">Palavras (separadas por vírgula)</Label>
+                  <Label className="text-xs">Palavras-chave (separadas por vírgula)</Label>
                   <Input
                     value={config.condition_value || ""}
                     onChange={(e) => updateConfig("condition_value", e.target.value)}
                     placeholder="sim, quero, comprar"
                     className="h-9 text-sm"
                   />
+                  <p className="text-[10px] text-muted-foreground">Busca parcial, sem distinção de maiúsculas/acentos.</p>
                 </div>
               )}
-              {(config.condition_type === "has_tag" || config.condition_type === "pipeline_stage") && (
+              {config.condition_type === "has_tag" && (
                 <div className="space-y-2">
-                  <Label className="text-xs">{config.condition_type === "has_tag" ? "Nome da tag" : "Nome da etapa"}</Label>
+                  <Label className="text-xs">Nome da tag no CRM</Label>
                   <Input
                     value={config.condition_value || ""}
                     onChange={(e) => updateConfig("condition_value", e.target.value)}
+                    placeholder="qualificado, VIP, etc."
                     className="h-9 text-sm"
                   />
+                  <p className="text-[10px] text-muted-foreground">Verifica se o lead possui esta tag no CRM.</p>
                 </div>
               )}
               {config.condition_type === "score_above" && (
-                <div className="space-y-2">
-                  <Label className="text-xs">Score mínimo</Label>
-                  <Input
-                    type="number"
-                    value={config.condition_value || ""}
-                    onChange={(e) => updateConfig("condition_value", e.target.value)}
-                    placeholder="500"
-                    className="h-9 text-sm"
-                  />
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Tipo de verificação</Label>
+                    <Select value={config.score_check_type || "number"} onValueChange={(v) => updateConfig("score_check_type", v)}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="number">Por número (score mínimo)</SelectItem>
+                        <SelectItem value="category">Por categoria</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {(config.score_check_type || "number") === "number" && (
+                    <div className="space-y-2">
+                      <Label className="text-xs">Score mínimo</Label>
+                      <Input
+                        type="number"
+                        value={config.condition_value || ""}
+                        onChange={(e) => updateConfig("condition_value", e.target.value)}
+                        placeholder="500"
+                        className="h-9 text-sm"
+                      />
+                    </div>
+                  )}
+                  {config.score_check_type === "category" && (
+                    <div className="space-y-2">
+                      <Label className="text-xs">Categoria mínima</Label>
+                      <Select value={config.score_category || ""} onValueChange={(v) => updateConfig("score_category", v)}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="hot">🔥 Quente</SelectItem>
+                          <SelectItem value="warm">🟡 Morno</SelectItem>
+                          <SelectItem value="cold">❄️ Frio</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               )}
-              {config.condition_type === "field_equals" && (
+              {config.condition_type === "is_customer" && (
                 <div className="space-y-2">
-                  <Label className="text-xs">Nome do campo</Label>
-                  <Input
-                    value={config.field_name || ""}
-                    onChange={(e) => updateConfig("field_name", e.target.value)}
-                    placeholder="cidade"
-                    className="h-9 text-sm"
-                  />
-                  <Label className="text-xs">Valor esperado</Label>
-                  <Input
-                    value={config.condition_value || ""}
-                    onChange={(e) => updateConfig("condition_value", e.target.value)}
-                    placeholder="São Paulo"
-                    className="h-9 text-sm"
-                  />
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/30">
+                    <Info size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Verifica se o lead possui <span className="font-semibold text-foreground">vendas fechadas</span> no CRM. Se sim → <span className="text-primary font-semibold">Sim</span>, senão → <span className="text-destructive font-semibold">Não</span>.
+                    </p>
+                  </div>
                 </div>
               )}
               {config.condition_type === "no_response" && (
@@ -1365,6 +1385,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                     placeholder="60"
                     className="h-9 text-sm"
                   />
+                  <p className="text-[10px] text-muted-foreground">Se o lead não responder dentro deste tempo, segue pelo caminho "Não".</p>
                 </div>
               )}
               <p className="text-[10px] text-muted-foreground">Saída <span className="text-primary font-semibold">Sim</span> = condição verdadeira · <span className="text-destructive font-semibold">Não</span> = falsa</p>
@@ -1374,16 +1395,17 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== WAIT NODE ===== */}
           {node.type === "wait" && (
             <div className="space-y-4">
-              {renderInfoBanner("Pause o fluxo por um período. A espera inteligente verifica se o lead respondeu antes de continuar.")}
+              {renderInfoBanner("Pause o fluxo por um período antes de continuar para o próximo bloco.")}
               <div className="flex gap-3">
                 <div className="flex-1 space-y-2">
-                  <Label className="text-xs font-medium">Tempo</Label>
+                  <Label className="text-xs font-medium">Tempo de espera</Label>
                   <Input
                     type="number"
                     value={config.delay_value || ""}
                     onChange={(e) => updateConfig("delay_value", parseInt(e.target.value) || 0)}
                     placeholder="0"
                     className="h-9 text-sm"
+                    min={1}
                   />
                 </div>
                 <div className="flex-1 space-y-2">
@@ -1394,6 +1416,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                       <SelectItem value="minutes">Minutos</SelectItem>
                       <SelectItem value="hours">Horas</SelectItem>
                       <SelectItem value="days">Dias</SelectItem>
+                      <SelectItem value="weeks">Semanas</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1401,14 +1424,16 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
               <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
                 <div className="flex items-center gap-2">
                   <Switch
-                    checked={config.smart || false}
+                    checked={config.smart !== false}
                     onCheckedChange={(v) => updateConfig("smart", v)}
                   />
                   <Label className="text-xs font-medium">Espera inteligente</Label>
                 </div>
-                {config.smart && (
-                  <p className="text-[10px] text-muted-foreground">Se o lead responder antes do tempo, o fluxo avança imediatamente. Se não responder, segue após o timeout.</p>
-                )}
+                <p className="text-[10px] text-muted-foreground">
+                  {config.smart !== false
+                    ? "Se o lead responder antes do tempo, o fluxo avança imediatamente. Se não responder, segue após o timeout."
+                    : "A espera será fixa, independente de o lead responder."}
+                </p>
               </div>
               <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
                 <div className="flex items-center gap-2">
@@ -1418,6 +1443,11 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                   />
                   <Label className="text-xs font-medium">Apenas horário comercial</Label>
                 </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {config.business_hours_only
+                    ? "O timer só conta durante o horário comercial. Ex: delay de 2h = 2h úteis (fora do horário o timer pausa)."
+                    : "O delay conta normalmente, incluindo fora do horário comercial."}
+                </p>
                 {config.business_hours_only && (
                   <div className="flex gap-2">
                     <div className="flex-1 space-y-1">
@@ -1702,74 +1732,111 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== A/B TEST NODE ===== */}
           {node.type === "ab_test" && (
             <div className="space-y-4">
-              {renderInfoBanner("Divide os leads igualmente entre variantes e metrifica qual performa melhor no objetivo escolhido.")}
+              {renderInfoBanner("Divide os leads entre variantes e metrifica qual performa melhor. A medição é feita nos blocos conectados após cada variante.")}
               <div className="space-y-2">
-                <Label className="text-xs font-medium">Nome do teste</Label>
-                <Input
-                  value={config.test_name || ""}
-                  onChange={(e) => updateConfig("test_name", e.target.value)}
-                  placeholder="Mensagem inicial de boas-vindas"
-                  className="h-9 text-sm"
+                <Label className="text-xs font-medium">Descrição do teste</Label>
+                <Textarea
+                  value={config.test_description || ""}
+                  onChange={(e) => updateConfig("test_description", e.target.value)}
+                  placeholder="Teste de abertura: mensagem formal vs informal"
+                  className="text-sm min-h-[50px]"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-medium">Objetivo de medição</Label>
-                <Select value={config.objective || ""} onValueChange={(v) => updateConfig("objective", v)}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="response_rate">Taxa de resposta</SelectItem>
-                    <SelectItem value="click_rate">Taxa de clique em botão</SelectItem>
-                    <SelectItem value="conversion">Conversão (chegou ao fim)</SelectItem>
-                    <SelectItem value="handoff_rate">Taxa de transferência para humano</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium">Medições ({(config.objectives || [config.objective].filter(Boolean)).length}/4)</Label>
+                  {(config.objectives || [config.objective].filter(Boolean)).length < 4 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-[10px] gap-1"
+                      onClick={() => {
+                        const current = config.objectives || (config.objective ? [config.objective] : []);
+                        updateConfig("objectives", [...current, ""]);
+                      }}
+                    >
+                      <Plus size={10} /> Adicionar medição
+                    </Button>
+                  )}
+                </div>
+                {(config.objectives || (config.objective ? [config.objective] : [""])).map((obj: string, idx: number) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Select value={obj || ""} onValueChange={(v) => {
+                      const objs = [...(config.objectives || (config.objective ? [config.objective] : [""]))];
+                      objs[idx] = v;
+                      updateConfig("objectives", objs);
+                      if (idx === 0) updateConfig("objective", v);
+                    }}>
+                      <SelectTrigger className="h-9 text-sm flex-1"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="response_rate">Taxa de resposta (TR)</SelectItem>
+                        <SelectItem value="click_rate">Taxa de clique (CTR)</SelectItem>
+                        <SelectItem value="conversion">Conversão (TC)</SelectItem>
+                        <SelectItem value="handoff_rate">Transferência humano (TH)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {(config.objectives || []).length > 1 && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => {
+                        const objs = (config.objectives || []).filter((_: any, j: number) => j !== idx);
+                        updateConfig("objectives", objs);
+                      }}>
+                        <X size={12} />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <p className="text-[10px] text-muted-foreground">A medição analisa os blocos conectados após cada variante.</p>
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Variantes</Label>
                 <div className="space-y-2">
-                  {(config.variants || []).map((v: any, i: number) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-[10px] font-bold text-emerald-400 shrink-0">
-                        {String.fromCharCode(65 + i)}
-                      </div>
-                      <Input
-                        value={v.name || ""}
-                        onChange={(e) => {
-                          const updated = [...(config.variants || [])];
-                          updated[i] = { ...updated[i], name: e.target.value };
-                          updateConfig("variants", updated);
-                        }}
-                        placeholder={`Variante ${String.fromCharCode(65 + i)}`}
-                        className="h-8 text-sm flex-1"
-                      />
-                      <Input
-                        type="number"
-                        value={v.weight || 0}
-                        onChange={(e) => {
-                          const updated = [...(config.variants || [])];
-                          updated[i] = { ...updated[i], weight: parseInt(e.target.value) || 0 };
-                          updateConfig("variants", updated);
-                        }}
-                        className="h-8 text-sm w-16 text-center"
-                        min={1}
-                        max={100}
-                      />
-                      <span className="text-[10px] text-muted-foreground">%</span>
-                      {(config.variants || []).length > 2 && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 shrink-0"
-                          onClick={() => {
-                            const updated = (config.variants || []).filter((_: any, j: number) => j !== i);
+                  {(config.variants || []).map((v: any, i: number) => {
+                    const isProtected = i < 2;
+                    return (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-[10px] font-bold text-emerald-400 shrink-0">
+                          {String.fromCharCode(65 + i)}
+                        </div>
+                        <Input
+                          value={v.name || ""}
+                          onChange={(e) => {
+                            const updated = [...(config.variants || [])];
+                            updated[i] = { ...updated[i], name: e.target.value };
                             updateConfig("variants", updated);
                           }}
-                        >
-                          <X size={14} />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                          placeholder={`Variante ${String.fromCharCode(65 + i)}`}
+                          className="h-8 text-sm flex-1"
+                        />
+                        <Input
+                          type="number"
+                          value={v.weight ?? 0}
+                          onChange={(e) => {
+                            const updated = [...(config.variants || [])];
+                            updated[i] = { ...updated[i], weight: parseFloat(e.target.value) || 0 };
+                            updateConfig("variants", updated);
+                          }}
+                          className="h-8 text-sm w-20 text-center"
+                          min={0.01}
+                          max={100}
+                          step={0.01}
+                        />
+                        <span className="text-[10px] text-muted-foreground">%</span>
+                        {!isProtected && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            onClick={() => {
+                              const updated = (config.variants || []).filter((_: any, j: number) => j !== i);
+                              updateConfig("variants", updated);
+                            }}
+                          >
+                            <X size={14} />
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
                   {(config.variants || []).length < 5 && (
                     <Button
                       variant="outline"
@@ -1778,9 +1845,9 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                       onClick={() => {
                         const current = config.variants || [];
                         const letter = String.fromCharCode(65 + current.length);
-                        const equalWeight = Math.floor(100 / (current.length + 1));
+                        const equalWeight = parseFloat((100 / (current.length + 1)).toFixed(2));
                         const updated = current.map((v: any) => ({ ...v, weight: equalWeight }));
-                        updated.push({ id: `var_${letter.toLowerCase()}`, name: `Variante ${letter}`, weight: 100 - equalWeight * current.length });
+                        updated.push({ id: `var_${letter.toLowerCase()}`, name: `Variante ${letter}`, weight: parseFloat((100 - equalWeight * current.length).toFixed(2)) });
                         updateConfig("variants", updated);
                       }}
                     >
@@ -1788,7 +1855,16 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                     </Button>
                   )}
                 </div>
-                <p className="text-[10px] text-muted-foreground">A soma dos pesos deve ser 100%. Os leads são distribuídos proporcionalmente. Cada variante gera uma saída no fluxo.</p>
+                {(() => {
+                  const total = (config.variants || []).reduce((s: number, v: any) => s + (parseFloat(v.weight) || 0), 0);
+                  const isValid = Math.abs(total - 100) < 0.1;
+                  return (
+                    <p className={cn("text-[10px] font-medium", isValid ? "text-primary" : "text-destructive")}>
+                      Soma: {total.toFixed(2)}% {isValid ? "✓" : "— deve ser 100%"}
+                    </p>
+                  );
+                })()}
+                <p className="text-[10px] text-muted-foreground">Números quebrados são permitidos (ex: 33.33%). A variante A e B não podem ser excluídas.</p>
               </div>
             </div>
           )}
@@ -1901,24 +1977,22 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Nome da variável</Label>
-                <div className="flex items-center gap-1">
-                  <span className="text-sm text-muted-foreground">{"{"}</span>
-                  <Input
-                    value={config.variable_name || ""}
-                    onChange={(e) => updateConfig("variable_name", e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))}
-                    placeholder="nome_do_lead"
-                    className="h-9 text-sm font-mono flex-1"
-                    maxLength={30}
-                  />
-                  <span className="text-sm text-muted-foreground">{"}"}</span>
+              {/* AI Explanation */}
+              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/20">
+                <Info size={14} className="text-primary shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-[11px] text-primary font-medium">🤖 Como a IA funciona aqui</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Com base no <span className="font-semibold text-foreground">tipo de informação</span> selecionado acima, a IA vai analisar a resposta do lead, identificar o dado correspondente e armazená-lo na variável configurada. A IA não responde nada ao lead — apenas extrai a informação silenciosamente.
+                  </p>
                 </div>
-                <p className="text-[10px] text-muted-foreground">Use essa variável nos próximos blocos. Ex: {"{nome_do_lead}"}</p>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-medium">Conteúdo da pergunta</Label>
+                <div className="flex items-center gap-2">
+                  <MessageSquare size={14} className="text-muted-foreground" />
+                  <Label className="text-xs font-medium">Conteúdo da pergunta</Label>
+                </div>
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     {[
@@ -1955,11 +2029,14 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                     </div>
                   )}
                 </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Você pode usar variáveis como {"{nome}"}, {"{empresa}"}, {"{telefone}"} e também as criadas por você em outros blocos de coleta.
+                </p>
               </div>
 
               <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs font-medium">Smart Delay</Label>
+                  <Label className="text-xs font-medium">Delay inteligente</Label>
                   <Switch
                     checked={config.use_delay || false}
                     onCheckedChange={(v) => updateConfig("use_delay", v)}
@@ -2012,6 +2089,22 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                   placeholder="Desculpe, não entendi. Poderia repetir?"
                   className="h-9 text-sm"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Nome da variável</Label>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-muted-foreground">{"{"}</span>
+                  <Input
+                    value={config.variable_name || ""}
+                    onChange={(e) => updateConfig("variable_name", e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))}
+                    placeholder="nome_do_lead"
+                    className="h-9 text-sm font-mono flex-1"
+                    maxLength={30}
+                  />
+                  <span className="text-sm text-muted-foreground">{"}"}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground">Use essa variável nos próximos blocos. Ex: {"{nome_do_lead}"}</p>
               </div>
             </div>
           )}

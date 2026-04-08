@@ -5,11 +5,12 @@ import { useLayoutEffect, useRef, useState } from "react";
 
 const conditionLabels: Record<string, string> = {
   button_clicked: "Clicou botão",
-  keyword_match: "Contém palavra",
-  has_tag: "Tem tag",
-  field_equals: "Campo = valor",
+  keyword_match: "Palavra-chave",
+  has_tag: "Possui tag",
   responded: "Respondeu",
   no_response: "Não respondeu",
+  score_above: "Score acima de",
+  is_customer: "É cliente",
 };
 
 export function WAConditionNode({ data }: NodeProps) {
@@ -37,7 +38,6 @@ export function WAConditionNode({ data }: NodeProps) {
   return (
     <div ref={nodeRef} className="bg-card border border-border rounded-xl shadow-sm w-52 relative">
       <FlowHandle type="target" position={Position.Left} />
-      {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
         <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
           <GitBranch size={16} className="text-purple-400" />
@@ -56,7 +56,6 @@ export function WAConditionNode({ data }: NodeProps) {
         </div>
       </div>
 
-      {/* Outcomes */}
       <div className="px-3 py-2 space-y-1.5">
         <div ref={yesRef} className="w-full">
           <div className="bg-primary/10 rounded-md py-1.5 flex items-center justify-center w-full">

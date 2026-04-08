@@ -1,17 +1,20 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
-import { FlaskConical } from "lucide-react";
+import { FlaskConical, Trophy } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
+
+const metricAbbr: Record<string, string> = {
+  response_rate: "TR",
+  click_rate: "CTR",
+  conversion: "TC",
+  handoff_rate: "TH",
+};
 
 export function WAABTestNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
-  const testName = cfg.test_name || "";
-  const variants: { id: string; name: string; weight: number }[] = cfg.variants || [
-    { id: "var_a", name: "Variante A", weight: 50 },
-    { id: "var_b", name: "Variante B", weight: 50 },
-  ];
-  const objective = cfg.objective || "";
-  const hasConfig = !!testName || !!objective;
+  const variants: { id: string; name: string; weight: number; rank?: number }[] = cfg.variants || [];
+  const objectives: string[] = cfg.objectives || (cfg.objective ? [cfg.objective] : []);
+  const hasConfig = objectives.length > 0 || cfg.test_description;
 
   const nodeRef = useRef<HTMLDivElement>(null);
   const variantRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -26,10 +29,7 @@ export function WAABTestNode({ data }: NodeProps) {
       return ((r.top + r.height / 2 - nodeRect.top) / nodeRect.height) * 100;
     });
     setHandleTops(tops);
-  }, [variants.length, testName, objective]);
-
-  const colors = ["text-primary", "text-blue-400", "text-amber-400", "text-purple-400", "text-pink-400"];
-  const bgColors = ["bg-primary/10", "bg-blue-400/10", "bg-amber-400/10", "bg-purple-400/10", "bg-pink-400/10"];
+  }, [variants.length, hasConfig]);
 
   return (
     <div ref={nodeRef} className="bg-card border border-border rounded-xl shadow-sm w-56 relative">
@@ -44,7 +44,11 @@ export function WAABTestNode({ data }: NodeProps) {
           </p>
           {hasConfig ? (
             <p className="text-[10px] text-muted-foreground truncate">
-              {testName || objective || `${variants.length} variantes`}
+              {objectives.length > 1
+                ? `${objectives.length} medições`
+                : objectives.length === 1
+                  ? metricAbbr[objectives[0]] || objectives[0]
+                  : `${variants.length} variantes`}
             </p>
           ) : (
             <p className="text-[10px] text-muted-foreground/60 italic">Clique para configurar</p>
@@ -52,25 +56,28 @@ export function WAABTestNode({ data }: NodeProps) {
         </div>
       </div>
 
-      {objective && (
-        <div className="px-3 pt-2">
-          <p className="text-[10px] text-muted-foreground">
-            📊 Objetivo: <span className="text-foreground/80">{objective === "response_rate" ? "Taxa de resposta" : objective === "click_rate" ? "Taxa de clique" : objective === "conversion" ? "Conversão" : objective === "handoff_rate" ? "Taxa de handoff" : objective}</span>
-          </p>
-        </div>
-      )}
-
       <div className="px-3 py-2 space-y-1">
-        {variants.map((v, i) => (
-          <div
-            key={v.id}
-            ref={(el) => { variantRefs.current[i] = el; }}
-            className={`text-[10px] ${bgColors[i % bgColors.length]} rounded px-2 py-1.5 truncate flex items-center justify-between`}
-          >
-            <span className={`font-semibold ${colors[i % colors.length]}`}>{v.name}</span>
-            <span className="text-muted-foreground font-mono">{v.weight}%</span>
-          </div>
-        ))}
+        {variants.map((v, i) => {
+          const rank = v.rank;
+          return (
+            <div
+              key={v.id}
+              ref={(el) => { variantRefs.current[i] = el; }}
+              className="text-[10px] bg-muted/40 rounded px-2 py-1.5 truncate flex items-center justify-between"
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                <span className="font-semibold text-foreground">{v.name}</span>
+              </div>
+              {rank != null && rank <= 3 && (
+                <div className="flex items-center gap-0.5">
+                  {rank === 1 && <Trophy size={9} className="text-amber-400" />}
+                  <span className="text-[9px] font-bold text-muted-foreground">{rank}°</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {variants.map((v, i) => (
