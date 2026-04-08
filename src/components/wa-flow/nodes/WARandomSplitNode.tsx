@@ -4,11 +4,11 @@ import { Shuffle } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 
 const dotColors = [
-  "bg-sky-400",
-  "bg-violet-400",
-  "bg-rose-400",
-  "bg-amber-400",
-  "bg-teal-400",
+  "bg-primary",
+  "bg-primary",
+  "bg-primary",
+  "bg-primary",
+  "bg-primary",
 ];
 
 export function WARandomSplitNode({ data }: NodeProps) {
