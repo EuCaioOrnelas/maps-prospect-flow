@@ -1987,15 +1987,25 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                 </div>
               )}
 
-              {/* AI Explanation */}
-              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/20">
-                <Info size={14} className="text-primary shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="text-[11px] text-primary font-medium">🤖 Como a IA funciona aqui</p>
-                  <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    Com base no <span className="font-semibold text-foreground">tipo de informação</span> selecionado acima, a IA vai analisar a resposta do lead, identificar o dado correspondente e armazená-lo na variável configurada. A IA não responde nada ao lead — apenas extrai a informação silenciosamente.
-                  </p>
-                </div>
+              {/* AI Explanation - collapsible */}
+              <div className="rounded-lg bg-primary/5 border border-primary/20 overflow-hidden">
+                <button
+                  onClick={() => updateConfig("_ai_info_open", !config._ai_info_open)}
+                  className="flex items-center justify-between w-full p-2.5 text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <Info size={14} className="text-primary shrink-0" />
+                    <p className="text-[11px] text-primary font-medium">🤖 Como a IA funciona aqui</p>
+                  </div>
+                  <ChevronUp size={12} className={cn("text-primary transition-transform", config._ai_info_open ? "rotate-0" : "rotate-180")} />
+                </button>
+                {config._ai_info_open && (
+                  <div className="px-2.5 pb-2.5">
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Com base no <span className="font-semibold text-foreground">tipo de informação</span> selecionado acima, a IA vai analisar a resposta do lead, identificar o dado correspondente e armazená-lo na variável configurada. A IA não responde nada ao lead — apenas extrai a informação silenciosamente.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -2052,6 +2062,9 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                     onCheckedChange={(v) => updateConfig("use_delay", v)}
                   />
                 </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Aguarda um tempo aleatório entre o mínimo e máximo antes de enviar a pergunta, simulando digitação humana para parecer mais natural.
+                </p>
                 {config.use_delay && (
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
