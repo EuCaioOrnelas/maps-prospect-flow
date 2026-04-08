@@ -741,9 +741,9 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           value={config.whatsapp_number_id || ""}
           onValueChange={(v) => {
             const num = numbers.find((n: any) => n.id === v);
-            const numIsMeta = num?.api_tier === "paid" || num?.api_tier === "meta";
+            const numIsMeta = num?.api_type === "meta";
             updateConfig("whatsapp_number_id", v);
-            updateConfig("whatsapp_number_name", num?.name || num?.phone_number || "");
+            updateConfig("whatsapp_number_name", num?.name || num?.display_phone_number || num?.phone_number || "");
             updateConfig("api_type", numIsMeta ? "meta" : "evolution");
             updateConfig("reopen_template_name", "");
           }}
@@ -754,11 +754,11 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
               <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum número conectado</div>
             )}
             {numbers.map((n: any) => {
-              const nIsMeta = n.api_tier === "paid" || n.api_tier === "meta";
+              const nIsMeta = n.api_type === "meta";
               return (
                 <SelectItem key={n.id} value={n.id}>
                   <div className="flex items-center gap-2">
-                    <span>{n.name || n.phone_number}</span>
+                    <span>{n.name || n.display_phone_number || n.phone_number}</span>
                     <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${nIsMeta ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-500"}`}>
                       {nIsMeta ? "API Inbound" : "API Outbound"}
                     </span>
