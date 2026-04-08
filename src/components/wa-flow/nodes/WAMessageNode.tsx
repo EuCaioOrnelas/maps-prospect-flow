@@ -8,7 +8,6 @@ const typeIcons: Record<string, any> = {
   audio: FileAudio,
   video: Video,
   document: FileText,
-  template: FileUp,
 };
 
 export function WAMessageNode({ data }: NodeProps) {
