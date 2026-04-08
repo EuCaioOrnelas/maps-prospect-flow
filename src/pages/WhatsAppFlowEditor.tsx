@@ -224,6 +224,7 @@ export default function WhatsAppFlowEditor() {
   const [clipboard, setClipboard] = useState<Node | null>(null);
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
+  const [edgeToDelete, setEdgeToDelete] = useState<string | null>(null);
 
   // Undo/Redo history
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -859,14 +860,7 @@ export default function WhatsAppFlowEditor() {
             onNodeClick={onNodeClick}
             onPaneClick={() => { setSelectedNode(null); setSelectedNodeIds(new Set()); }}
             onEdgeClick={(_event, edge) => {
-              const confirmed = window.confirm("Deseja excluir esta conexão?");
-              if (confirmed) {
-                const newEdges = edges.filter((e) => e.id !== edge.id);
-                setEdges(newEdges);
-                pushHistory(nodes, newEdges);
-                setHasChanges(true);
-                toast.success("Conexão removida");
-              }
+              setEdgeToDelete(edge.id);
             }}
             onInit={(instance) => {
               // Store instance on wrapper for screenToFlowPosition
@@ -910,6 +904,36 @@ export default function WhatsAppFlowEditor() {
         edges={edges}
         resetVersion={testResetVersion}
       />
+
+      {/* Edge delete confirmation dialog */}
+      <AlertDialog open={!!edgeToDelete} onOpenChange={(open) => { if (!open) setEdgeToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conexão?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja remover esta conexão entre os blocos? Esta ação pode ser desfeita com Ctrl+Z.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (edgeToDelete) {
+                  const newEdges = edges.filter((e) => e.id !== edgeToDelete);
+                  setEdges(newEdges);
+                  pushHistory(nodes, newEdges);
+                  setHasChanges(true);
+                  toast.success("Conexão removida");
+                }
+                setEdgeToDelete(null);
+              }}
+            >
+              Excluir
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
