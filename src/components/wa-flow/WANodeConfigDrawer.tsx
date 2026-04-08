@@ -1592,6 +1592,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== END NODE ===== */}
           {node.type === "end" && (
             <div className="space-y-4">
+              {renderApiIndicator()}
               {renderInfoBanner("Encerra o fluxo para este lead. Opcionalmente envie uma mensagem final.")}
               <div className="space-y-2">
                 <Label className="text-xs">Mensagem de encerramento (opcional)</Label>
