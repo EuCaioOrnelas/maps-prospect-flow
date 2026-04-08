@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ChevronUp } from "lucide-react";
+import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ChevronUp, KeyRound, BotMessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { MessageContentBuilder } from "./MessageContentBuilder";
 import type { Node } from "@xyflow/react";
@@ -1187,9 +1187,15 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
       {/* CREDENTIALS SECTION - collapsible */}
       <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
         <button onClick={() => setShowCredSection(!showCredSection)} className="flex items-center justify-between w-full">
-          <Label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">🔑 Credenciais de IA</Label>
+          <Label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+            <KeyRound size={14} className="text-muted-foreground" /> Credenciais de IA
+          </Label>
           <div className="flex items-center gap-2">
-            {selectedCred && <span className="text-[9px] text-emerald-500 font-medium">{selectedCred.name}</span>}
+            {selectedCred ? (
+              <span className="text-[9px] text-emerald-500 font-medium">{selectedCred.name}</span>
+            ) : (
+              <span className="text-[9px] text-muted-foreground font-medium">Selecionar</span>
+            )}
             <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", showCredSection && "rotate-180")} />
           </div>
         </button>
@@ -1288,10 +1294,14 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
       {/* AGENTS SECTION - collapsible */}
       <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
         <button onClick={() => setShowAgentSection(!showAgentSection)} className="flex items-center justify-between w-full">
-          <Label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">🤖 Agente de IA</Label>
+          <Label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+            <BotMessageSquare size={14} className="text-muted-foreground" /> Agente de IA
+          </Label>
           <div className="flex items-center gap-2">
-            {selectedAgentId && savedAgents.find((a: any) => a.id === selectedAgentId) && (
+            {selectedAgentId && savedAgents.find((a: any) => a.id === selectedAgentId) ? (
               <span className="text-[9px] text-emerald-500 font-medium">{savedAgents.find((a: any) => a.id === selectedAgentId)?.name}</span>
+            ) : (
+              <span className="text-[9px] text-muted-foreground font-medium">Selecionar</span>
             )}
             <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", showAgentSection && "rotate-180")} />
           </div>
