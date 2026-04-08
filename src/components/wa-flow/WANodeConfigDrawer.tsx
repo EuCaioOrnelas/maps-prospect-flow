@@ -601,6 +601,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
   const [templateSearch, setTemplateSearch] = useState("");
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [reopenTemplates, setReopenTemplates] = useState<any[]>([]);
+  const [tokenExpired, setTokenExpired] = useState(false);
 
   const { data: numbers = [] } = useQuery({
     queryKey: ["wa-numbers-for-flow"],
@@ -638,15 +639,31 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
   useEffect(() => {
     if (!wabaConn || !isMeta) {
       setReopenTemplates([]);
+      setTokenExpired(false);
       return;
     }
     const fetchTemplates = async () => {
       setLoadingTemplates(true);
+      setTokenExpired(false);
       try {
         const { data, error } = await supabase.functions.invoke("meta-fetch-templates", {
           body: { waba_id: wabaConn.waba_id, access_token: wabaConn.access_token },
         });
-        if (!error && data?.templates) {
+        if (error) {
+          const errStr = typeof error === 'object' && error.message ? error.message : String(error);
+          if (errStr.includes("Session has expired") || errStr.includes("OAuthException") || errStr.includes("access token")) {
+            setTokenExpired(true);
+            return;
+          }
+        }
+        if (data?.error) {
+          const details = data?.details?.error;
+          if (details?.code === 190 || details?.error_subcode === 463) {
+            setTokenExpired(true);
+            return;
+          }
+        }
+        if (data?.templates) {
           setReopenTemplates(data.templates.filter((t: any) => t.status === "APPROVED"));
         }
       } catch (e) {
@@ -747,7 +764,17 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           <p className="text-[10px] text-muted-foreground">
             Selecione o template aprovado que será usado para reabrir a conversa após 24h de inatividade.
           </p>
-          {loadingTemplates ? (
+          {tokenExpired ? (
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-destructive/10 border border-destructive/20">
+              <AlertTriangle size={14} className="text-destructive shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-[11px] text-destructive font-medium">Token da Meta expirado</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Reconecte seu número na seção <span className="font-semibold">Números → API Oficial</span> para renovar o acesso e carregar os templates.
+                </p>
+              </div>
+            </div>
+          ) : loadingTemplates ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
               <Loader2 size={14} className="animate-spin" /> Carregando templates...
             </div>
