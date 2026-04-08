@@ -1236,7 +1236,7 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
   );
 }
 
-
+interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   node: Node;
