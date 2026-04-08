@@ -1260,3 +1260,50 @@ input::placeholder, textarea::placeholder {
 .scrollbar-thin::-webkit-scrollbar-thumb { background-color: hsl(var(--border) / 0.4); border-radius: 2px; }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover { background-color: hsl(var(--border) / 0.7); }
 .scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--border) / 0.4) transparent; }
+
+/* ─── React Flow Handle Styling ─── */
+.react-flow .react-flow__handle {
+  width: 14px !important;
+  height: 14px !important;
+  border-radius: 50% !important;
+  border: 2px solid hsl(var(--card)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.react-flow .react-flow__handle-left.react-flow__handle-target {
+  background: hsl(var(--muted-foreground) / 0.4) !important;
+  width: 10px !important;
+  height: 10px !important;
+  border: none !important;
+}
+
+.react-flow .react-flow__handle-left.react-flow__handle-target.react-flow__handle-connected {
+  background: hsl(var(--muted-foreground)) !important;
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.react-flow .react-flow__handle-right.react-flow__handle-source {
+  background: hsl(var(--primary)) !important;
+  width: 18px !important;
+  height: 18px !important;
+  border: 2px solid hsl(var(--card)) !important;
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.3);
+}
+
+.react-flow .react-flow__handle-right.react-flow__handle-source::after {
+  content: '›';
+  color: hsl(var(--primary-foreground));
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: -1px;
+}
+
+.react-flow .react-flow__handle:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 6px hsl(var(--primary) / 0.4);
+}
