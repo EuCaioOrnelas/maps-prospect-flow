@@ -904,6 +904,36 @@ export default function WhatsAppFlowEditor() {
         edges={edges}
         resetVersion={testResetVersion}
       />
+
+      {/* Edge delete confirmation dialog */}
+      <AlertDialog open={!!edgeToDelete} onOpenChange={(open) => { if (!open) setEdgeToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conexão?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja remover esta conexão entre os blocos? Esta ação pode ser desfeita com Ctrl+Z.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (edgeToDelete) {
+                  const newEdges = edges.filter((e) => e.id !== edgeToDelete);
+                  setEdges(newEdges);
+                  pushHistory(nodes, newEdges);
+                  setHasChanges(true);
+                  toast.success("Conexão removida");
+                }
+                setEdgeToDelete(null);
+              }}
+            >
+              Excluir
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
