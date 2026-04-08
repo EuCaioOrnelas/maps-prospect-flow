@@ -744,18 +744,18 @@ export default function WhatsAppFlowEditor() {
             <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
           </ReactFlow>
         </div>
-      </div>
 
-      {/* Config drawer */}
-      {selectedNode && (
-        <WANodeConfigDrawer
-          open={drawerOpen}
-          onOpenChange={setDrawerOpen}
-          node={selectedNode}
-          onUpdate={handleUpdateNodeConfig}
-          onDelete={handleDeleteNode}
-        />
-      )}
+        {/* Config drawer - inside main area */}
+        {selectedNode && (
+          <WANodeConfigDrawer
+            open={drawerOpen}
+            onOpenChange={setDrawerOpen}
+            node={selectedNode}
+            onUpdate={handleUpdateNodeConfig}
+            onDelete={handleDeleteNode}
+          />
+        )}
+      </div>
 
       <WAFlowTestDialog
         open={testDialogOpen}

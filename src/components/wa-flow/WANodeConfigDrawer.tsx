@@ -759,18 +759,18 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
       {/* Backdrop - click to close, no blur */}
       {open && (
         <div
-          className="fixed inset-0 z-40"
+          className="absolute inset-0 z-40"
           onClick={() => onOpenChange(false)}
         />
       )}
       <div
         className={cn(
-          "fixed top-0 right-0 z-50 h-full w-[400px] sm:w-[440px] bg-card border-l border-border shadow-2xl flex flex-col transition-transform duration-300 ease-out",
-          open ? "translate-x-0" : "translate-x-full"
+          "absolute top-0 right-0 z-50 h-full w-[400px] sm:w-[440px] bg-card border-l border-border shadow-2xl flex flex-col transition-transform duration-300 ease-out",
+          open ? "translate-x-0" : "translate-x-full pointer-events-none"
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
           <h3 className="text-base font-semibold text-foreground">Configurar Bloco</h3>
           <button
             onClick={() => onOpenChange(false)}
