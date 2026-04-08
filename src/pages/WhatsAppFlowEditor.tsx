@@ -491,6 +491,40 @@ export default function WhatsAppFlowEditor() {
     return (entryNode.data as any).config || {};
   }, [nodes]);
 
+  // Auto-block buttons nodes when using Evolution API
+  useEffect(() => {
+    const isEvolution = entryApiType === "evolution";
+    let changed = false;
+    const updatedNodes = nodes.map((n) => {
+      if (n.type !== "buttons") return n;
+      const cfg = (n.data as any).config || {};
+      const currentlyBlocked = cfg._blocked_evolution === true;
+      if (isEvolution && !currentlyBlocked) {
+        changed = true;
+        return { ...n, data: { ...n.data, config: { ...cfg, _blocked_evolution: true } } };
+      }
+      if (!isEvolution && currentlyBlocked) {
+        changed = true;
+        const { _blocked_evolution, ...rest } = cfg;
+        return { ...n, data: { ...n.data, config: rest } };
+      }
+      return n;
+    });
+
+    if (changed) {
+      setNodes(updatedNodes);
+      if (isEvolution) {
+        // Cut all edges connected to buttons nodes
+        const buttonIds = new Set(updatedNodes.filter((n) => n.type === "buttons").map((n) => n.id));
+        const newEdges = edges.filter((e) => !buttonIds.has(e.source) && !buttonIds.has(e.target));
+        if (newEdges.length !== edges.length) {
+          setEdges(newEdges);
+        }
+      }
+      setHasChanges(true);
+    }
+  }, [entryApiType]); // intentionally only on entryApiType change
+
   const saveFlow = useMutation({
     mutationFn: async () => {
       // Extract entry node config for flow-level metadata
