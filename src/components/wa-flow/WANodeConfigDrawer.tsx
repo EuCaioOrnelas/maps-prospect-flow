@@ -601,6 +601,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
   const [templateSearch, setTemplateSearch] = useState("");
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [reopenTemplates, setReopenTemplates] = useState<any[]>([]);
+  const [tokenExpired, setTokenExpired] = useState(false);
 
   const { data: numbers = [] } = useQuery({
     queryKey: ["wa-numbers-for-flow"],
