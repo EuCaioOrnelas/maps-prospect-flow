@@ -1813,6 +1813,17 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
         return;
       }
     }
+    // Validate handoff requires message
+    if (node.type === "handoff") {
+      if (!config.handoff_message?.trim()) {
+        toast.error("A mensagem ao lead é obrigatória");
+        return;
+      }
+      if (config.notify_team && !config.email_subject?.trim()) {
+        toast.error("Preencha o título do email de notificação");
+        return;
+      }
+    }
     onUpdate(node.id, config, label);
     onOpenChange(false);
   };
