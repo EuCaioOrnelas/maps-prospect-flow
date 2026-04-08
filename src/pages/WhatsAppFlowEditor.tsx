@@ -740,7 +740,8 @@ export default function WhatsAppFlowEditor() {
             proOptions={{ hideAttribution: true }}
             className="bg-background"
           >
-            <Background color="hsl(var(--border))" gap={20} size={1} />
+            <Background color="hsl(var(--border) / 0.25)" gap={24} size={1} variant={"dots" as any} />
+            <Background id="grid" color="hsl(var(--border) / 0.08)" gap={24} variant={"lines" as any} />
             <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
           </ReactFlow>
         </div>
