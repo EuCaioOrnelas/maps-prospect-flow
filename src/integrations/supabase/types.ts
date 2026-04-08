@@ -3533,12 +3533,66 @@ export type Database = {
         }
         Relationships: []
       }
+      user_ai_agents: {
+        Row: {
+          ai_model: string
+          ai_output_type: string
+          ai_provider: string
+          ai_routes: string | null
+          created_at: string
+          credential_id: string | null
+          id: string
+          max_chars: number
+          name: string
+          system_prompt: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_model?: string
+          ai_output_type?: string
+          ai_provider?: string
+          ai_routes?: string | null
+          created_at?: string
+          credential_id?: string | null
+          id?: string
+          max_chars?: number
+          name?: string
+          system_prompt?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_model?: string
+          ai_output_type?: string
+          ai_provider?: string
+          ai_routes?: string | null
+          created_at?: string
+          credential_id?: string | null
+          id?: string
+          max_chars?: number
+          name?: string
+          system_prompt?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_ai_agents_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: false
+            referencedRelation: "user_ai_credentials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_ai_credentials: {
         Row: {
           api_key: string
           created_at: string
           id: string
           is_active: boolean
+          name: string
           provider: string
           updated_at: string
           user_id: string
@@ -3548,6 +3602,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          name?: string
           provider: string
           updated_at?: string
           user_id: string
@@ -3557,6 +3612,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          name?: string
           provider?: string
           updated_at?: string
           user_id?: string
