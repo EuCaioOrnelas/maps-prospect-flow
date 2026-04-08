@@ -226,41 +226,44 @@ export default function WhatsAppFlowEditor() {
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
   const [edgeToDelete, setEdgeToDelete] = useState<string | null>(null);
 
-  // Undo/Redo history
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  // Undo/Redo history – use refs to avoid stale closures
+  const historyRef = useRef<HistoryEntry[]>([]);
+  const historyIndexRef = useRef(-1);
+  const [, forceHistoryRender] = useState(0);
   const isUndoRedo = useRef(false);
 
   const pushHistory = useCallback((n: Node[], e: Edge[]) => {
     if (isUndoRedo.current) { isUndoRedo.current = false; return; }
-    setHistory((prev) => {
-      const truncated = prev.slice(0, historyIndex + 1);
-      const next = [...truncated, { nodes: JSON.parse(JSON.stringify(n)), edges: JSON.parse(JSON.stringify(e)) }];
-      if (next.length > 50) next.shift();
-      return next;
-    });
-    setHistoryIndex((prev) => Math.min(prev + 1, 49));
-  }, [historyIndex]);
+    const truncated = historyRef.current.slice(0, historyIndexRef.current + 1);
+    const entry: HistoryEntry = { nodes: JSON.parse(JSON.stringify(n)), edges: JSON.parse(JSON.stringify(e)) };
+    truncated.push(entry);
+    if (truncated.length > 50) truncated.shift();
+    historyRef.current = truncated;
+    historyIndexRef.current = truncated.length - 1;
+    forceHistoryRender((v) => v + 1);
+  }, []);
 
   const undo = useCallback(() => {
-    if (historyIndex <= 0) return;
+    if (historyIndexRef.current <= 0) return;
     isUndoRedo.current = true;
-    const prev = history[historyIndex - 1];
-    setNodes(prev.nodes);
-    setEdges(prev.edges);
-    setHistoryIndex((i) => i - 1);
+    historyIndexRef.current -= 1;
+    const prev = historyRef.current[historyIndexRef.current];
+    setNodes(JSON.parse(JSON.stringify(prev.nodes)));
+    setEdges(JSON.parse(JSON.stringify(prev.edges)));
     setHasChanges(true);
-  }, [history, historyIndex, setNodes, setEdges]);
+    forceHistoryRender((v) => v + 1);
+  }, [setNodes, setEdges]);
 
   const redo = useCallback(() => {
-    if (historyIndex >= history.length - 1) return;
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
     isUndoRedo.current = true;
-    const next = history[historyIndex + 1];
-    setNodes(next.nodes);
-    setEdges(next.edges);
-    setHistoryIndex((i) => i + 1);
+    historyIndexRef.current += 1;
+    const next = historyRef.current[historyIndexRef.current];
+    setNodes(JSON.parse(JSON.stringify(next.nodes)));
+    setEdges(JSON.parse(JSON.stringify(next.edges)));
     setHasChanges(true);
-  }, [history, historyIndex, setNodes, setEdges]);
+    forceHistoryRender((v) => v + 1);
+  }, [setNodes, setEdges]);
 
   // Fetch flow data
   const { data: flow, isLoading } = useQuery({
