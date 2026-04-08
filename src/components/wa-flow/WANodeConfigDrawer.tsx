@@ -610,45 +610,113 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
     enabled: !!user,
   });
 
+  // Fetch campaigns based on API type
   const selectedNumber = numbers.find((n: any) => n.id === config.whatsapp_number_id);
-  const isEvolution = selectedNumber?.api_tier !== "paid" && selectedNumber?.api_tier !== "meta";
+  const isMeta = selectedNumber?.api_tier === "paid" || selectedNumber?.api_tier === "meta";
+  const isEvolution = !!selectedNumber && !isMeta;
+
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ["wa-campaigns-for-trigger", user?.id, isMeta],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("whatsapp_campaigns")
+        .select("id, name, status, api_type")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      return (data || []).filter((c: any) => 
+        isMeta ? (c.api_type === "meta" || c.api_type === "official") : (c.api_type !== "meta" && c.api_type !== "official")
+      );
+    },
+    enabled: !!user && config.trigger_type === "campaign_reply",
+  });
 
   return (
     <div className="space-y-4">
       {renderInfoBanner("Defina como o lead entra neste fluxo e qual número será utilizado.")}
 
+      {/* Number selection */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">Número do WhatsApp</Label>
         <Select
           value={config.whatsapp_number_id || ""}
           onValueChange={(v) => {
             const num = numbers.find((n: any) => n.id === v);
+            const numIsMeta = num?.api_tier === "paid" || num?.api_tier === "meta";
             updateConfig("whatsapp_number_id", v);
             updateConfig("whatsapp_number_name", num?.name || num?.phone_number || "");
-            updateConfig("api_type", num?.api_tier === "paid" || num?.api_tier === "meta" ? "meta" : "evolution");
+            updateConfig("api_type", numIsMeta ? "meta" : "evolution");
           }}
         >
           <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar número..." /></SelectTrigger>
           <SelectContent>
-            {numbers.map((n: any) => (
-              <SelectItem key={n.id} value={n.id}>
-                {n.name || n.phone_number}
-                {n.api_tier !== "paid" && n.api_tier !== "meta" && " (Outbound)"}
-              </SelectItem>
-            ))}
+            {numbers.map((n: any) => {
+              const nIsMeta = n.api_tier === "paid" || n.api_tier === "meta";
+              return (
+                <SelectItem key={n.id} value={n.id}>
+                  <div className="flex items-center gap-2">
+                    <span>{n.name || n.phone_number}</span>
+                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${nIsMeta ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-500"}`}>
+                      {nIsMeta ? "API Inbound" : "API Outbound"}
+                    </span>
+                  </div>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
 
+      {/* Evolution warning */}
       {selectedNumber && isEvolution && (
         <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
           <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
           <p className="text-[11px] text-amber-500 leading-relaxed">
-            Esse tipo de API é recomendada para prospecção fria. Devido ao risco de bloqueio por spam, recomendamos o uso da API Inbound de relacionamento para esse fluxo.
+            <span className="font-semibold">API Outbound (Evolution)</span> — Recomendada para prospecção fria. Risco de bloqueio por spam. Para fluxos de relacionamento, use a API Inbound.
           </p>
         </div>
       )}
 
+      {/* Meta API info */}
+      {selectedNumber && isMeta && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/20">
+          <Info size={14} className="text-primary shrink-0 mt-0.5" />
+          <p className="text-[11px] text-primary leading-relaxed">
+            <span className="font-semibold">API Inbound (Oficial Meta)</span> — Requer templates HSM para reabrir conversas após 24h sem interação.
+          </p>
+        </div>
+      )}
+
+      {/* Reopen template - only for Meta API */}
+      {selectedNumber && isMeta && (
+        <div className="space-y-2 p-3 rounded-lg border border-primary/20 bg-primary/5">
+          <Label className="text-xs font-medium text-primary">Template de reabertura (24h)</Label>
+          <p className="text-[10px] text-muted-foreground">
+            Quando a conversa ficar parada por +24h, este template será usado para reabrir a sessão.
+          </p>
+          <Input
+            value={config.reopen_template_name || ""}
+            onChange={(e) => updateConfig("reopen_template_name", e.target.value)}
+            placeholder="nome_do_template_hsm"
+            className="h-9 text-sm"
+          />
+          <Input
+            value={config.reopen_template_language || "pt_BR"}
+            onChange={(e) => updateConfig("reopen_template_language", e.target.value)}
+            placeholder="pt_BR"
+            className="h-8 text-xs"
+          />
+          <div className="text-[10px] text-muted-foreground space-y-0.5">
+            <p>💰 <span className="font-medium">Custo estimado por mensagem:</span></p>
+            <p>• Marketing: ~R$ 0,25 / msg</p>
+            <p>• Utilidade: ~R$ 0,10 / msg</p>
+            <p>• Autenticação: ~R$ 0,09 / msg</p>
+            <p>• Serviço: Gratuita (dentro da janela)</p>
+          </div>
+        </div>
+      )}
+
+      {/* Trigger type */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">Tipo de gatilho</Label>
         <Select value={config.trigger_type || ""} onValueChange={(v) => updateConfig("trigger_type", v)}>
@@ -656,16 +724,13 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           <SelectContent>
             <SelectItem value="keyword">Palavra-chave</SelectItem>
             <SelectItem value="campaign_reply">Resposta de campanha</SelectItem>
-            <SelectItem value="button_click">Clique em botão interativo</SelectItem>
-            <SelectItem value="webhook">Webhook/API externa</SelectItem>
-            <SelectItem value="qr_code">QR Code</SelectItem>
+            <SelectItem value="webhook">Webhook / API externa</SelectItem>
             <SelectItem value="first_message">1ª mensagem recebida</SelectItem>
-            <SelectItem value="re_entry">Reentrada de lead existente</SelectItem>
-            <SelectItem value="template_reply">Resposta a template HSM</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
+      {/* Keyword config */}
       {config.trigger_type === "keyword" && (
         <div className="space-y-2">
           <Label className="text-xs">Palavras-chave (separadas por vírgula)</Label>
@@ -675,35 +740,85 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             placeholder="preço, comprar, orçamento, quero"
             className="h-9 text-sm"
           />
+          <p className="text-[10px] text-muted-foreground">
+            A identificação é feita independente de maiúsculas/minúsculas, acentos ou variações.
+          </p>
           <div className="flex items-center gap-2 mt-1">
             <Switch
               checked={config.exact_match || false}
               onCheckedChange={(v) => updateConfig("exact_match", v)}
             />
-            <Label className="text-[11px] text-muted-foreground">Correspondência exata</Label>
+            <Label className="text-[11px] text-muted-foreground">Correspondência exata (desativa busca parcial)</Label>
           </div>
         </div>
       )}
+
+      {/* Campaign reply config */}
       {config.trigger_type === "campaign_reply" && (
         <div className="space-y-2">
-          <Label className="text-xs">ID ou nome da campanha (opcional)</Label>
-          <Input
-            value={config.campaign_filter || ""}
-            onChange={(e) => updateConfig("campaign_filter", e.target.value)}
-            placeholder="Qualquer campanha"
-            className="h-9 text-sm"
-          />
+          <Label className="text-xs">Campanha {isMeta ? "(API Oficial)" : "(API Outbound)"}</Label>
+          <Select
+            value={config.campaign_id || "any"}
+            onValueChange={(v) => {
+              updateConfig("campaign_id", v === "any" ? "" : v);
+              const camp = campaigns.find((c: any) => c.id === v);
+              updateConfig("campaign_filter", camp?.name || "");
+            }}
+          >
+            <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Qualquer campanha" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Qualquer campanha</SelectItem>
+              {campaigns.map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>
+                  <div className="flex items-center gap-2">
+                    <span className="truncate">{c.name}</span>
+                    <Badge variant="secondary" className="text-[8px] h-4">{c.status}</Badge>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-muted-foreground">
+            O sistema identifica automaticamente se algum lead respondeu à campanha selecionada e entra no fluxo.
+          </p>
         </div>
       )}
+
+      {/* Webhook config */}
       {config.trigger_type === "webhook" && (
         <div className="space-y-2">
-          <Label className="text-xs">URL de callback (será gerada automaticamente)</Label>
+          <Label className="text-xs">URL de callback</Label>
           <div className="flex gap-2">
             <Input
               value={config.webhook_url || "Será gerado ao ativar o fluxo"}
               readOnly
               className="h-9 text-sm bg-muted/30 flex-1"
             />
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Envie um POST para esta URL com os dados do lead (phone, name, email) para iniciar o fluxo automaticamente.
+          </p>
+          <div className="space-y-1.5 p-2.5 rounded-lg bg-muted/30 border border-border/30">
+            <p className="text-[10px] font-medium text-foreground">Formato esperado (JSON):</p>
+            <pre className="text-[9px] text-muted-foreground font-mono bg-background/50 rounded p-2 overflow-x-auto">
+{`{
+  "phone": "5511999999999",
+  "name": "Nome do Lead",
+  "email": "lead@email.com"
+}`}
+            </pre>
+          </div>
+        </div>
+      )}
+
+      {/* First message config */}
+      {config.trigger_type === "first_message" && (
+        <div className="space-y-2">
+          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/30">
+            <Info size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              O fluxo será acionado apenas na <span className="font-semibold text-foreground">primeira mensagem</span> que o lead enviar para este número. Mensagens subsequentes não reativam o fluxo.
+            </p>
           </div>
         </div>
       )}
