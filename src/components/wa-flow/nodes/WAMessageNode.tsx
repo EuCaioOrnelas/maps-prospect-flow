@@ -1,6 +1,6 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
-import { MessageSquare, Image, FileAudio, Video, FileText, FileUp } from "lucide-react";
+import { MessageSquare, Image, FileAudio, Video, FileText } from "lucide-react";
 
 const typeIcons: Record<string, any> = {
   text: MessageSquare,
