@@ -1,9 +1,10 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Sheet } from "lucide-react";
+import { Sheet, CheckCircle2, AlertCircle } from "lucide-react";
 
 export function WAGoogleSheetsNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
-  const isConfigured = !!cfg.webhook_url;
+  const isConfigured = !!cfg.spreadsheet_id;
+  const isConnected = !!cfg.google_connected;
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm w-52 relative">
@@ -15,17 +16,26 @@ export function WAGoogleSheetsNode({ data }: NodeProps) {
           <p className="text-xs font-bold text-foreground truncate">
             {String((data as any).label || "Google Sheets")}
           </p>
-          {isConfigured ? (
-            <p className="text-[10px] text-muted-foreground truncate">📊 Webhook configurado</p>
+          {isConnected && isConfigured ? (
+            <p className="text-[10px] text-green-500 flex items-center gap-1">
+              <CheckCircle2 size={10} /> Conectado
+            </p>
+          ) : isConnected ? (
+            <p className="text-[10px] text-yellow-500 flex items-center gap-1">
+              <AlertCircle size={10} /> Configurar planilha
+            </p>
           ) : (
-            <p className="text-[10px] text-muted-foreground/60 italic">Clique para configurar</p>
+            <p className="text-[10px] text-muted-foreground/60 italic">Clique para conectar</p>
           )}
         </div>
       </div>
 
-      {isConfigured && (
+      {isConnected && cfg.google_email && (
         <div className="px-3 py-2">
-          <p className="text-[9px] text-muted-foreground truncate">🔗 {cfg.webhook_url?.substring(0, 38)}...</p>
+          <p className="text-[10px] text-muted-foreground truncate">📧 {cfg.google_email}</p>
+          {cfg.spreadsheet_id && (
+            <p className="text-[9px] text-muted-foreground truncate mt-0.5">📊 {cfg.sheet_name || "Sheet1"}</p>
+          )}
         </div>
       )}
 

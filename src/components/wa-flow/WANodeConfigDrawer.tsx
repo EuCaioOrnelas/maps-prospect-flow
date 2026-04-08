@@ -10,8 +10,135 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle } from "lucide-react";
+import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
 import type { Node } from "@xyflow/react";
+
+function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
+  const { user } = useAuth();
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  const { data: googleToken, refetch: refetchToken } = useQuery({
+    queryKey: ["google-token", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_google_tokens" as any)
+        .select("google_email, scopes, token_expires_at")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+    refetchInterval: 5000,
+  });
+
+  const isConnected = !!googleToken;
+
+  useEffect(() => {
+    if (googleToken) {
+      updateConfig("google_connected", true);
+      updateConfig("google_email", (googleToken as any).google_email);
+    }
+  }, [(googleToken as any)?.google_email]);
+
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("google-oauth-start", {
+        body: { scopes: ["https://www.googleapis.com/auth/spreadsheets"] },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "google-oauth", "width=600,height=700,left=200,top=100");
+      }
+    } catch (err) {
+      console.error("Failed to start OAuth:", err);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    await supabase.from("user_google_tokens" as any).delete().eq("user_id", user!.id);
+    updateConfig("google_connected", false);
+    updateConfig("google_email", "");
+    refetchToken();
+  };
+
+  return (
+    <div className="space-y-4">
+      {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets.")}
+
+      <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
+        {isConnected ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={14} className="text-green-500" />
+              <span className="text-xs font-medium text-foreground">Google conectado</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground">📧 {(googleToken as any).google_email}</p>
+            <Button variant="ghost" size="sm" className="h-7 text-[10px] text-destructive hover:text-destructive" onClick={handleDisconnect}>
+              Desconectar conta
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Conecte sua conta Google para salvar leads diretamente no Sheets.</p>
+            <Button onClick={handleConnect} disabled={isConnecting} className="w-full h-9 text-sm gap-2">
+              {isConnecting ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
+              {isConnecting ? "Conectando..." : "Conectar Google"}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {isConnected && (
+        <>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">ID da Planilha</Label>
+            <Input
+              value={config.spreadsheet_id || ""}
+              onChange={(e) => updateConfig("spreadsheet_id", e.target.value)}
+              placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+              className="h-9 text-sm font-mono"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Abra sua planilha e copie o ID da URL: docs.google.com/spreadsheets/d/<strong>ID_AQUI</strong>/edit
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Nome da aba (opcional)</Label>
+            <Input
+              value={config.sheet_name || ""}
+              onChange={(e) => updateConfig("sheet_name", e.target.value)}
+              placeholder="Sheet1"
+              className="h-9 text-sm"
+            />
+          </div>
+          <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+            <p className="text-[11px] font-medium text-foreground">📊 Dados enviados automaticamente:</p>
+            <div className="space-y-1">
+              {["Nome do contato", "Telefone", "Email", "Empresa", "Cidade", "Origem", "Tags", "Data/hora"].map((field) => (
+                <div key={field} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
+                  {field}
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2 pt-2 border-t border-border/30">
+              <Label className="text-[10px]">Campos extras (um por linha, chave=valor)</Label>
+              <Textarea
+                value={config.extra_fields || ""}
+                onChange={(e) => updateConfig("extra_fields", e.target.value)}
+                placeholder={"plano=premium\ninteresse=produto_x"}
+                className="text-xs min-h-[50px] font-mono"
+              />
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
   const { user } = useAuth();
@@ -1153,48 +1280,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
 
           {/* ===== GOOGLE SHEETS NODE ===== */}
           {node.type === "google_sheets" && (
-            <div className="space-y-4">
-              {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets via webhook.")}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">URL do Webhook</Label>
-                <Input
-                  value={config.webhook_url || ""}
-                  onChange={(e) => updateConfig("webhook_url", e.target.value)}
-                  placeholder="https://hooks.zapier.com/... ou Make webhook"
-                  className="h-9 text-sm"
-                />
-                <p className="text-[10px] text-muted-foreground">Cole a URL gerada pelo Zapier, Make ou n8n.</p>
-              </div>
-              <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
-                <p className="text-[11px] font-medium text-foreground">📊 Dados enviados automaticamente:</p>
-                <div className="space-y-1">
-                  {["Nome do contato", "Telefone", "Email", "Empresa", "Cidade", "Origem", "Tags", "Data/hora"].map((field) => (
-                    <div key={field} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                      <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
-                      {field}
-                    </div>
-                  ))}
-                </div>
-                <div className="space-y-2 pt-2 border-t border-border/30">
-                  <Label className="text-[10px]">Campos extras (um por linha, chave=valor)</Label>
-                  <Textarea
-                    value={config.extra_fields || ""}
-                    onChange={(e) => updateConfig("extra_fields", e.target.value)}
-                    placeholder={"plano=premium\ninteresse=produto_x"}
-                    className="text-xs min-h-[50px] font-mono"
-                  />
-                </div>
-              </div>
-              <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
-                <p className="text-[11px] text-primary font-medium mb-1">💡 Como configurar</p>
-                <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
-                  <li>No <strong>Zapier</strong>: Trigger "Webhooks by Zapier" → Action "Google Sheets - Create Spreadsheet Row"</li>
-                  <li>No <strong>Make</strong>: Webhook → Google Sheets "Add a Row"</li>
-                  <li>No <strong>n8n</strong>: Webhook → Google Sheets node</li>
-                  <li>Copie a URL do webhook e cole acima</li>
-                </ol>
-              </div>
-            </div>
+            <GoogleSheetsConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} />
           )}
 
           {/* ===== GOOGLE CALENDAR NODE ===== */}
