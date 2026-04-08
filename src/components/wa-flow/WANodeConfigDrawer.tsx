@@ -958,6 +958,8 @@ interface Props {
   node: Node;
   onUpdate: (nodeId: string, config: any, label?: string) => void;
   onDelete: (nodeId: string) => void;
+  entryApiType?: string;
+  entryConfig?: any;
 }
 
 export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete }: Props) {
