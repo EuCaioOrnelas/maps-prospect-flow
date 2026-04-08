@@ -349,6 +349,17 @@ export default function WhatsAppFlowEditor() {
 
   const onConnect = useCallback(
     (params: Connection) => {
+      // Prevent connections to/from blocked buttons nodes
+      const sourceNode = nodes.find((n) => n.id === params.source);
+      const targetNode = nodes.find((n) => n.id === params.target);
+      if (sourceNode?.type === "buttons" && (sourceNode.data as any).config?._blocked_evolution) {
+        toast.error("Botões bloqueados — exclusivo da API Inbound");
+        return;
+      }
+      if (targetNode?.type === "buttons" && (targetNode.data as any).config?._blocked_evolution) {
+        toast.error("Botões bloqueados — exclusivo da API Inbound");
+        return;
+      }
       setEdges((eds) => {
         const newEdges = addEdge({ ...params, ...defaultEdgeOptions }, eds);
         pushHistory(nodes, newEdges);
@@ -494,36 +505,40 @@ export default function WhatsAppFlowEditor() {
   // Auto-block buttons nodes when using Evolution API
   useEffect(() => {
     const isEvolution = entryApiType === "evolution";
-    let changed = false;
+    const buttonNodes = nodes.filter((n) => n.type === "buttons");
+    if (buttonNodes.length === 0) return;
+
+    let nodesChanged = false;
     const updatedNodes = nodes.map((n) => {
       if (n.type !== "buttons") return n;
       const cfg = (n.data as any).config || {};
       const currentlyBlocked = cfg._blocked_evolution === true;
       if (isEvolution && !currentlyBlocked) {
-        changed = true;
+        nodesChanged = true;
         return { ...n, data: { ...n.data, config: { ...cfg, _blocked_evolution: true } } };
       }
       if (!isEvolution && currentlyBlocked) {
-        changed = true;
+        nodesChanged = true;
         const { _blocked_evolution, ...rest } = cfg;
         return { ...n, data: { ...n.data, config: rest } };
       }
       return n;
     });
 
-    if (changed) {
+    if (nodesChanged) {
       setNodes(updatedNodes);
-      if (isEvolution) {
-        // Cut all edges connected to buttons nodes
-        const buttonIds = new Set(updatedNodes.filter((n) => n.type === "buttons").map((n) => n.id));
-        const newEdges = edges.filter((e) => !buttonIds.has(e.source) && !buttonIds.has(e.target));
-        if (newEdges.length !== edges.length) {
-          setEdges(newEdges);
-        }
-      }
       setHasChanges(true);
     }
-  }, [entryApiType]); // intentionally only on entryApiType change
+
+    if (isEvolution) {
+      const buttonIds = new Set(buttonNodes.map((n) => n.id));
+      const newEdges = edges.filter((e) => !buttonIds.has(e.source) && !buttonIds.has(e.target));
+      if (newEdges.length !== edges.length) {
+        setEdges(newEdges);
+        setHasChanges(true);
+      }
+    }
+  }, [entryApiType, nodes.length]); // trigger on api change AND when nodes are added/removed
 
   const saveFlow = useMutation({
     mutationFn: async () => {
