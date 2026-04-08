@@ -860,14 +860,7 @@ export default function WhatsAppFlowEditor() {
             onNodeClick={onNodeClick}
             onPaneClick={() => { setSelectedNode(null); setSelectedNodeIds(new Set()); }}
             onEdgeClick={(_event, edge) => {
-              const confirmed = window.confirm("Deseja excluir esta conexão?");
-              if (confirmed) {
-                const newEdges = edges.filter((e) => e.id !== edge.id);
-                setEdges(newEdges);
-                pushHistory(nodes, newEdges);
-                setHasChanges(true);
-                toast.success("Conexão removida");
-              }
+              setEdgeToDelete(edge.id);
             }}
             onInit={(instance) => {
               // Store instance on wrapper for screenToFlowPosition
