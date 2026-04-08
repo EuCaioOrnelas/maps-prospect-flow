@@ -1283,11 +1283,24 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
             <Plus size={12} className="mr-1" /> Adicionar credencial
           </Button>
         )}
+        </div>
+        )}
       </div>
 
       {/* AGENTS SECTION */}
-      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
-        <Label className="text-xs font-bold flex items-center gap-1.5">🤖 Agente de IA</Label>
+      <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
+        <button onClick={() => setShowAgentSection(!showAgentSection)} className="flex items-center justify-between w-full">
+          <Label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">🤖 Agente de IA</Label>
+          <div className="flex items-center gap-2">
+            {selectedAgentId && savedAgents.find((a: any) => a.id === selectedAgentId) && (
+              <span className="text-[9px] text-emerald-500 font-medium">{savedAgents.find((a: any) => a.id === selectedAgentId)?.name}</span>
+            )}
+            <ChevronDown size={14} className={cn("text-muted-foreground transition-transform", showAgentSection && "rotate-180")} />
+          </div>
+        </button>
+
+        {showAgentSection && (
+        <div className="space-y-3 mt-3">
 
         {!creatingAgent && (
           <>
