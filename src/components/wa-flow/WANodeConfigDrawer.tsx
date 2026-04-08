@@ -764,7 +764,17 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           <p className="text-[10px] text-muted-foreground">
             Selecione o template aprovado que será usado para reabrir a conversa após 24h de inatividade.
           </p>
-          {loadingTemplates ? (
+          {tokenExpired ? (
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-destructive/10 border border-destructive/20">
+              <AlertTriangle size={14} className="text-destructive shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-[11px] text-destructive font-medium">Token da Meta expirado</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Reconecte seu número na seção <span className="font-semibold">Números → API Oficial</span> para renovar o acesso e carregar os templates.
+                </p>
+              </div>
+            </div>
+          ) : loadingTemplates ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
               <Loader2 size={14} className="animate-spin" /> Carregando templates...
             </div>
