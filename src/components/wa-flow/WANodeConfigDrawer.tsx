@@ -2769,7 +2769,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
 
           {/* ===== GOOGLE CALENDAR NODE ===== */}
           {node.type === "google_calendar" && (
-            <GoogleCalendarConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} />
+            <GoogleCalendarConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} allNodes={allNodes} />
           )}
 
           {/* ===== GMAIL NODE ===== */}
