@@ -1260,6 +1260,7 @@ export const LeadDetailDialog = ({
                     {/* Search + create input - always visible */}
                     <div className="flex gap-2">
                       <Input
+                        id="tag-search-input"
                         value={newTag}
                         onChange={(e) => setNewTag(e.target.value)}
                         placeholder="Pesquisar ou criar nova tag"
