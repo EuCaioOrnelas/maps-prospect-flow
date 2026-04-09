@@ -79,7 +79,9 @@ function getAvatarColor(phone: string): string {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
-type FilterType = "all" | "unread" | "official" | "groups" | "archived";
+type FilterType = "all" | "unread" | "filtered";
+
+const DEFAULT_FILTER_CONFIG: ChatFilterConfig = { tags: [], crmStages: [], scoreMin: 0, scoreMax: 1000 };
 
 export function ChatSidebar({
   conversations, activeConversationId, onSelectConversation,
@@ -90,21 +92,18 @@ export function ChatSidebar({
   const [searchFocused, setSearchFocused] = useState(false);
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [customFilters, setCustomFilters] = useState<ChatFilterConfig>(DEFAULT_FILTER_CONFIG);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  const hasCustomFilters = customFilters.tags.length > 0 || customFilters.crmStages.length > 0 || customFilters.scoreMin > 0 || customFilters.scoreMax < 1000;
+  const customFilterCount = customFilters.tags.length + customFilters.crmStages.length + (customFilters.scoreMin > 0 || customFilters.scoreMax < 1000 ? 1 : 0);
 
   // Apply filters
   const filteredConversations = conversations.filter(conv => {
     if (activeFilter === "unread") return conv.unread_count > 0;
-    if (activeFilter === "archived") return conv.is_archived;
     return true;
   });
-
-  const filters: { key: FilterType; label: string }[] = [
-    { key: "all", label: "Todas" },
-    { key: "unread", label: "Não lidas" },
-    { key: "official", label: "Oficiais" },
-    { key: "groups", label: "Grupos" },
-  ];
 
   return (
     <div className="flex flex-col h-full wa-sidebar-bg">
