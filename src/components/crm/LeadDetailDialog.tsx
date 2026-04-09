@@ -354,6 +354,9 @@ export const LeadDetailDialog = ({
       setHeaderNameValue(lead.contact_name || lead.company_name || '');
       loadNotesAndActivities();
       loadDeals();
+      loadDealAttachments();
+      loadLeadFiles();
+      loadDriveConnection();
       loadAgentPauseStatus();
       setIsEditing(false);
       setIsEditingHeaderName(false);
@@ -362,7 +365,7 @@ export const LeadDetailDialog = ({
       setHistoryPage(1);
       setShowDealConfirm(false);
       setNewTag('');
-      setShowTagComposer(false);
+      setDealAttachmentFiles([]);
     }
   }, [lead?.id]);
 
