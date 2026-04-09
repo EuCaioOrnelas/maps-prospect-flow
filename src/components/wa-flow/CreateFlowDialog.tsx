@@ -3,6 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Workflow, Sparkles, ArrowLeft, Loader2, Wand2, RefreshCw } from "lucide-react";
+import geminiIcon from "@/assets/logos/gemini-icon.png";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -137,13 +138,13 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
               {/* AI */}
               <button
                 onClick={() => setMode("ai")}
-                className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-primary/30 bg-primary/5 hover:border-primary/60 hover:bg-primary/10 transition-all text-center"
+                className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all text-center"
               >
-                <Badge className="absolute -top-2 right-3 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 gap-1">
-                  <Sparkles size={10} /> IA
+                <Badge className="absolute -top-2 right-3 bg-emerald-500 text-white text-[10px] px-2 py-0.5 gap-1">
+                  <img src={geminiIcon} alt="Gemini" className="w-2.5 h-2.5" /> IA
                 </Badge>
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Sparkles size={24} className="text-primary" />
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                  <img src={geminiIcon} alt="Gemini" className="w-7 h-7" />
                 </div>
                 <div>
                   <p className="font-semibold text-foreground text-sm mb-1">Criar com IA ✨</p>
