@@ -439,7 +439,115 @@ export const LeadDetailDialog = ({
     }
   };
 
-  const loadAgentPauseStatus = async () => {
+  const loadDealAttachments = async () => {
+    if (!lead || !user) return;
+    const { data } = await supabase
+      .from('lead_deal_attachments')
+      .select('id, deal_id, file_name, file_type, file_url')
+      .eq('user_id', user.id);
+    if (data) {
+      const grouped: Record<string, Array<{ id: string; file_name: string; file_type: string; file_url: string }>> = {};
+      data.forEach((att) => {
+        if (!grouped[att.deal_id]) grouped[att.deal_id] = [];
+        grouped[att.deal_id].push(att);
+      });
+      setDealAttachments(grouped);
+    }
+  };
+
+  const loadLeadFiles = async () => {
+    if (!lead || !user) return;
+    const { data } = await supabase
+      .from('lead_files')
+      .select('id, file_name, file_type, file_url, source, created_at')
+      .eq('lead_id', lead.id)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (data) setLeadFiles(data);
+  };
+
+  const loadDriveConnection = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('user_drive_connections')
+      .select('is_active, root_folder_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    setDriveConnection(data);
+  };
+
+  const uploadDealAttachment = async (dealId: string, file: File, fileType: string) => {
+    if (!user) return;
+    const filePath = `${user.id}/${dealId}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('deal-attachments')
+      .upload(filePath, file);
+    if (uploadError) throw uploadError;
+    const { data: urlData } = supabase.storage.from('deal-attachments').getPublicUrl(filePath);
+    await supabase.from('lead_deal_attachments').insert({
+      deal_id: dealId,
+      user_id: user.id,
+      file_name: file.name,
+      file_type: fileType,
+      file_url: urlData.publicUrl,
+      file_size: file.size,
+    });
+  };
+
+  const handleUploadLeadFile = async (file: File) => {
+    if (!lead || !user) return;
+    setIsUploadingLeadFile(true);
+    try {
+      const filePath = `${user.id}/${lead.id}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('deal-attachments')
+        .upload(filePath, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from('deal-attachments').getPublicUrl(filePath);
+      await supabase.from('lead_files').insert({
+        lead_id: lead.id,
+        user_id: user.id,
+        file_name: file.name,
+        file_type: 'other',
+        file_url: urlData.publicUrl,
+        file_size: file.size,
+        source: 'local',
+      });
+      toast.success('Arquivo enviado!');
+      loadLeadFiles();
+    } catch {
+      toast.error('Erro ao enviar arquivo');
+    } finally {
+      setIsUploadingLeadFile(false);
+    }
+  };
+
+  const handleDeleteLeadFile = async (fileId: string) => {
+    try {
+      await supabase.from('lead_files').delete().eq('id', fileId);
+      toast.success('Arquivo excluído!');
+      loadLeadFiles();
+    } catch {
+      toast.error('Erro ao excluir arquivo');
+    }
+  };
+
+  const handleConnectDrive = async () => {
+    if (!user) return;
+    try {
+      const { data: funcUrl } = await supabase.functions.invoke('google-oauth-start', {
+        body: { scope: 'drive', redirectPath: '/crm' },
+      });
+      if (funcUrl?.url) {
+        window.location.href = funcUrl.url;
+      } else {
+        toast.error('Erro ao iniciar conexão com Google Drive');
+      }
+    } catch {
+      toast.error('Erro ao conectar Google Drive');
+    }
+  };
+
     if (!lead || !user) { setAgentPauseStatus(null); return; }
     const phoneDigits = lead.phone.replace(/\D/g, '');
     const { data: agents } = await supabase
