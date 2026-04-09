@@ -63,23 +63,85 @@ export function useChat() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
+  const [connectionHealth, setConnectionHealth] = useState<Record<string, boolean>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load WABA connections (include all to detect expired ones)
-  const loadConnections = useCallback(async () => {
+  // Validate a single token against Graph API (lightweight debug_token or /me check)
+  const validateToken = useCallback(async (accessToken: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`https://graph.facebook.com/v21.0/me?access_token=${encodeURIComponent(accessToken)}`, {
+        method: "GET",
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      return !!data.id;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // Load WABA connections and validate tokens
+  const loadConnections = useCallback(async (forceValidate = false) => {
     if (!user) return;
     const { data } = await supabase
       .from("user_waba_connections")
       .select("id, phone_number_id, display_phone_number, business_name, nickname, status, waba_id, access_token, token_expires_at")
       .eq("user_id", user.id);
-    if (data && data.length > 0) {
-      setConnections(data);
-      // Prefer active connection
-      const active = data.find(c => c.status === "active");
-      setActiveConnectionId(active?.id || data[0].id);
+    if (!data || data.length === 0) {
+      setConnections([]);
+      setLoading(false);
+      return;
     }
+
+    setConnections(data);
+
+    // Check localStorage cache for health status
+    const CACHE_KEY = `waba_health_${user.id}`;
+    const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+    let cached: { ts: number; health: Record<string, boolean> } | null = null;
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (raw) cached = JSON.parse(raw);
+    } catch {}
+
+    if (!forceValidate && cached && (Date.now() - cached.ts) < CACHE_TTL) {
+      setConnectionHealth(cached.health);
+      // Pick best active connection
+      const healthyConn = data.find(c => cached!.health[c.id] !== false);
+      setActiveConnectionId(healthyConn?.id || data[0].id);
+      setLoading(false);
+      return;
+    }
+
+    // Validate each token in parallel
+    const healthMap: Record<string, boolean> = {};
+    await Promise.all(
+      data.map(async (conn) => {
+        if (!conn.access_token) {
+          healthMap[conn.id] = false;
+          return;
+        }
+        // Quick check: if token_expires_at is in the past, skip API call
+        if (conn.token_expires_at && new Date(conn.token_expires_at) < new Date()) {
+          healthMap[conn.id] = false;
+          return;
+        }
+        healthMap[conn.id] = await validateToken(conn.access_token);
+      })
+    );
+
+    setConnectionHealth(healthMap);
+
+    // Save to localStorage
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), health: healthMap }));
+    } catch {}
+
+    // Prefer a healthy connection
+    const healthyConn = data.find(c => healthMap[c.id] === true);
+    setActiveConnectionId(healthyConn?.id || data[0].id);
     setLoading(false);
-  }, [user]);
+  }, [user, validateToken]);
 
   useEffect(() => {
     if (!user) return;
