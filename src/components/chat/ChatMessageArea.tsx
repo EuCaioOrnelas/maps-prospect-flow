@@ -345,114 +345,107 @@ export function ChatMessageArea({
           </div>
         </div>
 
-        {/* Messages area */}
-        <div className="flex-1 overflow-y-auto wa-chat-bg wa-scrollbar relative" ref={scrollContainerRef}>
+        {/* Messages area + input — background extends fully */}
+        <div className="flex-1 flex flex-col min-h-0 wa-chat-bg relative">
           <div className="absolute inset-0 wa-chat-pattern pointer-events-none" />
           <div className="wa-chat-glow" />
 
-          <div className="relative z-[1] px-[63px] py-[4px] min-h-full flex flex-col justify-end">
-            {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="h-8 w-8 rounded-full border-[3px] border-[#00a884]/20 border-t-[#00a884] animate-spin" />
-              </div>
-            ) : (
-              <>
-                {messages.map((msg, idx) => {
-                  const prevMsg = idx > 0 ? messages[idx - 1] : null;
-                  const showDate = !prevMsg || !isSameDay(parseISO(msg.created_at), parseISO(prevMsg.created_at));
-                  const isOutbound = msg.direction === "outbound";
-                  const isSameAuthorAsPrev = prevMsg && prevMsg.direction === msg.direction && !showDate;
-                  const showTail = !isSameAuthorAsPrev;
-                  const replyMsg = msg.reply_to_message_id ? messagesMap.get(msg.reply_to_message_id) : undefined;
+          <div className="flex-1 overflow-y-auto wa-scrollbar relative z-[1]" ref={scrollContainerRef}>
+            <div className="px-[63px] py-[4px] min-h-full flex flex-col justify-end">
+              {loading ? (
+                <div className="flex items-center justify-center py-16">
+                  <div className="h-8 w-8 rounded-full border-[3px] border-[#00a884]/20 border-t-[#00a884] animate-spin" />
+                </div>
+              ) : (
+                <>
+                  {messages.map((msg, idx) => {
+                    const prevMsg = idx > 0 ? messages[idx - 1] : null;
+                    const showDate = !prevMsg || !isSameDay(parseISO(msg.created_at), parseISO(prevMsg.created_at));
+                    const isOutbound = msg.direction === "outbound";
+                    const isSameAuthorAsPrev = prevMsg && prevMsg.direction === msg.direction && !showDate;
+                    const showTail = !isSameAuthorAsPrev;
+                    const replyMsg = msg.reply_to_message_id ? messagesMap.get(msg.reply_to_message_id) : undefined;
 
-                  return (
-                    <div key={msg.id}>
-                      {showDate && <DateDivider date={parseISO(msg.created_at)} />}
-                      <div className={cn(
-                        "flex",
-                        isOutbound ? "justify-end" : "justify-start",
-                        isSameAuthorAsPrev ? "mt-[2px]" : "mt-[10px]"
-                      )}>
+                    return (
+                      <div key={msg.id}>
+                        {showDate && <DateDivider date={parseISO(msg.created_at)} />}
                         <div className={cn(
-                          "relative max-w-[65%] group/msg",
-                          showTail ? (isOutbound ? "mr-0" : "ml-0") : (isOutbound ? "mr-[8px]" : "ml-[8px]")
+                          "flex",
+                          isOutbound ? "justify-end" : "justify-start",
+                          isSameAuthorAsPrev ? "mt-[2px]" : "mt-[10px]"
                         )}>
-                          {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
-
-                          {/* Message actions dropdown */}
-                          <MessageActions
-                            msg={msg}
-                            onReply={() => setReplyingTo(msg)}
-                            onForward={() => toast.info("Encaminhar: em breve!")}
-                          />
-
                           <div className={cn(
-                            "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative",
-                            isOutbound
-                              ? "wa-bubble-out rounded-[7.5px]"
-                              : "wa-bubble-in rounded-[7.5px]",
-                            showTail && isOutbound && "!rounded-tr-none",
-                            showTail && !isOutbound && "!rounded-tl-none"
+                            "relative max-w-[65%] group/msg",
+                            showTail ? (isOutbound ? "mr-0" : "ml-0") : (isOutbound ? "mr-[8px]" : "ml-[8px]")
                           )}>
-                            {/* Reply quote */}
-                            {replyMsg && <ReplyQuote replyMsg={replyMsg} />}
-
-                            {msg.message_type !== "text" && (
-                              <div className="p-[3px]"><MediaPreview msg={msg} /></div>
-                            )}
-
-                            {msg.content && msg.message_type === "text" && (
-                              <div className="px-[9px] pt-[6px] pb-[8px]">
-                                <span className="text-[14.2px] wa-text-primary leading-[19px] whitespace-pre-wrap break-words">
-                                  {msg.content}
+                            {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
+                            <MessageActions
+                              msg={msg}
+                              onReply={() => setReplyingTo(msg)}
+                              onForward={() => toast.info("Encaminhar: em breve!")}
+                            />
+                            <div className={cn(
+                              "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative",
+                              isOutbound ? "wa-bubble-out rounded-[7.5px]" : "wa-bubble-in rounded-[7.5px]",
+                              showTail && isOutbound && "!rounded-tr-none",
+                              showTail && !isOutbound && "!rounded-tl-none"
+                            )}>
+                              {replyMsg && <ReplyQuote replyMsg={replyMsg} />}
+                              {msg.message_type !== "text" && (
+                                <div className="p-[3px]"><MediaPreview msg={msg} /></div>
+                              )}
+                              {msg.content && msg.message_type === "text" && (
+                                <div className="px-[9px] pt-[6px] pb-[8px]">
+                                  <span className="text-[14.2px] wa-text-primary leading-[19px] whitespace-pre-wrap break-words">
+                                    {msg.content}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="flex items-center justify-end gap-[3px] px-[7px] pb-[5px] -mt-[2px]">
+                                <span className="text-[11px] leading-[15px] wa-text-timestamp select-none">
+                                  {format(parseISO(msg.created_at), "HH:mm")}
                                 </span>
+                                {isOutbound && <MessageStatus status={msg.status} />}
                               </div>
-                            )}
-
-                            <div className="flex items-center justify-end gap-[3px] px-[7px] pb-[5px] -mt-[2px]">
-                              <span className="text-[11px] leading-[15px] wa-text-timestamp select-none">
-                                {format(parseISO(msg.created_at), "HH:mm")}
-                              </span>
-                              {isOutbound && <MessageStatus status={msg.status} />}
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-                <div ref={messagesEndRef} className="h-[2px]" />
-              </>
-            )}
+                    );
+                  })}
+                  <div ref={messagesEndRef} className="h-[2px]" />
+                </>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Input or Expired Banner — floating over chat */}
-        <div className="relative z-10">
-          {(() => {
-            const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
-            const isWindowExpired = lastInbound
-              ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) > 24
-              : messages.length > 0;
+          {/* Input — inside background container so pattern extends behind it */}
+          <div className="relative z-10 shrink-0">
+            {(() => {
+              const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
+              const isWindowExpired = lastInbound
+                ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) > 24
+                : messages.length > 0;
 
-            if (isWindowExpired && onReopenConversation) {
+              if (isWindowExpired && onReopenConversation) {
+                return (
+                  <ExpiredWindowBanner
+                    contactName={conversation.contact_name}
+                    contactPhone={conversation.contact_phone}
+                    onReopenConversation={onReopenConversation}
+                  />
+                );
+              }
               return (
-                <ExpiredWindowBanner
-                  contactName={conversation.contact_name}
-                  contactPhone={conversation.contact_phone}
-                  onReopenConversation={onReopenConversation}
+                <ChatInput
+                  onSendMessage={onSendMessage}
+                  onSendMedia={onSendMedia}
+                  replyingTo={replyingTo}
+                  onCancelReply={() => setReplyingTo(null)}
                 />
               );
-            }
-            return (
-              <ChatInput
-                onSendMessage={onSendMessage}
-                onSendMedia={onSendMedia}
-                replyingTo={replyingTo}
-                onCancelReply={() => setReplyingTo(null)}
-              />
-            );
-          })()}
+            })()}
+          </div>
         </div>
       </div>
 
