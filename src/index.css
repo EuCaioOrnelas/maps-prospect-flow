@@ -368,6 +368,13 @@
   .landing-light .bg-destructive\/60 {
     background-color: hsl(0 72% 51% / 0.6);
   }
+/* ─── Force Wiize fonts on all chat elements ─── */
+.wa-app-bg, .wa-app-bg * {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.wa-app-bg h1, .wa-app-bg h2, .wa-app-bg h3, .wa-app-bg h4, .wa-app-bg h5, .wa-app-bg h6 {
+  font-family: 'Outfit', system-ui, sans-serif;
+}
 
 
   .landing-light input:-webkit-autofill,
