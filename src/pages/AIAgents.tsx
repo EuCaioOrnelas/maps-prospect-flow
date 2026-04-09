@@ -64,6 +64,7 @@ import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
 import { Smartphone } from "lucide-react";
+import { ApiCompatibilityDialog } from "@/components/agents/ApiCompatibilityDialog";
 
 interface AIAgent {
   id: string;
@@ -132,6 +133,7 @@ export default function AIAgents() {
   const [summaryAgent, setSummaryAgent] = useState<AIAgent | null>(null);
   const [testChatAgent, setTestChatAgent] = useState<AIAgent | null>(null);
   const [showTestAgentSelector, setShowTestAgentSelector] = useState(false);
+  const [showApiCompat, setShowApiCompat] = useState(false);
 
   // DB-backed beta warning popup
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("agents_beta_warning");
@@ -381,9 +383,12 @@ export default function AIAgents() {
               {/* Info Card */}
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border/50">
                 <Bot className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground/80">Dica:</span> Agentes respondem automaticamente enquanto o lead continuar interagindo.
+                <p className="text-xs text-muted-foreground flex-1">
+                  <span className="font-medium text-foreground/80">Dica:</span> Agentes de IA são exclusivos da API Outbound (WhatsApp Web). Para usar IA na API Oficial, use os Fluxos.
                 </p>
+                <button onClick={() => setShowApiCompat(true)} className="text-xs text-primary hover:underline shrink-0 font-medium">
+                  Saiba mais
+                </button>
               </div>
 
               {/* Agents Grid */}
@@ -780,6 +785,9 @@ export default function AIAgents() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* API Compatibility Dialog */}
+      <ApiCompatibilityDialog open={showApiCompat} onOpenChange={setShowApiCompat} />
     </SidebarProvider>
   );
 }
