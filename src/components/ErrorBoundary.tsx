@@ -1,4 +1,5 @@
 import React from 'react';
+import { isRuntimeAssetError, recoverFromRuntimeAssetError } from '@/lib/runtimeRecovery';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -21,6 +22,10 @@ export class ErrorBoundary extends React.Component<
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('[ErrorBoundary] Caught error:', error.message);
     console.error('[ErrorBoundary] Component stack:', errorInfo.componentStack);
+
+    if (isRuntimeAssetError(error)) {
+      void recoverFromRuntimeAssetError('error-boundary', error);
+    }
   }
 
   render() {
