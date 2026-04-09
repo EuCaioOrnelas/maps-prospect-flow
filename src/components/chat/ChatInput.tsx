@@ -126,7 +126,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     return () => document.removeEventListener("click", handler);
   }, []);
 
-  const isMultiline = text.includes("\n") || text.length > 60;
+  const isMultiline = false; // Always keep rounded-full
 
   // Recording UI
   if (isRecording) {
@@ -233,13 +233,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
             </div>
           )}
 
-          {/* Main pill — + emoji input inside, floating */}
-          <div
-            className={cn(
-              "flex-1 wa-input-field flex items-end shadow-sm transition-all",
-              isMultiline ? "rounded-[18px]" : "rounded-full"
-            )}
-          >
+          {/* Main pill — everything inside */}
+          <div className="flex-1 wa-input-field flex items-end shadow-sm rounded-full">
             {/* Attach */}
             <button
               onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setEmojiOpen(false); }}
@@ -295,21 +290,21 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               onKeyDown={handleKeyDown}
               placeholder="Digite uma mensagem"
               rows={1}
-              className="flex-1 bg-transparent wa-text-primary text-[15px] pl-[2px] pr-[14px] py-[10px] outline-none resize-none max-h-[120px] overflow-y-auto leading-[20px] placeholder:wa-text-muted wa-scrollbar"
+              className="flex-1 bg-transparent wa-text-primary text-[15px] pl-[2px] pr-[6px] py-[10px] outline-none resize-none max-h-[120px] overflow-y-auto leading-[20px] placeholder:wa-text-muted wa-scrollbar"
               style={{ minHeight: "22px" }}
             />
-          </div>
 
-          {/* Mic/Send — outside pill */}
-          {text.trim() ? (
-            <button onClick={handleSend} className="p-[10px] rounded-full bg-[#00a884] hover:bg-[#06cf9c] transition-colors self-end">
-              <Send size={20} className="text-white ml-[1px]" />
-            </button>
-          ) : (
-            <button onClick={startRecording} className="p-[10px] rounded-full hover:bg-white/5 transition-colors self-end">
-              <Mic size={24} className="wa-icon-panel" />
-            </button>
-          )}
+            {/* Mic/Send — inside pill */}
+            {text.trim() ? (
+              <button onClick={handleSend} className="p-[9px] shrink-0 self-end hover:opacity-70 transition-opacity">
+                <Send size={20} className="text-[#00a884]" />
+              </button>
+            ) : (
+              <button onClick={startRecording} className="p-[9px] shrink-0 self-end hover:opacity-70 transition-opacity">
+                <Mic size={22} className="wa-icon-panel" />
+              </button>
+            )}
+          </div>
         </div>
       )}
 
