@@ -23,9 +23,9 @@ import {
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
   HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail, Database,
 } from "lucide-react";
-import gmailIcon from "@/assets/icons/gmail.png";
-import sheetsIcon from "@/assets/icons/google-sheets.png";
-import calendarIcon from "@/assets/icons/google-calendar.png";
+import gmailIcon from "@/assets/icons/gmail-sm.png";
+import sheetsIcon from "@/assets/icons/google-sheets-sm.png";
+import calendarIcon from "@/assets/icons/google-calendar-sm.png";
 import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
 import { WAMessageNode } from "@/components/wa-flow/nodes/WAMessageNode";

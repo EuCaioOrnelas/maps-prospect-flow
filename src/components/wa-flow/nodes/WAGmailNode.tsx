@@ -1,7 +1,7 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
 import { CheckCircle2, AlertCircle } from "lucide-react";
-import gmailIcon from "@/assets/icons/gmail.png";
+import gmailIcon from "@/assets/icons/gmail-sm.png";
 
 export function WAGmailNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
