@@ -33,7 +33,7 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
       >
         <div className="flex items-center gap-2">
           <img src={googleLogo} alt="Google" className="w-5 h-5" loading="eager" />
-          <span className="text-xs font-medium text-foreground">Conta conectada</span>
+          <span className="text-xs font-medium text-foreground">{hasAccounts ? "Conta conectada" : "Conectar conta"}</span>
         </div>
         <div className="flex items-center gap-2">
           {hasAccounts && selectedEmail ? (
