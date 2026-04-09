@@ -384,7 +384,30 @@ export default function WhatsAppFlowEditor() {
     setSelectedNode(node);
     setSelectedNodeIds(new Set([node.id]));
     setDrawerOpen(true);
+    setContextMenu(null);
   }, []);
+
+  const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
+    event.preventDefault();
+    setContextMenu({ x: event.clientX, y: event.clientY, nodeId: node.id });
+  }, []);
+
+  const handleDuplicateNode = useCallback((nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    const newNode: Node = {
+      ...JSON.parse(JSON.stringify(node)),
+      id: `temp-${Date.now()}`,
+      position: { x: node.position.x + 60, y: node.position.y + 60 },
+      selected: false,
+    };
+    const newNodes = [...nodes, newNode];
+    setNodes(newNodes);
+    pushHistory(newNodes, edges);
+    setHasChanges(true);
+    toast.success("Bloco duplicado");
+    setContextMenu(null);
+  }, [nodes, edges, setNodes, pushHistory]);
 
   const handleAddNode = useCallback(
     (type: string) => {
