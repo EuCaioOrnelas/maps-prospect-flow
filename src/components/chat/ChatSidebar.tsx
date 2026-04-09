@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
-import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check } from "lucide-react";
+import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { NewConversationDialog } from "./NewConversationDialog";
+import { ChatFiltersDialog, ChatFilterConfig } from "./ChatFiltersDialog";
 
 interface ChatSidebarProps {
   conversations: ChatConversation[];
@@ -78,7 +79,9 @@ function getAvatarColor(phone: string): string {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
-type FilterType = "all" | "unread" | "official" | "groups" | "archived";
+type FilterType = "all" | "unread" | "filtered";
+
+const DEFAULT_FILTER_CONFIG: ChatFilterConfig = { tags: [], crmStages: [], scoreMin: 0, scoreMax: 1000 };
 
 export function ChatSidebar({
   conversations, activeConversationId, onSelectConversation,
@@ -89,21 +92,18 @@ export function ChatSidebar({
   const [searchFocused, setSearchFocused] = useState(false);
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [customFilters, setCustomFilters] = useState<ChatFilterConfig>(DEFAULT_FILTER_CONFIG);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  const hasCustomFilters = customFilters.tags.length > 0 || customFilters.crmStages.length > 0 || customFilters.scoreMin > 0 || customFilters.scoreMax < 1000;
+  const customFilterCount = customFilters.tags.length + customFilters.crmStages.length + (customFilters.scoreMin > 0 || customFilters.scoreMax < 1000 ? 1 : 0);
 
   // Apply filters
   const filteredConversations = conversations.filter(conv => {
     if (activeFilter === "unread") return conv.unread_count > 0;
-    if (activeFilter === "archived") return conv.is_archived;
     return true;
   });
-
-  const filters: { key: FilterType; label: string }[] = [
-    { key: "all", label: "Todas" },
-    { key: "unread", label: "Não lidas" },
-    { key: "official", label: "Oficiais" },
-    { key: "groups", label: "Grupos" },
-  ];
 
   return (
     <div className="flex flex-col h-full wa-sidebar-bg">
@@ -211,21 +211,46 @@ export function ChatSidebar({
       </div>
 
       {/* Filter chips */}
-      <div className="flex items-center gap-1.5 px-3 pb-2 wa-sidebar-search-area overflow-x-auto scrollbar-none">
-        {filters.map(f => (
-          <button
-            key={f.key}
-            onClick={() => setActiveFilter(activeFilter === f.key ? "all" : f.key)}
-            className={cn(
-              "px-3 py-[5px] rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-150 border",
-              activeFilter === f.key
-                ? "bg-[#00a884] text-white border-[#00a884]"
-                : "wa-text-muted border-white/10 hover:border-white/20 hover:bg-white/5"
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-center gap-2 px-3 pb-2 wa-sidebar-search-area">
+        <button
+          onClick={() => setActiveFilter("all")}
+          className={cn(
+            "px-3 py-[5px] rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-150 border",
+            activeFilter === "all"
+              ? "bg-[#00a884] text-white border-[#00a884]"
+              : "wa-text-muted border-white/10 hover:border-[#00a884]/40 hover:text-[#00a884]"
+          )}
+        >
+          Todas
+        </button>
+        <button
+          onClick={() => setActiveFilter(activeFilter === "unread" ? "all" : "unread")}
+          className={cn(
+            "px-3 py-[5px] rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-150 border",
+            activeFilter === "unread"
+              ? "bg-[#00a884] text-white border-[#00a884]"
+              : "wa-text-muted border-white/10 hover:border-[#00a884]/40 hover:text-[#00a884]"
+          )}
+        >
+          Não lidas
+        </button>
+        <button
+          onClick={() => setFiltersOpen(true)}
+          className={cn(
+            "flex items-center gap-1 px-3 py-[5px] rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-150 border",
+            hasCustomFilters
+              ? "bg-[#00a884] text-white border-[#00a884]"
+              : "wa-text-muted border-white/10 hover:border-[#00a884]/40 hover:text-[#00a884]"
+          )}
+        >
+          <SlidersHorizontal size={12} />
+          Filtros
+          {customFilterCount > 0 && (
+            <span className="ml-0.5 bg-white/20 text-white text-[10px] font-bold px-1.5 py-0 rounded-full leading-[16px]">
+              {customFilterCount}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Conversations list */}
@@ -356,6 +381,14 @@ export function ChatSidebar({
           onStartConversation={onNewConversation}
         />
       )}
+
+      {/* Custom filters dialog */}
+      <ChatFiltersDialog
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        filters={customFilters}
+        onApply={setCustomFilters}
+      />
     </div>
   );
 }
