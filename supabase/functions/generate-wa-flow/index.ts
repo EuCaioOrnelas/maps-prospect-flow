@@ -63,11 +63,30 @@ entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_c
 13. handoff deve ter handoff_message.
 14. data_collect deve ter collect_type, variable_name e question_text.
 
+=== REGRA CRÍTICA: UMA PERGUNTA POR VEZ ===
+NUNCA encadeie dois nós que enviam mensagem ao lead sem esperar resposta entre eles.
+Combinações PROIBIDAS (sem condition/wait entre elas):
+- message → message (duas mensagens sem esperar resposta)
+- message → data_collect (pergunta + outra pergunta seguida)
+- data_collect → data_collect (duas coletas sem validação)
+- data_collect → message (coleta seguida de mensagem sem verificar se respondeu)
+
+O PADRÃO CORRETO entre perguntas ou coletas sequenciais é:
+  message/data_collect → condition(responded) → [SIM] → próxima pergunta
+                                                → [NÃO] → wait(1h) → message(follow-up) → end/handoff
+
+Ou seja: após QUALQUER nó que espera resposta do lead (message com pergunta, data_collect), 
+SEMPRE coloque um nó condition(responded/no_response) antes de prosseguir.
+A saída "SIM" (respondeu) segue para o próximo passo.
+A saída "NÃO" (não respondeu) pode ir para wait → follow-up → end, ou direto para end/handoff.
+
+EXCEÇÃO: mensagens puramente informativas (sem pergunta) seguidas de buttons são permitidas.
+
 === PADRÕES RECOMENDADOS ===
-VENDAS: entry → message → buttons(menu) → cada botão → message/action/end
-SUPORTE: entry → message → ai_agent(prompt completo) → handoff/end
-QUALIFICAÇÃO: entry → data_collect(nome) → data_collect(email) → message(personalizada) → handoff/end  
-AGENDAMENTO: entry → data_collect(nome) → data_collect(email) → google_calendar → message(confirmação) → end
+VENDAS: entry → message(saudação) → buttons(menu) → cada botão → message/action/end
+SUPORTE: entry → message(saudação) → buttons(triagem) → cada botão → ai_agent/handoff/end
+QUALIFICAÇÃO: entry → data_collect(nome) → condition(responded) → [SIM] → data_collect(email) → condition(responded) → [SIM] → message(personalizada) → handoff/end
+AGENDAMENTO: entry → data_collect(nome) → condition(responded) → [SIM] → data_collect(email) → condition(responded) → [SIM] → google_calendar → message(confirmação) → end
 
 === POSICIONAMENTO ===
 - Entry em x:0, y:300
