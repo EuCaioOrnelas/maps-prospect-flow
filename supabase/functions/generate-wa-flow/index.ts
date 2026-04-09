@@ -57,7 +57,7 @@ entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_c
 7. Use data_collect quando precisar coletar dados antes de prosseguir (nome, email, etc).
 8. Use variáveis coletadas {{variable_name}} nas mensagens seguintes para personalizar.
 9. Integrações Google (google_sheets, google_calendar, gmail) só quando o contexto exige claramente.
-10. message precisa ter content E body_text preenchidos.
+10. message DEVE ter o campo "contents" preenchido com array de itens. Cada item de texto deve ter conteúdo real e útil, NÃO genérico. Adicione sempre um delay inteligente (type:"delay", delay_min:2, delay_max:5) após o texto.
 11. buttons precisa ter body_text E opções reais.
 12. ai_agent precisa ter system_prompt, ai_model e ai_output_type.
 13. handoff deve ter handoff_message.
