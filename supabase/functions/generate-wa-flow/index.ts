@@ -527,15 +527,27 @@ const ensureNodeConfig = (
       return actionConfig;
     }
 
-    case "ai_agent":
+    case "ai_agent": {
+      // NEVER use the flow creation prompt as system_prompt or ai_context
+      const aiLabel = normalizeText(node.label) || "Agente de IA";
+      const defaultSystemPrompt = `Você é um assistente virtual profissional. Seu papel é: ${aiLabel}. Responda de forma clara, objetiva e empática. Mantenha o foco no objetivo da conversa.`;
+      const existingSystemPrompt = normalizeText(config.system_prompt);
+      // If the AI accidentally put the creation prompt as system_prompt, replace it
+      const isCreationPrompt = existingSystemPrompt && (
+        existingSystemPrompt.toLowerCase().includes("crie um fluxo") ||
+        existingSystemPrompt.toLowerCase().includes("crie um atendimento") ||
+        existingSystemPrompt.toLowerCase().includes("com os seguintes objetivos") ||
+        existingSystemPrompt.length > 500
+      );
       return {
         ...config,
-        system_prompt: normalizeText(config.system_prompt) || truncateText(prompt, 4000),
+        system_prompt: (existingSystemPrompt && !isCreationPrompt) ? existingSystemPrompt : defaultSystemPrompt,
         ai_model: normalizeText(config.ai_model) || "gpt-4o",
         ai_output_type: normalizeText(config.ai_output_type) || "message_and_route",
         ai_routes: normalizeText(config.ai_routes) || "CONTINUAR → seguir para o próximo bloco\nESCALAR_ATENDIMENTO → encaminhar para handoff\nENCERRAR_ATENDIMENTO → seguir para end",
-        ai_context: normalizeText(config.ai_context) || truncateText(prompt, 800),
+        ai_context: normalizeText(config.ai_context) && !normalizeText(config.ai_context).toLowerCase().includes("crie um fluxo") ? normalizeText(config.ai_context) : "",
       };
+    }
 
     case "handoff":
       return {
