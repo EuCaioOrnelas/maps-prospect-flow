@@ -865,7 +865,7 @@ export const LeadDetailDialog = ({
   const displayName = lead.contact_name || lead.company_name || formatPhoneNumber(lead.phone);
   const normalizedTagSearch = newTag.trim().toLowerCase();
   const tagSuggestions = availableTags
-    .filter((tag) => !(lead.tags || []).some((currentTag) => currentTag.toLowerCase() === tag.toLowerCase()))
+    .filter((tag) => !localTags.some((currentTag) => currentTag.toLowerCase() === tag.toLowerCase()))
     .filter((tag) => !normalizedTagSearch || tag.toLowerCase().includes(normalizedTagSearch))
     .slice(0, 10);
 
