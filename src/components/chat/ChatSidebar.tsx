@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { NewConversationDialog } from "./NewConversationDialog";
-import { ChatFiltersDialog, ChatFilterConfig } from "./ChatFiltersDialog";
+import { ChatFiltersDialog, type ChatFilterConfig } from "./ChatFiltersDialog";
 
 interface ChatSidebarProps {
   conversations: ChatConversation[];
