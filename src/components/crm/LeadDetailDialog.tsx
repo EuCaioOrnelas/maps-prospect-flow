@@ -686,7 +686,7 @@ export const LeadDetailDialog = ({
 
     if (!normalizedTag) return;
 
-    const currentTags = (lead.tags || []).map((tag) => tag.trim()).filter(Boolean);
+    const currentTags = localTags.map((tag) => tag.trim()).filter(Boolean);
 
     if (currentTags.some((tag) => tag.toLowerCase() === normalizedTag.toLowerCase())) {
       toast.error('Essa tag já está adicionada neste lead');
@@ -696,11 +696,9 @@ export const LeadDetailDialog = ({
     const updatedTags = [...currentTags, normalizedTag];
 
     try {
-      const updatedLead = await onUpdate(lead.id, { tags: updatedTags });
+      await onUpdate(lead.id, { tags: updatedTags });
 
-      if (updatedLead) {
-        Object.assign(lead, updatedLead);
-      }
+      setLocalTags(updatedTags);
 
       setAvailableTags((prev) => {
         if (prev.some((tag) => tag.toLowerCase() === normalizedTag.toLowerCase())) {
