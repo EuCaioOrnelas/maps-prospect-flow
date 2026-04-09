@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal } from "lucide-react";
+import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
@@ -22,6 +22,7 @@ interface ChatSidebarProps {
   onToggleMute: (id: string) => void;
   loading: boolean;
   onNewConversation?: (phone: string, name?: string) => void;
+  connectionHealth?: Record<string, boolean>;
 }
 
 function formatTimestamp(dateStr: string | null): string {
@@ -88,7 +89,7 @@ export function ChatSidebar({
   conversations, activeConversationId, onSelectConversation,
   searchQuery, onSearchChange, connections, activeConnectionId,
   onConnectionChange, onTogglePin, onArchive, onToggleMute, loading,
-  onNewConversation,
+  onNewConversation, connectionHealth = {},
 }: ChatSidebarProps) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [newConvOpen, setNewConvOpen] = useState(false);
@@ -178,6 +179,9 @@ export function ChatSidebar({
                       18
                     )}
                   </span>
+                  {activeConnectionId && connectionHealth[activeConnectionId] === false && (
+                    <AlertTriangle size={12} className="text-red-500 shrink-0 animate-pulse" />
+                  )}
                   <ChevronDown size={11} className="shrink-0 opacity-50" />
                 </button>
               </DropdownMenuTrigger>
@@ -198,14 +202,27 @@ export function ChatSidebar({
                   >
                     <div className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                      c.id === activeConnectionId ? "bg-[#00a884]/20" : "bg-white/5"
+                      connectionHealth[c.id] === false 
+                        ? "bg-red-500/20" 
+                        : c.id === activeConnectionId ? "bg-[#00a884]/20" : "bg-white/5"
                     )}>
-                      <Phone size={14} className={c.id === activeConnectionId ? "text-[#00a884]" : "wa-icon-muted"} />
+                      {connectionHealth[c.id] === false ? (
+                        <AlertTriangle size={14} className="text-red-500" />
+                      ) : (
+                        <Phone size={14} className={c.id === activeConnectionId ? "text-[#00a884]" : "wa-icon-muted"} />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={cn("text-[13px] font-medium truncate", c.id === activeConnectionId ? "text-[#00a884]" : "wa-text-primary")}>
-                        {truncateText(c.nickname || c.business_name || "Número", 22)}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={cn("text-[13px] font-medium truncate", c.id === activeConnectionId ? "text-[#00a884]" : "wa-text-primary")}>
+                          {truncateText(c.nickname || c.business_name || "Número", 22)}
+                        </p>
+                        {connectionHealth[c.id] === false && (
+                          <span className="text-[9px] font-semibold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded-full shrink-0">
+                            Expirado
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] wa-text-muted truncate">{c.display_phone_number || c.phone_number_id}</p>
                     </div>
                     {c.id === activeConnectionId && (

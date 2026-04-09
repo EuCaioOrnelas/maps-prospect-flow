@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ChatOfficialApiDialog } from "@/components/chat/ChatOfficialApiDialog";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Chat = () => {
@@ -66,12 +66,15 @@ const Chat = () => {
     handledLaunchKey, hasConnection, isLoading, searchParams, setSearchParams, shouldShowDialog,
   ]);
 
+  // All connections expired → block page
+  const showDisconnectedOverlay = !chat.loading && hasConnection && chat.allConnectionsExpired;
+
   return (
     <SidebarProvider>
       <div className="h-screen flex w-full wa-app-bg overflow-hidden">
         <AppSidebar profile={profile} />
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex overflow-hidden relative">
             {!isLoading && shouldShowDialog && (
               <ChatOfficialApiDialog
                 open={true}
@@ -80,33 +83,43 @@ const Chat = () => {
               />
             )}
 
+            {/* Disconnected overlay — blocks entire chat */}
+            {showDisconnectedOverlay && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                <div className="bg-background border border-border rounded-2xl p-8 max-w-[440px] text-center shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+                  <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-5">
+                    <WifiOff size={36} className="text-red-500" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">Conexão desconectada</h2>
+                  <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
+                    O token de acesso do seu WhatsApp Business expirou ou foi revogado. 
+                    Reconecte seu número para continuar usando o chat.
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 mb-6">
+                    💡 As mensagens recebidas durante a desconexão serão sincronizadas automaticamente ao reconectar.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      onClick={() => navigate("/meta-campaigns")}
+                      className="bg-[#00a884] hover:bg-[#008f6f] text-white h-11 px-6 text-sm w-full"
+                    >
+                      <RefreshCw size={16} className="mr-2" />
+                      Reconectar WhatsApp
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => chat.handleReconnect()}
+                      className="text-xs text-muted-foreground h-8"
+                    >
+                      Verificar novamente
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {!shouldShowDialog && hasConnection ? (
               <>
-                {/* Expired connection overlay */}
-                {chat.isConnectionExpired && (
-                  <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={{ marginLeft: '72px' }}>
-                    <div className="bg-background border border-border rounded-2xl p-8 max-w-[420px] text-center shadow-2xl">
-                      <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
-                        <AlertTriangle size={32} className="text-amber-500" />
-                      </div>
-                      <h2 className="text-xl font-semibold text-foreground mb-2">Conexão expirada</h2>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        O token de acesso do seu WhatsApp Business expirou. Reconecte para continuar enviando e recebendo mensagens.
-                      </p>
-                      <p className="text-xs text-muted-foreground mb-6">
-                        As mensagens recebidas durante a desconexão serão sincronizadas automaticamente ao reconectar.
-                      </p>
-                      <Button
-                        onClick={() => navigate("/meta-campaigns")}
-                        className="bg-[#00a884] hover:bg-[#008f6f] text-white h-11 px-6 text-sm"
-                      >
-                        <RefreshCw size={16} className="mr-2" />
-                        Reconectar WhatsApp
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
                 <div className="w-[360px] shrink-0 wa-sidebar-border">
                   <ChatSidebar
                     conversations={chat.conversations}
@@ -114,7 +127,7 @@ const Chat = () => {
                     onSelectConversation={chat.setActiveConversationId}
                     searchQuery={chat.searchQuery}
                     onSearchChange={chat.setSearchQuery}
-                    connections={chat.connections.filter(c => c.status === "active")}
+                    connections={chat.connections}
                     activeConnectionId={chat.activeConnectionId}
                     onConnectionChange={chat.setActiveConnectionId}
                     onTogglePin={chat.togglePin}
@@ -122,6 +135,7 @@ const Chat = () => {
                     onToggleMute={chat.toggleMute}
                     loading={chat.loading}
                     onNewConversation={chat.startNewConversation}
+                    connectionHealth={chat.connectionHealth}
                   />
                 </div>
                 <ChatMessageArea
