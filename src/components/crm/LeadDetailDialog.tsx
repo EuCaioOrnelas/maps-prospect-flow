@@ -280,6 +280,7 @@ export const LeadDetailDialog = ({
   const [newTag, setNewTag] = useState('');
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [showTagComposer, setShowTagComposer] = useState(false);
+  const [localTags, setLocalTags] = useState<string[]>([]);
   const [hasWiizeChatConnection, setHasWiizeChatConnection] = useState(false);
   const [formData, setFormData] = useState({
     phone: '',
@@ -366,6 +367,7 @@ export const LeadDetailDialog = ({
       setShowDealConfirm(false);
       setNewTag('');
       setDealAttachmentFiles([]);
+      setLocalTags(lead.tags || []);
     }
   }, [lead?.id]);
 
@@ -684,7 +686,7 @@ export const LeadDetailDialog = ({
 
     if (!normalizedTag) return;
 
-    const currentTags = (lead.tags || []).map((tag) => tag.trim()).filter(Boolean);
+    const currentTags = localTags.map((tag) => tag.trim()).filter(Boolean);
 
     if (currentTags.some((tag) => tag.toLowerCase() === normalizedTag.toLowerCase())) {
       toast.error('Essa tag já está adicionada neste lead');
@@ -694,11 +696,9 @@ export const LeadDetailDialog = ({
     const updatedTags = [...currentTags, normalizedTag];
 
     try {
-      const updatedLead = await onUpdate(lead.id, { tags: updatedTags });
+      await onUpdate(lead.id, { tags: updatedTags });
 
-      if (updatedLead) {
-        Object.assign(lead, updatedLead);
-      }
+      setLocalTags(updatedTags);
 
       setAvailableTags((prev) => {
         if (prev.some((tag) => tag.toLowerCase() === normalizedTag.toLowerCase())) {
@@ -718,14 +718,10 @@ export const LeadDetailDialog = ({
 
   const handleRemoveTag = async (tagToRemove: string) => {
     if (!lead) return;
-    const updatedTags = (lead.tags || []).filter(tag => tag !== tagToRemove);
+    const updatedTags = localTags.filter(tag => tag !== tagToRemove);
     try {
-      const updatedLead = await onUpdate(lead.id, { tags: updatedTags });
-
-      if (updatedLead) {
-        Object.assign(lead, updatedLead);
-      }
-
+      await onUpdate(lead.id, { tags: updatedTags });
+      setLocalTags(updatedTags);
       toast.success('Tag removida!');
     } catch {
       toast.error('Erro ao remover tag');
@@ -869,7 +865,7 @@ export const LeadDetailDialog = ({
   const displayName = lead.contact_name || lead.company_name || formatPhoneNumber(lead.phone);
   const normalizedTagSearch = newTag.trim().toLowerCase();
   const tagSuggestions = availableTags
-    .filter((tag) => !(lead.tags || []).some((currentTag) => currentTag.toLowerCase() === tag.toLowerCase()))
+    .filter((tag) => !localTags.some((currentTag) => currentTag.toLowerCase() === tag.toLowerCase()))
     .filter((tag) => !normalizedTagSearch || tag.toLowerCase().includes(normalizedTagSearch))
     .slice(0, 10);
 
@@ -1129,8 +1125,8 @@ export const LeadDetailDialog = ({
                     <Button
                       type="button"
                       size="sm"
-                      variant="outline"
-                      className="h-8 shrink-0 text-xs px-2.5 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors"
+                      variant="default"
+                      className="h-8 shrink-0 text-xs px-3 rounded-full"
                       onClick={(e) => {
                         e.stopPropagation();
                         void handleAddTag();
@@ -1424,8 +1420,8 @@ export const LeadDetailDialog = ({
                   >
                     {/* Current tags */}
                     <div className="flex flex-wrap gap-2">
-                      {(lead.tags || []).length > 0 ? (
-                        (lead.tags || []).map((tag) => (
+                      {localTags.length > 0 ? (
+                        localTags.map((tag) => (
                           <button
                             key={tag}
                             type="button"
@@ -1462,8 +1458,8 @@ export const LeadDetailDialog = ({
                       <Button
                         type="button"
                         size="sm"
-                        variant="outline"
-                        className="h-8 shrink-0 text-xs px-3 border-primary/30 text-primary bg-background hover:bg-primary/10 hover:text-primary hover:border-primary/50 focus-visible:ring-primary/30 transition-colors"
+                        variant="default"
+                        className="h-8 shrink-0 text-xs px-4 rounded-full"
                         onClick={() => void handleAddTag()}
                         disabled={!newTag.trim()}
                       >
