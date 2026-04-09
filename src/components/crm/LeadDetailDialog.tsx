@@ -949,11 +949,6 @@ export const LeadDetailDialog = ({
           <Select
             value={lead.whatsapp_status}
             onValueChange={(value) => {
-              if (value === '__add_tag__') {
-                setShowTagComposer(true);
-                setActiveTab('info');
-                return;
-              }
               handleWhatsAppStatusChange(value as WhatsAppStatus);
             }}
           >
@@ -966,15 +961,26 @@ export const LeadDetailDialog = ({
                   {WHATSAPP_STATUS_LABELS[status]}
                 </SelectItem>
               ))}
-              <div className="border-t border-border my-1" />
-              <SelectItem value="__add_tag__" className="text-primary font-medium">
-                <span className="flex items-center gap-1.5">
-                  <Plus className="w-3.5 h-3.5" />
-                  Criar nova tag
-                </span>
-              </SelectItem>
             </SelectContent>
           </Select>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-9 text-xs gap-1.5 text-primary border-primary/30 hover:bg-primary/10 hover:text-primary hover:border-primary/50 transition-colors"
+            onClick={() => {
+              setActiveTab('info');
+              setTimeout(() => {
+                const tagInput = document.getElementById('tag-search-input');
+                tagInput?.focus();
+                tagInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }, 100);
+            }}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Criar tag
+          </Button>
         </div>
 
         {/* Tab Navigation */}
@@ -1254,6 +1260,7 @@ export const LeadDetailDialog = ({
                     {/* Search + create input - always visible */}
                     <div className="flex gap-2">
                       <Input
+                        id="tag-search-input"
                         value={newTag}
                         onChange={(e) => setNewTag(e.target.value)}
                         placeholder="Pesquisar ou criar nova tag"
