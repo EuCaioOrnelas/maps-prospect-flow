@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, List, Trash2, Ban } from "lucide-react";
+import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, Trash2, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
