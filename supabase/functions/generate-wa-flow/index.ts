@@ -705,6 +705,7 @@ const buildFlowRequestMessage = (prompt: string, feedback?: string) => {
     "Se precisar coletar dados do lead (nome, email, telefone), use data_collect com variable_name e question_text.",
     "Use {{variable_name}} nas mensagens seguintes para personalizar (ex: Olá {{lead_name}}!).",
     "TODOS os caminhos devem terminar em end ou handoff. Sem exceção.",
+    "REGRA CRÍTICA: NUNCA encadeie data_collect → data_collect ou data_collect → message sem um nó condition(responded) entre eles. O fluxo precisa esperar a resposta do lead antes de fazer a próxima pergunta. Padrão: data_collect → condition(responded) → [SIM] → próximo passo, [NÃO] → wait/end.",
   ];
 
   if (feedback) {
