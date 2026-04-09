@@ -548,6 +548,7 @@ export const LeadDetailDialog = ({
     }
   };
 
+  const loadAgentPauseStatus = async () => {
     if (!lead || !user) { setAgentPauseStatus(null); return; }
     const phoneDigits = lead.phone.replace(/\D/g, '');
     const { data: agents } = await supabase
