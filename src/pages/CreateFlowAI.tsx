@@ -555,6 +555,11 @@ export default function CreateFlowAI() {
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
                 Descreva seu objetivo e a IA monta automaticamente um fluxo completo.
               </p>
+
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/40 tracking-widest uppercase font-medium select-none">
+                <span>powered by</span>
+                <span className="text-primary/50 font-bold tracking-wider">Wiize IA</span>
+              </div>
             </motion.div>
 
             {/* Chat input area */}
