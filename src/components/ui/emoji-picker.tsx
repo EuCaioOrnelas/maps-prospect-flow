@@ -6,7 +6,7 @@ import {
   type EmojiPickerListRowProps,
   EmojiPicker as EmojiPickerPrimitive,
 } from "frimousse";
-import { LoaderIcon, SearchIcon } from "lucide-react";
+import { LoaderIcon, SearchIcon, SmileIcon, HeartIcon, CoffeeIcon, TreesIcon, PlaneIcon, LightbulbIcon, HashIcon, FlagIcon } from "lucide-react";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -42,6 +42,34 @@ function EmojiPickerSearch({
   );
 }
 
+// Category navigation bar like WhatsApp
+const CATEGORY_ICONS: { label: string; icon: React.ReactNode; emoji: string }[] = [
+  { label: "Smileys", icon: <SmileIcon size={18} />, emoji: "😀" },
+  { label: "Pessoas", icon: <HeartIcon size={18} />, emoji: "👋" },
+  { label: "Animais", icon: <TreesIcon size={18} />, emoji: "🐶" },
+  { label: "Comida", icon: <CoffeeIcon size={18} />, emoji: "🍔" },
+  { label: "Viagens", icon: <PlaneIcon size={18} />, emoji: "✈️" },
+  { label: "Atividades", icon: <LightbulbIcon size={18} />, emoji: "⚽" },
+  { label: "Objetos", icon: <HashIcon size={18} />, emoji: "💡" },
+  { label: "Bandeiras", icon: <FlagIcon size={18} />, emoji: "🏁" },
+];
+
+function EmojiPickerCategories() {
+  return (
+    <div className="flex items-center justify-around px-2 py-1.5 border-b">
+      {CATEGORY_ICONS.map((cat) => (
+        <button
+          key={cat.label}
+          title={cat.label}
+          className="p-1.5 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        >
+          {cat.icon}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function EmojiPickerRow({ children, ...props }: EmojiPickerListRowProps) {
   return (
     <div className="flex" {...props}>
@@ -58,7 +86,7 @@ function EmojiPickerEmoji({
   return (
     <button
       className={cn(
-        "flex size-8 items-center justify-center rounded-md text-base transition-colors hover:bg-accent",
+        "flex size-8 items-center justify-center rounded-md text-base transition-colors hover:bg-accent/60",
         className,
       )}
       {...props}
@@ -150,6 +178,7 @@ function EmojiPickerFooter({
 export {
   EmojiPicker,
   EmojiPickerSearch,
+  EmojiPickerCategories,
   EmojiPickerContent,
   EmojiPickerFooter,
 };
