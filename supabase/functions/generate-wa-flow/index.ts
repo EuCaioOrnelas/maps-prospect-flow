@@ -31,7 +31,7 @@ entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_c
 
 === DESCRIÇÃO DOS NÓS ===
 - entry: Ponto de entrada do fluxo. Config: trigger_type, keywords.
-- message: Envia mensagem de texto/mídia. Config: message_type, content, body_text.
+- message: Envia mensagem de texto/mídia. Config deve conter um campo "contents" que é um array de itens sequenciais. Cada item tem: id (string único), type ("text"|"image"|"audio"|"video"|"document"|"delay"), content (texto para type=text), caption (legenda para mídia), media_url (URL para mídia, pode ser vazio), delay_min e delay_max (segundos para type=delay). SEMPRE adicione pelo menos um item de texto com conteúdo real e relevante. Adicione um delay inteligente (delay_min: 2, delay_max: 5) entre conteúdos para simular digitação humana. Exemplo: contents: [{id:"item_0",type:"text",content:"Olá! Como posso ajudar?"},{id:"delay_0",type:"delay",delay_min:2,delay_max:5}]
 - buttons: Menu interativo com botões ou lista. Config: interaction_type, body_text, buttons/list_items.
 - condition: Lógica condicional. Config: condition_type, condition_value. Handles: yes, no.
 - wait: Espera um tempo. Config: delay_value, delay_unit, smart.
