@@ -184,6 +184,7 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
   const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("sheets", [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive.readonly",
+  ], config.google_account_id);
   ]);
 
   const [isCreating, setIsCreating] = useState(false);
