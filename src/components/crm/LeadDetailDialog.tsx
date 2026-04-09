@@ -539,7 +539,12 @@ export const LeadDetailDialog = ({
     if (!user) return;
     try {
       const { data: funcUrl } = await supabase.functions.invoke('google-oauth-start', {
-        body: { scope: 'drive', redirectPath: '/crm' },
+        body: { 
+          scopes: [
+            'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/drive',
+          ],
+        },
       });
       if (funcUrl?.url) {
         window.location.href = funcUrl.url;
