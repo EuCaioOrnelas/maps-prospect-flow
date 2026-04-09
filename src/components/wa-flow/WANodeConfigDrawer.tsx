@@ -1335,6 +1335,29 @@ function ActionNodeConfig({ config, updateConfig, renderInfoBanner }: {
     enabled: !!user,
   });
 
+  const { data: availableTags = [] } = useQuery({
+    queryKey: ["crm-tags-action", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("crm_tags").select("name").eq("user_id", user!.id).order("name");
+      return data?.map((t) => t.name) || [];
+    },
+    enabled: !!user,
+  });
+
+  const defaultStatusLabels = [
+    "Nunca contatado",
+    "Mensagem enviada",
+    "Respondeu",
+    "Em conversa",
+    "Sem resposta",
+    "Bloqueado/Inválido",
+  ];
+
+  const allTagOptions = [
+    ...defaultStatusLabels.map((label) => ({ label, group: "padrão" })),
+    ...availableTags.map((name) => ({ label: name, group: "personalizada" })),
+  ];
+
   const actions: any[] = config.actions || [];
 
   const addAction = () => {
@@ -1382,13 +1405,28 @@ function ActionNodeConfig({ config, updateConfig, renderInfoBanner }: {
 
           {(action.type === "add_tag" || action.type === "remove_tag") && (
             <div className="space-y-1">
-              <Label className="text-[10px]">Nome da tag</Label>
-              <Input
-                value={action.tag_value || ""}
-                onChange={(e) => updateAction(idx, "tag_value", e.target.value)}
-                placeholder="qualificado, interessado..."
-                className="h-8 text-xs"
-              />
+              <Label className="text-[10px]">Selecionar tag</Label>
+              <Select value={action.tag_value || ""} onValueChange={(v) => updateAction(idx, "tag_value", v)}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar tag..." /></SelectTrigger>
+                <SelectContent>
+                  <div className="px-2 py-1">
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Padrão</span>
+                  </div>
+                  {defaultStatusLabels.map((label) => (
+                    <SelectItem key={`default-${label}`} value={label}>{label}</SelectItem>
+                  ))}
+                  {availableTags.length > 0 && (
+                    <>
+                      <div className="px-2 py-1 mt-1 border-t border-border">
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Personalizadas</span>
+                      </div>
+                      {availableTags.map((name) => (
+                        <SelectItem key={`custom-${name}`} value={name}>{name}</SelectItem>
+                      ))}
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
