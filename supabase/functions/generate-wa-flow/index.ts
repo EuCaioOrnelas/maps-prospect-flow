@@ -63,11 +63,30 @@ entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_c
 13. handoff deve ter handoff_message.
 14. data_collect deve ter collect_type, variable_name e question_text.
 
+=== REGRA CRÍTICA: UMA PERGUNTA POR VEZ ===
+NUNCA encadeie dois nós que enviam mensagem ao lead sem esperar resposta entre eles.
+Combinações PROIBIDAS (sem condition/wait entre elas):
+- message → message (duas mensagens sem esperar resposta)
+- message → data_collect (pergunta + outra pergunta seguida)
+- data_collect → data_collect (duas coletas sem validação)
+- data_collect → message (coleta seguida de mensagem sem verificar se respondeu)
+
+O PADRÃO CORRETO entre perguntas ou coletas sequenciais é:
+  message/data_collect → condition(responded) → [SIM] → próxima pergunta
+                                                → [NÃO] → wait(1h) → message(follow-up) → end/handoff
+
+Ou seja: após QUALQUER nó que espera resposta do lead (message com pergunta, data_collect), 
+SEMPRE coloque um nó condition(responded/no_response) antes de prosseguir.
+A saída "SIM" (respondeu) segue para o próximo passo.
+A saída "NÃO" (não respondeu) pode ir para wait → follow-up → end, ou direto para end/handoff.
+
+EXCEÇÃO: mensagens puramente informativas (sem pergunta) seguidas de buttons são permitidas.
+
 === PADRÕES RECOMENDADOS ===
-VENDAS: entry → message → buttons(menu) → cada botão → message/action/end
-SUPORTE: entry → message → ai_agent(prompt completo) → handoff/end
-QUALIFICAÇÃO: entry → data_collect(nome) → data_collect(email) → message(personalizada) → handoff/end  
-AGENDAMENTO: entry → data_collect(nome) → data_collect(email) → google_calendar → message(confirmação) → end
+VENDAS: entry → message(saudação) → buttons(menu) → cada botão → message/action/end
+SUPORTE: entry → message(saudação) → buttons(triagem) → cada botão → ai_agent/handoff/end
+QUALIFICAÇÃO: entry → data_collect(nome) → condition(responded) → [SIM] → data_collect(email) → condition(responded) → [SIM] → message(personalizada) → handoff/end
+AGENDAMENTO: entry → data_collect(nome) → condition(responded) → [SIM] → data_collect(email) → condition(responded) → [SIM] → google_calendar → message(confirmação) → end
 
 === POSICIONAMENTO ===
 - Entry em x:0, y:300
@@ -654,6 +673,18 @@ const validateFlowDraft = (draft: FlowDraft, prompt: string) => {
     if (buttonTargets.some((t) => t?.type === "condition")) issues.push(`O nó buttons ${node.id} não pode apontar diretamente para condition.`);
   }
 
+  // Back-to-back questions forbidden: data_collect/message(pergunta) → data_collect/message without condition between
+  const questionTypes = ["data_collect"];
+  for (const node of nodes.filter((n) => questionTypes.includes(n.type))) {
+    const outgoing = edgesBySource.get(node.id) || [];
+    for (const edge of outgoing) {
+      const target = nodeById.get(edge.target);
+      if (target && (target.type === "data_collect" || target.type === "message")) {
+        issues.push(`O nó ${node.id} (${node.type}) conecta diretamente a ${target.id} (${target.type}) sem condition(responded) entre eles. Insira um nó condition para verificar se o lead respondeu antes de prosseguir.`);
+      }
+    }
+  }
+
   if (looksLikeAgentPlaybook(prompt)) {
     const suspiciousActions = nodes.filter((n) => n.type === "action" && /colet(ar)? dados|suger(ir)? solu[cç][aã]o|diagn[oó]stico|classifica[cç][aã]o/i.test(n.label || ""));
     if (suspiciousActions.length > 0) issues.push("O fluxo transformou etapas abstratas em nós action; compacte em ai_agent ou message.");
@@ -674,6 +705,7 @@ const buildFlowRequestMessage = (prompt: string, feedback?: string) => {
     "Se precisar coletar dados do lead (nome, email, telefone), use data_collect com variable_name e question_text.",
     "Use {{variable_name}} nas mensagens seguintes para personalizar (ex: Olá {{lead_name}}!).",
     "TODOS os caminhos devem terminar em end ou handoff. Sem exceção.",
+    "REGRA CRÍTICA: NUNCA encadeie data_collect → data_collect ou data_collect → message sem um nó condition(responded) entre eles. O fluxo precisa esperar a resposta do lead antes de fazer a próxima pergunta. Padrão: data_collect → condition(responded) → [SIM] → próximo passo, [NÃO] → wait/end.",
   ];
 
   if (feedback) {
