@@ -1229,23 +1229,10 @@ export const LeadDetailDialog = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tags do CRM</span>
-                    <Button
-                      size="sm"
-                      variant={showTagComposer ? 'secondary' : 'outline'}
-                      className="h-7 px-3"
-                      onClick={() => {
-                        setShowTagComposer((prev) => !prev);
-                        if (showTagComposer) {
-                          setNewTag('');
-                        }
-                      }}
-                    >
-                      <Plus className="w-3.5 h-3.5 mr-1" />
-                      Adicionar mais tag
-                    </Button>
                   </div>
 
-                  <div className="bg-muted/40 rounded-lg border border-border/50 p-3 space-y-3">
+                  <div className="bg-muted/40 rounded-lg border border-border/50 p-3 space-y-3 max-h-[220px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+                    {/* Current tags */}
                     <div className="flex flex-wrap gap-2">
                       {(lead.tags || []).length > 0 ? (
                         (lead.tags || []).map((tag) => (
@@ -1264,52 +1251,44 @@ export const LeadDetailDialog = ({
                       )}
                     </div>
 
-                    {showTagComposer && (
-                      <div className="space-y-3 rounded-xl border border-border bg-background/70 p-3">
-                        <div className="flex gap-2">
-                          <Input
-                            value={newTag}
-                            onChange={(e) => setNewTag(e.target.value)}
-                            placeholder="Pesquisar ou criar nova tag"
-                            className="h-9"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                void handleAddTag();
-                              }
-                            }}
-                          />
-                          <Button
-                            size="sm"
-                            className="h-9 shrink-0"
-                            onClick={() => handleAddTag()}
-                            disabled={!newTag.trim()}
-                          >
-                            <Plus className="w-4 h-4 mr-1" />
-                            Adicionar
-                          </Button>
-                        </div>
+                    {/* Search + create input - always visible */}
+                    <div className="flex gap-2">
+                      <Input
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        placeholder="Pesquisar ou criar nova tag"
+                        className="h-8 text-xs"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            void handleAddTag();
+                          }
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        className="h-8 shrink-0 text-xs px-3"
+                        onClick={() => handleAddTag()}
+                        disabled={!newTag.trim()}
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1" />
+                        Criar
+                      </Button>
+                    </div>
 
-                        {tagSuggestions.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {tagSuggestions.map((tag) => (
-                              <button
-                                key={tag}
-                                type="button"
-                                onClick={() => handleAddTag(tag)}
-                                className="rounded-full border border-border bg-muted/30 px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-                              >
-                                {tag}
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-muted-foreground">
-                            {newTag.trim()
-                              ? `Nenhuma tag encontrada. Clique em adicionar para criar \"${newTag.trim()}\".`
-                              : 'Pesquise tags existentes ou crie uma nova para este lead.'}
-                          </p>
-                        )}
+                    {/* Tag suggestions */}
+                    {tagSuggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {tagSuggestions.map((tag) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => handleAddTag(tag)}
+                            className="rounded-full border border-border bg-muted/30 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                          >
+                            {tag}
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>
