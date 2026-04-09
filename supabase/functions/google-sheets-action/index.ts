@@ -76,7 +76,7 @@ serve(async (req) => {
     }
 
     // Append data to Google Sheets
-    const range = sheet_name ? `${sheet_name}!A1` : "Sheet1!A1";
+    const range = sheet_name ? `${sheet_name}!A1` : "Dados!A1";
     const values = Array.isArray(data[0]) ? data : [data];
 
     const sheetsRes = await fetch(

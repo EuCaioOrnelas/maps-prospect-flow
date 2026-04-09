@@ -23,14 +23,20 @@ function GoogleConnectionBlock({ isConnected, googleToken, isConnecting, handleC
     <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
       {isConnected ? (
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={14} className="text-green-500" />
-            <span className="text-xs font-medium text-foreground">{label} conectado</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-green-500/10 flex items-center justify-center">
+                <CheckCircle2 size={14} className="text-green-500" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-foreground">{label} conectado</p>
+                <p className="text-[10px] text-muted-foreground">{googleToken?.google_email}</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" className="h-7 text-[10px] text-destructive hover:text-destructive px-2" onClick={handleDisconnect}>
+              Desconectar
+            </Button>
           </div>
-          <p className="text-[10px] text-muted-foreground">📧 {googleToken?.google_email}</p>
-          <Button variant="ghost" size="sm" className="h-7 text-[10px] text-destructive hover:text-destructive" onClick={handleDisconnect}>
-            Desconectar conta
-          </Button>
         </div>
       ) : (
         <div className="space-y-2">
@@ -39,7 +45,6 @@ function GoogleConnectionBlock({ isConnected, googleToken, isConnecting, handleC
             {isConnecting ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
             {isConnecting ? "Conectando..." : `Conectar ${label}`}
           </Button>
-          
         </div>
       )}
     </div>
@@ -89,23 +94,37 @@ function useGoogleAuth(queryKeySuffix: string, scopes: string[]) {
   return { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect, refetchToken };
 }
 
-const AVAILABLE_VARIABLES = [
+const BASE_VARIABLES = [
   { key: "{nome}", label: "Nome do contato" },
   { key: "{telefone}", label: "Telefone" },
-  { key: "{email}", label: "Email" },
-  { key: "{empresa}", label: "Empresa" },
-  { key: "{cidade}", label: "Cidade" },
-  { key: "{origem}", label: "Origem" },
-  { key: "{data}", label: "Data atual" },
-  { key: "{hora}", label: "Hora atual" },
 ];
 
-function VariablesHelper() {
+function useFlowVariables(nodes?: any[]) {
+  const customVars: { key: string; label: string }[] = [];
+  if (nodes) {
+    for (const n of nodes) {
+      if (n.type === "data_collect" && n.data?.config?.fields) {
+        for (const f of n.data.config.fields) {
+          if (f.variable_name) {
+            const k = `{${f.variable_name}}`;
+            if (!BASE_VARIABLES.some(v => v.key === k) && !customVars.some(v => v.key === k)) {
+              customVars.push({ key: k, label: f.label || f.variable_name });
+            }
+          }
+        }
+      }
+    }
+  }
+  return [...BASE_VARIABLES, ...customVars];
+}
+
+function VariablesHelper({ variables }: { variables?: { key: string; label: string }[] }) {
+  const vars = variables || BASE_VARIABLES;
   return (
     <div className="p-2 rounded-lg border border-border/30 bg-muted/10">
       <p className="text-[10px] font-medium text-muted-foreground mb-1.5">📌 Variáveis disponíveis:</p>
       <div className="flex flex-wrap gap-1">
-        {AVAILABLE_VARIABLES.map((v) => (
+        {vars.map((v) => (
           <Badge key={v.key} variant="secondary" className="text-[9px] px-1.5 py-0 h-5 font-mono cursor-pointer hover:bg-primary/20"
             onClick={() => navigator.clipboard.writeText(v.key)}
             title={`Clique para copiar: ${v.key}`}
@@ -118,7 +137,7 @@ function VariablesHelper() {
   );
 }
 
-function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
+function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; allNodes?: any[] }) {
   const { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect } = useGoogleAuth("sheets", [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive.readonly",
@@ -126,7 +145,10 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
 
   const [isCreating, setIsCreating] = useState(false);
   const [newSheetName, setNewSheetName] = useState("");
+  const [newTabName, setNewTabName] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+
+  const flowVars = useFlowVariables(allNodes);
 
   useEffect(() => {
     if (googleToken) {
@@ -147,7 +169,7 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
     enabled: !!user && isConnected,
   });
 
-  const { data: sheetTabs = [] } = useQuery({
+  const { data: sheetTabs = [], refetch: refetchTabs } = useQuery({
     queryKey: ["google-sheet-tabs", user?.id, config.spreadsheet_id],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
@@ -160,21 +182,29 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
   });
 
   const handleCreateSpreadsheet = async () => {
+    if (!newSheetName.trim()) {
+      toast.error("Digite um nome para a planilha");
+      return;
+    }
     setIsCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
-        body: { user_id: user!.id, action: "create", title: newSheetName || "Wiize - Leads" },
+        body: { user_id: user!.id, action: "create", title: newSheetName.trim(), tab_name: newTabName.trim() || "Dados" },
       });
       if (error) throw error;
       if (data?.spreadsheet) {
         updateConfig("spreadsheet_id", data.spreadsheet.id);
         updateConfig("spreadsheet_name", data.spreadsheet.name);
+        updateConfig("sheet_name", newTabName.trim() || "Dados");
         setShowCreate(false);
         setNewSheetName("");
+        setNewTabName("");
         refetchSheets();
+        toast.success("Planilha criada com sucesso!");
       }
     } catch (err) {
       console.error("Failed to create spreadsheet:", err);
+      toast.error("Erro ao criar planilha");
     } finally {
       setIsCreating(false);
     }
@@ -182,7 +212,6 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
 
   const columns = config.columns || [
     { key: "nome", label: "Nome", variable: "{nome}" },
-    { key: "email", label: "Email", variable: "{email}" },
     { key: "telefone", label: "Telefone", variable: "{telefone}" },
   ];
 
@@ -203,7 +232,7 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
 
   return (
     <div className="space-y-4">
-      {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets.")}
+      {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets. Os dados são adicionados em novas linhas, sem sobrescrever dados existentes.")}
 
       <GoogleConnectionBlock
         isConnected={isConnected}
@@ -222,6 +251,8 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
               <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
                 <Loader2 size={14} className="animate-spin" /> Carregando planilhas...
               </div>
+            ) : spreadsheets.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">Nenhuma planilha encontrada. Crie uma nova abaixo.</p>
             ) : (
               <Select
                 value={config.spreadsheet_id || ""}
@@ -255,15 +286,28 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
             </div>
 
             {showCreate && (
-              <div className="flex gap-2 mt-1">
-                <Input
-                  value={newSheetName}
-                  onChange={(e) => setNewSheetName(e.target.value)}
-                  placeholder="Nome da nova planilha"
-                  className="h-8 text-xs flex-1"
-                />
-                <Button size="sm" className="h-8 text-xs" onClick={handleCreateSpreadsheet} disabled={isCreating}>
-                  {isCreating ? <Loader2 size={12} className="animate-spin" /> : "Criar"}
+              <div className="space-y-2 mt-1 p-3 rounded-lg border border-border/50 bg-muted/10">
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Nome da planilha *</Label>
+                  <Input
+                    value={newSheetName}
+                    onChange={(e) => setNewSheetName(e.target.value)}
+                    placeholder="Ex: Leads da campanha"
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Nome da aba (página)</Label>
+                  <Input
+                    value={newTabName}
+                    onChange={(e) => setNewTabName(e.target.value)}
+                    placeholder="Ex: Janeiro (padrão: Dados)"
+                    className="h-8 text-xs"
+                  />
+                  <p className="text-[9px] text-muted-foreground">A aba é a página dentro da planilha onde os dados serão inseridos.</p>
+                </div>
+                <Button size="sm" className="h-8 text-xs w-full" onClick={handleCreateSpreadsheet} disabled={isCreating || !newSheetName.trim()}>
+                  {isCreating ? <Loader2 size={12} className="animate-spin" /> : "Criar planilha"}
                 </Button>
               </div>
             )}
@@ -271,13 +315,14 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
 
           {config.spreadsheet_id && sheetTabs.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-xs font-medium">Aba da planilha</Label>
+              <Label className="text-xs font-medium">Aba (página da planilha)</Label>
+              <p className="text-[10px] text-muted-foreground">Selecione em qual aba os dados serão adicionados.</p>
               <Select
-                value={config.sheet_name || sheetTabs[0]?.title || ""}
+                value={config.sheet_name || ""}
                 onValueChange={(v) => updateConfig("sheet_name", v)}
               >
                 <SelectTrigger className="h-9 text-sm">
-                  <SelectValue />
+                  <SelectValue placeholder="Selecionar aba..." />
                 </SelectTrigger>
                 <SelectContent>
                   {sheetTabs.map((tab: any) => (
@@ -313,7 +358,7 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
                       <SelectValue placeholder="Variável" />
                     </SelectTrigger>
                     <SelectContent>
-                      {AVAILABLE_VARIABLES.map((v) => (
+                      {flowVars.map((v) => (
                         <SelectItem key={v.key} value={v.key}>{v.key} - {v.label}</SelectItem>
                       ))}
                     </SelectContent>
@@ -326,7 +371,7 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
             </div>
           </div>
 
-          <VariablesHelper />
+          <VariablesHelper variables={flowVars} />
         </>
       )}
     </div>
@@ -1793,9 +1838,10 @@ interface Props {
   onDelete: (nodeId: string) => void;
   entryApiType?: string;
   entryConfig?: any;
+  allNodes?: Node[];
 }
 
-export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete, entryApiType = "evolution", entryConfig = {} }: Props) {
+export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete, entryApiType = "evolution", entryConfig = {}, allNodes }: Props) {
   const [config, setConfig] = useState<any>({});
   const [label, setLabel] = useState("");
 
@@ -2534,7 +2580,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
 
           {/* ===== GOOGLE SHEETS NODE ===== */}
           {node.type === "google_sheets" && (
-            <GoogleSheetsConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} />
+            <GoogleSheetsConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} allNodes={allNodes} />
           )}
 
           {/* ===== GOOGLE CALENDAR NODE ===== */}
