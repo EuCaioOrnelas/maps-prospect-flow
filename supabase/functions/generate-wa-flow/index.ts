@@ -417,7 +417,16 @@ const ensureNodeConfig = (
           delay_min: typeof item.delay_min === "number" ? item.delay_min : undefined,
           delay_max: typeof item.delay_max === "number" ? item.delay_max : undefined,
         }));
-        return { ...config, contents: normalizedContents };
+        
+        // Check if any text items actually have content - if none do, regenerate
+        const hasRealText = normalizedContents.some((item: any) => item.type === "text" && item.content && item.content.length > 3);
+        if (!hasRealText) {
+          // No real text content - inject a meaningful message
+          const inferredText = inferMessageText(label, prompt);
+          normalizedContents.unshift({ id: `item_fix_${Date.now()}`, type: "text", content: inferredText });
+        }
+        
+        return { ...config, contents: normalizedContents, content: normalizedContents.find((c: any) => c.type === "text")?.content || "", body_text: normalizedContents.find((c: any) => c.type === "text")?.content || "" };
       }
 
       // Build contents from legacy fields
