@@ -381,10 +381,10 @@ export default function CRM() {
                         className="h-8 sm:h-9"
                       >
                         <Settings2 className="w-4 h-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Colunas</span>
+                        <span className="hidden sm:inline">Configurações</span>
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Gerenciar colunas do funil</TooltipContent>
+                    <TooltipContent>Configurações gerais do CRM</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>

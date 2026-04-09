@@ -1103,58 +1103,6 @@ export const LeadDetailDialog = ({
                     </button>
                   ))}
                 </div>
-
-                {/* Separator + Tag creation */}
-                <div className="border-t border-border mx-1" />
-                <div className="p-2 space-y-2">
-                  <div className="flex gap-1.5">
-                    <Input
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      placeholder="Nova tag..."
-                      className="h-8 text-xs"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && newTag.trim()) {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          void handleAddTag();
-                        }
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="default"
-                      className="h-8 shrink-0 text-xs px-3 rounded-full"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void handleAddTag();
-                      }}
-                      disabled={!newTag.trim()}
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                  {/* Quick tag suggestions */}
-                  {tagSuggestions.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {tagSuggestions.slice(0, 6).map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddTag(tag);
-                          }}
-                          className="rounded-full border border-border bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
             </PopoverContent>
           </Popover>
