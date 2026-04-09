@@ -1632,6 +1632,109 @@ export const LeadDetailDialog = ({
               </div>
             )}
 
+            {/* Arquivos Tab */}
+            {activeTab === 'files' && (
+              <div className="space-y-4">
+                {/* Google Drive Connection */}
+                <div className="bg-muted/40 rounded-lg border border-border/50 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <FolderOpen className="w-3.5 h-3.5" />
+                      Google Drive
+                    </span>
+                    {driveConnection?.is_active ? (
+                      <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">Conectado</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px]">Desconectado</Badge>
+                    )}
+                  </div>
+                  {driveConnection?.is_active ? (
+                    <p className="text-xs text-muted-foreground">
+                      Arquivos são salvos automaticamente no Google Drive.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Conecte seu Google Drive para salvar arquivos automaticamente em uma pasta por lead.
+                      </p>
+                      <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={handleConnectDrive}>
+                        <FolderOpen className="w-3.5 h-3.5" />
+                        Conectar Google Drive
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload Area */}
+                <div className="space-y-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Enviar Arquivo</span>
+                  <label className="flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors cursor-pointer">
+                    <Upload className="w-6 h-6 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Clique para selecionar um arquivo</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadLeadFile(file);
+                        e.target.value = '';
+                      }}
+                      disabled={isUploadingLeadFile}
+                    />
+                  </label>
+                  {isUploadingLeadFile && (
+                    <p className="text-xs text-muted-foreground text-center animate-pulse">Enviando...</p>
+                  )}
+                </div>
+
+                {/* Files List */}
+                <div className="space-y-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Arquivos ({leadFiles.length})
+                  </span>
+                  {leadFiles.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {leadFiles.map((file) => (
+                        <div key={file.id} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/40 border border-border/50 group">
+                          <FileText className="w-4 h-4 text-primary shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{file.file_name}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {format(new Date(file.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              {file.source === 'drive' && ' • Google Drive'}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {file.file_url && (
+                              <a
+                                href={file.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded hover:bg-muted transition-colors"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                              </a>
+                            )}
+                            <button
+                              onClick={() => handleDeleteLeadFile(file.id)}
+                              className="p-1.5 rounded opacity-0 group-hover:opacity-100 hover:bg-destructive/10 transition-all"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <FileText className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
+                      <p className="text-sm text-muted-foreground">Nenhum arquivo</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* History Tab */}
             {activeTab === 'history' && (
               <div className="space-y-1">
