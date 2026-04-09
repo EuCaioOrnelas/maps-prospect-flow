@@ -365,15 +365,58 @@ const ensureNodeConfig = (
 
     case "message": {
       const messageType = normalizeText(config.message_type) || "text";
+      // Build the contents array that the frontend MessageContentBuilder expects
+      const existingContents = Array.isArray(config.contents) ? config.contents : [];
+      
+      if (existingContents.length > 0) {
+        // AI already provided contents array - normalize it
+        const normalizedContents = existingContents.map((item: any, i: number) => ({
+          id: item.id || `item_${i}_${Date.now()}`,
+          type: normalizeText(item.type) || "text",
+          content: normalizeText(item.content) || undefined,
+          caption: normalizeText(item.caption) || undefined,
+          media_url: normalizeText(item.media_url) || undefined,
+          media_filename: normalizeText(item.media_filename) || undefined,
+          delay_seconds: typeof item.delay_seconds === "number" ? item.delay_seconds : undefined,
+          delay_min: typeof item.delay_min === "number" ? item.delay_min : undefined,
+          delay_max: typeof item.delay_max === "number" ? item.delay_max : undefined,
+        }));
+        return { ...config, contents: normalizedContents };
+      }
+
+      // Build contents from legacy fields
+      const contents: any[] = [];
+      
       if (messageType === "text") {
-        const content = normalizeText(config.content || config.body_text) || inferMessageText(label, prompt);
-        return { ...config, message_type: "text", content, body_text: content };
-      }
-      if (messageType === "template") {
+        const textContent = normalizeText(config.content || config.body_text) || inferMessageText(label, prompt);
+        contents.push({
+          id: `item_0_${Date.now()}`,
+          type: "text",
+          content: textContent,
+        });
+      } else if (messageType === "template") {
         return { ...config, message_type: "template", template_name: normalizeText(config.template_name) || slugifyTag(label), template_language: normalizeText(config.template_language) || "pt_BR" };
+      } else {
+        // image, audio, video, document
+        const caption = normalizeText(config.caption || config.content || config.body_text) || inferMessageText(label, prompt);
+        contents.push({
+          id: `item_0_${Date.now()}`,
+          type: messageType,
+          caption,
+          media_url: normalizeText(config.media_url) || "",
+          media_filename: "",
+        });
       }
-      const caption = normalizeText(config.caption || config.content || config.body_text) || inferMessageText(label, prompt);
-      return { ...config, message_type: messageType, caption, content: caption, body_text: caption };
+
+      // Add smart delay between message nodes for natural feel
+      contents.push({
+        id: `delay_${Date.now()}`,
+        type: "delay",
+        delay_min: 2,
+        delay_max: 5,
+      });
+
+      return { ...config, contents, message_type: messageType, content: contents[0]?.content || "", body_text: contents[0]?.content || "" };
     }
 
     case "buttons": {
