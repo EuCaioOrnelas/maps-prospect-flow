@@ -26,6 +26,7 @@ interface ChatMessageAreaProps {
   onSendMedia: (file: File, caption?: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   onReopenConversation?: (templateName: string) => void;
+  fetchTemplates?: () => Promise<any[]>;
 }
 
 function MessageStatus({ status }: { status: string }) {
