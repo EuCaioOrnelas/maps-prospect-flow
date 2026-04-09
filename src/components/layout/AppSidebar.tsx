@@ -297,13 +297,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/oportunidades"
                         className={cn(
-                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
                           currentPath === "/oportunidades"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
-                        <Search size={16} className="shrink-0" />
+                        <Search size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Buscar</span>
                       </Link>
                     </li>
@@ -311,13 +311,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/oportunidades/gestao"
                         className={cn(
-                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
                           currentPath === "/oportunidades/gestao"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
-                        <BarChart3 size={16} className="shrink-0" />
+                        <BarChart3 size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Gestão</span>
                       </Link>
                     </li>
@@ -353,13 +353,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/whatsapp"
                         className={cn(
-                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
                           currentPath === "/whatsapp"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
-                        <Send size={16} className="shrink-0" />
+                        <Send size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Prospecção</span>
                       </Link>
                     </li>
@@ -367,13 +367,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/meta-campaigns"
                         className={cn(
-                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
                           currentPath === "/meta-campaigns"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
-                        <Handshake size={16} className="shrink-0" />
+                        <Handshake size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Relacionamento</span>
                       </Link>
                     </li>
@@ -409,13 +409,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/crm"
                         className={cn(
-                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
                           currentPath === "/crm"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
-                        <Users size={16} className="shrink-0" />
+                        <Users size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Pipeline</span>
                       </Link>
                     </li>
@@ -423,13 +423,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/crm/score"
                         className={cn(
-                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
                           currentPath === "/crm/score"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
-                        <Trophy size={16} className="shrink-0" />
+                        <Trophy size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Score</span>
                       </Link>
                     </li>
@@ -482,13 +482,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/fluxos"
                         className={cn(
-                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
                           currentPath.startsWith("/fluxos")
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
-                        <Workflow size={16} className="shrink-0" />
+                        <Workflow size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Fluxos</span>
                       </Link>
                     </li>
@@ -496,13 +496,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/agents"
                         className={cn(
-                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
                           currentPath === "/agents"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
-                        <Bot size={16} className="shrink-0" />
+                        <Bot size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Agentes IA</span>
                       </Link>
                     </li>
@@ -510,13 +510,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/warming"
                         className={cn(
-                          "flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
                           currentPath === "/warming"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
-                        <Flame size={16} className="shrink-0" />
+                        <Flame size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Aquecimento</span>
                       </Link>
                     </li>
