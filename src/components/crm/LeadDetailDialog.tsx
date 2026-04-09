@@ -718,14 +718,10 @@ export const LeadDetailDialog = ({
 
   const handleRemoveTag = async (tagToRemove: string) => {
     if (!lead) return;
-    const updatedTags = (lead.tags || []).filter(tag => tag !== tagToRemove);
+    const updatedTags = localTags.filter(tag => tag !== tagToRemove);
     try {
-      const updatedLead = await onUpdate(lead.id, { tags: updatedTags });
-
-      if (updatedLead) {
-        Object.assign(lead, updatedLead);
-      }
-
+      await onUpdate(lead.id, { tags: updatedTags });
+      setLocalTags(updatedTags);
       toast.success('Tag removida!');
     } catch {
       toast.error('Erro ao remover tag');
