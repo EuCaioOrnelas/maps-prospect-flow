@@ -8,7 +8,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { Sparkles, ArrowLeft, SendIcon, MessageSquare, CheckCircle2, AlertTriangle, Settings2, Zap } from "lucide-react";
-import geminiIcon from "@/assets/logos/gemini-icon.png";
+
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
