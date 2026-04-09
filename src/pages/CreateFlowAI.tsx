@@ -8,6 +8,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { Sparkles, ArrowLeft, SendIcon, MessageSquare, CheckCircle2, AlertTriangle, Settings2, Zap } from "lucide-react";
+import { DailyLimitDialog } from "@/components/wa-flow/DailyLimitDialog";
 
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -421,6 +422,28 @@ export default function CreateFlowAI() {
 
   const [reviewFlowId, setReviewFlowId] = useState<string | null>(null);
   const [showReviewPopup, setShowReviewPopup] = useState(false);
+  const [showDailyLimit, setShowDailyLimit] = useState(false);
+  const [dailyCount, setDailyCount] = useState(0);
+
+  const DAILY_LIMIT = 3;
+
+  // Check daily AI flow creation count
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `ai_flow_count_${user.id}_${today}`;
+    const count = parseInt(localStorage.getItem(key) || "0", 10);
+    setDailyCount(count);
+  }, [user]);
+
+  const incrementDailyCount = () => {
+    if (!user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `ai_flow_count_${user.id}_${today}`;
+    const newCount = dailyCount + 1;
+    localStorage.setItem(key, String(newCount));
+    setDailyCount(newCount);
+  };
 
   useEffect(() => {
     const p = searchParams.get("prompt");
@@ -432,9 +455,15 @@ export default function CreateFlowAI() {
     requestAnimationFrame(() => adjustHeight());
   }, [prompt, adjustHeight]);
 
+  const canCreateWithAI = dailyCount < DAILY_LIMIT;
+
   const createWithAI = useMutation({
     mutationFn: async () => {
       if (!prompt.trim()) throw new Error("Descreva o que deseja para o fluxo");
+      if (!canCreateWithAI) {
+        setShowDailyLimit(true);
+        throw new Error("__limit__");
+      }
       const { data: flow, error: flowErr } = await supabase
         .from("wa_automation_flows")
         .insert({ user_id: user!.id, name: "Fluxo IA" })
@@ -452,13 +481,16 @@ export default function CreateFlowAI() {
       return flow;
     },
     onSuccess: (flow) => {
+      incrementDailyCount();
       setReviewFlowId(flow.id);
-      // Small delay to let the user see "Fluxo criado!" before popup
       setTimeout(() => {
         setShowReviewPopup(true);
       }, 1500);
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao gerar fluxo com IA"),
+    onError: (err: any) => {
+      if (err.message === "__limit__") return;
+      toast.error(err.message || "Erro ao gerar fluxo com IA");
+    },
   });
 
   const handleGoToFlow = () => {
@@ -485,8 +517,9 @@ export default function CreateFlowAI() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+      if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      if (!canCreateWithAI) { setShowDailyLimit(true); return; }
       if (prompt.trim() && !createWithAI.isPending) createWithAI.mutate();
     }
   };
@@ -552,7 +585,7 @@ export default function CreateFlowAI() {
                 Crie <span className="text-shimmer-highlight whitespace-nowrap">fluxos inteligentes</span><br />para o WhatsApp
               </h1>
 
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+               <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
                 Descreva seu objetivo e a IA monta automaticamente um fluxo completo.
               </p>
 
@@ -582,10 +615,11 @@ export default function CreateFlowAI() {
                 )}
               />
 
-              <div className="flex justify-end pt-2 border-t border-border/30">
+              <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                <span className="text-[10px] text-muted-foreground/50">{dailyCount}/{DAILY_LIMIT} criações hoje</span>
                 <motion.button
                   type="button"
-                  onClick={() => createWithAI.mutate()}
+                  onClick={() => { if (!canCreateWithAI) { setShowDailyLimit(true); return; } createWithAI.mutate(); }}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   disabled={!prompt.trim()}
@@ -619,13 +653,13 @@ export default function CreateFlowAI() {
             {/* Quick prompts - 3 per row */}
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground text-center">Ou escolha um prompt pronto:</p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="flex flex-wrap justify-center gap-2">
                 {quickPrompts.map((qp, index) => (
                   <motion.button
                     key={index}
                     onClick={() => handleSelectPrompt(index)}
                     className={cn(
-                      "text-left p-3 rounded-xl border transition-all text-xs",
+                      "px-4 py-2 rounded-full border transition-all text-xs font-medium",
                       expandedPrompt === index
                         ? "border-primary/40 bg-primary/5 text-foreground"
                         : "border-border bg-card/50 text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-foreground"
@@ -633,9 +667,9 @@ export default function CreateFlowAI() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.05 }}
                   >
-                    <span className="line-clamp-2 font-medium">{qp.preview}</span>
+                    {qp.preview}
                   </motion.button>
                 ))}
               </div>
@@ -707,6 +741,13 @@ export default function CreateFlowAI() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Daily Limit Dialog */}
+      <DailyLimitDialog 
+        open={showDailyLimit} 
+        onOpenChange={setShowDailyLimit} 
+        remaining={DAILY_LIMIT - dailyCount} 
+      />
     </div>
   );
 }
