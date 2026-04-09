@@ -14,6 +14,7 @@ interface ChatInputProps {
 
 export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply }: ChatInputProps) {
   const [text, setText] = useState("");
+  const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
   const [showAttach, setShowAttach] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [preview, setPreview] = useState<{ file: File; url: string; type: string } | null>(null);
