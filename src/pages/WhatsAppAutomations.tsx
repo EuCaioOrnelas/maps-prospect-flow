@@ -212,7 +212,7 @@ export default function WhatsAppAutomations() {
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                {greeting}, {firstName}!
+                Fluxos de Automação
               </h1>
               <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 font-semibold gap-1">
                 <FlaskConical className="h-3 w-3" />
@@ -257,8 +257,11 @@ export default function WhatsAppAutomations() {
 
             <button
               onClick={() => navigate("/fluxos/criar-ia")}
-              className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
+              className="group relative flex items-center gap-3 p-4 rounded-xl border border-primary/20 bg-primary/5 hover:border-primary/40 hover:bg-primary/10 transition-all text-left"
             >
+              <Badge className="absolute -top-2 right-3 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 shadow-md">
+                ⭐ Recomendado
+              </Badge>
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:bg-emerald-500/20 transition-colors">
                 <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" viewBox="0 0 32 32" fill="none">
                   <path d="M16 2L18.5 11.5L28 16L18.5 20.5L16 30L13.5 20.5L4 16L13.5 11.5L16 2Z" fill="#34A853"/>
