@@ -144,7 +144,7 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
                   <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="white"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z"/></svg> IA
                 </Badge>
                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" fill="url(#geminiGrad2)"/><defs><linearGradient id="geminiGrad2" x1="0" y1="0" x2="24" y2="24"><stop stopColor="#4285F4"/><stop offset="0.5" stopColor="#34A853"/><stop offset="1" stopColor="#8BC34A"/></linearGradient></defs></svg>
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" fill="url(#gG2)"/><defs><linearGradient id="gG2" x1="1" y1="1" x2="23" y2="23"><stop offset="0%" stopColor="#4285F4"/><stop offset="33%" stopColor="#EA4335"/><stop offset="66%" stopColor="#FBBC05"/><stop offset="100%" stopColor="#34A853"/></linearGradient></defs></svg>
                 </div>
                 <div>
                   <p className="font-semibold text-foreground text-sm mb-1">Criar com IA ✨</p>

@@ -540,7 +540,7 @@ export default function CreateFlowAI() {
               transition={{ duration: 0.6 }}
             >
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-card text-sm text-muted-foreground">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" fill="url(#geminiGradHero)"/><defs><linearGradient id="geminiGradHero" x1="0" y1="0" x2="24" y2="24"><stop stopColor="#4285F4"/><stop offset="0.5" stopColor="#34A853"/><stop offset="1" stopColor="#8BC34A"/></linearGradient></defs></svg>
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" fill="url(#gGH)"/><defs><linearGradient id="gGH" x1="1" y1="1" x2="23" y2="23"><stop offset="0%" stopColor="#4285F4"/><stop offset="33%" stopColor="#EA4335"/><stop offset="66%" stopColor="#FBBC05"/><stop offset="100%" stopColor="#34A853"/></linearGradient></defs></svg>
                 Descreva. Nós montamos o fluxo.
               </div>
 
@@ -581,28 +581,41 @@ export default function CreateFlowAI() {
                   whileTap={{ scale: 0.97 }}
                   disabled={!prompt.trim()}
                   className={cn(
-                    "px-5 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 btn-shine relative overflow-hidden",
+                    "px-5 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 relative overflow-hidden",
                     prompt.trim()
                       ? "text-white shadow-lg"
                       : "bg-muted text-muted-foreground"
                   )}
-                   style={prompt.trim() ? {
+                  style={prompt.trim() ? {
                     background: "linear-gradient(135deg, #4285F4, #34A853, #8BC34A)",
                     boxShadow: "0 4px 16px rgba(66, 133, 244, 0.3)",
                   } : undefined}
                 >
+                  {/* Shimmer glow overlay when active */}
+                  {prompt.trim() && (
+                    <motion.div
+                      className="absolute inset-0 rounded-full pointer-events-none"
+                      style={{
+                        background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)",
+                        backgroundSize: "200% 100%",
+                      }}
+                      animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
+                      transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+                    />
+                  )}
                   {/* Animated white star */}
                   <motion.svg
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
                     fill="white"
+                    className="relative z-10"
                     animate={{ rotate: [0, 360] }}
                     transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                   >
                     <path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" />
                   </motion.svg>
-                  <span>Criar fluxo</span>
+                  <span className="relative z-10">Criar fluxo</span>
                 </motion.button>
               </div>
             </motion.div>
