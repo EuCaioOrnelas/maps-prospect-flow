@@ -244,7 +244,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               sideOffset={10}
               className="w-[340px] p-0 rounded-xl border wa-border-light shadow-2xl bg-popover overflow-hidden"
             >
-              <EmojiPickerWithCategories onEmojiSelect={(emoji) => {
+              <EmojiPickerFull onSelect={(emoji) => {
                 setText(prev => prev + emoji);
                 inputRef.current?.focus();
               }} />
