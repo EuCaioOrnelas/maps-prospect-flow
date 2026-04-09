@@ -8,6 +8,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { Sparkles, ArrowLeft, SendIcon, MessageSquare, CheckCircle2, AlertTriangle, Settings2, Zap } from "lucide-react";
+import { DailyLimitDialog } from "@/components/wa-flow/DailyLimitDialog";
 
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -421,6 +422,28 @@ export default function CreateFlowAI() {
 
   const [reviewFlowId, setReviewFlowId] = useState<string | null>(null);
   const [showReviewPopup, setShowReviewPopup] = useState(false);
+  const [showDailyLimit, setShowDailyLimit] = useState(false);
+  const [dailyCount, setDailyCount] = useState(0);
+
+  const DAILY_LIMIT = 3;
+
+  // Check daily AI flow creation count
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `ai_flow_count_${user.id}_${today}`;
+    const count = parseInt(localStorage.getItem(key) || "0", 10);
+    setDailyCount(count);
+  }, [user]);
+
+  const incrementDailyCount = () => {
+    if (!user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `ai_flow_count_${user.id}_${today}`;
+    const newCount = dailyCount + 1;
+    localStorage.setItem(key, String(newCount));
+    setDailyCount(newCount);
+  };
 
   useEffect(() => {
     const p = searchParams.get("prompt");
@@ -432,9 +455,15 @@ export default function CreateFlowAI() {
     requestAnimationFrame(() => adjustHeight());
   }, [prompt, adjustHeight]);
 
+  const canCreateWithAI = dailyCount < DAILY_LIMIT;
+
   const createWithAI = useMutation({
     mutationFn: async () => {
       if (!prompt.trim()) throw new Error("Descreva o que deseja para o fluxo");
+      if (!canCreateWithAI) {
+        setShowDailyLimit(true);
+        throw new Error("__limit__");
+      }
       const { data: flow, error: flowErr } = await supabase
         .from("wa_automation_flows")
         .insert({ user_id: user!.id, name: "Fluxo IA" })
@@ -452,13 +481,16 @@ export default function CreateFlowAI() {
       return flow;
     },
     onSuccess: (flow) => {
+      incrementDailyCount();
       setReviewFlowId(flow.id);
-      // Small delay to let the user see "Fluxo criado!" before popup
       setTimeout(() => {
         setShowReviewPopup(true);
       }, 1500);
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao gerar fluxo com IA"),
+    onError: (err: any) => {
+      if (err.message === "__limit__") return;
+      toast.error(err.message || "Erro ao gerar fluxo com IA");
+    },
   });
 
   const handleGoToFlow = () => {
@@ -485,8 +517,9 @@ export default function CreateFlowAI() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+      if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      if (!canCreateWithAI) { setShowDailyLimit(true); return; }
       if (prompt.trim() && !createWithAI.isPending) createWithAI.mutate();
     }
   };
@@ -552,7 +585,7 @@ export default function CreateFlowAI() {
                 Crie <span className="text-shimmer-highlight whitespace-nowrap">fluxos inteligentes</span><br />para o WhatsApp
               </h1>
 
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+               <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
                 Descreva seu objetivo e a IA monta automaticamente um fluxo completo.
               </p>
 
