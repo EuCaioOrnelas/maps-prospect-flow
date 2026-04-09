@@ -8,6 +8,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { Sparkles, ArrowLeft, SendIcon, MessageSquare, CheckCircle2, AlertTriangle, Settings2, Zap } from "lucide-react";
+import geminiIcon from "@/assets/logos/gemini-icon.png";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -496,7 +497,7 @@ export default function CreateFlowAI() {
               transition={{ duration: 0.6 }}
             >
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-card text-sm text-muted-foreground">
-                <Sparkles size={14} className="text-primary" />
+                <img src={geminiIcon} alt="Gemini" className="w-3.5 h-3.5" />
                 Descreva. Nós montamos o fluxo.
               </div>
 
@@ -543,7 +544,7 @@ export default function CreateFlowAI() {
                       : "bg-muted text-muted-foreground"
                   )}
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <img src={geminiIcon} alt="Gemini" className="w-4 h-4" />
                   <span>Criar fluxo</span>
                 </motion.button>
               </div>
