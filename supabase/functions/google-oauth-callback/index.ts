@@ -78,7 +78,7 @@ serve(async (req) => {
         scopes: tokenData.scope ? tokenData.scope.split(" ") : [],
         google_email: userInfo.email || null,
         updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+      }, { onConflict: "user_id,google_email" });
 
     if (upsertError) {
       console.error("Failed to save tokens:", upsertError);

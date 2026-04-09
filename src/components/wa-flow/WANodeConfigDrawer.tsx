@@ -16,31 +16,56 @@ import type { Node } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 
 
-function GoogleConnectionBlock({ isConnected, googleToken, isConnecting, handleConnect, handleDisconnect, label }: {
-  isConnected: boolean; googleToken: any; isConnecting: boolean; handleConnect: () => void; handleDisconnect: () => void; label: string;
+function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, isConnecting, handleConnect, handleDisconnect, label }: {
+  accounts: any[]; selectedAccountId?: string; onSelectAccount: (id: string) => void;
+  isConnecting: boolean; handleConnect: () => void; handleDisconnect: (id: string) => void; label: string;
 }) {
+  const selectedAccount = accounts.find((a: any) => a.id === selectedAccountId) || accounts[0];
+  const hasAccounts = accounts.length > 0;
+
   return (
     <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
-      {isConnected ? (
-        <div className="space-y-2">
+      {hasAccounts ? (
+        <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-green-500/10 flex items-center justify-center">
-                <CheckCircle2 size={14} className="text-green-500" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-foreground">{label} conectado</p>
-                <p className="text-[10px] text-muted-foreground">{googleToken?.google_email}</p>
-              </div>
+              <img src="/src/assets/logos/google.svg" alt="Google" className="w-5 h-5" />
+              <span className="text-xs font-medium text-foreground">{label} conectado</span>
             </div>
-            <Button variant="ghost" size="sm" className="h-7 text-[10px] text-destructive hover:text-destructive px-2" onClick={handleDisconnect}>
-              Desconectar
+          </div>
+
+          {/* Account selector */}
+          <Select value={selectedAccountId || accounts[0]?.id || ""} onValueChange={onSelectAccount}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder="Selecionar conta..." />
+            </SelectTrigger>
+            <SelectContent>
+              {accounts.map((acc: any) => (
+                <SelectItem key={acc.id} value={acc.id}>
+                  <span className="text-xs">{acc.google_email}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 flex-1" onClick={handleConnect}>
+              {isConnecting ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+              Conectar outra conta
             </Button>
+            {selectedAccount && (
+              <Button variant="ghost" size="sm" className="h-7 text-[10px] text-destructive hover:text-destructive px-2" onClick={() => handleDisconnect(selectedAccount.id)}>
+                <Trash2 size={12} />
+              </Button>
+            )}
           </div>
         </div>
       ) : (
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">Conecte sua conta Google para usar este recurso.</p>
+          <div className="flex items-center gap-2">
+            <img src="/src/assets/logos/google.svg" alt="Google" className="w-5 h-5" />
+            <p className="text-xs text-muted-foreground">Conecte sua conta Google para usar este recurso.</p>
+          </div>
           <Button onClick={handleConnect} disabled={isConnecting} className="w-full h-9 text-sm gap-2">
             {isConnecting ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
             {isConnecting ? "Conectando..." : `Conectar ${label}`}
@@ -54,22 +79,30 @@ function GoogleConnectionBlock({ isConnected, googleToken, isConnecting, handleC
 function useGoogleAuth(queryKeySuffix: string, scopes: string[]) {
   const { user } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("");
 
-  const { data: googleToken, refetch: refetchToken } = useQuery({
-    queryKey: [`google-token-${queryKeySuffix}`, user?.id],
+  const { data: googleAccounts = [], refetch: refetchTokens } = useQuery({
+    queryKey: [`google-tokens-${queryKeySuffix}`, user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("user_google_tokens" as any)
-        .select("google_email, scopes, token_expires_at")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return data;
+        .select("id, google_email, scopes, token_expires_at")
+        .eq("user_id", user!.id);
+      return (data || []) as any[];
     },
     enabled: !!user,
     refetchInterval: 5000,
   });
 
-  const isConnected = !!googleToken;
+  // Auto-select first account if none selected
+  useEffect(() => {
+    if (googleAccounts.length > 0 && !selectedAccountId) {
+      setSelectedAccountId(googleAccounts[0].id);
+    }
+  }, [googleAccounts, selectedAccountId]);
+
+  const isConnected = googleAccounts.length > 0;
+  const selectedAccount = googleAccounts.find((a: any) => a.id === selectedAccountId) || googleAccounts[0];
 
   const handleConnect = async () => {
     setIsConnecting(true);
@@ -86,12 +119,13 @@ function useGoogleAuth(queryKeySuffix: string, scopes: string[]) {
     }
   };
 
-  const handleDisconnect = async () => {
-    await supabase.from("user_google_tokens" as any).delete().eq("user_id", user!.id);
-    refetchToken();
+  const handleDisconnect = async (tokenId: string) => {
+    await supabase.from("user_google_tokens" as any).delete().eq("id", tokenId);
+    if (selectedAccountId === tokenId) setSelectedAccountId("");
+    refetchTokens();
   };
 
-  return { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect, refetchToken };
+  return { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect, refetchTokens };
 }
 
 const BASE_VARIABLES = [
@@ -138,7 +172,7 @@ function VariablesHelper({ variables }: { variables?: { key: string; label: stri
 }
 
 function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; allNodes?: any[] }) {
-  const { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect } = useGoogleAuth("sheets", [
+  const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("sheets", [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive.readonly",
   ]);
@@ -151,11 +185,11 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
   const flowVars = useFlowVariables(allNodes);
 
   useEffect(() => {
-    if (googleToken) {
+    if (selectedAccount) {
       updateConfig("google_connected", true);
-      updateConfig("google_email", (googleToken as any).google_email);
+      updateConfig("google_email", selectedAccount.google_email);
     }
-  }, [(googleToken as any)?.google_email]);
+  }, [selectedAccount?.google_email]);
 
   const { data: spreadsheets = [], isLoading: loadingSheets, refetch: refetchSheets } = useQuery({
     queryKey: ["google-spreadsheets", user?.id],
@@ -235,11 +269,12 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
       {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets. Os dados são adicionados em novas linhas, sem sobrescrever dados existentes.")}
 
       <GoogleConnectionBlock
-        isConnected={isConnected}
-        googleToken={googleToken}
+        accounts={googleAccounts}
+        selectedAccountId={selectedAccountId}
+        onSelectAccount={setSelectedAccountId}
         isConnecting={isConnecting}
         handleConnect={handleConnect}
-        handleDisconnect={() => { handleDisconnect(); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
+        handleDisconnect={(id) => { handleDisconnect(id); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
         label="Google"
       />
 
@@ -379,17 +414,17 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
 }
 
 function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
-  const { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect } = useGoogleAuth("calendar", [
+  const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("calendar", [
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/calendar.events",
   ]);
 
   useEffect(() => {
-    if (googleToken) {
+    if (selectedAccount) {
       updateConfig("google_connected", true);
-      updateConfig("google_email", (googleToken as any).google_email);
+      updateConfig("google_email", selectedAccount.google_email);
     }
-  }, [(googleToken as any)?.google_email]);
+  }, [selectedAccount?.google_email]);
 
   const { data: calendars = [], isLoading: loadingCalendars } = useQuery({
     queryKey: ["google-calendars", user?.id],
@@ -408,11 +443,12 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
       {renderInfoBanner("Crie eventos automáticos no Google Agenda quando o lead chegar neste ponto do fluxo.")}
 
       <GoogleConnectionBlock
-        isConnected={isConnected}
-        googleToken={googleToken}
+        accounts={googleAccounts}
+        selectedAccountId={selectedAccountId}
+        onSelectAccount={setSelectedAccountId}
         isConnecting={isConnecting}
         handleConnect={handleConnect}
-        handleDisconnect={() => { handleDisconnect(); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
+        handleDisconnect={(id) => { handleDisconnect(id); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
         label="Google"
       />
 
@@ -539,27 +575,28 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
 }
 
 function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
-  const { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect } = useGoogleAuth("gmail", [
+  const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("gmail", [
     "https://www.googleapis.com/auth/gmail.send",
   ]);
 
   useEffect(() => {
-    if (googleToken) {
+    if (selectedAccount) {
       updateConfig("google_connected", true);
-      updateConfig("google_email", (googleToken as any).google_email);
+      updateConfig("google_email", selectedAccount.google_email);
     }
-  }, [(googleToken as any)?.google_email]);
+  }, [selectedAccount?.google_email]);
 
   return (
     <div className="space-y-4">
       {renderInfoBanner("Envie emails automáticos pelo Gmail quando o lead chegar neste ponto do fluxo.")}
 
       <GoogleConnectionBlock
-        isConnected={isConnected}
-        googleToken={googleToken}
+        accounts={googleAccounts}
+        selectedAccountId={selectedAccountId}
+        onSelectAccount={setSelectedAccountId}
         isConnecting={isConnecting}
         handleConnect={handleConnect}
-        handleDisconnect={() => { handleDisconnect(); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
+        handleDisconnect={(id) => { handleDisconnect(id); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
         label="Gmail"
       />
 
