@@ -963,40 +963,90 @@ export const LeadDetailDialog = ({
             </SelectContent>
           </Select>
 
-          <Select
-            value={lead.whatsapp_status}
-            open={isWhatsAppStatusOpen}
-            onOpenChange={setIsWhatsAppStatusOpen}
-            onValueChange={(value) => {
-              void handleWhatsAppStatusChange(value as WhatsAppStatus);
-            }}
-          >
-            <SelectTrigger className="w-auto min-w-[160px] h-9 text-sm">
-              <span className="truncate">{WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}</span>
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(WHATSAPP_STATUS_LABELS) as WhatsAppStatus[]).map((status) => (
-                <SelectItem key={status} value={status}>
-                  {WHATSAPP_STATUS_LABELS[status]}
-                </SelectItem>
-              ))}
-              <SelectSeparator />
-              <div className="p-1">
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  onClick={() => {
-                    setIsWhatsAppStatusOpen(false);
-                    setActiveTab('info');
-                    setShowTagComposer(true);
-                  }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Criar nova tag
-                </button>
+          <Popover open={isWhatsAppStatusOpen} onOpenChange={setIsWhatsAppStatusOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 text-sm min-w-[160px] justify-between gap-2">
+                <span className="truncate">{WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}</span>
+                <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" align="start" sideOffset={4}>
+              <div className="max-h-[340px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+                {/* Status options */}
+                <div className="p-1">
+                  {(Object.keys(WHATSAPP_STATUS_LABELS) as WhatsAppStatus[]).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      className={cn(
+                        'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted',
+                        lead.whatsapp_status === status && 'bg-primary/10 text-primary font-medium'
+                      )}
+                      onClick={() => {
+                        void handleWhatsAppStatusChange(status);
+                        setIsWhatsAppStatusOpen(false);
+                      }}
+                    >
+                      {lead.whatsapp_status === status && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      <span className={cn(lead.whatsapp_status !== status && 'ml-5.5')}>{WHATSAPP_STATUS_LABELS[status]}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Separator + Tag creation */}
+                <div className="border-t border-border mx-1" />
+                <div className="p-2 space-y-2">
+                  <div className="flex gap-1.5">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Nova tag..."
+                      className="h-8 text-xs"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && newTag.trim()) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          void handleAddTag();
+                        }
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 shrink-0 text-xs px-2.5 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleAddTag();
+                      }}
+                      disabled={!newTag.trim()}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                  {/* Quick tag suggestions */}
+                  {tagSuggestions.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {tagSuggestions.slice(0, 6).map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddTag(tag);
+                          }}
+                          className="rounded-full border border-border bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </SelectContent>
-          </Select>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Tab Navigation */}
