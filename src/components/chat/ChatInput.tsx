@@ -126,13 +126,12 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     return () => document.removeEventListener("click", handler);
   }, []);
 
-  // Multiline detection for border radius
   const isMultiline = text.includes("\n") || text.length > 60;
 
   // Recording UI
   if (isRecording) {
     return (
-      <div className="wa-input-bar flex items-center gap-3 px-[10px] py-[8px]">
+      <div className="flex items-center gap-3 px-4 py-2">
         <button onClick={cancelRecording} className="p-2 rounded-full hover:bg-white/10 transition-colors">
           <X size={22} className="text-red-400" />
         </button>
@@ -154,7 +153,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     <>
       {/* Reply preview bar */}
       {replyingTo && (
-        <div className="flex items-center gap-2 px-4 py-2 border-t wa-border-light wa-input-bar">
+        <div className="flex items-center gap-2 mx-4 mt-2 px-3 py-2 rounded-t-xl wa-input-field">
           <div className="w-[3px] h-8 rounded-full bg-[#00a884] shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-[11px] text-[#00a884] font-medium">
@@ -170,7 +169,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
       {/* File preview overlay */}
       {preview && (
-        <div className="wa-preview-bg border-t wa-border-light">
+        <div className="mx-4 mb-2 rounded-xl wa-input-field border wa-border-light overflow-hidden">
           <div className="flex items-end gap-3 px-4 py-3">
             <div className="flex-1 flex flex-col items-center">
               {preview.type === "image" && (
@@ -190,13 +189,13 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                   value={caption}
                   onChange={e => setCaption(e.target.value)}
                   placeholder="Adicionar legenda..."
-                  className="w-full wa-bg-input wa-text-primary text-[14px] px-[12px] py-[9px] rounded-lg outline-none border-none placeholder:wa-text-muted"
+                  className="w-full bg-transparent wa-text-primary text-[14px] px-[12px] py-[9px] rounded-lg outline-none border-none placeholder:wa-text-muted"
                   onKeyDown={e => e.key === "Enter" && handleSend()}
                 />
               )}
             </div>
             <div className="flex flex-col gap-2 pb-1">
-              <button onClick={() => { setPreview(null); setCaption(""); }} className="wa-icon-button p-2 rounded-full hover:bg-white/5 transition-colors">
+              <button onClick={() => { setPreview(null); setCaption(""); }} className="p-2 rounded-full hover:bg-white/5 transition-colors">
                 <X size={20} className="wa-icon-header" />
               </button>
               <button onClick={handleSend} className="w-[42px] h-[42px] bg-[#00a884] hover:bg-[#06cf9c] rounded-full flex items-center justify-center transition-colors">
@@ -207,12 +206,12 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
         </div>
       )}
 
-      {/* Input bar — WhatsApp style: pill with icons inside */}
+      {/* Floating input bar — WhatsApp style */}
       {!preview && (
-        <div className="wa-input-bar flex items-end gap-[8px] px-[10px] py-[6px] relative">
+        <div className="flex items-end gap-[6px] px-[12px] py-[6px] relative">
           {/* Attach menu */}
           {showAttach && (
-            <div className="wa-attach-menu absolute bottom-[60px] left-[15px] wa-attach-bg rounded-2xl shadow-2xl border wa-border-light p-3 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="wa-attach-menu absolute bottom-[60px] left-[20px] wa-attach-bg rounded-2xl shadow-2xl border wa-border-light p-3 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <button onClick={() => imageInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
                 <div className="w-[50px] h-[50px] rounded-full bg-[#7f66ff] flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
                   <Image size={22} className="text-white" />
@@ -234,25 +233,25 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
             </div>
           )}
 
-          {/* Main pill container — icons + input inside */}
+          {/* Main pill — + emoji input inside, floating */}
           <div
             className={cn(
-              "flex-1 wa-input-field flex items-end transition-all",
+              "flex-1 wa-input-field flex items-end shadow-sm transition-all",
               isMultiline ? "rounded-[18px]" : "rounded-full"
             )}
           >
-            {/* Attach + inside pill */}
+            {/* Attach */}
             <button
               onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setEmojiOpen(false); }}
-              className={cn("wa-attach-btn p-[9px] shrink-0 rounded-full transition-colors self-end", showAttach ? "opacity-100" : "hover:opacity-80")}
+              className="wa-attach-btn p-[9px] shrink-0 self-end hover:opacity-70 transition-opacity"
             >
               <Plus size={22} className={cn("transition-transform duration-200", showAttach ? "text-[#00a884] rotate-45" : "wa-icon-panel")} />
             </button>
 
-            {/* Emoji picker inside pill */}
+            {/* Emoji */}
             <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
               <PopoverTrigger asChild>
-                <button className={cn("p-[9px] shrink-0 rounded-full transition-colors self-end", emojiOpen ? "opacity-100" : "hover:opacity-80")}>
+                <button className="p-[9px] shrink-0 self-end hover:opacity-70 transition-opacity">
                   <Smile size={22} className={emojiOpen ? "text-[#00a884]" : "wa-icon-panel"} />
                 </button>
               </PopoverTrigger>
@@ -288,7 +287,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               </PopoverContent>
             </Popover>
 
-            {/* Text input */}
+            {/* Textarea */}
             <textarea
               ref={inputRef}
               value={text}
@@ -301,13 +300,13 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
             />
           </div>
 
-          {/* Send or Mic button — outside pill */}
+          {/* Mic/Send — outside pill */}
           {text.trim() ? (
-            <button onClick={handleSend} className="p-[10px] rounded-full bg-[#00a884] hover:bg-[#06cf9c] transition-colors self-end mb-[1px]">
+            <button onClick={handleSend} className="p-[10px] rounded-full bg-[#00a884] hover:bg-[#06cf9c] transition-colors self-end">
               <Send size={20} className="text-white ml-[1px]" />
             </button>
           ) : (
-            <button onClick={startRecording} className="p-[10px] rounded-full hover:bg-white/5 transition-colors self-end mb-[1px]">
+            <button onClick={startRecording} className="p-[10px] rounded-full hover:bg-white/5 transition-colors self-end">
               <Mic size={24} className="wa-icon-panel" />
             </button>
           )}
