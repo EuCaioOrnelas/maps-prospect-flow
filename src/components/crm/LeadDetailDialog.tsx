@@ -1417,8 +1417,9 @@ export const LeadDetailDialog = ({
                             key={tag}
                             type="button"
                             onClick={() => handleAddTag(tag)}
-                            className="rounded-full border border-border bg-muted/30 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/30 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
                           >
+                            <Tag className="w-2.5 h-2.5" />
                             {tag}
                           </button>
                         ))}
