@@ -240,13 +240,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               {isExpanded && (
                 <div
                   className={cn(
-                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     (isReportsOpen)
                       ? "max-h-56 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
                   )}
                 >
-                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full">
+                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
                     {dashboardSubItems.map((subItem) => (
                       <li key={subItem.title}>
                         <Link
@@ -286,13 +286,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               {isExpanded && (
                 <div
                   className={cn(
-                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isOpportunitiesOpen
                       ? "max-h-28 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
                   )}
                 >
-                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full">
+                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
                     <li>
                       <Link
                         to="/oportunidades"
@@ -342,13 +342,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               {isExpanded && (
                 <div
                   className={cn(
-                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isCampaignsOpen
                       ? "max-h-28 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
                   )}
                 >
-                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full">
+                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
                     <li>
                       <Link
                         to="/whatsapp"
@@ -398,13 +398,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               {isExpanded && (
                 <div
                   className={cn(
-                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isCrmOpen
                       ? "max-h-28 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
                   )}
                 >
-                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full">
+                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
                     <li>
                       <Link
                         to="/crm"
@@ -471,13 +471,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               {isExpanded && (
                 <div
                   className={cn(
-                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isAutomationOpen
                       ? "max-h-40 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
                   )}
                 >
-                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full">
+                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
                     <li>
                       <Link
                         to="/fluxos"
