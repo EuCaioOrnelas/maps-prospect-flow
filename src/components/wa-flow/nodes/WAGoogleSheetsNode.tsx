@@ -1,7 +1,7 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
 import { CheckCircle2, AlertCircle } from "lucide-react";
-import sheetsIcon from "@/assets/icons/google-sheets.png";
+import sheetsIcon from "@/assets/icons/google-sheets-sm.png";
 
 export function WAGoogleSheetsNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
