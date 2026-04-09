@@ -89,7 +89,7 @@ export function ChatSidebar({
   conversations, activeConversationId, onSelectConversation,
   searchQuery, onSearchChange, connections, activeConnectionId,
   onConnectionChange, onTogglePin, onArchive, onToggleMute, loading,
-  onNewConversation,
+  onNewConversation, connectionHealth = {},
 }: ChatSidebarProps) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [newConvOpen, setNewConvOpen] = useState(false);
