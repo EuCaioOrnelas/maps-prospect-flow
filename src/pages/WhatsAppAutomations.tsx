@@ -260,7 +260,11 @@ export default function WhatsAppAutomations() {
               className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
             >
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:bg-emerald-500/20 transition-colors">
-                <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" viewBox="0 0 24 24" fill="none"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" fill="url(#gG1)"/><defs><linearGradient id="gG1" x1="1" y1="1" x2="23" y2="23"><stop offset="0%" stopColor="#4285F4"/><stop offset="33%" stopColor="#EA4335"/><stop offset="66%" stopColor="#FBBC05"/><stop offset="100%" stopColor="#34A853"/></linearGradient></defs></svg>
+                <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" viewBox="0 0 32 32" fill="none">
+                  <path d="M16 2L18.5 11.5L28 16L18.5 20.5L16 30L13.5 20.5L4 16L13.5 11.5L16 2Z" fill="#34A853"/>
+                  <path d="M25 4L26 7.5L29.5 9L26 10.5L25 14L24 10.5L20.5 9L24 7.5L25 4Z" fill="#34A853" opacity="0.6"/>
+                  <path d="M7 22L8 24.5L10.5 25.5L8 26.5L7 29L6 26.5L3.5 25.5L6 24.5L7 22Z" fill="#34A853" opacity="0.5"/>
+                </svg>
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Criar com IA ✨</p>
