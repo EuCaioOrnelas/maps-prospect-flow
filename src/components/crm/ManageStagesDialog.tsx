@@ -442,7 +442,7 @@ export const ManageStagesDialog = ({
                   </p>
                 ) : (
                   filteredTags.map((tag) => (
-                    <div key={tag} className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card transition-colors hover:bg-muted/50">
+                    <div key={tag} className="group flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card transition-colors hover:bg-muted/50">
                       <Tag className="w-3.5 h-3.5 text-primary shrink-0" />
                       {editingTag === tag ? (
                         <div className="flex-1 flex items-center gap-1.5">
