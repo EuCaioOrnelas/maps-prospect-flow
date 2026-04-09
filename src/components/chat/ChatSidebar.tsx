@@ -381,6 +381,14 @@ export function ChatSidebar({
           onStartConversation={onNewConversation}
         />
       )}
+
+      {/* Custom filters dialog */}
+      <ChatFiltersDialog
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        filters={customFilters}
+        onApply={setCustomFilters}
+      />
     </div>
   );
 }
