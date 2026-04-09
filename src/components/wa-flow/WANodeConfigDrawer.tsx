@@ -27,7 +27,6 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
 
   return (
     <div className="rounded-lg border border-border/50 bg-muted/20 overflow-hidden">
-      {/* Header - always visible */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
@@ -46,28 +45,31 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
         </div>
       </button>
 
-      {/* Collapsible content */}
       {isOpen && (
         <div className="px-3 pb-3 space-y-2.5 border-t border-border/30 pt-2.5">
           {hasAccounts && (
             <div className="space-y-1.5">
-              {accounts.map((acc: any) => (
-                <div key={acc.id} className={cn(
-                  "flex items-center justify-between p-2 rounded-md border text-xs",
-                  acc.id === selectedAccountId ? "border-primary/50 bg-primary/5" : "border-border/30 bg-muted/10"
-                )}>
-                  <button
-                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                    onClick={() => onSelectAccount(acc.id)}
-                  >
-                    <div className={cn("w-2 h-2 rounded-full shrink-0", acc.id === selectedAccountId ? "bg-primary" : "bg-muted-foreground/30")} />
-                    <span className="truncate">{acc.google_email}</span>
-                  </button>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive/70 hover:text-destructive shrink-0" onClick={() => handleDisconnect(acc.id)}>
-                    <X size={12} />
-                  </Button>
-                </div>
-              ))}
+              {accounts.map((acc: any) => {
+                const isSelected = acc.id === selectedAccountId;
+                return (
+                  <div key={acc.id} className={cn(
+                    "flex items-center justify-between p-2 rounded-md border text-xs transition-colors",
+                    isSelected ? "border-primary/50 bg-primary/5" : "border-border/30 bg-muted/10 hover:bg-muted/20"
+                  )}>
+                    <button
+                      className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                      onClick={() => onSelectAccount(acc.id)}
+                    >
+                      <div className={cn("w-2 h-2 rounded-full shrink-0", isSelected ? "bg-primary" : "bg-muted-foreground/30")} />
+                      <span className="truncate">{acc.google_email}</span>
+                      {isSelected && <span className="text-[9px] text-primary ml-auto shrink-0">ativo</span>}
+                    </button>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive/70 hover:text-destructive shrink-0 ml-1" onClick={() => handleDisconnect(acc.id)} title="Desconectar">
+                      <PowerOff size={11} />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
 
