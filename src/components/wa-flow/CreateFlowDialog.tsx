@@ -141,10 +141,10 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
                 className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all text-center"
               >
                 <Badge className="absolute -top-2 right-3 bg-emerald-500 text-white text-[10px] px-2 py-0.5 gap-1">
-                  <img src={geminiIcon} alt="Gemini" className="w-2.5 h-2.5" /> IA
+                  <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="white"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z"/></svg> IA
                 </Badge>
                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                  <img src={geminiIcon} alt="Gemini" className="w-7 h-7" />
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" fill="url(#geminiGrad2)"/><defs><linearGradient id="geminiGrad2" x1="0" y1="0" x2="24" y2="24"><stop stopColor="#4285F4"/><stop offset="0.5" stopColor="#34A853"/><stop offset="1" stopColor="#8BC34A"/></linearGradient></defs></svg>
                 </div>
                 <div>
                   <p className="font-semibold text-foreground text-sm mb-1">Criar com IA ✨</p>

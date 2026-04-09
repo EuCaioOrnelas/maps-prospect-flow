@@ -259,8 +259,8 @@ export default function WhatsAppAutomations() {
               onClick={() => navigate("/fluxos/criar-ia")}
               className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
             >
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                <img src={geminiIcon} alt="Gemini" className="w-5 h-5 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:bg-emerald-500/20 transition-colors">
+                <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" viewBox="0 0 24 24" fill="none"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" fill="url(#geminiGrad)"/><defs><linearGradient id="geminiGrad" x1="0" y1="0" x2="24" y2="24"><stop stopColor="#4285F4"/><stop offset="0.5" stopColor="#34A853"/><stop offset="1" stopColor="#8BC34A"/></linearGradient></defs></svg>
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Criar com IA ✨</p>
