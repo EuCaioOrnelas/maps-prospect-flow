@@ -88,6 +88,9 @@ function useGoogleAuth(queryKeySuffix: string, scopes: string[], initialAccountI
   const [isConnecting, setIsConnecting] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string>(initialAccountId || "");
 
+  // Required scope keyword to filter accounts by integration type
+  const scopeFilter = queryKeySuffix === "calendar" ? "calendar" : queryKeySuffix === "gmail" ? "gmail" : "spreadsheets";
+
   const { data: googleAccounts = [], refetch: refetchTokens } = useQuery({
     queryKey: [`google-tokens-${queryKeySuffix}`, user?.id],
     queryFn: async () => {
@@ -95,7 +98,11 @@ function useGoogleAuth(queryKeySuffix: string, scopes: string[], initialAccountI
         .from("user_google_tokens" as any)
         .select("id, google_email, scopes, token_expires_at")
         .eq("user_id", user!.id);
-      return (data || []) as any[];
+      // Filter to only accounts that have the matching scope
+      return ((data || []) as any[]).filter((acc: any) => {
+        const accScopes: string[] = acc.scopes || [];
+        return accScopes.some((s: string) => s.includes(scopeFilter));
+      });
     },
     enabled: !!user,
     refetchInterval: 5000,
@@ -104,7 +111,6 @@ function useGoogleAuth(queryKeySuffix: string, scopes: string[], initialAccountI
   // Auto-select: prefer initialAccountId, then first account
   useEffect(() => {
     if (googleAccounts.length > 0 && !selectedAccountId) {
-      // If initialAccountId exists in accounts, use it; otherwise pick first
       const matchInit = initialAccountId && googleAccounts.find((a: any) => a.id === initialAccountId);
       setSelectedAccountId(matchInit ? initialAccountId : googleAccounts[0].id);
     }
