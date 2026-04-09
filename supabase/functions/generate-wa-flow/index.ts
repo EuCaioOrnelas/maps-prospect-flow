@@ -1107,16 +1107,61 @@ serve(async (req) => {
       !connectedSources.has(n.id) && !terminalTypes.includes(n.type) && n.type !== "entry" && nodeIdMap[n.id],
     );
     const endNode = flowDraft.nodes.find((n) => n.type === "end" && nodeIdMap[n.id]);
-    if (endNode && looseNodes.length > 0) {
+    const handoffNode = flowDraft.nodes.find((n) => n.type === "handoff" && nodeIdMap[n.id]);
+    const fallbackTarget = endNode || handoffNode;
+
+    if (fallbackTarget && looseNodes.length > 0) {
       for (const looseNode of looseNodes) {
         if (connectedTargets.has(looseNode.id)) {
           await sb.from("wa_flow_edges").insert({
             flow_id,
             source_node_id: nodeIdMap[looseNode.id],
-            target_node_id: nodeIdMap[endNode.id],
+            target_node_id: nodeIdMap[fallbackTarget.id],
             source_handle: null, target_handle: null, label: null,
           });
-          console.log(`[generate-wa-flow] Auto-connected loose node ${looseNode.id} to end`);
+          console.log(`[generate-wa-flow] Auto-connected loose node ${looseNode.id} to ${fallbackTarget.type}`);
+        }
+      }
+    }
+
+    // Auto-connect loose button/list handles to end/handoff
+    if (fallbackTarget) {
+      const edgeHandleKeys = new Set(
+        (flowDraft.edges || []).map((e) => `${e.source}|${normalizeHandle(e.source_handle || e.sourceHandle) || ""}`),
+      );
+
+      for (const node of flowDraft.nodes) {
+        if (!nodeIdMap[node.id]) continue;
+        const config = node.config || {};
+
+        let expectedHandles: string[] = [];
+        if (node.type === "buttons") {
+          if (config.interaction_type === "list" && Array.isArray(config.list_items)) {
+            expectedHandles = config.list_items.map((_: any, i: number) => `item_${i}`);
+          } else if (Array.isArray(config.buttons)) {
+            expectedHandles = config.buttons.map((_: any, i: number) => `btn_${i}`);
+          }
+        } else if (node.type === "random_split" && Array.isArray(config.splits)) {
+          expectedHandles = config.splits.map((_: any, i: number) => `split_${i}`);
+        } else if (node.type === "ab_test" && Array.isArray(config.variants)) {
+          expectedHandles = config.variants.map((_: any, i: number) => `variant_${i}`);
+        }
+
+        for (const handle of expectedHandles) {
+          const key = `${node.id}|${handle}`;
+          if (!edgeHandleKeys.has(key)) {
+            const { error } = await sb.from("wa_flow_edges").insert({
+              flow_id,
+              source_node_id: nodeIdMap[node.id],
+              target_node_id: nodeIdMap[fallbackTarget.id],
+              source_handle: handle,
+              target_handle: null,
+              label: null,
+            });
+            if (!error) {
+              console.log(`[generate-wa-flow] Auto-connected loose handle ${node.id}/${handle} to ${fallbackTarget.type}`);
+            }
+          }
         }
       }
     }
