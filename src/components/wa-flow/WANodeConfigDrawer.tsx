@@ -172,7 +172,7 @@ function VariablesHelper({ variables }: { variables?: { key: string; label: stri
 }
 
 function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; allNodes?: any[] }) {
-  const { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect } = useGoogleAuth("sheets", [
+  const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("sheets", [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive.readonly",
   ]);
@@ -185,11 +185,11 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
   const flowVars = useFlowVariables(allNodes);
 
   useEffect(() => {
-    if (googleToken) {
+    if (selectedAccount) {
       updateConfig("google_connected", true);
-      updateConfig("google_email", (googleToken as any).google_email);
+      updateConfig("google_email", selectedAccount.google_email);
     }
-  }, [(googleToken as any)?.google_email]);
+  }, [selectedAccount?.google_email]);
 
   const { data: spreadsheets = [], isLoading: loadingSheets, refetch: refetchSheets } = useQuery({
     queryKey: ["google-spreadsheets", user?.id],
@@ -269,11 +269,12 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
       {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets. Os dados são adicionados em novas linhas, sem sobrescrever dados existentes.")}
 
       <GoogleConnectionBlock
-        isConnected={isConnected}
-        googleToken={googleToken}
+        accounts={googleAccounts}
+        selectedAccountId={selectedAccountId}
+        onSelectAccount={setSelectedAccountId}
         isConnecting={isConnecting}
         handleConnect={handleConnect}
-        handleDisconnect={() => { handleDisconnect(); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
+        handleDisconnect={(id) => { handleDisconnect(id); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
         label="Google"
       />
 
