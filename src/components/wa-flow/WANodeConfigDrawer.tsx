@@ -14,56 +14,66 @@ import { toast } from "sonner";
 import { MessageContentBuilder } from "./MessageContentBuilder";
 import type { Node } from "@xyflow/react";
 import { cn } from "@/lib/utils";
-import googleLogo from "@/assets/icons/google-g.png";
+import googleLogo from "@/assets/icons/google-g-sm.png";
 
 
 function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, isConnecting, handleConnect, handleDisconnect, label }: {
   accounts: any[]; selectedAccountId?: string; onSelectAccount: (id: string) => void;
   isConnecting: boolean; handleConnect: () => void; handleDisconnect: (id: string) => void; label: string;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
   const hasAccounts = accounts.length > 0;
+  const selectedEmail = accounts.find((a: any) => a.id === selectedAccountId)?.google_email;
 
   return (
-    <div className="p-3 rounded-lg border border-border/50 bg-muted/20 space-y-2.5">
-      <div className="flex items-center gap-2">
-        <img src={googleLogo} alt="Google" className="w-5 h-5" />
-        <span className="text-xs font-medium text-foreground">Contas conectadas</span>
-      </div>
+    <div className="rounded-lg border border-border/50 bg-muted/20 overflow-hidden">
+      {/* Header - always visible */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <img src={googleLogo} alt="Google" className="w-5 h-5" />
+          <span className="text-xs font-medium text-foreground">Conta conectada</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {hasAccounts && selectedEmail ? (
+            <span className="text-[10px] text-muted-foreground truncate max-w-[140px]">{selectedEmail}</span>
+          ) : (
+            <span className="text-[10px] text-primary font-medium">Selecionar</span>
+          )}
+          <ChevronDown size={12} className={cn("text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+        </div>
+      </button>
 
-      {hasAccounts ? (
-        <>
-          {/* Connected accounts list */}
-          <div className="space-y-1.5">
-            {accounts.map((acc: any) => (
-              <div key={acc.id} className={cn(
-                "flex items-center justify-between p-2 rounded-md border text-xs",
-                acc.id === selectedAccountId ? "border-primary/50 bg-primary/5" : "border-border/30 bg-muted/10"
-              )}>
-                <button
-                  className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                  onClick={() => onSelectAccount(acc.id)}
-                >
-                  <div className={cn("w-2 h-2 rounded-full shrink-0", acc.id === selectedAccountId ? "bg-primary" : "bg-muted-foreground/30")} />
-                  <span className="truncate">{acc.google_email}</span>
-                </button>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive/70 hover:text-destructive shrink-0" onClick={() => handleDisconnect(acc.id)}>
-                  <X size={12} />
-                </Button>
-              </div>
-            ))}
-          </div>
+      {/* Collapsible content */}
+      {isOpen && (
+        <div className="px-3 pb-3 space-y-2.5 border-t border-border/30 pt-2.5">
+          {hasAccounts && (
+            <div className="space-y-1.5">
+              {accounts.map((acc: any) => (
+                <div key={acc.id} className={cn(
+                  "flex items-center justify-between p-2 rounded-md border text-xs",
+                  acc.id === selectedAccountId ? "border-primary/50 bg-primary/5" : "border-border/30 bg-muted/10"
+                )}>
+                  <button
+                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                    onClick={() => onSelectAccount(acc.id)}
+                  >
+                    <div className={cn("w-2 h-2 rounded-full shrink-0", acc.id === selectedAccountId ? "bg-primary" : "bg-muted-foreground/30")} />
+                    <span className="truncate">{acc.google_email}</span>
+                  </button>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive/70 hover:text-destructive shrink-0" onClick={() => handleDisconnect(acc.id)}>
+                    <X size={12} />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
 
-          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 w-full" onClick={handleConnect} disabled={isConnecting}>
+          <Button variant="outline" size="sm" className="h-8 text-[10px] gap-1.5 w-full" onClick={handleConnect} disabled={isConnecting}>
             {isConnecting ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-            Conectar outra conta
-          </Button>
-        </>
-      ) : (
-        <div className="space-y-2">
-          <p className="text-[10px] text-muted-foreground">Nenhuma conta conectada. Conecte para usar este recurso.</p>
-          <Button onClick={handleConnect} disabled={isConnecting} className="w-full h-9 text-sm gap-2">
-            {isConnecting ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
-            {isConnecting ? "Conectando..." : `Conectar ${label}`}
+            {hasAccounts ? "Conectar outra conta" : "Conectar conta Google"}
           </Button>
         </div>
       )}

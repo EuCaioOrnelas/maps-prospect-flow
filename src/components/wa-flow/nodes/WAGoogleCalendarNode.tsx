@@ -1,7 +1,7 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
 import { CheckCircle2, AlertCircle } from "lucide-react";
-import calendarIcon from "@/assets/icons/google-calendar.png";
+import calendarIcon from "@/assets/icons/google-calendar-sm.png";
 
 export function WAGoogleCalendarNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
