@@ -615,10 +615,11 @@ export default function CreateFlowAI() {
                 )}
               />
 
-              <div className="flex justify-end pt-2 border-t border-border/30">
+              <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                <span className="text-[10px] text-muted-foreground/50">{dailyCount}/{DAILY_LIMIT} criações hoje</span>
                 <motion.button
                   type="button"
-                  onClick={() => createWithAI.mutate()}
+                  onClick={() => { if (!canCreateWithAI) { setShowDailyLimit(true); return; } createWithAI.mutate(); }}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   disabled={!prompt.trim()}
@@ -652,13 +653,13 @@ export default function CreateFlowAI() {
             {/* Quick prompts - 3 per row */}
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground text-center">Ou escolha um prompt pronto:</p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="flex flex-wrap justify-center gap-2">
                 {quickPrompts.map((qp, index) => (
                   <motion.button
                     key={index}
                     onClick={() => handleSelectPrompt(index)}
                     className={cn(
-                      "text-left p-3 rounded-xl border transition-all text-xs",
+                      "px-4 py-2 rounded-full border transition-all text-xs font-medium",
                       expandedPrompt === index
                         ? "border-primary/40 bg-primary/5 text-foreground"
                         : "border-border bg-card/50 text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-foreground"
@@ -666,10 +667,11 @@ export default function CreateFlowAI() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.05 }}
                   >
-                    <span className="line-clamp-2 font-medium">{qp.preview}</span>
+                    {qp.preview}
                   </motion.button>
+                ))}
                 ))}
               </div>
             </div>
@@ -740,6 +742,13 @@ export default function CreateFlowAI() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Daily Limit Dialog */}
+      <DailyLimitDialog 
+        open={showDailyLimit} 
+        onOpenChange={setShowDailyLimit} 
+        remaining={DAILY_LIMIT - dailyCount} 
+      />
     </div>
   );
 }

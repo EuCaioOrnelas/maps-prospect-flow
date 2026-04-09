@@ -140,8 +140,8 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
                 onClick={() => setMode("ai")}
                 className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all text-center"
               >
-                <Badge className="absolute -top-2 right-3 bg-emerald-500 text-white text-[10px] px-2 py-0.5 gap-1">
-                  <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="white"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z"/></svg> IA
+                <Badge className="absolute -top-2 right-3 bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 gap-1 shadow-md">
+                  ⭐ Recomendado
                 </Badge>
                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
                   <svg className="w-7 h-7" viewBox="0 0 32 32" fill="none">
@@ -153,7 +153,7 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
                 <div>
                   <p className="font-semibold text-foreground text-sm mb-1">Criar com IA ✨</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Descreva seu objetivo e a IA monta o fluxo completo
+                    Descreva seu objetivo e a IA monta o fluxo completo pra você
                   </p>
                 </div>
               </button>
@@ -200,7 +200,7 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
                   <button
                     key={s}
                     onClick={() => setPrompt(s)}
-                    className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors"
+                    className="text-[11px] px-3 py-1.5 rounded-full border border-border bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors"
                   >
                     {s}
                   </button>
