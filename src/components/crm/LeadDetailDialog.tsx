@@ -1420,8 +1420,8 @@ export const LeadDetailDialog = ({
                   >
                     {/* Current tags */}
                     <div className="flex flex-wrap gap-2">
-                      {(lead.tags || []).length > 0 ? (
-                        (lead.tags || []).map((tag) => (
+                      {localTags.length > 0 ? (
+                        localTags.map((tag) => (
                           <button
                             key={tag}
                             type="button"
