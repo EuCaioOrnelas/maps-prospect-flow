@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { MessageContentBuilder } from "./MessageContentBuilder";
 import type { Node } from "@xyflow/react";
 import { cn } from "@/lib/utils";
+import googleLogo from "@/assets/logos/google.svg";
 
 
 function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, isConnecting, handleConnect, handleDisconnect, label }: {
@@ -29,7 +30,7 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <img src="/src/assets/logos/google.svg" alt="Google" className="w-5 h-5" />
+              <img src={googleLogo} alt="Google" className="w-5 h-5" />
               <span className="text-xs font-medium text-foreground">{label} conectado</span>
             </div>
           </div>
@@ -63,7 +64,7 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
       ) : (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <img src="/src/assets/logos/google.svg" alt="Google" className="w-5 h-5" />
+            <img src={googleLogo} alt="Google" className="w-5 h-5" />
             <p className="text-xs text-muted-foreground">Conecte sua conta Google para usar este recurso.</p>
           </div>
           <Button onClick={handleConnect} disabled={isConnecting} className="w-full h-9 text-sm gap-2">
@@ -266,7 +267,14 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
 
   return (
     <div className="space-y-4">
-      {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets. Os dados são adicionados em novas linhas, sem sobrescrever dados existentes.")}
+      {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets. Os dados são adicionados em novas linhas.")}
+
+      <div className="flex gap-2 items-start p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+        <AlertTriangle size={13} className="text-yellow-500 shrink-0 mt-0.5" />
+        <p className="text-[10px] text-yellow-600 dark:text-yellow-400">
+          <strong>Atenção:</strong> Ao salvar, a planilha selecionada será limpa e formatada com os cabeçalhos definidos no mapeamento de colunas. Use uma planilha em branco ou sem dados importantes.
+        </p>
+      </div>
 
       <GoogleConnectionBlock
         accounts={googleAccounts}
@@ -1879,6 +1887,7 @@ interface Props {
 }
 
 export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete, entryApiType = "evolution", entryConfig = {}, allNodes }: Props) {
+  const { user } = useAuth();
   const [config, setConfig] = useState<any>({});
   const [label, setLabel] = useState("");
 
@@ -1887,7 +1896,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
     setLabel(String((node.data as any).label || ""));
   }, [node]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validate A/B test sum
     if (node.type === "ab_test") {
       const total = (config.variants || []).reduce((s: number, v: any) => s + (parseFloat(v.weight) || 0), 0);
@@ -1907,6 +1916,38 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
         return;
       }
     }
+
+    // Google Sheets: clear sheet and set headers on save
+    if (node.type === "google_sheets" && config.spreadsheet_id && config.google_connected) {
+      const columns = config.columns || [];
+      const sheetName = config.sheet_name || "Dados";
+      if (columns.length > 0) {
+        try {
+          toast.loading("Formatando planilha...", { id: "sheets-format" });
+          const headers = columns.map((c: any) => c.label || "");
+          const { error } = await supabase.functions.invoke("google-sheets-action", {
+            body: {
+              user_id: user?.id,
+              spreadsheet_id: config.spreadsheet_id,
+              sheet_name: sheetName,
+              action: "clear_and_set_headers",
+              data: [headers],
+            },
+          });
+          if (error) {
+            toast.error("Erro ao formatar planilha", { id: "sheets-format" });
+            console.error("Sheets format error:", error);
+            return;
+          }
+          toast.success("Planilha formatada com sucesso!", { id: "sheets-format" });
+        } catch (err) {
+          toast.error("Erro ao formatar planilha", { id: "sheets-format" });
+          console.error(err);
+          return;
+        }
+      }
+    }
+
     onUpdate(node.id, config, label);
     onOpenChange(false);
   };
@@ -1978,7 +2019,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 pr-3 space-y-5">
+        <div className="flex-1 overflow-y-auto p-5 pr-3 space-y-5 scrollbar-thin">
 
           {/* ===== ENTRY NODE ===== */}
           {node.type === "entry" && (
