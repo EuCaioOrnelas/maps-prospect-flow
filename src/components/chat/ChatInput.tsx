@@ -245,10 +245,30 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               sideOffset={10}
               className="w-[340px] p-0 rounded-xl border wa-border-light shadow-2xl bg-popover overflow-hidden"
             >
-              <EmojiPickerFull onSelect={(emoji) => {
-                setText(prev => prev + emoji);
-                inputRef.current?.focus();
-              }} />
+              <EmojiPicker
+                className="h-[350px]"
+                onEmojiSelect={({ emoji }) => {
+                  setText(prev => prev + emoji);
+                  inputRef.current?.focus();
+                }}
+              >
+                <EmojiPickerSearch placeholder="Buscar emoji..." />
+                <EmojiPickerCategories
+                  activeCategory={activeEmojiCategory}
+                  onCategoryClick={(idx) => {
+                    setActiveEmojiCategory(idx);
+                    // Scroll to category header in the viewport
+                    const viewport = document.querySelector('[class*="outline-none"]');
+                    if (viewport) {
+                      const headers = viewport.querySelectorAll("[data-category-header]");
+                      if (headers[idx]) {
+                        headers[idx].scrollIntoView({ behavior: "smooth", block: "start" });
+                      }
+                    }
+                  }}
+                />
+                <EmojiPickerContent onVisibleCategoryChange={setActiveEmojiCategory} />
+              </EmojiPicker>
             </PopoverContent>
           </Popover>
 
