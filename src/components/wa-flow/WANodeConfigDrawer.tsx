@@ -197,8 +197,9 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
     if (selectedAccount) {
       updateConfig("google_connected", true);
       updateConfig("google_email", selectedAccount.google_email);
+      updateConfig("google_account_id", selectedAccountId);
     }
-  }, [selectedAccount?.google_email]);
+  }, [selectedAccount?.google_email, selectedAccountId]);
 
   const { data: spreadsheets = [], isLoading: loadingSheets, refetch: refetchSheets } = useQuery({
     queryKey: ["google-spreadsheets", user?.id],
