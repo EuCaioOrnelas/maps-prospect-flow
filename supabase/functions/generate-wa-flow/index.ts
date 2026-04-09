@@ -673,6 +673,18 @@ const validateFlowDraft = (draft: FlowDraft, prompt: string) => {
     if (buttonTargets.some((t) => t?.type === "condition")) issues.push(`O nó buttons ${node.id} não pode apontar diretamente para condition.`);
   }
 
+  // Back-to-back questions forbidden: data_collect/message(pergunta) → data_collect/message without condition between
+  const questionTypes = ["data_collect"];
+  for (const node of nodes.filter((n) => questionTypes.includes(n.type))) {
+    const outgoing = edgesBySource.get(node.id) || [];
+    for (const edge of outgoing) {
+      const target = nodeById.get(edge.target);
+      if (target && (target.type === "data_collect" || target.type === "message")) {
+        issues.push(`O nó ${node.id} (${node.type}) conecta diretamente a ${target.id} (${target.type}) sem condition(responded) entre eles. Insira um nó condition para verificar se o lead respondeu antes de prosseguir.`);
+      }
+    }
+  }
+
   if (looksLikeAgentPlaybook(prompt)) {
     const suspiciousActions = nodes.filter((n) => n.type === "action" && /colet(ar)? dados|suger(ir)? solu[cç][aã]o|diagn[oó]stico|classifica[cç][aã]o/i.test(n.label || ""));
     if (suspiciousActions.length > 0) issues.push("O fluxo transformou etapas abstratas em nós action; compacte em ai_agent ou message.");
