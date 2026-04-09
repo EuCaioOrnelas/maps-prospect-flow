@@ -1,24 +1,32 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Send, Smile, Mic, Plus, X, Image, FileText, Film } from "lucide-react";
+import { Send, Smile, Mic, MicOff, Plus, X, Image, FileText, Film, Reply } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { EmojiPicker, EmojiPickerSearch, EmojiPickerContent } from "@/components/ui/emoji-picker";
+import { EmojiPicker, EmojiPickerSearch, EmojiPickerContent, EmojiPickerFooter } from "@/components/ui/emoji-picker";
+import { ChatMessage } from "@/hooks/useChat";
 
 interface ChatInputProps {
-  onSendMessage: (text: string) => void;
+  onSendMessage: (text: string, replyToId?: string) => void;
   onSendMedia: (file: File, caption?: string) => void;
+  replyingTo?: ChatMessage | null;
+  onCancelReply?: () => void;
 }
 
-export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
+export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply }: ChatInputProps) {
   const [text, setText] = useState("");
   const [showAttach, setShowAttach] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [preview, setPreview] = useState<{ file: File; url: string; type: string } | null>(null);
   const [caption, setCaption] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const handleSend = useCallback(() => {
     if (preview) {
@@ -28,11 +36,12 @@ export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
       return;
     }
     if (!text.trim()) return;
-    onSendMessage(text.trim());
+    onSendMessage(text.trim(), replyingTo?.id);
     setText("");
     setEmojiOpen(false);
+    onCancelReply?.();
     inputRef.current?.focus();
-  }, [text, preview, caption, onSendMessage, onSendMedia]);
+  }, [text, preview, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -54,6 +63,53 @@ export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
     e.target.value = "";
   };
 
+  // Audio recording
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      audioChunksRef.current = [];
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const audioFile = new File([audioBlob], `audio_${Date.now()}.webm`, { type: "audio/webm" });
+        onSendMedia(audioFile);
+        stream.getTracks().forEach(t => t.stop());
+        setRecordingTime(0);
+      };
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      timerRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
+    } catch (err) {
+      console.error("Mic access denied:", err);
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.ondataavailable = null;
+      mediaRecorderRef.current.onstop = null;
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
+    }
+    setIsRecording(false);
+    setRecordingTime(0);
+    audioChunksRef.current = [];
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  };
+
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.style.height = "20px";
@@ -70,9 +126,46 @@ export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
     return () => document.removeEventListener("click", handler);
   }, []);
 
+  // Recording UI
+  if (isRecording) {
+    return (
+      <div className="wa-input-bar flex items-center gap-3 px-[10px] py-[8px]">
+        <button onClick={cancelRecording} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+          <X size={22} className="text-red-400" />
+        </button>
+        <div className="flex-1 flex items-center gap-3">
+          <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+          <span className="text-[15px] wa-text-primary font-mono">{formatTime(recordingTime)}</span>
+          <div className="flex-1 h-[4px] rounded-full bg-white/10 overflow-hidden">
+            <div className="h-full bg-red-500/60 rounded-full animate-pulse" style={{ width: `${Math.min((recordingTime / 120) * 100, 100)}%` }} />
+          </div>
+        </div>
+        <button onClick={stopRecording} className="w-[42px] h-[42px] bg-[#00a884] hover:bg-[#06cf9c] rounded-full flex items-center justify-center transition-colors">
+          <Send size={18} className="text-white ml-[1px]" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* ─── File preview overlay ─── */}
+      {/* Reply preview bar */}
+      {replyingTo && (
+        <div className="flex items-center gap-2 px-4 py-2 border-t wa-border-light wa-input-bar">
+          <div className="w-[3px] h-8 rounded-full bg-[#00a884] shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] text-[#00a884] font-medium">
+              {replyingTo.direction === "outbound" ? "Você" : "Contato"}
+            </p>
+            <p className="text-[12px] wa-text-muted truncate">{replyingTo.content || "📎 Mídia"}</p>
+          </div>
+          <button onClick={onCancelReply} className="p-1 rounded-full hover:bg-white/10">
+            <X size={16} className="wa-icon-muted" />
+          </button>
+        </div>
+      )}
+
+      {/* File preview overlay */}
       {preview && (
         <div className="wa-preview-bg border-t wa-border-light">
           <div className="flex items-end gap-3 px-4 py-3">
@@ -111,7 +204,7 @@ export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
         </div>
       )}
 
-      {/* ─── Input bar ─── */}
+      {/* Input bar */}
       {!preview && (
         <div className="wa-input-bar flex items-end gap-[6px] px-[10px] py-[5px] relative">
           {/* Attach menu */}
@@ -138,12 +231,10 @@ export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
             </div>
           )}
 
-          {/* Emoji picker with Popover */}
+          {/* Emoji picker */}
           <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
             <PopoverTrigger asChild>
-              <button
-                className={cn("wa-emoji-btn p-[8px] rounded-full transition-colors", emojiOpen ? "bg-white/10" : "hover:bg-white/5")}
-              >
+              <button className={cn("wa-emoji-btn p-[8px] rounded-full transition-colors", emojiOpen ? "bg-white/10" : "hover:bg-white/5")}>
                 <Smile size={24} className={emojiOpen ? "text-[#00a884]" : "wa-icon-panel"} />
               </button>
             </PopoverTrigger>
@@ -154,7 +245,7 @@ export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
               className="w-[340px] p-0 rounded-xl border wa-border-light shadow-2xl bg-popover overflow-hidden"
             >
               <EmojiPicker
-                className="h-[320px]"
+                className="h-[350px]"
                 onEmojiSelect={({ emoji }) => {
                   setText(prev => prev + emoji);
                   inputRef.current?.focus();
@@ -162,6 +253,7 @@ export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
               >
                 <EmojiPickerSearch placeholder="Buscar emoji..." />
                 <EmojiPickerContent />
+                <EmojiPickerFooter />
               </EmojiPicker>
             </PopoverContent>
           </Popover>
@@ -192,14 +284,11 @@ export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
 
           {/* Send or Mic button */}
           {text.trim() ? (
-            <button
-              onClick={handleSend}
-              className="p-[8px] rounded-full bg-[#00a884] hover:bg-[#06cf9c] transition-colors"
-            >
+            <button onClick={handleSend} className="p-[8px] rounded-full bg-[#00a884] hover:bg-[#06cf9c] transition-colors">
               <Send size={20} className="text-white ml-[1px]" />
             </button>
           ) : (
-            <button className="p-[8px] rounded-full hover:bg-white/5 transition-colors">
+            <button onClick={startRecording} className="p-[8px] rounded-full hover:bg-white/5 transition-colors">
               <Mic size={24} className="wa-icon-panel" />
             </button>
           )}

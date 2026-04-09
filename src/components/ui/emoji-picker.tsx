@@ -18,6 +18,7 @@ function EmojiPicker({
   return (
     <EmojiPickerPrimitive.Root
       className={cn("flex flex-col", className)}
+      locale="pt"
       {...props}
     />
   );

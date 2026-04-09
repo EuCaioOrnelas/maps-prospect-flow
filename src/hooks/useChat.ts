@@ -237,7 +237,7 @@ export function useChat() {
   }, [user, activeConversationId]);
 
   // Send text message
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, replyToId?: string) => {
     if (!activeConversationId || !user || !text.trim()) return;
     const conversation = conversations.find(c => c.id === activeConversationId);
     if (!conversation) return;
@@ -258,7 +258,7 @@ export function useChat() {
       media_caption: null,
       status: "pending",
       status_updated_at: null,
-      reply_to_message_id: null,
+      reply_to_message_id: replyToId || null,
       metadata: {},
       created_at: new Date().toISOString(),
     };
@@ -272,6 +272,7 @@ export function useChat() {
       message_type: "text",
       content: text,
       status: "pending",
+      reply_to_message_id: replyToId || null,
     }).select().single();
 
     if (inserted) {

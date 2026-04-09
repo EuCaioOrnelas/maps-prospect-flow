@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, Trash2, Ban } from "lucide-react";
+import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, Trash2, Ban, Reply, Forward, Copy, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
@@ -7,22 +7,14 @@ import { ChatInput } from "./ChatInput";
 import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import { toast } from "sonner";
 
-// Format phone: 5511999887766 → +55 (11) 99988-7766
 function formatPhoneDisplay(phone: string): string {
   const digits = phone.replace(/\D/g, "");
-  if (digits.length === 13 && digits.startsWith("55")) {
-    return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
-  }
-  if (digits.length === 12 && digits.startsWith("55")) {
-    return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 8)}-${digits.slice(8)}`;
-  }
-  if (digits.length === 11) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  }
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  }
+  if (digits.length === 13 && digits.startsWith("55")) return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+  if (digits.length === 12 && digits.startsWith("55")) return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 8)}-${digits.slice(8)}`;
+  if (digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  if (digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
   return phone;
 }
 
@@ -30,13 +22,12 @@ interface ChatMessageAreaProps {
   conversation: ChatConversation | null;
   messages: ChatMessage[];
   loading: boolean;
-  onSendMessage: (text: string) => void;
+  onSendMessage: (text: string, replyToId?: string) => void;
   onSendMedia: (file: File, caption?: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   onReopenConversation?: (templateName: string) => void;
 }
 
-// ─── Status icons ───
 function MessageStatus({ status }: { status: string }) {
   if (status === "pending") {
     return (
@@ -79,7 +70,6 @@ function MessageStatus({ status }: { status: string }) {
   return null;
 }
 
-// ─── Date divider ───
 function DateDivider({ date }: { date: Date }) {
   const today = new Date();
   const yesterday = new Date(today);
@@ -98,7 +88,6 @@ function DateDivider({ date }: { date: Date }) {
   );
 }
 
-// ─── Media previews ───
 function MediaPreview({ msg }: { msg: ChatMessage }) {
   if (msg.message_type === "image") {
     return (
@@ -113,6 +102,13 @@ function MediaPreview({ msg }: { msg: ChatMessage }) {
       <div className="rounded-[6px] overflow-hidden mb-[3px] max-w-[330px]">
         <video src={msg.media_url || ""} controls className="w-full max-h-[330px]" preload="metadata" />
         {msg.media_caption && <p className="text-[14.2px] wa-text-primary mt-[4px] px-[2px] leading-[19px]">{msg.media_caption}</p>}
+      </div>
+    );
+  }
+  if (msg.message_type === "audio") {
+    return (
+      <div className="min-w-[240px] max-w-[330px] px-1 py-1">
+        <audio src={msg.media_url || ""} controls className="w-full h-[36px]" preload="metadata" />
       </div>
     );
   }
@@ -133,7 +129,6 @@ function MediaPreview({ msg }: { msg: ChatMessage }) {
   return null;
 }
 
-// ─── Tail SVGs ───
 function OutboundTail() {
   return (
     <span className="absolute top-0 -right-[8px] w-[8px] h-[13px]">
@@ -149,7 +144,19 @@ function InboundTail() {
   );
 }
 
-// ─── Search messages bar ───
+// Reply quote inside bubble
+function ReplyQuote({ replyMsg }: { replyMsg: ChatMessage | undefined }) {
+  if (!replyMsg) return null;
+  return (
+    <div className="mx-[4px] mt-[4px] mb-[2px] rounded-[7px] bg-black/10 px-[8px] py-[5px] border-l-[3px] border-[#00a884] cursor-pointer">
+      <p className="text-[11px] text-[#00a884] font-medium">
+        {replyMsg.direction === "outbound" ? "Você" : "Contato"}
+      </p>
+      <p className="text-[12px] wa-text-muted truncate">{replyMsg.content || "📎 Mídia"}</p>
+    </div>
+  );
+}
+
 function SearchMessagesBar({ messages, onClose }: { messages: ChatMessage[]; onClose: () => void }) {
   const [query, setQuery] = useState("");
   const results = query.trim().length >= 2
@@ -194,11 +201,39 @@ function SearchMessagesBar({ messages, onClose }: { messages: ChatMessage[]; onC
   );
 }
 
+// Message action menu (reply, copy, forward)
+function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply: () => void; onForward: () => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="opacity-0 group-hover/msg:opacity-100 absolute top-[4px] right-[4px] p-1 rounded-md bg-black/20 hover:bg-black/30 transition-all z-10">
+          <ChevronDown size={14} className="text-white/80" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="wa-dropdown-bg border wa-border min-w-[180px] rounded-xl shadow-2xl py-1 overflow-hidden">
+        <DropdownMenuItem onClick={onReply} className="flex items-center gap-2 px-3 py-2 mx-1 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5">
+          <Reply size={14} className="wa-icon-muted" /> Responder
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => {
+          navigator.clipboard.writeText(msg.content || "");
+          toast.success("Mensagem copiada");
+        }} className="flex items-center gap-2 px-3 py-2 mx-1 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5">
+          <Copy size={14} className="wa-icon-muted" /> Copiar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onForward} className="flex items-center gap-2 px-3 py-2 mx-1 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5">
+          <Forward size={14} className="wa-icon-muted" /> Encaminhar
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function ChatMessageArea({
   conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation,
 }: ChatMessageAreaProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -206,7 +241,11 @@ export function ChatMessageArea({
     }
   }, [messages]);
 
-  // ─── Empty state ───
+  // Clear reply when conversation changes
+  useEffect(() => {
+    setReplyingTo(null);
+  }, [conversation?.id]);
+
   if (!conversation) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center wa-empty-bg select-none">
@@ -230,15 +269,17 @@ export function ChatMessageArea({
     );
   }
 
-  // Avatar color
   const AVATAR_COLORS = ["bg-[#00a884]", "bg-[#53bdeb]", "bg-[#7f66ff]", "bg-[#ff6f69]", "bg-[#ffa62b]"];
   const hash = conversation.contact_phone.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const avatarColor = AVATAR_COLORS[hash % AVATAR_COLORS.length];
 
+  // Build a map for reply lookups
+  const messagesMap = new Map(messages.map(m => [m.id, m]));
+
   return (
     <div className="flex-1 flex min-w-0">
       <div className="flex-1 flex flex-col min-w-0">
-        {/* ─── Chat Header ─── */}
+        {/* Chat Header */}
         <div className="h-[58px] min-h-[58px] flex items-center gap-[10px] px-[16px] wa-chat-header-bg wa-border-header-bottom shrink-0">
           <div className={cn(
             "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-light",
@@ -260,14 +301,16 @@ export function ChatMessageArea({
               {conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
             </h3>
             <p className="text-[13px] wa-chat-header-sub truncate leading-[18px]">
-              {formatPhoneDisplay(conversation.contact_phone)}
+              {conversation.last_message_at
+                ? `Último contato: ${format(parseISO(conversation.last_message_at), "dd/MM/yyyy 'às' HH:mm")}`
+                : formatPhoneDisplay(conversation.contact_phone)
+              }
             </p>
           </div>
           <div className="flex items-center gap-[20px]">
             <button className="wa-icon-button p-1" onClick={() => setShowSearch(!showSearch)}>
               <Search size={20} className="wa-chat-header-icon" />
             </button>
-            {/* 3-dot menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="wa-icon-button p-1">
@@ -302,11 +345,9 @@ export function ChatMessageArea({
           </div>
         </div>
 
-        {/* ─── Messages area ─── */}
+        {/* Messages area */}
         <div className="flex-1 overflow-y-auto wa-chat-bg wa-scrollbar relative" ref={scrollContainerRef}>
-          {/* WhatsApp wallpaper doodle pattern */}
           <div className="absolute inset-0 wa-chat-pattern pointer-events-none" />
-          {/* Glow effects */}
           <div className="wa-chat-glow" />
 
           <div className="relative z-[1] px-[63px] py-[4px] min-h-full flex flex-col justify-end">
@@ -318,11 +359,11 @@ export function ChatMessageArea({
               <>
                 {messages.map((msg, idx) => {
                   const prevMsg = idx > 0 ? messages[idx - 1] : null;
-                  const nextMsg = idx < messages.length - 1 ? messages[idx + 1] : null;
                   const showDate = !prevMsg || !isSameDay(parseISO(msg.created_at), parseISO(prevMsg.created_at));
                   const isOutbound = msg.direction === "outbound";
                   const isSameAuthorAsPrev = prevMsg && prevMsg.direction === msg.direction && !showDate;
                   const showTail = !isSameAuthorAsPrev;
+                  const replyMsg = msg.reply_to_message_id ? messagesMap.get(msg.reply_to_message_id) : undefined;
 
                   return (
                     <div key={msg.id}>
@@ -333,10 +374,17 @@ export function ChatMessageArea({
                         isSameAuthorAsPrev ? "mt-[2px]" : "mt-[10px]"
                       )}>
                         <div className={cn(
-                          "relative max-w-[65%]",
+                          "relative max-w-[65%] group/msg",
                           showTail ? (isOutbound ? "mr-0" : "ml-0") : (isOutbound ? "mr-[8px]" : "ml-[8px]")
                         )}>
                           {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
+
+                          {/* Message actions dropdown */}
+                          <MessageActions
+                            msg={msg}
+                            onReply={() => setReplyingTo(msg)}
+                            onForward={() => toast.info("Encaminhar: em breve!")}
+                          />
 
                           <div className={cn(
                             "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative",
@@ -346,6 +394,9 @@ export function ChatMessageArea({
                             showTail && isOutbound && "!rounded-tr-none",
                             showTail && !isOutbound && "!rounded-tl-none"
                           )}>
+                            {/* Reply quote */}
+                            {replyMsg && <ReplyQuote replyMsg={replyMsg} />}
+
                             {msg.message_type !== "text" && (
                               <div className="p-[3px]"><MediaPreview msg={msg} /></div>
                             )}
@@ -358,7 +409,6 @@ export function ChatMessageArea({
                               </div>
                             )}
 
-                            {/* Timestamp + status — below text, right-aligned */}
                             <div className="flex items-center justify-end gap-[3px] px-[7px] pb-[5px] -mt-[2px]">
                               <span className="text-[11px] leading-[15px] wa-text-timestamp select-none">
                                 {format(parseISO(msg.created_at), "HH:mm")}
@@ -377,7 +427,7 @@ export function ChatMessageArea({
           </div>
         </div>
 
-        {/* ─── Input or Expired Banner ─── */}
+        {/* Input or Expired Banner */}
         {(() => {
           const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
           const isWindowExpired = lastInbound
@@ -393,7 +443,14 @@ export function ChatMessageArea({
               />
             );
           }
-          return <ChatInput onSendMessage={onSendMessage} onSendMedia={onSendMedia} />;
+          return (
+            <ChatInput
+              onSendMessage={onSendMessage}
+              onSendMedia={onSendMedia}
+              replyingTo={replyingTo}
+              onCancelReply={() => setReplyingTo(null)}
+            />
+          );
         })()}
       </div>
 
