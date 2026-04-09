@@ -244,17 +244,10 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               sideOffset={10}
               className="w-[340px] p-0 rounded-xl border wa-border-light shadow-2xl bg-popover overflow-hidden"
             >
-              <EmojiPicker
-                className="h-[350px]"
-                onEmojiSelect={({ emoji }) => {
-                  setText(prev => prev + emoji);
-                  inputRef.current?.focus();
-                }}
-              >
-                <EmojiPickerSearch placeholder="Buscar emoji..." />
-                <EmojiPickerCategories />
-                <EmojiPickerContent />
-              </EmojiPicker>
+              <EmojiPickerWithCategories onEmojiSelect={(emoji) => {
+                setText(prev => prev + emoji);
+                inputRef.current?.focus();
+              }} />
             </PopoverContent>
           </Popover>
 
