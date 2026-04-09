@@ -1165,6 +1165,7 @@ export const LeadDetailDialog = ({
             { id: 'info', label: 'Informações' },
             { id: 'deals', label: `Vendas (${deals.length})` },
             { id: 'notes', label: `Notas (${notes.length})` },
+            { id: 'files', label: 'Arquivos' },
             { id: 'history', label: 'Histórico' },
           ].map((tab) => (
             <button
