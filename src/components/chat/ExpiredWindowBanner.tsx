@@ -1,40 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Clock, Info, MessageSquare, Send } from "lucide-react";
+import { Clock, Info, MessageSquare, Send, Loader2 } from "lucide-react";
+
+interface MetaTemplate {
+  id: string;
+  name: string;
+  category: string;
+  language: string;
+  components: any[];
+}
 
 interface ExpiredWindowBannerProps {
   contactName: string | null;
   contactPhone: string;
   onReopenConversation: (templateName: string) => void;
+  fetchTemplates?: () => Promise<MetaTemplate[]>;
 }
-
-const TEMPLATES = [
-  {
-    id: "hello_world",
-    name: "Olá (padrão)",
-    category: "utility",
-    cost: "R$ 0,25",
-    description: "Template simples de saudação aprovado pela Meta",
-    preview: "Olá! Como posso ajudá-lo(a)?",
-  },
-  {
-    id: "follow_up",
-    name: "Follow-up",
-    category: "marketing",
-    cost: "R$ 0,62",
-    description: "Template de acompanhamento comercial",
-    preview: "Olá {{nome}}, tudo bem? Gostaria de retomar nossa conversa...",
-  },
-  {
-    id: "reengagement",
-    name: "Reengajamento",
-    category: "marketing",
-    cost: "R$ 0,62",
-    description: "Template para retomar contato após período de inatividade",
-    preview: "Olá {{nome}}! Faz um tempo que não conversamos. Tenho novidades...",
-  },
-];
 
 function formatPhoneDisplay(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -50,9 +32,50 @@ function formatPhoneDisplay(phone: string): string {
   return phone;
 }
 
-export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConversation }: ExpiredWindowBannerProps) {
+function getCategoryLabel(cat: string) {
+  switch (cat) {
+    case "utility": return "Utilidade";
+    case "marketing": return "Marketing";
+    case "authentication": return "Autenticação";
+    default: return cat;
+  }
+}
+
+function getCategoryCost(cat: string) {
+  switch (cat) {
+    case "utility": return "~R$ 0,25";
+    case "marketing": return "~R$ 0,62";
+    case "authentication": return "~R$ 0,15";
+    default: return "~R$ 0,25";
+  }
+}
+
+function getTemplatePreview(template: MetaTemplate): string {
+  const bodyComp = template.components?.find((c: any) => c.type === "BODY");
+  return bodyComp?.text || template.name;
+}
+
+export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConversation, fetchTemplates }: ExpiredWindowBannerProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<MetaTemplate[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  const handleOpenDialog = async () => {
+    setDialogOpen(true);
+    if (!hasLoaded && fetchTemplates) {
+      setLoadingTemplates(true);
+      try {
+        const result = await fetchTemplates();
+        setTemplates(result);
+      } catch {
+        setTemplates([]);
+      }
+      setLoadingTemplates(false);
+      setHasLoaded(true);
+    }
+  };
 
   const handleReopen = () => {
     if (!selectedTemplate) return;
@@ -63,7 +86,6 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
 
   return (
     <>
-      {/* Banner in chat */}
       <div className="px-4 py-3 wa-input-bar border-t wa-border-light">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 shrink-0">
@@ -78,7 +100,7 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
             </p>
             <Button
               size="sm"
-              onClick={() => setDialogOpen(true)}
+              onClick={handleOpenDialog}
               className="mt-2 h-8 bg-primary hover:bg-primary/90 text-primary-foreground text-[12px] px-4"
             >
               <Send size={13} className="mr-1.5" />
@@ -88,7 +110,6 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
         </div>
       </div>
 
-      {/* Template selection dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[440px] p-0 gap-0 overflow-hidden rounded-xl bg-background border border-border shadow-2xl [&>button]:hidden">
           <DialogHeader className="px-5 pt-5 pb-3">
@@ -106,31 +127,47 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
           </div>
 
           <div className="px-5 py-3 space-y-2 max-h-[300px] overflow-y-auto">
-            {TEMPLATES.map(template => (
-              <button
-                key={template.id}
-                onClick={() => setSelectedTemplate(template.id)}
-                className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                  selectedTemplate === template.id
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-[13px] font-medium text-foreground">{template.name}</p>
-                  <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                    {template.cost}
-                  </span>
-                </div>
-                <p className="text-[11px] text-muted-foreground mt-0.5">{template.description}</p>
-                <div className="mt-2 bg-muted/50 rounded-md px-3 py-2">
-                  <p className="text-[12px] text-muted-foreground italic">"{template.preview}"</p>
-                </div>
-              </button>
-            ))}
+            {loadingTemplates ? (
+              <div className="flex items-center justify-center py-8 gap-2">
+                <Loader2 size={20} className="animate-spin text-primary" />
+                <span className="text-[13px] text-muted-foreground">Carregando templates...</span>
+              </div>
+            ) : templates.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-[13px] text-muted-foreground">Nenhum template aprovado encontrado.</p>
+                <p className="text-[11px] text-muted-foreground mt-1">Crie templates no Meta Business Suite.</p>
+              </div>
+            ) : (
+              templates.map(template => (
+                <button
+                  key={template.id}
+                  onClick={() => setSelectedTemplate(template.name)}
+                  className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                    selectedTemplate === template.name
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-[13px] font-medium text-foreground">{template.name}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                        {getCategoryLabel(template.category)}
+                      </span>
+                      <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                        {getCategoryCost(template.category)}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{template.language}</p>
+                  <div className="mt-2 bg-muted/50 rounded-md px-3 py-2">
+                    <p className="text-[12px] text-muted-foreground italic line-clamp-3">"{getTemplatePreview(template)}"</p>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
 
-          {/* Pricing info */}
           <div className="mx-5 mb-3 p-3 rounded-lg bg-muted/40 border border-border">
             <div className="flex items-start gap-2">
               <Info size={14} className="text-muted-foreground mt-0.5 shrink-0" />
