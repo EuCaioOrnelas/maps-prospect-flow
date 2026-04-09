@@ -280,6 +280,7 @@ export const LeadDetailDialog = ({
   const [newTag, setNewTag] = useState('');
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [showTagComposer, setShowTagComposer] = useState(false);
+  const [localTags, setLocalTags] = useState<string[]>([]);
   const [hasWiizeChatConnection, setHasWiizeChatConnection] = useState(false);
   const [formData, setFormData] = useState({
     phone: '',
