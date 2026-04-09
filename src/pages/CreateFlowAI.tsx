@@ -672,7 +672,6 @@ export default function CreateFlowAI() {
                     {qp.preview}
                   </motion.button>
                 ))}
-                ))}
               </div>
             </div>
           </div>
