@@ -1887,7 +1887,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
     setLabel(String((node.data as any).label || ""));
   }, [node]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validate A/B test sum
     if (node.type === "ab_test") {
       const total = (config.variants || []).reduce((s: number, v: any) => s + (parseFloat(v.weight) || 0), 0);
@@ -1907,6 +1907,38 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
         return;
       }
     }
+
+    // Google Sheets: clear sheet and set headers on save
+    if (node.type === "google_sheets" && config.spreadsheet_id && config.google_connected) {
+      const columns = config.columns || [];
+      const sheetName = config.sheet_name || "Dados";
+      if (columns.length > 0) {
+        try {
+          toast.loading("Formatando planilha...", { id: "sheets-format" });
+          const headers = columns.map((c: any) => c.label || "");
+          const { error } = await supabase.functions.invoke("google-sheets-action", {
+            body: {
+              user_id: user?.id,
+              spreadsheet_id: config.spreadsheet_id,
+              sheet_name: sheetName,
+              action: "clear_and_set_headers",
+              data: [headers],
+            },
+          });
+          if (error) {
+            toast.error("Erro ao formatar planilha", { id: "sheets-format" });
+            console.error("Sheets format error:", error);
+            return;
+          }
+          toast.success("Planilha formatada com sucesso!", { id: "sheets-format" });
+        } catch (err) {
+          toast.error("Erro ao formatar planilha", { id: "sheets-format" });
+          console.error(err);
+          return;
+        }
+      }
+    }
+
     onUpdate(node.id, config, label);
     onOpenChange(false);
   };
@@ -1978,7 +2010,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 pr-3 space-y-5">
+        <div className="flex-1 overflow-y-auto p-5 pr-3 space-y-5 scrollbar-thin">
 
           {/* ===== ENTRY NODE ===== */}
           {node.type === "entry" && (
