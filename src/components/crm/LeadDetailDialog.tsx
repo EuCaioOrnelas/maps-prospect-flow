@@ -948,7 +948,14 @@ export const LeadDetailDialog = ({
 
           <Select
             value={lead.whatsapp_status}
-            onValueChange={(value) => handleWhatsAppStatusChange(value as WhatsAppStatus)}
+            onValueChange={(value) => {
+              if (value === '__add_tag__') {
+                setShowTagComposer(true);
+                setActiveTab('info');
+                return;
+              }
+              handleWhatsAppStatusChange(value as WhatsAppStatus);
+            }}
           >
             <SelectTrigger className="w-auto min-w-[160px] h-9 text-sm">
               <span className="truncate">{WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}</span>
@@ -959,6 +966,13 @@ export const LeadDetailDialog = ({
                   {WHATSAPP_STATUS_LABELS[status]}
                 </SelectItem>
               ))}
+              <div className="border-t border-border my-1" />
+              <SelectItem value="__add_tag__" className="text-primary font-medium">
+                <span className="flex items-center gap-1.5">
+                  <Plus className="w-3.5 h-3.5" />
+                  Criar nova tag
+                </span>
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
