@@ -140,8 +140,8 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
                 onClick={() => setMode("ai")}
                 className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all text-center"
               >
-                <Badge className="absolute -top-2 right-3 bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 gap-1 shadow-md">
-                  ⭐ Recomendado
+                <Badge className="absolute -top-2 right-3 bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 shadow-md">
+                  Recomendado
                 </Badge>
                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
                   <svg className="w-7 h-7" viewBox="0 0 32 32" fill="none">
