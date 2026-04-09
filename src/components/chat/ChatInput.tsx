@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Send, Smile, Mic, MicOff, Plus, X, Image, FileText, Film, Reply } from "lucide-react";
+import { Send, Smile, Mic, Plus, X, Image, FileText, Film } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerContent, CATEGORIES } from "@/components/ui/emoji-picker";
+import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerContent } from "@/components/ui/emoji-picker";
 import { ChatMessage } from "@/hooks/useChat";
 
 interface ChatInputProps {
@@ -64,7 +64,6 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     e.target.value = "";
   };
 
-  // Audio recording
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -113,8 +112,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
   useEffect(() => {
     if (inputRef.current) {
-      inputRef.current.style.height = "20px";
-      inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 100) + "px";
+      inputRef.current.style.height = "22px";
+      inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 120) + "px";
     }
   }, [text]);
 
@@ -126,6 +125,9 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     document.addEventListener("click", handler);
     return () => document.removeEventListener("click", handler);
   }, []);
+
+  // Multiline detection for border radius
+  const isMultiline = text.includes("\n") || text.length > 60;
 
   // Recording UI
   if (isRecording) {
@@ -205,9 +207,9 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
         </div>
       )}
 
-      {/* Input bar */}
+      {/* Input bar — WhatsApp style: pill with icons inside */}
       {!preview && (
-        <div className="wa-input-bar flex items-end gap-[6px] px-[10px] py-[5px] relative">
+        <div className="wa-input-bar flex items-end gap-[8px] px-[10px] py-[6px] relative">
           {/* Attach menu */}
           {showAttach && (
             <div className="wa-attach-menu absolute bottom-[60px] left-[15px] wa-attach-bg rounded-2xl shadow-2xl border wa-border-light p-3 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
@@ -232,76 +234,80 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
             </div>
           )}
 
-          {/* Emoji picker */}
-          <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
-            <PopoverTrigger asChild>
-              <button className={cn("wa-emoji-btn p-[8px] rounded-full transition-colors", emojiOpen ? "bg-white/10" : "hover:bg-white/5")}>
-                <Smile size={24} className={emojiOpen ? "text-[#00a884]" : "wa-icon-panel"} />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              side="top"
-              align="start"
-              sideOffset={10}
-              className="w-[340px] p-0 rounded-xl border wa-border-light shadow-2xl bg-popover overflow-hidden"
-            >
-              <EmojiPicker
-                className="h-[350px]"
-                onEmojiSelect={({ emoji }) => {
-                  setText(prev => prev + emoji);
-                  inputRef.current?.focus();
-                }}
-              >
-                <EmojiPickerCategories
-                  activeCategory={activeEmojiCategory}
-                  onCategoryClick={(idx) => {
-                    setActiveEmojiCategory(idx);
-                    const popoverEl = document.querySelector('[data-radix-popper-content-wrapper] [class*="outline-none"]');
-                    if (popoverEl) {
-                      const headers = popoverEl.querySelectorAll("[data-category-header]");
-                      if (headers[idx]) {
-                        headers[idx].scrollIntoView({ behavior: "smooth", block: "start" });
-                      }
-                    }
-                  }}
-                />
-                <EmojiPickerSearch placeholder="Pesquisar emoji" />
-                <EmojiPickerContent onVisibleCategoryChange={setActiveEmojiCategory} />
-              </EmojiPicker>
-            </PopoverContent>
-          </Popover>
-
-          {/* Attach button */}
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setEmojiOpen(false); }}
-            className={cn("wa-attach-btn p-[8px] rounded-full transition-colors", showAttach ? "bg-white/10" : "hover:bg-white/5")}
+          {/* Main pill container — icons + input inside */}
+          <div
+            className={cn(
+              "flex-1 wa-input-field flex items-end transition-all",
+              isMultiline ? "rounded-[18px]" : "rounded-full"
+            )}
           >
-            <Plus size={24} className={cn("transition-transform duration-200", showAttach ? "text-[#00a884] rotate-45" : "wa-icon-panel")} />
-          </button>
+            {/* Attach + inside pill */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setEmojiOpen(false); }}
+              className={cn("wa-attach-btn p-[9px] shrink-0 rounded-full transition-colors self-end", showAttach ? "opacity-100" : "hover:opacity-80")}
+            >
+              <Plus size={22} className={cn("transition-transform duration-200", showAttach ? "text-[#00a884] rotate-45" : "wa-icon-panel")} />
+            </button>
 
-          {/* Input field - rounded pill like WhatsApp */}
-          <div className="flex-1 py-[5px]">
-            <div className="wa-input-field rounded-full flex items-end">
-              <textarea
-                ref={inputRef}
-                value={text}
-                onChange={e => setText(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Digite uma mensagem"
-                rows={1}
-                className="flex-1 bg-transparent wa-text-primary text-[15px] px-[14px] py-[9px] outline-none resize-none max-h-[100px] overflow-y-auto leading-[20px] placeholder:wa-text-muted wa-scrollbar"
-                style={{ minHeight: "20px" }}
-              />
-            </div>
+            {/* Emoji picker inside pill */}
+            <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+              <PopoverTrigger asChild>
+                <button className={cn("p-[9px] shrink-0 rounded-full transition-colors self-end", emojiOpen ? "opacity-100" : "hover:opacity-80")}>
+                  <Smile size={22} className={emojiOpen ? "text-[#00a884]" : "wa-icon-panel"} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                side="top"
+                align="start"
+                sideOffset={10}
+                className="w-[340px] p-0 rounded-xl border wa-border-light shadow-2xl bg-popover overflow-hidden"
+              >
+                <EmojiPicker
+                  className="h-[350px]"
+                  onEmojiSelect={({ emoji }) => {
+                    setText(prev => prev + emoji);
+                    inputRef.current?.focus();
+                  }}
+                >
+                  <EmojiPickerCategories
+                    activeCategory={activeEmojiCategory}
+                    onCategoryClick={(idx) => {
+                      setActiveEmojiCategory(idx);
+                      const popoverEl = document.querySelector('[data-radix-popper-content-wrapper] [class*="outline-none"]');
+                      if (popoverEl) {
+                        const headers = popoverEl.querySelectorAll("[data-category-header]");
+                        if (headers[idx]) {
+                          headers[idx].scrollIntoView({ behavior: "smooth", block: "start" });
+                        }
+                      }
+                    }}
+                  />
+                  <EmojiPickerSearch placeholder="Pesquisar emoji" />
+                  <EmojiPickerContent onVisibleCategoryChange={setActiveEmojiCategory} />
+                </EmojiPicker>
+              </PopoverContent>
+            </Popover>
+
+            {/* Text input */}
+            <textarea
+              ref={inputRef}
+              value={text}
+              onChange={e => setText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Digite uma mensagem"
+              rows={1}
+              className="flex-1 bg-transparent wa-text-primary text-[15px] pl-[2px] pr-[14px] py-[10px] outline-none resize-none max-h-[120px] overflow-y-auto leading-[20px] placeholder:wa-text-muted wa-scrollbar"
+              style={{ minHeight: "22px" }}
+            />
           </div>
 
-          {/* Send or Mic button */}
+          {/* Send or Mic button — outside pill */}
           {text.trim() ? (
-            <button onClick={handleSend} className="p-[8px] rounded-full bg-[#00a884] hover:bg-[#06cf9c] transition-colors">
+            <button onClick={handleSend} className="p-[10px] rounded-full bg-[#00a884] hover:bg-[#06cf9c] transition-colors self-end mb-[1px]">
               <Send size={20} className="text-white ml-[1px]" />
             </button>
           ) : (
-            <button onClick={startRecording} className="p-[8px] rounded-full hover:bg-white/5 transition-colors">
+            <button onClick={startRecording} className="p-[10px] rounded-full hover:bg-white/5 transition-colors self-end mb-[1px]">
               <Mic size={24} className="wa-icon-panel" />
             </button>
           )}
