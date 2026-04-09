@@ -268,7 +268,7 @@ export const LeadDetailDialog = ({
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files'>('info');
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingHeaderName, setIsEditingHeaderName] = useState(false);
   const [headerNameValue, setHeaderNameValue] = useState('');
@@ -322,6 +322,16 @@ export const LeadDetailDialog = ({
     hasAgent: boolean;
   } | null>(null);
   const [isTogglingPause, setIsTogglingPause] = useState(false);
+
+  // Deal attachments state
+  const [dealAttachmentFiles, setDealAttachmentFiles] = useState<File[]>([]);
+  const [dealAttachments, setDealAttachments] = useState<Record<string, Array<{ id: string; file_name: string; file_type: string; file_url: string }>>>({});
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+
+  // Lead files state
+  const [leadFiles, setLeadFiles] = useState<Array<{ id: string; file_name: string; file_type: string; file_url: string | null; source: string; created_at: string }>>([]);
+  const [driveConnection, setDriveConnection] = useState<{ is_active: boolean; root_folder_id: string | null } | null>(null);
+  const [isUploadingLeadFile, setIsUploadingLeadFile] = useState(false);
 
   // Check if value has unsaved changes
   const hasUnsavedValue = dealValue !== savedValue;
