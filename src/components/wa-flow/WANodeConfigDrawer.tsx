@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ChevronUp, KeyRound, BotMessageSquare } from "lucide-react";
+import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ChevronDown, ChevronUp, KeyRound, BotMessageSquare, PowerOff } from "lucide-react";
 import { toast } from "sonner";
 import { MessageContentBuilder } from "./MessageContentBuilder";
 import type { Node } from "@xyflow/react";
@@ -27,7 +27,6 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
 
   return (
     <div className="rounded-lg border border-border/50 bg-muted/20 overflow-hidden">
-      {/* Header - always visible */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
@@ -46,28 +45,31 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
         </div>
       </button>
 
-      {/* Collapsible content */}
       {isOpen && (
         <div className="px-3 pb-3 space-y-2.5 border-t border-border/30 pt-2.5">
           {hasAccounts && (
             <div className="space-y-1.5">
-              {accounts.map((acc: any) => (
-                <div key={acc.id} className={cn(
-                  "flex items-center justify-between p-2 rounded-md border text-xs",
-                  acc.id === selectedAccountId ? "border-primary/50 bg-primary/5" : "border-border/30 bg-muted/10"
-                )}>
-                  <button
-                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                    onClick={() => onSelectAccount(acc.id)}
-                  >
-                    <div className={cn("w-2 h-2 rounded-full shrink-0", acc.id === selectedAccountId ? "bg-primary" : "bg-muted-foreground/30")} />
-                    <span className="truncate">{acc.google_email}</span>
-                  </button>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive/70 hover:text-destructive shrink-0" onClick={() => handleDisconnect(acc.id)}>
-                    <X size={12} />
-                  </Button>
-                </div>
-              ))}
+              {accounts.map((acc: any) => {
+                const isSelected = acc.id === selectedAccountId;
+                return (
+                  <div key={acc.id} className={cn(
+                    "flex items-center justify-between p-2 rounded-md border text-xs transition-colors",
+                    isSelected ? "border-primary/50 bg-primary/5" : "border-border/30 bg-muted/10 hover:bg-muted/20"
+                  )}>
+                    <button
+                      className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                      onClick={() => onSelectAccount(acc.id)}
+                    >
+                      <div className={cn("w-2 h-2 rounded-full shrink-0", isSelected ? "bg-primary" : "bg-muted-foreground/30")} />
+                      <span className="truncate">{acc.google_email}</span>
+                      {isSelected && <span className="text-[9px] text-primary ml-auto shrink-0">ativo</span>}
+                    </button>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive/70 hover:text-destructive shrink-0 ml-1" onClick={() => handleDisconnect(acc.id)} title="Desconectar">
+                      <PowerOff size={11} />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -81,10 +83,10 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
   );
 }
 
-function useGoogleAuth(queryKeySuffix: string, scopes: string[]) {
+function useGoogleAuth(queryKeySuffix: string, scopes: string[], initialAccountId?: string) {
   const { user } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
-  const [selectedAccountId, setSelectedAccountId] = useState<string>("");
+  const [selectedAccountId, setSelectedAccountId] = useState<string>(initialAccountId || "");
 
   const { data: googleAccounts = [], refetch: refetchTokens } = useQuery({
     queryKey: [`google-tokens-${queryKeySuffix}`, user?.id],
@@ -99,12 +101,14 @@ function useGoogleAuth(queryKeySuffix: string, scopes: string[]) {
     refetchInterval: 5000,
   });
 
-  // Auto-select first account if none selected
+  // Auto-select: prefer initialAccountId, then first account
   useEffect(() => {
     if (googleAccounts.length > 0 && !selectedAccountId) {
-      setSelectedAccountId(googleAccounts[0].id);
+      // If initialAccountId exists in accounts, use it; otherwise pick first
+      const matchInit = initialAccountId && googleAccounts.find((a: any) => a.id === initialAccountId);
+      setSelectedAccountId(matchInit ? initialAccountId : googleAccounts[0].id);
     }
-  }, [googleAccounts, selectedAccountId]);
+  }, [googleAccounts, selectedAccountId, initialAccountId]);
 
   const isConnected = googleAccounts.length > 0;
   const selectedAccount = googleAccounts.find((a: any) => a.id === selectedAccountId) || googleAccounts[0];
@@ -180,7 +184,7 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
   const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("sheets", [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive.readonly",
-  ]);
+  ], config.google_account_id);
 
   const [isCreating, setIsCreating] = useState(false);
   const [newSheetName, setNewSheetName] = useState("");
@@ -193,8 +197,9 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
     if (selectedAccount) {
       updateConfig("google_connected", true);
       updateConfig("google_email", selectedAccount.google_email);
+      updateConfig("google_account_id", selectedAccountId);
     }
-  }, [selectedAccount?.google_email]);
+  }, [selectedAccount?.google_email, selectedAccountId]);
 
   const { data: spreadsheets = [], isLoading: loadingSheets, refetch: refetchSheets } = useQuery({
     queryKey: ["google-spreadsheets", user?.id],
@@ -436,14 +441,15 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
   const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("calendar", [
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/calendar.events",
-  ]);
+  ], config.google_account_id);
 
   useEffect(() => {
     if (selectedAccount) {
       updateConfig("google_connected", true);
       updateConfig("google_email", selectedAccount.google_email);
+      updateConfig("google_account_id", selectedAccountId);
     }
-  }, [selectedAccount?.google_email]);
+  }, [selectedAccount?.google_email, selectedAccountId]);
 
   const { data: calendars = [], isLoading: loadingCalendars } = useQuery({
     queryKey: ["google-calendars", user?.id],
@@ -596,14 +602,15 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
 function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
   const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("gmail", [
     "https://www.googleapis.com/auth/gmail.send",
-  ]);
+  ], config.google_account_id);
 
   useEffect(() => {
     if (selectedAccount) {
       updateConfig("google_connected", true);
       updateConfig("google_email", selectedAccount.google_email);
+      updateConfig("google_account_id", selectedAccountId);
     }
-  }, [selectedAccount?.google_email]);
+  }, [selectedAccount?.google_email, selectedAccountId]);
 
   return (
     <div className="space-y-4">
@@ -1059,7 +1066,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
 import openaiIcon from "@/assets/logos/openai-icon.png";
 import geminiIcon from "@/assets/logos/gemini-icon.png";
 import deepseekIcon from "@/assets/logos/deepseek-icon.png";
-import { Eye, EyeOff, ChevronDown, Save, Pencil } from "lucide-react";
+import { Eye, EyeOff, Save, Pencil } from "lucide-react";
 
 const AI_PROVIDERS = [
   { value: "openai", label: "OpenAI", icon: openaiIcon },
