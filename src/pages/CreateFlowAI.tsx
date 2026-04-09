@@ -549,7 +549,7 @@ export default function CreateFlowAI() {
               </div>
 
               <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
-                Crie fluxos inteligentes<br />para o WhatsApp
+                Crie <span className="text-shimmer-highlight whitespace-nowrap">fluxos inteligentes</span><br />para o WhatsApp
               </h1>
 
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
