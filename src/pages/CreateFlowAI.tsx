@@ -198,13 +198,32 @@ function TypingDots() {
 }
 
 // Phone loading simulation component
-function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPrompt: string }) {
+function PhoneSimulation({ flowName, userPrompt, isFinished }: { flowName: string; userPrompt: string; isFinished: boolean }) {
   const { profile } = useAuth();
   const agentName = `Agente ${profile?.name?.split(" ")[0] || "Wiize"}`;
   const simulationSteps = buildSimulationSteps(userPrompt);
   const [messages, setMessages] = useState<typeof simulationSteps>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const phoneRef = useRef<HTMLDivElement>(null);
+  const [rotateX, setRotateX] = useState(2);
+  const [rotateY, setRotateY] = useState(-3);
+
+  // 3D mouse-follow effect
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!phoneRef.current) return;
+      const rect = phoneRef.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const x = (e.clientX - centerX) / (rect.width / 2);
+      const y = (e.clientY - centerY) / (rect.height / 2);
+      setRotateY(x * 12);
+      setRotateX(-y * 8);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
 
   useEffect(() => {
     if (currentStep >= simulationSteps.length) return;
@@ -219,6 +238,8 @@ function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPromp
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const simulationDone = currentStep >= simulationSteps.length;
+
   return (
     <motion.div
       className="flex flex-col items-center justify-center"
@@ -230,26 +251,22 @@ function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPromp
       <div className="absolute w-[400px] h-[600px] bg-primary/15 rounded-full filter blur-[100px] pointer-events-none" />
 
       {/* 3D Phone Frame */}
-      <div className="relative" style={{ perspective: "1200px" }}>
-        <div
+      <div className="relative" style={{ perspective: "1200px" }} ref={phoneRef}>
+        <motion.div
           className="relative w-[300px] h-[620px]"
-          style={{
-            transform: "rotateY(-3deg) rotateX(2deg)",
-            transformStyle: "preserve-3d",
-          }}
+          animate={{ rotateX, rotateY }}
+          transition={{ type: "spring", stiffness: 100, damping: 20 }}
+          style={{ transformStyle: "preserve-3d" }}
         >
-          {/* Phone body - outer shell with 3D depth */}
+          {/* Phone body */}
           <div
             className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a]"
             style={{
               boxShadow: "0 25px 60px -15px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset, -8px 8px 20px rgba(0,0,0,0.3)",
             }}
           >
-            {/* Metallic edge highlight */}
             <div className="absolute inset-0 rounded-[3rem] border border-[#444] pointer-events-none" />
             <div className="absolute inset-[1px] rounded-[3rem] border border-[#222] pointer-events-none" />
-
-            {/* Side buttons */}
             <div className="absolute -left-[2px] top-[100px] w-[3px] h-[28px] bg-gradient-to-r from-[#555] to-[#333] rounded-l-sm shadow-md" />
             <div className="absolute -left-[2px] top-[145px] w-[3px] h-[50px] bg-gradient-to-r from-[#555] to-[#333] rounded-l-sm shadow-md" />
             <div className="absolute -left-[2px] top-[205px] w-[3px] h-[50px] bg-gradient-to-r from-[#555] to-[#333] rounded-l-sm shadow-md" />
@@ -265,14 +282,12 @@ function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPromp
                 <div className="w-[8px] h-[8px] rounded-full bg-[#333] border border-[#444]" />
               </div>
               <div className="flex items-center gap-1">
-                {/* Signal bars */}
                 <div className="flex items-end gap-[1px]">
                   {[5, 7, 9, 11].map((h, i) => (
                     <div key={i} className="w-[2px] bg-primary-foreground/80 rounded-full" style={{ height: `${h}px` }} />
                   ))}
                 </div>
                 <span className="text-primary-foreground/80 text-[8px] font-semibold ml-0.5">5G</span>
-                {/* Battery */}
                 <div className="ml-1 w-[18px] h-[9px] border border-primary-foreground/60 rounded-[2px] relative">
                   <div className="absolute inset-[1px] rounded-[1px] bg-primary-foreground/70" style={{ width: "70%" }} />
                   <div className="absolute -right-[2px] top-[2px] w-[1px] h-[4px] bg-primary-foreground/60 rounded-r-full" />
@@ -291,7 +306,7 @@ function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPromp
               </div>
             </div>
 
-            {/* Chat area with WhatsApp-style background pattern */}
+            {/* Chat area */}
             <div
               className="flex-1 overflow-y-auto px-3 py-3 space-y-2 relative"
               style={{
@@ -358,17 +373,40 @@ function PhoneSimulation({ flowName, userPrompt }: { flowName: string; userPromp
 
           {/* Bottom chin indicator */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-[100px] h-[4px] bg-[#444] rounded-full" />
-        </div>
+        </motion.div>
       </div>
 
-      <motion.p
-        className="mt-8 text-sm text-muted-foreground text-center flex items-center gap-2"
-        animate={{ opacity: [0.5, 1, 0.5] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
-        <MessageSquare size={16} className="text-primary" />
-        Criando seu fluxo com IA...
-      </motion.p>
+      {/* Status text - changes based on state */}
+      <motion.div className="mt-8 text-center">
+        {isFinished ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 text-sm text-primary font-medium"
+          >
+            <CheckCircle2 size={18} className="text-primary" />
+            Fluxo criado! Abrindo...
+          </motion.div>
+        ) : simulationDone && !isFinished ? (
+          <motion.p
+            className="text-sm text-muted-foreground flex items-center gap-2"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <Sparkles size={16} className="text-primary animate-spin" style={{ animationDuration: "3s" }} />
+            Finalizando a geração do fluxo...
+          </motion.p>
+        ) : (
+          <motion.p
+            className="text-sm text-muted-foreground flex items-center gap-2"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <MessageSquare size={16} className="text-primary" />
+            Criando seu fluxo com IA...
+          </motion.p>
+        )}
+      </motion.div>
     </motion.div>
   );
 }
@@ -415,7 +453,10 @@ export default function CreateFlowAI() {
     },
     onSuccess: (flow) => {
       setReviewFlowId(flow.id);
-      setShowReviewPopup(true);
+      // Small delay to let the user see "Fluxo criado!" before popup
+      setTimeout(() => {
+        setShowReviewPopup(true);
+      }, 1500);
     },
     onError: (err: any) => toast.error(err.message || "Erro ao gerar fluxo com IA"),
   });
@@ -450,8 +491,10 @@ export default function CreateFlowAI() {
     }
   };
 
+  const isGenerating = createWithAI.isPending || (createWithAI.isSuccess && !showReviewPopup);
+
   // Loading state - show phone simulation
-  if (createWithAI.isPending) {
+  if (isGenerating) {
     return (
       <div className="min-h-screen bg-background flex w-full">
         <AppSidebar profile={profile} />
@@ -460,7 +503,7 @@ export default function CreateFlowAI() {
           <MobileNav profile={profile} />
           <BackgroundGlow />
           <main className="flex-1 flex items-center justify-center px-4">
-            <PhoneSimulation flowName={prompt.slice(0, 30)} userPrompt={prompt} />
+            <PhoneSimulation flowName={prompt.slice(0, 30)} userPrompt={prompt} isFinished={createWithAI.isSuccess} />
           </main>
         </div>
       </div>
@@ -540,11 +583,25 @@ export default function CreateFlowAI() {
                   className={cn(
                     "px-5 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 btn-shine relative overflow-hidden",
                     prompt.trim()
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                      ? "text-white shadow-lg"
                       : "bg-muted text-muted-foreground"
                   )}
+                  style={prompt.trim() ? {
+                    background: "linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335)",
+                    boxShadow: "0 4px 16px rgba(66, 133, 244, 0.3)",
+                  } : undefined}
                 >
-                  <img src={geminiIcon} alt="Gemini" className="w-4 h-4" />
+                  {/* Animated white star */}
+                  <motion.svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="white"
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                  >
+                    <path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" />
+                  </motion.svg>
                   <span>Criar fluxo</span>
                 </motion.button>
               </div>
