@@ -83,10 +83,10 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
   );
 }
 
-function useGoogleAuth(queryKeySuffix: string, scopes: string[]) {
+function useGoogleAuth(queryKeySuffix: string, scopes: string[], initialAccountId?: string) {
   const { user } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
-  const [selectedAccountId, setSelectedAccountId] = useState<string>("");
+  const [selectedAccountId, setSelectedAccountId] = useState<string>(initialAccountId || "");
 
   const { data: googleAccounts = [], refetch: refetchTokens } = useQuery({
     queryKey: [`google-tokens-${queryKeySuffix}`, user?.id],
@@ -101,12 +101,14 @@ function useGoogleAuth(queryKeySuffix: string, scopes: string[]) {
     refetchInterval: 5000,
   });
 
-  // Auto-select first account if none selected
+  // Auto-select: prefer initialAccountId, then first account
   useEffect(() => {
     if (googleAccounts.length > 0 && !selectedAccountId) {
-      setSelectedAccountId(googleAccounts[0].id);
+      // If initialAccountId exists in accounts, use it; otherwise pick first
+      const matchInit = initialAccountId && googleAccounts.find((a: any) => a.id === initialAccountId);
+      setSelectedAccountId(matchInit ? initialAccountId : googleAccounts[0].id);
     }
-  }, [googleAccounts, selectedAccountId]);
+  }, [googleAccounts, selectedAccountId, initialAccountId]);
 
   const isConnected = googleAccounts.length > 0;
   const selectedAccount = googleAccounts.find((a: any) => a.id === selectedAccountId) || googleAccounts[0];
