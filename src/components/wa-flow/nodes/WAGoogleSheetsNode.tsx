@@ -13,7 +13,7 @@ export function WAGoogleSheetsNode({ data }: NodeProps) {
       <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
         <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
-          <img src={sheetsIcon} alt="Google Sheets" className="w-5 h-5 object-contain" />
+          <img src={sheetsIcon} alt="Google Sheets" width={20} height={20} className="w-5 h-5 object-contain" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground truncate">
