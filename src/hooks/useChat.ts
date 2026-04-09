@@ -48,6 +48,8 @@ export interface WabaConnection {
   nickname: string | null;
   status: string;
   waba_id: string;
+  access_token?: string;
+  token_expires_at?: string | null;
 }
 
 export function useChat() {
