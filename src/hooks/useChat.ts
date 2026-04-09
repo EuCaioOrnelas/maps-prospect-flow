@@ -435,6 +435,43 @@ export function useChat() {
 
   const activeConversation = conversations.find(c => c.id === activeConversationId) || null;
 
+  // Detect if the active connection has an expired/invalid token
+  const activeConnection = connections.find(c => c.id === activeConnectionId);
+  const isConnectionExpired = activeConnection
+    ? activeConnection.status !== "active" || 
+      (activeConnection.token_expires_at && new Date(activeConnection.token_expires_at) < new Date())
+    : false;
+
+  // Fetch real Meta templates for the active connection
+  const fetchTemplates = useCallback(async () => {
+    if (!activeConnection || !activeConnection.access_token || !activeConnection.waba_id) return [];
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-fetch-templates", {
+        body: {
+          waba_id: activeConnection.waba_id,
+          access_token: activeConnection.access_token,
+        },
+      });
+      if (error || !data?.templates) return [];
+      return data.templates
+        .filter((t: any) => t.status === "APPROVED")
+        .map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          category: t.category?.toLowerCase() || "utility",
+          language: t.language || "pt_BR",
+          components: t.components || [],
+        }));
+    } catch {
+      return [];
+    }
+  }, [activeConnection]);
+
+  // Reconnect handler: reload connections and sync missed messages
+  const handleReconnect = useCallback(async () => {
+    await loadConnections();
+  }, [loadConnections]);
+
   return {
     conversations: filteredConversations,
     messages,
@@ -444,6 +481,8 @@ export function useChat() {
     connections,
     activeConnectionId,
     setActiveConnectionId,
+    activeConnection,
+    isConnectionExpired,
     loading,
     loadingMessages,
     searchQuery,
@@ -457,5 +496,7 @@ export function useChat() {
     toggleMute,
     startNewConversation,
     messagesEndRef,
+    fetchTemplates,
+    handleReconnect,
   };
 }
