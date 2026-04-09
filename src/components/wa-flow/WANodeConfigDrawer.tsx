@@ -32,15 +32,15 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
         className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <img src={googleLogo} alt="Google" className="w-5 h-5" />
+          <img src={googleLogo} alt="Google" className="w-5 h-5" loading="eager" />
           <span className="text-xs font-medium text-foreground">Conta conectada</span>
         </div>
         <div className="flex items-center gap-2">
           {hasAccounts && selectedEmail ? (
             <span className="text-[10px] text-muted-foreground truncate max-w-[140px]">{selectedEmail}</span>
-          ) : (
+          ) : !hasAccounts ? (
             <span className="text-[10px] text-primary font-medium">Selecionar</span>
-          )}
+          ) : null}
           <ChevronDown size={12} className={cn("text-muted-foreground transition-transform", isOpen && "rotate-180")} />
         </div>
       </button>
@@ -61,8 +61,8 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
                       onClick={() => onSelectAccount(acc.id)}
                     >
                       <div className={cn("w-2 h-2 rounded-full shrink-0", isSelected ? "bg-primary" : "bg-muted-foreground/30")} />
-                      <span className="truncate">{acc.google_email}</span>
-                      {isSelected && <span className="text-[9px] text-primary ml-auto shrink-0">ativo</span>}
+                      <span className="truncate text-foreground">{acc.google_email || "Conta Google"}</span>
+                      {isSelected && <span className="text-[9px] text-primary ml-auto shrink-0">selecionado</span>}
                     </button>
                     <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive/70 hover:text-destructive shrink-0 ml-1" onClick={() => handleDisconnect(acc.id)} title="Desconectar">
                       <PowerOff size={11} />
