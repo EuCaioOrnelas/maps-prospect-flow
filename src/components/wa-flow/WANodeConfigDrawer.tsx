@@ -1059,7 +1059,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
 import openaiIcon from "@/assets/logos/openai-icon.png";
 import geminiIcon from "@/assets/logos/gemini-icon.png";
 import deepseekIcon from "@/assets/logos/deepseek-icon.png";
-import { Eye, EyeOff, ChevronDown, Save, Pencil } from "lucide-react";
+import { Eye, EyeOff, Save, Pencil } from "lucide-react";
 
 const AI_PROVIDERS = [
   { value: "openai", label: "OpenAI", icon: openaiIcon },
