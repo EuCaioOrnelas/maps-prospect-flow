@@ -437,11 +437,14 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
   );
 }
 
-function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
+function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner, allNodes }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; allNodes?: any[] }) {
   const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("calendar", [
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/calendar.events",
   ], config.google_account_id);
+
+  const [showHowItWorks, setShowHowItWorks] = useState(true);
+  const flowVars = useFlowVariables(allNodes);
 
   useEffect(() => {
     if (selectedAccount) {
@@ -463,9 +466,64 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
     enabled: !!user && isConnected,
   });
 
+  const durationOptions = [
+    { value: 15, label: "15 minutos" },
+    { value: 30, label: "30 minutos" },
+    { value: 45, label: "45 minutos" },
+    { value: 60, label: "1 hora" },
+    { value: 90, label: "1 hora e meia" },
+    { value: 120, label: "2 horas" },
+    { value: 150, label: "2 horas e meia" },
+    { value: 180, label: "3 horas" },
+  ];
+
+  const reminderOptions = [
+    { value: 5, label: "5 minutos antes" },
+    { value: 10, label: "10 minutos antes" },
+    { value: 15, label: "15 minutos antes" },
+    { value: 30, label: "30 minutos antes" },
+    { value: 60, label: "1 hora antes" },
+    { value: 120, label: "2 horas antes" },
+    { value: 1440, label: "1 dia antes" },
+  ];
+
   return (
     <div className="space-y-4">
-      {renderInfoBanner("Crie eventos automáticos no Google Agenda quando o lead chegar neste ponto do fluxo.")}
+      {/* Como funciona - collapsible no topo */}
+      <div className="rounded-lg border border-primary/20 bg-primary/5 overflow-hidden">
+        <button
+          onClick={() => setShowHowItWorks(!showHowItWorks)}
+          className="w-full flex items-center justify-between p-3 hover:bg-primary/10 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Info size={14} className="text-primary" />
+            <span className="text-[11px] text-primary font-medium">Como funciona</span>
+          </div>
+          <ChevronDown size={12} className={cn("text-primary transition-transform", showHowItWorks && "rotate-180")} />
+        </button>
+        {showHowItWorks && (
+          <div className="px-3 pb-3 space-y-2">
+            <ol className="text-[10px] text-muted-foreground space-y-1.5">
+              <li className="flex items-start gap-2">
+                <Calendar size={11} className="text-muted-foreground mt-0.5 shrink-0" />
+                <span>Selecione a agenda onde o evento será criado</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Type size={11} className="text-muted-foreground mt-0.5 shrink-0" />
+                <span>Configure o nome, duração e descrição do evento</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Zap size={11} className="text-muted-foreground mt-0.5 shrink-0" />
+                <span>Quando o lead passar por aqui, o evento será criado automaticamente</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Mail size={11} className="text-muted-foreground mt-0.5 shrink-0" />
+                <span>O participante receberá um convite por email</span>
+              </li>
+            </ol>
+          </div>
+        )}
+      </div>
 
       <GoogleConnectionBlock
         accounts={googleAccounts}
@@ -480,7 +538,10 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
       {isConnected && (
         <>
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Agenda</Label>
+            <Label className="text-xs font-medium flex items-center gap-1.5">
+              <Calendar size={12} className="text-muted-foreground" />
+              Agenda
+            </Label>
             {loadingCalendars ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
                 <Loader2 size={14} className="animate-spin" /> Carregando agendas...
@@ -514,17 +575,27 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Título do evento</Label>
+            <Label className="text-xs font-medium flex items-center gap-1.5">
+              <Type size={12} className="text-muted-foreground" />
+              Nome do evento <span className="text-destructive">*</span>
+            </Label>
             <Input
               value={config.event_title || ""}
               onChange={(e) => updateConfig("event_title", e.target.value)}
-              placeholder="Reunião com {nome}"
-              className="h-9 text-sm"
+              placeholder="Ex: Reunião com {nome}"
+              className={cn("h-9 text-sm", !config.event_title && "border-destructive/50")}
+              required
             />
+            {!config.event_title && (
+              <p className="text-[10px] text-destructive">Campo obrigatório</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Duração (minutos)</Label>
+            <Label className="text-xs font-medium flex items-center gap-1.5">
+              <Clock size={12} className="text-muted-foreground" />
+              Duração
+            </Label>
             <Select
               value={String(config.event_duration || "30")}
               onValueChange={(v) => updateConfig("event_duration", parseInt(v))}
@@ -533,25 +604,31 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[15, 30, 45, 60, 90, 120].map((d) => (
-                  <SelectItem key={d} value={String(d)}>{d} min</SelectItem>
+                {durationOptions.map((d) => (
+                  <SelectItem key={d.value} value={String(d.value)}>{d.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Descrição do evento</Label>
+            <Label className="text-xs font-medium flex items-center gap-1.5">
+              <FileText size={12} className="text-muted-foreground" />
+              Descrição do evento
+            </Label>
             <Textarea
               value={config.event_description || ""}
               onChange={(e) => updateConfig("event_description", e.target.value)}
-              placeholder={"Lead: {nome}\nTelefone: {telefone}\nEmpresa: {empresa}"}
+              placeholder={"Lead: {nome}\nTelefone: {telefone}"}
               className="text-sm min-h-[80px]"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Convidar participante (email)</Label>
+            <Label className="text-xs font-medium flex items-center gap-1.5">
+              <UserPlus size={12} className="text-muted-foreground" />
+              Convidar participante (email)
+            </Label>
             <Input
               value={config.attendee_email || ""}
               onChange={(e) => updateConfig("attendee_email", e.target.value)}
@@ -559,12 +636,15 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
               className="h-9 text-sm"
             />
             <p className="text-[10px] text-muted-foreground">
-              Use {"{email}"} para enviar convite para o lead ou um email fixo.
+              Use <code className="bg-muted px-1 rounded text-[9px]">{"{email}"}</code> para enviar convite ao lead ou insira um email fixo.
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Lembrete (minutos antes)</Label>
+            <Label className="text-xs font-medium flex items-center gap-1.5">
+              <Bell size={12} className="text-muted-foreground" />
+              Lembrete
+            </Label>
             <Select
               value={String(config.reminder_minutes || "30")}
               onValueChange={(v) => updateConfig("reminder_minutes", parseInt(v))}
@@ -573,25 +653,28 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[5, 10, 15, 30, 60, 120, 1440].map((m) => (
-                  <SelectItem key={m} value={String(m)}>
-                    {m < 60 ? `${m} min` : m === 60 ? "1 hora" : m === 120 ? "2 horas" : "1 dia"}
-                  </SelectItem>
+                {reminderOptions.map((m) => (
+                  <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          <VariablesHelper />
-
-          <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
-            <p className="text-[11px] text-primary font-medium mb-1">📅 Como funciona</p>
-            <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
-              <li>Selecione a agenda onde o evento será criado</li>
-              <li>Configure o título, duração e descrição</li>
-              <li>Quando o lead passar por aqui, o evento será criado automaticamente</li>
-              <li>O participante receberá um convite por email</li>
-            </ol>
+          <div className="p-2 rounded-lg border border-border/30 bg-muted/10">
+            <p className="text-[10px] font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
+              <ListOrdered size={10} className="text-muted-foreground" />
+              Variáveis disponíveis:
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {flowVars.map((v) => (
+                <Badge key={v.key} variant="secondary" className="text-[9px] px-1.5 py-0 h-5 font-mono cursor-pointer hover:bg-primary/20"
+                  onClick={() => navigator.clipboard.writeText(v.key)}
+                  title={`Clique para copiar: ${v.key}`}
+                >
+                  {v.key}
+                </Badge>
+              ))}
+            </div>
           </div>
         </>
       )}
