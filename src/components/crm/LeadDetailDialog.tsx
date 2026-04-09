@@ -380,11 +380,9 @@ export const LeadDetailDialog = ({
       try {
         const [tagsResponse, connectionsResponse] = await Promise.all([
           supabase
-            .from('leads')
-            .select('tags')
-            .eq('user_id', user.id)
-            .not('tags', 'is', null)
-            .range(0, 4999),
+            .from('crm_tags')
+            .select('name')
+            .eq('user_id', user.id),
           supabase
             .from('user_waba_connections')
             .select('id')
@@ -396,19 +394,8 @@ export const LeadDetailDialog = ({
         if (cancelled) return;
 
         const uniqueTags = new Set<string>();
-
         tagsResponse.data?.forEach((item) => {
-          if (!Array.isArray(item.tags)) return;
-
-          item.tags.forEach((tag) => {
-            if (typeof tag !== 'string') return;
-
-            const normalizedTag = tag.trim();
-
-            if (normalizedTag) {
-              uniqueTags.add(normalizedTag);
-            }
-          });
+          if (item.name?.trim()) uniqueTags.add(item.name.trim());
         });
 
         setAvailableTags(Array.from(uniqueTags).sort((a, b) => a.localeCompare(b, 'pt-BR')));
@@ -680,7 +667,7 @@ export const LeadDetailDialog = ({
   };
 
   const handleAddTag = async (tagValue?: string) => {
-    if (!lead) return;
+    if (!lead || !user) return;
 
     const normalizedTag = (tagValue ?? newTag).trim();
 
@@ -700,11 +687,16 @@ export const LeadDetailDialog = ({
 
       setLocalTags(updatedTags);
 
+      // Also save to crm_tags table (upsert to avoid duplicates)
+      await supabase.from('crm_tags').upsert(
+        { user_id: user.id, name: normalizedTag },
+        { onConflict: 'user_id,name' }
+      );
+
       setAvailableTags((prev) => {
         if (prev.some((tag) => tag.toLowerCase() === normalizedTag.toLowerCase())) {
           return prev;
         }
-
         return [...prev, normalizedTag].sort((a, b) => a.localeCompare(b, 'pt-BR'));
       });
 
@@ -1374,10 +1366,11 @@ export const LeadDetailDialog = ({
                             key={tag}
                             type="button"
                             onClick={() => handleRemoveTag(tag)}
-                            className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-destructive/30 hover:text-destructive"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-destructive/30 hover:text-destructive"
                           >
+                            <Tag className="w-3 h-3 text-primary" />
                             <span>{tag}</span>
-                            <X className="w-3 h-3" />
+                            <X className="w-3 h-3 opacity-50" />
                           </button>
                         ))
                       ) : (
@@ -1424,8 +1417,9 @@ export const LeadDetailDialog = ({
                             key={tag}
                             type="button"
                             onClick={() => handleAddTag(tag)}
-                            className="rounded-full border border-border bg-muted/30 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/30 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
                           >
+                            <Tag className="w-2.5 h-2.5" />
                             {tag}
                           </button>
                         ))}
