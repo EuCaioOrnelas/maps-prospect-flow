@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus } from "lucide-react";
+import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
@@ -58,10 +58,14 @@ function getInitials(name: string | null, phone: string): string {
   return phone.slice(-2);
 }
 
+function truncateText(text: string, maxLen: number): string {
+  if (text.length <= maxLen) return text;
+  return text.substring(0, maxLen) + "…";
+}
+
 function getLastMessagePreview(conv: ChatConversation): string {
   if (!conv.last_message_text) return "";
-  const text = conv.last_message_text;
-  return text.length > 45 ? text.substring(0, 45) + "…" : text;
+  return truncateText(conv.last_message_text, 42);
 }
 
 const AVATAR_COLORS = [
@@ -74,6 +78,8 @@ function getAvatarColor(phone: string): string {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
+type FilterType = "all" | "unread" | "official" | "groups" | "archived";
+
 export function ChatSidebar({
   conversations, activeConversationId, onSelectConversation,
   searchQuery, onSearchChange, connections, activeConnectionId,
@@ -82,7 +88,22 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [newConvOpen, setNewConvOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Apply filters
+  const filteredConversations = conversations.filter(conv => {
+    if (activeFilter === "unread") return conv.unread_count > 0;
+    if (activeFilter === "archived") return conv.is_archived;
+    return true;
+  });
+
+  const filters: { key: FilterType; label: string }[] = [
+    { key: "all", label: "Todas" },
+    { key: "unread", label: "Não lidas" },
+    { key: "official", label: "Oficiais" },
+    { key: "groups", label: "Grupos" },
+  ];
 
   return (
     <div className="flex flex-col h-full wa-sidebar-bg">
@@ -96,31 +117,48 @@ export function ChatSidebar({
           {connections.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs wa-sidebar-header-select border transition-colors hover:opacity-80">
-                  <span className="truncate max-w-[140px]">
-                    {connections.find(c => c.id === activeConnectionId)?.nickname 
-                      || connections.find(c => c.id === activeConnectionId)?.display_phone_number 
-                      || "Número"}
+                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs wa-sidebar-header-select border transition-colors hover:brightness-110">
+                  <Phone size={12} className="shrink-0 opacity-70" />
+                  <span className="truncate max-w-[120px]">
+                    {truncateText(
+                      connections.find(c => c.id === activeConnectionId)?.nickname 
+                        || connections.find(c => c.id === activeConnectionId)?.display_phone_number 
+                        || "Número",
+                      18
+                    )}
                   </span>
-                  <ChevronDown size={12} className="shrink-0 opacity-60" />
+                  <ChevronDown size={11} className="shrink-0 opacity-50" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="wa-dropdown-bg wa-border wa-text-primary min-w-[220px] rounded-[3px] shadow-xl py-[9px]">
+              <DropdownMenuContent align="end" className="wa-dropdown-bg border wa-border min-w-[240px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+                <div className="px-3 py-2 border-b wa-border-light">
+                  <p className="text-[11px] uppercase tracking-wider wa-text-muted font-semibold">Números conectados</p>
+                </div>
                 {connections.map(c => (
                   <DropdownMenuItem
                     key={c.id}
                     onClick={() => onConnectionChange(c.id)}
                     className={cn(
-                      "wa-dropdown-item text-[14px] px-4 py-[9px] flex items-center justify-between",
-                      c.id === activeConnectionId && "bg-[#00a884]/10"
+                      "flex items-center gap-3 px-3 py-2.5 mx-1 my-0.5 rounded-lg cursor-pointer transition-colors",
+                      c.id === activeConnectionId
+                        ? "bg-[#00a884]/10 text-[#00a884]"
+                        : "hover:bg-white/5"
                     )}
                   >
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">{c.nickname || c.business_name || "Número"}</p>
-                      <p className="text-[11px] opacity-60">{c.display_phone_number || c.phone_number_id}</p>
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                      c.id === activeConnectionId ? "bg-[#00a884]/20" : "bg-white/5"
+                    )}>
+                      <Phone size={14} className={c.id === activeConnectionId ? "text-[#00a884]" : "wa-icon-muted"} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn("text-[13px] font-medium truncate", c.id === activeConnectionId ? "text-[#00a884]" : "wa-text-primary")}>
+                        {truncateText(c.nickname || c.business_name || "Número", 22)}
+                      </p>
+                      <p className="text-[11px] wa-text-muted truncate">{c.display_phone_number || c.phone_number_id}</p>
                     </div>
                     {c.id === activeConnectionId && (
-                      <span className="w-2 h-2 rounded-full bg-[#00a884] shrink-0 ml-2" />
+                      <Check size={16} className="text-[#00a884] shrink-0" />
                     )}
                   </DropdownMenuItem>
                 ))}
@@ -172,21 +210,44 @@ export function ChatSidebar({
         </div>
       </div>
 
+      {/* Filter chips */}
+      <div className="flex items-center gap-1.5 px-3 pb-2 wa-sidebar-search-area overflow-x-auto scrollbar-none">
+        {filters.map(f => (
+          <button
+            key={f.key}
+            onClick={() => setActiveFilter(activeFilter === f.key ? "all" : f.key)}
+            className={cn(
+              "px-3 py-[5px] rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-150 border",
+              activeFilter === f.key
+                ? "bg-[#00a884] text-white border-[#00a884]"
+                : "wa-text-muted border-white/10 hover:border-white/20 hover:bg-white/5"
+            )}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       {/* Conversations list */}
       <div className="flex-1 overflow-y-auto wa-scrollbar">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <div className="h-7 w-7 rounded-full border-[3px] border-[#00a884]/20 border-t-[#00a884] animate-spin" />
           </div>
-        ) : conversations.length === 0 ? (
+        ) : filteredConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-            <p className="text-sm wa-text-muted">Nenhuma conversa</p>
+            <p className="text-sm wa-text-muted">
+              {activeFilter !== "all" ? "Nenhuma conversa neste filtro" : "Nenhuma conversa"}
+            </p>
             <p className="text-xs wa-text-muted mt-1 opacity-60">As mensagens recebidas aparecerão aqui</p>
           </div>
         ) : (
-          conversations.map(conv => {
+          filteredConversations.map(conv => {
             const isActive = activeConversationId === conv.id;
             const hasUnread = conv.unread_count > 0;
+            const displayName = conv.contact_name
+              ? truncateText(conv.contact_name, 24)
+              : formatPhoneDisplay(conv.contact_phone);
 
             return (
               <div
@@ -213,8 +274,8 @@ export function ChatSidebar({
                 {/* Content */}
                 <div className="flex-1 min-w-0 border-b wa-border-conversation py-[14px] h-full flex flex-col justify-center">
                   <div className="flex items-center justify-between mb-[2px]">
-                    <span className="text-[17px] leading-[21px] wa-text-primary truncate flex items-center gap-1">
-                      {conv.contact_name || formatPhoneDisplay(conv.contact_phone)}
+                    <span className="text-[17px] leading-[21px] wa-text-primary truncate flex items-center gap-1 max-w-[200px]">
+                      {displayName}
                     </span>
                     <span className={cn(
                       "text-[12px] leading-[14px] shrink-0 ml-2",
@@ -254,14 +315,26 @@ export function ChatSidebar({
                             <ChevronDown size={18} className="wa-icon-muted" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="wa-dropdown-bg wa-border wa-text-primary min-w-[200px] rounded-[3px] shadow-xl py-[9px]">
-                          <DropdownMenuItem onClick={() => onTogglePin(conv.id)} className="wa-dropdown-item text-[14.5px] px-6 py-[9px]">
+                        <DropdownMenuContent align="end" className="wa-dropdown-bg border wa-border min-w-[200px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+                          <DropdownMenuItem
+                            onClick={() => onTogglePin(conv.id)}
+                            className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors"
+                          >
+                            <Pin size={14} className="wa-icon-muted" />
                             {conv.is_pinned ? "Desafixar conversa" : "Fixar conversa"}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onToggleMute(conv.id)} className="wa-dropdown-item text-[14.5px] px-6 py-[9px]">
+                          <DropdownMenuItem
+                            onClick={() => onToggleMute(conv.id)}
+                            className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors"
+                          >
+                            <VolumeX size={14} className="wa-icon-muted" />
                             {conv.is_muted ? "Ativar notificações" : "Silenciar notificações"}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onArchive(conv.id)} className="wa-dropdown-item text-[14.5px] px-6 py-[9px]">
+                          <DropdownMenuItem
+                            onClick={() => onArchive(conv.id)}
+                            className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="wa-icon-muted"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
                             Arquivar conversa
                           </DropdownMenuItem>
                         </DropdownMenuContent>
