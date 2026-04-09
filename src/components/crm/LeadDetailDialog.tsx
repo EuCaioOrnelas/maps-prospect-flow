@@ -963,24 +963,6 @@ export const LeadDetailDialog = ({
               ))}
             </SelectContent>
           </Select>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-9 text-xs gap-1.5 text-primary border-primary/30 hover:bg-primary/10 hover:text-primary hover:border-primary/50 transition-colors"
-            onClick={() => {
-              setActiveTab('info');
-              setTimeout(() => {
-                const tagInput = document.getElementById('tag-search-input');
-                tagInput?.focus();
-                tagInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              }, 100);
-            }}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Criar tag
-          </Button>
         </div>
 
         {/* Tab Navigation */}
