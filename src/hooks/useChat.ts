@@ -290,7 +290,7 @@ export function useChat() {
     // Call edge function to send via Meta API
     const connection = connections.find(c => c.id === conversation.waba_connection_id);
     if (connection && inserted) {
-      supabase.functions.invoke("send-chat-message", {
+      const { error: fnError } = await supabase.functions.invoke("send-chat-message", {
         body: {
           message_id: (inserted as any).id,
           phone_number_id: connection.phone_number_id,
@@ -300,6 +300,11 @@ export function useChat() {
           waba_connection_id: connection.id,
         },
       });
+      if (fnError) {
+        console.error("send-chat-message error:", fnError);
+        // Update message status to failed
+        setMessages(prev => prev.map(m => m.id === (inserted as any).id ? { ...m, status: "failed" } : m));
+      }
     }
   }, [activeConversationId, user, conversations, connections]);
 
