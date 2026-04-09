@@ -606,7 +606,7 @@ export default function CreateFlowAI() {
                   >
                     <path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" />
                   </motion.svg>
-                  <span className="relative z-10">Criar fluxo</span>
+                  <span>Criar fluxo</span>
                 </motion.button>
               </div>
             </motion.div>
