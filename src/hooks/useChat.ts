@@ -48,6 +48,8 @@ export interface WabaConnection {
   nickname: string | null;
   status: string;
   waba_id: string;
+  access_token?: string;
+  token_expires_at?: string | null;
 }
 
 export function useChat() {
@@ -63,22 +65,26 @@ export function useChat() {
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load WABA connections
+  // Load WABA connections (include all to detect expired ones)
+  const loadConnections = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("user_waba_connections")
+      .select("id, phone_number_id, display_phone_number, business_name, nickname, status, waba_id, access_token, token_expires_at")
+      .eq("user_id", user.id);
+    if (data && data.length > 0) {
+      setConnections(data);
+      // Prefer active connection
+      const active = data.find(c => c.status === "active");
+      setActiveConnectionId(active?.id || data[0].id);
+    }
+    setLoading(false);
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
-    const loadConnections = async () => {
-      const { data } = await supabase
-        .from("user_waba_connections")
-        .select("id, phone_number_id, display_phone_number, business_name, nickname, status, waba_id")
-        .eq("user_id", user.id)
-        .eq("status", "active");
-      if (data && data.length > 0) {
-        setConnections(data);
-        setActiveConnectionId(data[0].id);
-      }
-    };
     loadConnections();
-  }, [user]);
+  }, [user, loadConnections]);
 
   // Load conversations
   useEffect(() => {
@@ -429,6 +435,43 @@ export function useChat() {
 
   const activeConversation = conversations.find(c => c.id === activeConversationId) || null;
 
+  // Detect if the active connection has an expired/invalid token
+  const activeConnection = connections.find(c => c.id === activeConnectionId);
+  const isConnectionExpired = activeConnection
+    ? activeConnection.status !== "active" || 
+      (activeConnection.token_expires_at && new Date(activeConnection.token_expires_at) < new Date())
+    : false;
+
+  // Fetch real Meta templates for the active connection
+  const fetchTemplates = useCallback(async () => {
+    if (!activeConnection || !activeConnection.access_token || !activeConnection.waba_id) return [];
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-fetch-templates", {
+        body: {
+          waba_id: activeConnection.waba_id,
+          access_token: activeConnection.access_token,
+        },
+      });
+      if (error || !data?.templates) return [];
+      return data.templates
+        .filter((t: any) => t.status === "APPROVED")
+        .map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          category: t.category?.toLowerCase() || "utility",
+          language: t.language || "pt_BR",
+          components: t.components || [],
+        }));
+    } catch {
+      return [];
+    }
+  }, [activeConnection]);
+
+  // Reconnect handler: reload connections and sync missed messages
+  const handleReconnect = useCallback(async () => {
+    await loadConnections();
+  }, [loadConnections]);
+
   return {
     conversations: filteredConversations,
     messages,
@@ -438,6 +481,8 @@ export function useChat() {
     connections,
     activeConnectionId,
     setActiveConnectionId,
+    activeConnection,
+    isConnectionExpired,
     loading,
     loadingMessages,
     searchQuery,
@@ -451,5 +496,7 @@ export function useChat() {
     toggleMute,
     startNewConversation,
     messagesEndRef,
+    fetchTemplates,
+    handleReconnect,
   };
 }

@@ -7,12 +7,15 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ChatOfficialApiDialog } from "@/components/chat/ChatOfficialApiDialog";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Chat = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
-  const [showApiDialog, setShowApiDialog] = useState<boolean | null>(null); // null = loading
+  const [showApiDialog, setShowApiDialog] = useState<boolean | null>(null);
   const [handledLaunchKey, setHandledLaunchKey] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const chat = useChat();
@@ -22,7 +25,6 @@ const Chat = () => {
     supabase.from("profiles").select("plan, name, email, avatar_url, chat_onboarding_seen").eq("id", user.id).single()
       .then(({ data }) => {
         setProfile(data);
-        // Only auto-show if not seen before
         setShowApiDialog(data?.chat_onboarding_seen ? false : true);
       });
   }, [user]);
@@ -31,54 +33,37 @@ const Chat = () => {
   const hasNoConnection = !hasConnection && !chat.loading;
 
   const handleDismissDialog = async () => {
-    if (!hasConnection) return; // Can't dismiss without connection
+    if (!hasConnection) return;
     setShowApiDialog(false);
-    // Mark as seen in DB so it never shows again
     if (user) {
       await supabase.from("profiles").update({ chat_onboarding_seen: true } as any).eq("id", user.id);
     }
   };
 
   const isLoading = chat.loading || showApiDialog === null;
-
-  // Always force dialog open when no connection, regardless of DB flag
   const shouldShowDialog = isLoading ? false : hasNoConnection ? true : !!showApiDialog;
 
   useEffect(() => {
     if (isLoading || shouldShowDialog || !hasConnection) return;
-
     const phone = searchParams.get("phone");
     const name = searchParams.get("name") ?? undefined;
     const conversationId = searchParams.get("conversation");
-
     if (!phone && !conversationId) return;
-
     const nextLaunchKey = `${conversationId ?? ""}:${phone ?? ""}:${chat.activeConnectionId ?? ""}`;
-
     if (nextLaunchKey === handledLaunchKey) return;
-
     const openRequestedChat = async () => {
       if (conversationId) {
         chat.setActiveConversationId(conversationId);
       } else if (phone) {
         await chat.startNewConversation(phone, name);
       }
-
       setHandledLaunchKey(nextLaunchKey);
       setSearchParams({}, { replace: true });
     };
-
     void openRequestedChat();
   }, [
-    chat.activeConnectionId,
-    chat.setActiveConversationId,
-    chat.startNewConversation,
-    handledLaunchKey,
-    hasConnection,
-    isLoading,
-    searchParams,
-    setSearchParams,
-    shouldShowDialog,
+    chat.activeConnectionId, chat.setActiveConversationId, chat.startNewConversation,
+    handledLaunchKey, hasConnection, isLoading, searchParams, setSearchParams, shouldShowDialog,
   ]);
 
   return (
@@ -97,6 +82,31 @@ const Chat = () => {
 
             {!shouldShowDialog && hasConnection ? (
               <>
+                {/* Expired connection overlay */}
+                {chat.isConnectionExpired && (
+                  <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={{ marginLeft: '72px' }}>
+                    <div className="bg-background border border-border rounded-2xl p-8 max-w-[420px] text-center shadow-2xl">
+                      <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
+                        <AlertTriangle size={32} className="text-amber-500" />
+                      </div>
+                      <h2 className="text-xl font-semibold text-foreground mb-2">Conexão expirada</h2>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        O token de acesso do seu WhatsApp Business expirou. Reconecte para continuar enviando e recebendo mensagens.
+                      </p>
+                      <p className="text-xs text-muted-foreground mb-6">
+                        As mensagens recebidas durante a desconexão serão sincronizadas automaticamente ao reconectar.
+                      </p>
+                      <Button
+                        onClick={() => navigate("/meta-campaigns")}
+                        className="bg-[#00a884] hover:bg-[#008f6f] text-white h-11 px-6 text-sm"
+                      >
+                        <RefreshCw size={16} className="mr-2" />
+                        Reconectar WhatsApp
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="w-[360px] shrink-0 wa-sidebar-border">
                   <ChatSidebar
                     conversations={chat.conversations}
@@ -104,7 +114,7 @@ const Chat = () => {
                     onSelectConversation={chat.setActiveConversationId}
                     searchQuery={chat.searchQuery}
                     onSearchChange={chat.setSearchQuery}
-                    connections={chat.connections}
+                    connections={chat.connections.filter(c => c.status === "active")}
                     activeConnectionId={chat.activeConnectionId}
                     onConnectionChange={chat.setActiveConnectionId}
                     onTogglePin={chat.togglePin}
@@ -124,6 +134,7 @@ const Chat = () => {
                   onReopenConversation={(templateName) => {
                     console.log("Reabrir conversa com template:", templateName);
                   }}
+                  fetchTemplates={chat.fetchTemplates}
                 />
               </>
             ) : null}

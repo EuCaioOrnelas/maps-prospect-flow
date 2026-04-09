@@ -26,6 +26,7 @@ interface ChatMessageAreaProps {
   onSendMedia: (file: File, caption?: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   onReopenConversation?: (templateName: string) => void;
+  fetchTemplates?: () => Promise<any[]>;
 }
 
 function MessageStatus({ status }: { status: string }) {
@@ -229,7 +230,7 @@ function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply
 }
 
 export function ChatMessageArea({
-  conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation,
+  conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
 }: ChatMessageAreaProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -428,13 +429,14 @@ export function ChatMessageArea({
                 : messages.length > 0;
 
               if (isWindowExpired && onReopenConversation) {
-                return (
-                  <ExpiredWindowBanner
-                    contactName={conversation.contact_name}
-                    contactPhone={conversation.contact_phone}
-                    onReopenConversation={onReopenConversation}
-                  />
-                );
+                  return (
+                    <ExpiredWindowBanner
+                      contactName={conversation.contact_name}
+                      contactPhone={conversation.contact_phone}
+                      onReopenConversation={onReopenConversation}
+                      fetchTemplates={fetchTemplates}
+                    />
+                  );
               }
               return (
                 <ChatInput
