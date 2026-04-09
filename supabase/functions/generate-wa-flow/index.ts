@@ -31,7 +31,7 @@ entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_c
 
 === DESCRIÇÃO DOS NÓS ===
 - entry: Ponto de entrada do fluxo. Config: trigger_type, keywords.
-- message: Envia mensagem de texto/mídia. Config: message_type, content, body_text.
+- message: Envia mensagem de texto/mídia. Config deve conter um campo "contents" que é um array de itens sequenciais. Cada item tem: id (string único), type ("text"|"image"|"audio"|"video"|"document"|"delay"), content (texto para type=text), caption (legenda para mídia), media_url (URL para mídia, pode ser vazio), delay_min e delay_max (segundos para type=delay). SEMPRE adicione pelo menos um item de texto com conteúdo real e relevante. Adicione um delay inteligente (delay_min: 2, delay_max: 5) entre conteúdos para simular digitação humana. Exemplo: contents: [{id:"item_0",type:"text",content:"Olá! Como posso ajudar?"},{id:"delay_0",type:"delay",delay_min:2,delay_max:5}]
 - buttons: Menu interativo com botões ou lista. Config: interaction_type, body_text, buttons/list_items.
 - condition: Lógica condicional. Config: condition_type, condition_value. Handles: yes, no.
 - wait: Espera um tempo. Config: delay_value, delay_unit, smart.
@@ -57,7 +57,7 @@ entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_c
 7. Use data_collect quando precisar coletar dados antes de prosseguir (nome, email, etc).
 8. Use variáveis coletadas {{variable_name}} nas mensagens seguintes para personalizar.
 9. Integrações Google (google_sheets, google_calendar, gmail) só quando o contexto exige claramente.
-10. message precisa ter content E body_text preenchidos.
+10. message DEVE ter o campo "contents" preenchido com array de itens. Cada item de texto deve ter conteúdo real e útil, NÃO genérico. Adicione sempre um delay inteligente (type:"delay", delay_min:2, delay_max:5) após o texto.
 11. buttons precisa ter body_text E opções reais.
 12. ai_agent precisa ter system_prompt, ai_model e ai_output_type.
 13. handoff deve ter handoff_message.
@@ -82,8 +82,25 @@ const FLOW_NODE_CONFIG_PROPERTIES: Record<string, any> = {
   keywords: { type: "array", items: { type: "string" } },
   // Message
   message_type: { type: "string", enum: ["text", "image", "audio", "video", "document", "template"] },
-  content: { type: "string", description: "Texto principal da mensagem" },
-  body_text: { type: "string", description: "Texto espelhado da mensagem" },
+  content: { type: "string", description: "Texto principal da mensagem (legacy, prefira usar contents)" },
+  body_text: { type: "string", description: "Texto espelhado da mensagem (legacy, prefira usar contents)" },
+  contents: { 
+    type: "array", 
+    description: "Array de itens de conteúdo sequenciais da mensagem. SEMPRE preencha com pelo menos um item de texto.",
+    items: { 
+      type: "object", 
+      properties: { 
+        id: { type: "string", description: "ID único como item_0, item_1" },
+        type: { type: "string", enum: ["text", "image", "audio", "video", "document", "delay"] },
+        content: { type: "string", description: "Texto da mensagem (para type=text)" },
+        caption: { type: "string", description: "Legenda para mídia" },
+        media_url: { type: "string", description: "URL do arquivo de mídia" },
+        delay_min: { type: "number", description: "Delay mínimo em segundos (para type=delay)" },
+        delay_max: { type: "number", description: "Delay máximo em segundos (para type=delay)" },
+      },
+      required: ["id", "type"]
+    }
+  },
   preview_url: { type: "boolean" },
   media_url: { type: "string" },
   caption: { type: "string" },
@@ -365,15 +382,58 @@ const ensureNodeConfig = (
 
     case "message": {
       const messageType = normalizeText(config.message_type) || "text";
+      // Build the contents array that the frontend MessageContentBuilder expects
+      const existingContents = Array.isArray(config.contents) ? config.contents : [];
+      
+      if (existingContents.length > 0) {
+        // AI already provided contents array - normalize it
+        const normalizedContents = existingContents.map((item: any, i: number) => ({
+          id: item.id || `item_${i}_${Date.now()}`,
+          type: normalizeText(item.type) || "text",
+          content: normalizeText(item.content) || undefined,
+          caption: normalizeText(item.caption) || undefined,
+          media_url: normalizeText(item.media_url) || undefined,
+          media_filename: normalizeText(item.media_filename) || undefined,
+          delay_seconds: typeof item.delay_seconds === "number" ? item.delay_seconds : undefined,
+          delay_min: typeof item.delay_min === "number" ? item.delay_min : undefined,
+          delay_max: typeof item.delay_max === "number" ? item.delay_max : undefined,
+        }));
+        return { ...config, contents: normalizedContents };
+      }
+
+      // Build contents from legacy fields
+      const contents: any[] = [];
+      
       if (messageType === "text") {
-        const content = normalizeText(config.content || config.body_text) || inferMessageText(label, prompt);
-        return { ...config, message_type: "text", content, body_text: content };
-      }
-      if (messageType === "template") {
+        const textContent = normalizeText(config.content || config.body_text) || inferMessageText(label, prompt);
+        contents.push({
+          id: `item_0_${Date.now()}`,
+          type: "text",
+          content: textContent,
+        });
+      } else if (messageType === "template") {
         return { ...config, message_type: "template", template_name: normalizeText(config.template_name) || slugifyTag(label), template_language: normalizeText(config.template_language) || "pt_BR" };
+      } else {
+        // image, audio, video, document
+        const caption = normalizeText(config.caption || config.content || config.body_text) || inferMessageText(label, prompt);
+        contents.push({
+          id: `item_0_${Date.now()}`,
+          type: messageType,
+          caption,
+          media_url: normalizeText(config.media_url) || "",
+          media_filename: "",
+        });
       }
-      const caption = normalizeText(config.caption || config.content || config.body_text) || inferMessageText(label, prompt);
-      return { ...config, message_type: messageType, caption, content: caption, body_text: caption };
+
+      // Add smart delay between message nodes for natural feel
+      contents.push({
+        id: `delay_${Date.now()}`,
+        type: "delay",
+        delay_min: 2,
+        delay_max: 5,
+      });
+
+      return { ...config, contents, message_type: messageType, content: contents[0]?.content || "", body_text: contents[0]?.content || "" };
     }
 
     case "buttons": {
