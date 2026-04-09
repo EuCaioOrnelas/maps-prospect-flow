@@ -414,17 +414,17 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
 }
 
 function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
-  const { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect } = useGoogleAuth("calendar", [
+  const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("calendar", [
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/calendar.events",
   ]);
 
   useEffect(() => {
-    if (googleToken) {
+    if (selectedAccount) {
       updateConfig("google_connected", true);
-      updateConfig("google_email", (googleToken as any).google_email);
+      updateConfig("google_email", selectedAccount.google_email);
     }
-  }, [(googleToken as any)?.google_email]);
+  }, [selectedAccount?.google_email]);
 
   const { data: calendars = [], isLoading: loadingCalendars } = useQuery({
     queryKey: ["google-calendars", user?.id],
@@ -443,11 +443,12 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
       {renderInfoBanner("Crie eventos automáticos no Google Agenda quando o lead chegar neste ponto do fluxo.")}
 
       <GoogleConnectionBlock
-        isConnected={isConnected}
-        googleToken={googleToken}
+        accounts={googleAccounts}
+        selectedAccountId={selectedAccountId}
+        onSelectAccount={setSelectedAccountId}
         isConnecting={isConnecting}
         handleConnect={handleConnect}
-        handleDisconnect={() => { handleDisconnect(); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
+        handleDisconnect={(id) => { handleDisconnect(id); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
         label="Google"
       />
 
@@ -574,27 +575,28 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
 }
 
 function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
-  const { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect } = useGoogleAuth("gmail", [
+  const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("gmail", [
     "https://www.googleapis.com/auth/gmail.send",
   ]);
 
   useEffect(() => {
-    if (googleToken) {
+    if (selectedAccount) {
       updateConfig("google_connected", true);
-      updateConfig("google_email", (googleToken as any).google_email);
+      updateConfig("google_email", selectedAccount.google_email);
     }
-  }, [(googleToken as any)?.google_email]);
+  }, [selectedAccount?.google_email]);
 
   return (
     <div className="space-y-4">
       {renderInfoBanner("Envie emails automáticos pelo Gmail quando o lead chegar neste ponto do fluxo.")}
 
       <GoogleConnectionBlock
-        isConnected={isConnected}
-        googleToken={googleToken}
+        accounts={googleAccounts}
+        selectedAccountId={selectedAccountId}
+        onSelectAccount={setSelectedAccountId}
         isConnecting={isConnecting}
         handleConnect={handleConnect}
-        handleDisconnect={() => { handleDisconnect(); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
+        handleDisconnect={(id) => { handleDisconnect(id); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
         label="Gmail"
       />
 
