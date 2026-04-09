@@ -367,6 +367,7 @@ export const LeadDetailDialog = ({
       setShowDealConfirm(false);
       setNewTag('');
       setDealAttachmentFiles([]);
+      setLocalTags(lead.tags || []);
     }
   }, [lead?.id]);
 
