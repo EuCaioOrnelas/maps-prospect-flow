@@ -230,7 +230,7 @@ function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply
 }
 
 export function ChatMessageArea({
-  conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation,
+  conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
 }: ChatMessageAreaProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showSearch, setShowSearch] = useState(false);
