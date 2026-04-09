@@ -380,11 +380,9 @@ export const LeadDetailDialog = ({
       try {
         const [tagsResponse, connectionsResponse] = await Promise.all([
           supabase
-            .from('leads')
-            .select('tags')
-            .eq('user_id', user.id)
-            .not('tags', 'is', null)
-            .range(0, 4999),
+            .from('crm_tags')
+            .select('name')
+            .eq('user_id', user.id),
           supabase
             .from('user_waba_connections')
             .select('id')
@@ -396,19 +394,8 @@ export const LeadDetailDialog = ({
         if (cancelled) return;
 
         const uniqueTags = new Set<string>();
-
         tagsResponse.data?.forEach((item) => {
-          if (!Array.isArray(item.tags)) return;
-
-          item.tags.forEach((tag) => {
-            if (typeof tag !== 'string') return;
-
-            const normalizedTag = tag.trim();
-
-            if (normalizedTag) {
-              uniqueTags.add(normalizedTag);
-            }
-          });
+          if (item.name?.trim()) uniqueTags.add(item.name.trim());
         });
 
         setAvailableTags(Array.from(uniqueTags).sort((a, b) => a.localeCompare(b, 'pt-BR')));
