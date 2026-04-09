@@ -30,7 +30,7 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <img src="/src/assets/logos/google.svg" alt="Google" className="w-5 h-5" />
+              <img src={googleLogo} alt="Google" className="w-5 h-5" />
               <span className="text-xs font-medium text-foreground">{label} conectado</span>
             </div>
           </div>
@@ -64,7 +64,7 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
       ) : (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <img src="/src/assets/logos/google.svg" alt="Google" className="w-5 h-5" />
+            <img src={googleLogo} alt="Google" className="w-5 h-5" />
             <p className="text-xs text-muted-foreground">Conecte sua conta Google para usar este recurso.</p>
           </div>
           <Button onClick={handleConnect} disabled={isConnecting} className="w-full h-9 text-sm gap-2">
