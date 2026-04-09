@@ -137,7 +137,7 @@ function VariablesHelper({ variables }: { variables?: { key: string; label: stri
   );
 }
 
-function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
+function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; allNodes?: any[] }) {
   const { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect } = useGoogleAuth("sheets", [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive.readonly",
@@ -145,7 +145,10 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
 
   const [isCreating, setIsCreating] = useState(false);
   const [newSheetName, setNewSheetName] = useState("");
+  const [newTabName, setNewTabName] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+
+  const flowVars = useFlowVariables(allNodes);
 
   useEffect(() => {
     if (googleToken) {
@@ -166,7 +169,7 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
     enabled: !!user && isConnected,
   });
 
-  const { data: sheetTabs = [] } = useQuery({
+  const { data: sheetTabs = [], refetch: refetchTabs } = useQuery({
     queryKey: ["google-sheet-tabs", user?.id, config.spreadsheet_id],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
@@ -179,21 +182,29 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
   });
 
   const handleCreateSpreadsheet = async () => {
+    if (!newSheetName.trim()) {
+      toast.error("Digite um nome para a planilha");
+      return;
+    }
     setIsCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
-        body: { user_id: user!.id, action: "create", title: newSheetName || "Wiize - Leads" },
+        body: { user_id: user!.id, action: "create", title: newSheetName.trim(), tab_name: newTabName.trim() || "Dados" },
       });
       if (error) throw error;
       if (data?.spreadsheet) {
         updateConfig("spreadsheet_id", data.spreadsheet.id);
         updateConfig("spreadsheet_name", data.spreadsheet.name);
+        updateConfig("sheet_name", newTabName.trim() || "Dados");
         setShowCreate(false);
         setNewSheetName("");
+        setNewTabName("");
         refetchSheets();
+        toast.success("Planilha criada com sucesso!");
       }
     } catch (err) {
       console.error("Failed to create spreadsheet:", err);
+      toast.error("Erro ao criar planilha");
     } finally {
       setIsCreating(false);
     }
@@ -201,7 +212,6 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
 
   const columns = config.columns || [
     { key: "nome", label: "Nome", variable: "{nome}" },
-    { key: "email", label: "Email", variable: "{email}" },
     { key: "telefone", label: "Telefone", variable: "{telefone}" },
   ];
 
@@ -222,7 +232,7 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
 
   return (
     <div className="space-y-4">
-      {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets.")}
+      {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets. Os dados são adicionados em novas linhas, sem sobrescrever dados existentes.")}
 
       <GoogleConnectionBlock
         isConnected={isConnected}
@@ -241,6 +251,8 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
               <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
                 <Loader2 size={14} className="animate-spin" /> Carregando planilhas...
               </div>
+            ) : spreadsheets.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">Nenhuma planilha encontrada. Crie uma nova abaixo.</p>
             ) : (
               <Select
                 value={config.spreadsheet_id || ""}
@@ -274,15 +286,28 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
             </div>
 
             {showCreate && (
-              <div className="flex gap-2 mt-1">
-                <Input
-                  value={newSheetName}
-                  onChange={(e) => setNewSheetName(e.target.value)}
-                  placeholder="Nome da nova planilha"
-                  className="h-8 text-xs flex-1"
-                />
-                <Button size="sm" className="h-8 text-xs" onClick={handleCreateSpreadsheet} disabled={isCreating}>
-                  {isCreating ? <Loader2 size={12} className="animate-spin" /> : "Criar"}
+              <div className="space-y-2 mt-1 p-3 rounded-lg border border-border/50 bg-muted/10">
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Nome da planilha *</Label>
+                  <Input
+                    value={newSheetName}
+                    onChange={(e) => setNewSheetName(e.target.value)}
+                    placeholder="Ex: Leads da campanha"
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Nome da aba (página)</Label>
+                  <Input
+                    value={newTabName}
+                    onChange={(e) => setNewTabName(e.target.value)}
+                    placeholder="Ex: Janeiro (padrão: Dados)"
+                    className="h-8 text-xs"
+                  />
+                  <p className="text-[9px] text-muted-foreground">A aba é a página dentro da planilha onde os dados serão inseridos.</p>
+                </div>
+                <Button size="sm" className="h-8 text-xs w-full" onClick={handleCreateSpreadsheet} disabled={isCreating || !newSheetName.trim()}>
+                  {isCreating ? <Loader2 size={12} className="animate-spin" /> : "Criar planilha"}
                 </Button>
               </div>
             )}
@@ -290,13 +315,14 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
 
           {config.spreadsheet_id && sheetTabs.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-xs font-medium">Aba da planilha</Label>
+              <Label className="text-xs font-medium">Aba (página da planilha)</Label>
+              <p className="text-[10px] text-muted-foreground">Selecione em qual aba os dados serão adicionados.</p>
               <Select
-                value={config.sheet_name || sheetTabs[0]?.title || ""}
+                value={config.sheet_name || ""}
                 onValueChange={(v) => updateConfig("sheet_name", v)}
               >
                 <SelectTrigger className="h-9 text-sm">
-                  <SelectValue />
+                  <SelectValue placeholder="Selecionar aba..." />
                 </SelectTrigger>
                 <SelectContent>
                   {sheetTabs.map((tab: any) => (
@@ -332,7 +358,7 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
                       <SelectValue placeholder="Variável" />
                     </SelectTrigger>
                     <SelectContent>
-                      {AVAILABLE_VARIABLES.map((v) => (
+                      {flowVars.map((v) => (
                         <SelectItem key={v.key} value={v.key}>{v.key} - {v.label}</SelectItem>
                       ))}
                     </SelectContent>
@@ -345,7 +371,7 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner }: { config
             </div>
           </div>
 
-          <VariablesHelper />
+          <VariablesHelper variables={flowVars} />
         </>
       )}
     </div>
