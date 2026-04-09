@@ -427,31 +427,33 @@ export function ChatMessageArea({
           </div>
         </div>
 
-        {/* Input or Expired Banner */}
-        {(() => {
-          const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
-          const isWindowExpired = lastInbound
-            ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) > 24
-            : messages.length > 0;
+        {/* Input or Expired Banner — floating over chat */}
+        <div className="relative z-10">
+          {(() => {
+            const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
+            const isWindowExpired = lastInbound
+              ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) > 24
+              : messages.length > 0;
 
-          if (isWindowExpired && onReopenConversation) {
+            if (isWindowExpired && onReopenConversation) {
+              return (
+                <ExpiredWindowBanner
+                  contactName={conversation.contact_name}
+                  contactPhone={conversation.contact_phone}
+                  onReopenConversation={onReopenConversation}
+                />
+              );
+            }
             return (
-              <ExpiredWindowBanner
-                contactName={conversation.contact_name}
-                contactPhone={conversation.contact_phone}
-                onReopenConversation={onReopenConversation}
+              <ChatInput
+                onSendMessage={onSendMessage}
+                onSendMedia={onSendMedia}
+                replyingTo={replyingTo}
+                onCancelReply={() => setReplyingTo(null)}
               />
             );
-          }
-          return (
-            <ChatInput
-              onSendMessage={onSendMessage}
-              onSendMedia={onSendMedia}
-              replyingTo={replyingTo}
-              onCancelReply={() => setReplyingTo(null)}
-            />
-          );
-        })()}
+          })()}
+        </div>
       </div>
 
       {/* Search panel */}

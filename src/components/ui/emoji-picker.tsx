@@ -6,7 +6,10 @@ import {
   type EmojiPickerListRowProps,
   EmojiPicker as EmojiPickerPrimitive,
 } from "frimousse";
-import { LoaderIcon, SearchIcon } from "lucide-react";
+import {
+  LoaderIcon, SearchIcon,
+  Smile, Users, Dog, UtensilsCrossed, Plane, Dribbble, Lightbulb, Heart, Flag,
+} from "lucide-react";
 import { useRef, useEffect } from "react";
 import type * as React from "react";
 
@@ -30,7 +33,7 @@ function EmojiPickerSearch({
   ...props
 }: React.ComponentProps<typeof EmojiPickerPrimitive.Search>) {
   return (
-    <div className="flex items-center gap-2 px-3 py-1">
+    <div className="flex items-center gap-2 px-3 py-1 border-b">
       <SearchIcon className="size-4 shrink-0 opacity-50" />
       <EmojiPickerPrimitive.Search
         className={cn(
@@ -44,44 +47,43 @@ function EmojiPickerSearch({
 }
 
 const CATEGORIES = [
-  { id: 0, label: "Smileys e emoções", icon: "😀" },
-  { id: 1, label: "Pessoas", icon: "👋" },
-  { id: 2, label: "Animais e natureza", icon: "🐶" },
-  { id: 3, label: "Comida e bebida", icon: "🍔" },
-  { id: 4, label: "Viagens e lugares", icon: "✈️" },
-  { id: 5, label: "Atividades", icon: "⚽" },
-  { id: 6, label: "Objetos", icon: "💡" },
-  { id: 7, label: "Símbolos", icon: "❤️" },
-  { id: 8, label: "Bandeiras", icon: "🏁" },
+  { id: 0, label: "Smileys e emoções", Icon: Smile },
+  { id: 1, label: "Pessoas", Icon: Users },
+  { id: 2, label: "Animais e natureza", Icon: Dog },
+  { id: 3, label: "Comida e bebida", Icon: UtensilsCrossed },
+  { id: 4, label: "Viagens e lugares", Icon: Plane },
+  { id: 5, label: "Atividades", Icon: Dribbble },
+  { id: 6, label: "Objetos", Icon: Lightbulb },
+  { id: 7, label: "Símbolos", Icon: Heart },
+  { id: 8, label: "Bandeiras", Icon: Flag },
 ];
 
 function EmojiPickerCategories({ activeCategory, onCategoryClick }: { activeCategory?: number; onCategoryClick: (idx: number) => void }) {
   return (
     <div className="flex items-center justify-around px-1 py-0.5 border-b gap-0">
-      {CATEGORIES.map((cat, idx) => (
-        <button
-          key={cat.id}
-          title={cat.label}
-          onClick={() => onCategoryClick(idx)}
-          className={cn(
-            "w-9 h-9 flex items-center justify-center text-[18px] transition-all relative",
-            activeCategory === idx
-              ? "opacity-100"
-              : "opacity-60 hover:opacity-90"
-          )}
-        >
-          {cat.icon}
-          {/* Bottom bar indicator like WhatsApp */}
-          <span
+      {CATEGORIES.map((cat, idx) => {
+        const Icon = cat.Icon;
+        const isActive = activeCategory === idx;
+        return (
+          <button
+            key={cat.id}
+            title={cat.label}
+            onClick={() => onCategoryClick(idx)}
             className={cn(
-              "absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] rounded-full transition-all duration-200",
-              activeCategory === idx
-                ? "w-6 bg-[#00a884]"
-                : "w-0 bg-transparent"
+              "w-9 h-9 flex items-center justify-center transition-all relative",
+              isActive ? "opacity-100" : "opacity-50 hover:opacity-80"
             )}
-          />
-        </button>
-      ))}
+          >
+            <Icon size={18} className={isActive ? "text-[#00a884]" : "wa-icon-panel"} strokeWidth={1.8} />
+            <span
+              className={cn(
+                "absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] rounded-full transition-all duration-200",
+                isActive ? "w-6 bg-[#00a884]" : "w-0 bg-transparent"
+              )}
+            />
+          </button>
+        );
+      })}
     </div>
   );
 }
