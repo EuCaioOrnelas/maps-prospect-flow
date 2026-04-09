@@ -1323,7 +1323,7 @@ export const LeadDetailDialog = ({
                           if (showTagComposer) setShowTagComposer(false);
                         }}
                         placeholder="Pesquisar ou criar nova tag"
-                        className={cn('h-8 text-xs', showTagComposer && 'border-primary/40 ring-2 ring-primary/10')}
+                        className="h-8 text-xs"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
