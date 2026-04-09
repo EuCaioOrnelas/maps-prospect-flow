@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { MessageContentBuilder } from "./MessageContentBuilder";
 import type { Node } from "@xyflow/react";
 import { cn } from "@/lib/utils";
+import googleLogo from "@/assets/logos/google.svg";
 
 
 function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, isConnecting, handleConnect, handleDisconnect, label }: {
