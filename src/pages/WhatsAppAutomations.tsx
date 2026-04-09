@@ -257,10 +257,10 @@ export default function WhatsAppAutomations() {
 
             <button
               onClick={() => navigate("/fluxos/criar-ia")}
-              className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-amber-500/40 hover:bg-amber-500/5 transition-all text-left"
+              className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all text-left"
             >
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0 group-hover:bg-amber-500/20 transition-colors">
-                <Sparkles size={20} className="text-amber-500 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:bg-emerald-500/20 transition-colors">
+                <img src={geminiIcon} alt="Gemini" className="w-5 h-5 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Criar com IA ✨</p>
