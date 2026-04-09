@@ -179,6 +179,9 @@ export function ChatSidebar({
                       18
                     )}
                   </span>
+                  {activeConnectionId && connectionHealth[activeConnectionId] === false && (
+                    <AlertTriangle size={12} className="text-red-500 shrink-0 animate-pulse" />
+                  )}
                   <ChevronDown size={11} className="shrink-0 opacity-50" />
                 </button>
               </DropdownMenuTrigger>
