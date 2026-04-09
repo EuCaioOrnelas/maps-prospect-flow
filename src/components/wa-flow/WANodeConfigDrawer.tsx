@@ -1917,11 +1917,14 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
       }
     }
 
-    // Google Sheets: clear sheet and set headers on save
+    // Google Sheets: clear sheet and set headers on save (only once per spreadsheet+tab combo)
     if (node.type === "google_sheets" && config.spreadsheet_id && config.google_connected) {
       const columns = config.columns || [];
       const sheetName = config.sheet_name || "Dados";
-      if (columns.length > 0) {
+      const formatKey = `${config.spreadsheet_id}::${sheetName}`;
+      const alreadyFormatted = config.sheet_formatted_id === formatKey;
+
+      if (columns.length > 0 && !alreadyFormatted) {
         try {
           toast.loading("Formatando planilha...", { id: "sheets-format" });
           const headers = columns.map((c: any) => c.label || "");
@@ -1939,6 +1942,8 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
             console.error("Sheets format error:", error);
             return;
           }
+          // Mark as formatted so it won't clear again for this combo
+          config.sheet_formatted_id = formatKey;
           toast.success("Planilha formatada com sucesso!", { id: "sheets-format" });
         } catch (err) {
           toast.error("Erro ao formatar planilha", { id: "sheets-format" });
