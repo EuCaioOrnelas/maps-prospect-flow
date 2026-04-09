@@ -449,7 +449,7 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner, allNodes
     "https://www.googleapis.com/auth/calendar.events",
   ], config.google_account_id);
 
-  const [showHowItWorks, setShowHowItWorks] = useState(true);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const flowVars = useFlowVariables(allNodes);
 
   useEffect(() => {

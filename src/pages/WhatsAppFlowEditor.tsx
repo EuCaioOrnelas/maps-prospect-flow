@@ -778,13 +778,13 @@ export default function WhatsAppFlowEditor() {
                             e.dataTransfer.effectAllowed = "move";
                           }}
                           onClick={() => handleAddNode(item.type)}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card transition-colors text-left group shadow-sm cursor-grab active:cursor-grabbing"
+                          className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/40 hover:border-primary/30 transition-all duration-200 text-left group shadow-sm cursor-grab active:cursor-grabbing active:shadow-lg active:scale-[1.02] active:border-primary/50"
                         >
                           <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
                             {(item as any).iconImg ? (
-                              <img src={(item as any).iconImg} alt={item.label} loading="eager" decoding="async" className="w-5 h-5 object-contain transition-transform duration-200 group-hover:scale-125 group-hover:rotate-12" />
+                              <img src={(item as any).iconImg} alt={item.label} width={20} height={20} loading="eager" decoding="async" className="w-5 h-5 object-contain" />
                             ) : (
-                              <item.icon size={16} className={cn(item.color.split(" ")[0], "transition-transform duration-200 group-hover:scale-125 group-hover:rotate-12")} />
+                              <item.icon size={16} className={cn(item.color.split(" ")[0])} />
                             )}
                           </div>
                           <div className="min-w-0">
