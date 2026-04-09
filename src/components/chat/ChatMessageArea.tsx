@@ -429,13 +429,14 @@ export function ChatMessageArea({
                 : messages.length > 0;
 
               if (isWindowExpired && onReopenConversation) {
-                return (
-                  <ExpiredWindowBanner
-                    contactName={conversation.contact_name}
-                    contactPhone={conversation.contact_phone}
-                    onReopenConversation={onReopenConversation}
-                  />
-                );
+                  return (
+                    <ExpiredWindowBanner
+                      contactName={conversation.contact_name}
+                      contactPhone={conversation.contact_phone}
+                      onReopenConversation={onReopenConversation}
+                      fetchTemplates={fetchTemplates}
+                    />
+                  );
               }
               return (
                 <ChatInput
