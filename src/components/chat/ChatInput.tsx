@@ -234,7 +234,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
           )}
 
           {/* Main pill — everything inside */}
-          <div className="flex-1 wa-input-field flex items-end shadow-sm rounded-full">
+          <div className="flex-1 wa-input-field flex items-end shadow-sm rounded-[21px] overflow-hidden">
             {/* Attach */}
             <button
               onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setEmojiOpen(false); }}
