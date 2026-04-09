@@ -87,6 +87,22 @@ serve(async (req) => {
       });
     }
 
+    // If Drive scopes are present, also populate user_drive_connections
+    const scopesList = tokenData.scope ? tokenData.scope.split(" ") : [];
+    const hasDriveScope = scopesList.some((s: string) => s.includes("drive"));
+    if (hasDriveScope) {
+      await supabase
+        .from("user_drive_connections")
+        .upsert({
+          user_id: userId,
+          access_token: tokenData.access_token,
+          refresh_token: tokenData.refresh_token || null,
+          token_expires_at: expiresAt,
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+    }
+
     return new Response(renderHTML("Sucesso! ✅", `Conta Google (${userInfo.email || ""}) conectada com sucesso. Você pode fechar esta janela.`), {
       headers: { "Content-Type": "text/html" },
     });
