@@ -240,7 +240,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               {isExpanded && (
                 <div
                   className={cn(
-                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     (isReportsOpen)
                       ? "max-h-56 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
@@ -286,7 +286,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               {isExpanded && (
                 <div
                   className={cn(
-                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isOpportunitiesOpen
                       ? "max-h-28 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
@@ -342,7 +342,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               {isExpanded && (
                 <div
                   className={cn(
-                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isCampaignsOpen
                       ? "max-h-28 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
@@ -398,7 +398,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               {isExpanded && (
                 <div
                   className={cn(
-                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isCrmOpen
                       ? "max-h-28 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
@@ -471,7 +471,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               {isExpanded && (
                 <div
                   className={cn(
-                    "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isAutomationOpen
                       ? "max-h-40 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
