@@ -252,8 +252,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                 }}
               >
                 <EmojiPickerSearch placeholder="Buscar emoji..." />
+                <EmojiPickerCategories />
                 <EmojiPickerContent />
-                <EmojiPickerFooter />
               </EmojiPicker>
             </PopoverContent>
           </Popover>
