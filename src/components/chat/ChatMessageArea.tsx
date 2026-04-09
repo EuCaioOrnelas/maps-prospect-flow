@@ -274,31 +274,28 @@ export function ChatMessageArea({
                   <MoreVertical size={20} className="wa-chat-header-icon" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="wa-dropdown-bg wa-text-primary min-w-[220px] rounded-[3px] shadow-xl py-[9px] border wa-border">
-                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3">
-                  <User size={16} className="wa-icon-muted" /> Dados do contato
+              <DropdownMenuContent align="end" className="wa-dropdown-bg border wa-border min-w-[220px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
+                  <User size={15} className="wa-icon-muted" /> Dados do contato
                 </DropdownMenuItem>
-                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3" onClick={() => setShowSearch(true)}>
-                  <Search size={16} className="wa-icon-muted" /> Pesquisar
+                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors" onClick={() => setShowSearch(true)}>
+                  <Search size={15} className="wa-icon-muted" /> Pesquisar
                 </DropdownMenuItem>
-                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3">
-                  <MessageSquareText size={16} className="wa-icon-muted" /> Selecionar mensagens
+                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
+                  <MessageSquareText size={15} className="wa-icon-muted" /> Selecionar mensagens
                 </DropdownMenuItem>
-                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3">
-                  <BellOff size={16} className="wa-icon-muted" /> Silenciar notificações
+                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
+                  <BellOff size={15} className="wa-icon-muted" /> Silenciar
                 </DropdownMenuItem>
-                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3">
-                  <Star size={16} className="wa-icon-muted" /> Adicionar aos Favoritos
+                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
+                  <Star size={15} className="wa-icon-muted" /> Favoritos
                 </DropdownMenuItem>
-                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3">
-                  <List size={16} className="wa-icon-muted" /> Adicionar à lista
+                <div className="my-1 mx-3 border-t wa-border-light" />
+                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
+                  <Ban size={15} className="wa-icon-muted" /> Bloquear
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="wa-border-light" />
-                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3">
-                  <Ban size={16} className="wa-icon-muted" /> Bloquear
-                </DropdownMenuItem>
-                <DropdownMenuItem className="wa-dropdown-item text-[14.5px] px-6 py-[9px] flex items-center gap-3 text-red-400">
-                  <Trash2 size={16} /> Apagar conversa
+                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] text-red-400 cursor-pointer hover:bg-red-500/10 transition-colors">
+                  <Trash2 size={15} /> Apagar conversa
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
