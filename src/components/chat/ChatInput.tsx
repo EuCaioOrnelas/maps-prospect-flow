@@ -1,22 +1,18 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Send, Smile, Mic, Plus, X, Image, FileText, Film } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { EmojiPicker, EmojiPickerSearch, EmojiPickerContent } from "@/components/ui/emoji-picker";
 
 interface ChatInputProps {
   onSendMessage: (text: string) => void;
   onSendMedia: (file: File, caption?: string) => void;
 }
 
-const EMOJI_GROUPS = [
-  { label: "Rostos", emojis: ["😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊","😋","😎","😍","🥰","😘","😗","😙","😚","🙂","🤗","🤩","🤔","🤨","😐","😑","😶","🙄","😏","😣","😥","😮","🤐","😯","😪","😫","🥱","😴","😌","😛","😜","😝","🤤","😒","😓","😔","😕","🙃","🤑","😲","☹️","🙁","😖","😞","😟","😤","😢","😭","😦","😧","😨","😩","🤯","😬","😰","😱","🥵","🥶","😳","🤪","😵","🥴","😠","😡","🤬"] },
-  { label: "Gestos", emojis: ["👍","👎","👌","🤝","👏","🙌","🙏","💪","✌️","🤞","🤟","🤙","👈","👉","👆","👇","☝️","✋","🤚","🖐️","🖖","👋","🤏","✍️","🤳","💅","🦾","🦿"] },
-  { label: "Símbolos", emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","🔥","⭐","🌟","✨","⚡","💡","🎉","🎊","🎈","✅","❌","⭕","❗","❓","💯","🚀","🏆","🎯","💎","🔑","🎵"] },
-];
-
 export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
   const [text, setText] = useState("");
-  const [showEmojis, setShowEmojis] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
   const [preview, setPreview] = useState<{ file: File; url: string; type: string } | null>(null);
   const [caption, setCaption] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -34,7 +30,7 @@ export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
     if (!text.trim()) return;
     onSendMessage(text.trim());
     setText("");
-    setShowEmojis(false);
+    setEmojiOpen(false);
     inputRef.current?.focus();
   }, [text, preview, caption, onSendMessage, onSendMedia]);
 
@@ -68,7 +64,6 @@ export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest(".wa-emoji-picker") && !target.closest(".wa-emoji-btn")) setShowEmojis(false);
       if (!target.closest(".wa-attach-menu") && !target.closest(".wa-attach-btn")) setShowAttach(false);
     };
     document.addEventListener("click", handler);
@@ -116,30 +111,6 @@ export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
         </div>
       )}
 
-      {/* ─── Emoji picker ─── */}
-      {showEmojis && !preview && (
-        <div className="wa-emoji-picker wa-emoji-bg border-t wa-border-light overflow-hidden">
-          <div className="max-h-[240px] overflow-y-auto wa-scrollbar p-3">
-            {EMOJI_GROUPS.map((group) => (
-              <div key={group.label} className="mb-3">
-                <p className="text-[12px] wa-text-muted font-medium mb-[6px] uppercase tracking-wide">{group.label}</p>
-                <div className="flex flex-wrap gap-[1px]">
-                  {group.emojis.map(emoji => (
-                    <button
-                      key={emoji}
-                      onClick={() => { setText(prev => prev + emoji); inputRef.current?.focus(); }}
-                      className="w-[36px] h-[36px] flex items-center justify-center hover:bg-white/10 rounded-lg text-[22px] transition-colors"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* ─── Input bar ─── */}
       {!preview && (
         <div className="wa-input-bar flex items-end gap-[6px] px-[10px] py-[5px] relative">
@@ -167,17 +138,37 @@ export function ChatInput({ onSendMessage, onSendMedia }: ChatInputProps) {
             </div>
           )}
 
-          {/* Emoji button */}
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowEmojis(!showEmojis); setShowAttach(false); }}
-            className={cn("wa-emoji-btn p-[8px] rounded-full transition-colors", showEmojis ? "bg-white/10" : "hover:bg-white/5")}
-          >
-            <Smile size={24} className={showEmojis ? "text-[#00a884]" : "wa-icon-panel"} />
-          </button>
+          {/* Emoji picker with Popover */}
+          <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+            <PopoverTrigger asChild>
+              <button
+                className={cn("wa-emoji-btn p-[8px] rounded-full transition-colors", emojiOpen ? "bg-white/10" : "hover:bg-white/5")}
+              >
+                <Smile size={24} className={emojiOpen ? "text-[#00a884]" : "wa-icon-panel"} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              side="top"
+              align="start"
+              sideOffset={10}
+              className="w-[340px] p-0 rounded-xl border wa-border-light shadow-2xl bg-popover overflow-hidden"
+            >
+              <EmojiPicker
+                className="h-[320px]"
+                onEmojiSelect={({ emoji }) => {
+                  setText(prev => prev + emoji);
+                  inputRef.current?.focus();
+                }}
+              >
+                <EmojiPickerSearch placeholder="Buscar emoji..." />
+                <EmojiPickerContent />
+              </EmojiPicker>
+            </PopoverContent>
+          </Popover>
 
           {/* Attach button */}
           <button
-            onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setShowEmojis(false); }}
+            onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setEmojiOpen(false); }}
             className={cn("wa-attach-btn p-[8px] rounded-full transition-colors", showAttach ? "bg-white/10" : "hover:bg-white/5")}
           >
             <Plus size={24} className={cn("transition-transform duration-200", showAttach ? "text-[#00a884] rotate-45" : "wa-icon-panel")} />
