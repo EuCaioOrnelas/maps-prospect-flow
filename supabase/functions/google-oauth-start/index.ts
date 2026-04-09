@@ -43,7 +43,11 @@ serve(async (req) => {
 
     const { scopes } = await req.json();
     
-    const scopeString = (scopes || ["https://www.googleapis.com/auth/spreadsheets"]).join(" ");
+    // Always include email/profile scopes so we can store the user's email
+    const baseScopes = ["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"];
+    const requestedScopes = scopes || ["https://www.googleapis.com/auth/spreadsheets"];
+    const allScopes = [...new Set([...baseScopes, ...requestedScopes])];
+    const scopeString = allScopes.join(" ");
 
     const redirectUri = `${supabaseUrl}/functions/v1/google-oauth-callback`;
 

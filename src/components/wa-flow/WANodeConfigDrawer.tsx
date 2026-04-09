@@ -61,7 +61,7 @@ function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, i
                       onClick={() => onSelectAccount(acc.id)}
                     >
                       <div className={cn("w-2 h-2 rounded-full shrink-0", isSelected ? "bg-primary" : "bg-muted-foreground/30")} />
-                      <span className="truncate text-foreground">{acc.google_email || "Conta Google"}</span>
+                      <span className="truncate text-foreground">{acc.google_email || `Conta ${accounts.indexOf(acc) + 1} (reconecte para ver email)`}</span>
                       {isSelected && <span className="text-[9px] text-primary ml-auto shrink-0">selecionado</span>}
                     </button>
                     <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive/70 hover:text-destructive shrink-0 ml-1" onClick={() => handleDisconnect(acc.id)} title="Desconectar">
