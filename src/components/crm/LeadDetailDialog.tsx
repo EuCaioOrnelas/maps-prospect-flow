@@ -1292,10 +1292,7 @@ export const LeadDetailDialog = ({
                   </div>
 
                   <div
-                    className={cn(
-                      'bg-muted/40 rounded-lg border border-border/50 p-3 space-y-3 max-h-[220px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full transition-colors',
-                      showTagComposer && 'border-primary/40 bg-primary/5'
-                    )}
+                    className="bg-muted/40 rounded-lg border border-border/50 p-3 space-y-3 max-h-[220px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full transition-colors"
                   >
                     {/* Current tags */}
                     <div className="flex flex-wrap gap-2">
