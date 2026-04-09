@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal } from "lucide-react";
+import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
@@ -22,6 +22,7 @@ interface ChatSidebarProps {
   onToggleMute: (id: string) => void;
   loading: boolean;
   onNewConversation?: (phone: string, name?: string) => void;
+  connectionHealth?: Record<string, boolean>;
 }
 
 function formatTimestamp(dateStr: string | null): string {
