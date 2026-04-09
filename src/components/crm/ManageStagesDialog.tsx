@@ -172,6 +172,8 @@ export const ManageStagesDialog = ({
     }
     setIsLoading(true);
     try {
+      // Update crm_tags table
+      await supabase.from('crm_tags').update({ name: newName }).eq('user_id', user.id).eq('name', editingTag);
       // Update all leads that have this tag
       const { data: leadsWithTag } = await supabase
         .from('leads')
@@ -201,6 +203,9 @@ export const ManageStagesDialog = ({
     if (!deleteTagConfirm || !user) return;
     setIsLoading(true);
     try {
+      // Delete from crm_tags table
+      await supabase.from('crm_tags').delete().eq('user_id', user.id).eq('name', deleteTagConfirm);
+      // Remove from all leads
       const { data: leadsWithTag } = await supabase
         .from('leads')
         .select('id, tags')
