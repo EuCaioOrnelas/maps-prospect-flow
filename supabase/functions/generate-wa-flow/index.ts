@@ -82,8 +82,25 @@ const FLOW_NODE_CONFIG_PROPERTIES: Record<string, any> = {
   keywords: { type: "array", items: { type: "string" } },
   // Message
   message_type: { type: "string", enum: ["text", "image", "audio", "video", "document", "template"] },
-  content: { type: "string", description: "Texto principal da mensagem" },
-  body_text: { type: "string", description: "Texto espelhado da mensagem" },
+  content: { type: "string", description: "Texto principal da mensagem (legacy, prefira usar contents)" },
+  body_text: { type: "string", description: "Texto espelhado da mensagem (legacy, prefira usar contents)" },
+  contents: { 
+    type: "array", 
+    description: "Array de itens de conteúdo sequenciais da mensagem. SEMPRE preencha com pelo menos um item de texto.",
+    items: { 
+      type: "object", 
+      properties: { 
+        id: { type: "string", description: "ID único como item_0, item_1" },
+        type: { type: "string", enum: ["text", "image", "audio", "video", "document", "delay"] },
+        content: { type: "string", description: "Texto da mensagem (para type=text)" },
+        caption: { type: "string", description: "Legenda para mídia" },
+        media_url: { type: "string", description: "URL do arquivo de mídia" },
+        delay_min: { type: "number", description: "Delay mínimo em segundos (para type=delay)" },
+        delay_max: { type: "number", description: "Delay máximo em segundos (para type=delay)" },
+      },
+      required: ["id", "type"]
+    }
+  },
   preview_url: { type: "boolean" },
   media_url: { type: "string" },
   caption: { type: "string" },
