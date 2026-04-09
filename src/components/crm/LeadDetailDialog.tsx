@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChevronDown, FileText, Upload, FolderOpen } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -266,7 +268,7 @@ export const LeadDetailDialog = ({
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files'>('info');
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingHeaderName, setIsEditingHeaderName] = useState(false);
   const [headerNameValue, setHeaderNameValue] = useState('');
@@ -321,6 +323,16 @@ export const LeadDetailDialog = ({
   } | null>(null);
   const [isTogglingPause, setIsTogglingPause] = useState(false);
 
+  // Deal attachments state
+  const [dealAttachmentFiles, setDealAttachmentFiles] = useState<File[]>([]);
+  const [dealAttachments, setDealAttachments] = useState<Record<string, Array<{ id: string; file_name: string; file_type: string; file_url: string }>>>({});
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+
+  // Lead files state
+  const [leadFiles, setLeadFiles] = useState<Array<{ id: string; file_name: string; file_type: string; file_url: string | null; source: string; created_at: string }>>([]);
+  const [driveConnection, setDriveConnection] = useState<{ is_active: boolean; root_folder_id: string | null } | null>(null);
+  const [isUploadingLeadFile, setIsUploadingLeadFile] = useState(false);
+
   // Check if value has unsaved changes
   const hasUnsavedValue = dealValue !== savedValue;
 
@@ -342,6 +354,9 @@ export const LeadDetailDialog = ({
       setHeaderNameValue(lead.contact_name || lead.company_name || '');
       loadNotesAndActivities();
       loadDeals();
+      loadDealAttachments();
+      loadLeadFiles();
+      loadDriveConnection();
       loadAgentPauseStatus();
       setIsEditing(false);
       setIsEditingHeaderName(false);
@@ -350,7 +365,7 @@ export const LeadDetailDialog = ({
       setHistoryPage(1);
       setShowDealConfirm(false);
       setNewTag('');
-      setShowTagComposer(false);
+      setDealAttachmentFiles([]);
     }
   }, [lead?.id]);
 
@@ -413,19 +428,7 @@ export const LeadDetailDialog = ({
     };
   }, [open, user]);
 
-  useEffect(() => {
-    if (!open || activeTab !== 'info' || !showTagComposer) return;
-
-    const timeoutId = window.setTimeout(() => {
-      const tagInput = document.getElementById('tag-search-input') as HTMLInputElement | null;
-      if (!tagInput) return;
-
-      tagInput.focus();
-      tagInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 80);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [activeTab, open, showTagComposer]);
+  // showTagComposer is no longer needed — tag creation is inside the status popover
 
   const loadDeals = async () => {
     if (!lead) return;
@@ -436,6 +439,120 @@ export const LeadDetailDialog = ({
       .order('closed_at', { ascending: false });
     if (!error && data) {
       setDeals(data as LeadDeal[]);
+    }
+  };
+
+  const loadDealAttachments = async () => {
+    if (!lead || !user) return;
+    const { data } = await supabase
+      .from('lead_deal_attachments')
+      .select('id, deal_id, file_name, file_type, file_url')
+      .eq('user_id', user.id);
+    if (data) {
+      const grouped: Record<string, Array<{ id: string; file_name: string; file_type: string; file_url: string }>> = {};
+      data.forEach((att) => {
+        if (!grouped[att.deal_id]) grouped[att.deal_id] = [];
+        grouped[att.deal_id].push(att);
+      });
+      setDealAttachments(grouped);
+    }
+  };
+
+  const loadLeadFiles = async () => {
+    if (!lead || !user) return;
+    const { data } = await supabase
+      .from('lead_files')
+      .select('id, file_name, file_type, file_url, source, created_at')
+      .eq('lead_id', lead.id)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (data) setLeadFiles(data);
+  };
+
+  const loadDriveConnection = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('user_drive_connections')
+      .select('is_active, root_folder_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    setDriveConnection(data);
+  };
+
+  const uploadDealAttachment = async (dealId: string, file: File, fileType: string) => {
+    if (!user) return;
+    const filePath = `${user.id}/${dealId}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('deal-attachments')
+      .upload(filePath, file);
+    if (uploadError) throw uploadError;
+    const { data: urlData } = supabase.storage.from('deal-attachments').getPublicUrl(filePath);
+    await supabase.from('lead_deal_attachments').insert({
+      deal_id: dealId,
+      user_id: user.id,
+      file_name: file.name,
+      file_type: fileType,
+      file_url: urlData.publicUrl,
+      file_size: file.size,
+    });
+  };
+
+  const handleUploadLeadFile = async (file: File) => {
+    if (!lead || !user) return;
+    setIsUploadingLeadFile(true);
+    try {
+      const filePath = `${user.id}/${lead.id}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('deal-attachments')
+        .upload(filePath, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from('deal-attachments').getPublicUrl(filePath);
+      await supabase.from('lead_files').insert({
+        lead_id: lead.id,
+        user_id: user.id,
+        file_name: file.name,
+        file_type: 'other',
+        file_url: urlData.publicUrl,
+        file_size: file.size,
+        source: 'local',
+      });
+      toast.success('Arquivo enviado!');
+      loadLeadFiles();
+    } catch {
+      toast.error('Erro ao enviar arquivo');
+    } finally {
+      setIsUploadingLeadFile(false);
+    }
+  };
+
+  const handleDeleteLeadFile = async (fileId: string) => {
+    try {
+      await supabase.from('lead_files').delete().eq('id', fileId);
+      toast.success('Arquivo excluído!');
+      loadLeadFiles();
+    } catch {
+      toast.error('Erro ao excluir arquivo');
+    }
+  };
+
+  const handleConnectDrive = async () => {
+    if (!user) return;
+    try {
+      const { data: funcUrl } = await supabase.functions.invoke('google-oauth-start', {
+        body: { 
+          scopes: [
+            'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/drive',
+          ],
+        },
+      });
+      if (funcUrl?.url) {
+        window.location.href = funcUrl.url;
+      } else {
+        toast.error('Erro ao iniciar conexão com Google Drive');
+      }
+    } catch {
+      toast.error('Erro ao conectar Google Drive');
     }
   };
 
@@ -961,40 +1078,90 @@ export const LeadDetailDialog = ({
             </SelectContent>
           </Select>
 
-          <Select
-            value={lead.whatsapp_status}
-            open={isWhatsAppStatusOpen}
-            onOpenChange={setIsWhatsAppStatusOpen}
-            onValueChange={(value) => {
-              void handleWhatsAppStatusChange(value as WhatsAppStatus);
-            }}
-          >
-            <SelectTrigger className="w-auto min-w-[160px] h-9 text-sm">
-              <span className="truncate">{WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}</span>
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(WHATSAPP_STATUS_LABELS) as WhatsAppStatus[]).map((status) => (
-                <SelectItem key={status} value={status}>
-                  {WHATSAPP_STATUS_LABELS[status]}
-                </SelectItem>
-              ))}
-              <SelectSeparator />
-              <div className="p-1">
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  onClick={() => {
-                    setIsWhatsAppStatusOpen(false);
-                    setActiveTab('info');
-                    setShowTagComposer(true);
-                  }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Criar nova tag
-                </button>
+          <Popover open={isWhatsAppStatusOpen} onOpenChange={setIsWhatsAppStatusOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 text-sm min-w-[160px] justify-between gap-2">
+                <span className="truncate">{WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}</span>
+                <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" align="start" sideOffset={4}>
+              <div className="max-h-[340px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+                {/* Status options */}
+                <div className="p-1">
+                  {(Object.keys(WHATSAPP_STATUS_LABELS) as WhatsAppStatus[]).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      className={cn(
+                        'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted',
+                        lead.whatsapp_status === status && 'bg-primary/10 text-primary font-medium'
+                      )}
+                      onClick={() => {
+                        void handleWhatsAppStatusChange(status);
+                        setIsWhatsAppStatusOpen(false);
+                      }}
+                    >
+                      {lead.whatsapp_status === status && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      <span className={cn(lead.whatsapp_status !== status && 'ml-5.5')}>{WHATSAPP_STATUS_LABELS[status]}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Separator + Tag creation */}
+                <div className="border-t border-border mx-1" />
+                <div className="p-2 space-y-2">
+                  <div className="flex gap-1.5">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Nova tag..."
+                      className="h-8 text-xs"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && newTag.trim()) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          void handleAddTag();
+                        }
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 shrink-0 text-xs px-2.5 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleAddTag();
+                      }}
+                      disabled={!newTag.trim()}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                  {/* Quick tag suggestions */}
+                  {tagSuggestions.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {tagSuggestions.slice(0, 6).map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddTag(tag);
+                          }}
+                          className="rounded-full border border-border bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </SelectContent>
-          </Select>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Tab Navigation */}
@@ -1003,6 +1170,7 @@ export const LeadDetailDialog = ({
             { id: 'info', label: 'Informações' },
             { id: 'deals', label: `Vendas (${deals.length})` },
             { id: 'notes', label: `Notas (${notes.length})` },
+            { id: 'files', label: 'Arquivos' },
             { id: 'history', label: 'Histórico' },
           ].map((tab) => (
             <button
@@ -1252,10 +1420,7 @@ export const LeadDetailDialog = ({
                   </div>
 
                   <div
-                    className={cn(
-                      'bg-muted/40 rounded-lg border border-border/50 p-3 space-y-3 max-h-[220px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full transition-colors',
-                      showTagComposer && 'border-primary/40 bg-primary/5'
-                    )}
+                    className="bg-muted/40 rounded-lg border border-border/50 p-3 space-y-3 max-h-[220px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full transition-colors"
                   >
                     {/* Current tags */}
                     <div className="flex flex-wrap gap-2">
@@ -1286,7 +1451,7 @@ export const LeadDetailDialog = ({
                           if (showTagComposer) setShowTagComposer(false);
                         }}
                         placeholder="Pesquisar ou criar nova tag"
-                        className={cn('h-8 text-xs', showTagComposer && 'border-primary/40 ring-2 ring-primary/10')}
+                        className="h-8 text-xs"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
@@ -1421,6 +1586,27 @@ export const LeadDetailDialog = ({
                             {deal.notes}
                           </p>
                         )}
+                        {/* Deal Attachments */}
+                        {(dealAttachments[deal.id] || []).length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-border/50 space-y-1.5">
+                            <span className="text-[11px] font-medium text-muted-foreground uppercase">Anexos</span>
+                            {dealAttachments[deal.id].map((att) => (
+                              <a
+                                key={att.id}
+                                href={att.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-xs text-primary hover:underline p-1.5 rounded bg-muted/30 hover:bg-muted/60 transition-colors"
+                              >
+                                <FileText className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate">{att.file_name}</span>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                                  {att.file_type === 'receipt' ? 'Comprovante' : att.file_type === 'contract' ? 'Contrato' : 'Outro'}
+                                </Badge>
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                     
@@ -1448,6 +1634,109 @@ export const LeadDetailDialog = ({
                     </p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Arquivos Tab */}
+            {activeTab === 'files' && (
+              <div className="space-y-4">
+                {/* Google Drive Connection */}
+                <div className="bg-muted/40 rounded-lg border border-border/50 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <FolderOpen className="w-3.5 h-3.5" />
+                      Google Drive
+                    </span>
+                    {driveConnection?.is_active ? (
+                      <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">Conectado</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px]">Desconectado</Badge>
+                    )}
+                  </div>
+                  {driveConnection?.is_active ? (
+                    <p className="text-xs text-muted-foreground">
+                      Arquivos são salvos automaticamente no Google Drive.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Conecte seu Google Drive para salvar arquivos automaticamente em uma pasta por lead.
+                      </p>
+                      <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={handleConnectDrive}>
+                        <FolderOpen className="w-3.5 h-3.5" />
+                        Conectar Google Drive
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload Area */}
+                <div className="space-y-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Enviar Arquivo</span>
+                  <label className="flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors cursor-pointer">
+                    <Upload className="w-6 h-6 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Clique para selecionar um arquivo</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadLeadFile(file);
+                        e.target.value = '';
+                      }}
+                      disabled={isUploadingLeadFile}
+                    />
+                  </label>
+                  {isUploadingLeadFile && (
+                    <p className="text-xs text-muted-foreground text-center animate-pulse">Enviando...</p>
+                  )}
+                </div>
+
+                {/* Files List */}
+                <div className="space-y-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Arquivos ({leadFiles.length})
+                  </span>
+                  {leadFiles.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {leadFiles.map((file) => (
+                        <div key={file.id} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/40 border border-border/50 group">
+                          <FileText className="w-4 h-4 text-primary shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{file.file_name}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {format(new Date(file.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              {file.source === 'drive' && ' • Google Drive'}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {file.file_url && (
+                              <a
+                                href={file.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded hover:bg-muted transition-colors"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                              </a>
+                            )}
+                            <button
+                              onClick={() => handleDeleteLeadFile(file.id)}
+                              className="p-1.5 rounded opacity-0 group-hover:opacity-100 hover:bg-destructive/10 transition-all"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <FileText className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
+                      <p className="text-sm text-muted-foreground">Nenhum arquivo</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1656,40 +1945,103 @@ export const LeadDetailDialog = ({
                   />
                 </div>
               )}
+
+              {/* File attachments for deal */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Anexos (opcional)</label>
+                <div className="space-y-2">
+                  {/* Comprovante */}
+                  <label className="flex items-center gap-2 p-2.5 rounded-lg border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors cursor-pointer">
+                    <Upload className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="text-xs text-muted-foreground flex-1">
+                      {dealAttachmentFiles.find(f => f.name.startsWith('receipt_'))
+                        ? dealAttachmentFiles.find(f => f.name.startsWith('receipt_'))!.name.replace('receipt_', '')
+                        : 'Comprovante de pagamento'}
+                    </span>
+                    <Badge variant="outline" className="text-[10px] shrink-0">Comprovante</Badge>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*,.pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const renamedFile = new File([file], `receipt_${file.name}`, { type: file.type });
+                          setDealAttachmentFiles(prev => [...prev.filter(f => !f.name.startsWith('receipt_')), renamedFile]);
+                        }
+                      }}
+                    />
+                  </label>
+                  {/* Contrato */}
+                  <label className="flex items-center gap-2 p-2.5 rounded-lg border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors cursor-pointer">
+                    <Upload className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="text-xs text-muted-foreground flex-1">
+                      {dealAttachmentFiles.find(f => f.name.startsWith('contract_'))
+                        ? dealAttachmentFiles.find(f => f.name.startsWith('contract_'))!.name.replace('contract_', '')
+                        : 'Contrato assinado'}
+                    </span>
+                    <Badge variant="outline" className="text-[10px] shrink-0">Contrato</Badge>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*,.pdf,.doc,.docx"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const renamedFile = new File([file], `contract_${file.name}`, { type: file.type });
+                          setDealAttachmentFiles(prev => [...prev.filter(f => !f.name.startsWith('contract_')), renamedFile]);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDealConfirm(false)}>
+              <Button variant="outline" onClick={() => { setShowDealConfirm(false); setDealAttachmentFiles([]); }}>
                 Cancelar
               </Button>
               <Button 
                 onClick={async () => {
                   if (!lead || !user) return;
+                  setIsUploadingAttachment(true);
                   const months = contractType === 'custom' ? customMonths : parseInt(contractType);
                   try {
-                    const { error } = await supabase.from('lead_deals').insert({
+                    const { data: dealData, error } = await supabase.from('lead_deals').insert({
                       lead_id: lead.id,
                       user_id: user.id,
                       value: dealValue,
                       contract_type: contractType,
                       contract_months: months,
-                    });
+                    }).select('id').single();
                     if (error) throw error;
                     
-                    // Update lead estimated_value
+                    // Upload attachments
+                    for (const file of dealAttachmentFiles) {
+                      const fileType = file.name.startsWith('receipt_') ? 'receipt' : file.name.startsWith('contract_') ? 'contract' : 'other';
+                      const originalFile = new File([file], file.name.replace(/^(receipt_|contract_)/, ''), { type: file.type });
+                      await uploadDealAttachment(dealData.id, originalFile, fileType);
+                    }
+                    
                     await onUpdate(lead.id, { estimated_value: dealValue });
                     
                     toast.success('Venda registrada com sucesso!');
                     setShowDealConfirm(false);
                     setDealValue(0);
+                    setDealAttachmentFiles([]);
                     loadDeals();
+                    loadDealAttachments();
                   } catch {
                     toast.error('Erro ao registrar venda');
+                  } finally {
+                    setIsUploadingAttachment(false);
                   }
                 }}
                 className="bg-primary hover:bg-primary/90"
+                disabled={isUploadingAttachment}
               >
                 <Check className="w-4 h-4 mr-1" />
-                Confirmar Venda
+                {isUploadingAttachment ? 'Salvando...' : 'Confirmar Venda'}
               </Button>
             </DialogFooter>
           </DialogContent>
