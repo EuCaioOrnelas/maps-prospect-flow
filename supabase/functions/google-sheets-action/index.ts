@@ -17,7 +17,7 @@ serve(async (req) => {
     const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
     const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
 
-    const { user_id, spreadsheet_id, sheet_name, data } = await req.json();
+    const { user_id, spreadsheet_id, sheet_name, data, action } = await req.json();
 
     if (!user_id || !spreadsheet_id || !data) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
@@ -75,8 +75,50 @@ serve(async (req) => {
       }).eq("user_id", user_id);
     }
 
-    // Append data to Google Sheets
-    const range = sheet_name ? `${sheet_name}!A1` : "Dados!A1";
+    const sheetTarget = sheet_name || "Dados";
+
+    // Action: clear sheet and set headers
+    if (action === "clear_and_set_headers") {
+      // 1. Clear entire sheet
+      const clearRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}/values/${encodeURIComponent(sheetTarget)}:clear`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        }
+      );
+      if (!clearRes.ok) {
+        const clearErr = await clearRes.json();
+        console.error("Clear error:", clearErr);
+        return new Response(JSON.stringify({ error: "Failed to clear sheet", details: clearErr }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // 2. Set headers in first row
+      const values = Array.isArray(data[0]) ? data : [data];
+      const updateRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}/values/${encodeURIComponent(sheetTarget + "!A1")}?valueInputOption=USER_ENTERED`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ values }),
+        }
+      );
+      const updateData = await updateRes.json();
+      if (!updateRes.ok) {
+        return new Response(JSON.stringify({ error: "Failed to set headers", details: updateData }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ success: true, updatedRange: updateData.updatedRange }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Default: Append data to Google Sheets
+    const range = `${sheetTarget}!A1`;
     const values = Array.isArray(data[0]) ? data : [data];
 
     const sheetsRes = await fetch(
