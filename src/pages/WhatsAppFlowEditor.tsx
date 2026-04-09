@@ -782,7 +782,7 @@ export default function WhatsAppFlowEditor() {
                         >
                           <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
                             {(item as any).iconImg ? (
-                              <img src={(item as any).iconImg} alt={item.label} className="w-5 h-5 object-contain transition-transform duration-200 group-hover:scale-125 group-hover:rotate-12" />
+                              <img src={(item as any).iconImg} alt={item.label} loading="eager" decoding="async" className="w-5 h-5 object-contain transition-transform duration-200 group-hover:scale-125 group-hover:rotate-12" />
                             ) : (
                               <item.icon size={16} className={cn(item.color.split(" ")[0], "transition-transform duration-200 group-hover:scale-125 group-hover:rotate-12")} />
                             )}
