@@ -688,10 +688,65 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner, allNodes
   );
 }
 
+function EmailChipsInput({ value, onChange, placeholder, max = 5 }: { value: string[]; onChange: (v: string[]) => void; placeholder?: string; max?: number }) {
+  const [inputValue, setInputValue] = useState("");
+
+  const addEmail = () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmed)) { toast.error("Email inválido"); return; }
+    if (value.includes(trimmed)) { toast.error("Email já adicionado"); return; }
+    if (value.length >= max) { toast.error(`Máximo de ${max} emails`); return; }
+    onChange([...value, trimmed]);
+    setInputValue("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addEmail();
+    }
+    if (e.key === "Backspace" && !inputValue && value.length > 0) {
+      onChange(value.slice(0, -1));
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-1 min-h-0">
+        {value.map((email, i) => (
+          <Badge key={i} variant="secondary" className="text-[10px] gap-1 px-1.5 h-5">
+            {email}
+            <button onClick={() => onChange(value.filter((_, idx) => idx !== i))} className="hover:text-destructive">
+              <X size={9} />
+            </button>
+          </Badge>
+        ))}
+      </div>
+      {value.length < max && (
+        <Input
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={addEmail}
+          placeholder={placeholder || "Digite o email e pressione Enter"}
+          className="h-8 text-xs"
+        />
+      )}
+      <p className="text-[9px] text-muted-foreground">
+        Digite o email e pressione Enter para adicionar (máx. {max})
+      </p>
+    </div>
+  );
+}
+
 function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
   const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("gmail", [
     "https://www.googleapis.com/auth/gmail.send",
   ], config.google_account_id);
+
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   useEffect(() => {
     if (selectedAccount) {
@@ -701,9 +756,46 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
     }
   }, [selectedAccount?.google_email, selectedAccountId]);
 
+  const ccEmails: string[] = Array.isArray(config.email_cc) ? config.email_cc : (config.email_cc ? [config.email_cc] : []);
+  const bccEmails: string[] = Array.isArray(config.email_bcc) ? config.email_bcc : (config.email_bcc ? [config.email_bcc] : []);
+
   return (
     <div className="space-y-4">
-      {renderInfoBanner("Envie emails automáticos pelo Gmail quando o lead chegar neste ponto do fluxo.")}
+      {/* Como funciona - collapsible no topo */}
+      <div className="rounded-lg border border-primary/20 bg-primary/5 overflow-hidden">
+        <button
+          onClick={() => setShowHowItWorks(!showHowItWorks)}
+          className="w-full flex items-center justify-between p-3 hover:bg-primary/10 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Info size={14} className="text-primary" />
+            <span className="text-[11px] text-primary font-medium">Como funciona</span>
+          </div>
+          <ChevronDown size={12} className={cn("text-primary transition-transform", showHowItWorks && "rotate-180")} />
+        </button>
+        {showHowItWorks && (
+          <div className="px-3 pb-3 space-y-2">
+            <ol className="text-[10px] text-muted-foreground space-y-1.5">
+              <li className="flex items-start gap-2">
+                <Mail size={11} className="text-muted-foreground mt-0.5 shrink-0" />
+                <span>Conecte sua conta Gmail acima</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Type size={11} className="text-muted-foreground mt-0.5 shrink-0" />
+                <span>Configure destinatário, assunto e corpo do email</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Zap size={11} className="text-muted-foreground mt-0.5 shrink-0" />
+                <span>Use variáveis para personalizar cada email</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 size={11} className="text-muted-foreground mt-0.5 shrink-0" />
+                <span>O email será enviado pela sua conta e aparecerá nos "Enviados"</span>
+              </li>
+            </ol>
+          </div>
+        )}
+      </div>
 
       <GoogleConnectionBlock
         accounts={googleAccounts}
@@ -718,7 +810,10 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
       {isConnected && (
         <>
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Destinatário (Para)</Label>
+            <Label className="text-xs font-medium flex items-center gap-1.5">
+              <Mail size={12} className="text-muted-foreground" />
+              Destinatário (Para)
+            </Label>
             <Input
               value={config.email_to || ""}
               onChange={(e) => updateConfig("email_to", e.target.value)}
@@ -726,32 +821,39 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
               className="h-9 text-sm"
             />
             <p className="text-[10px] text-muted-foreground">
-              Use {"{email}"} para enviar ao lead ou um email fixo. Separe vários com vírgula.
+              Use <code className="bg-muted px-1 rounded text-[9px]">{"{email}"}</code> para enviar ao lead ou um email fixo.
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Cópia (CC)</Label>
-            <Input
-              value={config.email_cc || ""}
-              onChange={(e) => updateConfig("email_cc", e.target.value)}
+            <Label className="text-xs font-medium flex items-center gap-1.5">
+              <UserPlus size={12} className="text-muted-foreground" />
+              Cópia (CC)
+            </Label>
+            <EmailChipsInput
+              value={ccEmails}
+              onChange={(v) => updateConfig("email_cc", v)}
               placeholder="gerente@empresa.com"
-              className="h-9 text-sm"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Cópia oculta (CCO)</Label>
-            <Input
-              value={config.email_bcc || ""}
-              onChange={(e) => updateConfig("email_bcc", e.target.value)}
+            <Label className="text-xs font-medium flex items-center gap-1.5">
+              <UserPlus size={12} className="text-muted-foreground" />
+              Cópia oculta (CCO)
+            </Label>
+            <EmailChipsInput
+              value={bccEmails}
+              onChange={(v) => updateConfig("email_bcc", v)}
               placeholder="registro@empresa.com"
-              className="h-9 text-sm"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Assunto do email</Label>
+            <Label className="text-xs font-medium flex items-center gap-1.5">
+              <Type size={12} className="text-muted-foreground" />
+              Assunto do email
+            </Label>
             <Input
               value={config.email_subject || ""}
               onChange={(e) => updateConfig("email_subject", e.target.value)}
@@ -760,35 +862,39 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
             />
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Corpo do email</Label>
-            <Textarea
-              value={config.email_body || ""}
-              onChange={(e) => updateConfig("email_body", e.target.value)}
-              placeholder={"Olá!\n\nNovo lead capturado:\n\n📋 Nome: {nome}\n📱 Tel: {telefone}\n📧 Email: {email}\n🏢 Empresa: {empresa}\n📍 Cidade: {cidade}\n\nAtt,\nWiize"}
-              className="text-sm min-h-[120px]"
-            />
-          </div>
-
           <div className="flex items-center justify-between py-1">
-            <Label className="text-xs">Enviar como HTML</Label>
+            <Label className="text-xs flex items-center gap-1.5">
+              <FileText size={12} className="text-muted-foreground" />
+              Enviar como HTML
+            </Label>
             <Switch
               checked={config.email_html || false}
               onCheckedChange={(v) => updateConfig("email_html", v)}
             />
           </div>
 
-          <VariablesHelper />
-
-          <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
-            <p className="text-[11px] text-primary font-medium mb-1">✉️ Como funciona</p>
-            <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
-              <li>Conecte sua conta Gmail acima</li>
-              <li>Configure destinatário, assunto e corpo</li>
-              <li>Use variáveis para personalizar cada email</li>
-              <li>O email será enviado pela sua conta e aparecerá nos "Enviados"</li>
-            </ol>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium flex items-center gap-1.5">
+              <FileText size={12} className="text-muted-foreground" />
+              {config.email_html ? "Código HTML do email" : "Corpo do email"}
+            </Label>
+            <Textarea
+              value={config.email_body || ""}
+              onChange={(e) => updateConfig("email_body", e.target.value)}
+              placeholder={config.email_html
+                ? '<html>\n<body>\n  <h1>Olá {nome}!</h1>\n  <p>Novo lead capturado.</p>\n</body>\n</html>'
+                : "Olá!\n\nNovo lead capturado:\n\n📋 Nome: {nome}\n📱 Tel: {telefone}\n📧 Email: {email}"}
+              className={cn("text-sm min-h-[120px]", config.email_html && "font-mono text-xs")}
+              spellCheck={!config.email_html}
+            />
+            {config.email_html && (
+              <p className="text-[10px] text-muted-foreground">
+                Cole seu código HTML completo. Variáveis como <code className="bg-muted px-1 rounded text-[9px]">{"{nome}"}</code> serão substituídas automaticamente.
+              </p>
+            )}
           </div>
+
+          <VariablesHelper />
         </>
       )}
     </div>

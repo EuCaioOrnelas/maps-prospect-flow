@@ -17,7 +17,7 @@ serve(async (req) => {
     const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
     const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
 
-    const { user_id, to, subject, body_text, body_html } = await req.json();
+    const { user_id, to, cc, bcc, subject, body_text, body_html } = await req.json();
 
     if (!user_id || !to || !subject) {
       return new Response(JSON.stringify({ error: "Missing required fields: user_id, to, subject" }), {
@@ -72,24 +72,26 @@ serve(async (req) => {
       }).eq("user_id", user_id);
     }
 
+    // Build CC and BCC headers
+    const ccList = Array.isArray(cc) ? cc.join(", ") : (cc || "");
+    const bccList = Array.isArray(bcc) ? bcc.join(", ") : (bcc || "");
+
+    // Build email headers
+    const headers: string[] = [
+      `MIME-Version: 1.0`,
+      `To: ${to}`,
+      `Subject: ${subject}`,
+    ];
+    if (ccList) headers.push(`Cc: ${ccList}`);
+    if (bccList) headers.push(`Bcc: ${bccList}`);
+
     // Build email in RFC 2822 format
-    const emailContent = body_html
-      ? [
-          `Content-Type: text/html; charset="UTF-8"`,
-          `MIME-Version: 1.0`,
-          `To: ${to}`,
-          `Subject: ${subject}`,
-          ``,
-          body_html,
-        ].join("\r\n")
-      : [
-          `Content-Type: text/plain; charset="UTF-8"`,
-          `MIME-Version: 1.0`,
-          `To: ${to}`,
-          `Subject: ${subject}`,
-          ``,
-          body_text || "",
-        ].join("\r\n");
+    const contentType = body_html
+      ? `Content-Type: text/html; charset="UTF-8"`
+      : `Content-Type: text/plain; charset="UTF-8"`;
+    headers.unshift(contentType);
+
+    const emailContent = [...headers, "", body_html || body_text || ""].join("\r\n");
 
     // Base64url encode
     const encodedEmail = btoa(unescape(encodeURIComponent(emailContent)))
