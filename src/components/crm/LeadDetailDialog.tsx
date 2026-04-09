@@ -1940,40 +1940,103 @@ export const LeadDetailDialog = ({
                   />
                 </div>
               )}
+
+              {/* File attachments for deal */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Anexos (opcional)</label>
+                <div className="space-y-2">
+                  {/* Comprovante */}
+                  <label className="flex items-center gap-2 p-2.5 rounded-lg border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors cursor-pointer">
+                    <Upload className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="text-xs text-muted-foreground flex-1">
+                      {dealAttachmentFiles.find(f => f.name.startsWith('receipt_'))
+                        ? dealAttachmentFiles.find(f => f.name.startsWith('receipt_'))!.name.replace('receipt_', '')
+                        : 'Comprovante de pagamento'}
+                    </span>
+                    <Badge variant="outline" className="text-[10px] shrink-0">Comprovante</Badge>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*,.pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const renamedFile = new File([file], `receipt_${file.name}`, { type: file.type });
+                          setDealAttachmentFiles(prev => [...prev.filter(f => !f.name.startsWith('receipt_')), renamedFile]);
+                        }
+                      }}
+                    />
+                  </label>
+                  {/* Contrato */}
+                  <label className="flex items-center gap-2 p-2.5 rounded-lg border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors cursor-pointer">
+                    <Upload className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="text-xs text-muted-foreground flex-1">
+                      {dealAttachmentFiles.find(f => f.name.startsWith('contract_'))
+                        ? dealAttachmentFiles.find(f => f.name.startsWith('contract_'))!.name.replace('contract_', '')
+                        : 'Contrato assinado'}
+                    </span>
+                    <Badge variant="outline" className="text-[10px] shrink-0">Contrato</Badge>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*,.pdf,.doc,.docx"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const renamedFile = new File([file], `contract_${file.name}`, { type: file.type });
+                          setDealAttachmentFiles(prev => [...prev.filter(f => !f.name.startsWith('contract_')), renamedFile]);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDealConfirm(false)}>
+              <Button variant="outline" onClick={() => { setShowDealConfirm(false); setDealAttachmentFiles([]); }}>
                 Cancelar
               </Button>
               <Button 
                 onClick={async () => {
                   if (!lead || !user) return;
+                  setIsUploadingAttachment(true);
                   const months = contractType === 'custom' ? customMonths : parseInt(contractType);
                   try {
-                    const { error } = await supabase.from('lead_deals').insert({
+                    const { data: dealData, error } = await supabase.from('lead_deals').insert({
                       lead_id: lead.id,
                       user_id: user.id,
                       value: dealValue,
                       contract_type: contractType,
                       contract_months: months,
-                    });
+                    }).select('id').single();
                     if (error) throw error;
                     
-                    // Update lead estimated_value
+                    // Upload attachments
+                    for (const file of dealAttachmentFiles) {
+                      const fileType = file.name.startsWith('receipt_') ? 'receipt' : file.name.startsWith('contract_') ? 'contract' : 'other';
+                      const originalFile = new File([file], file.name.replace(/^(receipt_|contract_)/, ''), { type: file.type });
+                      await uploadDealAttachment(dealData.id, originalFile, fileType);
+                    }
+                    
                     await onUpdate(lead.id, { estimated_value: dealValue });
                     
                     toast.success('Venda registrada com sucesso!');
                     setShowDealConfirm(false);
                     setDealValue(0);
+                    setDealAttachmentFiles([]);
                     loadDeals();
+                    loadDealAttachments();
                   } catch {
                     toast.error('Erro ao registrar venda');
+                  } finally {
+                    setIsUploadingAttachment(false);
                   }
                 }}
                 className="bg-primary hover:bg-primary/90"
+                disabled={isUploadingAttachment}
               >
                 <Check className="w-4 h-4 mr-1" />
-                Confirmar Venda
+                {isUploadingAttachment ? 'Salvando...' : 'Confirmar Venda'}
               </Button>
             </DialogFooter>
           </DialogContent>
