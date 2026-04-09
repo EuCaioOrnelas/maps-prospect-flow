@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -290,6 +290,7 @@ export const LeadDetailDialog = ({
     estimated_value: 0,
   });
   const [showWhatsAppOptions, setShowWhatsAppOptions] = useState(false);
+  const [isWhatsAppStatusOpen, setIsWhatsAppStatusOpen] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
   const HISTORY_PER_PAGE = 5;
   const [showNewOriginDialog, setShowNewOriginDialog] = useState(false);
@@ -411,6 +412,20 @@ export const LeadDetailDialog = ({
       cancelled = true;
     };
   }, [open, user]);
+
+  useEffect(() => {
+    if (!open || activeTab !== 'info' || !showTagComposer) return;
+
+    const timeoutId = window.setTimeout(() => {
+      const tagInput = document.getElementById('tag-search-input') as HTMLInputElement | null;
+      if (!tagInput) return;
+
+      tagInput.focus();
+      tagInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [activeTab, open, showTagComposer]);
 
   const loadDeals = async () => {
     if (!lead) return;
@@ -948,8 +963,10 @@ export const LeadDetailDialog = ({
 
           <Select
             value={lead.whatsapp_status}
+            open={isWhatsAppStatusOpen}
+            onOpenChange={setIsWhatsAppStatusOpen}
             onValueChange={(value) => {
-              handleWhatsAppStatusChange(value as WhatsAppStatus);
+              void handleWhatsAppStatusChange(value as WhatsAppStatus);
             }}
           >
             <SelectTrigger className="w-auto min-w-[160px] h-9 text-sm">
@@ -961,6 +978,21 @@ export const LeadDetailDialog = ({
                   {WHATSAPP_STATUS_LABELS[status]}
                 </SelectItem>
               ))}
+              <SelectSeparator />
+              <div className="p-1">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={() => {
+                    setIsWhatsAppStatusOpen(false);
+                    setActiveTab('info');
+                    setShowTagComposer(true);
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  Criar nova tag
+                </button>
+              </div>
             </SelectContent>
           </Select>
         </div>
@@ -1219,7 +1251,12 @@ export const LeadDetailDialog = ({
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tags do CRM</span>
                   </div>
 
-                  <div className="bg-muted/40 rounded-lg border border-border/50 p-3 space-y-3 max-h-[220px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+                  <div
+                    className={cn(
+                      'bg-muted/40 rounded-lg border border-border/50 p-3 space-y-3 max-h-[220px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full transition-colors',
+                      showTagComposer && 'border-primary/40 bg-primary/5'
+                    )}
+                  >
                     {/* Current tags */}
                     <div className="flex flex-wrap gap-2">
                       {(lead.tags || []).length > 0 ? (
@@ -1244,9 +1281,12 @@ export const LeadDetailDialog = ({
                       <Input
                         id="tag-search-input"
                         value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
+                        onChange={(e) => {
+                          setNewTag(e.target.value);
+                          if (showTagComposer) setShowTagComposer(false);
+                        }}
                         placeholder="Pesquisar ou criar nova tag"
-                        className="h-8 text-xs"
+                        className={cn('h-8 text-xs', showTagComposer && 'border-primary/40 ring-2 ring-primary/10')}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
