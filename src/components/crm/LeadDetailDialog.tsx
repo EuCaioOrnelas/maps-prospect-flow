@@ -415,19 +415,7 @@ export const LeadDetailDialog = ({
     };
   }, [open, user]);
 
-  useEffect(() => {
-    if (!open || activeTab !== 'info' || !showTagComposer) return;
-
-    const timeoutId = window.setTimeout(() => {
-      const tagInput = document.getElementById('tag-search-input') as HTMLInputElement | null;
-      if (!tagInput) return;
-
-      tagInput.focus();
-      tagInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 80);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [activeTab, open, showTagComposer]);
+  // showTagComposer is no longer needed — tag creation is inside the status popover
 
   const loadDeals = async () => {
     if (!lead) return;
