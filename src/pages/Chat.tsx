@@ -7,11 +7,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ChatOfficialApiDialog } from "@/components/chat/ChatOfficialApiDialog";
+import { useSearchParams } from "react-router-dom";
 
 const Chat = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [showApiDialog, setShowApiDialog] = useState<boolean | null>(null); // null = loading
+  const [handledLaunchKey, setHandledLaunchKey] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const chat = useChat();
 
   useEffect(() => {
@@ -40,6 +43,43 @@ const Chat = () => {
 
   // Always force dialog open when no connection, regardless of DB flag
   const shouldShowDialog = isLoading ? false : hasNoConnection ? true : !!showApiDialog;
+
+  useEffect(() => {
+    if (isLoading || shouldShowDialog || !hasConnection) return;
+
+    const phone = searchParams.get("phone");
+    const name = searchParams.get("name") ?? undefined;
+    const conversationId = searchParams.get("conversation");
+
+    if (!phone && !conversationId) return;
+
+    const nextLaunchKey = `${conversationId ?? ""}:${phone ?? ""}:${chat.activeConnectionId ?? ""}`;
+
+    if (nextLaunchKey === handledLaunchKey) return;
+
+    const openRequestedChat = async () => {
+      if (conversationId) {
+        chat.setActiveConversationId(conversationId);
+      } else if (phone) {
+        await chat.startNewConversation(phone, name);
+      }
+
+      setHandledLaunchKey(nextLaunchKey);
+      setSearchParams({}, { replace: true });
+    };
+
+    void openRequestedChat();
+  }, [
+    chat.activeConnectionId,
+    chat.setActiveConversationId,
+    chat.startNewConversation,
+    handledLaunchKey,
+    hasConnection,
+    isLoading,
+    searchParams,
+    setSearchParams,
+    shouldShowDialog,
+  ]);
 
   return (
     <SidebarProvider>

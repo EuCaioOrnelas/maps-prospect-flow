@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
+import { getChatPhoneKey, useChatCRMFilters } from "@/hooks/useChatCRMFilters";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { NewConversationDialog } from "./NewConversationDialog";
 import { ChatFiltersDialog, type ChatFilterConfig } from "./ChatFiltersDialog";
@@ -95,15 +96,65 @@ export function ChatSidebar({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [customFilters, setCustomFilters] = useState<ChatFilterConfig>(DEFAULT_FILTER_CONFIG);
   const searchRef = useRef<HTMLInputElement>(null);
+  const {
+    availableTags,
+    availableStages,
+    crmLeadByPhoneKey,
+    loading: loadingCrmFilters,
+  } = useChatCRMFilters();
 
   const hasCustomFilters = customFilters.tags.length > 0 || customFilters.crmStages.length > 0 || customFilters.scoreMin > 0 || customFilters.scoreMax < 1000;
   const customFilterCount = customFilters.tags.length + customFilters.crmStages.length + (customFilters.scoreMin > 0 || customFilters.scoreMax < 1000 ? 1 : 0);
 
-  // Apply filters
-  const filteredConversations = conversations.filter(conv => {
-    if (activeFilter === "unread") return conv.unread_count > 0;
-    return true;
-  });
+  const handleApplyFilters = (filters: ChatFilterConfig) => {
+    const nextHasFilters = filters.tags.length > 0 || filters.crmStages.length > 0 || filters.scoreMin > 0 || filters.scoreMax < 1000;
+
+    setCustomFilters(filters);
+    setActiveFilter(nextHasFilters ? "filtered" : "all");
+  };
+
+  const filteredConversations = useMemo(() => {
+    return conversations.filter((conv) => {
+      if (activeFilter === "unread" && conv.unread_count <= 0) {
+        return false;
+      }
+
+      if (activeFilter !== "filtered" || !hasCustomFilters) {
+        return true;
+      }
+
+      const crmLead = crmLeadByPhoneKey[getChatPhoneKey(conv.contact_phone)];
+
+      if (!crmLead) {
+        return false;
+      }
+
+      if (customFilters.tags.length > 0) {
+        const leadTags = new Set([
+          ...crmLead.tags,
+          ...(crmLead.statusLabel ? [crmLead.statusLabel] : []),
+        ]);
+
+        if (!customFilters.tags.some((tag) => leadTags.has(tag))) {
+          return false;
+        }
+      }
+
+      if (customFilters.crmStages.length > 0) {
+        if (!crmLead.stageName || !customFilters.crmStages.includes(crmLead.stageName)) {
+          return false;
+        }
+      }
+
+      if (crmLead.score < customFilters.scoreMin || crmLead.score > customFilters.scoreMax) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [activeFilter, conversations, crmLeadByPhoneKey, customFilters, hasCustomFilters]);
+
+  const isListLoading = loading || (activeFilter === "filtered" && loadingCrmFilters);
 
   return (
     <div className="flex flex-col h-full wa-sidebar-bg">
@@ -255,14 +306,18 @@ export function ChatSidebar({
 
       {/* Conversations list */}
       <div className="flex-1 overflow-y-auto wa-scrollbar">
-        {loading ? (
+        {isListLoading ? (
           <div className="flex items-center justify-center py-16">
             <div className="h-7 w-7 rounded-full border-[3px] border-[#00a884]/20 border-t-[#00a884] animate-spin" />
           </div>
         ) : filteredConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
             <p className="text-sm wa-text-muted">
-              {activeFilter !== "all" ? "Nenhuma conversa neste filtro" : "Nenhuma conversa"}
+              {activeFilter === "filtered"
+                ? "Nenhuma conversa encontrada nesses filtros"
+                : activeFilter !== "all"
+                  ? "Nenhuma conversa neste filtro"
+                  : "Nenhuma conversa"}
             </p>
             <p className="text-xs wa-text-muted mt-1 opacity-60">As mensagens recebidas aparecerão aqui</p>
           </div>
@@ -387,7 +442,10 @@ export function ChatSidebar({
         open={filtersOpen}
         onOpenChange={setFiltersOpen}
         filters={customFilters}
-        onApply={setCustomFilters}
+        onApply={handleApplyFilters}
+        availableTags={availableTags}
+        availableStages={availableStages}
+        loading={loadingCrmFilters}
       />
     </div>
   );
