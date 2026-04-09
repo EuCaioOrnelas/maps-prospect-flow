@@ -453,7 +453,10 @@ export default function CreateFlowAI() {
     },
     onSuccess: (flow) => {
       setReviewFlowId(flow.id);
-      setShowReviewPopup(true);
+      // Small delay to let the user see "Fluxo criado!" before popup
+      setTimeout(() => {
+        setShowReviewPopup(true);
+      }, 1500);
     },
     onError: (err: any) => toast.error(err.message || "Erro ao gerar fluxo com IA"),
   });
@@ -488,8 +491,10 @@ export default function CreateFlowAI() {
     }
   };
 
+  const isGenerating = createWithAI.isPending || (createWithAI.isSuccess && !showReviewPopup);
+
   // Loading state - show phone simulation
-  if (createWithAI.isPending) {
+  if (isGenerating) {
     return (
       <div className="min-h-screen bg-background flex w-full">
         <AppSidebar profile={profile} />
@@ -498,7 +503,7 @@ export default function CreateFlowAI() {
           <MobileNav profile={profile} />
           <BackgroundGlow />
           <main className="flex-1 flex items-center justify-center px-4">
-            <PhoneSimulation flowName={prompt.slice(0, 30)} userPrompt={prompt} />
+            <PhoneSimulation flowName={prompt.slice(0, 30)} userPrompt={prompt} isFinished={createWithAI.isSuccess} />
           </main>
         </div>
       </div>
@@ -578,11 +583,25 @@ export default function CreateFlowAI() {
                   className={cn(
                     "px-5 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 btn-shine relative overflow-hidden",
                     prompt.trim()
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                      ? "text-white shadow-lg"
                       : "bg-muted text-muted-foreground"
                   )}
+                  style={prompt.trim() ? {
+                    background: "linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335)",
+                    boxShadow: "0 4px 16px rgba(66, 133, 244, 0.3)",
+                  } : undefined}
                 >
-                  <img src={geminiIcon} alt="Gemini" className="w-4 h-4" />
+                  {/* Animated white star */}
+                  <motion.svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="white"
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                  >
+                    <path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" />
+                  </motion.svg>
                   <span>Criar fluxo</span>
                 </motion.button>
               </div>
