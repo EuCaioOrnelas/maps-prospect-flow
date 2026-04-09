@@ -667,7 +667,7 @@ export const LeadDetailDialog = ({
   };
 
   const handleAddTag = async (tagValue?: string) => {
-    if (!lead) return;
+    if (!lead || !user) return;
 
     const normalizedTag = (tagValue ?? newTag).trim();
 
@@ -687,11 +687,16 @@ export const LeadDetailDialog = ({
 
       setLocalTags(updatedTags);
 
+      // Also save to crm_tags table (upsert to avoid duplicates)
+      await supabase.from('crm_tags').upsert(
+        { user_id: user.id, name: normalizedTag },
+        { onConflict: 'user_id,name' }
+      );
+
       setAvailableTags((prev) => {
         if (prev.some((tag) => tag.toLowerCase() === normalizedTag.toLowerCase())) {
           return prev;
         }
-
         return [...prev, normalizedTag].sort((a, b) => a.localeCompare(b, 'pt-BR'));
       });
 
@@ -700,6 +705,7 @@ export const LeadDetailDialog = ({
       toast.success('Tag adicionada!');
     } catch {
       toast.error('Erro ao adicionar tag');
+    }
     }
   };
 
