@@ -8,7 +8,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { Sparkles, ArrowLeft, SendIcon, MessageSquare, CheckCircle2, AlertTriangle, Settings2, Zap } from "lucide-react";
-import geminiIcon from "@/assets/logos/gemini-icon.png";
+
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -540,7 +540,7 @@ export default function CreateFlowAI() {
               transition={{ duration: 0.6 }}
             >
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-card text-sm text-muted-foreground">
-                <img src={geminiIcon} alt="Gemini" className="w-3.5 h-3.5" />
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" fill="url(#geminiGradHero)"/><defs><linearGradient id="geminiGradHero" x1="0" y1="0" x2="24" y2="24"><stop stopColor="#4285F4"/><stop offset="0.5" stopColor="#34A853"/><stop offset="1" stopColor="#8BC34A"/></linearGradient></defs></svg>
                 Descreva. Nós montamos o fluxo.
               </div>
 
@@ -586,8 +586,8 @@ export default function CreateFlowAI() {
                       ? "text-white shadow-lg"
                       : "bg-muted text-muted-foreground"
                   )}
-                  style={prompt.trim() ? {
-                    background: "linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335)",
+                   style={prompt.trim() ? {
+                    background: "linear-gradient(135deg, #4285F4, #34A853, #8BC34A)",
                     boxShadow: "0 4px 16px rgba(66, 133, 244, 0.3)",
                   } : undefined}
                 >
