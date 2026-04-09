@@ -202,14 +202,27 @@ export function ChatSidebar({
                   >
                     <div className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                      c.id === activeConnectionId ? "bg-[#00a884]/20" : "bg-white/5"
+                      connectionHealth[c.id] === false 
+                        ? "bg-red-500/20" 
+                        : c.id === activeConnectionId ? "bg-[#00a884]/20" : "bg-white/5"
                     )}>
-                      <Phone size={14} className={c.id === activeConnectionId ? "text-[#00a884]" : "wa-icon-muted"} />
+                      {connectionHealth[c.id] === false ? (
+                        <AlertTriangle size={14} className="text-red-500" />
+                      ) : (
+                        <Phone size={14} className={c.id === activeConnectionId ? "text-[#00a884]" : "wa-icon-muted"} />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={cn("text-[13px] font-medium truncate", c.id === activeConnectionId ? "text-[#00a884]" : "wa-text-primary")}>
-                        {truncateText(c.nickname || c.business_name || "Número", 22)}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={cn("text-[13px] font-medium truncate", c.id === activeConnectionId ? "text-[#00a884]" : "wa-text-primary")}>
+                          {truncateText(c.nickname || c.business_name || "Número", 22)}
+                        </p>
+                        {connectionHealth[c.id] === false && (
+                          <span className="text-[9px] font-semibold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded-full shrink-0">
+                            Expirado
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] wa-text-muted truncate">{c.display_phone_number || c.phone_number_id}</p>
                     </div>
                     {c.id === activeConnectionId && (
