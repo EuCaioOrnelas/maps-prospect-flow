@@ -211,21 +211,46 @@ export function ChatSidebar({
       </div>
 
       {/* Filter chips */}
-      <div className="flex items-center gap-1.5 px-3 pb-2 wa-sidebar-search-area overflow-x-auto scrollbar-none">
-        {filters.map(f => (
-          <button
-            key={f.key}
-            onClick={() => setActiveFilter(activeFilter === f.key ? "all" : f.key)}
-            className={cn(
-              "px-3 py-[5px] rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-150 border",
-              activeFilter === f.key
-                ? "bg-[#00a884] text-white border-[#00a884]"
-                : "wa-text-muted border-white/10 hover:border-white/20 hover:bg-white/5"
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-center gap-2 px-3 pb-2 wa-sidebar-search-area">
+        <button
+          onClick={() => setActiveFilter("all")}
+          className={cn(
+            "px-3 py-[5px] rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-150 border",
+            activeFilter === "all"
+              ? "bg-[#00a884] text-white border-[#00a884]"
+              : "wa-text-muted border-white/10 hover:border-[#00a884]/40 hover:text-[#00a884]"
+          )}
+        >
+          Todas
+        </button>
+        <button
+          onClick={() => setActiveFilter(activeFilter === "unread" ? "all" : "unread")}
+          className={cn(
+            "px-3 py-[5px] rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-150 border",
+            activeFilter === "unread"
+              ? "bg-[#00a884] text-white border-[#00a884]"
+              : "wa-text-muted border-white/10 hover:border-[#00a884]/40 hover:text-[#00a884]"
+          )}
+        >
+          Não lidas
+        </button>
+        <button
+          onClick={() => setFiltersOpen(true)}
+          className={cn(
+            "flex items-center gap-1 px-3 py-[5px] rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-150 border",
+            hasCustomFilters
+              ? "bg-[#00a884] text-white border-[#00a884]"
+              : "wa-text-muted border-white/10 hover:border-[#00a884]/40 hover:text-[#00a884]"
+          )}
+        >
+          <SlidersHorizontal size={12} />
+          Filtros
+          {customFilterCount > 0 && (
+            <span className="ml-0.5 bg-white/20 text-white text-[10px] font-bold px-1.5 py-0 rounded-full leading-[16px]">
+              {customFilterCount}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Conversations list */}
