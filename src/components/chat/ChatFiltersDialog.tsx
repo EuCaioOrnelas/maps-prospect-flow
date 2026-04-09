@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Tag, BarChart3, Columns3, Loader2, Search } from "lucide-react";
+import { Tag, BarChart3, Columns3, Loader2 } from "lucide-react";
 
 export interface ChatFilterConfig {
   tags: string[];
@@ -32,22 +31,12 @@ export function ChatFiltersDialog({
   loading = false,
 }: ChatFiltersDialogProps) {
   const [local, setLocal] = useState<ChatFilterConfig>(filters);
-  const [tagSearch, setTagSearch] = useState("");
 
   useEffect(() => {
     if (open) {
       setLocal(filters);
-      setTagSearch("");
     }
   }, [open, filters]);
-
-  const filteredTags = useMemo(() => {
-    const normalizedSearch = tagSearch.trim().toLowerCase();
-
-    if (!normalizedSearch) return availableTags;
-
-    return availableTags.filter((tag) => tag.toLowerCase().includes(normalizedSearch));
-  }, [availableTags, tagSearch]);
 
   const toggleTag = (tag: string) => {
     setLocal(prev => ({
@@ -75,7 +64,6 @@ export function ChatFiltersDialog({
   const handleClear = () => {
     const cleared: ChatFilterConfig = { tags: [], crmStages: [], scoreMin: 0, scoreMax: 1000 };
     setLocal(cleared);
-    setTagSearch("");
     onApply(cleared);
     onOpenChange(false);
   };
@@ -102,29 +90,15 @@ export function ChatFiltersDialog({
           <div className="px-5 pb-5 space-y-5 max-h-[60vh] overflow-y-auto">
             {/* Tags */}
             <div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-3">
                 <Tag size={14} className="text-primary" />
                 <span className="text-[13px] font-semibold text-foreground">Tags do CRM</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground mb-3">
-                Inclui status como <strong className="text-foreground">Respondeu</strong>, <strong className="text-foreground">Em conversa</strong>, <strong className="text-foreground">Sem resposta</strong> e tags personalizadas.
-              </p>
-              <div className="relative mb-3">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={tagSearch}
-                  onChange={(event) => setTagSearch(event.target.value)}
-                  placeholder="Pesquisar tags do CRM"
-                  className="h-9 rounded-xl border-border bg-muted/20 pl-9"
-                />
               </div>
               <div className="flex flex-wrap gap-2">
                 {availableTags.length === 0 ? (
                   <span className="text-[12px] text-muted-foreground">Nenhuma tag encontrada no CRM</span>
-                ) : filteredTags.length === 0 ? (
-                  <span className="text-[12px] text-muted-foreground">Nenhuma tag encontrada para essa busca</span>
                 ) : (
-                  filteredTags.map(tag => (
+                  availableTags.map(tag => (
                     <button
                       key={tag}
                       onClick={() => toggleTag(tag)}
