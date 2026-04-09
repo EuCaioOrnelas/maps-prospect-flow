@@ -1098,6 +1098,95 @@ export const LeadDetailDialog = ({
               </div>
             </PopoverContent>
           </Popover>
+
+          {/* Tags Selector */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 text-sm min-w-[120px] justify-between gap-2">
+                <Tag className="w-3.5 h-3.5 shrink-0 text-primary" />
+                <span className="truncate">{localTags.length > 0 ? `${localTags.length} tag${localTags.length > 1 ? 's' : ''}` : 'Tags'}</span>
+                <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-0" align="end" sideOffset={4}>
+              <div className="max-h-[320px] flex flex-col">
+                {/* Search / create input */}
+                <div className="p-2 border-b border-border shrink-0">
+                  <div className="flex gap-1.5">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Pesquisar ou criar tag..."
+                      className="h-8 text-xs"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          void handleAddTag();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="default"
+                      className="h-8 shrink-0 text-xs px-3"
+                      onClick={() => void handleAddTag()}
+                      disabled={!newTag.trim()}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Current tags + suggestions */}
+                <div className="overflow-y-auto flex-1 [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+                  {/* Active tags */}
+                  {localTags.length > 0 && (
+                    <div className="p-2 space-y-1">
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Ativas</span>
+                      {localTags.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors bg-primary/10 text-primary hover:bg-destructive/10 hover:text-destructive group"
+                        >
+                          <Check className="w-3.5 h-3.5 shrink-0" />
+                          <span className="flex-1 text-left truncate">{tag}</span>
+                          <X className="w-3 h-3 opacity-0 group-hover:opacity-100 shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Available suggestions */}
+                  {tagSuggestions.length > 0 && (
+                    <div className="p-2 space-y-1">
+                      {localTags.length > 0 && <div className="h-px bg-border my-1" />}
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Disponíveis</span>
+                      {tagSuggestions.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => handleAddTag(tag)}
+                          className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-muted text-foreground"
+                        >
+                          <Tag className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                          <span className="flex-1 text-left truncate">{tag}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {localTags.length === 0 && tagSuggestions.length === 0 && (
+                    <div className="p-4 text-center text-xs text-muted-foreground">
+                      Nenhuma tag encontrada. Digite para criar.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Tab Navigation */}
