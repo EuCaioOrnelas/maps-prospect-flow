@@ -585,7 +585,7 @@ export default function CreateFlowAI() {
                   whileTap={{ scale: 0.97 }}
                   disabled={!prompt.trim()}
                   className={cn(
-                    "px-5 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 relative overflow-hidden",
+                    "px-5 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 btn-shine relative overflow-hidden",
                     prompt.trim()
                       ? "text-white shadow-lg"
                       : "bg-muted text-muted-foreground"
@@ -595,31 +595,18 @@ export default function CreateFlowAI() {
                     boxShadow: "0 4px 16px rgba(66, 133, 244, 0.3)",
                   } : undefined}
                 >
-                  {/* Shimmer glow overlay when active */}
-                  {prompt.trim() && (
-                    <motion.div
-                      className="absolute inset-0 rounded-full pointer-events-none"
-                      style={{
-                        background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)",
-                        backgroundSize: "200% 100%",
-                      }}
-                      animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
-                      transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-                    />
-                  )}
                   {/* Animated white star */}
                   <motion.svg
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
                     fill="white"
-                    className="relative z-10"
                     animate={{ rotate: [0, 360] }}
                     transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                   >
                     <path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" />
                   </motion.svg>
-                  <span className="relative z-10">Criar fluxo</span>
+                  <span>Criar fluxo</span>
                 </motion.button>
               </div>
             </motion.div>
