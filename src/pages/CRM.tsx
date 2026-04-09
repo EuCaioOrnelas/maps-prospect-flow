@@ -384,7 +384,7 @@ export default function CRM() {
                         <span className="hidden sm:inline">Configurações</span>
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Gerenciar colunas do funil</TooltipContent>
+                    <TooltipContent>Configurações gerais do CRM</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
