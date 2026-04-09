@@ -706,7 +706,6 @@ export const LeadDetailDialog = ({
     } catch {
       toast.error('Erro ao adicionar tag');
     }
-    }
   };
 
   const handleRemoveTag = async (tagToRemove: string) => {
