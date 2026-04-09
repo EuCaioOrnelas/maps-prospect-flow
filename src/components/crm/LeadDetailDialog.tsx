@@ -1581,6 +1581,27 @@ export const LeadDetailDialog = ({
                             {deal.notes}
                           </p>
                         )}
+                        {/* Deal Attachments */}
+                        {(dealAttachments[deal.id] || []).length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-border/50 space-y-1.5">
+                            <span className="text-[11px] font-medium text-muted-foreground uppercase">Anexos</span>
+                            {dealAttachments[deal.id].map((att) => (
+                              <a
+                                key={att.id}
+                                href={att.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-xs text-primary hover:underline p-1.5 rounded bg-muted/30 hover:bg-muted/60 transition-colors"
+                              >
+                                <FileText className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate">{att.file_name}</span>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                                  {att.file_type === 'receipt' ? 'Comprovante' : att.file_type === 'contract' ? 'Contrato' : 'Outro'}
+                                </Badge>
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                     
