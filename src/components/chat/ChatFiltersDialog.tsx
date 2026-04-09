@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
-import { Tag, BarChart3, Columns3, X } from "lucide-react";
+import { Tag, BarChart3, Columns3, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ChatFilterConfig {
   tags: string[];
@@ -17,22 +17,65 @@ interface ChatFiltersDialogProps {
   onOpenChange: (open: boolean) => void;
   filters: ChatFilterConfig;
   onApply: (filters: ChatFilterConfig) => void;
-  availableTags?: string[];
-  availableStages?: string[];
 }
-
-const DEFAULT_TAGS = ["Cliente", "Lead", "Parceiro", "VIP", "Suporte", "Novo"];
-const DEFAULT_STAGES = ["Novo Lead", "Em contato", "Qualificado", "Proposta", "Fechado"];
 
 export function ChatFiltersDialog({
   open,
   onOpenChange,
   filters,
   onApply,
-  availableTags = DEFAULT_TAGS,
-  availableStages = DEFAULT_STAGES,
 }: ChatFiltersDialogProps) {
   const [local, setLocal] = useState<ChatFilterConfig>(filters);
+  const [stages, setStages] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setLocal(filters);
+      fetchCRMData();
+    }
+  }, [open, filters]);
+
+  const fetchCRMData = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch real pipeline stages
+      const { data: stagesData } = await supabase
+        .from("pipeline_stages")
+        .select("name, position")
+        .eq("user_id", user.id)
+        .order("position");
+
+      if (stagesData) {
+        setStages(stagesData.map(s => s.name));
+      }
+
+      // Fetch unique tags from leads
+      const { data: leadsData } = await supabase
+        .from("leads")
+        .select("tags")
+        .eq("user_id", user.id)
+        .not("tags", "is", null);
+
+      if (leadsData) {
+        const allTags = new Set<string>();
+        leadsData.forEach(lead => {
+          if (Array.isArray(lead.tags)) {
+            lead.tags.forEach((t: string) => allTags.add(t));
+          }
+        });
+        setTags(Array.from(allTags).sort());
+      }
+    } catch (e) {
+      console.error("Error fetching CRM data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleTag = (tag: string) => {
     setLocal(prev => ({
@@ -66,101 +109,115 @@ export function ChatFiltersDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px] wa-dropdown-bg border wa-border rounded-2xl p-0 overflow-hidden gap-0">
+      <DialogContent className="sm:max-w-[420px] bg-background border border-border rounded-2xl p-0 overflow-hidden gap-0 [&>button]:hidden">
         <DialogHeader className="px-5 pt-5 pb-3">
-          <DialogTitle className="text-[16px] font-semibold wa-text-primary flex items-center gap-2">
+          <DialogTitle className="text-[16px] font-semibold text-foreground flex items-center gap-2">
             Filtros personalizados
             {activeCount > 0 && (
-              <span className="text-[11px] bg-[#00a884] text-white px-2 py-0.5 rounded-full font-bold">
+              <span className="text-[11px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-bold">
                 {activeCount}
               </span>
             )}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="px-5 pb-5 space-y-5 max-h-[60vh] overflow-y-auto wa-scrollbar">
-          {/* Tags */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Tag size={14} className="text-[#00a884]" />
-              <span className="text-[13px] font-semibold wa-text-primary">Tags do CRM</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {availableTags.map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-150 border",
-                    local.tags.includes(tag)
-                      ? "bg-[#00a884] text-white border-[#00a884]"
-                      : "wa-text-muted border-white/10 hover:border-[#00a884]/40 hover:text-[#00a884]"
-                  )}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 size={20} className="animate-spin text-primary" />
           </div>
+        ) : (
+          <div className="px-5 pb-5 space-y-5 max-h-[60vh] overflow-y-auto">
+            {/* Tags */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Tag size={14} className="text-primary" />
+                <span className="text-[13px] font-semibold text-foreground">Tags do CRM</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {tags.length === 0 ? (
+                  <span className="text-[12px] text-muted-foreground">Nenhuma tag encontrada no CRM</span>
+                ) : (
+                  tags.map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-150 border",
+                        local.tags.includes(tag)
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "text-muted-foreground border-border hover:border-primary/40 hover:text-primary"
+                      )}
+                    >
+                      {tag}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
 
-          {/* CRM Stages */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Columns3 size={14} className="text-[#00a884]" />
-              <span className="text-[13px] font-semibold wa-text-primary">Etapa no CRM</span>
+            {/* CRM Stages */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Columns3 size={14} className="text-primary" />
+                <span className="text-[13px] font-semibold text-foreground">Etapa no CRM</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {stages.length === 0 ? (
+                  <span className="text-[12px] text-muted-foreground">Nenhuma etapa encontrada</span>
+                ) : (
+                  stages.map(stage => (
+                    <button
+                      key={stage}
+                      onClick={() => toggleStage(stage)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-150 border",
+                        local.crmStages.includes(stage)
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "text-muted-foreground border-border hover:border-primary/40 hover:text-primary"
+                      )}
+                    >
+                      {stage}
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {availableStages.map(stage => (
-                <button
-                  key={stage}
-                  onClick={() => toggleStage(stage)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-150 border",
-                    local.crmStages.includes(stage)
-                      ? "bg-[#00a884] text-white border-[#00a884]"
-                      : "wa-text-muted border-white/10 hover:border-[#00a884]/40 hover:text-[#00a884]"
-                  )}
-                >
-                  {stage}
-                </button>
-              ))}
-            </div>
-          </div>
 
-          {/* Score */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <BarChart3 size={14} className="text-[#00a884]" />
-              <span className="text-[13px] font-semibold wa-text-primary">Score do contato</span>
-            </div>
-            <div className="px-1">
-              <Slider
-                value={[local.scoreMin, local.scoreMax]}
-                min={0}
-                max={1000}
-                step={50}
-                onValueChange={([min, max]) => setLocal(prev => ({ ...prev, scoreMin: min, scoreMax: max }))}
-                className="mb-2"
-              />
-              <div className="flex justify-between text-[11px] wa-text-muted">
-                <span>{local.scoreMin} pts</span>
-                <span>{local.scoreMax} pts</span>
+            {/* Score */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <BarChart3 size={14} className="text-primary" />
+                <span className="text-[13px] font-semibold text-foreground">Score do contato</span>
+              </div>
+              <div className="px-1">
+                <Slider
+                  value={[local.scoreMin, local.scoreMax]}
+                  min={0}
+                  max={1000}
+                  step={50}
+                  onValueChange={([min, max]) => setLocal(prev => ({ ...prev, scoreMin: min, scoreMax: max }))}
+                  className="mb-2"
+                />
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>{local.scoreMin} pts</span>
+                  <span>{local.scoreMax} pts</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Actions */}
-        <div className="flex items-center gap-2 px-5 py-4 border-t wa-border-light">
+        <div className="flex items-center gap-2 px-5 py-4 border-t border-border">
           <button
             onClick={handleClear}
-            className="flex-1 py-2 rounded-lg text-[13px] font-medium wa-text-muted hover:bg-white/5 transition-colors"
+            className="flex-1 py-2 rounded-full text-[13px] font-medium text-muted-foreground hover:bg-muted transition-colors"
           >
             Limpar filtros
           </button>
           <button
             onClick={handleApply}
-            className="flex-1 py-2 rounded-lg text-[13px] font-semibold bg-[#00a884] hover:bg-[#06cf9c] text-white transition-colors"
+            className="flex-1 py-2 rounded-full text-[13px] font-semibold bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
           >
             Aplicar
           </button>
