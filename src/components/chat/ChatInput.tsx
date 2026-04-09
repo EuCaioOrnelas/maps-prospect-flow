@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Send, Smile, Mic, MicOff, Plus, X, Image, FileText, Film, Reply } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerContent } from "@/components/ui/emoji-picker";
+import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerContent, CATEGORIES } from "@/components/ui/emoji-picker";
 import { ChatMessage } from "@/hooks/useChat";
 
 interface ChatInputProps {
