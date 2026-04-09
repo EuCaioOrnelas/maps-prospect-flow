@@ -353,12 +353,6 @@ export const LeadDetailDialog = ({
       setDealValue(initialValue);
       setSavedValue(initialValue);
       setHeaderNameValue(lead.contact_name || lead.company_name || '');
-      loadNotesAndActivities();
-      loadDeals();
-      loadDealAttachments();
-      loadLeadFiles();
-      loadDriveConnection();
-      loadAgentPauseStatus();
       setIsEditing(false);
       setIsEditingHeaderName(false);
       setActiveTab('info');
@@ -368,6 +362,16 @@ export const LeadDetailDialog = ({
       setNewTag('');
       setDealAttachmentFiles([]);
       setLocalTags(lead.tags || []);
+
+      // Load all data in parallel for faster popup
+      Promise.all([
+        loadNotesAndActivities(),
+        loadDeals(),
+        loadDealAttachments(),
+        loadLeadFiles(),
+        loadDriveConnection(),
+        loadAgentPauseStatus(),
+      ]);
     }
   }, [lead?.id]);
 
@@ -1080,7 +1084,7 @@ export const LeadDetailDialog = ({
               <div className="max-h-[400px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
                 {/* Status options */}
                 <div className="p-1">
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-1 block">Status</span>
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-1 block">Tags padrão</span>
                   {(Object.keys(WHATSAPP_STATUS_LABELS) as WhatsAppStatus[]).map((status) => (
                     <button
                       key={status}
@@ -1113,7 +1117,7 @@ export const LeadDetailDialog = ({
                             key={tag}
                             type="button"
                             onClick={() => handleRemoveTag(tag)}
-                            className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors bg-primary/10 text-primary hover:bg-destructive/10 hover:text-destructive group"
+                            className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors bg-primary/10 text-primary hover:bg-primary/20 group"
                           >
                             <Check className="w-3.5 h-3.5 shrink-0" />
                             <span className="flex-1 text-left truncate">{tag}</span>
