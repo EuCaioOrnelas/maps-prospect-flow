@@ -217,8 +217,8 @@ export function ChatSidebar({
           className={cn(
             "px-3 py-[5px] rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-150 border",
             activeFilter === "all"
-              ? "bg-[#00a884] text-white border-[#00a884]"
-              : "wa-text-muted border-white/10 hover:border-[#00a884]/40 hover:text-[#00a884]"
+              ? "bg-primary text-primary-foreground border-primary"
+              : "wa-text-muted border-white/10 hover:border-primary/40 hover:text-primary"
           )}
         >
           Todas
@@ -228,8 +228,8 @@ export function ChatSidebar({
           className={cn(
             "px-3 py-[5px] rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-150 border",
             activeFilter === "unread"
-              ? "bg-[#00a884] text-white border-[#00a884]"
-              : "wa-text-muted border-white/10 hover:border-[#00a884]/40 hover:text-[#00a884]"
+              ? "bg-primary text-primary-foreground border-primary"
+              : "wa-text-muted border-white/10 hover:border-primary/40 hover:text-primary"
           )}
         >
           Não lidas
@@ -239,8 +239,8 @@ export function ChatSidebar({
           className={cn(
             "flex items-center gap-1 px-3 py-[5px] rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-150 border",
             hasCustomFilters
-              ? "bg-[#00a884] text-white border-[#00a884]"
-              : "wa-text-muted border-white/10 hover:border-[#00a884]/40 hover:text-[#00a884]"
+              ? "bg-primary text-primary-foreground border-primary"
+              : "wa-text-muted border-white/10 hover:border-primary/40 hover:text-primary"
           )}
         >
           <SlidersHorizontal size={12} />
