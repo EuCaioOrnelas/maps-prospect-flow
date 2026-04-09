@@ -23,14 +23,20 @@ function GoogleConnectionBlock({ isConnected, googleToken, isConnecting, handleC
     <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
       {isConnected ? (
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={14} className="text-green-500" />
-            <span className="text-xs font-medium text-foreground">{label} conectado</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-green-500/10 flex items-center justify-center">
+                <CheckCircle2 size={14} className="text-green-500" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-foreground">{label} conectado</p>
+                <p className="text-[10px] text-muted-foreground">{googleToken?.google_email}</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" className="h-7 text-[10px] text-destructive hover:text-destructive px-2" onClick={handleDisconnect}>
+              Desconectar
+            </Button>
           </div>
-          <p className="text-[10px] text-muted-foreground">📧 {googleToken?.google_email}</p>
-          <Button variant="ghost" size="sm" className="h-7 text-[10px] text-destructive hover:text-destructive" onClick={handleDisconnect}>
-            Desconectar conta
-          </Button>
         </div>
       ) : (
         <div className="space-y-2">
@@ -39,7 +45,6 @@ function GoogleConnectionBlock({ isConnected, googleToken, isConnecting, handleC
             {isConnecting ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
             {isConnecting ? "Conectando..." : `Conectar ${label}`}
           </Button>
-          
         </div>
       )}
     </div>
@@ -89,23 +94,37 @@ function useGoogleAuth(queryKeySuffix: string, scopes: string[]) {
   return { user, googleToken, isConnected, isConnecting, handleConnect, handleDisconnect, refetchToken };
 }
 
-const AVAILABLE_VARIABLES = [
+const BASE_VARIABLES = [
   { key: "{nome}", label: "Nome do contato" },
   { key: "{telefone}", label: "Telefone" },
-  { key: "{email}", label: "Email" },
-  { key: "{empresa}", label: "Empresa" },
-  { key: "{cidade}", label: "Cidade" },
-  { key: "{origem}", label: "Origem" },
-  { key: "{data}", label: "Data atual" },
-  { key: "{hora}", label: "Hora atual" },
 ];
 
-function VariablesHelper() {
+function useFlowVariables(nodes?: any[]) {
+  const customVars: { key: string; label: string }[] = [];
+  if (nodes) {
+    for (const n of nodes) {
+      if (n.type === "data_collect" && n.data?.config?.fields) {
+        for (const f of n.data.config.fields) {
+          if (f.variable_name) {
+            const k = `{${f.variable_name}}`;
+            if (!BASE_VARIABLES.some(v => v.key === k) && !customVars.some(v => v.key === k)) {
+              customVars.push({ key: k, label: f.label || f.variable_name });
+            }
+          }
+        }
+      }
+    }
+  }
+  return [...BASE_VARIABLES, ...customVars];
+}
+
+function VariablesHelper({ variables }: { variables?: { key: string; label: string }[] }) {
+  const vars = variables || BASE_VARIABLES;
   return (
     <div className="p-2 rounded-lg border border-border/30 bg-muted/10">
       <p className="text-[10px] font-medium text-muted-foreground mb-1.5">📌 Variáveis disponíveis:</p>
       <div className="flex flex-wrap gap-1">
-        {AVAILABLE_VARIABLES.map((v) => (
+        {vars.map((v) => (
           <Badge key={v.key} variant="secondary" className="text-[9px] px-1.5 py-0 h-5 font-mono cursor-pointer hover:bg-primary/20"
             onClick={() => navigator.clipboard.writeText(v.key)}
             title={`Clique para copiar: ${v.key}`}
