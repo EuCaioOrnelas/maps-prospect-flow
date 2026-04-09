@@ -115,20 +115,29 @@ export const ManageStagesDialog = ({
     if (!user) return;
     setIsLoadingTags(true);
     try {
-      const { data } = await supabase
-        .from('leads')
-        .select('tags')
-        .eq('user_id', user.id)
-        .not('tags', 'is', null)
-        .range(0, 4999);
-      
+      // Load from crm_tags table + tags on leads (merge both)
+      const [crmTagsRes, leadsRes] = await Promise.all([
+        supabase.from('crm_tags').select('name').eq('user_id', user.id),
+        supabase.from('leads').select('tags').eq('user_id', user.id).not('tags', 'is', null).range(0, 4999),
+      ]);
+
       const uniqueTags = new Set<string>();
-      data?.forEach((item) => {
+      crmTagsRes.data?.forEach((t) => { if (t.name?.trim()) uniqueTags.add(t.name.trim()); });
+      leadsRes.data?.forEach((item) => {
         if (!Array.isArray(item.tags)) return;
-        item.tags.forEach((tag) => {
-          if (typeof tag === 'string' && tag.trim()) uniqueTags.add(tag.trim());
-        });
+        item.tags.forEach((tag) => { if (typeof tag === 'string' && tag.trim()) uniqueTags.add(tag.trim()); });
       });
+
+      // Sync missing tags to crm_tags table
+      const existingCrmNames = new Set(crmTagsRes.data?.map(t => t.name) || []);
+      const missingTags = Array.from(uniqueTags).filter(t => !existingCrmNames.has(t));
+      if (missingTags.length > 0) {
+        await supabase.from('crm_tags').upsert(
+          missingTags.map(name => ({ user_id: user.id, name })),
+          { onConflict: 'user_id,name' }
+        );
+      }
+
       setAllTags(Array.from(uniqueTags).sort((a, b) => a.localeCompare(b, 'pt-BR')));
     } catch {
       toast.error('Erro ao carregar tags');
@@ -144,11 +153,14 @@ export const ManageStagesDialog = ({
       toast.error('Essa tag já existe');
       return;
     }
-    // To "create" a tag globally, we just add it to the available list.
-    // Tags are stored on individual leads, so we add it to state immediately.
-    setAllTags(prev => [...prev, trimmed].sort((a, b) => a.localeCompare(b, 'pt-BR')));
-    setNewTagValue('');
-    toast.success('Tag criada!');
+    try {
+      await supabase.from('crm_tags').insert({ user_id: user.id, name: trimmed });
+      setAllTags(prev => [...prev, trimmed].sort((a, b) => a.localeCompare(b, 'pt-BR')));
+      setNewTagValue('');
+      toast.success('Tag criada!');
+    } catch {
+      toast.error('Erro ao criar tag');
+    }
   };
 
   const handleRenameTag = async () => {
