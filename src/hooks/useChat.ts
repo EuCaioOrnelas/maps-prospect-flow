@@ -65,22 +65,26 @@ export function useChat() {
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load WABA connections
+  // Load WABA connections (include all to detect expired ones)
+  const loadConnections = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("user_waba_connections")
+      .select("id, phone_number_id, display_phone_number, business_name, nickname, status, waba_id, access_token, token_expires_at")
+      .eq("user_id", user.id);
+    if (data && data.length > 0) {
+      setConnections(data);
+      // Prefer active connection
+      const active = data.find(c => c.status === "active");
+      setActiveConnectionId(active?.id || data[0].id);
+    }
+    setLoading(false);
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
-    const loadConnections = async () => {
-      const { data } = await supabase
-        .from("user_waba_connections")
-        .select("id, phone_number_id, display_phone_number, business_name, nickname, status, waba_id")
-        .eq("user_id", user.id)
-        .eq("status", "active");
-      if (data && data.length > 0) {
-        setConnections(data);
-        setActiveConnectionId(data[0].id);
-      }
-    };
     loadConnections();
-  }, [user]);
+  }, [user, loadConnections]);
 
   // Load conversations
   useEffect(() => {
