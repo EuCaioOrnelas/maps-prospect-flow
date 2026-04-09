@@ -1458,8 +1458,8 @@ export const LeadDetailDialog = ({
                       <Button
                         type="button"
                         size="sm"
-                        variant="outline"
-                        className="h-8 shrink-0 text-xs px-3 border-primary/30 text-primary bg-background hover:bg-primary/10 hover:text-primary hover:border-primary/50 focus-visible:ring-primary/30 transition-colors"
+                        variant="default"
+                        className="h-8 shrink-0 text-xs px-4 rounded-full"
                         onClick={() => void handleAddTag()}
                         disabled={!newTag.trim()}
                       >
