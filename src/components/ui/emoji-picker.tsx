@@ -7,7 +7,7 @@ import {
   EmojiPicker as EmojiPickerPrimitive,
 } from "frimousse";
 import { LoaderIcon, SearchIcon } from "lucide-react";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect } from "react";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -30,11 +30,11 @@ function EmojiPickerSearch({
   ...props
 }: React.ComponentProps<typeof EmojiPickerPrimitive.Search>) {
   return (
-    <div className="flex items-center gap-2 border-b px-3">
+    <div className="flex items-center gap-2 px-3 py-1">
       <SearchIcon className="size-4 shrink-0 opacity-50" />
       <EmojiPickerPrimitive.Search
         className={cn(
-          "flex h-9 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground",
+          "flex h-8 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground",
           className,
         )}
         {...props}
@@ -43,7 +43,6 @@ function EmojiPickerSearch({
   );
 }
 
-// Category icons — click scrolls the list to that category
 const CATEGORIES = [
   { id: 0, label: "Smileys e emoções", icon: "😀" },
   { id: 1, label: "Pessoas", icon: "👋" },
@@ -58,22 +57,29 @@ const CATEGORIES = [
 
 function EmojiPickerCategories({ activeCategory, onCategoryClick }: { activeCategory?: number; onCategoryClick: (idx: number) => void }) {
   return (
-    <div className="flex items-center justify-around px-1 py-1 border-b gap-0.5">
+    <div className="flex items-center justify-around px-1 py-0.5 border-b gap-0">
       {CATEGORIES.map((cat, idx) => (
         <button
           key={cat.id}
           title={cat.label}
           onClick={() => onCategoryClick(idx)}
           className={cn(
-            "w-8 h-8 flex items-center justify-center rounded-full text-[16px] transition-all",
+            "w-9 h-9 flex items-center justify-center text-[18px] transition-all relative",
             activeCategory === idx
-              ? "bg-[#00a884] shadow-sm scale-105"
-              : "hover:bg-[#00a884]/20"
+              ? "opacity-100"
+              : "opacity-60 hover:opacity-90"
           )}
         >
-          <span className={activeCategory === idx ? "grayscale brightness-[10]" : ""}>
-            {cat.icon}
-          </span>
+          {cat.icon}
+          {/* Bottom bar indicator like WhatsApp */}
+          <span
+            className={cn(
+              "absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] rounded-full transition-all duration-200",
+              activeCategory === idx
+                ? "w-6 bg-[#00a884]"
+                : "w-0 bg-transparent"
+            )}
+          />
         </button>
       ))}
     </div>
@@ -128,7 +134,6 @@ function EmojiPickerContent({
 }: React.ComponentProps<typeof EmojiPickerPrimitive.Viewport> & { onVisibleCategoryChange?: (idx: number) => void }) {
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  // Observe which category header is visible
   useEffect(() => {
     if (!onVisibleCategoryChange || !viewportRef.current) return;
     const viewport = viewportRef.current;
@@ -147,7 +152,6 @@ function EmojiPickerContent({
       { root: viewport, threshold: 0.5, rootMargin: "0px 0px -80% 0px" }
     );
 
-    // Delay to allow list to render
     const timer = setTimeout(() => {
       const headers = viewport.querySelectorAll("[data-category-header]");
       headers.forEach(h => observer.observe(h));

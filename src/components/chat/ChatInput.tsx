@@ -252,21 +252,20 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                   inputRef.current?.focus();
                 }}
               >
-                <EmojiPickerSearch placeholder="Buscar emoji..." />
                 <EmojiPickerCategories
                   activeCategory={activeEmojiCategory}
                   onCategoryClick={(idx) => {
                     setActiveEmojiCategory(idx);
-                    // Scroll to category header in the viewport
-                    const viewport = document.querySelector('[class*="outline-none"]');
-                    if (viewport) {
-                      const headers = viewport.querySelectorAll("[data-category-header]");
+                    const popoverEl = document.querySelector('[data-radix-popper-content-wrapper] [class*="outline-none"]');
+                    if (popoverEl) {
+                      const headers = popoverEl.querySelectorAll("[data-category-header]");
                       if (headers[idx]) {
                         headers[idx].scrollIntoView({ behavior: "smooth", block: "start" });
                       }
                     }
                   }}
                 />
+                <EmojiPickerSearch placeholder="Pesquisar emoji" />
                 <EmojiPickerContent onVisibleCategoryChange={setActiveEmojiCategory} />
               </EmojiPicker>
             </PopoverContent>
@@ -280,9 +279,9 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
             <Plus size={24} className={cn("transition-transform duration-200", showAttach ? "text-[#00a884] rotate-45" : "wa-icon-panel")} />
           </button>
 
-          {/* Input field */}
+          {/* Input field - rounded pill like WhatsApp */}
           <div className="flex-1 py-[5px]">
-            <div className="wa-input-field rounded-xl flex items-end">
+            <div className="wa-input-field rounded-full flex items-end">
               <textarea
                 ref={inputRef}
                 value={text}
@@ -290,7 +289,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                 onKeyDown={handleKeyDown}
                 placeholder="Digite uma mensagem"
                 rows={1}
-                className="flex-1 bg-transparent wa-text-primary text-[15px] px-[12px] py-[9px] outline-none resize-none max-h-[100px] overflow-y-auto leading-[20px] placeholder:wa-text-muted wa-scrollbar"
+                className="flex-1 bg-transparent wa-text-primary text-[15px] px-[14px] py-[9px] outline-none resize-none max-h-[100px] overflow-y-auto leading-[20px] placeholder:wa-text-muted wa-scrollbar"
                 style={{ minHeight: "20px" }}
               />
             </div>
