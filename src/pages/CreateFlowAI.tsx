@@ -218,8 +218,8 @@ function PhoneSimulation({ flowName, userPrompt, isFinished }: { flowName: strin
       const centerY = rect.top + rect.height / 2;
       const x = (e.clientX - centerX) / (rect.width / 2);
       const y = (e.clientY - centerY) / (rect.height / 2);
-      setRotateY(x * 12);
-      setRotateX(-y * 8);
+      setRotateY(x * 3);
+      setRotateX(-y * 2);
     };
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
