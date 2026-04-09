@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const VALID_NODE_TYPES = ["entry", "message", "buttons", "condition", "wait", "action", "ai_agent", "handoff", "end"] as const;
+const VALID_NODE_TYPES = ["entry", "message", "buttons", "condition", "wait", "action", "ai_agent", "handoff", "end", "data_collect", "random_split", "ab_test", "google_sheets", "google_calendar", "gmail"] as const;
 const OPENAI_MODEL = "gpt-4o";
 const MAX_NODES = 25;
 const MAX_GENERATION_ATTEMPTS = 2;
