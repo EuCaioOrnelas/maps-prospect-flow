@@ -1838,9 +1838,10 @@ interface Props {
   onDelete: (nodeId: string) => void;
   entryApiType?: string;
   entryConfig?: any;
+  allNodes?: Node[];
 }
 
-export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete, entryApiType = "evolution", entryConfig = {} }: Props) {
+export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete, entryApiType = "evolution", entryConfig = {}, allNodes }: Props) {
   const [config, setConfig] = useState<any>({});
   const [label, setLabel] = useState("");
 
@@ -2579,7 +2580,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
 
           {/* ===== GOOGLE SHEETS NODE ===== */}
           {node.type === "google_sheets" && (
-            <GoogleSheetsConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} />
+            <GoogleSheetsConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} allNodes={allNodes} />
           )}
 
           {/* ===== GOOGLE CALENDAR NODE ===== */}
