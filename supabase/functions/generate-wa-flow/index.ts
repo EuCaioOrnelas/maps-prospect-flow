@@ -67,6 +67,9 @@ entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_c
 - Para COLETAR DADOS (nome, email, telefone, CPF, empresa, endereço, etc): USE data_collect. Ele já tem IA embutida.
 - Para CONVERSAR INTELIGENTEMENTE (diagnosticar problemas, responder dúvidas, qualificar leads, negociar): USE ai_agent.
 - NUNCA use ai_agent apenas para perguntar "qual seu nome?" ou "qual seu email?" — isso é trabalho do data_collect.
+- Para TRIAGEM, REFINAMENTO, IDENTIFICAÇÃO DE URGÊNCIA, CAPTURA DE PALAVRAS-CHAVE, CLASSIFICAÇÃO ou ROTEAMENTO sem salvar variável: NÃO use ai_agent.
+- Se um bloco só analisa a intenção e em seguida leva para um menu/submenu, REMOVA o ai_agent e conecte direto ao próximo bloco.
+- Só use ai_agent quando a IA realmente precisar GERAR UMA RESPOSTA nova ao lead em linguagem natural.
 
 === REGRA CRÍTICA: UMA PERGUNTA POR VEZ ===
 NUNCA encadeie dois nós que enviam mensagem ao lead sem esperar resposta entre eles.
@@ -272,6 +275,22 @@ const normalizeHandle = (value?: string | null) => {
   return value;
 };
 
+const dedupeEdges = (edges: FlowEdgeDraft[]) => {
+  const seen = new Set<string>();
+  return edges.filter((edge) => {
+    const key = [
+      edge.source,
+      edge.target,
+      normalizeHandle(edge.source_handle || edge.sourceHandle) || "",
+      normalizeHandle(edge.target_handle || edge.targetHandle) || "",
+    ].join("|");
+
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 const normalizeText = (value: unknown) => (typeof value === "string" ? value.trim() : "");
 
 const truncateText = (value: string, max = 160) => {
@@ -329,9 +348,33 @@ const sortInteractiveHandle = (a: string, b: string) => {
 const looksLikeAgentPlaybook = (prompt: string) =>
   /papel do modelo|regras|estados do fluxo|classifica[cç][aã]o|diagn[oó]stico|resolu[cç][aã]o|escalar_atendimento|aguardar_resposta_usuario|coletar_dados|sugerir_solucao/i.test(prompt);
 
+const AI_AGENT_ANALYSIS_ONLY_REGEX = /captur(a|e)|extra(i|ç)|palavra(?:s)?[-\s]?chave|keyword|classifica[cç][aã]o|identifica[cç][aã]o|urg[eê]ncia|triagem|rotea|route|roteamento|categori[az]|inten[cç][aã]o|refinamento|refinar/i;
+const AI_AGENT_DYNAMIC_CONVERSATION_REGEX = /responda|responder|converse|dialog|negoci|qualific|obje[cç][aã]o|persua|venda consultiva|tirar d[úu]vidas|atenda o lead|assistente virtual|mensagem din[aâ]mica/i;
+
+const isAnalysisOnlyAiAgent = (node: FlowNodeDraft) => {
+  if (node.type !== "ai_agent") return false;
+
+  const config = node.config || {};
+  const aiOutputType = normalizeText(config.ai_output_type).toLowerCase();
+  const basis = [
+    normalizeText(node.label),
+    normalizeText(config.system_prompt),
+    normalizeText(config.ai_context),
+    aiOutputType,
+  ].join(" ").toLowerCase();
+
+  if (aiOutputType === "route_only") return true;
+
+  const analysisOnly = AI_AGENT_ANALYSIS_ONLY_REGEX.test(basis);
+  const dynamicConversation = AI_AGENT_DYNAMIC_CONVERSATION_REGEX.test(basis);
+
+  return analysisOnly && !dynamicConversation;
+};
+
 const inferMessageText = (label: string, prompt: string) => {
   const nl = normalizeText(label).toLowerCase();
   if (/sauda|boas-vindas|in[ií]cio/.test(nl)) return "Olá! 👋 Seja bem-vindo(a). Me conte em poucas palavras como posso te ajudar hoje.";
+  if (/captur(a|e)|palavra|keyword|urg[eê]ncia|triagem|classifica|identifica|refin/.test(nl)) return "Para te direcionar melhor, escolha abaixo a opção que mais combina com a sua necessidade.";
   if (/diagn[oó]st|triagem|classifica/.test(nl)) return "Entendi. Para te direcionar corretamente, descreva em uma frase o que aconteceu ou qual é a sua dúvida.";
   if (/confirma/.test(nl) && /resolu|solu/.test(nl)) return "Consegui te ajudar com isso ou você ainda precisa de suporte humano?";
   if (/escalon|humano|transfer/.test(nl)) return "Vou encaminhar seu atendimento para um especialista humano e ele continuará com você em instantes.";
@@ -710,6 +753,7 @@ const validateFlowDraft = (draft: FlowDraft, prompt: string) => {
         break;
       case "ai_agent":
         if (!normalizeText(config.system_prompt)) issues.push(`O nó ai_agent ${node.id} está sem system_prompt.`);
+        if (isAnalysisOnlyAiAgent(node)) issues.push(`O nó ai_agent ${node.id} está sendo usado só para análise/roteamento. Use ai_agent apenas para conversa dinâmica.`);
         break;
       case "handoff":
         if (!normalizeText(config.handoff_message) && config.notify_team !== true) issues.push(`O nó handoff ${node.id} está sem handoff_message.`);
@@ -766,6 +810,9 @@ const buildFlowRequestMessage = (prompt: string, feedback?: string) => {
     "Se usar buttons, gere botões reais com textos curtos.",
     "Se precisar coletar dados do lead (nome, email, telefone), use data_collect com variable_name e question_text.",
     "Use {{variable_name}} nas mensagens seguintes para personalizar (ex: Olá {{lead_name}}!).",
+    "Use ai_agent SOMENTE quando o bloco realmente precisar responder dinamicamente ao lead em linguagem natural.",
+    "Para triagem, captura de palavras-chave, identificação de urgência, classificação, refinamento ou roteamento sem salvar variável: NÃO use ai_agent.",
+    "Se existir um bloco intermediário que só analisaria a intenção antes de abrir um menu, elimine esse bloco e conecte direto ao próximo menu ou próximo passo.",
     "TODOS os caminhos devem terminar em end ou handoff. Sem exceção.",
     "REGRA CRÍTICA: NUNCA encadeie data_collect → data_collect ou data_collect → message sem um nó condition(responded) entre eles. O fluxo precisa esperar a resposta do lead antes de fazer a próxima pergunta. Padrão: data_collect → condition(responded) → [SIM] → próximo passo, [NÃO] → wait/end.",
   ];
@@ -883,6 +930,91 @@ const enrichFlowDraft = (draft: { flow_name: string; nodes: FlowNodeDraft[]; edg
   return { flow_name: draft.flow_name, nodes: enrichedNodes, edges };
 };
 
+const simplifyNonDynamicAiAgents = (draft: { flow_name: string; nodes: FlowNodeDraft[]; edges: FlowEdgeDraft[] }, prompt: string) => {
+  const nodes = draft.nodes.map((node) => ({ ...node, config: { ...(node.config || {}) } }));
+  const edges = draft.edges.map((edge) => ({
+    ...edge,
+    source_handle: normalizeHandle(edge.source_handle || edge.sourceHandle),
+    target_handle: normalizeHandle(edge.target_handle || edge.targetHandle),
+  }));
+
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const incomingByTarget = new Map<string, FlowEdgeDraft[]>();
+  const outgoingBySource = new Map<string, FlowEdgeDraft[]>();
+
+  for (const edge of edges) {
+    if (!incomingByTarget.has(edge.target)) incomingByTarget.set(edge.target, []);
+    incomingByTarget.get(edge.target)!.push(edge);
+
+    if (!outgoingBySource.has(edge.source)) outgoingBySource.set(edge.source, []);
+    outgoingBySource.get(edge.source)!.push(edge);
+  }
+
+  const nodesToRemove = new Set<string>();
+  const bypassEdges: FlowEdgeDraft[] = [];
+
+  for (const node of nodes) {
+    if (!isAnalysisOnlyAiAgent(node)) continue;
+
+    const incoming = incomingByTarget.get(node.id) || [];
+    const outgoing = outgoingBySource.get(node.id) || [];
+    const singleTarget = outgoing.length === 1 ? nodeById.get(outgoing[0].target) : null;
+
+    if (incoming.length > 0 && outgoing.length === 1 && singleTarget && ["buttons", "message", "handoff", "end"].includes(singleTarget.type)) {
+      nodesToRemove.add(node.id);
+      for (const inEdge of incoming) {
+        bypassEdges.push({
+          source: inEdge.source,
+          target: outgoing[0].target,
+          source_handle: normalizeHandle(inEdge.source_handle || inEdge.sourceHandle),
+          target_handle: normalizeHandle(outgoing[0].target_handle || outgoing[0].targetHandle),
+        });
+      }
+      continue;
+    }
+
+    if (outgoing.length >= 2) {
+      node.type = "buttons";
+      node.config = {
+        interaction_type: "reply_buttons",
+        body_text: inferButtonsBodyText(node.label || "Escolha uma opção", prompt),
+        buttons: outgoing.map((edge, index) => {
+          const targetNode = nodeById.get(edge.target);
+          const rawTitle = normalizeText(targetNode?.label).replace(/^(mensagem|bloco|etapa|a[cç][aã]o|acao)\s*[:-]?\s*/i, "");
+          return {
+            id: `btn_${index}`,
+            title: truncateText(rawTitle || `Opção ${index + 1}`, 20),
+          };
+        }),
+      };
+
+      outgoing.forEach((edge, index) => {
+        edge.source_handle = `btn_${index}`;
+      });
+      continue;
+    }
+
+    node.type = "message";
+    const textMessage = inferMessageText(node.label || "Mensagem", prompt);
+    node.config = {
+      message_type: "text",
+      content: textMessage,
+      body_text: textMessage,
+    };
+  }
+
+  return {
+    flow_name: draft.flow_name,
+    nodes: nodes.filter((node) => !nodesToRemove.has(node.id)),
+    edges: dedupeEdges(
+      edges
+        .filter((edge) => !nodesToRemove.has(edge.source) && !nodesToRemove.has(edge.target))
+        .concat(bypassEdges)
+        .filter((edge) => edge.source !== edge.target),
+    ),
+  };
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -905,11 +1037,13 @@ serve(async (req) => {
       const rawDraft = await callOpenAIForFlow(OPENAI_API_KEY, prompt, attempt > 1 && lastIssues.length > 0 ? lastIssues.map((i) => `- ${i}`).join("\n") : undefined);
       const normalizedDraft = normalizeFlowDraft(rawDraft, prompt);
       const enrichedDraft = enrichFlowDraft(normalizedDraft, prompt);
-      const issues = validateFlowDraft(enrichedDraft, prompt);
+      const simplifiedDraft = simplifyNonDynamicAiAgents(enrichedDraft, prompt);
+      const finalDraft = enrichFlowDraft(simplifiedDraft, prompt);
+      const issues = validateFlowDraft(finalDraft, prompt);
 
-      flowDraft = enrichedDraft;
+      flowDraft = finalDraft;
       lastIssues = issues;
-      console.log(`[generate-wa-flow] Attempt ${attempt}: ${enrichedDraft.nodes.length} nodes, ${enrichedDraft.edges.length} edges, issues=${issues.length}`);
+      console.log(`[generate-wa-flow] Attempt ${attempt}: ${finalDraft.nodes.length} nodes, ${finalDraft.edges.length} edges, issues=${issues.length}`);
       if (issues.length === 0) break;
     }
 
