@@ -1098,6 +1098,95 @@ export const LeadDetailDialog = ({
               </div>
             </PopoverContent>
           </Popover>
+
+          {/* Tags Selector */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 text-sm min-w-[120px] justify-between gap-2">
+                <Tag className="w-3.5 h-3.5 shrink-0 text-primary" />
+                <span className="truncate">{localTags.length > 0 ? `${localTags.length} tag${localTags.length > 1 ? 's' : ''}` : 'Tags'}</span>
+                <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-0" align="end" sideOffset={4}>
+              <div className="max-h-[320px] flex flex-col">
+                {/* Search / create input */}
+                <div className="p-2 border-b border-border shrink-0">
+                  <div className="flex gap-1.5">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Pesquisar ou criar tag..."
+                      className="h-8 text-xs"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          void handleAddTag();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="default"
+                      className="h-8 shrink-0 text-xs px-3"
+                      onClick={() => void handleAddTag()}
+                      disabled={!newTag.trim()}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Current tags + suggestions */}
+                <div className="overflow-y-auto flex-1 [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+                  {/* Active tags */}
+                  {localTags.length > 0 && (
+                    <div className="p-2 space-y-1">
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Ativas</span>
+                      {localTags.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors bg-primary/10 text-primary hover:bg-destructive/10 hover:text-destructive group"
+                        >
+                          <Check className="w-3.5 h-3.5 shrink-0" />
+                          <span className="flex-1 text-left truncate">{tag}</span>
+                          <X className="w-3 h-3 opacity-0 group-hover:opacity-100 shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Available suggestions */}
+                  {tagSuggestions.length > 0 && (
+                    <div className="p-2 space-y-1">
+                      {localTags.length > 0 && <div className="h-px bg-border my-1" />}
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Disponíveis</span>
+                      {tagSuggestions.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => handleAddTag(tag)}
+                          className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-muted text-foreground"
+                        >
+                          <Tag className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                          <span className="flex-1 text-left truncate">{tag}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {localTags.length === 0 && tagSuggestions.length === 0 && (
+                    <div className="p-4 text-center text-xs text-muted-foreground">
+                      Nenhuma tag encontrada. Digite para criar.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Tab Navigation */}
@@ -1344,85 +1433,6 @@ export const LeadDetailDialog = ({
                             R$ {deals.reduce((sum, d) => sum + Number(d.value), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Tags Section */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tags do CRM</span>
-                  </div>
-
-                  <div
-                    className="bg-muted/40 rounded-lg border border-border/50 p-3 space-y-3 max-h-[220px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full transition-colors"
-                  >
-                    {/* Current tags */}
-                    <div className="flex flex-wrap gap-2">
-                      {localTags.length > 0 ? (
-                        localTags.map((tag) => (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => handleRemoveTag(tag)}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-destructive/30 hover:text-destructive"
-                          >
-                            <Tag className="w-3 h-3 text-primary" />
-                            <span>{tag}</span>
-                            <X className="w-3 h-3 opacity-50" />
-                          </button>
-                        ))
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Nenhuma tag adicionada ainda.</span>
-                      )}
-                    </div>
-
-                    {/* Search + create input - always visible */}
-                    <div className="flex gap-2">
-                      <Input
-                        id="tag-search-input"
-                        value={newTag}
-                        onChange={(e) => {
-                          setNewTag(e.target.value);
-                          if (showTagComposer) setShowTagComposer(false);
-                        }}
-                        placeholder="Pesquisar ou criar nova tag"
-                        className="h-8 text-xs"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            void handleAddTag();
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="default"
-                        className="h-8 shrink-0 text-xs px-4 rounded-full"
-                        onClick={() => void handleAddTag()}
-                        disabled={!newTag.trim()}
-                      >
-                        <Plus className="w-3.5 h-3.5 mr-1" />
-                        Criar tag
-                      </Button>
-                    </div>
-
-                    {/* Tag suggestions */}
-                    {tagSuggestions.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {tagSuggestions.map((tag) => (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => handleAddTag(tag)}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/30 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-                          >
-                            <Tag className="w-2.5 h-2.5" />
-                            {tag}
-                          </button>
-                        ))}
                       </div>
                     )}
                   </div>
