@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { type PipelineStage, type Lead, isLockedStage } from '@/hooks/useCRM';
+import { type PipelineStage, type Lead, isLockedStage, WHATSAPP_STATUS_LABELS } from '@/hooks/useCRM';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -448,54 +448,73 @@ export const ManageStagesDialog = ({
               />
             </div>
 
-            {/* Tag list */}
-            <ScrollArea className="max-h-[280px]">
-              <div className="space-y-1.5 pr-2">
-                {isLoadingTags ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Carregando tags...</p>
-                ) : filteredTags.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    {tagSearch ? 'Nenhuma tag encontrada' : 'Nenhuma tag criada ainda'}
-                  </p>
-                ) : (
-                  filteredTags.map((tag) => (
-                    <div key={tag} className="group flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card transition-colors hover:bg-muted/50">
-                      <Tag className="w-3.5 h-3.5 text-primary shrink-0" />
-                      {editingTag === tag ? (
-                        <div className="flex-1 flex items-center gap-1.5">
-                          <Input
-                            value={editTagValue}
-                            onChange={(e) => setEditTagValue(e.target.value)}
-                            className="h-7 text-sm"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleRenameTag();
-                              if (e.key === 'Escape') { setEditingTag(null); setEditTagValue(''); }
-                            }}
-                          />
-                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={handleRenameTag} disabled={isLoading || !editTagValue.trim()}>
-                            <Check className="w-3.5 h-3.5 text-primary" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { setEditingTag(null); setEditTagValue(''); }}>
-                            <X className="w-3.5 h-3.5 text-muted-foreground" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <span className="flex-1 text-sm font-medium truncate">{tag}</span>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100" onClick={() => { setEditingTag(tag); setEditTagValue(tag); }}>
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100" onClick={() => setDeleteTagConfirm(tag)}>
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  ))
-                )}
+            {/* Default statuses (locked) */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Padrão (obrigatórias)</span>
+              <div className="space-y-1 pr-2">
+                {Object.values(WHATSAPP_STATUS_LABELS)
+                  .filter(label => !tagSearch || label.toLowerCase().includes(tagSearch.toLowerCase()))
+                  .map((label) => (
+                  <div key={label} className="flex items-center gap-2 p-2.5 rounded-lg border border-border/50 bg-muted/50">
+                    <Tag className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="flex-1 text-sm font-medium truncate text-muted-foreground">{label}</span>
+                    <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
+                  </div>
+                ))}
               </div>
-            </ScrollArea>
+            </div>
+
+            {/* Custom tags */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Personalizadas</span>
+              <ScrollArea className="max-h-[200px]">
+                <div className="space-y-1.5 pr-2">
+                  {isLoadingTags ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">Carregando tags...</p>
+                  ) : filteredTags.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      {tagSearch ? 'Nenhuma tag encontrada' : 'Nenhuma tag personalizada criada'}
+                    </p>
+                  ) : (
+                    filteredTags.map((tag) => (
+                      <div key={tag} className="group flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card transition-colors hover:bg-muted/50">
+                        <Tag className="w-3.5 h-3.5 text-primary shrink-0" />
+                        {editingTag === tag ? (
+                          <div className="flex-1 flex items-center gap-1.5">
+                            <Input
+                              value={editTagValue}
+                              onChange={(e) => setEditTagValue(e.target.value)}
+                              className="h-7 text-sm"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleRenameTag();
+                                if (e.key === 'Escape') { setEditingTag(null); setEditTagValue(''); }
+                              }}
+                            />
+                            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={handleRenameTag} disabled={isLoading || !editTagValue.trim()}>
+                              <Check className="w-3.5 h-3.5 text-primary" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { setEditingTag(null); setEditTagValue(''); }}>
+                              <X className="w-3.5 h-3.5 text-muted-foreground" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="flex-1 text-sm font-medium truncate">{tag}</span>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100" onClick={() => { setEditingTag(tag); setEditTagValue(tag); }}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100" onClick={() => setDeleteTagConfirm(tag)}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
 
             {/* Create new tag */}
             <div className="border-t pt-3">
