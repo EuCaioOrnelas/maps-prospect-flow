@@ -1366,10 +1366,11 @@ export const LeadDetailDialog = ({
                             key={tag}
                             type="button"
                             onClick={() => handleRemoveTag(tag)}
-                            className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-destructive/30 hover:text-destructive"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-destructive/30 hover:text-destructive"
                           >
+                            <Tag className="w-3 h-3 text-primary" />
                             <span>{tag}</span>
-                            <X className="w-3 h-3" />
+                            <X className="w-3 h-3 opacity-50" />
                           </button>
                         ))
                       ) : (
