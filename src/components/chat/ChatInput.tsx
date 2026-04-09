@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Send, Smile, Mic, Plus, X, Image, FileText, Film } from "lucide-react";
+import { Send, Smile, Mic, Plus, X, Image, FileText, Film, Trash2, Pause, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerContent } from "@/components/ui/emoji-picker";
@@ -21,6 +21,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const [caption, setCaption] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [waveformBars, setWaveformBars] = useState<number[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +29,10 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const handleSend = useCallback(() => {
     if (preview) {
@@ -64,9 +69,46 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     e.target.value = "";
   };
 
+  // Waveform analyser loop
+  const startWaveformLoop = useCallback(() => {
+    const analyser = analyserRef.current;
+    if (!analyser) return;
+    const dataArray = new Uint8Array(analyser.fftSize);
+    const tick = () => {
+      analyser.getByteTimeDomainData(dataArray);
+      // Compute RMS amplitude
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        const v = (dataArray[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / dataArray.length);
+      const barHeight = Math.min(Math.max(rms * 4, 0.05), 1); // normalize 0.05-1
+      setWaveformBars(prev => {
+        const next = [...prev, barHeight];
+        // Keep last ~60 bars visible
+        if (next.length > 60) next.shift();
+        return next;
+      });
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+    tick();
+  }, []);
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      // Set up audio analyser for waveform
+      const audioCtx = new AudioContext();
+      audioCtxRef.current = audioCtx;
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
       const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       audioChunksRef.current = [];
       mediaRecorder.ondataavailable = (e) => {
@@ -76,43 +118,52 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
         const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         const audioFile = new File([audioBlob], `audio_${Date.now()}.webm`, { type: "audio/webm" });
         onSendMedia(audioFile);
-        stream.getTracks().forEach(t => t.stop());
-        setRecordingTime(0);
+        cleanupRecording();
       };
       mediaRecorderRef.current = mediaRecorder;
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
+      setWaveformBars([]);
       timerRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
+      startWaveformLoop();
     } catch (err) {
       console.error("Mic access denied:", err);
     }
   };
 
+  const cleanupRecording = () => {
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    animFrameRef.current = null;
+    analyserRef.current = null;
+    if (audioCtxRef.current) { audioCtxRef.current.close(); audioCtxRef.current = null; }
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+    setRecordingTime(0);
+    setWaveformBars([]);
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  };
+
   const stopRecording = () => {
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   };
 
   const cancelRecording = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.ondataavailable = null;
       mediaRecorderRef.current.onstop = null;
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
+      try { mediaRecorderRef.current.stop(); } catch {}
     }
     setIsRecording(false);
-    setRecordingTime(0);
+    cleanupRecording();
     audioChunksRef.current = [];
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   };
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   useEffect(() => {
     if (inputRef.current) {
-      inputRef.current.style.height = "22px";
+      inputRef.current.style.height = "24px";
       inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 120) + "px";
     }
   }, [text]);
@@ -126,23 +177,55 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     return () => document.removeEventListener("click", handler);
   }, []);
 
-  const isMultiline = false; // Always keep rounded-full
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
-  // Recording UI
+  // Recording UI — WhatsApp style with waveform
   if (isRecording) {
     return (
-      <div className="flex items-center gap-3 px-4 py-2">
-        <button onClick={cancelRecording} className="p-2 rounded-full hover:bg-white/10 transition-colors">
-          <X size={22} className="text-red-400" />
+      <div className="flex items-center gap-[8px] px-[12px] py-[6px]">
+        {/* Delete / cancel */}
+        <button
+          onClick={cancelRecording}
+          className="w-[42px] h-[42px] rounded-full flex items-center justify-center hover:bg-white/5 transition-colors shrink-0"
+        >
+          <Trash2 size={20} className="text-red-400" />
         </button>
-        <div className="flex-1 flex items-center gap-3">
-          <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-[15px] wa-text-primary font-mono">{formatTime(recordingTime)}</span>
-          <div className="flex-1 h-[4px] rounded-full bg-white/10 overflow-hidden">
-            <div className="h-full bg-red-500/60 rounded-full animate-pulse" style={{ width: `${Math.min((recordingTime / 120) * 100, 100)}%` }} />
+
+        {/* Waveform pill */}
+        <div className="flex-1 wa-input-field rounded-[21px] flex items-center gap-3 px-[16px] py-[10px] min-h-[46px] overflow-hidden">
+          {/* Red dot */}
+          <div className="w-[10px] h-[10px] rounded-full bg-red-500 animate-pulse shrink-0" />
+
+          {/* Timer */}
+          <span className="text-[14px] wa-text-primary font-mono min-w-[38px] shrink-0">{formatTime(recordingTime)}</span>
+
+          {/* Waveform bars */}
+          <div className="flex-1 flex items-center gap-[2px] h-[28px] overflow-hidden">
+            {waveformBars.map((bar, i) => (
+              <div
+                key={i}
+                className="w-[3px] rounded-full bg-[#00a884] shrink-0 transition-all duration-75"
+                style={{ height: `${Math.max(bar * 28, 3)}px` }}
+              />
+            ))}
+            {/* Fill remaining space with empty bars for visual consistency */}
+            {waveformBars.length < 60 && Array.from({ length: 60 - waveformBars.length }).map((_, i) => (
+              <div key={`empty-${i}`} className="w-[3px] h-[3px] rounded-full bg-white/10 shrink-0" />
+            ))}
           </div>
         </div>
-        <button onClick={stopRecording} className="w-[42px] h-[42px] bg-[#00a884] hover:bg-[#06cf9c] rounded-full flex items-center justify-center transition-colors">
+
+        {/* Send */}
+        <button
+          onClick={stopRecording}
+          className="w-[42px] h-[42px] bg-[#00a884] hover:bg-[#06cf9c] rounded-full flex items-center justify-center transition-colors shrink-0"
+        >
           <Send size={18} className="text-white ml-[1px]" />
         </button>
       </div>
@@ -233,12 +316,12 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
             </div>
           )}
 
-          {/* Main pill — everything inside */}
+          {/* Main pill */}
           <div className="flex-1 wa-input-field flex items-end shadow-sm rounded-[21px] overflow-hidden">
             {/* Attach */}
             <button
               onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setEmojiOpen(false); }}
-              className="wa-attach-btn p-[9px] shrink-0 self-end hover:opacity-70 transition-opacity"
+              className="wa-attach-btn p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity"
             >
               <Plus size={22} className={cn("transition-transform duration-200", showAttach ? "text-[#00a884] rotate-45" : "wa-icon-panel")} />
             </button>
@@ -246,7 +329,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
             {/* Emoji */}
             <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
               <PopoverTrigger asChild>
-                <button className="p-[9px] shrink-0 self-end hover:opacity-70 transition-opacity">
+                <button className="p-[12px] pl-0 shrink-0 self-end hover:opacity-70 transition-opacity">
                   <Smile size={22} className={emojiOpen ? "text-[#00a884]" : "wa-icon-panel"} />
                 </button>
               </PopoverTrigger>
@@ -290,17 +373,17 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               onKeyDown={handleKeyDown}
               placeholder="Digite uma mensagem"
               rows={1}
-              className="flex-1 bg-transparent wa-text-primary text-[15px] pl-[2px] pr-[6px] py-[10px] outline-none resize-none max-h-[120px] overflow-y-auto leading-[20px] placeholder:wa-text-muted wa-scrollbar"
-              style={{ minHeight: "22px" }}
+              className="flex-1 bg-transparent wa-text-primary text-[15px] pl-[4px] pr-[8px] py-[12px] outline-none resize-none max-h-[120px] overflow-y-auto leading-[20px] placeholder:wa-text-muted wa-scrollbar"
+              style={{ minHeight: "24px" }}
             />
 
             {/* Mic/Send — inside pill */}
             {text.trim() ? (
-              <button onClick={handleSend} className="p-[9px] shrink-0 self-end hover:opacity-70 transition-opacity">
+              <button onClick={handleSend} className="p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity">
                 <Send size={20} className="text-[#00a884]" />
               </button>
             ) : (
-              <button onClick={startRecording} className="p-[9px] shrink-0 self-end hover:opacity-70 transition-opacity">
+              <button onClick={startRecording} className="p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity">
                 <Mic size={22} className="wa-icon-panel" />
               </button>
             )}
