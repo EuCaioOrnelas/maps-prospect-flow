@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Send, Smile, Mic, MicOff, Plus, X, Image, FileText, Film, Reply } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerContent } from "@/components/ui/emoji-picker";
+import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerContent, CATEGORIES } from "@/components/ui/emoji-picker";
 import { ChatMessage } from "@/hooks/useChat";
 
 interface ChatInputProps {
@@ -14,6 +14,7 @@ interface ChatInputProps {
 
 export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply }: ChatInputProps) {
   const [text, setText] = useState("");
+  const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
   const [showAttach, setShowAttach] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [preview, setPreview] = useState<{ file: File; url: string; type: string } | null>(null);
@@ -252,8 +253,21 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                 }}
               >
                 <EmojiPickerSearch placeholder="Buscar emoji..." />
-                <EmojiPickerCategories />
-                <EmojiPickerContent />
+                <EmojiPickerCategories
+                  activeCategory={activeEmojiCategory}
+                  onCategoryClick={(idx) => {
+                    setActiveEmojiCategory(idx);
+                    // Scroll to category header in the viewport
+                    const viewport = document.querySelector('[class*="outline-none"]');
+                    if (viewport) {
+                      const headers = viewport.querySelectorAll("[data-category-header]");
+                      if (headers[idx]) {
+                        headers[idx].scrollIntoView({ behavior: "smooth", block: "start" });
+                      }
+                    }
+                  }}
+                />
+                <EmojiPickerContent onVisibleCategoryChange={setActiveEmojiCategory} />
               </EmojiPicker>
             </PopoverContent>
           </Popover>

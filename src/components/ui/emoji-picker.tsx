@@ -6,7 +6,8 @@ import {
   type EmojiPickerListRowProps,
   EmojiPicker as EmojiPickerPrimitive,
 } from "frimousse";
-import { LoaderIcon, SearchIcon, SmileIcon, HeartIcon, CoffeeIcon, TreesIcon, PlaneIcon, LightbulbIcon, HashIcon, FlagIcon } from "lucide-react";
+import { LoaderIcon, SearchIcon } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -42,28 +43,37 @@ function EmojiPickerSearch({
   );
 }
 
-// Category navigation bar like WhatsApp
-const CATEGORY_ICONS: { label: string; icon: React.ReactNode; emoji: string }[] = [
-  { label: "Smileys", icon: <SmileIcon size={18} />, emoji: "😀" },
-  { label: "Pessoas", icon: <HeartIcon size={18} />, emoji: "👋" },
-  { label: "Animais", icon: <TreesIcon size={18} />, emoji: "🐶" },
-  { label: "Comida", icon: <CoffeeIcon size={18} />, emoji: "🍔" },
-  { label: "Viagens", icon: <PlaneIcon size={18} />, emoji: "✈️" },
-  { label: "Atividades", icon: <LightbulbIcon size={18} />, emoji: "⚽" },
-  { label: "Objetos", icon: <HashIcon size={18} />, emoji: "💡" },
-  { label: "Bandeiras", icon: <FlagIcon size={18} />, emoji: "🏁" },
+// Category icons — click scrolls the list to that category
+const CATEGORIES = [
+  { id: 0, label: "Smileys e emoções", icon: "😀" },
+  { id: 1, label: "Pessoas", icon: "👋" },
+  { id: 2, label: "Animais e natureza", icon: "🐶" },
+  { id: 3, label: "Comida e bebida", icon: "🍔" },
+  { id: 4, label: "Viagens e lugares", icon: "✈️" },
+  { id: 5, label: "Atividades", icon: "⚽" },
+  { id: 6, label: "Objetos", icon: "💡" },
+  { id: 7, label: "Símbolos", icon: "❤️" },
+  { id: 8, label: "Bandeiras", icon: "🏁" },
 ];
 
-function EmojiPickerCategories() {
+function EmojiPickerCategories({ activeCategory, onCategoryClick }: { activeCategory?: number; onCategoryClick: (idx: number) => void }) {
   return (
-    <div className="flex items-center justify-around px-2 py-1.5 border-b">
-      {CATEGORY_ICONS.map((cat) => (
+    <div className="flex items-center justify-around px-1 py-1 border-b gap-0.5">
+      {CATEGORIES.map((cat, idx) => (
         <button
-          key={cat.label}
+          key={cat.id}
           title={cat.label}
-          className="p-1.5 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          onClick={() => onCategoryClick(idx)}
+          className={cn(
+            "w-8 h-8 flex items-center justify-center rounded-full text-[16px] transition-all",
+            activeCategory === idx
+              ? "bg-[#00a884] shadow-sm scale-105"
+              : "hover:bg-[#00a884]/20"
+          )}
         >
-          {cat.icon}
+          <span className={activeCategory === idx ? "grayscale brightness-[10]" : ""}>
+            {cat.icon}
+          </span>
         </button>
       ))}
     </div>
@@ -86,7 +96,7 @@ function EmojiPickerEmoji({
   return (
     <button
       className={cn(
-        "flex size-8 items-center justify-center rounded-md text-base transition-colors hover:bg-accent/60",
+        "flex size-8 items-center justify-center rounded-md text-base transition-colors hover:bg-gray-200/50 dark:hover:bg-gray-600/30",
         className,
       )}
       {...props}
@@ -103,6 +113,7 @@ function EmojiPickerCategoryHeader({
   return (
     <div
       className="bg-background px-1 py-2 text-xs font-medium text-muted-foreground"
+      data-category-header={category.label}
       {...props}
     >
       {category.label}
@@ -112,10 +123,45 @@ function EmojiPickerCategoryHeader({
 
 function EmojiPickerContent({
   className,
+  onVisibleCategoryChange,
   ...props
-}: React.ComponentProps<typeof EmojiPickerPrimitive.Viewport>) {
+}: React.ComponentProps<typeof EmojiPickerPrimitive.Viewport> & { onVisibleCategoryChange?: (idx: number) => void }) {
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  // Observe which category header is visible
+  useEffect(() => {
+    if (!onVisibleCategoryChange || !viewportRef.current) return;
+    const viewport = viewportRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const label = (entry.target as HTMLElement).getAttribute("data-category-header");
+            if (label) {
+              const idx = CATEGORIES.findIndex(c => c.label === label);
+              if (idx >= 0) onVisibleCategoryChange(idx);
+            }
+          }
+        }
+      },
+      { root: viewport, threshold: 0.5, rootMargin: "0px 0px -80% 0px" }
+    );
+
+    // Delay to allow list to render
+    const timer = setTimeout(() => {
+      const headers = viewport.querySelectorAll("[data-category-header]");
+      headers.forEach(h => observer.observe(h));
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [onVisibleCategoryChange]);
+
   return (
     <EmojiPickerPrimitive.Viewport
+      ref={viewportRef}
       className={cn("outline-none", className)}
       {...props}
     >
@@ -141,44 +187,10 @@ function EmojiPickerContent({
   );
 }
 
-function EmojiPickerFooter({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-1.5 border-t p-2 text-sm",
-        className,
-      )}
-      {...props}
-    >
-      <EmojiPickerPrimitive.ActiveEmoji>
-        {({ emoji }) =>
-          emoji ? (
-            <>
-              <div className="flex size-6 items-center justify-center text-lg">
-                {emoji.emoji}
-              </div>
-              <span className="truncate text-xs text-muted-foreground">
-                {emoji.label}
-              </span>
-            </>
-          ) : (
-            <span className="ml-1.5 text-xs text-muted-foreground">
-              Selecione um emoji…
-            </span>
-          )
-        }
-      </EmojiPickerPrimitive.ActiveEmoji>
-    </div>
-  );
-}
-
 export {
   EmojiPicker,
   EmojiPickerSearch,
   EmojiPickerCategories,
   EmojiPickerContent,
-  EmojiPickerFooter,
+  CATEGORIES,
 };
