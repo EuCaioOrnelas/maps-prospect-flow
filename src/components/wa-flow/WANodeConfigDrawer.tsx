@@ -263,20 +263,6 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
     <div className="space-y-4">
       {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets. Os dados são adicionados em novas linhas.")}
 
-      {(() => {
-        const fKey = `${config.spreadsheet_id}::${config.sheet_name || "Dados"}`;
-        const alreadyDone = config.sheet_formatted_id === fKey;
-        if (alreadyDone) return null;
-        return (
-          <div className="flex gap-2 items-start p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-            <AlertTriangle size={13} className="text-yellow-500 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-yellow-600 dark:text-yellow-400">
-              <strong>Atenção:</strong> Ao salvar, a planilha selecionada será limpa e formatada com os cabeçalhos definidos no mapeamento de colunas. Use uma planilha em branco ou sem dados importantes.
-            </p>
-          </div>
-        );
-      })()}
-
       <GoogleConnectionBlock
         accounts={googleAccounts}
         selectedAccountId={selectedAccountId}
