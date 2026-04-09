@@ -276,6 +276,9 @@ export const LeadDetailDialog = ({
   const [deals, setDeals] = useState<LeadDeal[]>([]);
   const [newNote, setNewNote] = useState('');
   const [newTag, setNewTag] = useState('');
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [showTagComposer, setShowTagComposer] = useState(false);
+  const [hasWiizeChatConnection, setHasWiizeChatConnection] = useState(false);
   const [formData, setFormData] = useState({
     phone: '',
     company_name: '',
@@ -345,8 +348,69 @@ export const LeadDetailDialog = ({
       setShowWhatsAppOptions(false);
       setHistoryPage(1);
       setShowDealConfirm(false);
+      setNewTag('');
+      setShowTagComposer(false);
     }
   }, [lead?.id]);
+
+  useEffect(() => {
+    if (!open || !user) return;
+
+    let cancelled = false;
+
+    const loadDialogSupportData = async () => {
+      try {
+        const [tagsResponse, connectionsResponse] = await Promise.all([
+          supabase
+            .from('leads')
+            .select('tags')
+            .eq('user_id', user.id)
+            .not('tags', 'is', null)
+            .range(0, 4999),
+          supabase
+            .from('user_waba_connections')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('status', 'active')
+            .limit(1),
+        ]);
+
+        if (cancelled) return;
+
+        const uniqueTags = new Set<string>();
+
+        tagsResponse.data?.forEach((item) => {
+          if (!Array.isArray(item.tags)) return;
+
+          item.tags.forEach((tag) => {
+            if (typeof tag !== 'string') return;
+
+            const normalizedTag = tag.trim();
+
+            if (normalizedTag) {
+              uniqueTags.add(normalizedTag);
+            }
+          });
+        });
+
+        setAvailableTags(Array.from(uniqueTags).sort((a, b) => a.localeCompare(b, 'pt-BR')));
+        setHasWiizeChatConnection((connectionsResponse.data?.length ?? 0) > 0);
+      } catch (error) {
+        console.error('Error loading CRM tag support data:', error);
+
+        if (!cancelled) {
+          setAvailableTags([]);
+          setHasWiizeChatConnection(false);
+        }
+      }
+    };
+
+    void loadDialogSupportData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, user]);
 
   const loadDeals = async () => {
     if (!lead) return;
@@ -481,12 +545,39 @@ export const LeadDetailDialog = ({
     }
   };
 
-  const handleAddTag = async () => {
-    if (!lead || !newTag.trim()) return;
-    const updatedTags = [...(lead.tags || []), newTag.trim()];
+  const handleAddTag = async (tagValue?: string) => {
+    if (!lead) return;
+
+    const normalizedTag = (tagValue ?? newTag).trim();
+
+    if (!normalizedTag) return;
+
+    const currentTags = (lead.tags || []).map((tag) => tag.trim()).filter(Boolean);
+
+    if (currentTags.some((tag) => tag.toLowerCase() === normalizedTag.toLowerCase())) {
+      toast.error('Essa tag já está adicionada neste lead');
+      return;
+    }
+
+    const updatedTags = [...currentTags, normalizedTag];
+
     try {
-      await onUpdate(lead.id, { tags: updatedTags });
+      const updatedLead = await onUpdate(lead.id, { tags: updatedTags });
+
+      if (updatedLead) {
+        Object.assign(lead, updatedLead);
+      }
+
+      setAvailableTags((prev) => {
+        if (prev.some((tag) => tag.toLowerCase() === normalizedTag.toLowerCase())) {
+          return prev;
+        }
+
+        return [...prev, normalizedTag].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      });
+
       setNewTag('');
+      setShowTagComposer(false);
       toast.success('Tag adicionada!');
     } catch {
       toast.error('Erro ao adicionar tag');
@@ -497,7 +588,13 @@ export const LeadDetailDialog = ({
     if (!lead) return;
     const updatedTags = (lead.tags || []).filter(tag => tag !== tagToRemove);
     try {
-      await onUpdate(lead.id, { tags: updatedTags });
+      const updatedLead = await onUpdate(lead.id, { tags: updatedTags });
+
+      if (updatedLead) {
+        Object.assign(lead, updatedLead);
+      }
+
+      toast.success('Tag removida!');
     } catch {
       toast.error('Erro ao remover tag');
     }
@@ -583,6 +680,24 @@ export const LeadDetailDialog = ({
     setShowWhatsAppOptions(false);
   };
 
+  const openWiizeChat = () => {
+    if (!lead) return;
+
+    const params = new URLSearchParams({
+      phone: lead.phone.replace(/\D/g, ''),
+    });
+
+    const displayName = lead.contact_name || lead.company_name;
+
+    if (displayName) {
+      params.set('name', displayName);
+    }
+
+    navigate(`/chat?${params.toString()}`);
+    setShowWhatsAppOptions(false);
+    onOpenChange(false);
+  };
+
   const handleValueChange = async (value: number) => {
     if (!lead) return;
     setIsSavingValue(true);
@@ -620,6 +735,11 @@ export const LeadDetailDialog = ({
 
   const currentStage = stages.find(s => s.id === lead.pipeline_stage_id);
   const displayName = lead.contact_name || lead.company_name || formatPhoneNumber(lead.phone);
+  const normalizedTagSearch = newTag.trim().toLowerCase();
+  const tagSuggestions = availableTags
+    .filter((tag) => !(lead.tags || []).some((currentTag) => currentTag.toLowerCase() === tag.toLowerCase()))
+    .filter((tag) => !normalizedTagSearch || tag.toLowerCase().includes(normalizedTagSearch))
+    .slice(0, 10);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -767,16 +887,28 @@ export const LeadDetailDialog = ({
               Conversar
             </Button>
             {showWhatsAppOptions && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-1 rounded-2xl border border-border bg-popover/95 p-1 shadow-xl backdrop-blur-sm z-50">
+                {hasWiizeChatConnection && (
+                  <>
+                    <button
+                      className="w-full rounded-xl px-3 py-2.5 text-sm text-left transition-colors flex items-center gap-2 text-foreground hover:bg-primary/10"
+                      onClick={openWiizeChat}
+                    >
+                      <MessageCircle className="w-4 h-4 text-primary" />
+                      Chamar no Chat Wiize
+                    </button>
+                    <div className="my-1 h-px bg-border/60" />
+                  </>
+                )}
                 <button
-                  className="w-full px-3 py-2 text-sm text-left hover:bg-muted transition-colors flex items-center gap-2"
+                  className="w-full rounded-xl px-3 py-2.5 text-sm text-left transition-colors flex items-center gap-2 text-foreground hover:bg-muted"
                   onClick={() => openWhatsApp('web')}
                 >
                   <Globe className="w-4 h-4" />
                   WhatsApp Web
                 </button>
                 <button
-                  className="w-full px-3 py-2 text-sm text-left hover:bg-muted transition-colors flex items-center gap-2"
+                  className="w-full rounded-xl px-3 py-2.5 text-sm text-left transition-colors flex items-center gap-2 text-foreground hover:bg-muted"
                   onClick={() => openWhatsApp('app')}
                 >
                   <Phone className="w-4 h-4" />
@@ -1074,6 +1206,96 @@ export const LeadDetailDialog = ({
                             R$ {deals.reduce((sum, d) => sum + Number(d.value), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
                         </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tags Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tags do CRM</span>
+                    <Button
+                      size="sm"
+                      variant={showTagComposer ? 'secondary' : 'outline'}
+                      className="h-7 px-3"
+                      onClick={() => {
+                        setShowTagComposer((prev) => !prev);
+                        if (showTagComposer) {
+                          setNewTag('');
+                        }
+                      }}
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" />
+                      Adicionar mais tag
+                    </Button>
+                  </div>
+
+                  <div className="bg-muted/40 rounded-lg border border-border/50 p-3 space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      {(lead.tags || []).length > 0 ? (
+                        (lead.tags || []).map((tag) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => handleRemoveTag(tag)}
+                            className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-destructive/30 hover:text-destructive"
+                          >
+                            <span>{tag}</span>
+                            <X className="w-3 h-3" />
+                          </button>
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Nenhuma tag adicionada ainda.</span>
+                      )}
+                    </div>
+
+                    {showTagComposer && (
+                      <div className="space-y-3 rounded-xl border border-border bg-background/70 p-3">
+                        <div className="flex gap-2">
+                          <Input
+                            value={newTag}
+                            onChange={(e) => setNewTag(e.target.value)}
+                            placeholder="Pesquisar ou criar nova tag"
+                            className="h-9"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                void handleAddTag();
+                              }
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            className="h-9 shrink-0"
+                            onClick={() => handleAddTag()}
+                            disabled={!newTag.trim()}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Adicionar
+                          </Button>
+                        </div>
+
+                        {tagSuggestions.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {tagSuggestions.map((tag) => (
+                              <button
+                                key={tag}
+                                type="button"
+                                onClick={() => handleAddTag(tag)}
+                                className="rounded-full border border-border bg-muted/30 px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                              >
+                                {tag}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            {newTag.trim()
+                              ? `Nenhuma tag encontrada. Clique em adicionar para criar \"${newTag.trim()}\".`
+                              : 'Pesquise tags existentes ou crie uma nova para este lead.'}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

@@ -332,6 +332,9 @@ export const useCRM = () => {
       throw error;
     }
 
+    setLeads((prev) => prev.map((lead) => (lead.id === id ? { ...lead, ...data } as Lead : lead)));
+    setSelectedLead((prev) => (prev?.id === id ? { ...prev, ...data } as Lead : prev));
+
     return data;
   };
 
