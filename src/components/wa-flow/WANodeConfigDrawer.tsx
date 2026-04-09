@@ -447,8 +447,9 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
     if (selectedAccount) {
       updateConfig("google_connected", true);
       updateConfig("google_email", selectedAccount.google_email);
+      updateConfig("google_account_id", selectedAccountId);
     }
-  }, [selectedAccount?.google_email]);
+  }, [selectedAccount?.google_email, selectedAccountId]);
 
   const { data: calendars = [], isLoading: loadingCalendars } = useQuery({
     queryKey: ["google-calendars", user?.id],
@@ -607,8 +608,9 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
     if (selectedAccount) {
       updateConfig("google_connected", true);
       updateConfig("google_email", selectedAccount.google_email);
+      updateConfig("google_account_id", selectedAccountId);
     }
-  }, [selectedAccount?.google_email]);
+  }, [selectedAccount?.google_email, selectedAccountId]);
 
   return (
     <div className="space-y-4">
