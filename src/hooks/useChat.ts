@@ -500,9 +500,12 @@ export function useChat() {
   // Detect if the active connection has an expired/invalid token
   const activeConnection = connections.find(c => c.id === activeConnectionId);
   const isConnectionExpired = activeConnection
-    ? activeConnection.status !== "active" || 
-      (activeConnection.token_expires_at && new Date(activeConnection.token_expires_at) < new Date())
+    ? connectionHealth[activeConnection.id] === false
     : false;
+
+  // All connections expired = block page
+  const allConnectionsExpired = connections.length > 0 && 
+    connections.every(c => connectionHealth[c.id] === false);
 
   // Fetch real Meta templates for the active connection
   const fetchTemplates = useCallback(async () => {
@@ -529,10 +532,13 @@ export function useChat() {
     }
   }, [activeConnection]);
 
-  // Reconnect handler: reload connections and sync missed messages
+  // Reconnect handler: clear cache and reload
   const handleReconnect = useCallback(async () => {
-    await loadConnections();
-  }, [loadConnections]);
+    if (user) {
+      try { localStorage.removeItem(`waba_health_${user.id}`); } catch {}
+    }
+    await loadConnections(true);
+  }, [loadConnections, user]);
 
   return {
     conversations: filteredConversations,
@@ -545,6 +551,8 @@ export function useChat() {
     setActiveConnectionId,
     activeConnection,
     isConnectionExpired,
+    allConnectionsExpired,
+    connectionHealth,
     loading,
     loadingMessages,
     searchQuery,
