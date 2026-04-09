@@ -892,7 +892,8 @@ export default function WhatsAppFlowEditor() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
-            onPaneClick={() => { setSelectedNode(null); setSelectedNodeIds(new Set()); }}
+            onPaneClick={() => { setSelectedNode(null); setSelectedNodeIds(new Set()); setContextMenu(null); }}
+            onNodeContextMenu={onNodeContextMenu}
             onEdgeClick={(_event, edge) => {
               setEdgeToDelete(edge.id);
             }}
