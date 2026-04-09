@@ -417,7 +417,16 @@ const ensureNodeConfig = (
           delay_min: typeof item.delay_min === "number" ? item.delay_min : undefined,
           delay_max: typeof item.delay_max === "number" ? item.delay_max : undefined,
         }));
-        return { ...config, contents: normalizedContents };
+        
+        // Check if any text items actually have content - if none do, regenerate
+        const hasRealText = normalizedContents.some((item: any) => item.type === "text" && item.content && item.content.length > 3);
+        if (!hasRealText) {
+          // No real text content - inject a meaningful message
+          const inferredText = inferMessageText(label, prompt);
+          normalizedContents.unshift({ id: `item_fix_${Date.now()}`, type: "text", content: inferredText });
+        }
+        
+        return { ...config, contents: normalizedContents, content: normalizedContents.find((c: any) => c.type === "text")?.content || "", body_text: normalizedContents.find((c: any) => c.type === "text")?.content || "" };
       }
 
       // Build contents from legacy fields
@@ -548,14 +557,50 @@ const ensureNodeConfig = (
         name: { variable: "lead_name", question: "Qual é o seu nome completo?" },
         email: { variable: "lead_email", question: "Qual é o seu e-mail para contato?" },
         phone: { variable: "lead_phone", question: "Qual é o seu número de telefone?" },
-        custom: { variable: normalizeText(config.variable_name) || "custom_field", question: normalizeText(config.question_text) || "Por favor, informe o dado solicitado:" },
+        custom: { variable: normalizeText(config.variable_name) || "custom_field", question: "" },
       };
       const defaults = variableDefaults[collectType] || variableDefaults.custom;
+      
+      // For custom fields, generate a human-readable question from the variable name if no question_text provided
+      let questionText = normalizeText(config.question_text);
+      if (!questionText || questionText.includes("_") || /^[a-z_]+:?$/i.test(questionText)) {
+        if (collectType !== "custom") {
+          questionText = defaults.question;
+        } else {
+          // Convert variable_name like "finance_keyword" into a friendly question
+          const varName = normalizeText(config.variable_name) || defaults.variable;
+          const humanName = varName
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (c: string) => c.toUpperCase());
+          questionText = `Por favor, informe: ${humanName}`;
+          
+          // Try to infer better questions from common variable patterns
+          const vLower = varName.toLowerCase();
+          if (/nome|name/.test(vLower)) questionText = "Qual é o seu nome?";
+          else if (/email|e-mail|mail/.test(vLower)) questionText = "Qual é o seu e-mail?";
+          else if (/phone|telefone|celular|whatsapp/.test(vLower)) questionText = "Qual é o seu telefone?";
+          else if (/empresa|company/.test(vLower)) questionText = "Qual é o nome da sua empresa?";
+          else if (/cpf/.test(vLower)) questionText = "Qual é o seu CPF?";
+          else if (/cnpj/.test(vLower)) questionText = "Qual é o CNPJ da empresa?";
+          else if (/cidade|city/.test(vLower)) questionText = "Em qual cidade você está?";
+          else if (/estado|state|uf/.test(vLower)) questionText = "Qual é o seu estado?";
+          else if (/endereco|endereço|address/.test(vLower)) questionText = "Qual é o seu endereço?";
+          else if (/orcamento|orçamento|budget/.test(vLower)) questionText = "Qual é o seu orçamento aproximado?";
+          else if (/produto|product|servico|serviço|service/.test(vLower)) questionText = "Qual produto ou serviço lhe interessa?";
+          else if (/data|date|quando|when/.test(vLower)) questionText = "Qual data é melhor para você?";
+          else if (/horario|horário|hora|time/.test(vLower)) questionText = "Qual horário é melhor para você?";
+          else if (/financ|finance|pagamento|payment/.test(vLower)) questionText = "Qual é a sua dúvida financeira?";
+          else if (/problema|issue|problema/.test(vLower)) questionText = "Pode descrever o problema que está enfrentando?";
+          else if (/mensagem|message|feedback|comentario/.test(vLower)) questionText = "Deixe sua mensagem:";
+          else if (/keyword|palavra/.test(vLower)) questionText = "Pode nos dar mais detalhes sobre o que precisa?";
+        }
+      }
+      
       return {
         ...config,
         collect_type: collectType,
         variable_name: normalizeText(config.variable_name) || defaults.variable,
-        question_text: normalizeText(config.question_text) || defaults.question,
+        question_text: questionText,
         message_type: normalizeText(config.message_type) || "text",
         max_retries: typeof config.max_retries === "number" ? config.max_retries : 2,
       };
