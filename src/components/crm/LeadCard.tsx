@@ -249,6 +249,7 @@ export const LeadCard = memo(LeadCardComponent, (prevProps, nextProps) => {
     prevProps.lead.ai_score === nextProps.lead.ai_score &&
     prevProps.lead.estimated_value === nextProps.lead.estimated_value &&
     prevProps.lead.last_response_at === nextProps.lead.last_response_at &&
+    JSON.stringify(prevProps.lead.tags) === JSON.stringify(nextProps.lead.tags) &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.onClick === nextProps.onClick
   );
