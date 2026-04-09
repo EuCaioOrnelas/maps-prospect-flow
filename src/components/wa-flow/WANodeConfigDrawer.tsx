@@ -441,7 +441,7 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
   const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("calendar", [
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/calendar.events",
-  ]);
+  ], config.google_account_id);
 
   useEffect(() => {
     if (selectedAccount) {
@@ -601,7 +601,7 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner }: { conf
 function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
   const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("gmail", [
     "https://www.googleapis.com/auth/gmail.send",
-  ]);
+  ], config.google_account_id);
 
   useEffect(() => {
     if (selectedAccount) {
