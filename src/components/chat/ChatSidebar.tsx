@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
-import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check } from "lucide-react";
+import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { NewConversationDialog } from "./NewConversationDialog";
+import { ChatFiltersDialog, ChatFilterConfig } from "./ChatFiltersDialog";
 
 interface ChatSidebarProps {
   conversations: ChatConversation[];
