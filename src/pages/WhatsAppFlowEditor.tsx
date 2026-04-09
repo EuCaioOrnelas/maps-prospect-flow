@@ -633,6 +633,14 @@ export default function WhatsAppFlowEditor() {
     onError: () => toast.error("Erro ao salvar fluxo"),
   });
 
+  // Close context menu on outside click
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handler = () => setContextMenu(null);
+    window.addEventListener("click", handler);
+    return () => window.removeEventListener("click", handler);
+  }, [contextMenu]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
