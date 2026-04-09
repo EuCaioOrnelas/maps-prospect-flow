@@ -17,7 +17,7 @@ serve(async (req) => {
     const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
     const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
 
-    const { user_id, action, spreadsheet_id, title } = await req.json();
+    const { user_id, action, spreadsheet_id, title, tab_name } = await req.json();
 
     if (!user_id) {
       return new Response(JSON.stringify({ error: "Missing user_id" }), {
@@ -82,7 +82,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           properties: { title: title || "Wiize - Leads" },
-          sheets: [{ properties: { title: "Leads" } }],
+          sheets: [{ properties: { title: tab_name || "Dados" } }],
         }),
       });
 
