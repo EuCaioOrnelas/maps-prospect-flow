@@ -1077,8 +1077,8 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-bg-input { background-color: #f0f2f5; }
 .wa-input-field { background-color: hsl(220 18% 10%); }
 .landing-light .wa-input-field { background-color: #ffffff; }
-.wa-input-bar { background-color: hsl(220 18% 8%); }
-.landing-light .wa-input-bar { background-color: #f0f2f5; }
+.wa-input-bar { background-color: hsl(220 18% 6%); }
+.landing-light .wa-input-bar { background-color: #ffffff; }
 
 /* ─── Borders ─── */
 .wa-border { border-color: hsl(220 14% 16%); }
@@ -1151,11 +1151,11 @@ input::placeholder, textarea::placeholder {
 
 /* ─── Empty state ─── */
 .wa-empty-bg { background-color: hsl(220 18% 6%); }
-.landing-light .wa-empty-bg { background-color: #f0f2f5; }
+.landing-light .wa-empty-bg { background-color: #ffffff; }
 
 /* ─── Sidebar header (Conversas) — distinct from chat header ─── */
-.wa-sidebar-header-bg { background-color: hsl(220 18% 8%); }
-.landing-light .wa-sidebar-header-bg { background-color: #f0f2f5; }
+.wa-sidebar-header-bg { background-color: hsl(220 18% 6%); }
+.landing-light .wa-sidebar-header-bg { background-color: #ffffff; }
 .wa-sidebar-header-text { color: #e9edef; }
 .landing-light .wa-sidebar-header-text { color: #3b4a54; }
 .wa-sidebar-header-icon { color: #aebac1; }
@@ -1169,8 +1169,8 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-sidebar-search-area { background-color: #ffffff; }
 
 /* ─── Chat header (contact area) — matching sidebar header ─── */
-.wa-chat-header-bg { background-color: hsl(220 18% 8%); }
-.landing-light .wa-chat-header-bg { background-color: #f0f2f5; }
+.wa-chat-header-bg { background-color: hsl(220 18% 6%); }
+.landing-light .wa-chat-header-bg { background-color: #ffffff; }
 .wa-chat-header-text { color: #e9edef; }
 .landing-light .wa-chat-header-text { color: #111b21; }
 .wa-chat-header-sub { color: #8696a0; }

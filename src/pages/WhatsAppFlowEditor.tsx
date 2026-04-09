@@ -229,6 +229,7 @@ export default function WhatsAppFlowEditor() {
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
   const [edgeToDelete, setEdgeToDelete] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string } | null>(null);
 
   // Undo/Redo history – use refs to avoid stale closures
   const historyRef = useRef<HistoryEntry[]>([]);
@@ -383,7 +384,30 @@ export default function WhatsAppFlowEditor() {
     setSelectedNode(node);
     setSelectedNodeIds(new Set([node.id]));
     setDrawerOpen(true);
+    setContextMenu(null);
   }, []);
+
+  const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
+    event.preventDefault();
+    setContextMenu({ x: event.clientX, y: event.clientY, nodeId: node.id });
+  }, []);
+
+  const handleDuplicateNode = useCallback((nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    const newNode: Node = {
+      ...JSON.parse(JSON.stringify(node)),
+      id: `temp-${Date.now()}`,
+      position: { x: node.position.x + 60, y: node.position.y + 60 },
+      selected: false,
+    };
+    const newNodes = [...nodes, newNode];
+    setNodes(newNodes);
+    pushHistory(newNodes, edges);
+    setHasChanges(true);
+    toast.success("Bloco duplicado");
+    setContextMenu(null);
+  }, [nodes, edges, setNodes, pushHistory]);
 
   const handleAddNode = useCallback(
     (type: string) => {
@@ -608,6 +632,14 @@ export default function WhatsAppFlowEditor() {
     },
     onError: () => toast.error("Erro ao salvar fluxo"),
   });
+
+  // Close context menu on outside click
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handler = () => setContextMenu(null);
+    window.addEventListener("click", handler);
+    return () => window.removeEventListener("click", handler);
+  }, [contextMenu]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -868,7 +900,8 @@ export default function WhatsAppFlowEditor() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
-            onPaneClick={() => { setSelectedNode(null); setSelectedNodeIds(new Set()); }}
+            onPaneClick={() => { setSelectedNode(null); setSelectedNodeIds(new Set()); setContextMenu(null); }}
+            onNodeContextMenu={onNodeContextMenu}
             onEdgeClick={(_event, edge) => {
               setEdgeToDelete(edge.id);
             }}
@@ -945,6 +978,30 @@ export default function WhatsAppFlowEditor() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Node right-click context menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-[100] min-w-[180px] bg-card border border-border rounded-lg shadow-xl py-1.5 animate-in fade-in zoom-in-95 duration-100"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={() => setContextMenu(null)}
+        >
+          <button
+            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+            onClick={(e) => { e.stopPropagation(); handleDuplicateNode(contextMenu.nodeId); }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            Duplicar bloco
+          </button>
+          <button
+            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+            onClick={(e) => { e.stopPropagation(); handleDeleteNode(contextMenu.nodeId); setContextMenu(null); }}
+          >
+            <Trash2 size={14} />
+            Excluir bloco
+          </button>
+        </div>
+      )}
     </div>
   );
 }

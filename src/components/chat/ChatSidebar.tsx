@@ -86,24 +86,46 @@ export function ChatSidebar({
 
   return (
     <div className="flex flex-col h-full wa-sidebar-bg">
-      {/* Header — slightly different tone */}
+      {/* Header */}
       <div className="h-[58px] min-h-[58px] flex items-center justify-between px-4 wa-sidebar-header-bg wa-border-header-bottom">
         <div className="flex items-center gap-2">
           <span className="text-[18px] font-semibold wa-sidebar-header-text">Conversas</span>
         </div>
         <div className="flex items-center gap-2">
-          {connections.length > 1 && (
-            <select
-              value={activeConnectionId || ""}
-              onChange={e => onConnectionChange(e.target.value)}
-              className="text-xs wa-sidebar-header-select border rounded-md px-2 py-1.5 outline-none"
-            >
-              {connections.map(c => (
-                <option key={c.id} value={c.id} className="text-black">
-                  {c.nickname || c.display_phone_number || c.business_name || "Número"}
-                </option>
-              ))}
-            </select>
+          {/* Number selector dropdown */}
+          {connections.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs wa-sidebar-header-select border transition-colors hover:opacity-80">
+                  <span className="truncate max-w-[140px]">
+                    {connections.find(c => c.id === activeConnectionId)?.nickname 
+                      || connections.find(c => c.id === activeConnectionId)?.display_phone_number 
+                      || "Número"}
+                  </span>
+                  <ChevronDown size={12} className="shrink-0 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="wa-dropdown-bg wa-border wa-text-primary min-w-[220px] rounded-[3px] shadow-xl py-[9px]">
+                {connections.map(c => (
+                  <DropdownMenuItem
+                    key={c.id}
+                    onClick={() => onConnectionChange(c.id)}
+                    className={cn(
+                      "wa-dropdown-item text-[14px] px-4 py-[9px] flex items-center justify-between",
+                      c.id === activeConnectionId && "bg-[#00a884]/10"
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{c.nickname || c.business_name || "Número"}</p>
+                      <p className="text-[11px] opacity-60">{c.display_phone_number || c.phone_number_id}</p>
+                    </div>
+                    {c.id === activeConnectionId && (
+                      <span className="w-2 h-2 rounded-full bg-[#00a884] shrink-0 ml-2" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           {onNewConversation && (
             <button
