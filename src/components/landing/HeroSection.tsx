@@ -589,11 +589,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                     <span className="text-[9px] text-muted-foreground ml-auto">{currentStage + 1}/8</span>
                   </div>
 
-                  {/* Stage content */}
-                  <div className="min-h-[300px]" key={currentStage} style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+                  {/* Stage content - fixed height */}
+                  <div className="h-[300px] overflow-hidden" key={currentStage} style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
                     <CurrentStageRenderer progress={stageProgress} />
                   </div>
                 </div>
+                {/* Watermark */}
+                <div className="absolute bottom-2 left-4 text-[8px] text-muted-foreground/40 font-medium tracking-wide">@wiizebrasil</div>
               </div>
             </div>
           </div>
@@ -613,6 +615,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         @keyframes scaleIn {
           from { opacity: 0; transform: scale(0.8); }
           to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes moveCursor {
+          0% { transform: translateX(0); opacity: 0; }
+          15% { opacity: 1; }
+          50% { transform: translateX(60px); }
+          85% { opacity: 1; }
+          100% { transform: translateX(60px); opacity: 0; }
         }
       `}</style>
     </section>
