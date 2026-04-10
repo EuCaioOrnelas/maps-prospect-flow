@@ -267,13 +267,7 @@ const StageSend = ({ progress }: { progress: number }) => {
     const start = 0.06 + index * 0.18;
     const end = start + 0.13;
     const delivered = end + 0.08;
-
-    return {
-      start,
-      end,
-      delivered,
-      sendingProgress: segmentProgress(progress, start, end),
-    };
+    return { start, end, delivered, sendingProgress: segmentProgress(progress, start, end) };
   });
 
   const overallProgress = Math.round(
@@ -281,13 +275,11 @@ const StageSend = ({ progress }: { progress: number }) => {
   );
   const startedCount = steps.filter((step) => progress >= step.start).length;
   const deliveredCount = steps.filter((step) => progress >= step.delivered).length;
-  const activeIndex = steps.findIndex(
-    (step) => progress >= step.start && progress < step.end
-  );
+  const activeIndex = steps.findIndex((step) => progress >= step.start && progress < step.end);
 
   return (
-    <div className="flex h-full flex-col gap-2.5">
-      <div className="space-y-2 flex-1 min-h-0">
+    <div className="flex h-full flex-col gap-2 overflow-hidden">
+      <div className="space-y-1.5 flex-1 min-h-0 overflow-hidden">
         {contacts.map((c, i) => {
           const step = steps[i];
           const sent = progress >= step.start;
@@ -295,44 +287,44 @@ const StageSend = ({ progress }: { progress: number }) => {
           const sendPercent = delivered ? 100 : Math.round(step.sendingProgress * 100);
 
           return (
-            <div key={i} className="bg-secondary/45 rounded-xl p-2.5 border border-border/40">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                  <Send size={11} className={`text-primary ${sent && !delivered ? 'animate-pulse' : ''}`} />
+            <div key={i} className="bg-secondary/45 rounded-lg p-2 border border-border/40">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                  <Send size={10} className={`text-primary ${sent && !delivered ? 'animate-pulse' : ''}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-xs truncate">{c}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">Fila oficial · cadência inteligente</p>
+                  <p className="font-medium text-[11px] truncate">{c}</p>
+                  <p className="text-[9px] text-muted-foreground truncate">Fila oficial · cadência inteligente</p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {delivered ? (
-                    <span className="text-[10px] text-success font-medium flex items-center gap-0.5"><Check size={10} /> Entregue</span>
+                    <span className="text-[9px] text-success font-medium flex items-center gap-0.5"><Check size={9} /> Entregue</span>
                   ) : sent ? (
-                    <span className="text-[10px] text-primary font-medium flex items-center gap-0.5"><Clock size={10} className="animate-pulse" /> {sendPercent}%</span>
+                    <span className="text-[9px] text-primary font-medium flex items-center gap-0.5"><Clock size={9} className="animate-pulse" /> {sendPercent}%</span>
                   ) : (
-                    <span className="text-[10px] text-muted-foreground">Na fila</span>
+                    <span className="text-[9px] text-muted-foreground">Na fila</span>
                   )}
                 </div>
               </div>
-              <div className="mt-2 h-1.5 rounded-full bg-primary/10 overflow-hidden">
-                <div className="h-full rounded-full bg-primary" style={{ width: `${sendPercent}%` }} />
+              <div className="mt-1.5 h-1 rounded-full bg-primary/10 overflow-hidden">
+                <div className="h-full rounded-full bg-primary transition-[width] duration-200" style={{ width: `${sendPercent}%` }} />
               </div>
             </div>
           );
         })}
       </div>
-      <div className="bg-primary/10 rounded-xl p-3 border border-primary/10">
-        <div className="flex items-center gap-2 mb-2">
-          <Send size={12} className="text-primary animate-pulse" />
-          <span className="text-[11px] font-medium text-primary">Disparo em massa em andamento</span>
-          <span className="text-[11px] font-semibold text-primary ml-auto">{overallProgress}%</span>
+      <div className="bg-primary/10 rounded-lg p-2.5 border border-primary/10 shrink-0">
+        <div className="flex items-center gap-2 mb-1.5">
+          <Send size={11} className="text-primary animate-pulse" />
+          <span className="text-[10px] font-medium text-primary">Disparo em massa</span>
+          <span className="text-[10px] font-semibold text-primary ml-auto">{overallProgress}%</span>
         </div>
-        <div className="w-full bg-primary/10 rounded-full h-2 overflow-hidden">
-          <div className="bg-primary h-2 rounded-full" style={{ width: `${overallProgress}%` }} />
+        <div className="w-full bg-primary/10 rounded-full h-1.5 overflow-hidden">
+          <div className="bg-primary h-1.5 rounded-full transition-[width] duration-200" style={{ width: `${overallProgress}%` }} />
         </div>
-        <div className="flex items-center justify-between gap-2 mt-2 text-[10px] text-muted-foreground">
-          <span>{startedCount}/{contacts.length} contatos em processamento</span>
-          <span>{deliveredCount} entregues{activeIndex >= 0 ? ` • ${contacts[activeIndex]}` : ''}</span>
+        <div className="flex items-center justify-between gap-2 mt-1.5 text-[9px] text-muted-foreground">
+          <span>{startedCount}/{contacts.length} processando</span>
+          <span>{deliveredCount} entregues{activeIndex >= 0 ? ` · ${contacts[activeIndex]}` : ''}</span>
         </div>
       </div>
     </div>
