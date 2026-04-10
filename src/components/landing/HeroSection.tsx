@@ -689,7 +689,7 @@ const floatingCards = [
   { icon: Send, value: "900K+", label: "Mensagens enviadas", position: "-left-[10.5rem] top-4", delay: "0.8s" },
   { icon: Users, value: "50K+", label: "Empresas prospectadas", position: "left-1/3 -top-8", delay: "1.2s" },
   { icon: TrendingUp, value: "63%", label: "Taxa de resposta", position: "-left-[7.5rem] bottom-[5.5rem]", delay: "1.6s" },
-  { icon: Zap, value: "+40%", label: "Conversão vs tradicional", position: "-right-10 -bottom-3", delay: "2s" },
+  { icon: Zap, value: "+40%", label: "Conversão vs tradicional", position: "-right-10 bottom-[4.5rem]", delay: "2s" },
 ];
 
 /* ─── Main component ─── */
@@ -783,8 +783,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               </div>
               <span className="text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
             </div>
-            <h1 className="font-display text-[2.5rem] sm:text-[3rem] md:text-[3.5rem] lg:text-[4rem] xl:text-[4.5rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.10]" style={{ animationDelay: "0.1s" }}>
-              Transforme<br />Leads B2B em<br /><span className="text-shimmer-highlight">Vendas no Automático</span>
+            <h1 className="font-display text-[2.2rem] sm:text-[2.6rem] md:text-[3.2rem] lg:text-[3.6rem] xl:text-[4rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.13]" style={{ animationDelay: "0.1s" }}>
+              Transforme<br />Leads B2B em<br /><span className="text-shimmer-highlight whitespace-nowrap">Vendas no Automático</span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
               Encontre leads qualificados, analise e classifique oportunidades com IA, gere abordagens personalizadas e automatize todo seu processo de vendas B2B do primeiro contato ao fechamento no WhatsApp.
@@ -872,8 +872,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
       </div>
 
       <a href="#features" className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce hover:opacity-100 transition-opacity">
-        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-          <ChevronDown size={22} className="text-primary-foreground" />
+        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+          <ArrowDown size={18} className="text-primary-foreground" />
         </div>
       </a>
 
