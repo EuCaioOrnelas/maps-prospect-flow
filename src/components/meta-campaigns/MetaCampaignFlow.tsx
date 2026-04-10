@@ -738,6 +738,17 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
           </a>
         </div>
       </div>
+
+      {/* CRM Import Dialog */}
+      <CRMLeadImportDialog
+        open={crmDialogOpen}
+        onOpenChange={setCrmDialogOpen}
+        onImportPhones={(phones) => {
+          const current = phoneNumbers.trim();
+          const newNumbers = phones.join("\n");
+          setPhoneNumbers(current ? current + "\n" + newNumbers : newNumbers);
+        }}
+      />
     </div>
   );
 };
