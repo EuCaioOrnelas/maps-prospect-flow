@@ -50,7 +50,6 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   active: { label: "Em andamento", color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
   completed: { label: "Concluído", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
   abandoned: { label: "Abandonou", color: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
-  error: { label: "Erro", color: "bg-destructive/10 text-destructive border-destructive/20" },
 };
 
 const ITEMS_PER_PAGE = 15;
@@ -202,42 +201,27 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
         <h1 className="text-lg font-semibold">Resultados — {flowName}</h1>
       </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-3 px-6 py-4 border-b border-border shrink-0">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
-            <Users size={18} className="text-muted-foreground" />
-            <div>
-              <p className="text-xl font-bold">{stats.total}</p>
-              <p className="text-[10px] text-muted-foreground">Total de entradas</p>
+        {/* Stats Cards - Score-style design */}
+        <div className="grid grid-cols-3 gap-3 px-6 py-4 border-b border-border shrink-0">
+          {[
+            { label: "Total de entradas", value: stats.total, icon: Users, iconColor: "text-muted-foreground", circleColor: "bg-muted-foreground/10" },
+            { label: "Em andamento", value: stats.active, icon: Clock, iconColor: "text-blue-500", circleColor: "bg-blue-500/10" },
+            { label: "Concluídos", value: stats.completed, icon: CheckCircle2, iconColor: "text-emerald-500", circleColor: "bg-emerald-500/10" },
+          ].map((card) => (
+            <div key={card.label} className="relative overflow-hidden p-4 rounded-xl bg-card border border-border">
+              {/* Circle behind icon */}
+              <div className={`absolute -top-3 -right-3 w-14 h-14 rounded-full ${card.circleColor}`} />
+              <card.icon size={18} className={`absolute top-3 right-3 ${card.iconColor}`} />
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">{card.label}</p>
+              <p className="text-2xl font-bold mt-1">{card.value}</p>
             </div>
-          </div>
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
-            <Clock size={18} className="text-blue-500" />
-            <div>
-              <p className="text-xl font-bold text-blue-500">{stats.active}</p>
-              <p className="text-[10px] text-muted-foreground">Em andamento</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
-            <CheckCircle2 size={18} className="text-emerald-500" />
-            <div>
-              <p className="text-xl font-bold text-emerald-500">{stats.completed}</p>
-              <p className="text-[10px] text-muted-foreground">Concluídos</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
-            <AlertTriangle size={18} className="text-amber-500" />
-            <div>
-              <p className="text-xl font-bold text-amber-500">{stats.abandoned}</p>
-              <p className="text-[10px] text-muted-foreground">Abandonaram</p>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Horizontal Funnel */}
         {stats.total > 0 && (
           <div className="px-6 py-4 border-b border-border shrink-0">
-            <FlowFunnel total={stats.total} active={stats.active} completed={stats.completed} abandoned={stats.abandoned} />
+            <FlowFunnel total={stats.total} active={stats.active} completed={stats.completed} />
           </div>
         )}
 
