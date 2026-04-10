@@ -23,13 +23,7 @@ const brands = [
 export const TrustedBySection = () => {
   return (
     <section className="relative border-y border-primary/10 overflow-hidden">
-      <div className="text-center pt-4 pb-0">
-        <p className="text-[10px] sm:text-xs font-medium tracking-[0.2em] uppercase text-muted-foreground/50">
-          Empresas que confiam na Wiize
-        </p>
-      </div>
-
-      <div className="relative py-3 overflow-hidden marquee-mask">
+      <div className="relative py-4 overflow-hidden marquee-mask">
         <div className="marquee-track">
           {[0, 1].map((copy) => (
             <div key={copy} className="marquee-content" aria-hidden={copy === 1}>
