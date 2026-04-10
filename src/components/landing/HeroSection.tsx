@@ -157,51 +157,51 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-2.5">
-      <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5">
+    <div className="flex h-full flex-col gap-2 overflow-hidden">
+      <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2 shrink-0">
         <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
           <Users size={12} className="text-primary" />
         </div>
-        <div className="flex-1">
-          <p className="font-medium text-xs">CrossFit Box SP</p>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-xs truncate">CrossFit Box SP</p>
           <p className="text-[10px] text-muted-foreground">(11) 99XXX-XXXX</p>
         </div>
-        <div className="flex items-center gap-2 rounded-full bg-warning/10 px-2 py-1" style={{ opacity: progress > 0.58 ? 1 : 0, transition: 'opacity 0.6s' }}>
-          <img src={gptIcon} alt="GPT" className="w-6 h-6 rounded-full" />
+        <div className="flex items-center gap-1.5 rounded-full bg-warning/10 px-2 py-1 shrink-0" style={{ opacity: progress > 0.58 ? 1 : 0, transition: 'opacity 0.6s' }}>
+          <img src={gptIcon} alt="GPT" className="w-5 h-5 rounded-full" />
           <span className="text-sm font-bold text-warning">{Math.min(Math.round(progress * 847), 847)}</span>
         </div>
       </div>
-      <div className="rounded-xl bg-secondary/30 p-2.5 flex-1 min-h-0 flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <img src={gptIcon} alt="GPT" className="w-6 h-6 rounded-full" />
-          <div>
-            <p className="text-[10px] font-medium text-primary">GPT cruzando sinais comerciais em tempo real</p>
-            <p className="text-[10px] text-muted-foreground">Website, presença local, potencial e score preditivo</p>
+      <div className="rounded-xl bg-secondary/30 p-2 flex-1 min-h-0 flex flex-col gap-1.5 overflow-hidden">
+        <div className="flex items-center gap-2 shrink-0">
+          <img src={gptIcon} alt="GPT" className="w-5 h-5 rounded-full shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] font-medium text-primary truncate">GPT cruzando sinais comerciais</p>
+            <p className="text-[10px] text-muted-foreground truncate">Presença local, potencial e score preditivo</p>
           </div>
         </div>
-        <div className="grid gap-1.5">
+        <div className="grid gap-1 flex-1 min-h-0 overflow-hidden">
           {diagnosticItems.map((item, i) => (
             <div
               key={i}
-              className="flex items-center gap-2 bg-background/45 rounded-md px-2.5 py-1.5 border border-border/40"
+              className="flex items-center gap-2 bg-background/45 rounded-md px-2 py-1 border border-border/40"
               style={{
                 opacity: progress > item.delay ? 1 : 0,
                 transform: `translateX(${progress > item.delay ? 0 : -10}px)`,
                 transition: 'all 0.6s ease-out'
               }}
             >
-              <item.icon size={11} className={item.color} />
+              <item.icon size={10} className={item.color} />
               <span className="text-[10px] text-muted-foreground flex-1">{item.label}</span>
               <span className={`text-[10px] font-semibold ${item.color}`}>{item.value}</span>
             </div>
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1 shrink-0">
           {tags.map((t, i) => (
             <span
               key={i}
-              className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${t.color}`}
+              className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${t.color}`}
               style={{ opacity: progress > 0.58 + i * 0.08 ? 1 : 0, transform: `scale(${progress > 0.58 + i * 0.08 ? 1 : 0.85})`, transition: 'all 0.4s ease-out' }}
             >
               {t.label}
@@ -210,12 +210,12 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
         </div>
 
         <div
-          className="rounded-lg border border-primary/10 bg-primary/5 p-2"
+          className="rounded-md border border-primary/10 bg-primary/5 p-1.5 shrink-0"
           style={{ opacity: progress > 0.74 ? 1 : 0, transform: `translateY(${progress > 0.74 ? 0 : 8}px)`, transition: 'all 0.5s ease-out' }}
         >
           <p className="text-[10px] font-semibold text-primary">Diagnóstico automático</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            Lead com alta aderência ao ICP, boa presença local e janela favorável para uma abordagem consultiva.
+          <p className="text-[9px] text-muted-foreground mt-0.5 line-clamp-2">
+            Lead com alta aderência ao ICP, boa presença local e janela favorável para abordagem consultiva.
           </p>
         </div>
       </div>
