@@ -22,13 +22,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   Search,
   Users,
-  Filter,
   CheckCircle2,
   AlertCircle,
-  
   Trophy,
   Loader2,
   Layers,
+  Flame,
+  TrendingUp,
+  Zap,
+  ThermometerSnowflake,
+  Snowflake,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
