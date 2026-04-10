@@ -91,7 +91,7 @@ const StageCapture = ({ progress }: { progress: number }) => {
             <span className="text-foreground">academias</span>
             <span className="typing-cursor opacity-70">|</span>
           </div>
-          <div className="bg-secondary rounded-lg px-3 py-1.5 text-[10px] text-muted-foreground flex items-center gap-1.5">
+          <div className="bg-secondary rounded-lg px-3 py-1.5 text-[11px] text-muted-foreground flex items-center gap-1.5">
             <MapPin size={11} className="text-primary" />
             <span>São Paulo, SP</span>
           </div>
@@ -117,10 +117,10 @@ const StageCapture = ({ progress }: { progress: number }) => {
                 <Users size={12} className="text-success" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-[11px] truncate">{l.name}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{l.phone} · {l.note}</p>
+                <p className="font-medium text-[12px] truncate">{l.name}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{l.phone} · {l.note}</p>
               </div>
-              <div className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold text-primary shrink-0">
+              <div className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary shrink-0">
                 {l.rating}
               </div>
             </div>
@@ -128,12 +128,12 @@ const StageCapture = ({ progress }: { progress: number }) => {
         </div>
         <div className="grid grid-cols-2 gap-1.5 shrink-0">
           <div className="rounded-lg bg-success/10 p-1.5 border border-success/10">
-            <p className="text-[9px] text-muted-foreground">Telefones validados</p>
-            <p className="text-[10px] font-semibold text-success">3/3 com DDI + DDD</p>
+            <p className="text-[10px] text-muted-foreground">Telefones validados</p>
+            <p className="text-[11px] font-semibold text-success">3/3 com DDI + DDD</p>
           </div>
           <div className="rounded-lg bg-primary/10 p-1.5 border border-primary/10">
-            <p className="text-[9px] text-muted-foreground">Prontos para CRM</p>
-            <p className="text-[10px] font-semibold text-primary">Importação instantânea</p>
+            <p className="text-[10px] text-muted-foreground">Prontos para CRM</p>
+            <p className="text-[11px] font-semibold text-primary">Importação instantânea</p>
           </div>
         </div>
       </div>
@@ -163,7 +163,7 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-medium text-xs truncate">CrossFit Box SP</p>
-          <p className="text-[10px] text-muted-foreground">(11) 99XXX-XXXX</p>
+          <p className="text-[11px] text-muted-foreground">(11) 99XXX-XXXX</p>
         </div>
         <div className="flex items-center gap-1.5 rounded-full bg-warning/10 px-2 py-1 shrink-0" style={{ opacity: progress > 0.58 ? 1 : 0, transition: 'opacity 0.6s' }}>
           <img src={gptIcon} alt="GPT" className="w-5 h-5 rounded-full" />
@@ -174,8 +174,8 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
         <div className="flex items-center gap-2 shrink-0">
           <img src={gptIcon} alt="GPT" className="w-5 h-5 rounded-full shrink-0" />
           <div className="min-w-0">
-            <p className="text-[10px] font-medium text-primary truncate">GPT cruzando sinais comerciais</p>
-            <p className="text-[10px] text-muted-foreground truncate">Presença local, potencial e score preditivo</p>
+            <p className="text-[11px] font-medium text-primary truncate">GPT cruzando sinais comerciais</p>
+            <p className="text-[11px] text-muted-foreground truncate">Presença local, potencial e score preditivo</p>
           </div>
         </div>
         <div className="grid gap-1 flex-1 min-h-0 overflow-hidden">
@@ -190,8 +190,8 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
               }}
             >
               <item.icon size={10} className={item.color} />
-              <span className="text-[10px] text-muted-foreground flex-1">{item.label}</span>
-              <span className={`text-[10px] font-semibold ${item.color}`}>{item.value}</span>
+              <span className="text-[11px] text-muted-foreground flex-1">{item.label}</span>
+              <span className={`text-[11px] font-semibold ${item.color}`}>{item.value}</span>
             </div>
           ))}
         </div>
@@ -200,7 +200,7 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
           {tags.map((t, i) => (
             <span
               key={i}
-              className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${t.color}`}
+              className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${t.color}`}
               style={{ opacity: progress > 0.58 + i * 0.08 ? 1 : 0, transform: `scale(${progress > 0.58 + i * 0.08 ? 1 : 0.85})`, transition: 'all 0.4s ease-out' }}
             >
               {t.label}
@@ -212,8 +212,8 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
           className="rounded-md border border-primary/10 bg-primary/5 p-1.5 shrink-0"
           style={{ opacity: progress > 0.74 ? 1 : 0, transform: `translateY(${progress > 0.74 ? 0 : 8}px)`, transition: 'all 0.5s ease-out' }}
         >
-          <p className="text-[10px] font-semibold text-primary">Diagnóstico automático</p>
-          <p className="text-[9px] text-muted-foreground mt-0.5 line-clamp-2">
+          <p className="text-[11px] font-semibold text-primary">Diagnóstico automático</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
             Lead com alta aderência ao ICP, boa presença local e janela favorável para abordagem consultiva.
           </p>
         </div>
@@ -233,19 +233,19 @@ const StageMessage = ({ progress }: { progress: number }) => {
         </div>
         <div>
           <p className="font-medium text-xs">CrossFit Box SP</p>
-          <p className="text-[10px] text-muted-foreground">João Silva — Proprietário</p>
+          <p className="text-[11px] text-muted-foreground">João Silva — Proprietário</p>
         </div>
       </div>
       <div className="bg-secondary/30 rounded-lg p-3 flex-1 flex flex-col min-h-0">
         <div className="flex items-center gap-1.5 mb-2">
           <Sparkles size={11} className="text-primary animate-pulse" />
-          <span className="text-[10px] font-medium text-primary">IA gerando mensagem personalizada</span>
+          <span className="text-[11px] font-medium text-primary">IA gerando mensagem personalizada</span>
         </div>
         <div className="bg-background/60 rounded-lg p-2.5 text-xs text-foreground leading-relaxed flex-1">
           {fullMsg.slice(0, visibleChars)}
           {visibleChars < fullMsg.length && <span className="typing-cursor opacity-70">|</span>}
         </div>
-        <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-2 mt-2 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1"><Sparkles size={9} /> Variáveis dinâmicas</span>
           <span className="flex items-center gap-1"><Check size={9} className="text-success" /> Anti-spam</span>
         </div>
@@ -291,16 +291,16 @@ const StageSend = ({ progress }: { progress: number }) => {
                   <Send size={10} className={`text-primary ${sent && !delivered ? 'animate-pulse' : ''}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[11px] truncate">{c}</p>
-                  <p className="text-[9px] text-muted-foreground truncate">Fila oficial · cadência inteligente</p>
+                  <p className="font-medium text-[12px] truncate">{c}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">Fila oficial · cadência inteligente</p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {delivered ? (
-                    <span className="text-[9px] text-success font-medium flex items-center gap-0.5"><Check size={9} /> Entregue</span>
+                    <span className="text-[10px] text-success font-medium flex items-center gap-0.5"><Check size={9} /> Entregue</span>
                   ) : sent ? (
-                    <span className="text-[9px] text-primary font-medium flex items-center gap-0.5"><Clock size={9} className="animate-pulse" /> Enviando...</span>
+                    <span className="text-[10px] text-primary font-medium flex items-center gap-0.5"><Clock size={9} className="animate-pulse" /> Enviando...</span>
                   ) : (
-                    <span className="text-[9px] text-muted-foreground">Na fila</span>
+                    <span className="text-[10px] text-muted-foreground">Na fila</span>
                   )}
                 </div>
               </div>
@@ -311,13 +311,13 @@ const StageSend = ({ progress }: { progress: number }) => {
       <div className="bg-primary/10 rounded-lg p-2.5 border border-primary/10 shrink-0">
         <div className="flex items-center gap-2 mb-1.5">
           <Send size={11} className="text-primary animate-pulse" />
-          <span className="text-[10px] font-medium text-primary">Disparo em massa</span>
-          <span className="text-[10px] font-semibold text-primary ml-auto">{overallProgress}%</span>
+          <span className="text-[11px] font-medium text-primary">Disparo em massa</span>
+          <span className="text-[11px] font-semibold text-primary ml-auto">{overallProgress}%</span>
         </div>
         <div className="w-full bg-primary/10 rounded-full h-1.5 overflow-hidden">
           <div className="bg-primary h-1.5 rounded-full transition-[width] duration-200" style={{ width: `${overallProgress}%` }} />
         </div>
-        <div className="flex items-center justify-between gap-2 mt-1.5 text-[9px] text-muted-foreground">
+        <div className="flex items-center justify-between gap-2 mt-1.5 text-[10px] text-muted-foreground">
           <span>{startedCount}/{contacts.length} processando</span>
           <span>{deliveredCount} entregues{activeIndex >= 0 ? ` · ${contacts[activeIndex]}` : ''}</span>
         </div>
@@ -364,9 +364,9 @@ const StageReply = ({ progress }: { progress: number }) => {
             return (
               <div key={index} className={`flex ${message.dir === 'out' ? 'justify-end' : 'justify-start'}`} style={{ animation: 'fadeSlideUp 0.35s ease-out' }}>
                 <div className={`${message.dir === 'out' ? 'bg-primary/15 rounded-tr-sm' : 'bg-background/70 rounded-tl-sm'} rounded-xl px-3 py-2 max-w-[84%] border border-border/30`}>
-                  <p className="text-[11px] text-foreground leading-relaxed">{message.text}</p>
+                  <p className="text-[12px] text-foreground leading-relaxed">{message.text}</p>
                   <div className="flex items-center justify-end gap-1 mt-1">
-                    <span className="text-[8px] text-muted-foreground">{message.time}</span>
+                    <span className="text-[10px] text-muted-foreground">{message.time}</span>
                     {message.dir === 'out' && (
                       <>
                         <Check size={8} className="text-primary" />
@@ -395,7 +395,7 @@ const StageReply = ({ progress }: { progress: number }) => {
 
       <div className="bg-success/10 rounded-lg p-2.5 flex items-center gap-2 border border-success/10">
         <MessageCircle size={12} className="text-success" />
-        <span className="text-[10px] font-medium text-success">Lead respondeu e abriu janela ativa para atendimento</span>
+        <span className="text-[11px] font-medium text-success">Lead respondeu e abriu janela ativa para atendimento</span>
       </div>
     </div>
   );
@@ -416,10 +416,10 @@ const StageAIChat = ({ progress }: { progress: number }) => {
       <div className="flex items-center gap-2 rounded-xl bg-secondary/30 p-2.5 border border-border/40">
         <img src={gptIcon} alt="GPT" className="w-7 h-7 rounded-full" />
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-medium text-primary">Agente de IA respondendo em tempo real</p>
-          <p className="text-[10px] text-muted-foreground truncate">Contexto, score, CRM e histórico da conversa</p>
+          <p className="text-[11px] font-medium text-primary">Agente de IA respondendo em tempo real</p>
+          <p className="text-[11px] text-muted-foreground truncate">Contexto, score, CRM e histórico da conversa</p>
         </div>
-        <div className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-medium text-primary">GPT ativo</div>
+        <div className="rounded-full bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">GPT ativo</div>
       </div>
       <div className="rounded-xl bg-secondary/30 p-2.5 flex-1 min-h-0">
         <div className="flex h-full flex-col justify-end gap-1.5 overflow-hidden">
@@ -429,9 +429,9 @@ const StageAIChat = ({ progress }: { progress: number }) => {
             return (
               <div key={i} className={`flex ${m.dir === 'out' ? 'justify-end' : 'justify-start'}`} style={{ animation: 'fadeSlideUp 0.35s ease-out' }}>
                 <div className={`${m.dir === 'out' ? 'bg-primary/15 rounded-tr-sm' : 'bg-background/75 rounded-tl-sm'} rounded-xl px-2.5 py-1.5 max-w-[84%] border border-border/30`}>
-                  <p className="text-[10px] text-foreground leading-relaxed">{m.text}</p>
+                  <p className="text-[11px] text-foreground leading-relaxed">{m.text}</p>
                   <div className="flex items-center gap-1 mt-1 justify-end">
-                    <span className="text-[8px] text-muted-foreground">{m.time}</span>
+                    <span className="text-[10px] text-muted-foreground">{m.time}</span>
                     {m.dir === 'out' && <Bot size={8} className="text-primary" />}
                   </div>
                 </div>
@@ -443,12 +443,12 @@ const StageAIChat = ({ progress }: { progress: number }) => {
 
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-lg bg-success/10 p-2 border border-success/10">
-          <p className="text-[9px] text-muted-foreground">Intenção detectada</p>
-          <p className="text-[10px] font-semibold text-success">Alta prioridade comercial</p>
+          <p className="text-[10px] text-muted-foreground">Intenção detectada</p>
+          <p className="text-[11px] font-semibold text-success">Alta prioridade comercial</p>
         </div>
         <div className="rounded-lg bg-primary/10 p-2 border border-primary/10">
-          <p className="text-[9px] text-muted-foreground">Próximo passo</p>
-          <p className="text-[10px] font-semibold text-primary">Reunião agendada</p>
+          <p className="text-[10px] text-muted-foreground">Próximo passo</p>
+          <p className="text-[11px] font-semibold text-primary">Reunião agendada</p>
         </div>
       </div>
     </div>
@@ -461,7 +461,7 @@ const StageClose = ({ progress }: { progress: number }) => (
       <div className="w-7 h-7 rounded-full bg-success/15 flex items-center justify-center shrink-0">
         <Users size={12} className="text-success" />
       </div>
-      <div className="flex-1"><p className="font-medium text-xs">CrossFit Box SP</p><p className="text-[10px] text-muted-foreground">João Silva</p></div>
+      <div className="flex-1"><p className="font-medium text-xs">CrossFit Box SP</p><p className="text-[11px] text-muted-foreground">João Silva</p></div>
     </div>
     <div className="flex flex-col items-center justify-center gap-3 flex-1">
       {progress > 0.2 && (
@@ -473,19 +473,19 @@ const StageClose = ({ progress }: { progress: number }) => (
       {progress > 0.4 && (
         <div className="flex items-center gap-2 bg-info/10 rounded-full px-3 py-1.5" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
           <CalendarCheck size={13} className="text-info" />
-          <span className="text-[11px] font-medium text-info">Reunião agendada — Sex 14:00</span>
+          <span className="text-[12px] font-medium text-info">Reunião agendada — Sex 14:00</span>
         </div>
       )}
       {progress > 0.6 && (
         <div className="flex items-center gap-2 bg-warning/10 rounded-full px-3 py-1.5" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
           <Star size={13} className="text-warning" />
-          <span className="text-[11px] font-medium text-warning">Valor: R$ 5.964/ano</span>
+          <span className="text-[12px] font-medium text-warning">Valor: R$ 5.964/ano</span>
         </div>
       )}
       {progress > 0.8 && (
         <div className="flex items-center gap-2 bg-primary/10 rounded-full px-3 py-1.5" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
           <TrendingUp size={13} className="text-primary" />
-          <span className="text-[11px] font-medium text-primary">Movido para CRM automaticamente</span>
+          <span className="text-[12px] font-medium text-primary">Movido para CRM automaticamente</span>
         </div>
       )}
     </div>
@@ -554,8 +554,8 @@ const StageCRM = ({ progress }: { progress: number }) => {
             >
               <div className="flex items-center gap-1 mb-1.5 shrink-0">
                 <div className={`w-1.5 h-1.5 rounded-full ${col.color}`} />
-                <span className="text-[8px] font-semibold text-foreground truncate">{col.title}</span>
-                <span className="text-[7px] text-muted-foreground ml-auto">{col.leads.length}</span>
+                <span className="text-[10px] font-semibold text-foreground truncate">{col.title}</span>
+                <span className="text-[9px] text-muted-foreground ml-auto">{col.leads.length}</span>
                 {col.showAdd && (
                   <div className="relative flex h-4 w-4 items-center justify-center rounded border border-border/50 bg-background/70">
                     <Plus size={8} className="text-primary" />
@@ -571,10 +571,10 @@ const StageCRM = ({ progress }: { progress: number }) => {
                     className="rounded border border-border/40 bg-background/80 p-1.5 shadow-sm"
                     style={{ animation: progress > 0.16 ? 'fadeSlideUp 0.3s ease-out' : 'none' }}
                   >
-                    <p className="font-medium text-[8px] text-foreground truncate">{lead.name}</p>
+                    <p className="font-medium text-[10px] text-foreground truncate">{lead.name}</p>
                     <div className="mt-0.5 flex items-center justify-between gap-1">
-                      <span className={`text-[7px] font-bold ${col.accent}`}>{lead.score}</span>
-                      <span className="text-[7px] text-muted-foreground/80 truncate">{lead.value}</span>
+                      <span className={`text-[9px] font-bold ${col.accent}`}>{lead.score}</span>
+                      <span className="text-[9px] text-muted-foreground/80 truncate">{lead.value}</span>
                     </div>
                   </div>
                 ))}
@@ -606,10 +606,10 @@ const StageCRM = ({ progress }: { progress: number }) => {
                 transition: 'left 0.14s linear, top 0.14s linear, transform 0.14s linear',
               }}
             >
-              <p className="font-medium text-[8px] text-foreground truncate">{createdLead.name}</p>
+              <p className="font-medium text-[10px] text-foreground truncate">{createdLead.name}</p>
               <div className="mt-0.5 flex items-center justify-between gap-1">
-                <span className="text-[7px] font-semibold text-primary">{createdLead.score}</span>
-                <span className="text-[7px] text-muted-foreground">{createdLead.value}</span>
+                <span className="text-[9px] font-semibold text-primary">{createdLead.score}</span>
+                <span className="text-[9px] text-muted-foreground">{createdLead.value}</span>
               </div>
             </div>
           )}
@@ -619,8 +619,8 @@ const StageCRM = ({ progress }: { progress: number }) => {
       <div className="bg-secondary/30 rounded-lg p-2 flex items-center gap-2 border border-border/40 shrink-0">
         <TrendingUp size={11} className="text-success" />
         <div className="min-w-0">
-          <p className="text-[9px] font-medium text-foreground">Lead criado e movido automaticamente</p>
-          <p className="text-[9px] text-muted-foreground truncate">Studio Pilates One → Qualificado · Score 684</p>
+          <p className="text-[11px] font-medium text-foreground">Lead criado e movido automaticamente</p>
+          <p className="text-[11px] text-muted-foreground truncate">Studio Pilates One → Qualificado · Score 684</p>
         </div>
       </div>
     </div>
@@ -746,7 +746,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                   <div className="glass rounded-lg p-3 shadow-lg shadow-primary/10 border border-border/50 hover:border-primary/20 transition-all hover:scale-105">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center"><card.icon size={14} className="text-primary" /></div>
-                      <div><p className="text-sm font-bold text-foreground"><AnimatedCounter value={card.value} duration={2000} /></p><p className="text-[10px] text-muted-foreground whitespace-nowrap">{card.label}</p></div>
+                      <div><p className="text-sm font-bold text-foreground"><AnimatedCounter value={card.value} duration={2000} /></p><p className="text-[11px] text-muted-foreground whitespace-nowrap">{card.label}</p></div>
                     </div>
                   </div>
                 </div>
@@ -760,7 +760,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                     <div className="w-2.5 h-2.5 rounded-full bg-warning/60" />
                     <div className="w-2.5 h-2.5 rounded-full bg-success/60" />
                   </div>
-                  <span className="text-[9px] text-muted-foreground font-medium tracking-wide uppercase">Wiize Platform</span>
+                  <span className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">Wiize Platform</span>
                 </div>
 
                 <div className="bg-background/50 rounded-lg sm:rounded-xl p-3 sm:p-4">
@@ -779,8 +779,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                   {/* Stage label */}
                   <div className="flex items-center gap-2 mb-3 px-1">
                     <stage.icon size={13} className={stage.color} />
-                    <span className={`text-[11px] font-semibold ${stage.color}`}>{stage.label}</span>
-                    <span className="text-[9px] text-muted-foreground ml-auto">{currentStage + 1}/8</span>
+                    <span className={`text-[12px] font-semibold ${stage.color}`}>{stage.label}</span>
+                    <span className="text-[11px] text-muted-foreground ml-auto">{currentStage + 1}/8</span>
                   </div>
 
                   {/* Stage content - fixed height */}
@@ -789,7 +789,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                   </div>
                 </div>
                 {/* Watermark */}
-                <div className="absolute bottom-2 left-4 text-[8px] text-muted-foreground/40 font-medium tracking-wide">@wiizebrasil</div>
+                <div className="absolute bottom-2 left-4 text-[10px] text-muted-foreground/40 font-medium tracking-wide">@wiizebrasil</div>
               </div>
             </div>
           </div>
