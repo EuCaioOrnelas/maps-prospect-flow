@@ -225,6 +225,7 @@ export default function WhatsAppFlowEditor() {
   const [hasChanges, setHasChanges] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
+  const [resultsDialogOpen, setResultsDialogOpen] = useState(false);
   const [testResetVersion, setTestResetVersion] = useState(0);
   const [clipboard, setClipboard] = useState<Node | null>(null);
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
