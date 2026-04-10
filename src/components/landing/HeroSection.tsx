@@ -1,333 +1,457 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import metaIcon from "@/assets/logos/meta-icon.png";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check, ChevronDown } from "lucide-react";
+import { 
+  ArrowRight, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check, 
+  ChevronDown, Bot, Star, CalendarCheck, LayoutGrid, Sparkles, Clock, 
+  BadgeCheck, Brain, ChevronRight
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
-// Animated counter component
+/* ─── Animated counter ─── */
 const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?: number }) => {
   const [displayValue, setDisplayValue] = useState("0");
   const ref = useRef<HTMLSpanElement>(null);
   const hasAnimated = useRef(false);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !hasAnimated.current) {
-          hasAnimated.current = true;
-          
-          // Parse the target value
-          const isPercentage = value.includes('%');
-          const isPlus = value.startsWith('+');
-          const hasK = value.includes('K');
-          const hasM = value.includes('M');
-          
-          let numericValue = parseFloat(value.replace(/[^0-9.]/g, ''));
-          
-          const startTime = performance.now();
-          
-          const animate = (currentTime: number) => {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            
-            // Easing function
-            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-            const currentValue = numericValue * easeOutQuart;
-            
-            let formatted: string;
-            if (hasM) {
-              formatted = currentValue.toFixed(1) + 'M+';
-            } else if (hasK) {
-              formatted = Math.floor(currentValue) + 'K+';
-            } else if (isPercentage) {
-              formatted = (isPlus ? '+' : '') + Math.floor(currentValue) + '%';
-            } else {
-              formatted = (isPlus ? '+' : '') + Math.floor(currentValue).toString();
-            }
-            
-            setDisplayValue(formatted);
-            
-            if (progress < 1) {
-              requestAnimationFrame(animate);
-            } else {
-              setDisplayValue(value);
-            }
-          };
-          
-          requestAnimationFrame(animate);
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
-    return () => observer.disconnect();
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !hasAnimated.current) {
+        hasAnimated.current = true;
+        const isPercentage = value.includes('%');
+        const isPlus = value.startsWith('+');
+        const hasK = value.includes('K');
+        const hasM = value.includes('M');
+        let numericValue = parseFloat(value.replace(/[^0-9.]/g, ''));
+        const startTime = performance.now();
+        const animate = (t: number) => {
+          const p = Math.min((t - startTime) / duration, 1);
+          const ease = 1 - Math.pow(1 - p, 4);
+          const cur = numericValue * ease;
+          let f: string;
+          if (hasM) f = cur.toFixed(1) + 'M+';
+          else if (hasK) f = Math.floor(cur) + 'K+';
+          else if (isPercentage) f = (isPlus ? '+' : '') + Math.floor(cur) + '%';
+          else f = (isPlus ? '+' : '') + Math.floor(cur).toString();
+          setDisplayValue(f);
+          if (p < 1) requestAnimationFrame(animate); else setDisplayValue(value);
+        };
+        requestAnimationFrame(animate);
+      }
+    }, { threshold: 0.5 });
+    obs.observe(el);
+    return () => obs.disconnect();
   }, [value, duration]);
 
   return <span ref={ref}>{displayValue}</span>;
 };
 
-// Data for synchronized demo animation
-const demoData = [
-  {
-    searchTerm: "academias",
-    location: "São Paulo, SP",
-    leads: [
-      { emoji: "🏋️", name: "CrossFit Box SP", phone: "(11) 99XXX-XXXX", rating: "4.8" },
-      { emoji: "💪", name: "Arena Fit Training", phone: "(11) 98XXX-XXXX", rating: "4.6" },
-      { emoji: "🔥", name: "Power Gym Plus", phone: "(11) 97XXX-XXXX", rating: "4.9" },
-    ]
-  },
-  {
-    searchTerm: "dentistas",
-    location: "Rio de Janeiro, RJ",
-    leads: [
-      { emoji: "🦷", name: "OdontoLife Centro", phone: "(21) 99XXX-XXXX", rating: "4.9" },
-      { emoji: "😁", name: "Sorriso Perfeito", phone: "(21) 98XXX-XXXX", rating: "4.7" },
-      { emoji: "🏥", name: "Dental Prime RJ", phone: "(21) 97XXX-XXXX", rating: "4.8" },
-    ]
-  },
-  {
-    searchTerm: "restaurantes",
-    location: "Belo Horizonte, MG",
-    leads: [
-      { emoji: "🍝", name: "Trattoria Bella", phone: "(31) 99XXX-XXXX", rating: "4.9" },
-      { emoji: "🍕", name: "Cantina do Nonno", phone: "(31) 98XXX-XXXX", rating: "4.7" },
-      { emoji: "🍷", name: "Bistrô Mineiro", phone: "(31) 97XXX-XXXX", rating: "4.8" },
-    ]
-  },
-  {
-    searchTerm: "advogados",
-    location: "Curitiba, PR",
-    leads: [
-      { emoji: "⚖️", name: "Silva & Associados", phone: "(41) 99XXX-XXXX", rating: "4.9" },
-      { emoji: "📜", name: "Advocacia Martins", phone: "(41) 98XXX-XXXX", rating: "4.8" },
-      { emoji: "🏛️", name: "Jurídico Paraná", phone: "(41) 97XXX-XXXX", rating: "4.7" },
-    ]
-  },
+/* ─── Stage definitions ─── */
+const STAGE_DURATION = 3200; // ms per stage
+
+interface Stage {
+  color: string;
+  label: string;
+  icon: typeof Search;
+}
+
+const stages: Stage[] = [
+  { color: "text-success",      label: "Captando leads qualificados",             icon: Search },
+  { color: "text-warning",      label: "IA analisando e qualificando",            icon: Brain },
+  { color: "text-info",         label: "Mensagens personalizadas automaticamente", icon: Sparkles },
+  { color: "text-primary",      label: "Enviando mensagens automaticamente",       icon: Send },
+  { color: "text-warning",      label: "Lead respondeu",                           icon: MessageCircle },
+  { color: "text-destructive",  label: "IA conduzindo a conversa",                icon: Bot },
+  { color: "text-success",      label: "Cliente fechado com sucesso",             icon: BadgeCheck },
+  { color: "text-foreground",   label: "CRM atualizando automaticamente",         icon: LayoutGrid },
 ];
 
-// Typing animation component with callback for index changes
-const useTypingAnimation = (texts: string[], typingSpeed = 80, deletingSpeed = 40, pauseDuration = 1800) => {
-  const [displayText, setDisplayText] = useState("");
-  const [textIndex, setTextIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [phase, setPhase] = useState<'typing' | 'showing' | 'sending' | 'deleting'>('typing');
-  const [sendingIndex, setSendingIndex] = useState(-1);
-
-  useEffect(() => {
-    const currentFullText = texts[textIndex];
-    
-    if (isPaused) {
-      if (phase === 'showing') {
-        const sendTimer = setTimeout(() => {
-          setPhase('sending');
-          setSendingIndex(0);
-        }, pauseDuration);
-        return () => clearTimeout(sendTimer);
-      }
-      if (phase === 'sending') {
-        if (sendingIndex < 2) {
-          const nextTimer = setTimeout(() => {
-            setSendingIndex(prev => prev + 1);
-          }, 600);
-          return () => clearTimeout(nextTimer);
-        } else {
-          const deleteTimer = setTimeout(() => {
-            setIsPaused(false);
-            setIsDeleting(true);
-            setPhase('deleting');
-            setSendingIndex(-1);
-          }, 1000);
-          return () => clearTimeout(deleteTimer);
-        }
-      }
-    }
-
-    if (isDeleting) {
-      if (displayText.length > 0) {
-        const deleteTimer = setTimeout(() => {
-          setDisplayText(currentFullText.substring(0, displayText.length - 1));
-        }, deletingSpeed);
-        return () => clearTimeout(deleteTimer);
-      } else {
-        setIsDeleting(false);
-        setTextIndex((prev) => (prev + 1) % texts.length);
-        setPhase('typing');
-      }
-    } else {
-      if (displayText.length < currentFullText.length) {
-        const typeTimer = setTimeout(() => {
-          setDisplayText(currentFullText.substring(0, displayText.length + 1));
-        }, typingSpeed);
-        return () => clearTimeout(typeTimer);
-      } else {
-        setIsPaused(true);
-        setPhase('showing');
-      }
-    }
-  }, [displayText, isDeleting, isPaused, textIndex, texts, typingSpeed, deletingSpeed, pauseDuration, phase, sendingIndex]);
-
-  return { displayText, textIndex, phase, sendingIndex };
+/* ─── Stage renders ─── */
+const StageCapture = ({ progress }: { progress: number }) => {
+  const leads = [
+    { name: "CrossFit Box SP", phone: "(11) 99XXX-XXXX", rating: "4.8" },
+    { name: "Arena Fit Training", phone: "(11) 98XXX-XXXX", rating: "4.6" },
+    { name: "Power Gym Plus", phone: "(11) 97XXX-XXXX", rating: "4.9" },
+  ];
+  return (
+    <div className="space-y-2">
+      <div className="bg-secondary rounded-lg px-3 py-2 text-xs flex items-center gap-2">
+        <Search size={12} className="text-muted-foreground" />
+        <span className="text-foreground">academias em São Paulo</span>
+        <span className="typing-cursor opacity-70">|</span>
+      </div>
+      <div className="bg-secondary rounded-lg px-3 py-1.5 text-[10px] text-muted-foreground flex items-center gap-1.5">
+        <span>📍</span> São Paulo, SP — Google Maps
+      </div>
+      <div className="space-y-1.5 mt-2">
+        {leads.map((l, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5 transition-all duration-500"
+            style={{
+              opacity: progress > (i + 1) * 0.2 ? 1 : 0,
+              transform: `translateX(${progress > (i + 1) * 0.2 ? 0 : -16}px)`,
+              transitionDelay: `${i * 120}ms`
+            }}
+          >
+            <div className="w-7 h-7 rounded-full bg-success/15 flex items-center justify-center shrink-0">
+              <Users size={12} className="text-success" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-xs truncate">{l.name}</p>
+              <p className="text-[10px] text-muted-foreground">{l.phone} · ⭐ {l.rating}</p>
+            </div>
+            {progress > 0.7 && (
+              <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
-// Floating stats cards data - positioned around the demo
+const StageDiagnosis = ({ progress }: { progress: number }) => {
+  const tags = [
+    { label: "Alto potencial", color: "bg-success/15 text-success" },
+    { label: "Precisa de serviço", color: "bg-warning/15 text-warning" },
+    { label: "Decisor identificado", color: "bg-info/15 text-info" },
+  ];
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5">
+        <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+          <Users size={12} className="text-primary" />
+        </div>
+        <div className="flex-1">
+          <p className="font-medium text-xs">CrossFit Box SP</p>
+          <p className="text-[10px] text-muted-foreground">(11) 99XXX-XXXX</p>
+        </div>
+      </div>
+      <div className="bg-secondary/30 rounded-lg p-3 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Score IA</span>
+          <div className="flex items-center gap-1.5">
+            <Brain size={12} className="text-warning animate-pulse" />
+            <span className="text-sm font-bold text-warning" style={{ opacity: progress > 0.3 ? 1 : 0, transition: 'opacity 0.5s' }}>
+              {Math.min(Math.round(progress * 847), 847)}
+            </span>
+          </div>
+        </div>
+        <div className="w-full bg-secondary rounded-full h-1.5">
+          <div className="bg-gradient-to-r from-warning to-success h-1.5 rounded-full transition-all duration-700" style={{ width: `${Math.min(progress * 100, 85)}%` }} />
+        </div>
+        <div className="flex flex-wrap gap-1.5 mt-1">
+          {tags.map((t, i) => (
+            <span
+              key={i}
+              className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${t.color} transition-all duration-400`}
+              style={{ opacity: progress > (i + 1) * 0.25 ? 1 : 0, transform: `scale(${progress > (i + 1) * 0.25 ? 1 : 0.8})` }}
+            >
+              {t.label}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const StageMessage = ({ progress }: { progress: number }) => {
+  const fullMsg = 'Oi João, vi que a CrossFit Box SP está com ótimas avaliações! Tenho uma proposta exclusiva que pode ajudar a crescer ainda mais...';
+  const visibleChars = Math.round(progress * fullMsg.length);
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-2 bg-secondary/50 rounded-lg p-2.5">
+        <div className="w-7 h-7 rounded-full bg-info/15 flex items-center justify-center shrink-0">
+          <Users size={12} className="text-info" />
+        </div>
+        <div>
+          <p className="font-medium text-xs">CrossFit Box SP</p>
+          <p className="text-[10px] text-muted-foreground">João Silva — Proprietário</p>
+        </div>
+      </div>
+      <div className="bg-secondary/30 rounded-lg p-3">
+        <div className="flex items-center gap-1.5 mb-2">
+          <Sparkles size={11} className="text-primary animate-pulse" />
+          <span className="text-[10px] font-medium text-primary">IA gerando mensagem personalizada</span>
+        </div>
+        <div className="bg-background/60 rounded-lg p-2.5 text-xs text-foreground leading-relaxed min-h-[60px]">
+          {fullMsg.slice(0, visibleChars)}
+          {visibleChars < fullMsg.length && <span className="typing-cursor opacity-70">|</span>}
+        </div>
+        <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1"><Sparkles size={9} /> Variáveis dinâmicas</span>
+          <span className="flex items-center gap-1"><Check size={9} className="text-success" /> Anti-spam</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const StageSend = ({ progress }: { progress: number }) => {
+  const contacts = ["CrossFit Box SP", "Arena Fit Training", "Power Gym Plus"];
+  return (
+    <div className="space-y-2">
+      {contacts.map((c, i) => {
+        const sent = progress > (i + 1) * 0.25;
+        const delivered = progress > (i + 1) * 0.25 + 0.15;
+        return (
+          <div key={i} className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5">
+            <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+              <Send size={11} className={`text-primary ${sent && !delivered ? 'animate-pulse' : ''}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-xs truncate">{c}</p>
+            </div>
+            <div className="flex items-center gap-1">
+              {delivered ? (
+                <span className="text-[10px] text-success font-medium flex items-center gap-0.5"><Check size={10} /> Entregue</span>
+              ) : sent ? (
+                <span className="text-[10px] text-primary font-medium flex items-center gap-0.5"><Clock size={10} className="animate-pulse" /> Enviando</span>
+              ) : (
+                <span className="text-[10px] text-muted-foreground">Aguardando</span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+      <div className="bg-primary/10 rounded-lg p-2 flex items-center gap-2 mt-1">
+        <Send size={11} className="text-primary" />
+        <div className="flex-1">
+          <div className="flex justify-between mb-0.5"><span className="text-[10px] font-medium text-primary">Disparando via WhatsApp</span><span className="text-[10px] text-primary">{Math.min(Math.round(progress * 3), 3)}/3</span></div>
+          <div className="w-full bg-primary/10 rounded-full h-1"><div className="bg-primary h-1 rounded-full transition-all duration-500" style={{ width: `${Math.min(progress * 100, 100)}%` }} /></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const StageReply = ({ progress }: { progress: number }) => (
+  <div className="space-y-2">
+    <div className="flex justify-end">
+      <div className="bg-primary/15 rounded-xl rounded-tr-sm px-3 py-2 max-w-[85%]">
+        <p className="text-xs text-foreground">Oi João, vi que a CrossFit Box SP está com ótimas avaliações!</p>
+        <div className="flex items-center justify-end gap-1 mt-0.5"><span className="text-[9px] text-muted-foreground">10:32</span><Check size={9} className="text-primary" /><Check size={9} className="text-primary -ml-1.5" /></div>
+      </div>
+    </div>
+    {progress > 0.4 && (
+      <div className="flex justify-start" style={{ animation: 'fadeSlideUp 0.5s ease-out' }}>
+        <div className="bg-secondary rounded-xl rounded-tl-sm px-3 py-2 max-w-[85%]">
+          {progress > 0.6 ? (
+            <>
+              <p className="text-xs text-foreground">Oi! Que legal, obrigado! Me conta mais sobre essa proposta? 🤔</p>
+              <span className="text-[9px] text-muted-foreground">10:34</span>
+            </>
+          ) : (
+            <div className="flex items-center gap-1 py-0.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+    {progress > 0.7 && (
+      <div className="bg-success/10 rounded-lg p-2 flex items-center gap-2" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+        <MessageCircle size={12} className="text-success" />
+        <span className="text-[10px] font-medium text-success">Lead respondeu! Janela de 24h aberta</span>
+      </div>
+    )}
+  </div>
+);
+
+const StageAIChat = ({ progress }: { progress: number }) => {
+  const msgs = [
+    { dir: 'in', text: 'Oi! Me conta mais sobre essa proposta? 🤔', time: '10:34' },
+    { dir: 'out', text: 'Claro, João! Temos um plano especial para academias que faturam acima de 30k/mês com foco em retenção de alunos.', time: '10:34' },
+    { dir: 'in', text: 'Interessante! Quanto custa?', time: '10:35' },
+    { dir: 'out', text: 'O investimento começa em R$497/mês. Posso agendar uma demonstração gratuita para você?', time: '10:35' },
+  ];
+  const visibleCount = Math.min(Math.floor(progress * (msgs.length + 1)), msgs.length);
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-1.5 mb-1">
+        <Bot size={12} className="text-primary animate-pulse" />
+        <span className="text-[10px] font-medium text-primary">IA Wiize respondendo automaticamente</span>
+      </div>
+      <div className="space-y-1.5 max-h-[160px] overflow-hidden">
+        {msgs.slice(0, visibleCount).map((m, i) => (
+          <div key={i} className={`flex ${m.dir === 'out' ? 'justify-end' : 'justify-start'}`} style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+            <div className={`${m.dir === 'out' ? 'bg-primary/15 rounded-tr-sm' : 'bg-secondary rounded-tl-sm'} rounded-xl px-2.5 py-1.5 max-w-[85%]`}>
+              <p className="text-[11px] text-foreground leading-relaxed">{m.text}</p>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="text-[8px] text-muted-foreground">{m.time}</span>
+                {m.dir === 'out' && <Bot size={8} className="text-primary" />}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const StageClose = ({ progress }: { progress: number }) => (
+  <div className="space-y-3">
+    <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5">
+      <div className="w-7 h-7 rounded-full bg-success/15 flex items-center justify-center shrink-0">
+        <Users size={12} className="text-success" />
+      </div>
+      <div className="flex-1"><p className="font-medium text-xs">CrossFit Box SP</p><p className="text-[10px] text-muted-foreground">João Silva</p></div>
+    </div>
+    <div className="flex flex-col items-center gap-3 py-3">
+      {progress > 0.3 && (
+        <div className="flex items-center gap-2 bg-success/15 rounded-full px-4 py-2" style={{ animation: 'scaleIn 0.5s ease-out' }}>
+          <BadgeCheck size={16} className="text-success" />
+          <span className="text-sm font-bold text-success">Cliente Fechado!</span>
+        </div>
+      )}
+      {progress > 0.5 && (
+        <div className="flex items-center gap-2 bg-info/10 rounded-full px-3 py-1.5" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+          <CalendarCheck size={13} className="text-info" />
+          <span className="text-[11px] font-medium text-info">Reunião agendada — Sex 14:00</span>
+        </div>
+      )}
+      {progress > 0.7 && (
+        <div className="flex items-center gap-2 bg-warning/10 rounded-full px-3 py-1.5" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+          <Star size={13} className="text-warning" />
+          <span className="text-[11px] font-medium text-warning">Valor: R$ 5.964/ano</span>
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+const StageCRM = ({ progress }: { progress: number }) => {
+  const columns = [
+    { title: "Novo", count: 12, color: "bg-info" },
+    { title: "Qualificado", count: 8, color: "bg-warning" },
+    { title: "Proposta", count: 5, color: "bg-primary" },
+    { title: "Fechado", count: 3, color: "bg-success" },
+  ];
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-1.5 mb-1">
+        <LayoutGrid size={12} className="text-foreground" />
+        <span className="text-[10px] font-medium text-foreground">CRM Kanban — Atualizado automaticamente</span>
+      </div>
+      <div className="grid grid-cols-4 gap-1.5">
+        {columns.map((col, i) => (
+          <div key={i} className="bg-secondary/40 rounded-lg p-1.5" style={{ opacity: progress > i * 0.2 ? 1 : 0, transition: 'opacity 0.4s', transitionDelay: `${i * 100}ms` }}>
+            <div className="flex items-center gap-1 mb-1.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${col.color}`} />
+              <span className="text-[9px] font-medium text-foreground truncate">{col.title}</span>
+            </div>
+            <span className="text-[9px] text-muted-foreground">{col.count} leads</span>
+            {i === 3 && progress > 0.6 && (
+              <div className="mt-1 bg-success/10 rounded p-1 text-[8px] text-success font-medium" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+                CrossFit Box SP
+                <div className="text-[7px] text-success/70">Score: 847</div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      {progress > 0.5 && (
+        <div className="bg-secondary/30 rounded-lg p-2 flex items-center gap-2 mt-1" style={{ animation: 'fadeSlideUp 0.3s ease-out' }}>
+          <TrendingUp size={11} className="text-success" />
+          <span className="text-[10px] text-muted-foreground">Pipeline atualizado: <span className="text-success font-medium">+R$ 5.964</span> em receita prevista</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const stageRenderers = [StageCapture, StageDiagnosis, StageMessage, StageSend, StageReply, StageAIChat, StageClose, StageCRM];
+
+/* ─── Floating cards ─── */
 const floatingCards = [
-  { 
-    icon: Send, 
-    value: "900K+", 
-    label: "Mensagens enviadas", 
-    position: "-left-[10.5rem] top-4",
-    delay: "0.8s"
-  },
-  { 
-    icon: Users, 
-    value: "1.2M+", 
-    label: "Leads prospectados", 
-    position: "-right-12 -top-5",
-    delay: "1.2s"
-  },
-  { 
-    icon: TrendingUp, 
-    value: "63%", 
-    label: "Taxa de resposta", 
-    position: "-left-[7.5rem] bottom-[5.5rem]",
-    delay: "1.6s"
-  },
-  { 
-    icon: Zap, 
-    value: "+40%", 
-    label: "Conversão vs tradicional", 
-    position: "-right-10 -bottom-3",
-    delay: "2s"
-  },
+  { icon: Send, value: "900K+", label: "Mensagens enviadas", position: "-left-[10.5rem] top-4", delay: "0.8s" },
+  { icon: Users, value: "1.2M+", label: "Leads prospectados", position: "-right-12 -top-5", delay: "1.2s" },
+  { icon: TrendingUp, value: "63%", label: "Taxa de resposta", position: "-left-[7.5rem] bottom-[5.5rem]", delay: "1.6s" },
+  { icon: Zap, value: "+40%", label: "Conversão vs tradicional", position: "-right-10 -bottom-3", delay: "2s" },
 ];
 
-interface HeroSectionProps {
-  onSignupClick?: () => void;
-}
+/* ─── Main component ─── */
+interface HeroSectionProps { onSignupClick?: () => void; }
 
 export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const [scrollY, setScrollY] = useState(0);
+  const [currentStage, setCurrentStage] = useState(0);
+  const [stageProgress, setStageProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
-  
-  // Synchronized typing animation
-  const { displayText, textIndex, phase, sendingIndex } = useTypingAnimation(
-    demoData.map(d => d.searchTerm),
-    80,
-    40,
-    1800
-  );
-  
-  const currentData = demoData[textIndex];
 
   useEffect(() => {
     let ticking = false;
-    
     const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          setScrollY(window.scrollY);
-          ticking = false;
-        });
-        ticking = true;
-      }
+      if (!ticking) { requestAnimationFrame(() => { setScrollY(window.scrollY); ticking = false; }); ticking = true; }
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Control animation based on viewport visibility
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        setIsAnimating(entries[0].isIntersecting);
-      },
-      { threshold: 0.2 }
-    );
-
-    if (demoRef.current) {
-      observer.observe(demoRef.current);
-    }
-
-    return () => observer.disconnect();
+    const obs = new IntersectionObserver(([e]) => setIsAnimating(e.isIntersecting), { threshold: 0.2 });
+    if (demoRef.current) obs.observe(demoRef.current);
+    return () => obs.disconnect();
   }, []);
 
-  const parallaxOffset = scrollY * 0.3;
-  const imageScale = 1 + Math.min(scrollY * 0.0002, 0.05);
-  const imageOpacity = Math.max(1 - scrollY * 0.001, 0.7);
+  // Stage cycling
+  useEffect(() => {
+    if (!isAnimating) return;
+    const interval = setInterval(() => {
+      setCurrentStage(prev => (prev + 1) % stages.length);
+      setStageProgress(0);
+    }, STAGE_DURATION);
+    return () => clearInterval(interval);
+  }, [isAnimating]);
 
+  // Progress within stage
+  useEffect(() => {
+    if (!isAnimating) return;
+    const start = performance.now();
+    let raf: number;
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      setStageProgress(Math.min(elapsed / (STAGE_DURATION - 200), 1));
+      if (elapsed < STAGE_DURATION - 200) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [currentStage, isAnimating]);
+
+  const parallaxOffset = scrollY * 0.3;
+  const imageOpacity = Math.max(1 - scrollY * 0.001, 0.7);
+  const CurrentStageRenderer = stageRenderers[currentStage];
+  const stage = stages[currentStage];
 
   return (
-    <section 
-      ref={sectionRef}
-      className="relative min-h-[85vh] flex items-center justify-center pt-16 pb-10 overflow-x-clip overflow-y-visible w-full"
-    >
-      {/* Parallax background overlay */}
-      <div 
-        className="absolute inset-0 will-change-transform"
-        style={{
-          transform: `translateY(${parallaxOffset * 0.5}px)`,
-          background: "linear-gradient(180deg, hsl(var(--background) / 0.92) 0%, hsl(var(--background) / 0.72) 58%, hsl(var(--background) / 0.28) 100%)"
-        }}
-      />
+    <section ref={sectionRef} className="relative min-h-[85vh] flex items-center justify-center pt-16 pb-10 overflow-x-clip overflow-y-visible w-full">
+      <div className="absolute inset-0 will-change-transform" style={{ transform: `translateY(${parallaxOffset * 0.5}px)`, background: "linear-gradient(180deg, hsl(var(--background) / 0.92) 0%, hsl(var(--background) / 0.72) 58%, hsl(var(--background) / 0.28) 100%)" }} />
+      <div className="absolute inset-0 pointer-events-none opacity-[0.14] will-change-transform" style={{ transform: `translateY(${parallaxOffset * 0.2}px)`, backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`, backgroundSize: '18px 18px', maskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`, WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`, maskSize: 'cover', WebkitMaskSize: 'cover', maskPosition: 'center', WebkitMaskPosition: 'center' }} />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-glow opacity-20 will-change-transform" style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }} />
 
-      {/* World map dot pattern */}
-      <div 
-        className="absolute inset-0 pointer-events-none opacity-[0.14] will-change-transform"
-        style={{
-          transform: `translateY(${parallaxOffset * 0.2}px)`,
-          backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`,
-          backgroundSize: '18px 18px',
-          maskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`,
-          WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`,
-          maskSize: 'cover',
-          WebkitMaskSize: 'cover',
-          maskPosition: 'center',
-          WebkitMaskPosition: 'center',
-        }}
-      />
-      
-      {/* Main glow - softer */}
-      <div 
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-glow opacity-20 will-change-transform"
-        style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }}
-      />
-      
       <div className="container mx-auto px-6 sm:px-10 lg:px-16 relative z-10 max-w-[90rem] w-full">
-        {/* Two-column layout: text left, demo right */}
         <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-2 xl:gap-4 items-center">
-          
-          {/* LEFT: Text content */}
+
+          {/* LEFT */}
           <div className="text-center xl:text-left">
-            {/* Trust badge with avatars */}
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
               <img src={metaIcon} alt="Meta" className="h-4 w-auto" />
               <span className="text-xs font-medium text-foreground tracking-tight">Meta Business Partner</span>
             </div>
-
-            {/* Main heading - always 3 lines */}
             <h1 className="font-display text-[2.5rem] sm:text-[3rem] md:text-[3.5rem] lg:text-[3.75rem] xl:text-[4.25rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.12]" style={{ animationDelay: "0.1s" }}>
-              Transforme
-              <br />
-              Leads B2B em
-              <br />
-              <span className="text-shimmer-highlight">Clientes com IA</span>
+              Transforme<br />Leads B2B em<br /><span className="text-shimmer-highlight">Clientes com IA</span>
             </h1>
-
-            {/* Subheading */}
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
               Encontre leads qualificados, gere mensagens personalizadas com IA, automatize seu atendimento e follow-up no WhatsApp com inteligência artificial.
             </p>
-
-            {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center xl:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
               <Link to="/signup" className="shrink-0" onClick={onSignupClick}>
                 <Button variant="hero" size="lg" className="group rounded-full text-base px-8 h-12">
@@ -342,55 +466,25 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 </Button>
               </a>
             </div>
-
           </div>
 
-          {/* RIGHT: Animated Demo - hidden on small screens */}
-          <div 
-            className="animate-slide-up will-change-transform w-full hidden xl:flex xl:justify-end"
-            style={{ 
-              animationDelay: "0.5s",
-              transform: `translateY(${-parallaxOffset * 0.05}px)`,
-              opacity: imageOpacity
-            }}
-          >
+          {/* RIGHT: 8-stage demo */}
+          <div className="animate-slide-up will-change-transform w-full hidden xl:flex xl:justify-end" style={{ animationDelay: "0.5s", transform: `translateY(${-parallaxOffset * 0.05}px)`, opacity: imageOpacity }}>
             <div className="relative w-full max-w-[28rem] 2xl:max-w-[30rem]">
-              {/* Background glow */}
-              <div 
-                className="absolute -inset-4 bg-primary/8 blur-3xl rounded-3xl will-change-transform"
-                style={{ transform: `scale(${1 + scrollY * 0.0001})` }}
-              />
-              
-              {/* Floating Stats Cards */}
-              {floatingCards.map((card, index) => (
-                <div
-                  key={index}
-                  className={`absolute ${card.position} z-30 floating-card hidden lg:block`}
-                  style={{ animationDelay: card.delay }}
-                >
+              <div className="absolute -inset-4 bg-primary/8 blur-3xl rounded-3xl will-change-transform" style={{ transform: `scale(${1 + scrollY * 0.0001})` }} />
+
+              {/* Floating cards */}
+              {floatingCards.map((card, i) => (
+                <div key={i} className={`absolute ${card.position} z-30 floating-card hidden lg:block`} style={{ animationDelay: card.delay }}>
                   <div className="glass rounded-lg p-3 shadow-lg shadow-primary/10 border border-border/50 hover:border-primary/20 transition-all hover:scale-105">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                        <card.icon size={14} className="text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground">
-                          <AnimatedCounter value={card.value} duration={2000} />
-                        </p>
-                        <p className="text-[10px] text-muted-foreground whitespace-nowrap">{card.label}</p>
-                      </div>
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center"><card.icon size={14} className="text-primary" /></div>
+                      <div><p className="text-sm font-bold text-foreground"><AnimatedCounter value={card.value} duration={2000} /></p><p className="text-[10px] text-muted-foreground whitespace-nowrap">{card.label}</p></div>
                     </div>
                   </div>
                 </div>
               ))}
-              
-              {/* Demo badge */}
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 hidden sm:block">
-                <span className="px-3 py-1 text-xs font-medium bg-primary/20 text-primary border border-primary/30 rounded-full backdrop-blur-sm">
-                  ✨ Demonstração em tempo real
-                </span>
-              </div>
-              
+
               <div ref={demoRef} className={`relative glass rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-card hover:shadow-glow transition-shadow duration-500 ${isAnimating ? 'demo-animating' : 'demo-paused'}`}>
                 {/* Window controls */}
                 <div className="flex items-center justify-between mb-3">
@@ -399,116 +493,55 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                     <div className="w-2.5 h-2.5 rounded-full bg-warning/60" />
                     <div className="w-2.5 h-2.5 rounded-full bg-success/60" />
                   </div>
+                  <span className="text-[9px] text-muted-foreground font-medium tracking-wide uppercase">Wiize Platform</span>
                 </div>
-                
+
                 <div className="bg-background/50 rounded-lg sm:rounded-xl p-3 sm:p-4">
-                  {/* Search bar simulation */}
-                  <div className="flex gap-2 mb-3 sm:mb-4">
-                    <div className="flex-1 flex flex-col gap-2">
-                      <div className="bg-secondary rounded-lg px-3 py-2 text-xs sm:text-sm flex items-center">
-                        <span className="text-muted-foreground mr-2">🔍</span>
-                        <span className="text-foreground">{displayText}</span>
-                        <span className="typing-cursor">|</span>
-                      </div>
-                      <div className="bg-secondary rounded-lg px-3 py-2 text-xs sm:text-sm text-muted-foreground">
-                        📍 {currentData.location}
-                      </div>
-                    </div>
-                    <button className="bg-primary text-primary-foreground rounded-lg px-3 font-medium text-xs flex flex-col items-center justify-center gap-1 search-pulse aspect-square">
-                      <Search size={16} />
-                      <span>Buscar</span>
-                    </button>
-                  </div>
-                  
-                  {/* Animated leads */}
-                  <div className="space-y-2 min-h-[180px]">
-                    {currentData.leads.map((lead, idx) => (
-                      <div 
-                        key={`${textIndex}-${idx}`}
-                        className={`flex items-center gap-3 bg-secondary/50 rounded-lg p-3 transition-all duration-500 ${
-                          phase === 'showing' || phase === 'sending' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
-                        }`}
-                        style={{ transitionDelay: phase === 'showing' ? `${idx * 150}ms` : '0ms' }}
-                      >
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                          <span className="text-base">{lead.emoji}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-xs sm:text-sm truncate">{lead.name}</p>
-                          <p className="text-[10px] sm:text-xs text-muted-foreground truncate">📱 {lead.phone} • ⭐ {lead.rating}</p>
-                        </div>
-                        {/* Send status icon */}
-                        <div className="flex items-center gap-1.5 min-w-[70px] justify-end">
-                          {phase === 'sending' && sendingIndex >= idx ? (
-                            <div className="flex items-center gap-1">
-                              <div className="bg-primary/20 text-primary rounded-full p-1.5">
-                                {sendingIndex === idx ? (
-                                  <Send size={11} className="animate-pulse" />
-                                ) : (
-                                  <Check size={11} />
-                                )}
-                              </div>
-                              <span className="text-[9px] text-primary font-medium">
-                                {sendingIndex > idx ? 'Enviada ✓' : 'Enviando...'}
-                              </span>
-                            </div>
-                          ) : (
-                            <div 
-                              className={`transition-all duration-300 ${phase === 'showing' || phase === 'sending' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
-                              style={{ transitionDelay: phase === 'showing' ? `${800 + idx * 200}ms` : '0ms' }}
-                            >
-                              <div className="bg-success/20 text-success rounded-full p-1.5">
-                                <MessageCircle size={12} />
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                  {/* Stage indicator bar */}
+                  <div className="flex items-center gap-1 mb-3">
+                    {stages.map((s, i) => (
+                      <div key={i} className="flex-1 h-1 rounded-full overflow-hidden bg-secondary/60">
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${i < currentStage ? 'bg-primary' : i === currentStage ? 'bg-primary' : 'bg-transparent'}`}
+                          style={{ width: i < currentStage ? '100%' : i === currentStage ? `${stageProgress * 100}%` : '0%' }}
+                        />
                       </div>
                     ))}
                   </div>
 
-                  {/* Sending progress bar */}
-                  <div className="mt-2 h-10">
-                    <div className={`transition-all duration-400 ${phase === 'sending' ? 'opacity-100' : 'opacity-0'}`}>
-                      <div className="bg-primary/10 rounded-lg p-2 flex items-center gap-2">
-                        <Send size={12} className="text-primary animate-pulse" />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[10px] font-medium text-primary">Disparando mensagens...</span>
-                            <span className="text-[10px] text-primary">{Math.min(sendingIndex + 1, 3)}/3</span>
-                          </div>
-                          <div className="w-full bg-primary/10 rounded-full h-1">
-                            <div className="bg-primary h-1 rounded-full transition-all duration-500 ease-out" style={{ width: `${((sendingIndex + 1) / 3) * 100}%` }} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  {/* Stage label */}
+                  <div className="flex items-center gap-2 mb-3 px-1">
+                    <stage.icon size={13} className={stage.color} />
+                    <span className={`text-[11px] font-semibold ${stage.color}`}>{stage.label}</span>
+                    <span className="text-[9px] text-muted-foreground ml-auto">{currentStage + 1}/8</span>
                   </div>
-                  
-                  {/* Stats bar */}
-                  <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
-                    <div className="flex items-center gap-3">
-                      <span className="flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
-                        <span className="counter-animation">47</span> leads
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Zap size={10} className="text-primary" />
-                        <span className="counter-animation">12</span> enviadas
-                      </span>
-                    </div>
+
+                  {/* Stage content */}
+                  <div className="min-h-[210px]" key={currentStage} style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+                    <CurrentStageRenderer progress={stageProgress} />
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
       </div>
-      {/* Scroll indicator */}
+
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce opacity-50">
         <ChevronDown size={22} className="text-muted-foreground" />
       </div>
+
+      {/* Keyframe animations */}
+      <style>{`
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.8); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </section>
   );
 };
