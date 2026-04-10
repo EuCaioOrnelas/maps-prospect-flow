@@ -67,11 +67,11 @@ interface CRMLeadImportDialogProps {
 
 const SCORE_LABELS: Record<string, string> = {
   all: "Todos os scores",
-  very_hot: "🔥 Pronto p/ venda (≥650)",
-  hot: "🟠 Quente (350–649)",
-  engaged: "🟡 Engajado (150–349)",
-  cold: "❄️ Frio (<150)",
-  
+  ready: "Pronto p/ venda (801–1.000)",
+  high: "Alto valor (601–800)",
+  engaged: "Engajado (401–600)",
+  low: "Baixo engajamento (201–400)",
+  cold: "Frio (0–200)",
 };
 
 export const CRMLeadImportDialog = ({

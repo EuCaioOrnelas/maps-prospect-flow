@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
@@ -12,16 +12,30 @@ import {
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const MetaApiGuide = () => {
   useAutoScoreTracking("meta-api-guide");
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("name, email, avatar_url, plan, searches_used, searches_limit, trial_start_at")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => setProfile(data));
+  }, [user]);
 
   return (
     <div className="flex min-h-screen bg-background">
-      <AppSidebar />
+      <AppSidebar profile={profile} />
       <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
-        <AppHeader />
+        <AppHeader profile={profile} />
         <BackgroundGlow />
         <main className="flex-1 overflow-y-auto px-4 md:px-8 py-8">
           <div className="max-w-4xl mx-auto space-y-10">
