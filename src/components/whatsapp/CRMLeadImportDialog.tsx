@@ -87,7 +87,7 @@ export const CRMLeadImportDialog = ({
   const [leads, setLeads] = useState<CRMLeadItem[]>([]);
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [scoreMap, setScoreMap] = useState<Map<string, ScoreData>>(new Map());
-  const [droppingPhones, setDroppingPhones] = useState<Set<string>>(new Set());
+  
 
   // Filters
   const [stageFilter, setStageFilter] = useState("all");
