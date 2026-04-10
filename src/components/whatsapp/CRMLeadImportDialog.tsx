@@ -296,7 +296,7 @@ export const CRMLeadImportDialog = ({
         <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${color}`}>
           {label}
         </span>
-        {dropping && <TrendingDown size={12} className="text-destructive" />}
+        
       </div>
     );
   };
