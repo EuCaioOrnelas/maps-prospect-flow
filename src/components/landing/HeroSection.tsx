@@ -51,7 +51,7 @@ const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?:
 
 /* ─── Stage definitions ─── */
 const STAGE_DURATION = 5400;
-const STAGE_CONTENT_HEIGHT = 360;
+const STAGE_CONTENT_HEIGHT = 340;
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 const segmentProgress = (progress: number, start: number, end: number) =>
@@ -84,15 +84,15 @@ const StageCapture = ({ progress }: { progress: number }) => {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-2.5">
-      <div className="grid grid-cols-[1fr_auto] gap-2">
+    <div className="flex flex-col h-full overflow-hidden gap-2">
+      <div className="grid grid-cols-[1fr_auto] gap-2 shrink-0">
         <div className="grid gap-1.5">
-          <div className="bg-secondary rounded-lg px-3 py-2 text-xs flex items-center gap-2">
+          <div className="bg-secondary rounded-lg px-3 py-1.5 text-xs flex items-center gap-2">
             <Search size={12} className="text-muted-foreground" />
             <span className="text-foreground">academias</span>
             <span className="typing-cursor opacity-70">|</span>
           </div>
-          <div className="bg-secondary rounded-lg px-3 py-2 text-[10px] text-muted-foreground flex items-center gap-1.5">
+          <div className="bg-secondary rounded-lg px-3 py-1.5 text-[10px] text-muted-foreground flex items-center gap-1.5">
             <MapPin size={11} className="text-primary" />
             <span>São Paulo, SP</span>
           </div>
@@ -102,40 +102,39 @@ const StageCapture = ({ progress }: { progress: number }) => {
           <span>Buscar</span>
         </button>
       </div>
-      <div className="rounded-xl bg-secondary/30 p-2.5 flex-1 min-h-0 flex flex-col gap-2">
-        <div className="space-y-1.5 flex-1 min-h-0">
+      <div className="rounded-xl bg-secondary/30 p-2 flex-1 min-h-0 flex flex-col gap-1.5 overflow-hidden">
+        <div className="space-y-1.5 flex-1 min-h-0 overflow-hidden">
           {leads.map((l, i) => (
             <div
               key={i}
-              className="flex items-center gap-2.5 bg-background/55 rounded-lg p-2.5 border border-border/40"
+              className="flex items-center gap-2 bg-background/55 rounded-lg p-2 border border-border/40"
               style={{
                 opacity: progress > 0.08 + i * 0.12 ? 1 : 0,
                 transform: `translateX(${progress > 0.08 + i * 0.12 ? 0 : -16}px)`,
                 transition: "all 0.45s ease-out",
               }}
             >
-              <div className="w-8 h-8 rounded-full bg-success/15 flex items-center justify-center shrink-0">
-                <Users size={13} className="text-success" />
+              <div className="w-7 h-7 rounded-full bg-success/15 flex items-center justify-center shrink-0">
+                <Users size={12} className="text-success" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-xs truncate">{l.name}</p>
+                <p className="font-medium text-[11px] truncate">{l.name}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{l.phone} · {l.note}</p>
               </div>
-              <div className="rounded-full bg-primary/10 px-2 py-1 text-[9px] font-semibold text-primary">
+              <div className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold text-primary shrink-0">
                 {l.rating}
               </div>
             </div>
           ))}
         </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-lg bg-success/10 p-2 border border-success/10">
+        <div className="grid grid-cols-2 gap-1.5 shrink-0">
+          <div className="rounded-lg bg-success/10 p-1.5 border border-success/10">
             <p className="text-[9px] text-muted-foreground">Telefones validados</p>
-            <p className="text-xs font-semibold text-success">4/4 com DDI + DDD</p>
+            <p className="text-[10px] font-semibold text-success">4/4 com DDI + DDD</p>
           </div>
-          <div className="rounded-lg bg-primary/10 p-2 border border-primary/10">
+          <div className="rounded-lg bg-primary/10 p-1.5 border border-primary/10">
             <p className="text-[9px] text-muted-foreground">Prontos para CRM</p>
-            <p className="text-xs font-semibold text-primary">Importação instantânea</p>
+            <p className="text-[10px] font-semibold text-primary">Importação instantânea</p>
           </div>
         </div>
       </div>
@@ -158,51 +157,51 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-2.5">
-      <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5">
+    <div className="flex h-full flex-col gap-2 overflow-hidden">
+      <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2 shrink-0">
         <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
           <Users size={12} className="text-primary" />
         </div>
-        <div className="flex-1">
-          <p className="font-medium text-xs">CrossFit Box SP</p>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-xs truncate">CrossFit Box SP</p>
           <p className="text-[10px] text-muted-foreground">(11) 99XXX-XXXX</p>
         </div>
-        <div className="flex items-center gap-2 rounded-full bg-warning/10 px-2 py-1" style={{ opacity: progress > 0.58 ? 1 : 0, transition: 'opacity 0.6s' }}>
-          <img src={gptIcon} alt="GPT" className="w-6 h-6 rounded-full" />
+        <div className="flex items-center gap-1.5 rounded-full bg-warning/10 px-2 py-1 shrink-0" style={{ opacity: progress > 0.58 ? 1 : 0, transition: 'opacity 0.6s' }}>
+          <img src={gptIcon} alt="GPT" className="w-5 h-5 rounded-full" />
           <span className="text-sm font-bold text-warning">{Math.min(Math.round(progress * 847), 847)}</span>
         </div>
       </div>
-      <div className="rounded-xl bg-secondary/30 p-2.5 flex-1 min-h-0 flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <img src={gptIcon} alt="GPT" className="w-6 h-6 rounded-full" />
-          <div>
-            <p className="text-[10px] font-medium text-primary">GPT cruzando sinais comerciais em tempo real</p>
-            <p className="text-[10px] text-muted-foreground">Website, presença local, potencial e score preditivo</p>
+      <div className="rounded-xl bg-secondary/30 p-2 flex-1 min-h-0 flex flex-col gap-1.5 overflow-hidden">
+        <div className="flex items-center gap-2 shrink-0">
+          <img src={gptIcon} alt="GPT" className="w-5 h-5 rounded-full shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] font-medium text-primary truncate">GPT cruzando sinais comerciais</p>
+            <p className="text-[10px] text-muted-foreground truncate">Presença local, potencial e score preditivo</p>
           </div>
         </div>
-        <div className="grid gap-1.5">
+        <div className="grid gap-1 flex-1 min-h-0 overflow-hidden">
           {diagnosticItems.map((item, i) => (
             <div
               key={i}
-              className="flex items-center gap-2 bg-background/45 rounded-md px-2.5 py-1.5 border border-border/40"
+              className="flex items-center gap-2 bg-background/45 rounded-md px-2 py-1 border border-border/40"
               style={{
                 opacity: progress > item.delay ? 1 : 0,
                 transform: `translateX(${progress > item.delay ? 0 : -10}px)`,
                 transition: 'all 0.6s ease-out'
               }}
             >
-              <item.icon size={11} className={item.color} />
+              <item.icon size={10} className={item.color} />
               <span className="text-[10px] text-muted-foreground flex-1">{item.label}</span>
               <span className={`text-[10px] font-semibold ${item.color}`}>{item.value}</span>
             </div>
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1 shrink-0">
           {tags.map((t, i) => (
             <span
               key={i}
-              className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${t.color}`}
+              className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${t.color}`}
               style={{ opacity: progress > 0.58 + i * 0.08 ? 1 : 0, transform: `scale(${progress > 0.58 + i * 0.08 ? 1 : 0.85})`, transition: 'all 0.4s ease-out' }}
             >
               {t.label}
@@ -211,12 +210,12 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
         </div>
 
         <div
-          className="rounded-lg border border-primary/10 bg-primary/5 p-2"
+          className="rounded-md border border-primary/10 bg-primary/5 p-1.5 shrink-0"
           style={{ opacity: progress > 0.74 ? 1 : 0, transform: `translateY(${progress > 0.74 ? 0 : 8}px)`, transition: 'all 0.5s ease-out' }}
         >
           <p className="text-[10px] font-semibold text-primary">Diagnóstico automático</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            Lead com alta aderência ao ICP, boa presença local e janela favorável para uma abordagem consultiva.
+          <p className="text-[9px] text-muted-foreground mt-0.5 line-clamp-2">
+            Lead com alta aderência ao ICP, boa presença local e janela favorável para abordagem consultiva.
           </p>
         </div>
       </div>
@@ -268,13 +267,7 @@ const StageSend = ({ progress }: { progress: number }) => {
     const start = 0.06 + index * 0.18;
     const end = start + 0.13;
     const delivered = end + 0.08;
-
-    return {
-      start,
-      end,
-      delivered,
-      sendingProgress: segmentProgress(progress, start, end),
-    };
+    return { start, end, delivered, sendingProgress: segmentProgress(progress, start, end) };
   });
 
   const overallProgress = Math.round(
@@ -282,13 +275,11 @@ const StageSend = ({ progress }: { progress: number }) => {
   );
   const startedCount = steps.filter((step) => progress >= step.start).length;
   const deliveredCount = steps.filter((step) => progress >= step.delivered).length;
-  const activeIndex = steps.findIndex(
-    (step) => progress >= step.start && progress < step.end
-  );
+  const activeIndex = steps.findIndex((step) => progress >= step.start && progress < step.end);
 
   return (
-    <div className="flex h-full flex-col gap-2.5">
-      <div className="space-y-2 flex-1 min-h-0">
+    <div className="flex h-full flex-col gap-2 overflow-hidden">
+      <div className="space-y-1.5 flex-1 min-h-0 overflow-hidden">
         {contacts.map((c, i) => {
           const step = steps[i];
           const sent = progress >= step.start;
@@ -296,44 +287,44 @@ const StageSend = ({ progress }: { progress: number }) => {
           const sendPercent = delivered ? 100 : Math.round(step.sendingProgress * 100);
 
           return (
-            <div key={i} className="bg-secondary/45 rounded-xl p-2.5 border border-border/40">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                  <Send size={11} className={`text-primary ${sent && !delivered ? 'animate-pulse' : ''}`} />
+            <div key={i} className="bg-secondary/45 rounded-lg p-2 border border-border/40">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                  <Send size={10} className={`text-primary ${sent && !delivered ? 'animate-pulse' : ''}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-xs truncate">{c}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">Fila oficial · cadência inteligente</p>
+                  <p className="font-medium text-[11px] truncate">{c}</p>
+                  <p className="text-[9px] text-muted-foreground truncate">Fila oficial · cadência inteligente</p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {delivered ? (
-                    <span className="text-[10px] text-success font-medium flex items-center gap-0.5"><Check size={10} /> Entregue</span>
+                    <span className="text-[9px] text-success font-medium flex items-center gap-0.5"><Check size={9} /> Entregue</span>
                   ) : sent ? (
-                    <span className="text-[10px] text-primary font-medium flex items-center gap-0.5"><Clock size={10} className="animate-pulse" /> {sendPercent}%</span>
+                    <span className="text-[9px] text-primary font-medium flex items-center gap-0.5"><Clock size={9} className="animate-pulse" /> {sendPercent}%</span>
                   ) : (
-                    <span className="text-[10px] text-muted-foreground">Na fila</span>
+                    <span className="text-[9px] text-muted-foreground">Na fila</span>
                   )}
                 </div>
               </div>
-              <div className="mt-2 h-1.5 rounded-full bg-primary/10 overflow-hidden">
-                <div className="h-full rounded-full bg-primary" style={{ width: `${sendPercent}%` }} />
+              <div className="mt-1.5 h-1 rounded-full bg-primary/10 overflow-hidden">
+                <div className="h-full rounded-full bg-primary transition-[width] duration-200" style={{ width: `${sendPercent}%` }} />
               </div>
             </div>
           );
         })}
       </div>
-      <div className="bg-primary/10 rounded-xl p-3 border border-primary/10">
-        <div className="flex items-center gap-2 mb-2">
-          <Send size={12} className="text-primary animate-pulse" />
-          <span className="text-[11px] font-medium text-primary">Disparo em massa em andamento</span>
-          <span className="text-[11px] font-semibold text-primary ml-auto">{overallProgress}%</span>
+      <div className="bg-primary/10 rounded-lg p-2.5 border border-primary/10 shrink-0">
+        <div className="flex items-center gap-2 mb-1.5">
+          <Send size={11} className="text-primary animate-pulse" />
+          <span className="text-[10px] font-medium text-primary">Disparo em massa</span>
+          <span className="text-[10px] font-semibold text-primary ml-auto">{overallProgress}%</span>
         </div>
-        <div className="w-full bg-primary/10 rounded-full h-2 overflow-hidden">
-          <div className="bg-primary h-2 rounded-full" style={{ width: `${overallProgress}%` }} />
+        <div className="w-full bg-primary/10 rounded-full h-1.5 overflow-hidden">
+          <div className="bg-primary h-1.5 rounded-full transition-[width] duration-200" style={{ width: `${overallProgress}%` }} />
         </div>
-        <div className="flex items-center justify-between gap-2 mt-2 text-[10px] text-muted-foreground">
-          <span>{startedCount}/{contacts.length} contatos em processamento</span>
-          <span>{deliveredCount} entregues{activeIndex >= 0 ? ` • ${contacts[activeIndex]}` : ''}</span>
+        <div className="flex items-center justify-between gap-2 mt-1.5 text-[9px] text-muted-foreground">
+          <span>{startedCount}/{contacts.length} processando</span>
+          <span>{deliveredCount} entregues{activeIndex >= 0 ? ` · ${contacts[activeIndex]}` : ''}</span>
         </div>
       </div>
     </div>
@@ -517,9 +508,7 @@ const StageCRM = ({ progress }: { progress: number }) => {
 
   const columns = [
     {
-      title: "Novo",
-      color: "bg-info",
-      accent: "text-info",
+      title: "Novo", color: "bg-info", accent: "text-info",
       leads: [
         { name: "Dental Prime", score: 320, value: "R$ 3.2k" },
         ...(leadCreated && !dragComplete ? [createdLead] : []),
@@ -527,9 +516,7 @@ const StageCRM = ({ progress }: { progress: number }) => {
       showAdd: true,
     },
     {
-      title: "Qualificado",
-      color: "bg-warning",
-      accent: "text-warning",
+      title: "Qualificado", color: "bg-warning", accent: "text-warning",
       leads: [
         { name: "Barbearia VIP", score: 580, value: "R$ 4.8k" },
         { name: "Pet Shop Rex", score: 620, value: "R$ 5.1k" },
@@ -538,18 +525,14 @@ const StageCRM = ({ progress }: { progress: number }) => {
       highlight: progress > 0.44,
     },
     {
-      title: "Proposta",
-      color: "bg-primary",
-      accent: "text-primary",
+      title: "Proposta", color: "bg-primary", accent: "text-primary",
       leads: [
         { name: "Pizzaria Bella", score: 710, value: "R$ 7.4k" },
         { name: "Clínica Orto Mais", score: 760, value: "R$ 9.2k" },
       ],
     },
     {
-      title: "Fechado",
-      color: "bg-success",
-      accent: "text-success",
+      title: "Fechado", color: "bg-success", accent: "text-success",
       leads: [
         { name: "CrossFit Box SP", score: 847, value: "R$ 5.964" },
         { name: "Arena Black", score: 902, value: "R$ 8.400" },
@@ -561,38 +544,42 @@ const StageCRM = ({ progress }: { progress: number }) => {
   const cursorY = progress < 0.18 ? 10 : progress < 0.38 ? 42 : 42 - dragProgress * 4;
 
   return (
-    <div className="flex h-full flex-col gap-2.5">
-      <div className="relative flex-1 min-h-0">
-        <div className="grid h-full grid-cols-4 gap-2">
-          {columns.map((col, i) => (
+    <div className="flex h-full flex-col gap-2 overflow-hidden">
+      <div className="relative flex-1 min-h-0 overflow-hidden">
+        <div className="grid h-full grid-cols-4 gap-1.5">
+          {columns.map((col, ci) => (
             <div
-              key={i}
-              className={`rounded-xl border bg-secondary/35 p-2 flex flex-col min-h-0 ${col.highlight ? 'border-warning/50 ring-1 ring-warning/20 shadow-lg shadow-warning/10' : 'border-border/40'}`}
+              key={ci}
+              className={`rounded-lg border bg-secondary/35 p-1.5 flex flex-col min-h-0 overflow-hidden ${col.highlight ? 'border-warning/50 ring-1 ring-warning/20' : 'border-border/40'}`}
               style={{
-                opacity: progress > i * 0.06 ? 1 : 0,
-                transform: `translateY(${progress > i * 0.06 ? 0 : 8}px)`,
+                opacity: progress > ci * 0.06 ? 1 : 0,
+                transform: `translateY(${progress > ci * 0.06 ? 0 : 8}px)`,
                 transition: 'all 0.45s ease-out',
               }}
             >
-              <div className="flex items-center gap-1.5 mb-2">
+              <div className="flex items-center gap-1 mb-1.5 shrink-0">
                 <div className={`w-1.5 h-1.5 rounded-full ${col.color}`} />
-                <span className="text-[9px] font-semibold text-foreground truncate">{col.title}</span>
-                <span className="text-[8px] text-muted-foreground ml-auto">{col.leads.length}</span>
+                <span className="text-[8px] font-semibold text-foreground truncate">{col.title}</span>
+                <span className="text-[7px] text-muted-foreground ml-auto">{col.leads.length}</span>
                 {col.showAdd && (
-                  <div className="relative flex h-5 w-5 items-center justify-center rounded-md border border-border/50 bg-background/70">
-                    <Plus size={10} className="text-primary" />
-                    {clickPulse && <span className="absolute inset-0 rounded-md border border-primary/40 animate-ping" />}
+                  <div className="relative flex h-4 w-4 items-center justify-center rounded border border-border/50 bg-background/70">
+                    <Plus size={8} className="text-primary" />
+                    {clickPulse && <span className="absolute inset-0 rounded border border-primary/40 animate-ping" />}
                   </div>
                 )}
               </div>
 
-              <div className="space-y-1.5 flex-1 min-h-0">
-                {col.leads.map((lead, leadIndex) => (
-                  <div key={`${lead.name}-${leadIndex}`} className="rounded-lg border border-border/40 bg-background/75 p-1.5 shadow-sm" style={{ animation: progress > 0.16 ? 'fadeSlideUp 0.3s ease-out' : 'none' }}>
+              <div className="space-y-1 flex-1 min-h-0 overflow-hidden">
+                {col.leads.map((lead, li) => (
+                  <div
+                    key={`${lead.name}-${li}`}
+                    className="rounded border border-border/40 bg-background/75 p-1.5"
+                    style={{ animation: progress > 0.16 ? 'fadeSlideUp 0.3s ease-out' : 'none' }}
+                  >
                     <p className="font-medium text-[8px] text-foreground truncate">{lead.name}</p>
-                    <div className="mt-1 flex items-center justify-between gap-1">
-                      <span className={`text-[8px] font-semibold ${col.accent}`}>Score {lead.score}</span>
-                      <span className="text-[8px] text-muted-foreground truncate">{lead.value}</span>
+                    <div className="mt-0.5 flex items-center justify-between gap-1">
+                      <span className={`text-[7px] font-semibold ${col.accent}`}>{lead.score}</span>
+                      <span className="text-[7px] text-muted-foreground truncate">{lead.value}</span>
                     </div>
                   </div>
                 ))}
@@ -611,12 +598,12 @@ const StageCRM = ({ progress }: { progress: number }) => {
               transition: 'left 0.14s linear, top 0.14s linear, transform 0.14s linear',
             }}
           >
-            <MousePointer2 size={16} className="drop-shadow-md" />
+            <MousePointer2 size={14} className="drop-shadow-md" />
           </div>
 
           {dragActive && (
             <div
-              className="absolute z-20 w-[23%] rounded-lg border border-primary/20 bg-background/95 p-1.5 shadow-lg shadow-primary/10"
+              className="absolute z-20 w-[22%] rounded border border-primary/20 bg-background/95 p-1.5 shadow-lg shadow-primary/10"
               style={{
                 left: `${10 + dragProgress * 25}%`,
                 top: `${38 - dragProgress * 4}%`,
@@ -625,20 +612,20 @@ const StageCRM = ({ progress }: { progress: number }) => {
               }}
             >
               <p className="font-medium text-[8px] text-foreground truncate">{createdLead.name}</p>
-              <div className="mt-1 flex items-center justify-between gap-1">
-                <span className="text-[8px] font-semibold text-primary">Score {createdLead.score}</span>
-                <span className="text-[8px] text-muted-foreground">{createdLead.value}</span>
+              <div className="mt-0.5 flex items-center justify-between gap-1">
+                <span className="text-[7px] font-semibold text-primary">{createdLead.score}</span>
+                <span className="text-[7px] text-muted-foreground">{createdLead.value}</span>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="bg-secondary/30 rounded-xl p-2.5 flex items-center gap-2 border border-border/40">
-        <TrendingUp size={12} className="text-success" />
+      <div className="bg-secondary/30 rounded-lg p-2 flex items-center gap-2 border border-border/40 shrink-0">
+        <TrendingUp size={11} className="text-success" />
         <div className="min-w-0">
-          <p className="text-[10px] font-medium text-foreground">Lead criado e movido automaticamente</p>
-          <p className="text-[10px] text-muted-foreground truncate">Studio Pilates One entrou no CRM e avançou para Qualificado com novo score</p>
+          <p className="text-[9px] font-medium text-foreground">Lead criado e movido automaticamente</p>
+          <p className="text-[9px] text-muted-foreground truncate">Studio Pilates One → Qualificado · Score 684</p>
         </div>
       </div>
     </div>
