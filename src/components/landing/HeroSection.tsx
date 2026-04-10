@@ -689,7 +689,7 @@ const floatingCards = [
   { icon: Send, value: "900K+", label: "Mensagens enviadas", position: "-left-[10.5rem] top-4", delay: "0.8s" },
   { icon: Users, value: "50K+", label: "Empresas prospectadas", position: "left-1/3 -top-8", delay: "1.2s" },
   { icon: TrendingUp, value: "63%", label: "Taxa de resposta", position: "-left-[7.5rem] bottom-[5.5rem]", delay: "1.6s" },
-  { icon: Zap, value: "+40%", label: "Conversão vs tradicional", position: "-right-10 bottom-[4.5rem]", delay: "2s" },
+  { icon: Zap, value: "+40%", label: "Conversão vs tradicional", position: "-right-10 -bottom-6", delay: "2s" },
 ];
 
 /* ─── Main component ─── */
@@ -775,11 +775,12 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           {/* LEFT */}
           <div className="text-center xl:text-left">
             <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
-              <div className="flex -space-x-2">
-                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&fit=crop&crop=face" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
-                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
-                <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
-                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
+              <div className="flex -space-x-1.5">
+                <img src="https://logo.clearbit.com/google.com" alt="Google" className="w-6 h-6 rounded-full border-2 border-background object-contain bg-white p-0.5" />
+                <img src="https://logo.clearbit.com/stripe.com" alt="Stripe" className="w-6 h-6 rounded-full border-2 border-background object-contain bg-white p-0.5" />
+                <img src="https://logo.clearbit.com/notion.so" alt="Notion" className="w-6 h-6 rounded-full border-2 border-background object-contain bg-white p-0.5" />
+                <img src="https://logo.clearbit.com/vercel.com" alt="Vercel" className="w-6 h-6 rounded-full border-2 border-background object-contain bg-white p-0.5" />
+                <div className="w-6 h-6 rounded-full border-2 border-background bg-primary/15 flex items-center justify-center text-[9px] font-bold text-primary">+</div>
               </div>
               <span className="text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
             </div>
