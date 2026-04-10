@@ -116,6 +116,7 @@ export const LeadSelector = ({
   scheduledDate
 }: LeadSelectorProps) => {
   const [source, setSource] = useState<'file' | 'history' | null>(null);
+  const [crmDialogOpen, setCrmDialogOpen] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
