@@ -737,7 +737,7 @@ export default function WhatsAppFlowEditor() {
         {/* Activate/Deactivate toggle */}
         <div className="flex items-center gap-2 mr-2">
           <span className={cn("text-xs font-medium", flow?.status === "active" ? "text-primary" : "text-muted-foreground")}>
-            {flow?.status === "active" ? "Ativo" : "Inativo"}
+            {flow?.status === "active" ? "Em produção" : "Teste"}
           </span>
           <Switch
             checked={flow?.status === "active"}

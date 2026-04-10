@@ -1061,7 +1061,7 @@ input::placeholder, textarea::placeholder {
 
 /* ─── App background ─── */
 .wa-app-bg { background-color: hsl(220 20% 4%); }
-.landing-light .wa-app-bg { background-color: #eae6df; }
+.landing-light .wa-app-bg { background-color: hsl(var(--background)); }
 
 /* ─── Sidebar ─── */
 .wa-sidebar-bg { background-color: hsl(220 18% 6%); }

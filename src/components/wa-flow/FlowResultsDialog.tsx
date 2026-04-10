@@ -135,6 +135,17 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
     abandoned: executions.filter((e) => e.status === "abandoned").length,
   }), [executions]);
 
+  // Collect all unique variable keys from collected_data across all executions
+  const collectedDataKeys = useMemo(() => {
+    const keys = new Set<string>();
+    executions.forEach((e) => {
+      if (e.collected_data && typeof e.collected_data === "object") {
+        Object.keys(e.collected_data).forEach((k) => keys.add(k));
+      }
+    });
+    return Array.from(keys);
+  }, [executions]);
+
   const activeFiltersCount = [statusFilter, dateFrom, dateTo].filter(Boolean).length;
 
   const clearFilters = () => {
@@ -145,11 +156,16 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
     setCurrentPage(1);
   };
 
-  const getNodePath = (history: any[]) => {
-    if (!Array.isArray(history) || history.length === 0) return "—";
-    return history
-      .map((h: any) => h.node_name || h.node_id || "?")
-      .join(" → ");
+  const getStoppedAt = (exec: FlowExecution) => {
+    if (exec.status === "completed") return exec.exit_node_name || "Finalizado";
+    if (exec.exit_node_name) return exec.exit_node_name;
+    if (exec.current_node_name) return exec.current_node_name;
+    // Fallback: last node in history
+    if (Array.isArray(exec.node_history) && exec.node_history.length > 0) {
+      const last = exec.node_history[exec.node_history.length - 1];
+      return last?.node_name || last?.node_id || "—";
+    }
+    return "—";
   };
 
   const getLastResponse = (history: any[]) => {
