@@ -1,9 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +17,7 @@ import {
 import {
   Search, Download, CalendarIcon, ChevronLeft, ChevronRight, X,
   SlidersHorizontal, Loader2, Users, CheckCircle2, AlertTriangle, Clock,
+  ArrowLeft,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -179,12 +177,17 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
     toast.success(`${filtered.length} resultados exportados!`);
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-[1200px] max-h-[90vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border shrink-0">
-          <DialogTitle className="text-lg">Resultados — {flowName}</DialogTitle>
-        </DialogHeader>
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-border shrink-0">
+        <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="shrink-0">
+          <ArrowLeft size={18} />
+        </Button>
+        <h1 className="text-lg font-semibold">Resultados — {flowName}</h1>
+      </div>
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-3 px-6 py-4 border-b border-border shrink-0">
@@ -410,7 +413,6 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
             </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
   );
 }
