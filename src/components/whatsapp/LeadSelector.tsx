@@ -134,9 +134,14 @@ export const LeadSelector = ({
     const normalized = normalizeBrazilianMobilePhone(phone);
 
     if (!normalized.isValid) {
+      let reason = '';
+      if (normalized.reason === 'landline') reason = ' (fixo)';
+      else if (normalized.reason === 'international') reason = ' (internacional)';
+      else if (normalized.reason === 'invalid') reason = ' (inválido)';
+      
       return {
         isValid: false,
-        display: normalized.normalized ? `+${normalized.normalized}` : String(phone || ''),
+        display: (normalized.normalized ? `+${normalized.normalized}` : String(phone || '')) + reason,
       };
     }
 
