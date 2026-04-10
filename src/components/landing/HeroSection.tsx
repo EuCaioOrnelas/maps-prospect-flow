@@ -721,8 +721,18 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   }, []);
 
   const handleStageClick = (index: number) => {
-    manualJumpRef.current = index;
+    setJumpTarget(index);
   };
+
+  // Handle manual jump
+  useEffect(() => {
+    if (jumpTarget !== null) {
+      animationStartRef.current = performance.now() - jumpTarget * STAGE_DURATION;
+      setCurrentStage(jumpTarget);
+      setStageProgress(0);
+      setJumpTarget(null);
+    }
+  }, [jumpTarget]);
 
   useEffect(() => {
     if (!isAnimating) return;
@@ -734,12 +744,6 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
     let frameId = 0;
 
     const update = (now: number) => {
-      if (manualJumpRef.current !== null) {
-        const jumpTo = manualJumpRef.current;
-        manualJumpRef.current = null;
-        animationStartRef.current = now - jumpTo * STAGE_DURATION;
-      }
-
       const elapsed = now - animationStartRef.current;
       const cycleElapsed = ((elapsed % totalDuration) + totalDuration) % totalDuration;
       const nextStage = Math.floor(cycleElapsed / STAGE_DURATION);
@@ -763,7 +767,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
     <section ref={sectionRef} className="relative min-h-[85vh] flex items-center justify-center pt-16 pb-10 overflow-x-clip overflow-y-visible w-full">
       <div className="absolute inset-0 will-change-transform" style={{ transform: `translateY(${parallaxOffset * 0.5}px)`, background: "linear-gradient(180deg, hsl(var(--background) / 0.92) 0%, hsl(var(--background) / 0.72) 58%, hsl(var(--background) / 0.28) 100%)" }} />
       <div className="absolute inset-0 pointer-events-none opacity-[0.14] will-change-transform" style={{ transform: `translateY(${parallaxOffset * 0.2}px)`, backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`, backgroundSize: '18px 18px', maskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`, WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`, maskSize: 'cover', WebkitMaskSize: 'cover', maskPosition: 'center', WebkitMaskPosition: 'center' }} />
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] md:w-[900px] h-[700px] md:h-[900px] bg-gradient-glow opacity-[0.28] will-change-transform" style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }} />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] md:w-[1000px] h-[800px] md:h-[1000px] bg-gradient-glow opacity-[0.35] will-change-transform" style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }} />
 
       <div className="container mx-auto px-6 sm:px-10 lg:px-16 relative z-10 max-w-[90rem] w-full">
         <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-2 xl:gap-4 items-center">
@@ -862,9 +866,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         </div>
       </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce opacity-50">
-        <ChevronDown size={22} className="text-muted-foreground" />
-      </div>
+      <a href="#features" className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce opacity-70 hover:opacity-100 transition-opacity">
+        <ChevronDown size={28} className="text-primary" />
+      </a>
 
       {/* Keyframe animations */}
       <style>{`
