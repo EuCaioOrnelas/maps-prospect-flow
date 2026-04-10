@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { WAFlowTestDialog } from "@/components/wa-flow/WAFlowTestDialog";
+import { FlowResultsDialog } from "@/components/wa-flow/FlowResultsDialog";
 
 const normalizeStoredHandle = (value?: string | null) => {
   if (!value) return null;
