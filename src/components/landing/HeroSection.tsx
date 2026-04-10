@@ -84,15 +84,15 @@ const StageCapture = ({ progress }: { progress: number }) => {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-2.5">
-      <div className="grid grid-cols-[1fr_auto] gap-2">
+    <div className="flex flex-col h-full overflow-hidden gap-2">
+      <div className="grid grid-cols-[1fr_auto] gap-2 shrink-0">
         <div className="grid gap-1.5">
-          <div className="bg-secondary rounded-lg px-3 py-2 text-xs flex items-center gap-2">
+          <div className="bg-secondary rounded-lg px-3 py-1.5 text-xs flex items-center gap-2">
             <Search size={12} className="text-muted-foreground" />
             <span className="text-foreground">academias</span>
             <span className="typing-cursor opacity-70">|</span>
           </div>
-          <div className="bg-secondary rounded-lg px-3 py-2 text-[10px] text-muted-foreground flex items-center gap-1.5">
+          <div className="bg-secondary rounded-lg px-3 py-1.5 text-[10px] text-muted-foreground flex items-center gap-1.5">
             <MapPin size={11} className="text-primary" />
             <span>São Paulo, SP</span>
           </div>
@@ -102,40 +102,39 @@ const StageCapture = ({ progress }: { progress: number }) => {
           <span>Buscar</span>
         </button>
       </div>
-      <div className="rounded-xl bg-secondary/30 p-2.5 flex-1 min-h-0 flex flex-col gap-2">
-        <div className="space-y-1.5 flex-1 min-h-0">
+      <div className="rounded-xl bg-secondary/30 p-2 flex-1 min-h-0 flex flex-col gap-1.5 overflow-hidden">
+        <div className="space-y-1.5 flex-1 min-h-0 overflow-hidden">
           {leads.map((l, i) => (
             <div
               key={i}
-              className="flex items-center gap-2.5 bg-background/55 rounded-lg p-2.5 border border-border/40"
+              className="flex items-center gap-2 bg-background/55 rounded-lg p-2 border border-border/40"
               style={{
                 opacity: progress > 0.08 + i * 0.12 ? 1 : 0,
                 transform: `translateX(${progress > 0.08 + i * 0.12 ? 0 : -16}px)`,
                 transition: "all 0.45s ease-out",
               }}
             >
-              <div className="w-8 h-8 rounded-full bg-success/15 flex items-center justify-center shrink-0">
-                <Users size={13} className="text-success" />
+              <div className="w-7 h-7 rounded-full bg-success/15 flex items-center justify-center shrink-0">
+                <Users size={12} className="text-success" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-xs truncate">{l.name}</p>
+                <p className="font-medium text-[11px] truncate">{l.name}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{l.phone} · {l.note}</p>
               </div>
-              <div className="rounded-full bg-primary/10 px-2 py-1 text-[9px] font-semibold text-primary">
+              <div className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold text-primary shrink-0">
                 {l.rating}
               </div>
             </div>
           ))}
         </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-lg bg-success/10 p-2 border border-success/10">
+        <div className="grid grid-cols-2 gap-1.5 shrink-0">
+          <div className="rounded-lg bg-success/10 p-1.5 border border-success/10">
             <p className="text-[9px] text-muted-foreground">Telefones validados</p>
-            <p className="text-xs font-semibold text-success">4/4 com DDI + DDD</p>
+            <p className="text-[10px] font-semibold text-success">4/4 com DDI + DDD</p>
           </div>
-          <div className="rounded-lg bg-primary/10 p-2 border border-primary/10">
+          <div className="rounded-lg bg-primary/10 p-1.5 border border-primary/10">
             <p className="text-[9px] text-muted-foreground">Prontos para CRM</p>
-            <p className="text-xs font-semibold text-primary">Importação instantânea</p>
+            <p className="text-[10px] font-semibold text-primary">Importação instantânea</p>
           </div>
         </div>
       </div>
