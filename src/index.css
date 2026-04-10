@@ -1060,7 +1060,7 @@ input::placeholder, textarea::placeholder {
    ===================================================== */
 
 /* ─── App background ─── */
-.wa-app-bg { background-color: hsl(220 20% 4%); }
+.wa-app-bg { background-color: hsl(var(--background)); }
 .landing-light .wa-app-bg { background-color: hsl(var(--background)); }
 
 /* ─── Sidebar ─── */
