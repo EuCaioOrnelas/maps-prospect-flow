@@ -3,7 +3,7 @@ import metaIcon from "@/assets/logos/meta-icon.png";
 import gptIcon from "@/assets/logos/gpt-icon.png";
 import { Button } from "@/components/ui/button";
 import { 
-  ArrowRight, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check, 
+  ArrowRight, ArrowDown, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check, 
   ChevronDown, Bot, Star, CalendarCheck, LayoutGrid, Sparkles, Clock,
   BadgeCheck, Brain, MousePointer2, Plus, MapPin
 } from "lucide-react";
