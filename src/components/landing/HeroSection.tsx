@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import metaIcon from "@/assets/logos/meta-icon.png";
 import gptIcon from "@/assets/logos/gpt-icon.png";
+import avatar1 from "@/assets/avatars/avatar1.jpg";
+import avatar2 from "@/assets/avatars/avatar2.jpg";
+import avatar3 from "@/assets/avatars/avatar3.jpg";
+import avatar4 from "@/assets/avatars/avatar4.jpg";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowRight, ArrowDown, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check, 
@@ -689,7 +693,7 @@ const floatingCards = [
   { icon: Send, value: "900K+", label: "Mensagens enviadas", position: "-left-[10.5rem] top-4", delay: "0.8s" },
   { icon: Users, value: "50K+", label: "Empresas prospectadas", position: "left-1/3 -top-8", delay: "1.2s" },
   { icon: TrendingUp, value: "63%", label: "Taxa de resposta", position: "-left-[7.5rem] bottom-[5.5rem]", delay: "1.6s" },
-  { icon: Zap, value: "+40%", label: "Conversão vs tradicional", position: "-right-10 -bottom-6", delay: "2s" },
+  { icon: Zap, value: "+40%", label: "Conversão vs tradicional", position: "-right-10 -bottom-10", delay: "2s" },
 ];
 
 /* ─── Main component ─── */
@@ -776,11 +780,11 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           <div className="text-center xl:text-left">
             <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
               <div className="flex -space-x-1.5">
-                <img src="https://logo.clearbit.com/google.com" alt="Google" className="w-6 h-6 rounded-full border-2 border-background object-contain bg-white p-0.5" />
-                <img src="https://logo.clearbit.com/stripe.com" alt="Stripe" className="w-6 h-6 rounded-full border-2 border-background object-contain bg-white p-0.5" />
-                <img src="https://logo.clearbit.com/notion.so" alt="Notion" className="w-6 h-6 rounded-full border-2 border-background object-contain bg-white p-0.5" />
-                <img src="https://logo.clearbit.com/vercel.com" alt="Vercel" className="w-6 h-6 rounded-full border-2 border-background object-contain bg-white p-0.5" />
-                <div className="w-6 h-6 rounded-full border-2 border-background bg-primary/15 flex items-center justify-center text-[9px] font-bold text-primary">+</div>
+                <img src={avatar1} alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" width={28} height={28} />
+                <img src={avatar2} alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" width={28} height={28} />
+                <img src={avatar3} alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" width={28} height={28} />
+                <img src={avatar4} alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" width={28} height={28} />
+                <div className="w-7 h-7 rounded-full border-2 border-background bg-primary/15 flex items-center justify-center text-[9px] font-bold text-primary">+</div>
               </div>
               <span className="text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
             </div>
