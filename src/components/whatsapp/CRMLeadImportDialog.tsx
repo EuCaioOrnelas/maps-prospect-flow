@@ -22,13 +22,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   Search,
   Users,
-  Filter,
   CheckCircle2,
   AlertCircle,
-  
   Trophy,
   Loader2,
   Layers,
+  Flame,
+  TrendingUp,
+  Zap,
+  ThermometerSnowflake,
+  Snowflake,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -54,7 +57,7 @@ interface ScoreData {
   status_bucket: string;
 }
 
-type ScoreFilter = "all" | "very_hot" | "hot" | "engaged" | "cold" | "dropping";
+type ScoreFilter = "all" | "ready" | "high" | "engaged" | "low" | "cold";
 
 interface CRMLeadImportDialogProps {
   open: boolean;
@@ -67,11 +70,11 @@ interface CRMLeadImportDialogProps {
 
 const SCORE_LABELS: Record<string, string> = {
   all: "Todos os scores",
-  very_hot: "🔥 Pronto p/ venda (≥650)",
-  hot: "🟠 Quente (350–649)",
-  engaged: "🟡 Engajado (150–349)",
-  cold: "❄️ Frio (<150)",
-  
+  ready: "Pronto p/ venda (801–1.000)",
+  high: "Alto valor (601–800)",
+  engaged: "Engajado (401–600)",
+  low: "Baixo engajamento (201–400)",
+  cold: "Frio (0–200)",
 };
 
 export const CRMLeadImportDialog = ({
@@ -205,13 +208,13 @@ export const CRMLeadImportDialog = ({
     if (scoreFilter !== "all") {
       result = result.filter((l) => {
         const score = getLeadScore(l);
-        
-        if (!score) return scoreFilter === "cold";
+        const total = score?.score_total ?? 0;
         switch (scoreFilter) {
-          case "very_hot": return score.score_total >= 650;
-          case "hot": return score.score_total >= 350 && score.score_total < 650;
-          case "engaged": return score.score_total >= 150 && score.score_total < 350;
-          case "cold": return score.score_total < 150;
+          case "ready": return total >= 801;
+          case "high": return total >= 601 && total <= 800;
+          case "engaged": return total >= 401 && total <= 600;
+          case "low": return total >= 201 && total <= 400;
+          case "cold": return total <= 200;
           default: return true;
         }
       });
@@ -281,23 +284,20 @@ export const CRMLeadImportDialog = ({
 
   const getScoreBadge = (lead: CRMLeadItem) => {
     const score = getLeadScore(lead);
-
     if (!score) return null;
 
+    const total = score.score_total;
     let color = "bg-muted text-muted-foreground";
-    let label = `${score.score_total}`;
-    if (score.score_total >= 650) color = "bg-red-500/15 text-red-500";
-    else if (score.score_total >= 350) color = "bg-orange-500/15 text-orange-500";
-    else if (score.score_total >= 150) color = "bg-yellow-500/15 text-yellow-600";
+    if (total >= 801) color = "bg-green-500/15 text-green-500";
+    else if (total >= 601) color = "bg-emerald-500/15 text-emerald-500";
+    else if (total >= 401) color = "bg-yellow-500/15 text-yellow-600";
+    else if (total >= 201) color = "bg-orange-500/15 text-orange-500";
     else color = "bg-blue-500/15 text-blue-500";
 
     return (
-      <div className="flex items-center gap-1">
-        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${color}`}>
-          {label}
-        </span>
-        
-      </div>
+      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${color}`}>
+        {total}
+      </span>
     );
   };
 
@@ -360,11 +360,22 @@ export const CRMLeadImportDialog = ({
                 </div>
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(SCORE_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">Todos os scores</SelectItem>
+                <SelectItem value="ready">
+                  <span className="flex items-center gap-1.5"><Flame size={12} className="text-green-500" /> Pronto p/ venda (801–1.000)</span>
+                </SelectItem>
+                <SelectItem value="high">
+                  <span className="flex items-center gap-1.5"><TrendingUp size={12} className="text-emerald-500" /> Alto valor (601–800)</span>
+                </SelectItem>
+                <SelectItem value="engaged">
+                  <span className="flex items-center gap-1.5"><Zap size={12} className="text-yellow-500" /> Engajado (401–600)</span>
+                </SelectItem>
+                <SelectItem value="low">
+                  <span className="flex items-center gap-1.5"><ThermometerSnowflake size={12} className="text-orange-500" /> Baixo engajamento (201–400)</span>
+                </SelectItem>
+                <SelectItem value="cold">
+                  <span className="flex items-center gap-1.5"><Snowflake size={12} className="text-blue-500" /> Frio (0–200)</span>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
