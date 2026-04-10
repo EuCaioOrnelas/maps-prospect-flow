@@ -133,7 +133,7 @@ export const CRMLeadImportDialog = ({
     if (!user) return;
     setLoading(true);
     try {
-      const [leadsRes, stagesRes, scoresRes, droppingRes] = await Promise.all([
+      const [leadsRes, stagesRes, scoresRes] = await Promise.all([
         supabase
           .from("leads")
           .select("id, company_name, contact_name, phone, pipeline_stage_id, tags, ai_score")
@@ -149,13 +149,6 @@ export const CRMLeadImportDialog = ({
           .from("revenue_leads")
           .select("phone_e164, score_total, status_bucket")
           .eq("user_id", user.id),
-        // Find leads with dropping scores (3+ days of decline)
-        supabase
-          .from("revenue_score_history")
-          .select("phone_e164, score, recorded_at")
-          .eq("user_id", user.id)
-          .order("recorded_at", { ascending: false })
-          .limit(5000),
       ]);
 
       if (leadsRes.error) throw leadsRes.error;
@@ -171,29 +164,6 @@ export const CRMLeadImportDialog = ({
         sMap.set(key, row as ScoreData);
       }
       setScoreMap(sMap);
-
-      // Detect dropping scores (3+ consecutive decreases)
-      const dropping = new Set<string>();
-      if (droppingRes.data) {
-        const byPhone = new Map<string, number[]>();
-        for (const row of droppingRes.data) {
-          const key = getPhoneKey(row.phone_e164);
-          if (!byPhone.has(key)) byPhone.set(key, []);
-          byPhone.get(key)!.push(row.score);
-        }
-        for (const [key, scores] of byPhone) {
-          // scores are ordered desc by date, so check first 4 entries
-          if (scores.length >= 4) {
-            let consecutive = 0;
-            for (let i = 0; i < scores.length - 1 && i < 5; i++) {
-              if (scores[i] < scores[i + 1]) consecutive++;
-              else break;
-            }
-            if (consecutive >= 3) dropping.add(key);
-          }
-        }
-      }
-      setDroppingPhones(dropping);
     } catch (err) {
       console.error("Error loading CRM data:", err);
       toast({
