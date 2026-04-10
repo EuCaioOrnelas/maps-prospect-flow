@@ -453,42 +453,99 @@ const StageAIChat = ({ progress }: { progress: number }) => {
   );
 };
 
-const StageClose = ({ progress }: { progress: number }) => (
-  <div className="flex h-full flex-col">
-    <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5">
-      <div className="w-7 h-7 rounded-full bg-success/15 flex items-center justify-center shrink-0">
-        <Users size={12} className="text-success" />
+const StageClose = ({ progress }: { progress: number }) => {
+  const showBadge = progress > 0.12;
+  const showDetails = progress > 0.32;
+  const showMetrics = progress > 0.52;
+  const showConfetti = progress > 0.18;
+  const pulseScale = showBadge ? 1 + Math.sin(progress * 12) * 0.02 : 0.8;
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Lead header */}
+      <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5 shrink-0">
+        <div className="w-8 h-8 rounded-full bg-success/20 flex items-center justify-center shrink-0">
+          <Users size={13} className="text-success" />
+        </div>
+        <div className="flex-1">
+          <p className="font-medium text-xs">CrossFit Box SP</p>
+          <p className="text-[11px] text-muted-foreground">João Silva · Proprietário</p>
+        </div>
+        {showBadge && (
+          <div className="rounded-full bg-success/15 px-2 py-0.5 border border-success/20">
+            <span className="text-[10px] font-bold text-success">FECHADO</span>
+          </div>
+        )}
       </div>
-      <div className="flex-1"><p className="font-medium text-xs">CrossFit Box SP</p><p className="text-[11px] text-muted-foreground">João Silva</p></div>
+
+      {/* Central celebration */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-2.5 relative">
+        {/* Confetti dots */}
+        {showConfetti && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {[...Array(12)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-1.5 h-1.5 rounded-full"
+                style={{
+                  left: `${15 + (i * 7) % 70}%`,
+                  top: `${10 + (i * 11) % 60}%`,
+                  backgroundColor: ['hsl(var(--success))', 'hsl(var(--primary))', 'hsl(var(--warning))', 'hsl(var(--info))'][i % 4],
+                  opacity: 0.4 + Math.sin(progress * 8 + i) * 0.3,
+                  transform: `translateY(${Math.sin(progress * 6 + i * 2) * 6}px) scale(${0.6 + Math.sin(progress * 10 + i) * 0.4})`,
+                  transition: 'all 0.3s ease-out',
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {showBadge && (
+          <div
+            className="flex flex-col items-center gap-1.5"
+            style={{ transform: `scale(${pulseScale})`, transition: 'transform 0.15s ease-out' }}
+          >
+            <div className="w-14 h-14 rounded-full bg-success/15 flex items-center justify-center border-2 border-success/30">
+              <BadgeCheck size={28} className="text-success" />
+            </div>
+            <span className="text-base font-bold text-success tracking-tight">Cliente Fechado!</span>
+          </div>
+        )}
+
+        {showDetails && (
+          <div className="flex items-center gap-4" style={{ animation: 'fadeSlideUp 0.5s ease-out' }}>
+            <div className="flex items-center gap-1.5 bg-warning/10 rounded-full px-3 py-1 border border-warning/15">
+              <Star size={11} className="text-warning" />
+              <span className="text-[11px] font-semibold text-warning">R$ 5.964/ano</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-info/10 rounded-full px-3 py-1 border border-info/15">
+              <CalendarCheck size={11} className="text-info" />
+              <span className="text-[11px] font-semibold text-info">Sex 14:00</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom metrics */}
+      {showMetrics && (
+        <div className="grid grid-cols-3 gap-1.5 shrink-0" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+          <div className="rounded-lg bg-success/10 p-2 text-center border border-success/10">
+            <p className="text-[14px] font-bold text-success">100%</p>
+            <p className="text-[9px] text-muted-foreground">Automático</p>
+          </div>
+          <div className="rounded-lg bg-primary/10 p-2 text-center border border-primary/10">
+            <p className="text-[14px] font-bold text-primary">4 min</p>
+            <p className="text-[9px] text-muted-foreground">Tempo total</p>
+          </div>
+          <div className="rounded-lg bg-warning/10 p-2 text-center border border-warning/10">
+            <p className="text-[14px] font-bold text-warning">CRM</p>
+            <p className="text-[9px] text-muted-foreground">Atualizado</p>
+          </div>
+        </div>
+      )}
     </div>
-    <div className="flex flex-col items-center justify-center gap-3 flex-1">
-      {progress > 0.2 && (
-        <div className="flex items-center gap-2 bg-success/15 rounded-full px-4 py-2.5" style={{ animation: 'scaleIn 0.5s ease-out' }}>
-          <BadgeCheck size={18} className="text-success" />
-          <span className="text-sm font-bold text-success">Cliente Fechado!</span>
-        </div>
-      )}
-      {progress > 0.4 && (
-        <div className="flex items-center gap-2 bg-info/10 rounded-full px-3 py-1.5" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
-          <CalendarCheck size={13} className="text-info" />
-          <span className="text-[12px] font-medium text-info">Reunião agendada — Sex 14:00</span>
-        </div>
-      )}
-      {progress > 0.6 && (
-        <div className="flex items-center gap-2 bg-warning/10 rounded-full px-3 py-1.5" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
-          <Star size={13} className="text-warning" />
-          <span className="text-[12px] font-medium text-warning">Valor: R$ 5.964/ano</span>
-        </div>
-      )}
-      {progress > 0.8 && (
-        <div className="flex items-center gap-2 bg-primary/10 rounded-full px-3 py-1.5" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
-          <TrendingUp size={13} className="text-primary" />
-          <span className="text-[12px] font-medium text-primary">Movido para CRM automaticamente</span>
-        </div>
-      )}
-    </div>
-  </div>
-);
+  );
+};
 
 const StageCRM = ({ progress }: { progress: number }) => {
   const createdLead = { name: "Studio Pilates One", score: 514, value: "R$ 4.7k" };
@@ -645,7 +702,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
-  const animationSnapshotRef = useRef({ stage: 0, progress: 0 });
+  const animationStartRef = useRef<number>(0);
+  const manualJumpRef = useRef<number | null>(null);
 
   useEffect(() => {
     let ticking = false;
@@ -662,22 +720,27 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
     return () => obs.disconnect();
   }, []);
 
-  useEffect(() => {
-    animationSnapshotRef.current = { stage: currentStage, progress: stageProgress };
-  }, [currentStage, stageProgress]);
+  const handleStageClick = (index: number) => {
+    manualJumpRef.current = index;
+  };
 
   useEffect(() => {
     if (!isAnimating) return;
 
     const totalDuration = STAGE_DURATION * stages.length;
-    const offset =
-      animationSnapshotRef.current.stage * STAGE_DURATION +
-      animationSnapshotRef.current.progress * STAGE_DURATION;
-    const startTime = performance.now() - offset;
+    if (!animationStartRef.current) {
+      animationStartRef.current = performance.now();
+    }
     let frameId = 0;
 
     const update = (now: number) => {
-      const elapsed = now - startTime;
+      if (manualJumpRef.current !== null) {
+        const jumpTo = manualJumpRef.current;
+        manualJumpRef.current = null;
+        animationStartRef.current = now - jumpTo * STAGE_DURATION;
+      }
+
+      const elapsed = now - animationStartRef.current;
       const cycleElapsed = ((elapsed % totalDuration) + totalDuration) % totalDuration;
       const nextStage = Math.floor(cycleElapsed / STAGE_DURATION);
       const nextProgress = (cycleElapsed % STAGE_DURATION) / STAGE_DURATION;
@@ -762,15 +825,20 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 </div>
 
                 <div className="bg-background/50 rounded-lg sm:rounded-xl p-3 sm:p-4">
-                  {/* Stage indicator bar */}
+                  {/* Stage indicator bar — clickable */}
                   <div className="flex items-center gap-1 mb-3">
                     {stages.map((s, i) => (
-                      <div key={i} className="flex-1 h-1 rounded-full overflow-hidden bg-secondary/60">
+                      <button
+                        key={i}
+                        className="flex-1 h-1.5 rounded-full overflow-hidden bg-secondary/60 cursor-pointer hover:bg-secondary/80 transition-colors"
+                        onClick={() => handleStageClick(i)}
+                        title={s.label}
+                      >
                         <div
-                          className={`h-full rounded-full ${i <= currentStage ? 'bg-primary' : 'bg-transparent'}`}
+                          className={`h-full rounded-full transition-[width] duration-150 ${i <= currentStage ? 'bg-primary' : 'bg-transparent'}`}
                           style={{ width: i < currentStage ? '100%' : i === currentStage ? `${stageProgress * 100}%` : '0%' }}
                         />
-                      </div>
+                      </button>
                     ))}
                   </div>
 
