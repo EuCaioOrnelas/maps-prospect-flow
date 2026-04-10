@@ -225,7 +225,22 @@ const MetaCampaigns = () => {
 
   const handleDeleteConnection = async (connId: string) => {
     try {
-      await supabase.from("user_waba_connections").delete().eq("id", connId);
+      // Clean FK dependencies first: chat_conversations and meta_campaigns reference this connection
+      await Promise.allSettled([
+        supabase.from("chat_messages").delete().in(
+          "conversation_id",
+          // Get all conversation IDs for this connection first
+          (await supabase.from("chat_conversations").select("id").eq("waba_connection_id", connId)).data?.map((c: any) => c.id) || []
+        ),
+      ]);
+      await Promise.allSettled([
+        supabase.from("chat_conversations").delete().eq("waba_connection_id", connId),
+        (supabase as any).from("meta_campaigns").delete().eq("connection_id", connId),
+      ]);
+
+      const { error: deleteError } = await supabase.from("user_waba_connections").delete().eq("id", connId);
+      if (deleteError) throw deleteError;
+
       setConnections((prev) => prev.filter((c) => c.id !== connId));
       setExpiredTokenIds((prev) => {
         const next = new Set(prev);
@@ -234,8 +249,9 @@ const MetaCampaigns = () => {
       });
       setEditingConn(null);
       toast({ title: "Número removido!" });
-    } catch {
-      toast({ title: "Erro ao remover", variant: "destructive" });
+    } catch (err: any) {
+      console.error("[MetaCampaigns] Delete connection error:", err);
+      toast({ title: "Erro ao remover", description: err?.message || "Tente novamente", variant: "destructive" });
     }
   };
 
