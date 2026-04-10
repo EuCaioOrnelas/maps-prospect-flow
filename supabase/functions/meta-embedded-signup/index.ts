@@ -19,7 +19,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { code, user_id } = body;
+    const { code, user_id, redirect_uri } = body;
 
     if (!code || !user_id) {
       return new Response(
@@ -31,7 +31,9 @@ serve(async (req) => {
     console.log('[meta-embedded-signup] Exchanging code for token, user:', user_id);
 
     // Step 1: Exchange the short-lived code for a long-lived token
-    const tokenUrl = `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${META_APP_ID}&client_secret=${META_APP_SECRET}&code=${code}`;
+    // redirect_uri must match what was used in the OAuth dialog (JS SDK sends the current page origin)
+    const redirectParam = redirect_uri ? `&redirect_uri=${encodeURIComponent(redirect_uri)}` : '';
+    const tokenUrl = `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${META_APP_ID}&client_secret=${META_APP_SECRET}&code=${code}${redirectParam}`;
     
     const tokenRes = await fetch(tokenUrl);
     const tokenData = await tokenRes.json();

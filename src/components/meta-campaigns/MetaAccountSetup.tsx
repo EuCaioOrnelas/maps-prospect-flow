@@ -122,7 +122,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, isAddingExtra }: MetaAccou
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("meta-embedded-signup", {
-        body: { code, user_id: user.id },
+        body: { code, user_id: user.id, redirect_uri: window.location.origin },
       });
 
       if (fnError) throw new Error(fnError.message || "Erro ao processar conexão");
