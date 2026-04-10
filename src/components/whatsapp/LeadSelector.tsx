@@ -546,7 +546,7 @@ export const LeadSelector = ({
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Drag and Drop Import Area */}
             <div
               onDragOver={handleDragOver}
@@ -590,6 +590,19 @@ export const LeadSelector = ({
               <div className="text-center">
                 <p className="font-medium">Usar Buscas</p>
                 <p className="text-sm text-muted-foreground">Selecione uma busca anterior</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setCrmDialogOpen(true)}
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all group"
+            >
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                <Contact size={24} className="text-muted-foreground group-hover:text-primary" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium">Importar do CRM</p>
+                <p className="text-sm text-muted-foreground">Filtrar por etapa, score e mais</p>
               </div>
             </button>
           </div>
