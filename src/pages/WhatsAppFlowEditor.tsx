@@ -956,7 +956,13 @@ export default function WhatsAppFlowEditor() {
         resetVersion={testResetVersion}
       />
 
-      {/* Edge delete confirmation dialog */}
+      <FlowResultsDialog
+        open={resultsDialogOpen}
+        onOpenChange={setResultsDialogOpen}
+        flowId={id || ""}
+        flowName={flowName}
+      />
+
       <AlertDialog open={!!edgeToDelete} onOpenChange={(open) => { if (!open) setEdgeToDelete(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
