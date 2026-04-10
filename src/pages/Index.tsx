@@ -6,6 +6,9 @@ import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { ImpactNumbersSection } from "@/components/landing/ImpactNumbersSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
+import { ProblemSection } from "@/components/sales/ProblemSection";
+import { OpportunitySection } from "@/components/sales/OpportunitySection";
+import { MechanismSection } from "@/components/sales/MechanismSection";
 
 import { OfficialAPISection } from "@/components/landing/OfficialAPISection";
 import { CpuDividerSection } from "@/components/landing/CpuDividerSection";
@@ -99,6 +102,9 @@ const Index = () => {
           <Navbar onSignupClick={trackSignupClick} />
           <HeroSection onSignupClick={trackSignupClick} />
           <TrustedBySection />
+          <ProblemSection />
+          <OpportunitySection />
+          <MechanismSection />
           <HowItWorksSection />
           <FeaturesSection />
           <ImpactNumbersSection />
