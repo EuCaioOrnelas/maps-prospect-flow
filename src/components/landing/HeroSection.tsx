@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import metaIcon from "@/assets/logos/meta-icon.png";
+import gptIcon from "@/assets/logos/gpt-icon.png";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowRight, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check, 
@@ -49,7 +50,7 @@ const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?:
 };
 
 /* ─── Stage definitions ─── */
-const STAGE_DURATION = 3200; // ms per stage
+const STAGE_DURATION = 4200; // ms per stage
 
 interface Stage {
   color: string;
@@ -123,10 +124,10 @@ const StageCapture = ({ progress }: { progress: number }) => {
 
 const StageDiagnosis = ({ progress }: { progress: number }) => {
   const diagnosticItems = [
-    { label: "Presença digital", value: "Forte", icon: TrendingUp, color: "text-success", delay: 0.15 },
-    { label: "Fit com ICP", value: "92%", icon: BadgeCheck, color: "text-primary", delay: 0.3 },
-    { label: "Intenção de compra", value: "Alta", icon: Zap, color: "text-warning", delay: 0.45 },
-    { label: "Decisor acessível", value: "Sim", icon: Users, color: "text-info", delay: 0.6 },
+    { label: "Presença digital", value: "Forte", icon: TrendingUp, color: "text-success", delay: 0.12 },
+    { label: "Fit com ICP", value: "92%", icon: BadgeCheck, color: "text-primary", delay: 0.25 },
+    { label: "Intenção de compra", value: "Alta", icon: Zap, color: "text-warning", delay: 0.38 },
+    { label: "Decisor acessível", value: "Sim", icon: Users, color: "text-info", delay: 0.5 },
   ];
   const tags = [
     { label: "Alto potencial", color: "bg-success/15 text-success" },
@@ -143,21 +144,21 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
           <p className="font-medium text-xs">CrossFit Box SP</p>
           <p className="text-[10px] text-muted-foreground">(11) 99XXX-XXXX</p>
         </div>
-        <div className="flex items-center gap-1" style={{ opacity: progress > 0.7 ? 1 : 0, transition: 'opacity 0.4s' }}>
+        <div className="flex items-center gap-1" style={{ opacity: progress > 0.6 ? 1 : 0, transition: 'opacity 0.6s' }}>
           <Brain size={13} className="text-warning" />
           <span className="text-sm font-bold text-warning">{Math.min(Math.round(progress * 847), 847)}</span>
         </div>
       </div>
       <div className="bg-secondary/30 rounded-lg p-2.5 space-y-1.5">
         <div className="flex items-center gap-1.5 mb-1">
-          <Brain size={11} className="text-primary animate-pulse" />
-          <span className="text-[10px] font-medium text-primary">IA analisando perfil do lead...</span>
+          <img src={gptIcon} alt="GPT" className="w-4 h-4 rounded-full" />
+          <span className="text-[10px] font-medium text-primary">GPT analisando perfil do lead...</span>
         </div>
         {diagnosticItems.map((item, i) => (
           <div
             key={i}
-            className="flex items-center gap-2 bg-background/40 rounded-md px-2.5 py-1.5 transition-all duration-400"
-            style={{ opacity: progress > item.delay ? 1 : 0, transform: `translateX(${progress > item.delay ? 0 : -10}px)`, transition: 'all 0.4s ease-out' }}
+            className="flex items-center gap-2 bg-background/40 rounded-md px-2.5 py-1.5"
+            style={{ opacity: progress > item.delay ? 1 : 0, transform: `translateX(${progress > item.delay ? 0 : -10}px)`, transition: 'all 0.6s ease-out' }}
           >
             <item.icon size={11} className={item.color} />
             <span className="text-[10px] text-muted-foreground flex-1">{item.label}</span>
@@ -169,8 +170,8 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
         {tags.map((t, i) => (
           <span
             key={i}
-            className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${t.color} transition-all`}
-            style={{ opacity: progress > 0.5 + i * 0.12 ? 1 : 0, transform: `scale(${progress > 0.5 + i * 0.12 ? 1 : 0.8})`, transition: 'all 0.3s ease-out' }}
+            className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${t.color}`}
+            style={{ opacity: progress > 0.55 + i * 0.1 ? 1 : 0, transform: `scale(${progress > 0.55 + i * 0.1 ? 1 : 0.8})`, transition: 'all 0.4s ease-out' }}
           >
             {t.label}
           </span>
@@ -214,11 +215,12 @@ const StageMessage = ({ progress }: { progress: number }) => {
 
 const StageSend = ({ progress }: { progress: number }) => {
   const contacts = ["CrossFit Box SP", "Arena Fit Training", "Power Gym Plus"];
+  // Slow down: each contact takes longer
   return (
     <div className="space-y-2">
       {contacts.map((c, i) => {
-        const sent = progress > (i + 1) * 0.25;
-        const delivered = progress > (i + 1) * 0.25 + 0.15;
+        const sent = progress > (i + 1) * 0.22;
+        const delivered = progress > (i + 1) * 0.22 + 0.18;
         return (
           <div key={i} className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5">
             <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
@@ -239,11 +241,11 @@ const StageSend = ({ progress }: { progress: number }) => {
           </div>
         );
       })}
-      <div className="bg-primary/10 rounded-lg p-2 flex items-center gap-2 mt-1">
-        <Send size={11} className="text-primary" />
+      <div className="bg-primary/10 rounded-lg p-2.5 flex items-center gap-2 mt-1">
+        <Send size={11} className="text-primary animate-pulse" />
         <div className="flex-1">
-          <div className="flex justify-between mb-0.5"><span className="text-[10px] font-medium text-primary">Disparando via WhatsApp</span><span className="text-[10px] text-primary">{Math.min(Math.round(progress * 3), 3)}/3</span></div>
-          <div className="w-full bg-primary/10 rounded-full h-1"><div className="bg-primary h-1 rounded-full transition-all duration-500" style={{ width: `${Math.min(progress * 100, 100)}%` }} /></div>
+          <div className="flex justify-between mb-1"><span className="text-[10px] font-medium text-primary">Disparando via WhatsApp</span><span className="text-[10px] text-primary">{Math.min(Math.round(progress * 3), 3)}/3</span></div>
+          <div className="w-full bg-primary/10 rounded-full h-1.5"><div className="bg-primary h-1.5 rounded-full transition-all duration-1000 ease-linear" style={{ width: `${Math.min(progress * 100, 100)}%` }} /></div>
         </div>
       </div>
     </div>
@@ -251,17 +253,17 @@ const StageSend = ({ progress }: { progress: number }) => {
 };
 
 const StageReply = ({ progress }: { progress: number }) => (
-  <div className="space-y-2">
+  <div className="space-y-2 flex flex-col h-full">
     <div className="flex justify-end">
       <div className="bg-primary/15 rounded-xl rounded-tr-sm px-3 py-2 max-w-[85%]">
-        <p className="text-xs text-foreground">Oi João, vi que a CrossFit Box SP está com ótimas avaliações!</p>
+        <p className="text-xs text-foreground">Oi João, vi que a CrossFit Box SP está com ótimas avaliações! Tenho uma proposta exclusiva que pode ajudar a crescer ainda mais.</p>
         <div className="flex items-center justify-end gap-1 mt-0.5"><span className="text-[9px] text-muted-foreground">10:32</span><Check size={9} className="text-primary" /><Check size={9} className="text-primary -ml-1.5" /></div>
       </div>
     </div>
-    {progress > 0.4 && (
+    {progress > 0.25 && (
       <div className="flex justify-start" style={{ animation: 'fadeSlideUp 0.5s ease-out' }}>
         <div className="bg-secondary rounded-xl rounded-tl-sm px-3 py-2 max-w-[85%]">
-          {progress > 0.6 ? (
+          {progress > 0.45 ? (
             <>
               <p className="text-xs text-foreground">Oi! Que legal, obrigado! Me conta mais sobre essa proposta? 🤔</p>
               <span className="text-[9px] text-muted-foreground">10:34</span>
@@ -276,8 +278,16 @@ const StageReply = ({ progress }: { progress: number }) => (
         </div>
       </div>
     )}
+    {progress > 0.55 && (
+      <div className="flex justify-end" style={{ animation: 'fadeSlideUp 0.5s ease-out' }}>
+        <div className="bg-primary/15 rounded-xl rounded-tr-sm px-3 py-2 max-w-[85%]">
+          <p className="text-xs text-foreground">Claro! Temos um plano especial para academias com foco em captação de alunos e retenção. Posso te mostrar?</p>
+          <div className="flex items-center justify-end gap-1 mt-0.5"><span className="text-[9px] text-muted-foreground">10:35</span><Check size={9} className="text-primary" /><Check size={9} className="text-primary -ml-1.5" /></div>
+        </div>
+      </div>
+    )}
     {progress > 0.7 && (
-      <div className="bg-success/10 rounded-lg p-2 flex items-center gap-2" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+      <div className="bg-success/10 rounded-lg p-2 flex items-center gap-2 mt-auto" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
         <MessageCircle size={12} className="text-success" />
         <span className="text-[10px] font-medium text-success">Lead respondeu! Janela de 24h aberta</span>
       </div>
@@ -291,15 +301,16 @@ const StageAIChat = ({ progress }: { progress: number }) => {
     { dir: 'out', text: 'Claro, João! Temos um plano especial para academias que faturam acima de 30k/mês com foco em retenção de alunos.', time: '10:34' },
     { dir: 'in', text: 'Interessante! Quanto custa?', time: '10:35' },
     { dir: 'out', text: 'O investimento começa em R$497/mês. Posso agendar uma demonstração gratuita para você?', time: '10:35' },
+    { dir: 'in', text: 'Pode sim! Amanhã de tarde funciona?', time: '10:36' },
   ];
   const visibleCount = Math.min(Math.floor(progress * (msgs.length + 1)), msgs.length);
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 flex flex-col h-full">
       <div className="flex items-center gap-1.5 mb-1">
-        <Bot size={12} className="text-primary animate-pulse" />
+        <img src={gptIcon} alt="GPT" className="w-4 h-4 rounded-full" />
         <span className="text-[10px] font-medium text-primary">IA Wiize respondendo automaticamente</span>
       </div>
-      <div className="space-y-1.5 max-h-[160px] overflow-hidden">
+      <div className="space-y-1.5 flex-1">
         {msgs.slice(0, visibleCount).map((m, i) => (
           <div key={i} className={`flex ${m.dir === 'out' ? 'justify-end' : 'justify-start'}`} style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
             <div className={`${m.dir === 'out' ? 'bg-primary/15 rounded-tr-sm' : 'bg-secondary rounded-tl-sm'} rounded-xl px-2.5 py-1.5 max-w-[85%]`}>
@@ -392,7 +403,7 @@ const stageRenderers = [StageCapture, StageDiagnosis, StageMessage, StageSend, S
 /* ─── Floating cards ─── */
 const floatingCards = [
   { icon: Send, value: "900K+", label: "Mensagens enviadas", position: "-left-[10.5rem] top-4", delay: "0.8s" },
-  { icon: Users, value: "50K+", label: "Empresas prospectadas", position: "-right-16 -top-10", delay: "1.2s" },
+  { icon: Users, value: "50K+", label: "Empresas prospectadas", position: "left-1/2 -translate-x-1/3 -top-14", delay: "1.2s" },
   { icon: TrendingUp, value: "63%", label: "Taxa de resposta", position: "-left-[7.5rem] bottom-[5.5rem]", delay: "1.6s" },
   { icon: Zap, value: "+40%", label: "Conversão vs tradicional", position: "-right-10 -bottom-3", delay: "2s" },
 ];
@@ -538,7 +549,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                   </div>
 
                   {/* Stage content */}
-                  <div className="min-h-[250px]" key={currentStage} style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+                  <div className="min-h-[300px]" key={currentStage} style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
                     <CurrentStageRenderer progress={stageProgress} />
                   </div>
                 </div>
