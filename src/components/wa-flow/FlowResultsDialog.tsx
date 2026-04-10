@@ -221,6 +221,13 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
           </div>
         </div>
 
+        {/* Horizontal Funnel */}
+        {stats.total > 0 && (
+          <div className="px-6 py-4 border-b border-border shrink-0">
+            <FlowFunnel total={stats.total} active={stats.active} completed={stats.completed} abandoned={stats.abandoned} />
+          </div>
+        )}
+
         {/* Toolbar */}
         <div className="flex items-center gap-2 px-6 py-3 border-b border-border shrink-0">
           <div className="relative flex-1 max-w-sm">
