@@ -79,7 +79,7 @@ const MetaCampaigns = () => {
     }
 
     const details = payload?.details?.error;
-    return details?.code === 190 || details?.error_subcode === 463;
+    return payload?.token_expired === true || details?.code === 190 || details?.error_subcode === 463;
   }, []);
 
   useEffect(() => {
