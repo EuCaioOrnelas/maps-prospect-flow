@@ -65,6 +65,18 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+  const [quickDate, setQuickDate] = useState("all");
+
+  const applyQuickDate = (key: string) => {
+    setQuickDate(key);
+    setCurrentPage(1);
+    const now = new Date();
+    if (key === "all") { setDateFrom(undefined); setDateTo(undefined); return; }
+    if (key === "today") { const d = new Date(now); d.setHours(0,0,0,0); setDateFrom(d); setDateTo(now); return; }
+    if (key === "7d") { const d = new Date(now); d.setDate(d.getDate() - 7); setDateFrom(d); setDateTo(now); return; }
+    if (key === "30d") { const d = new Date(now); d.setDate(d.getDate() - 30); setDateFrom(d); setDateTo(now); return; }
+    if (key === "90d") { const d = new Date(now); d.setDate(d.getDate() - 90); setDateFrom(d); setDateTo(now); return; }
+  };
 
   const loadExecutions = useCallback(async () => {
     if (!user || !flowId) return;
@@ -239,6 +251,27 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
               placeholder="Buscar por nome ou telefone..."
               className="pl-9 rounded-full h-9"
             />
+          </div>
+
+          {/* Quick date filters */}
+          <div className="flex items-center gap-1">
+            {[
+              { key: "all", label: "Tudo" },
+              { key: "today", label: "Hoje" },
+              { key: "7d", label: "7 dias" },
+              { key: "30d", label: "30 dias" },
+              { key: "90d", label: "90 dias" },
+            ].map((opt) => (
+              <Button
+                key={opt.key}
+                variant={quickDate === opt.key ? "default" : "ghost"}
+                size="sm"
+                className="h-7 px-2.5 text-xs rounded-full"
+                onClick={() => applyQuickDate(opt.key)}
+              >
+                {opt.label}
+              </Button>
+            ))}
           </div>
 
           <Popover open={showFilters} onOpenChange={setShowFilters}>
