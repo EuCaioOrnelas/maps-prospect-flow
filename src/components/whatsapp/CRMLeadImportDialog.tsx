@@ -71,7 +71,7 @@ const SCORE_LABELS: Record<string, string> = {
   hot: "🟠 Quente (350–649)",
   engaged: "🟡 Engajado (150–349)",
   cold: "❄️ Frio (<150)",
-  dropping: "📉 Score em queda (3+ dias)",
+  
 };
 
 export const CRMLeadImportDialog = ({
@@ -181,10 +181,6 @@ export const CRMLeadImportDialog = ({
     return scoreMap.get(key);
   };
 
-  const isDropping = (lead: CRMLeadItem): boolean => {
-    const key = getPhoneKey(lead.phone);
-    return droppingPhones.has(key);
-  };
 
   const filteredLeads = useMemo(() => {
     let result = leads.filter((l) => l.phone && l.phone.replace(/\D/g, "").length >= 8);
@@ -209,7 +205,7 @@ export const CRMLeadImportDialog = ({
     if (scoreFilter !== "all") {
       result = result.filter((l) => {
         const score = getLeadScore(l);
-        if (scoreFilter === "dropping") return isDropping(l);
+        
         if (!score) return scoreFilter === "cold";
         switch (scoreFilter) {
           case "very_hot": return score.score_total >= 650;
@@ -222,7 +218,7 @@ export const CRMLeadImportDialog = ({
     }
 
     return result;
-  }, [leads, searchTerm, stageFilter, scoreFilter, scoreMap, droppingPhones]);
+  }, [leads, searchTerm, stageFilter, scoreFilter, scoreMap]);
 
   // Select all toggle
   useEffect(() => {
