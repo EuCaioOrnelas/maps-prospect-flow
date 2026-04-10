@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
-  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail, Database,
+  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail, Database, BarChart3,
 } from "lucide-react";
 import gmailIcon from "@/assets/icons/gmail-sm.png";
 import sheetsIcon from "@/assets/icons/google-sheets-sm.png";
@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { WAFlowTestDialog } from "@/components/wa-flow/WAFlowTestDialog";
+import { FlowResultsDialog } from "@/components/wa-flow/FlowResultsDialog";
 
 const normalizeStoredHandle = (value?: string | null) => {
   if (!value) return null;
@@ -224,6 +225,7 @@ export default function WhatsAppFlowEditor() {
   const [hasChanges, setHasChanges] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
+  const [resultsDialogOpen, setResultsDialogOpen] = useState(false);
   const [testResetVersion, setTestResetVersion] = useState(0);
   const [clipboard, setClipboard] = useState<Node | null>(null);
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
@@ -725,6 +727,11 @@ export default function WhatsAppFlowEditor() {
           Testar fluxo
         </Button>
 
+        <Button variant="outline" size="sm" onClick={() => setResultsDialogOpen(true)} className="gap-1.5 rounded-full">
+          <BarChart3 size={14} />
+          Resultados
+        </Button>
+
         <div className="flex-1" />
 
         {/* Activate/Deactivate toggle */}
@@ -949,7 +956,13 @@ export default function WhatsAppFlowEditor() {
         resetVersion={testResetVersion}
       />
 
-      {/* Edge delete confirmation dialog */}
+      <FlowResultsDialog
+        open={resultsDialogOpen}
+        onOpenChange={setResultsDialogOpen}
+        flowId={id || ""}
+        flowName={flowName}
+      />
+
       <AlertDialog open={!!edgeToDelete} onOpenChange={(open) => { if (!open) setEdgeToDelete(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>

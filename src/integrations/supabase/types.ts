@@ -4285,6 +4285,71 @@ export type Database = {
           },
         ]
       }
+      wa_flow_executions: {
+        Row: {
+          collected_data: Json | null
+          completed_at: string | null
+          created_at: string
+          current_node_id: string | null
+          current_node_name: string | null
+          entry_data: Json | null
+          exit_node_name: string | null
+          flow_id: string
+          id: string
+          lead_name: string | null
+          lead_phone: string
+          node_history: Json | null
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          collected_data?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          current_node_id?: string | null
+          current_node_name?: string | null
+          entry_data?: Json | null
+          exit_node_name?: string | null
+          flow_id: string
+          id?: string
+          lead_name?: string | null
+          lead_phone: string
+          node_history?: Json | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          collected_data?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          current_node_id?: string | null
+          current_node_name?: string | null
+          entry_data?: Json | null
+          exit_node_name?: string | null
+          flow_id?: string
+          id?: string
+          lead_name?: string | null
+          lead_phone?: string
+          node_history?: Json | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wa_flow_executions_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "wa_automation_flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wa_flow_nodes: {
         Row: {
           config: Json | null
