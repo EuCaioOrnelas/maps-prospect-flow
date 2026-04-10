@@ -51,7 +51,7 @@ const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?:
 
 /* ─── Stage definitions ─── */
 const STAGE_DURATION = 5400;
-const STAGE_CONTENT_HEIGHT = 360;
+const STAGE_CONTENT_HEIGHT = 340;
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 const segmentProgress = (progress: number, start: number, end: number) =>
