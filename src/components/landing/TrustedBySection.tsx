@@ -22,7 +22,7 @@ const brands = [
 
 export const TrustedBySection = () => {
   return (
-    <section className="relative border-y border-primary/10 overflow-hidden">
+    <section className="relative border-y border-muted-foreground/15 overflow-hidden">
       <div className="relative py-4 overflow-hidden marquee-mask">
         <div className="marquee-track">
           {[0, 1].map((copy) => (

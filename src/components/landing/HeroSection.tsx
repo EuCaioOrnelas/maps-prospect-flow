@@ -767,27 +767,33 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
     <section ref={sectionRef} className="relative min-h-[85vh] flex items-center justify-center pt-16 pb-10 overflow-x-clip overflow-y-visible w-full">
       <div className="absolute inset-0 will-change-transform" style={{ transform: `translateY(${parallaxOffset * 0.5}px)`, background: "linear-gradient(180deg, hsl(var(--background) / 0.92) 0%, hsl(var(--background) / 0.72) 58%, hsl(var(--background) / 0.28) 100%)" }} />
       <div className="absolute inset-0 pointer-events-none opacity-[0.14] will-change-transform" style={{ transform: `translateY(${parallaxOffset * 0.2}px)`, backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`, backgroundSize: '18px 18px', maskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`, WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`, maskSize: 'cover', WebkitMaskSize: 'cover', maskPosition: 'center', WebkitMaskPosition: 'center' }} />
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] md:w-[1000px] h-[800px] md:h-[1000px] bg-gradient-glow opacity-[0.35] will-change-transform" style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }} />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1000px] md:w-[1200px] h-[1000px] md:h-[1200px] bg-gradient-glow opacity-[0.50] will-change-transform" style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)` }} />
 
       <div className="container mx-auto px-6 sm:px-10 lg:px-16 relative z-10 max-w-[90rem] w-full">
         <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-2 xl:gap-4 items-center">
 
           {/* LEFT */}
           <div className="text-center xl:text-left">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
-              <img src={metaIcon} alt="Meta" className="h-4 w-auto" />
-              <span className="text-xs font-medium text-foreground tracking-tight">Meta Business Partner</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
+              <div className="flex -space-x-1.5">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="w-6 h-6 rounded-full bg-primary/15 border-2 border-background flex items-center justify-center">
+                    <Users size={10} className="text-primary" />
+                  </div>
+                ))}
+              </div>
+              <span className="text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
             </div>
             <h1 className="font-display text-[2.5rem] sm:text-[3rem] md:text-[3.5rem] lg:text-[3.75rem] xl:text-[4.25rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.12]" style={{ animationDelay: "0.1s" }}>
-              Transforme<br />Leads B2B em<br /><span className="text-shimmer-highlight">Clientes com IA</span>
+              Transforme<br />Leads B2B em<br /><span className="text-shimmer-highlight">Vendas no Automático</span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-              Encontre leads qualificados, gere mensagens personalizadas com IA, automatize seu atendimento e follow-up no WhatsApp com inteligência artificial.
+              Encontre leads qualificados, analise e classifique oportunidades com IA, gere abordagens personalizadas e automatize todo seu processo de vendas B2B do primeiro contato ao fechamento no WhatsApp.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center xl:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
               <Link to="/signup" className="shrink-0" onClick={onSignupClick}>
                 <Button variant="hero" size="lg" className="group rounded-full text-base px-8 h-12">
-                  Começar agora
+                  Gerar vendas
                   <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
@@ -866,8 +872,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         </div>
       </div>
 
-      <a href="#features" className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce opacity-70 hover:opacity-100 transition-opacity">
-        <ChevronDown size={28} className="text-primary" />
+      <a href="#features" className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce hover:opacity-100 transition-opacity">
+        <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center backdrop-blur-sm">
+          <ChevronDown size={22} className="text-white" />
+        </div>
       </a>
 
       {/* Keyframe animations */}
