@@ -784,7 +784,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 <img src={avatar2} alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" width={28} height={28} />
                 <img src={avatar3} alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" width={28} height={28} />
                 <img src={avatar4} alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" width={28} height={28} />
-                <div className="w-7 h-7 rounded-full border-2 border-background bg-primary/15 flex items-center justify-center text-[9px] font-bold text-primary">+</div>
+                
               </div>
               <span className="text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
             </div>
