@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { 
   ArrowRight, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check, 
   ChevronDown, Bot, Star, CalendarCheck, LayoutGrid, Sparkles, Clock, 
-  BadgeCheck, Brain, ChevronRight
+  BadgeCheck, Brain, ChevronRight, MousePointer2, Plus, ArrowRightLeft
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -77,7 +77,7 @@ const StageCapture = ({ progress }: { progress: number }) => {
     { name: "Power Gym Plus", phone: "(11) 97XXX-XXXX", rating: "4.9" },
   ];
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col h-[300px]">
       <div className="flex gap-2">
         <div className="flex-1 flex flex-col gap-1.5">
           <div className="bg-secondary rounded-lg px-3 py-2 text-xs flex items-center gap-2">
@@ -94,7 +94,7 @@ const StageCapture = ({ progress }: { progress: number }) => {
           <span>Buscar</span>
         </button>
       </div>
-      <div className="space-y-1.5 mt-1">
+      <div className="space-y-1.5 mt-2 flex-1">
         {leads.map((l, i) => (
           <div
             key={i}
@@ -118,6 +118,12 @@ const StageCapture = ({ progress }: { progress: number }) => {
           </div>
         ))}
       </div>
+      {progress > 0.8 && (
+        <div className="bg-success/10 rounded-lg p-2 flex items-center gap-2 mt-auto" style={{ animation: 'fadeSlideUp 0.3s ease-out' }}>
+          <Check size={11} className="text-success" />
+          <span className="text-[10px] font-medium text-success">3 leads encontrados com telefone válido</span>
+        </div>
+      )}
     </div>
   );
 };
@@ -135,7 +141,7 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
     { label: "Decisor identificado", color: "bg-info/15 text-info" },
   ];
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col h-[300px]">
       <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5">
         <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
           <Users size={12} className="text-primary" />
@@ -149,9 +155,9 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
           <span className="text-sm font-bold text-warning">{Math.min(Math.round(progress * 847), 847)}</span>
         </div>
       </div>
-      <div className="bg-secondary/30 rounded-lg p-2.5 space-y-1.5">
+      <div className="bg-secondary/30 rounded-lg p-2.5 space-y-1.5 mt-2 flex-1">
         <div className="flex items-center gap-1.5 mb-1">
-          <img src={gptIcon} alt="GPT" className="w-4 h-4 rounded-full" />
+          <img src={gptIcon} alt="GPT" className="w-5 h-5 rounded-full" />
           <span className="text-[10px] font-medium text-primary">GPT analisando perfil do lead...</span>
         </div>
         {diagnosticItems.map((item, i) => (
@@ -166,7 +172,7 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
           </div>
         ))}
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1.5 mt-2">
         {tags.map((t, i) => (
           <span
             key={i}
@@ -185,7 +191,7 @@ const StageMessage = ({ progress }: { progress: number }) => {
   const fullMsg = 'Oi João, vi que a CrossFit Box SP está com ótimas avaliações! Tenho uma proposta exclusiva que pode ajudar a crescer ainda mais...';
   const visibleChars = Math.round(progress * fullMsg.length);
   return (
-    <div className="space-y-2.5">
+    <div className="flex flex-col h-[300px]">
       <div className="flex items-center gap-2 bg-secondary/50 rounded-lg p-2.5">
         <div className="w-7 h-7 rounded-full bg-info/15 flex items-center justify-center shrink-0">
           <Users size={12} className="text-info" />
@@ -195,12 +201,12 @@ const StageMessage = ({ progress }: { progress: number }) => {
           <p className="text-[10px] text-muted-foreground">João Silva — Proprietário</p>
         </div>
       </div>
-      <div className="bg-secondary/30 rounded-lg p-3">
+      <div className="bg-secondary/30 rounded-lg p-3 mt-2 flex-1 flex flex-col">
         <div className="flex items-center gap-1.5 mb-2">
           <Sparkles size={11} className="text-primary animate-pulse" />
           <span className="text-[10px] font-medium text-primary">IA gerando mensagem personalizada</span>
         </div>
-        <div className="bg-background/60 rounded-lg p-2.5 text-xs text-foreground leading-relaxed min-h-[60px]">
+        <div className="bg-background/60 rounded-lg p-2.5 text-xs text-foreground leading-relaxed flex-1">
           {fullMsg.slice(0, visibleChars)}
           {visibleChars < fullMsg.length && <span className="typing-cursor opacity-70">|</span>}
         </div>
@@ -215,33 +221,34 @@ const StageMessage = ({ progress }: { progress: number }) => {
 
 const StageSend = ({ progress }: { progress: number }) => {
   const contacts = ["CrossFit Box SP", "Arena Fit Training", "Power Gym Plus"];
-  // Slow down: each contact takes longer
   return (
-    <div className="space-y-2">
-      {contacts.map((c, i) => {
-        const sent = progress > (i + 1) * 0.22;
-        const delivered = progress > (i + 1) * 0.22 + 0.18;
-        return (
-          <div key={i} className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5">
-            <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-              <Send size={11} className={`text-primary ${sent && !delivered ? 'animate-pulse' : ''}`} />
+    <div className="flex flex-col h-[300px]">
+      <div className="space-y-2 flex-1">
+        {contacts.map((c, i) => {
+          const sent = progress > (i + 1) * 0.22;
+          const delivered = progress > (i + 1) * 0.22 + 0.18;
+          return (
+            <div key={i} className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5">
+              <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                <Send size={11} className={`text-primary ${sent && !delivered ? 'animate-pulse' : ''}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-xs truncate">{c}</p>
+              </div>
+              <div className="flex items-center gap-1">
+                {delivered ? (
+                  <span className="text-[10px] text-success font-medium flex items-center gap-0.5"><Check size={10} /> Entregue</span>
+                ) : sent ? (
+                  <span className="text-[10px] text-primary font-medium flex items-center gap-0.5"><Clock size={10} className="animate-pulse" /> Enviando</span>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground">Aguardando</span>
+                )}
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-xs truncate">{c}</p>
-            </div>
-            <div className="flex items-center gap-1">
-              {delivered ? (
-                <span className="text-[10px] text-success font-medium flex items-center gap-0.5"><Check size={10} /> Entregue</span>
-              ) : sent ? (
-                <span className="text-[10px] text-primary font-medium flex items-center gap-0.5"><Clock size={10} className="animate-pulse" /> Enviando</span>
-              ) : (
-                <span className="text-[10px] text-muted-foreground">Aguardando</span>
-              )}
-            </div>
-          </div>
-        );
-      })}
-      <div className="bg-primary/10 rounded-lg p-2.5 flex items-center gap-2 mt-1">
+          );
+        })}
+      </div>
+      <div className="bg-primary/10 rounded-lg p-2.5 flex items-center gap-2 mt-auto">
         <Send size={11} className="text-primary animate-pulse" />
         <div className="flex-1">
           <div className="flex justify-between mb-1"><span className="text-[10px] font-medium text-primary">Disparando via WhatsApp</span><span className="text-[10px] text-primary">{Math.min(Math.round(progress * 3), 3)}/3</span></div>
@@ -253,7 +260,7 @@ const StageSend = ({ progress }: { progress: number }) => {
 };
 
 const StageReply = ({ progress }: { progress: number }) => (
-  <div className="space-y-2 flex flex-col h-full">
+  <div className="flex flex-col h-[300px] space-y-2">
     <div className="flex justify-end">
       <div className="bg-primary/15 rounded-xl rounded-tr-sm px-3 py-2 max-w-[85%]">
         <p className="text-xs text-foreground">Oi João, vi que a CrossFit Box SP está com ótimas avaliações! Tenho uma proposta exclusiva que pode ajudar a crescer ainda mais.</p>
@@ -286,8 +293,9 @@ const StageReply = ({ progress }: { progress: number }) => (
         </div>
       </div>
     )}
+    <div className="flex-1" />
     {progress > 0.7 && (
-      <div className="bg-success/10 rounded-lg p-2 flex items-center gap-2 mt-auto" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+      <div className="bg-success/10 rounded-lg p-2 flex items-center gap-2" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
         <MessageCircle size={12} className="text-success" />
         <span className="text-[10px] font-medium text-success">Lead respondeu! Janela de 24h aberta</span>
       </div>
@@ -305,12 +313,12 @@ const StageAIChat = ({ progress }: { progress: number }) => {
   ];
   const visibleCount = Math.min(Math.floor(progress * (msgs.length + 1)), msgs.length);
   return (
-    <div className="space-y-2 flex flex-col h-full">
-      <div className="flex items-center gap-1.5 mb-1">
-        <img src={gptIcon} alt="GPT" className="w-4 h-4 rounded-full" />
+    <div className="flex flex-col h-[300px]">
+      <div className="flex items-center gap-1.5 mb-2">
+        <img src={gptIcon} alt="GPT" className="w-5 h-5 rounded-full" />
         <span className="text-[10px] font-medium text-primary">IA Wiize respondendo automaticamente</span>
       </div>
-      <div className="space-y-1.5 flex-1">
+      <div className="space-y-1.5 flex-1 overflow-hidden">
         {msgs.slice(0, visibleCount).map((m, i) => (
           <div key={i} className={`flex ${m.dir === 'out' ? 'justify-end' : 'justify-start'}`} style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
             <div className={`${m.dir === 'out' ? 'bg-primary/15 rounded-tr-sm' : 'bg-secondary rounded-tl-sm'} rounded-xl px-2.5 py-1.5 max-w-[85%]`}>
@@ -328,30 +336,36 @@ const StageAIChat = ({ progress }: { progress: number }) => {
 };
 
 const StageClose = ({ progress }: { progress: number }) => (
-  <div className="space-y-3">
+  <div className="flex flex-col h-[300px]">
     <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5">
       <div className="w-7 h-7 rounded-full bg-success/15 flex items-center justify-center shrink-0">
         <Users size={12} className="text-success" />
       </div>
       <div className="flex-1"><p className="font-medium text-xs">CrossFit Box SP</p><p className="text-[10px] text-muted-foreground">João Silva</p></div>
     </div>
-    <div className="flex flex-col items-center gap-3 py-3">
-      {progress > 0.3 && (
-        <div className="flex items-center gap-2 bg-success/15 rounded-full px-4 py-2" style={{ animation: 'scaleIn 0.5s ease-out' }}>
-          <BadgeCheck size={16} className="text-success" />
+    <div className="flex flex-col items-center justify-center gap-3 flex-1">
+      {progress > 0.2 && (
+        <div className="flex items-center gap-2 bg-success/15 rounded-full px-4 py-2.5" style={{ animation: 'scaleIn 0.5s ease-out' }}>
+          <BadgeCheck size={18} className="text-success" />
           <span className="text-sm font-bold text-success">Cliente Fechado!</span>
         </div>
       )}
-      {progress > 0.5 && (
+      {progress > 0.4 && (
         <div className="flex items-center gap-2 bg-info/10 rounded-full px-3 py-1.5" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
           <CalendarCheck size={13} className="text-info" />
           <span className="text-[11px] font-medium text-info">Reunião agendada — Sex 14:00</span>
         </div>
       )}
-      {progress > 0.7 && (
+      {progress > 0.6 && (
         <div className="flex items-center gap-2 bg-warning/10 rounded-full px-3 py-1.5" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
           <Star size={13} className="text-warning" />
           <span className="text-[11px] font-medium text-warning">Valor: R$ 5.964/ano</span>
+        </div>
+      )}
+      {progress > 0.8 && (
+        <div className="flex items-center gap-2 bg-primary/10 rounded-full px-3 py-1.5" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+          <TrendingUp size={13} className="text-primary" />
+          <span className="text-[11px] font-medium text-primary">Movido para CRM automaticamente</span>
         </div>
       )}
     </div>
@@ -360,40 +374,67 @@ const StageClose = ({ progress }: { progress: number }) => (
 
 const StageCRM = ({ progress }: { progress: number }) => {
   const columns = [
-    { title: "Novo", count: 12, color: "bg-info" },
-    { title: "Qualificado", count: 8, color: "bg-warning" },
-    { title: "Proposta", count: 5, color: "bg-primary" },
-    { title: "Fechado", count: 3, color: "bg-success" },
+    { title: "Novo", color: "bg-info", leads: [
+      { name: "Dental Prime", score: 320 },
+      { name: "Studio Yoga", score: 410 },
+    ]},
+    { title: "Qualificado", color: "bg-warning", leads: [
+      { name: "Barbearia VIP", score: 580 },
+      { name: "Pet Shop Rex", score: 620 },
+    ]},
+    { title: "Proposta", color: "bg-primary", leads: [
+      { name: "Pizzaria Bella", score: 710 },
+    ]},
+    { title: "Fechado", color: "bg-success", leads: [
+      { name: "CrossFit Box SP", score: 847 },
+    ]},
   ];
+  // Animation: mouse cursor moves a lead from "Qualificado" to "Proposta"
+  const showMove = progress > 0.5 && progress < 0.85;
+  const moveComplete = progress >= 0.85;
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-1.5 mb-1">
-        <LayoutGrid size={12} className="text-foreground" />
-        <span className="text-[10px] font-medium text-foreground">CRM Kanban — Atualizado automaticamente</span>
-      </div>
-      <div className="grid grid-cols-4 gap-1.5">
-        {columns.map((col, i) => (
-          <div key={i} className="bg-secondary/40 rounded-lg p-1.5" style={{ opacity: progress > i * 0.2 ? 1 : 0, transition: 'opacity 0.4s', transitionDelay: `${i * 100}ms` }}>
-            <div className="flex items-center gap-1 mb-1.5">
-              <div className={`w-1.5 h-1.5 rounded-full ${col.color}`} />
-              <span className="text-[9px] font-medium text-foreground truncate">{col.title}</span>
-            </div>
-            <span className="text-[9px] text-muted-foreground">{col.count} leads</span>
-            {i === 3 && progress > 0.6 && (
-              <div className="mt-1 bg-success/10 rounded p-1 text-[8px] text-success font-medium" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
-                CrossFit Box SP
-                <div className="text-[7px] text-success/70">Score: 847</div>
+    <div className="flex flex-col h-[300px]">
+      <div className="grid grid-cols-4 gap-1.5 flex-1">
+        {columns.map((col, i) => {
+          const leadsToShow = [...col.leads];
+          // After move animation, add "Pet Shop Rex" to Proposta
+          if (i === 2 && moveComplete) leadsToShow.push({ name: "Pet Shop Rex", score: 620 });
+          return (
+            <div key={i} className="bg-secondary/40 rounded-lg p-1.5 flex flex-col" style={{ opacity: progress > i * 0.1 ? 1 : 0, transition: 'opacity 0.4s', transitionDelay: `${i * 80}ms` }}>
+              <div className="flex items-center gap-1 mb-1">
+                <div className={`w-1.5 h-1.5 rounded-full ${col.color}`} />
+                <span className="text-[9px] font-medium text-foreground truncate">{col.title}</span>
+                <span className="text-[8px] text-muted-foreground ml-auto">{leadsToShow.length}</span>
               </div>
-            )}
-          </div>
-        ))}
+              <div className="space-y-1 flex-1">
+                {leadsToShow.map((lead, li) => {
+                  // Hide "Pet Shop Rex" from Qualificado during/after move
+                  if (i === 1 && lead.name === "Pet Shop Rex" && (showMove || moveComplete)) return null;
+                  return (
+                    <div key={li} className="bg-background/50 rounded p-1 text-[8px]" style={{ animation: progress > 0.2 ? 'fadeSlideUp 0.3s ease-out' : 'none' }}>
+                      <p className="font-medium text-foreground truncate">{lead.name}</p>
+                      <p className="text-muted-foreground">Score: {lead.score}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
-      {progress > 0.5 && (
-        <div className="bg-secondary/30 rounded-lg p-2 flex items-center gap-2 mt-1" style={{ animation: 'fadeSlideUp 0.3s ease-out' }}>
-          <TrendingUp size={11} className="text-success" />
-          <span className="text-[10px] text-muted-foreground">Pipeline atualizado: <span className="text-success font-medium">+R$ 5.964</span> em receita prevista</span>
+      {/* Mouse cursor animation */}
+      {showMove && (
+        <div className="relative h-0">
+          <div className="absolute -top-16 left-[38%] flex items-center gap-1 text-primary" style={{ animation: 'moveCursor 1.5s ease-in-out forwards' }}>
+            <MousePointer2 size={14} className="text-primary drop-shadow-md" />
+            <div className="bg-primary/15 rounded px-1.5 py-0.5 text-[7px] font-medium text-primary">Pet Shop Rex</div>
+          </div>
         </div>
       )}
+      <div className="bg-secondary/30 rounded-lg p-2 flex items-center gap-2 mt-1.5">
+        <TrendingUp size={11} className="text-success" />
+        <span className="text-[10px] text-muted-foreground">Pipeline: <span className="text-success font-medium">+R$ 5.964</span> em receita prevista</span>
+      </div>
     </div>
   );
 };
@@ -403,7 +444,7 @@ const stageRenderers = [StageCapture, StageDiagnosis, StageMessage, StageSend, S
 /* ─── Floating cards ─── */
 const floatingCards = [
   { icon: Send, value: "900K+", label: "Mensagens enviadas", position: "-left-[10.5rem] top-4", delay: "0.8s" },
-  { icon: Users, value: "50K+", label: "Empresas prospectadas", position: "left-1/2 -translate-x-1/3 -top-14", delay: "1.2s" },
+  { icon: Users, value: "50K+", label: "Empresas prospectadas", position: "left-1/3 -top-8", delay: "1.2s" },
   { icon: TrendingUp, value: "63%", label: "Taxa de resposta", position: "-left-[7.5rem] bottom-[5.5rem]", delay: "1.6s" },
   { icon: Zap, value: "+40%", label: "Conversão vs tradicional", position: "-right-10 -bottom-3", delay: "2s" },
 ];
@@ -548,11 +589,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                     <span className="text-[9px] text-muted-foreground ml-auto">{currentStage + 1}/8</span>
                   </div>
 
-                  {/* Stage content */}
-                  <div className="min-h-[300px]" key={currentStage} style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+                  {/* Stage content - fixed height */}
+                  <div className="h-[300px] overflow-hidden" key={currentStage} style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
                     <CurrentStageRenderer progress={stageProgress} />
                   </div>
                 </div>
+                {/* Watermark */}
+                <div className="absolute bottom-2 left-4 text-[8px] text-muted-foreground/40 font-medium tracking-wide">@wiizebrasil</div>
               </div>
             </div>
           </div>
@@ -572,6 +615,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         @keyframes scaleIn {
           from { opacity: 0; transform: scale(0.8); }
           to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes moveCursor {
+          0% { transform: translateX(0); opacity: 0; }
+          15% { opacity: 1; }
+          50% { transform: translateX(60px); }
+          85% { opacity: 1; }
+          100% { transform: translateX(60px); opacity: 0; }
         }
       `}</style>
     </section>
