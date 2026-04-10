@@ -253,6 +253,27 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
             />
           </div>
 
+          {/* Quick date filters */}
+          <div className="flex items-center gap-1">
+            {[
+              { key: "all", label: "Tudo" },
+              { key: "today", label: "Hoje" },
+              { key: "7d", label: "7 dias" },
+              { key: "30d", label: "30 dias" },
+              { key: "90d", label: "90 dias" },
+            ].map((opt) => (
+              <Button
+                key={opt.key}
+                variant={quickDate === opt.key ? "default" : "ghost"}
+                size="sm"
+                className="h-7 px-2.5 text-xs rounded-full"
+                onClick={() => applyQuickDate(opt.key)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+
           <Popover open={showFilters} onOpenChange={setShowFilters}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
