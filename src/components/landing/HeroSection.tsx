@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import metaIcon from "@/assets/logos/meta-icon.png";
+import metaPartnerLogo from "@/assets/logos/meta-business-partner.png";
 import gptIcon from "@/assets/logos/gpt-icon.png";
 import { Button } from "@/components/ui/button";
 import { 
@@ -774,9 +774,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
           {/* LEFT */}
           <div className="text-center xl:text-left">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
-              <img src={metaIcon} alt="Meta" className="h-4 w-auto" />
-              <span className="text-xs font-medium text-foreground tracking-tight">Meta Business Partner</span>
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full mb-6 sm:mb-8 animate-fade-in backdrop-blur-xl bg-background/50 border border-border/40 shadow-lg shadow-background/10">
+              <span className="text-sm font-semibold text-foreground tracking-tight">wiize</span>
+              <div className="w-px h-4 bg-border/60" />
+              <img src={metaPartnerLogo} alt="Meta Business Partner" className="h-5 w-auto" />
             </div>
             <h1 className="font-display text-[2.5rem] sm:text-[3rem] md:text-[3.5rem] lg:text-[3.75rem] xl:text-[4.25rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.12]" style={{ animationDelay: "0.1s" }}>
               Transforme<br />Leads B2B em<br /><span className="text-shimmer-highlight">Clientes com IA</span>
@@ -866,8 +867,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         </div>
       </div>
 
-      <a href="#features" className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce opacity-70 hover:opacity-100 transition-opacity">
-        <ChevronDown size={28} className="text-primary" />
+      <a href="#features" className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-center w-10 h-10 rounded-full bg-primary/20 border border-primary/30 animate-bounce hover:bg-primary/30 transition-colors">
+        <ChevronDown size={22} className="text-primary-foreground" />
       </a>
 
       {/* Keyframe animations */}

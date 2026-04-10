@@ -140,7 +140,7 @@
     --gradient-primary: linear-gradient(135deg, hsl(158 72% 38%) 0%, hsl(170 80% 30%) 50%, hsl(145 65% 36%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(210 30% 99%) 0%, hsl(158 30% 97%) 40%, hsl(158 25% 95%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(158 72% 45% / 0.06) 0%, transparent 70%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(158 72% 45% / 0.25) 0%, hsl(158 72% 45% / 0.08) 40%, transparent 70%);
 
     --internal-glow-backdrop:
       radial-gradient(circle at 12% 12%, hsl(var(--primary) / 0.08) 0%, transparent 22%),
