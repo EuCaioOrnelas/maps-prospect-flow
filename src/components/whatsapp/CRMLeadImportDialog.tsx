@@ -281,23 +281,20 @@ export const CRMLeadImportDialog = ({
 
   const getScoreBadge = (lead: CRMLeadItem) => {
     const score = getLeadScore(lead);
-
     if (!score) return null;
 
+    const total = score.score_total;
     let color = "bg-muted text-muted-foreground";
-    let label = `${score.score_total}`;
-    if (score.score_total >= 650) color = "bg-red-500/15 text-red-500";
-    else if (score.score_total >= 350) color = "bg-orange-500/15 text-orange-500";
-    else if (score.score_total >= 150) color = "bg-yellow-500/15 text-yellow-600";
+    if (total >= 801) color = "bg-green-500/15 text-green-500";
+    else if (total >= 601) color = "bg-emerald-500/15 text-emerald-500";
+    else if (total >= 401) color = "bg-yellow-500/15 text-yellow-600";
+    else if (total >= 201) color = "bg-orange-500/15 text-orange-500";
     else color = "bg-blue-500/15 text-blue-500";
 
     return (
-      <div className="flex items-center gap-1">
-        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${color}`}>
-          {label}
-        </span>
-        
-      </div>
+      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${color}`}>
+        {total}
+      </span>
     );
   };
 
