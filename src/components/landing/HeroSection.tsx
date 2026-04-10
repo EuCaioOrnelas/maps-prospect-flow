@@ -80,7 +80,6 @@ const StageCapture = ({ progress }: { progress: number }) => {
     { name: "CrossFit Box SP", phone: "(11) 99XXX-XXXX", rating: "4.8", note: "Matriz" },
     { name: "Arena Fit Training", phone: "(11) 98XXX-XXXX", rating: "4.6", note: "Unidade 2" },
     { name: "Power Gym Plus", phone: "(11) 97XXX-XXXX", rating: "4.9", note: "Plano premium" },
-    { name: "Studio Core Fit", phone: "(11) 96XXX-XXXX", rating: "4.7", note: "Pilates + funcional" },
   ];
 
   return (
@@ -130,7 +129,7 @@ const StageCapture = ({ progress }: { progress: number }) => {
         <div className="grid grid-cols-2 gap-1.5 shrink-0">
           <div className="rounded-lg bg-success/10 p-1.5 border border-success/10">
             <p className="text-[9px] text-muted-foreground">Telefones validados</p>
-            <p className="text-[10px] font-semibold text-success">4/4 com DDI + DDD</p>
+            <p className="text-[10px] font-semibold text-success">3/3 com DDI + DDD</p>
           </div>
           <div className="rounded-lg bg-primary/10 p-1.5 border border-primary/10">
             <p className="text-[9px] text-muted-foreground">Prontos para CRM</p>
@@ -284,7 +283,6 @@ const StageSend = ({ progress }: { progress: number }) => {
           const step = steps[i];
           const sent = progress >= step.start;
           const delivered = progress >= step.delivered;
-          const sendPercent = delivered ? 100 : Math.round(step.sendingProgress * 100);
 
           return (
             <div key={i} className="bg-secondary/45 rounded-lg p-2 border border-border/40">
@@ -300,14 +298,11 @@ const StageSend = ({ progress }: { progress: number }) => {
                   {delivered ? (
                     <span className="text-[9px] text-success font-medium flex items-center gap-0.5"><Check size={9} /> Entregue</span>
                   ) : sent ? (
-                    <span className="text-[9px] text-primary font-medium flex items-center gap-0.5"><Clock size={9} className="animate-pulse" /> {sendPercent}%</span>
+                    <span className="text-[9px] text-primary font-medium flex items-center gap-0.5"><Clock size={9} className="animate-pulse" /> Enviando...</span>
                   ) : (
                     <span className="text-[9px] text-muted-foreground">Na fila</span>
                   )}
                 </div>
-              </div>
-              <div className="mt-1.5 h-1 rounded-full bg-primary/10 overflow-hidden">
-                <div className="h-full rounded-full bg-primary transition-[width] duration-200" style={{ width: `${sendPercent}%` }} />
               </div>
             </div>
           );
@@ -550,7 +545,7 @@ const StageCRM = ({ progress }: { progress: number }) => {
           {columns.map((col, ci) => (
             <div
               key={ci}
-              className={`rounded-lg border bg-secondary/35 p-1.5 flex flex-col min-h-0 overflow-hidden ${col.highlight ? 'border-warning/50 ring-1 ring-warning/20' : 'border-border/40'}`}
+              className={`rounded border bg-secondary/35 p-1.5 flex flex-col min-h-0 overflow-hidden ${col.highlight ? 'border-warning/50 ring-1 ring-warning/20' : 'border-border/40'}`}
               style={{
                 opacity: progress > ci * 0.06 ? 1 : 0,
                 transform: `translateY(${progress > ci * 0.06 ? 0 : 8}px)`,
@@ -573,13 +568,13 @@ const StageCRM = ({ progress }: { progress: number }) => {
                 {col.leads.map((lead, li) => (
                   <div
                     key={`${lead.name}-${li}`}
-                    className="rounded border border-border/40 bg-background/75 p-1.5"
+                    className="rounded border border-border/40 bg-background/80 p-1.5 shadow-sm"
                     style={{ animation: progress > 0.16 ? 'fadeSlideUp 0.3s ease-out' : 'none' }}
                   >
                     <p className="font-medium text-[8px] text-foreground truncate">{lead.name}</p>
                     <div className="mt-0.5 flex items-center justify-between gap-1">
-                      <span className={`text-[7px] font-semibold ${col.accent}`}>{lead.score}</span>
-                      <span className="text-[7px] text-muted-foreground truncate">{lead.value}</span>
+                      <span className={`text-[7px] font-bold ${col.accent}`}>{lead.score}</span>
+                      <span className="text-[7px] text-muted-foreground/80 truncate">{lead.value}</span>
                     </div>
                   </div>
                 ))}
