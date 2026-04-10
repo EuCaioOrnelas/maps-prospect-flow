@@ -192,16 +192,23 @@ export const validateAndFormatPhone = (phone: string): {
   formatted: string; 
   display: string;
   isLandline: boolean;
+  missingCountryCode: boolean;
 } => {
   const digits = String(phone).replace(/\D/g, '');
-  const isValid = digits.length >= 10 && digits.length <= 15 && !digits.startsWith('120363');
   const isLandline = isLandlinePhone(digits);
+  
+  // Check if number has country code (12+ digits for Brazil, or starts with non-55 country code)
+  const hasCountryCode = digits.length >= 12 || (digits.length >= 10 && !digits.startsWith('55') && digits.length <= 11 ? false : digits.length >= 12);
+  const missingCountryCode = digits.length >= 10 && digits.length <= 11 && !digits.startsWith('55');
+  
+  const isValid = digits.length >= 10 && digits.length <= 15 && !digits.startsWith('120363');
   
   return { 
     isValid, 
     formatted: digits, 
     display: formatPhoneNumber(digits),
-    isLandline
+    isLandline,
+    missingCountryCode,
   };
 };
 
