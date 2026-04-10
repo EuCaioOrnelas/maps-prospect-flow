@@ -65,6 +65,18 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+  const [quickDate, setQuickDate] = useState("all");
+
+  const applyQuickDate = (key: string) => {
+    setQuickDate(key);
+    setCurrentPage(1);
+    const now = new Date();
+    if (key === "all") { setDateFrom(undefined); setDateTo(undefined); return; }
+    if (key === "today") { const d = new Date(now); d.setHours(0,0,0,0); setDateFrom(d); setDateTo(now); return; }
+    if (key === "7d") { const d = new Date(now); d.setDate(d.getDate() - 7); setDateFrom(d); setDateTo(now); return; }
+    if (key === "30d") { const d = new Date(now); d.setDate(d.getDate() - 30); setDateFrom(d); setDateTo(now); return; }
+    if (key === "90d") { const d = new Date(now); d.setDate(d.getDate() - 90); setDateFrom(d); setDateTo(now); return; }
+  };
 
   const loadExecutions = useCallback(async () => {
     if (!user || !flowId) return;
