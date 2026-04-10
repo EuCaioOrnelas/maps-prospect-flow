@@ -727,6 +727,11 @@ export default function WhatsAppFlowEditor() {
           Testar fluxo
         </Button>
 
+        <Button variant="outline" size="sm" onClick={() => setResultsDialogOpen(true)} className="gap-1.5 rounded-full">
+          <BarChart3 size={14} />
+          Resultados
+        </Button>
+
         <div className="flex-1" />
 
         {/* Activate/Deactivate toggle */}
