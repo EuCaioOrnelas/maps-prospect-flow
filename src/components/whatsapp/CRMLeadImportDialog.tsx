@@ -281,7 +281,6 @@ export const CRMLeadImportDialog = ({
 
   const getScoreBadge = (lead: CRMLeadItem) => {
     const score = getLeadScore(lead);
-    const dropping = isDropping(lead);
 
     if (!score) return null;
 
