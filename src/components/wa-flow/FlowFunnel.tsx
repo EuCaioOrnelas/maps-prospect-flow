@@ -2,16 +2,18 @@ interface FlowFunnelProps {
   total: number;
   active: number;
   completed: number;
+  abandoned: number;
 }
 
 const stages = [
   { key: "total", label: "Entradas", colorStart: "#6366f1", colorEnd: "#818cf8" },
   { key: "active", label: "Em andamento", colorStart: "#3b82f6", colorEnd: "#60a5fa" },
   { key: "completed", label: "Concluídos", colorStart: "#10b981", colorEnd: "#34d399" },
+  { key: "abandoned", label: "Abandonaram", colorStart: "#f59e0b", colorEnd: "#fbbf24" },
 ] as const;
 
-export function FlowFunnel({ total, active, completed }: FlowFunnelProps) {
-  const values: Record<string, number> = { total, active, completed };
+export function FlowFunnel({ total, active, completed, abandoned }: FlowFunnelProps) {
+  const values: Record<string, number> = { total, active, completed, abandoned };
   const max = Math.max(total, 1);
 
   return (
@@ -56,7 +58,6 @@ export function FlowFunnel({ total, active, completed }: FlowFunnelProps) {
                 points={`${x},${topL} ${x + segW},${topR} ${x + segW},${botR} ${x},${botL}`}
                 fill={`url(#fg-${stage.key})`}
                 opacity={0.9}
-                rx={4}
               />
               {i < segCount - 1 && (
                 <line

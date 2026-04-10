@@ -202,14 +202,14 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
       </div>
 
         {/* Stats Cards - Score-style design */}
-        <div className="grid grid-cols-3 gap-3 px-6 py-4 border-b border-border shrink-0">
+        <div className="grid grid-cols-4 gap-3 px-6 py-4 border-b border-border shrink-0">
           {[
             { label: "Total de entradas", value: stats.total, icon: Users, iconColor: "text-muted-foreground", circleColor: "bg-muted-foreground/10" },
             { label: "Em andamento", value: stats.active, icon: Clock, iconColor: "text-blue-500", circleColor: "bg-blue-500/10" },
             { label: "Concluídos", value: stats.completed, icon: CheckCircle2, iconColor: "text-emerald-500", circleColor: "bg-emerald-500/10" },
+            { label: "Abandonaram", value: stats.abandoned, icon: AlertTriangle, iconColor: "text-amber-500", circleColor: "bg-amber-500/10" },
           ].map((card) => (
             <div key={card.label} className="relative overflow-hidden p-4 rounded-xl bg-card border border-border">
-              {/* Circle behind icon */}
               <div className={`absolute -top-3 -right-3 w-14 h-14 rounded-full ${card.circleColor}`} />
               <card.icon size={18} className={`absolute top-3 right-3 ${card.iconColor}`} />
               <p className="text-xs text-muted-foreground uppercase tracking-wide">{card.label}</p>
@@ -221,7 +221,7 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
         {/* Horizontal Funnel */}
         {stats.total > 0 && (
           <div className="px-6 py-4 border-b border-border shrink-0">
-            <FlowFunnel total={stats.total} active={stats.active} completed={stats.completed} />
+            <FlowFunnel total={stats.total} active={stats.active} completed={stats.completed} abandoned={stats.abandoned} />
           </div>
         )}
 
