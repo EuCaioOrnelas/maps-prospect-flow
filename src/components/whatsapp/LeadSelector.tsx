@@ -820,7 +820,7 @@ export const LeadSelector = ({
               className="flex-1"
             >
               <Plus size={16} className="mr-2" />
-              Adicionar planilha
+              Planilha
             </Button>
             <Button
               variant="outline"
@@ -828,7 +828,15 @@ export const LeadSelector = ({
               className="flex-1"
             >
               <History size={16} className="mr-2" />
-              Adicionar do histórico
+              Buscas
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setCrmDialogOpen(true)}
+              className="flex-1"
+            >
+              <Contact size={16} className="mr-2" />
+              CRM
             </Button>
           </div>
         </div>
