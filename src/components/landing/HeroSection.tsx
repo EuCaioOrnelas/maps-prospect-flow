@@ -700,10 +700,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const [currentStage, setCurrentStage] = useState(0);
   const [stageProgress, setStageProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [jumpTarget, setJumpTarget] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
   const animationStartRef = useRef<number>(0);
-  const manualJumpRef = useRef<number | null>(null);
 
   useEffect(() => {
     let ticking = false;
