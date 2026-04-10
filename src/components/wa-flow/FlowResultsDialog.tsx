@@ -373,19 +373,23 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[130px]">Entrada</TableHead>
                   <TableHead className="w-[140px]">Telefone</TableHead>
                   <TableHead className="w-[140px]">Nome</TableHead>
                   <TableHead className="w-[110px]">Status</TableHead>
                   <TableHead className="w-[150px]">Parou em</TableHead>
-                  <TableHead>Caminho percorrido</TableHead>
                   <TableHead className="w-[180px]">Última resposta</TableHead>
-                  <TableHead className="w-[150px]">Dados coletados</TableHead>
-                  <TableHead className="w-[130px]">Entrada</TableHead>
+                  {collectedDataKeys.map((key) => (
+                    <TableHead key={key} className="w-[140px] capitalize">{key}</TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginated.map((exec) => (
                   <TableRow key={exec.id}>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {format(new Date(exec.started_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{exec.lead_phone}</TableCell>
                     <TableCell className="text-sm">{exec.lead_name || "—"}</TableCell>
                     <TableCell>
@@ -394,22 +398,16 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {exec.exit_node_name || exec.current_node_name || "—"}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-[300px] truncate" title={getNodePath(exec.node_history)}>
-                      {getNodePath(exec.node_history)}
+                      {getStoppedAt(exec)}
                     </TableCell>
                     <TableCell className="text-xs max-w-[180px] truncate" title={getLastResponse(exec.node_history)}>
                       {getLastResponse(exec.node_history)}
                     </TableCell>
-                    <TableCell className="text-xs max-w-[150px] truncate">
-                      {Object.keys(exec.collected_data || {}).length > 0
-                        ? Object.entries(exec.collected_data).map(([k, v]) => `${k}: ${v}`).join(", ")
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {format(new Date(exec.started_at), "dd/MM/yy HH:mm", { locale: ptBR })}
-                    </TableCell>
+                    {collectedDataKeys.map((key) => (
+                      <TableCell key={key} className="text-xs max-w-[140px] truncate">
+                        {exec.collected_data?.[key] != null ? String(exec.collected_data[key]) : "—"}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>
