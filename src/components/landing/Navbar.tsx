@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { Link } from "react-router-dom";
 import { Menu, X, Shield, Zap, CreditCard, Gift, Bot, Flame } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const promoItems = [
   { icon: Shield, text: "API Oficial do WhatsApp: Meta Business Partner verificado" },
@@ -51,6 +51,15 @@ interface NavbarProps {
 
 export const Navbar = ({ onSignupClick }: NavbarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 60);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleSignupClick = () => {
     onSignupClick?.();
@@ -58,34 +67,46 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 glass">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Logo size="lg" mobileSize="md" />
+      <nav
+        className={`fixed left-0 right-0 z-50 transition-all duration-500 ease-out ${
+          scrolled
+            ? 'top-3 mx-auto max-w-3xl px-2 sm:px-0'
+            : 'top-0'
+        }`}
+      >
+        <div
+          className={`transition-all duration-500 ease-out ${
+            scrolled
+              ? 'rounded-full backdrop-blur-xl bg-background/70 border border-border/50 shadow-lg shadow-background/20 px-5 py-2.5'
+              : 'glass px-4 py-4'
+          }`}
+        >
+          <div className={`flex items-center justify-between ${scrolled ? '' : 'container mx-auto'}`}>
+            <Logo size={scrolled ? "md" : "lg"} mobileSize="md" />
             
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+            <div className={`hidden md:flex items-center ${scrolled ? 'gap-5' : 'gap-8'}`}>
+              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
                 Recursos
               </a>
-              <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors">
+              <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
                 Depoimentos
               </a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
                 Planos
               </a>
-              <a href="#faq" className="text-muted-foreground hover:text-foreground transition-colors">
+              <a href="#faq" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
                 FAQ
               </a>
             </div>
 
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2">
               <Link to="/login">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className={scrolled ? 'h-8 text-xs px-3' : ''}>
                   Entrar
                 </Button>
               </Link>
               <a href="#pricing" onClick={handleSignupClick}>
-                <Button variant="hero" size="sm">
+                <Button variant="hero" size="sm" className={scrolled ? 'h-8 text-xs px-4 rounded-full' : ''}>
                   Começar
                 </Button>
               </a>
@@ -101,7 +122,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           </div>
 
           {/* Mobile menu */}
-          {mobileMenuOpen && (
+          {mobileMenuOpen && !scrolled && (
             <div className="sm:hidden mt-4 pb-4 border-t border-border pt-4 animate-fade-in">
               <div className="flex flex-col gap-4">
                 <a 
