@@ -77,15 +77,23 @@ const StageCapture = ({ progress }: { progress: number }) => {
   ];
   return (
     <div className="space-y-2">
-      <div className="bg-secondary rounded-lg px-3 py-2 text-xs flex items-center gap-2">
-        <Search size={12} className="text-muted-foreground" />
-        <span className="text-foreground">academias em São Paulo</span>
-        <span className="typing-cursor opacity-70">|</span>
+      <div className="flex gap-2">
+        <div className="flex-1 flex flex-col gap-1.5">
+          <div className="bg-secondary rounded-lg px-3 py-2 text-xs flex items-center gap-2">
+            <Search size={12} className="text-muted-foreground" />
+            <span className="text-foreground">academias</span>
+            <span className="typing-cursor opacity-70">|</span>
+          </div>
+          <div className="bg-secondary rounded-lg px-3 py-1.5 text-[10px] text-muted-foreground flex items-center gap-1.5">
+            <span>📍</span> São Paulo, SP
+          </div>
+        </div>
+        <button className="bg-primary text-primary-foreground rounded-lg px-3 font-medium text-xs flex flex-col items-center justify-center gap-1 aspect-square shrink-0">
+          <Search size={16} />
+          <span>Buscar</span>
+        </button>
       </div>
-      <div className="bg-secondary rounded-lg px-3 py-1.5 text-[10px] text-muted-foreground flex items-center gap-1.5">
-        <span>📍</span> São Paulo, SP — Google Maps
-      </div>
-      <div className="space-y-1.5 mt-2">
+      <div className="space-y-1.5 mt-1">
         {leads.map((l, i) => (
           <div
             key={i}
@@ -114,13 +122,19 @@ const StageCapture = ({ progress }: { progress: number }) => {
 };
 
 const StageDiagnosis = ({ progress }: { progress: number }) => {
+  const diagnosticItems = [
+    { label: "Presença digital", value: "Forte", icon: TrendingUp, color: "text-success", delay: 0.15 },
+    { label: "Fit com ICP", value: "92%", icon: BadgeCheck, color: "text-primary", delay: 0.3 },
+    { label: "Intenção de compra", value: "Alta", icon: Zap, color: "text-warning", delay: 0.45 },
+    { label: "Decisor acessível", value: "Sim", icon: Users, color: "text-info", delay: 0.6 },
+  ];
   const tags = [
     { label: "Alto potencial", color: "bg-success/15 text-success" },
     { label: "Precisa de serviço", color: "bg-warning/15 text-warning" },
     { label: "Decisor identificado", color: "bg-info/15 text-info" },
   ];
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2">
       <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5">
         <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
           <Users size={12} className="text-primary" />
@@ -129,31 +143,38 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
           <p className="font-medium text-xs">CrossFit Box SP</p>
           <p className="text-[10px] text-muted-foreground">(11) 99XXX-XXXX</p>
         </div>
+        <div className="flex items-center gap-1" style={{ opacity: progress > 0.7 ? 1 : 0, transition: 'opacity 0.4s' }}>
+          <Brain size={13} className="text-warning" />
+          <span className="text-sm font-bold text-warning">{Math.min(Math.round(progress * 847), 847)}</span>
+        </div>
       </div>
-      <div className="bg-secondary/30 rounded-lg p-3 space-y-2.5">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Score IA</span>
-          <div className="flex items-center gap-1.5">
-            <Brain size={12} className="text-warning animate-pulse" />
-            <span className="text-sm font-bold text-warning" style={{ opacity: progress > 0.3 ? 1 : 0, transition: 'opacity 0.5s' }}>
-              {Math.min(Math.round(progress * 847), 847)}
-            </span>
+      <div className="bg-secondary/30 rounded-lg p-2.5 space-y-1.5">
+        <div className="flex items-center gap-1.5 mb-1">
+          <Brain size={11} className="text-primary animate-pulse" />
+          <span className="text-[10px] font-medium text-primary">IA analisando perfil do lead...</span>
+        </div>
+        {diagnosticItems.map((item, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-2 bg-background/40 rounded-md px-2.5 py-1.5 transition-all duration-400"
+            style={{ opacity: progress > item.delay ? 1 : 0, transform: `translateX(${progress > item.delay ? 0 : -10}px)`, transition: 'all 0.4s ease-out' }}
+          >
+            <item.icon size={11} className={item.color} />
+            <span className="text-[10px] text-muted-foreground flex-1">{item.label}</span>
+            <span className={`text-[10px] font-semibold ${item.color}`}>{item.value}</span>
           </div>
-        </div>
-        <div className="w-full bg-secondary rounded-full h-1.5">
-          <div className="bg-gradient-to-r from-warning to-success h-1.5 rounded-full transition-all duration-700" style={{ width: `${Math.min(progress * 100, 85)}%` }} />
-        </div>
-        <div className="flex flex-wrap gap-1.5 mt-1">
-          {tags.map((t, i) => (
-            <span
-              key={i}
-              className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${t.color} transition-all duration-400`}
-              style={{ opacity: progress > (i + 1) * 0.25 ? 1 : 0, transform: `scale(${progress > (i + 1) * 0.25 ? 1 : 0.8})` }}
-            >
-              {t.label}
-            </span>
-          ))}
-        </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {tags.map((t, i) => (
+          <span
+            key={i}
+            className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${t.color} transition-all`}
+            style={{ opacity: progress > 0.5 + i * 0.12 ? 1 : 0, transform: `scale(${progress > 0.5 + i * 0.12 ? 1 : 0.8})`, transition: 'all 0.3s ease-out' }}
+          >
+            {t.label}
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -371,7 +392,7 @@ const stageRenderers = [StageCapture, StageDiagnosis, StageMessage, StageSend, S
 /* ─── Floating cards ─── */
 const floatingCards = [
   { icon: Send, value: "900K+", label: "Mensagens enviadas", position: "-left-[10.5rem] top-4", delay: "0.8s" },
-  { icon: Users, value: "1.2M+", label: "Leads prospectados", position: "-right-12 -top-5", delay: "1.2s" },
+  { icon: Users, value: "50K+", label: "Empresas prospectadas", position: "-right-16 -top-10", delay: "1.2s" },
   { icon: TrendingUp, value: "63%", label: "Taxa de resposta", position: "-left-[7.5rem] bottom-[5.5rem]", delay: "1.6s" },
   { icon: Zap, value: "+40%", label: "Conversão vs tradicional", position: "-right-10 -bottom-3", delay: "2s" },
 ];
@@ -517,7 +538,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                   </div>
 
                   {/* Stage content */}
-                  <div className="min-h-[210px]" key={currentStage} style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
+                  <div className="min-h-[250px]" key={currentStage} style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
                     <CurrentStageRenderer progress={stageProgress} />
                   </div>
                 </div>
