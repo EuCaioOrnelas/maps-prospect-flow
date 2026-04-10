@@ -774,20 +774,19 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
           {/* LEFT */}
           <div className="text-center xl:text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
-              <div className="flex -space-x-1.5">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="w-6 h-6 rounded-full bg-primary/15 border-2 border-background flex items-center justify-center">
-                    <Users size={10} className="text-primary" />
-                  </div>
-                ))}
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
+              <div className="flex -space-x-2">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&fit=crop&crop=face" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
+                <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
+                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face" alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" />
               </div>
               <span className="text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
             </div>
-            <h1 className="font-display text-[2.5rem] sm:text-[3rem] md:text-[3.5rem] lg:text-[3.75rem] xl:text-[4.25rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.12]" style={{ animationDelay: "0.1s" }}>
+            <h1 className="font-display text-[2.5rem] sm:text-[3rem] md:text-[3.5rem] lg:text-[4rem] xl:text-[4.5rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.10]" style={{ animationDelay: "0.1s" }}>
               Transforme<br />Leads B2B em<br /><span className="text-shimmer-highlight">Vendas no Automático</span>
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
               Encontre leads qualificados, analise e classifique oportunidades com IA, gere abordagens personalizadas e automatize todo seu processo de vendas B2B do primeiro contato ao fechamento no WhatsApp.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center xl:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
@@ -873,8 +872,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
       </div>
 
       <a href="#features" className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce hover:opacity-100 transition-opacity">
-        <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center backdrop-blur-sm">
-          <ChevronDown size={22} className="text-white" />
+        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+          <ChevronDown size={22} className="text-primary-foreground" />
         </div>
       </a>
 
