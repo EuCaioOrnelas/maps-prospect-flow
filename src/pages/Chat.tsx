@@ -85,7 +85,7 @@ const Chat = () => {
 
             {/* Disconnected overlay — blocks entire chat */}
             {showDisconnectedOverlay && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
                 <div className="bg-background border border-border rounded-2xl p-8 max-w-[440px] text-center shadow-2xl animate-in fade-in zoom-in-95 duration-300">
                   <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-5">
                     <WifiOff size={36} className="text-red-500" />
