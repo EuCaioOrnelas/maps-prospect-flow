@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CRMLeadImportDialog } from "@/components/whatsapp/CRMLeadImportDialog";
 import type { WabaConnection } from "@/pages/MetaCampaigns";
 
 interface MetaTemplate {
@@ -92,6 +93,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
 
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ success: number; failed: number } | null>(null);
+  const [crmDialogOpen, setCrmDialogOpen] = useState(false);
 
   // Fetch templates when connection changes (and connection is selected)
   useEffect(() => {
@@ -541,6 +543,15 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Números de telefone</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCrmDialogOpen(true)}
+                  className="gap-1.5 text-xs"
+                >
+                  <Users size={14} />
+                  Importar do CRM
+                </Button>
               </div>
               <Textarea
                 value={phoneNumbers}
@@ -727,6 +738,17 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
           </a>
         </div>
       </div>
+
+      {/* CRM Import Dialog */}
+      <CRMLeadImportDialog
+        open={crmDialogOpen}
+        onOpenChange={setCrmDialogOpen}
+        onImportPhones={(phones) => {
+          const current = phoneNumbers.trim();
+          const newNumbers = phones.join("\n");
+          setPhoneNumbers(current ? current + "\n" + newNumbers : newNumbers);
+        }}
+      />
     </div>
   );
 };

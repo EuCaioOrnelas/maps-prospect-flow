@@ -13,8 +13,10 @@ import {
   Plus,
   Download,
   AlertCircle,
-  PhoneOff
+  PhoneOff,
+  Contact
 } from "lucide-react";
+import { CRMLeadImportDialog } from "./CRMLeadImportDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -114,6 +116,7 @@ export const LeadSelector = ({
   scheduledDate
 }: LeadSelectorProps) => {
   const [source, setSource] = useState<'file' | 'history' | null>(null);
+  const [crmDialogOpen, setCrmDialogOpen] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -543,7 +546,7 @@ export const LeadSelector = ({
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Drag and Drop Import Area */}
             <div
               onDragOver={handleDragOver}
@@ -587,6 +590,19 @@ export const LeadSelector = ({
               <div className="text-center">
                 <p className="font-medium">Usar Buscas</p>
                 <p className="text-sm text-muted-foreground">Selecione uma busca anterior</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setCrmDialogOpen(true)}
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all group"
+            >
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                <Contact size={24} className="text-muted-foreground group-hover:text-primary" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium">Importar do CRM</p>
+                <p className="text-sm text-muted-foreground">Filtrar por etapa, score e mais</p>
               </div>
             </button>
           </div>
@@ -804,7 +820,7 @@ export const LeadSelector = ({
               className="flex-1"
             >
               <Plus size={16} className="mr-2" />
-              Adicionar planilha
+              Planilha
             </Button>
             <Button
               variant="outline"
@@ -812,7 +828,15 @@ export const LeadSelector = ({
               className="flex-1"
             >
               <History size={16} className="mr-2" />
-              Adicionar do histórico
+              Buscas
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setCrmDialogOpen(true)}
+              className="flex-1"
+            >
+              <Contact size={16} className="mr-2" />
+              CRM
             </Button>
           </div>
         </div>
@@ -841,6 +865,41 @@ export const LeadSelector = ({
           </Button>
         </div>
       )}
+
+      {/* CRM Import Dialog */}
+      <CRMLeadImportDialog
+        open={crmDialogOpen}
+        onOpenChange={setCrmDialogOpen}
+        onImportLeads={(imported) => {
+          const newLeads: Lead[] = imported.map((l) => {
+            const validated = normalizeBrazilianMobilePhone(l.phone);
+            return {
+              name: l.name,
+              phone: validated.isValid ? validated.normalized : l.phone,
+              category: '',
+              address: '',
+              city: '',
+              website: '',
+              rating: 0,
+              reviewCount: 0,
+              mapsLink: '',
+            };
+          }).filter((l) => {
+            const v = normalizeBrazilianMobilePhone(l.phone);
+            return v.isValid;
+          });
+
+          const existing = new Set(selectedLeads.map((l) => l.phone));
+          const merged = [...selectedLeads, ...newLeads.filter((l) => !existing.has(l.phone))];
+          onLeadsChange(merged);
+          setImportStats({
+            valid: merged.length,
+            invalid: 0,
+            landlines: 0,
+            international: 0,
+          });
+        }}
+      />
     </div>
   );
 };
