@@ -360,11 +360,22 @@ export const CRMLeadImportDialog = ({
                 </div>
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(SCORE_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">Todos os scores</SelectItem>
+                <SelectItem value="ready">
+                  <span className="flex items-center gap-1.5"><Flame size={12} className="text-green-500" /> Pronto p/ venda (801–1.000)</span>
+                </SelectItem>
+                <SelectItem value="high">
+                  <span className="flex items-center gap-1.5"><TrendingUp size={12} className="text-emerald-500" /> Alto valor (601–800)</span>
+                </SelectItem>
+                <SelectItem value="engaged">
+                  <span className="flex items-center gap-1.5"><Zap size={12} className="text-yellow-500" /> Engajado (401–600)</span>
+                </SelectItem>
+                <SelectItem value="low">
+                  <span className="flex items-center gap-1.5"><ThermometerSnowflake size={12} className="text-orange-500" /> Baixo engajamento (201–400)</span>
+                </SelectItem>
+                <SelectItem value="cold">
+                  <span className="flex items-center gap-1.5"><Snowflake size={12} className="text-blue-500" /> Frio (0–200)</span>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
