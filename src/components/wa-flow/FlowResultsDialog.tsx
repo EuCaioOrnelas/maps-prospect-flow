@@ -182,20 +182,22 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
       return;
     }
 
-    const data = filtered.map((e) => ({
-      "Telefone": e.lead_phone,
-      "Nome": e.lead_name || "",
-      "Status": STATUS_MAP[e.status]?.label || e.status,
-      "Nó Atual": e.current_node_name || "",
-      "Último Nó": e.exit_node_name || "",
-      "Caminho": getNodePath(e.node_history),
-      "Última Resposta": getLastResponse(e.node_history),
-      "Dados Coletados": Object.entries(e.collected_data || {})
-        .map(([k, v]) => `${k}: ${v}`)
-        .join("; "),
-      "Início": e.started_at ? format(new Date(e.started_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "",
-      "Fim": e.completed_at ? format(new Date(e.completed_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "",
-    }));
+    const data = filtered.map((e) => {
+      const row: Record<string, string> = {
+        "Entrada": e.started_at ? format(new Date(e.started_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "",
+        "Telefone": e.lead_phone,
+        "Nome": e.lead_name || "",
+        "Status": STATUS_MAP[e.status]?.label || e.status,
+        "Parou em": getStoppedAt(e),
+        "Última Resposta": getLastResponse(e.node_history),
+      };
+      // Dynamic columns for each collected variable
+      collectedDataKeys.forEach((key) => {
+        row[key] = e.collected_data?.[key] != null ? String(e.collected_data[key]) : "";
+      });
+      row["Fim"] = e.completed_at ? format(new Date(e.completed_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "";
+      return row;
+    });
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
