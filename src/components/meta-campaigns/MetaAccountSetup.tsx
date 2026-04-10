@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +6,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   CheckCircle2,
   ExternalLink,
-  Phone,
   Shield,
   Loader2,
   Info,
@@ -44,6 +43,13 @@ export const MetaAccountSetup = ({ onConnectionSaved, isAddingExtra }: MetaAccou
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const getRedirectUri = () => {
+    const url = new URL(window.location.href);
+    url.hash = "";
+    url.search = "";
+    return url.toString();
+  };
+
   // Load Facebook SDK
   useEffect(() => {
     if (window.FB) {
@@ -72,8 +78,49 @@ export const MetaAccountSetup = ({ onConnectionSaved, isAddingExtra }: MetaAccou
     }
   }, []);
 
-  const handleFacebookLogin = useCallback(() => {
+  const exchangeCode = async (code: string) => {
+    if (!user) return;
+
+    const redirectUri = getRedirectUri();
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("meta-embedded-signup", {
+        body: { code, user_id: user.id, redirect_uri: redirectUri },
+      });
+
+      if (fnError) throw new Error(fnError.message || "Erro ao processar conexão");
+
+      if (!data?.success || !data?.connection) {
+        throw new Error(data?.message || data?.error || "Resposta inesperada do servidor");
+      }
+
+      toast({
+        title: "Conta conectada com sucesso!",
+        description: `${data.connection.display_phone_number || data.connection.business_name || "Número"} vinculado e webhook configurado automaticamente.`,
+      });
+
+      onConnectionSaved({
+        id: data.connection.id,
+        waba_id: data.connection.waba_id || "",
+        phone_number_id: data.connection.phone_number_id || "",
+        business_name: data.connection.business_name,
+        display_phone_number: data.connection.display_phone_number,
+        access_token: data.connection.access_token || "",
+        status: data.connection.status,
+        nickname: data.connection.nickname || null,
+      });
+    } catch (err: any) {
+      console.error("[MetaAccountSetup] Exchange error:", err);
+      setError(err.message || "Erro ao conectar. Tente novamente.");
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const handleFacebookLogin = () => {
     if (!window.FB || !user) return;
+
+    const redirectUri = getRedirectUri();
 
     setConnecting(true);
     setError(null);
@@ -87,7 +134,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, isAddingExtra }: MetaAccou
       window.FB.login(
         (response: any) => {
           clearTimeout(safetyTimeout);
-          
+
           if (response.authResponse?.code) {
             exchangeCode(response.authResponse.code);
           } else {
@@ -103,6 +150,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, isAddingExtra }: MetaAccou
           scope: "whatsapp_business_management,whatsapp_business_messaging",
           response_type: "code",
           override_default_response_type: true,
+          redirect_uri: redirectUri,
           extras: {
             setup: {
               solutionID: META_APP_ID,
@@ -110,49 +158,10 @@ export const MetaAccountSetup = ({ onConnectionSaved, isAddingExtra }: MetaAccou
           },
         }
       );
-    } catch (err) {
+    } catch {
       clearTimeout(safetyTimeout);
       setConnecting(false);
       setError("Erro ao abrir janela do Facebook. Verifique se popups estão permitidos.");
-    }
-  }, [user]);
-
-  const exchangeCode = async (code: string) => {
-    if (!user) return;
-
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke("meta-embedded-signup", {
-        body: { code, user_id: user.id, redirect_uri: window.location.origin },
-      });
-
-      if (fnError) throw new Error(fnError.message || "Erro ao processar conexão");
-
-      if (data?.error) throw new Error(data.error);
-
-      if (data?.success && data?.connection) {
-        toast({
-          title: "Conta conectada com sucesso!",
-          description: `${data.connection.display_phone_number || data.connection.business_name || "Número"} vinculado e webhook configurado automaticamente.`,
-        });
-
-        onConnectionSaved({
-          id: data.connection.id,
-          waba_id: data.connection.waba_id || "",
-          phone_number_id: data.connection.phone_number_id || "",
-          business_name: data.connection.business_name,
-          display_phone_number: data.connection.display_phone_number,
-          access_token: "", // Don't expose token
-          status: data.connection.status,
-          nickname: null,
-        });
-      } else {
-        throw new Error("Resposta inesperada do servidor");
-      }
-    } catch (err: any) {
-      console.error("[MetaAccountSetup] Exchange error:", err);
-      setError(err.message || "Erro ao conectar. Tente novamente.");
-    } finally {
-      setConnecting(false);
     }
   };
 
