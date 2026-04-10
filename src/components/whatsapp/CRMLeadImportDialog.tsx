@@ -54,7 +54,7 @@ interface ScoreData {
   status_bucket: string;
 }
 
-type ScoreFilter = "all" | "very_hot" | "hot" | "engaged" | "cold" | "dropping";
+type ScoreFilter = "all" | "ready" | "high" | "engaged" | "low" | "cold";
 
 interface CRMLeadImportDialogProps {
   open: boolean;
@@ -205,13 +205,13 @@ export const CRMLeadImportDialog = ({
     if (scoreFilter !== "all") {
       result = result.filter((l) => {
         const score = getLeadScore(l);
-        
-        if (!score) return scoreFilter === "cold";
+        const total = score?.score_total ?? 0;
         switch (scoreFilter) {
-          case "very_hot": return score.score_total >= 650;
-          case "hot": return score.score_total >= 350 && score.score_total < 650;
-          case "engaged": return score.score_total >= 150 && score.score_total < 350;
-          case "cold": return score.score_total < 150;
+          case "ready": return total >= 801;
+          case "high": return total >= 601 && total <= 800;
+          case "engaged": return total >= 401 && total <= 600;
+          case "low": return total >= 201 && total <= 400;
+          case "cold": return total <= 200;
           default: return true;
         }
       });
