@@ -865,6 +865,41 @@ export const LeadSelector = ({
           </Button>
         </div>
       )}
+
+      {/* CRM Import Dialog */}
+      <CRMLeadImportDialog
+        open={crmDialogOpen}
+        onOpenChange={setCrmDialogOpen}
+        onImportLeads={(imported) => {
+          const newLeads: Lead[] = imported.map((l) => {
+            const validated = normalizeBrazilianMobilePhone(l.phone);
+            return {
+              name: l.name,
+              phone: validated.isValid ? validated.normalized : l.phone,
+              category: '',
+              address: '',
+              city: '',
+              website: '',
+              rating: 0,
+              reviewCount: 0,
+              mapsLink: '',
+            };
+          }).filter((l) => {
+            const v = normalizeBrazilianMobilePhone(l.phone);
+            return v.isValid;
+          });
+
+          const existing = new Set(selectedLeads.map((l) => l.phone));
+          const merged = [...selectedLeads, ...newLeads.filter((l) => !existing.has(l.phone))];
+          onLeadsChange(merged);
+          setImportStats({
+            valid: merged.length,
+            invalid: 0,
+            landlines: 0,
+            international: 0,
+          });
+        }}
+      />
     </div>
   );
 };
