@@ -93,6 +93,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
 
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ success: number; failed: number } | null>(null);
+  const [crmDialogOpen, setCrmDialogOpen] = useState(false);
 
   // Fetch templates when connection changes (and connection is selected)
   useEffect(() => {
