@@ -508,9 +508,7 @@ const StageCRM = ({ progress }: { progress: number }) => {
 
   const columns = [
     {
-      title: "Novo",
-      color: "bg-info",
-      accent: "text-info",
+      title: "Novo", color: "bg-info", accent: "text-info",
       leads: [
         { name: "Dental Prime", score: 320, value: "R$ 3.2k" },
         ...(leadCreated && !dragComplete ? [createdLead] : []),
@@ -518,9 +516,7 @@ const StageCRM = ({ progress }: { progress: number }) => {
       showAdd: true,
     },
     {
-      title: "Qualificado",
-      color: "bg-warning",
-      accent: "text-warning",
+      title: "Qualificado", color: "bg-warning", accent: "text-warning",
       leads: [
         { name: "Barbearia VIP", score: 580, value: "R$ 4.8k" },
         { name: "Pet Shop Rex", score: 620, value: "R$ 5.1k" },
@@ -529,18 +525,14 @@ const StageCRM = ({ progress }: { progress: number }) => {
       highlight: progress > 0.44,
     },
     {
-      title: "Proposta",
-      color: "bg-primary",
-      accent: "text-primary",
+      title: "Proposta", color: "bg-primary", accent: "text-primary",
       leads: [
         { name: "Pizzaria Bella", score: 710, value: "R$ 7.4k" },
         { name: "Clínica Orto Mais", score: 760, value: "R$ 9.2k" },
       ],
     },
     {
-      title: "Fechado",
-      color: "bg-success",
-      accent: "text-success",
+      title: "Fechado", color: "bg-success", accent: "text-success",
       leads: [
         { name: "CrossFit Box SP", score: 847, value: "R$ 5.964" },
         { name: "Arena Black", score: 902, value: "R$ 8.400" },
@@ -552,38 +544,42 @@ const StageCRM = ({ progress }: { progress: number }) => {
   const cursorY = progress < 0.18 ? 10 : progress < 0.38 ? 42 : 42 - dragProgress * 4;
 
   return (
-    <div className="flex h-full flex-col gap-2.5">
-      <div className="relative flex-1 min-h-0">
-        <div className="grid h-full grid-cols-4 gap-2">
-          {columns.map((col, i) => (
+    <div className="flex h-full flex-col gap-2 overflow-hidden">
+      <div className="relative flex-1 min-h-0 overflow-hidden">
+        <div className="grid h-full grid-cols-4 gap-1.5">
+          {columns.map((col, ci) => (
             <div
-              key={i}
-              className={`rounded-xl border bg-secondary/35 p-2 flex flex-col min-h-0 ${col.highlight ? 'border-warning/50 ring-1 ring-warning/20 shadow-lg shadow-warning/10' : 'border-border/40'}`}
+              key={ci}
+              className={`rounded-lg border bg-secondary/35 p-1.5 flex flex-col min-h-0 overflow-hidden ${col.highlight ? 'border-warning/50 ring-1 ring-warning/20' : 'border-border/40'}`}
               style={{
-                opacity: progress > i * 0.06 ? 1 : 0,
-                transform: `translateY(${progress > i * 0.06 ? 0 : 8}px)`,
+                opacity: progress > ci * 0.06 ? 1 : 0,
+                transform: `translateY(${progress > ci * 0.06 ? 0 : 8}px)`,
                 transition: 'all 0.45s ease-out',
               }}
             >
-              <div className="flex items-center gap-1.5 mb-2">
+              <div className="flex items-center gap-1 mb-1.5 shrink-0">
                 <div className={`w-1.5 h-1.5 rounded-full ${col.color}`} />
-                <span className="text-[9px] font-semibold text-foreground truncate">{col.title}</span>
-                <span className="text-[8px] text-muted-foreground ml-auto">{col.leads.length}</span>
+                <span className="text-[8px] font-semibold text-foreground truncate">{col.title}</span>
+                <span className="text-[7px] text-muted-foreground ml-auto">{col.leads.length}</span>
                 {col.showAdd && (
-                  <div className="relative flex h-5 w-5 items-center justify-center rounded-md border border-border/50 bg-background/70">
-                    <Plus size={10} className="text-primary" />
-                    {clickPulse && <span className="absolute inset-0 rounded-md border border-primary/40 animate-ping" />}
+                  <div className="relative flex h-4 w-4 items-center justify-center rounded border border-border/50 bg-background/70">
+                    <Plus size={8} className="text-primary" />
+                    {clickPulse && <span className="absolute inset-0 rounded border border-primary/40 animate-ping" />}
                   </div>
                 )}
               </div>
 
-              <div className="space-y-1.5 flex-1 min-h-0">
-                {col.leads.map((lead, leadIndex) => (
-                  <div key={`${lead.name}-${leadIndex}`} className="rounded-lg border border-border/40 bg-background/75 p-1.5 shadow-sm" style={{ animation: progress > 0.16 ? 'fadeSlideUp 0.3s ease-out' : 'none' }}>
+              <div className="space-y-1 flex-1 min-h-0 overflow-hidden">
+                {col.leads.map((lead, li) => (
+                  <div
+                    key={`${lead.name}-${li}`}
+                    className="rounded border border-border/40 bg-background/75 p-1.5"
+                    style={{ animation: progress > 0.16 ? 'fadeSlideUp 0.3s ease-out' : 'none' }}
+                  >
                     <p className="font-medium text-[8px] text-foreground truncate">{lead.name}</p>
-                    <div className="mt-1 flex items-center justify-between gap-1">
-                      <span className={`text-[8px] font-semibold ${col.accent}`}>Score {lead.score}</span>
-                      <span className="text-[8px] text-muted-foreground truncate">{lead.value}</span>
+                    <div className="mt-0.5 flex items-center justify-between gap-1">
+                      <span className={`text-[7px] font-semibold ${col.accent}`}>{lead.score}</span>
+                      <span className="text-[7px] text-muted-foreground truncate">{lead.value}</span>
                     </div>
                   </div>
                 ))}
@@ -602,12 +598,12 @@ const StageCRM = ({ progress }: { progress: number }) => {
               transition: 'left 0.14s linear, top 0.14s linear, transform 0.14s linear',
             }}
           >
-            <MousePointer2 size={16} className="drop-shadow-md" />
+            <MousePointer2 size={14} className="drop-shadow-md" />
           </div>
 
           {dragActive && (
             <div
-              className="absolute z-20 w-[23%] rounded-lg border border-primary/20 bg-background/95 p-1.5 shadow-lg shadow-primary/10"
+              className="absolute z-20 w-[22%] rounded border border-primary/20 bg-background/95 p-1.5 shadow-lg shadow-primary/10"
               style={{
                 left: `${10 + dragProgress * 25}%`,
                 top: `${38 - dragProgress * 4}%`,
@@ -616,20 +612,20 @@ const StageCRM = ({ progress }: { progress: number }) => {
               }}
             >
               <p className="font-medium text-[8px] text-foreground truncate">{createdLead.name}</p>
-              <div className="mt-1 flex items-center justify-between gap-1">
-                <span className="text-[8px] font-semibold text-primary">Score {createdLead.score}</span>
-                <span className="text-[8px] text-muted-foreground">{createdLead.value}</span>
+              <div className="mt-0.5 flex items-center justify-between gap-1">
+                <span className="text-[7px] font-semibold text-primary">{createdLead.score}</span>
+                <span className="text-[7px] text-muted-foreground">{createdLead.value}</span>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="bg-secondary/30 rounded-xl p-2.5 flex items-center gap-2 border border-border/40">
-        <TrendingUp size={12} className="text-success" />
+      <div className="bg-secondary/30 rounded-lg p-2 flex items-center gap-2 border border-border/40 shrink-0">
+        <TrendingUp size={11} className="text-success" />
         <div className="min-w-0">
-          <p className="text-[10px] font-medium text-foreground">Lead criado e movido automaticamente</p>
-          <p className="text-[10px] text-muted-foreground truncate">Studio Pilates One entrou no CRM e avançou para Qualificado com novo score</p>
+          <p className="text-[9px] font-medium text-foreground">Lead criado e movido automaticamente</p>
+          <p className="text-[9px] text-muted-foreground truncate">Studio Pilates One → Qualificado · Score 684</p>
         </div>
       </div>
     </div>
