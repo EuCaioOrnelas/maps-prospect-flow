@@ -135,6 +135,17 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
     abandoned: executions.filter((e) => e.status === "abandoned").length,
   }), [executions]);
 
+  // Collect all unique variable keys from collected_data across all executions
+  const collectedDataKeys = useMemo(() => {
+    const keys = new Set<string>();
+    executions.forEach((e) => {
+      if (e.collected_data && typeof e.collected_data === "object") {
+        Object.keys(e.collected_data).forEach((k) => keys.add(k));
+      }
+    });
+    return Array.from(keys);
+  }, [executions]);
+
   const activeFiltersCount = [statusFilter, dateFrom, dateTo].filter(Boolean).length;
 
   const clearFilters = () => {
@@ -145,11 +156,16 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
     setCurrentPage(1);
   };
 
-  const getNodePath = (history: any[]) => {
-    if (!Array.isArray(history) || history.length === 0) return "—";
-    return history
-      .map((h: any) => h.node_name || h.node_id || "?")
-      .join(" → ");
+  const getStoppedAt = (exec: FlowExecution) => {
+    if (exec.status === "completed") return exec.exit_node_name || "Finalizado";
+    if (exec.exit_node_name) return exec.exit_node_name;
+    if (exec.current_node_name) return exec.current_node_name;
+    // Fallback: last node in history
+    if (Array.isArray(exec.node_history) && exec.node_history.length > 0) {
+      const last = exec.node_history[exec.node_history.length - 1];
+      return last?.node_name || last?.node_id || "—";
+    }
+    return "—";
   };
 
   const getLastResponse = (history: any[]) => {
@@ -166,20 +182,22 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
       return;
     }
 
-    const data = filtered.map((e) => ({
-      "Telefone": e.lead_phone,
-      "Nome": e.lead_name || "",
-      "Status": STATUS_MAP[e.status]?.label || e.status,
-      "Nó Atual": e.current_node_name || "",
-      "Último Nó": e.exit_node_name || "",
-      "Caminho": getNodePath(e.node_history),
-      "Última Resposta": getLastResponse(e.node_history),
-      "Dados Coletados": Object.entries(e.collected_data || {})
-        .map(([k, v]) => `${k}: ${v}`)
-        .join("; "),
-      "Início": e.started_at ? format(new Date(e.started_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "",
-      "Fim": e.completed_at ? format(new Date(e.completed_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "",
-    }));
+    const data = filtered.map((e) => {
+      const row: Record<string, string> = {
+        "Entrada": e.started_at ? format(new Date(e.started_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "",
+        "Telefone": e.lead_phone,
+        "Nome": e.lead_name || "",
+        "Status": STATUS_MAP[e.status]?.label || e.status,
+        "Parou em": getStoppedAt(e),
+        "Última Resposta": getLastResponse(e.node_history),
+      };
+      // Dynamic columns for each collected variable
+      collectedDataKeys.forEach((key) => {
+        row[key] = e.collected_data?.[key] != null ? String(e.collected_data[key]) : "";
+      });
+      row["Fim"] = e.completed_at ? format(new Date(e.completed_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "";
+      return row;
+    });
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -355,19 +373,23 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[130px]">Entrada</TableHead>
                   <TableHead className="w-[140px]">Telefone</TableHead>
                   <TableHead className="w-[140px]">Nome</TableHead>
                   <TableHead className="w-[110px]">Status</TableHead>
                   <TableHead className="w-[150px]">Parou em</TableHead>
-                  <TableHead>Caminho percorrido</TableHead>
                   <TableHead className="w-[180px]">Última resposta</TableHead>
-                  <TableHead className="w-[150px]">Dados coletados</TableHead>
-                  <TableHead className="w-[130px]">Entrada</TableHead>
+                  {collectedDataKeys.map((key) => (
+                    <TableHead key={key} className="w-[140px] capitalize">{key}</TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginated.map((exec) => (
                   <TableRow key={exec.id}>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {format(new Date(exec.started_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{exec.lead_phone}</TableCell>
                     <TableCell className="text-sm">{exec.lead_name || "—"}</TableCell>
                     <TableCell>
@@ -376,22 +398,16 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {exec.exit_node_name || exec.current_node_name || "—"}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-[300px] truncate" title={getNodePath(exec.node_history)}>
-                      {getNodePath(exec.node_history)}
+                      {getStoppedAt(exec)}
                     </TableCell>
                     <TableCell className="text-xs max-w-[180px] truncate" title={getLastResponse(exec.node_history)}>
                       {getLastResponse(exec.node_history)}
                     </TableCell>
-                    <TableCell className="text-xs max-w-[150px] truncate">
-                      {Object.keys(exec.collected_data || {}).length > 0
-                        ? Object.entries(exec.collected_data).map(([k, v]) => `${k}: ${v}`).join(", ")
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {format(new Date(exec.started_at), "dd/MM/yy HH:mm", { locale: ptBR })}
-                    </TableCell>
+                    {collectedDataKeys.map((key) => (
+                      <TableCell key={key} className="text-xs max-w-[140px] truncate">
+                        {exec.collected_data?.[key] != null ? String(exec.collected_data[key]) : "—"}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>
