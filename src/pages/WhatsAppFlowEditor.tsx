@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
-  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail, Database,
+  HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail, Database, BarChart3,
 } from "lucide-react";
 import gmailIcon from "@/assets/icons/gmail-sm.png";
 import sheetsIcon from "@/assets/icons/google-sheets-sm.png";
