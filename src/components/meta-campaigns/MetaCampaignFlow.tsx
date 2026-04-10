@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CRMLeadImportDialog } from "@/components/whatsapp/CRMLeadImportDialog";
 import type { WabaConnection } from "@/pages/MetaCampaigns";
 
 interface MetaTemplate {
