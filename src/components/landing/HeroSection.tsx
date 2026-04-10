@@ -825,15 +825,20 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 </div>
 
                 <div className="bg-background/50 rounded-lg sm:rounded-xl p-3 sm:p-4">
-                  {/* Stage indicator bar */}
+                  {/* Stage indicator bar — clickable */}
                   <div className="flex items-center gap-1 mb-3">
                     {stages.map((s, i) => (
-                      <div key={i} className="flex-1 h-1 rounded-full overflow-hidden bg-secondary/60">
+                      <button
+                        key={i}
+                        className="flex-1 h-1.5 rounded-full overflow-hidden bg-secondary/60 cursor-pointer hover:bg-secondary/80 transition-colors"
+                        onClick={() => handleStageClick(i)}
+                        title={s.label}
+                      >
                         <div
-                          className={`h-full rounded-full ${i <= currentStage ? 'bg-primary' : 'bg-transparent'}`}
+                          className={`h-full rounded-full transition-[width] duration-150 ${i <= currentStage ? 'bg-primary' : 'bg-transparent'}`}
                           style={{ width: i < currentStage ? '100%' : i === currentStage ? `${stageProgress * 100}%` : '0%' }}
                         />
-                      </div>
+                      </button>
                     ))}
                   </div>
 
