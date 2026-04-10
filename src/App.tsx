@@ -74,6 +74,7 @@ const Chat = lazyWithRetry(() => import("./pages/Chat"), "Chat");
 const WhatsAppAutomations = lazyWithRetry(() => import("./pages/WhatsAppAutomations"), "WhatsAppAutomations");
 const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEditor"), "WhatsAppFlowEditor");
 const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "CreateFlowAI");
+const SalesPage = lazyWithRetry(() => import("./pages/SalesPage"), "SalesPage");
 
 const queryClient = new QueryClient({
   defaultOptions: {
