@@ -702,7 +702,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
-  const animationSnapshotRef = useRef({ stage: 0, progress: 0 });
+  const animationStartRef = useRef<number>(0);
+  const manualJumpRef = useRef<number | null>(null);
 
   useEffect(() => {
     let ticking = false;
@@ -719,22 +720,27 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
     return () => obs.disconnect();
   }, []);
 
-  useEffect(() => {
-    animationSnapshotRef.current = { stage: currentStage, progress: stageProgress };
-  }, [currentStage, stageProgress]);
+  const handleStageClick = (index: number) => {
+    manualJumpRef.current = index;
+  };
 
   useEffect(() => {
     if (!isAnimating) return;
 
     const totalDuration = STAGE_DURATION * stages.length;
-    const offset =
-      animationSnapshotRef.current.stage * STAGE_DURATION +
-      animationSnapshotRef.current.progress * STAGE_DURATION;
-    const startTime = performance.now() - offset;
+    if (!animationStartRef.current) {
+      animationStartRef.current = performance.now();
+    }
     let frameId = 0;
 
     const update = (now: number) => {
-      const elapsed = now - startTime;
+      if (manualJumpRef.current !== null) {
+        const jumpTo = manualJumpRef.current;
+        manualJumpRef.current = null;
+        animationStartRef.current = now - jumpTo * STAGE_DURATION;
+      }
+
+      const elapsed = now - animationStartRef.current;
       const cycleElapsed = ((elapsed % totalDuration) + totalDuration) % totalDuration;
       const nextStage = Math.floor(cycleElapsed / STAGE_DURATION);
       const nextProgress = (cycleElapsed % STAGE_DURATION) / STAGE_DURATION;
