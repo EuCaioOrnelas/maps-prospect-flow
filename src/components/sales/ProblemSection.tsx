@@ -1,13 +1,12 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
-import { UserX, MessageSquareOff, AlertTriangle, BarChart3, TrendingDown } from "lucide-react";
+import { Clock, UserX, MessageSquareOff, AlertTriangle, BarChart3, TrendingDown } from "lucide-react";
 import { BentoGridShowcase } from "@/components/ui/bento-product-features";
-import clock3d from "@/assets/clock-3d.png";
 
 export const ProblemSection = () => {
   const { ref, isVisible } = useScrollAnimation();
 
-  const cardBase = "rounded-2xl border border-border bg-card/50 transition-all duration-300 p-5 sm:p-6 h-full flex flex-col";
+  const cardBase = "rounded-2xl border border-border bg-card/50 transition-all duration-300 p-4 sm:p-5 h-full flex flex-col";
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="py-20 sm:py-32 w-full relative">
@@ -32,18 +31,19 @@ export const ProblemSection = () => {
 
         {isVisible && (
           <BentoGridShowcase
+            className="auto-rows-[minmax(140px,auto)]"
             integration={
               <div className={cardBase}>
-                <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center mb-4">
-                  <MessageSquareOff size={20} className="text-destructive" />
+                <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
+                  <MessageSquareOff size={18} className="text-destructive" />
                 </div>
-                <h3 className="font-semibold text-foreground text-base mb-1.5">Mensagens genéricas</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-6">
-                  Abordagens iguais para todos. Sem contexto, sem personalização, sem resultado. Sua equipe gasta energia em tarefas repetitivas que poderiam ser automatizadas.
+                <h3 className="font-semibold text-foreground text-sm mb-1">Mensagens genéricas</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                  Abordagens iguais para todos. Sem contexto, sem personalização, sem resultado.
                 </p>
                 <div className="mt-auto">
-                  <span className="text-4xl font-bold text-destructive/80 tracking-tight">2%</span>
-                  <p className="text-[11px] text-muted-foreground mt-1">taxa de resposta média</p>
+                  <span className="text-3xl font-bold text-destructive/80 tracking-tight">2%</span>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">taxa de resposta média</p>
                 </div>
               </div>
             }
@@ -58,26 +58,25 @@ export const ProblemSection = () => {
                     <UserX size={16} className="text-destructive" />
                   </div>
                 </div>
-                <div className="mt-auto pt-3">
-                  <span className="text-3xl font-bold text-destructive/80 tracking-tight">82%</span>
+                <div className="mt-auto pt-2">
+                  <span className="text-2xl font-bold text-destructive/80 tracking-tight">82%</span>
                   <p className="text-[11px] text-muted-foreground mt-0.5">dos leads são descartados</p>
                 </div>
               </div>
             }
             statistic={
-              <div className={`${cardBase} relative overflow-hidden`}>
-                {/* 3D clock image */}
-                <img
-                  src={clock3d}
-                  alt=""
-                  className="absolute -right-6 -top-4 w-28 h-28 opacity-20 pointer-events-none"
-                />
-                <div className="relative z-10">
-                  <h3 className="font-semibold text-foreground text-sm mb-0.5">Prospecção manual</h3>
-                  <p className="text-xs text-muted-foreground">Horas perdidas sem critério</p>
+              <div className={cardBase}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-semibold text-foreground text-sm mb-0.5">Prospecção manual</h3>
+                    <p className="text-xs text-muted-foreground">Horas perdidas sem critério</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                    <Clock size={16} className="text-destructive" />
+                  </div>
                 </div>
-                <div className="mt-auto pt-3 relative z-10">
-                  <span className="text-3xl font-bold text-destructive/80 tracking-tight">3h+</span>
+                <div className="mt-auto pt-2">
+                  <span className="text-2xl font-bold text-destructive/80 tracking-tight">3h+</span>
                   <p className="text-[11px] text-muted-foreground mt-0.5">por dia em busca manual</p>
                 </div>
               </div>
@@ -93,27 +92,27 @@ export const ProblemSection = () => {
                     <AlertTriangle size={16} className="text-destructive" />
                   </div>
                 </div>
-                <div className="mt-auto pt-3">
-                  <span className="text-3xl font-bold text-destructive/80 tracking-tight">67%</span>
+                <div className="mt-auto pt-2">
+                  <span className="text-2xl font-bold text-destructive/80 tracking-tight">67%</span>
                   <p className="text-[11px] text-muted-foreground mt-0.5">dos deals morrem sem follow-up</p>
                 </div>
               </div>
             }
             productivity={
               <div className={cardBase}>
-                <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
+                <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center mb-2">
                   <BarChart3 size={16} className="text-destructive" />
                 </div>
                 <h3 className="font-semibold text-foreground text-sm mb-0.5">Funil desorganizado</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Sem visibilidade do pipeline. Sem dados. Sem previsibilidade de receita.
+                  Sem visibilidade do pipeline. Sem dados. Sem previsibilidade.
                 </p>
               </div>
             }
             shortcuts={
-              <div className={`${cardBase} flex-row items-center gap-6`}>
+              <div className={`${cardBase} flex-row items-center gap-4`}>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2.5 mb-1.5">
+                  <div className="flex items-center gap-2 mb-1">
                     <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
                       <TrendingDown size={16} className="text-destructive" />
                     </div>
@@ -123,9 +122,9 @@ export const ProblemSection = () => {
                     Esforço alto com retorno mínimo. Operação que não justifica o investimento.
                   </p>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <span className="text-4xl font-bold text-destructive/80 tracking-tight">1.4%</span>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">conversão média B2B</p>
+                <div className="text-right flex-shrink-0 pl-4 border-l border-border">
+                  <span className="text-3xl font-bold text-destructive/80 tracking-tight">0,5%</span>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 whitespace-nowrap">a cada 200 prospecções, 1 venda</p>
                 </div>
               </div>
             }
