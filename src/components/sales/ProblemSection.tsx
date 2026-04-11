@@ -47,42 +47,58 @@ export const ProblemSection = () => {
                 </div>
                 {/* Realistic phone mockup - large, cut at bottom */}
                 <div className="mt-auto relative z-10 flex justify-center">
-                  <div className="w-48 relative">
-                    {/* Phone frame */}
-                    <div className="rounded-t-[24px] border-[3px] border-b-0 border-muted-foreground/20 bg-[#0b141a] overflow-hidden shadow-2xl">
-                      {/* Status bar */}
-                      <div className="flex items-center justify-between px-4 py-1.5 bg-[#1f2c34]">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-5 h-5 rounded-full bg-muted-foreground/30" />
-                          <span className="text-[9px] text-white/70 font-medium">Lead</span>
-                        </div>
-                        <div className="flex gap-1">
-                          <div className="w-3 h-3 rounded-full bg-muted-foreground/20" />
-                          <div className="w-3 h-3 rounded-full bg-muted-foreground/20" />
+                  <div className="w-72 relative">
+                    {/* Phone outer frame */}
+                    <div className="rounded-t-[32px] border-[3px] border-b-0 border-muted-foreground/25 bg-[#f7f8fa] overflow-hidden shadow-[0_-8px_50px_rgba(0,0,0,0.12)]">
+                      {/* Dynamic Island / Notch */}
+                      <div className="flex justify-center py-2 bg-white">
+                        <div className="w-24 h-5 rounded-full bg-black relative flex items-center justify-end pr-2.5">
+                          <div className="w-3 h-3 rounded-full bg-[#1c1c1e] border-2 border-[#2a2a2e]" />
                         </div>
                       </div>
-                      {/* WhatsApp-like background */}
-                      <div className="bg-[#0b141a] p-2.5 space-y-2 min-h-[120px] relative">
-                        {/* WA pattern overlay */}
-                        <div className="absolute inset-0 opacity-[0.04]" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'200\' height=\'200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'p\' width=\'40\' height=\'40\' patternUnits=\'userSpaceOnUse\'%3E%3Ccircle cx=\'20\' cy=\'20\' r=\'1.5\' fill=\'white\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=\'200\' height=\'200\' fill=\'url(%23p)\'/%3E%3C/svg%3E")'}} />
-                        {/* Sent messages (right aligned - green bubbles) */}
+                      {/* WhatsApp header bar */}
+                      <div className="flex items-center gap-2.5 px-3 py-2 bg-[#075e54]">
+                        <div className="w-2 h-3.5 border-l-2 border-white/70 rotate-180" />
+                        <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                          <span className="text-[8px] text-white font-bold">L</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[9px] text-white font-semibold leading-none">Lead</p>
+                          <p className="text-[7px] text-white/50 mt-0.5">online</p>
+                        </div>
+                        <div className="flex gap-3">
+                          <div className="w-3.5 h-3.5 rounded-full border border-white/40" />
+                          <div className="w-3.5 h-3.5 rounded-full border border-white/40" />
+                        </div>
+                      </div>
+                      {/* Chat area - light WhatsApp background */}
+                      <div className="bg-[#efeae2] p-3 space-y-2.5 min-h-[140px] relative">
+                        {/* WA wallpaper pattern */}
+                        <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'300\' height=\'300\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'p\' width=\'50\' height=\'50\' patternUnits=\'userSpaceOnUse\'%3E%3Ccircle cx=\'10\' cy=\'10\' r=\'1\' fill=\'%23000\'/%3E%3Ccircle cx=\'35\' cy=\'35\' r=\'1.5\' fill=\'%23000\'/%3E%3Ccircle cx=\'25\' cy=\'15\' r=\'0.8\' fill=\'%23000\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=\'300\' height=\'300\' fill=\'url(%23p)\'/%3E%3C/svg%3E")'}} />
+                        {/* Sent messages (right - green bubbles) */}
                         <div className="flex justify-end relative z-10">
-                          <div className="rounded-lg rounded-tr-sm bg-[#005c4b] px-2.5 py-1.5 max-w-[80%]">
-                            <p className="text-[8px] text-white/90 leading-relaxed">Olá! Temos uma oferta especial para sua empresa...</p>
-                            <span className="text-[6px] text-white/40 float-right mt-0.5">10:30</span>
+                          <div className="rounded-xl rounded-tr-sm bg-[#d9fdd3] px-3 py-2 max-w-[78%] shadow-sm">
+                            <p className="text-[9px] text-[#111b21] leading-relaxed">Olá! Temos uma oferta especial para sua empresa...</p>
+                            <div className="flex items-center justify-end gap-1 mt-0.5">
+                              <span className="text-[7px] text-[#667781]">10:30</span>
+                              <span className="text-[7px] text-[#53bdeb]">✓✓</span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex justify-end relative z-10">
-                          <div className="rounded-lg rounded-tr-sm bg-[#005c4b] px-2.5 py-1.5 max-w-[80%]">
-                            <p className="text-[8px] text-white/90 leading-relaxed">Posso te apresentar nossos serviços?</p>
-                            <span className="text-[6px] text-white/40 float-right mt-0.5">10:31</span>
+                          <div className="rounded-xl rounded-tr-sm bg-[#d9fdd3] px-3 py-2 max-w-[78%] shadow-sm">
+                            <p className="text-[9px] text-[#111b21] leading-relaxed">Posso te apresentar nossos serviços?</p>
+                            <div className="flex items-center justify-end gap-1 mt-0.5">
+                              <span className="text-[7px] text-[#667781]">10:31</span>
+                              <span className="text-[7px] text-[#53bdeb]">✓✓</span>
+                            </div>
                           </div>
                         </div>
-                        {/* Reply from lead - spilling out */}
+                        {/* Reply from lead (left - white bubble) */}
                         <div className="flex justify-start relative z-10">
-                          <div className="rounded-lg rounded-tl-sm bg-[#1f2c34] px-2.5 py-1.5 max-w-[85%] border border-white/5">
-                            <p className="text-[8px] text-white/80 leading-relaxed">Não entendi o motivo do contato 🤔</p>
-                            <span className="text-[6px] text-white/30 float-right mt-0.5">10:45</span>
+                          <div className="rounded-xl rounded-tl-sm bg-white px-3 py-2 max-w-[82%] shadow-sm">
+                            <p className="text-[9px] text-[#111b21] leading-relaxed">Não entendi o motivo do contato 🤔</p>
+                            <span className="text-[7px] text-[#667781] float-right mt-0.5">10:45</span>
                           </div>
                         </div>
                       </div>
@@ -97,7 +113,7 @@ export const ProblemSection = () => {
                 <div className="flex items-start justify-between relative z-10">
                   <div>
                     <h3 className="font-semibold text-foreground text-sm mb-0.5">Leads frios</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">Contatos sem aderência ao seu produto. Listas compradas, dados desatualizados e zero qualificação prévia.</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">Listas compradas, dados desatualizados e zero qualificação prévia.</p>
                   </div>
                   <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0 ml-3">
                     <UserX size={16} className="text-destructive" />
@@ -133,7 +149,7 @@ export const ProblemSection = () => {
                 <div className="flex items-start justify-between relative z-10">
                   <div>
                     <h3 className="font-semibold text-foreground text-sm mb-0.5">Follow-up inconsistente</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">Sem cadência definida. Leads esfriam, oportunidades morrem e o time perde vendas por falta de acompanhamento.</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">Leads esfriam e oportunidades morrem por falta de acompanhamento.</p>
                   </div>
                   <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0 ml-3">
                     <AlertTriangle size={16} className="text-destructive" />
