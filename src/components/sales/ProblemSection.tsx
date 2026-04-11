@@ -58,7 +58,7 @@ export const ProblemSection = () => {
                   <img
                     src={whatsappPhoneMockup}
                     alt="Ilustração de conversa no WhatsApp"
-                    className="absolute top-0 left-1/2 w-[146%] sm:w-[148%] min-w-[360px] max-w-none -translate-x-1/2 drop-shadow-2xl"
+                    className="absolute left-[54%] top-[6%] w-[146%] sm:w-[148%] min-w-[360px] max-w-none -translate-x-1/2 drop-shadow-2xl"
                   />
                 </div>
               </div>
