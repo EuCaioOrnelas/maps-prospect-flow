@@ -2,7 +2,7 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
 import { Clock, UserX, MessageSquareOff, AlertTriangle, BarChart3, TrendingDown } from "lucide-react";
 import { BentoGridShowcase } from "@/components/ui/bento-product-features";
-import whatsappPhoneMockup from "@/assets/whatsapp-phone-mockup.png";
+import whatsappPhoneMockup from "@/assets/whatsapp-phone-mockup-v2.png";
 
 export const ProblemSection = () => {
   const { ref, isVisible } = useScrollAnimation();
@@ -44,7 +44,7 @@ export const ProblemSection = () => {
                 <div className={cardGlowSecondary} />
                 <div className="absolute bottom-[-5rem] left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-destructive/14 blur-[78px] pointer-events-none opacity-100" />
 
-                <div className="relative z-10 p-3 sm:p-3.5 pb-24 sm:pb-28">
+                <div className="relative z-10 p-3 sm:p-3.5 pb-28 sm:pb-32">
                   <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
                     <MessageSquareOff size={18} className="text-destructive" />
                   </div>
@@ -54,11 +54,11 @@ export const ProblemSection = () => {
                   </p>
                 </div>
 
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-[64%] items-end justify-center overflow-hidden">
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[68%] overflow-hidden">
                   <img
                     src={whatsappPhoneMockup}
                     alt="Ilustração de conversa no WhatsApp"
-                    className="w-[150%] sm:w-[142%] min-w-[340px] max-w-none translate-y-[14%] object-contain drop-shadow-2xl"
+                    className="absolute bottom-[-16%] left-1/2 w-[178%] min-w-[430px] max-w-none -translate-x-1/2 object-contain drop-shadow-2xl"
                   />
                 </div>
               </div>
