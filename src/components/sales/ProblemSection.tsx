@@ -8,7 +8,7 @@ export const ProblemSection = () => {
   const { ref, isVisible } = useScrollAnimation();
 
   const cardBase =
-    "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-300 p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg";
+    "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-md";
   const cardGlowMain =
     "absolute -bottom-16 -right-16 w-44 h-44 rounded-full bg-destructive/14 blur-[72px] pointer-events-none opacity-100";
   const cardGlowSecondary =
@@ -58,7 +58,7 @@ export const ProblemSection = () => {
                   <img
                     src={whatsappPhoneMockup}
                     alt="Ilustração de conversa no WhatsApp"
-                    className="absolute left-[57%] top-[11%] w-[146%] sm:w-[148%] min-w-[360px] max-w-none -translate-x-1/2 drop-shadow-2xl"
+                    className="absolute left-[62%] top-[11%] w-[146%] sm:w-[148%] min-w-[360px] max-w-none -translate-x-1/2 drop-shadow-2xl"
                   />
                 </div>
               </div>
