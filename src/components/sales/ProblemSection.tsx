@@ -54,11 +54,11 @@ export const ProblemSection = () => {
                   </p>
                 </div>
 
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[68%] overflow-hidden">
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[61%] sm:h-[62%] overflow-hidden">
                   <img
                     src={whatsappPhoneMockup}
                     alt="Ilustração de conversa no WhatsApp"
-                    className="absolute bottom-[-16%] left-1/2 w-[178%] min-w-[430px] max-w-none -translate-x-1/2 object-contain drop-shadow-2xl"
+                    className="absolute top-0 left-1/2 w-[146%] sm:w-[148%] min-w-[360px] max-w-none -translate-x-1/2 drop-shadow-2xl"
                   />
                 </div>
               </div>
