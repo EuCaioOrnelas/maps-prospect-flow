@@ -27,12 +27,12 @@ export const ProblemSection = () => {
             O problema
           </span>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Sua operação comercial
+            Seu processo comercial está
             <br />
-            <span className="text-muted-foreground">não foi feita para escalar</span>
+            <span className="text-muted-foreground">fazendo você perder clientes</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Empresas não deixam de crescer por falta de mercado. Elas param porque sua operação comercial é lenta, manual e estruturalmente ineficiente.
+            Enquanto sua operação depende de processos manuais, leads esfriam, respostas atrasam e oportunidades deixam de virar vendas.
           </p>
         </motion.div>
 
