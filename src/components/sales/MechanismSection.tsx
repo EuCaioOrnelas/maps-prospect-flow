@@ -1,6 +1,6 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
-import { Search, Brain, MessageSquare, Send, Bot, RefreshCw, CalendarCheck, LayoutGrid } from "lucide-react";
+import { Search, Brain, MessageSquare, Send, Bot, RefreshCw, CalendarCheck, LayoutGrid, ArrowRight } from "lucide-react";
 
 const steps = [
   { icon: Search, num: "01", title: "Captação inteligente", desc: "Busca empresas ideais no Google com base em nicho, localização e serviço." },
@@ -40,7 +40,7 @@ export const MechanismSection = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative">
           {steps.map((step, i) => (
             <motion.div
               key={step.num}
@@ -49,19 +49,27 @@ export const MechanismSection = () => {
               transition={{ duration: 0.5, delay: 0.08 * i }}
               className="group relative p-6 rounded-2xl border border-border bg-card/50 hover:border-primary/30 transition-all duration-300"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-xs font-mono text-primary/60">{step.num}</span>
-                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <step.icon size={18} className="text-primary" />
+              {/* Arrow connector */}
+              {i < steps.length - 1 && (
+                <div className="hidden lg:flex absolute -right-[14px] top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-primary/10 border border-primary/20 items-center justify-center">
+                  <ArrowRight size={14} className="text-primary" />
                 </div>
+              )}
+              {/* Arrow for row break (4th card → 5th card) */}
+              {i === 3 && (
+                <div className="hidden lg:flex absolute -bottom-[14px] left-1/2 -translate-x-1/2 z-20 w-7 h-7 rounded-full bg-primary/10 border border-primary/20 items-center justify-center rotate-90">
+                  <ArrowRight size={14} className="text-primary" />
+                </div>
+              )}
+
+              <div className="mb-4">
+                <span className="text-3xl font-bold text-primary/70 tracking-tight">{step.num}</span>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                <step.icon size={18} className="text-primary" />
               </div>
               <h3 className="font-semibold text-foreground mb-2 text-sm">{step.title}</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
-              
-              {/* Connector line */}
-              {i < steps.length - 1 && (
-                <div className="hidden lg:block absolute -right-2 top-1/2 w-4 h-px bg-border" />
-              )}
             </motion.div>
           ))}
         </div>
