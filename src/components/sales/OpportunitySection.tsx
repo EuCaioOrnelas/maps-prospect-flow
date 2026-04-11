@@ -24,7 +24,7 @@ export const OpportunitySection = () => {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} className="py-20 sm:py-32 w-full relative">
+    <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative">
       <div className="container mx-auto px-4 max-w-5xl">
         {/* Header */}
         <motion.div
@@ -37,11 +37,10 @@ export const OpportunitySection = () => {
             A oportunidade
           </span>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-5">
-            O novo padrão de<br />
-            <span className="text-shimmer-highlight">vendas B2B</span>
+            O novo padrão para <span className="text-shimmer-highlight">vender B2B</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Empresas que crescem mais rápido não vendem mais — vendem melhor, com processos, dados e inteligência.
+            Empresas que crescem mais rápido não vendem mais, vendem melhor, com processos, dados e inteligência.
           </p>
         </motion.div>
 
