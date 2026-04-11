@@ -6,7 +6,7 @@ import { BentoGridShowcase } from "@/components/ui/bento-product-features";
 export const ProblemSection = () => {
   const { ref, isVisible } = useScrollAnimation();
 
-  const cardBase = "rounded-2xl border border-border bg-card/50 transition-all duration-300 p-4 sm:p-5 h-full flex flex-col";
+  const cardBase = "rounded-2xl border border-border bg-card/50 transition-all duration-300 p-3.5 sm:p-4 h-full flex flex-col";
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="py-20 sm:py-32 w-full relative">
@@ -31,7 +31,7 @@ export const ProblemSection = () => {
 
         {isVisible && (
           <BentoGridShowcase
-            className="auto-rows-[minmax(140px,auto)]"
+            className="auto-rows-[minmax(110px,auto)]"
             integration={
               <div className={cardBase}>
                 <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
@@ -111,21 +111,16 @@ export const ProblemSection = () => {
             }
             shortcuts={
               <div className={`${cardBase} flex-row items-center gap-4`}>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                      <TrendingDown size={16} className="text-destructive" />
-                    </div>
-                    <h3 className="font-semibold text-foreground text-sm">Baixa conversão</h3>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                    <TrendingDown size={16} className="text-destructive" />
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Esforço alto com retorno mínimo. Operação que não justifica o investimento.
-                  </p>
+                  <h3 className="font-semibold text-foreground text-sm">Baixa conversão</h3>
                 </div>
-                <div className="text-right flex-shrink-0 pl-4 border-l border-border">
-                  <span className="text-3xl font-bold text-destructive/80 tracking-tight">0,5%</span>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 whitespace-nowrap">a cada 200 prospecções, 1 venda</p>
-                </div>
+                <span className="text-3xl font-bold text-destructive/80 tracking-tight flex-shrink-0">0,5%</span>
+                <p className="text-xs text-muted-foreground leading-relaxed flex-1 min-w-0">
+                  A cada 200 prospecções, apenas 1 venda. Esforço alto com retorno mínimo.
+                </p>
               </div>
             }
           />
