@@ -34,10 +34,10 @@ export const ProblemSection = () => {
           <BentoGridShowcase
             className="auto-rows-[minmax(110px,auto)]"
             integration={
-              <div className={`${cardBase} !overflow-visible`}>
+              <div className={`${cardBase} !overflow-visible !p-0`}>
                 {/* Red glow background */}
                 <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 w-48 h-48 bg-destructive/15 rounded-full blur-[60px] pointer-events-none" />
-                <div className="relative z-10">
+                <div className="relative z-10 p-3.5 sm:p-4 pb-0">
                   <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
                     <MessageSquareOff size={18} className="text-destructive" />
                   </div>
@@ -46,12 +46,12 @@ export const ProblemSection = () => {
                     Abordagens iguais para todos. Sem contexto, sem personalização. Leads ignoram e você perde oportunidades reais.
                   </p>
                 </div>
-                {/* Phone image - sticking out of the card bottom */}
+                {/* Phone image - flush to card edges, overflowing bottom */}
                 <div className="relative z-10 flex justify-center mb-[-80px] mt-auto">
                   <img 
                     src={whatsappPhoneMockup} 
                     alt="WhatsApp conversation mockup" 
-                    className="w-[260px] object-cover object-top max-h-[280px] drop-shadow-2xl"
+                    className="w-[85%] object-cover object-top max-h-[280px] drop-shadow-2xl"
                   />
                 </div>
               </div>
