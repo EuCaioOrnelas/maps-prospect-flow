@@ -2,7 +2,6 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
 import { Clock, UserX, MessageSquareOff, AlertTriangle, BarChart3, TrendingDown } from "lucide-react";
 import { BentoGridShowcase } from "@/components/ui/bento-product-features";
-import phoneMockup from "@/assets/phone-chat-mockup.png";
 
 export const ProblemSection = () => {
   const { ref, isVisible } = useScrollAnimation();
@@ -35,40 +34,38 @@ export const ProblemSection = () => {
             className="auto-rows-[minmax(110px,auto)]"
             integration={
               <div className={cardBase}>
+                {/* Red glow */}
                 <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-32 h-32 bg-destructive/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="relative z-10">
-                  <div className="flex items-center gap-2.5 mb-2">
-                    <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                      <MessageSquareOff size={18} className="text-destructive" />
-                    </div>
-                    <h3 className="font-semibold text-foreground text-sm">Mensagens genéricas</h3>
+                  <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
+                    <MessageSquareOff size={18} className="text-destructive" />
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                  <h3 className="font-semibold text-foreground text-sm mb-1">Mensagens genéricas</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-4">
                     Abordagens iguais para todos. Sem contexto, sem personalização, sem resultado.
                   </p>
                 </div>
                 {/* Phone mockup */}
-                <div className="mt-auto relative z-10 flex justify-center pt-4">
-                  <img
-                    src={phoneMockup}
-                    alt="Conversa genérica no WhatsApp"
-                    className="w-40 object-contain object-top"
-                    style={{ maxHeight: '220px' }}
-                    loading="lazy"
-                  />
+                <div className="mt-auto relative z-10 flex justify-center">
+                  <div className="w-36 rounded-t-2xl border border-b-0 border-border/50 bg-muted/30 p-2 space-y-1.5">
+                    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5 text-[9px] text-muted-foreground/60 max-w-[85%]">Olá, temos uma oferta...</div>
+                    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5 text-[9px] text-muted-foreground/60 max-w-[85%]">Olá, temos uma oferta...</div>
+                    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5 text-[9px] text-muted-foreground/60 max-w-[85%]">Olá, temos uma oferta...</div>
+                    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5 text-[9px] text-muted-foreground/60 max-w-[90%]">Olá, temos uma oferta...</div>
+                  </div>
                 </div>
               </div>
             }
             trackers={
               <div className={cardBase}>
-                <div className="absolute -top-6 -left-6 w-20 h-20 bg-destructive/15 rounded-full blur-sm pointer-events-none" />
-                <div className="flex items-center gap-2.5 relative z-10">
-                  <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0 -ml-2 -mt-2 relative">
-                    <UserX size={18} className="text-destructive" />
-                  </div>
+                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-destructive/8 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex items-start justify-between relative z-10">
                   <div>
-                    <h3 className="font-semibold text-foreground text-sm">Leads frios</h3>
+                    <h3 className="font-semibold text-foreground text-sm mb-0.5">Leads frios</h3>
                     <p className="text-xs text-muted-foreground">Contatos sem aderência</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                    <UserX size={16} className="text-destructive" />
                   </div>
                 </div>
                 <div className="mt-auto pt-2 relative z-10">
@@ -79,14 +76,14 @@ export const ProblemSection = () => {
             }
             statistic={
               <div className={cardBase}>
-                <div className="absolute -top-6 -left-6 w-20 h-20 bg-destructive/15 rounded-full blur-sm pointer-events-none" />
-                <div className="flex items-center gap-2.5 relative z-10">
-                  <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0 -ml-2 -mt-2 relative">
-                    <Clock size={18} className="text-destructive" />
-                  </div>
+                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-destructive/8 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex items-start justify-between relative z-10">
                   <div>
-                    <h3 className="font-semibold text-foreground text-sm">Prospecção manual</h3>
+                    <h3 className="font-semibold text-foreground text-sm mb-0.5">Prospecção manual</h3>
                     <p className="text-xs text-muted-foreground">Horas perdidas sem critério</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                    <Clock size={16} className="text-destructive" />
                   </div>
                 </div>
                 <div className="mt-auto pt-2 relative z-10">
@@ -97,14 +94,14 @@ export const ProblemSection = () => {
             }
             focus={
               <div className={cardBase}>
-                <div className="absolute -top-6 -left-6 w-20 h-20 bg-destructive/15 rounded-full blur-sm pointer-events-none" />
-                <div className="flex items-center gap-2.5 relative z-10">
-                  <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0 -ml-2 -mt-2 relative">
-                    <AlertTriangle size={18} className="text-destructive" />
-                  </div>
+                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-destructive/8 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex items-start justify-between relative z-10">
                   <div>
-                    <h3 className="font-semibold text-foreground text-sm">Follow-up inconsistente</h3>
+                    <h3 className="font-semibold text-foreground text-sm mb-0.5">Follow-up inconsistente</h3>
                     <p className="text-xs text-muted-foreground">Cadência inexistente</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle size={16} className="text-destructive" />
                   </div>
                 </div>
                 <div className="mt-auto pt-2 relative z-10">
@@ -115,21 +112,21 @@ export const ProblemSection = () => {
             }
             productivity={
               <div className={cardBase}>
-                <div className="absolute -top-6 -left-6 w-20 h-20 bg-destructive/15 rounded-full blur-sm pointer-events-none" />
-                <div className="flex items-center gap-2.5 relative z-10">
-                  <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0 -ml-2 -mt-2 relative">
-                    <BarChart3 size={18} className="text-destructive" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground text-sm">Funil desorganizado</h3>
-                    <p className="text-xs text-muted-foreground">Sem dados ou previsibilidade</p>
-                  </div>
+                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-destructive/8 rounded-full blur-2xl pointer-events-none" />
+                <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center mb-2 relative z-10">
+                  <BarChart3 size={16} className="text-destructive" />
                 </div>
+                <h3 className="font-semibold text-foreground text-sm mb-0.5 relative z-10">Funil desorganizado</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed relative z-10">
+                  Sem visibilidade do pipeline. Sem dados. Sem previsibilidade.
+                </p>
               </div>
             }
             shortcuts={
               <div className={`${cardBase} !flex-row items-center`}>
+                {/* Red glow */}
                 <div className="absolute -bottom-8 left-1/4 w-40 h-40 bg-destructive/8 rounded-full blur-3xl pointer-events-none" />
+                {/* Left side */}
                 <div className="flex-1 min-w-0 relative z-10">
                   <div className="flex items-center gap-2.5 mb-1.5">
                     <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
@@ -141,6 +138,7 @@ export const ProblemSection = () => {
                     Esforço alto com retorno mínimo. Operação que não justifica o investimento.
                   </p>
                 </div>
+                {/* Right side */}
                 <div className="flex-shrink-0 text-right pl-6 border-l border-border/50 relative z-10">
                   <span className="text-4xl font-bold text-destructive/80 tracking-tight">0,5%</span>
                   <p className="text-[11px] text-muted-foreground mt-0.5">a cada 200 prospecções, 1 venda</p>
