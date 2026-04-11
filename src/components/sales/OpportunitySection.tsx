@@ -52,9 +52,19 @@ export const OpportunitySection = () => {
             initial={{ opacity: 0, x: -24 }}
             animate={isVisible ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="rounded-t-2xl border border-b-0 border-border bg-muted/30 px-6 sm:px-8 pt-6 sm:pt-8 pb-4"
+            className="rounded-t-2xl border border-b-0 border-border bg-muted/30 px-6 sm:px-8 pt-6 sm:pt-8 pb-5"
           >
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={isVisible ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="mb-4"
+            >
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider bg-muted text-muted-foreground/70 border border-border">
+                Menos eficiente
+              </span>
+            </motion.div>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
               Modelo tradicional
             </h3>
           </motion.div>
@@ -64,7 +74,7 @@ export const OpportunitySection = () => {
             initial={{ opacity: 0, x: 24 }}
             animate={isVisible ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="rounded-t-2xl border border-b-0 border-primary/20 bg-primary/[0.02] px-6 sm:px-8 pt-6 sm:pt-8 pb-4 relative overflow-hidden"
+            className="rounded-t-2xl border border-b-0 border-primary/20 bg-primary/[0.02] px-6 sm:px-8 pt-6 sm:pt-8 pb-5 relative overflow-hidden"
           >
             <div className="absolute -top-8 -right-8 w-40 h-40 bg-primary/8 rounded-full blur-[60px] pointer-events-none" />
             <motion.div
@@ -80,7 +90,7 @@ export const OpportunitySection = () => {
             </motion.div>
             <div className="flex items-center gap-3">
               <img src={logoIconNew} alt="Wiize" className="w-9 h-9 rounded-xl" />
-              <h3 className="text-xs font-semibold text-primary uppercase tracking-widest">Modelo com Wiize</h3>
+              <h3 className="text-sm font-semibold text-primary uppercase tracking-widest">Modelo com Wiize</h3>
             </div>
           </motion.div>
         </div>
