@@ -1,7 +1,8 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
-import { Clock, UserX, MessageSquareOff, AlertTriangle, BarChart3, TrendingDown, Phone, Video, MoreVertical, Wifi, Battery, Signal } from "lucide-react";
+import { Clock, UserX, MessageSquareOff, AlertTriangle, BarChart3, TrendingDown } from "lucide-react";
 import { BentoGridShowcase } from "@/components/ui/bento-product-features";
+import whatsappPhoneMockup from "@/assets/whatsapp-phone-mockup.png";
 
 export const ProblemSection = () => {
   const { ref, isVisible } = useScrollAnimation();
