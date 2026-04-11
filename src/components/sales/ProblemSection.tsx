@@ -47,13 +47,13 @@ export const ProblemSection = () => {
                 </div>
                 {/* Realistic phone mockup - large, cut at bottom */}
                 <div className="mt-auto relative z-10 flex justify-center">
-                  <div className="w-48 relative">
+                  <div className="w-64 relative">
                     {/* Phone frame */}
-                    <div className="rounded-t-[24px] border-[3px] border-b-0 border-muted-foreground/20 bg-[#0b141a] overflow-hidden shadow-2xl">
-                      {/* Status bar */}
-                      <div className="flex items-center justify-between px-4 py-1.5 bg-[#1f2c34]">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-5 h-5 rounded-full bg-muted-foreground/30" />
+                    <div className="rounded-t-[28px] border-[3px] border-b-0 border-muted-foreground/30 bg-white overflow-hidden shadow-[0_-4px_40px_rgba(0,0,0,0.15)]">
+                      {/* Notch */}
+                      <div className="flex justify-center pt-2 pb-1 bg-[#f0f2f5]">
+                        <div className="w-20 h-4 rounded-full bg-black/80 relative flex items-center justify-center">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#1a1a2e] border border-[#333] absolute right-3" />
                           <span className="text-[9px] text-white/70 font-medium">Lead</span>
                         </div>
                         <div className="flex gap-1">
