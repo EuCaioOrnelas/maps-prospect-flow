@@ -34,37 +34,72 @@ export const ProblemSection = () => {
             className="auto-rows-[minmax(110px,auto)]"
             integration={
               <div className={cardBase}>
-                {/* Red glow */}
-                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-32 h-32 bg-destructive/10 rounded-full blur-3xl pointer-events-none" />
+                {/* Red glow background */}
+                <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 w-48 h-48 bg-destructive/15 rounded-full blur-[60px] pointer-events-none" />
                 <div className="relative z-10">
                   <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
                     <MessageSquareOff size={18} className="text-destructive" />
                   </div>
                   <h3 className="font-semibold text-foreground text-sm mb-1">Mensagens genéricas</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-                    Abordagens iguais para todos. Sem contexto, sem personalização, sem resultado.
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                    Abordagens iguais para todos. Sem contexto, sem personalização. Leads ignoram e você perde oportunidades reais.
                   </p>
                 </div>
-                {/* Phone mockup */}
+                {/* Realistic phone mockup - large, cut at bottom */}
                 <div className="mt-auto relative z-10 flex justify-center">
-                  <div className="w-36 rounded-t-2xl border border-b-0 border-border/50 bg-muted/30 p-2 space-y-1.5">
-                    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5 text-[9px] text-muted-foreground/60 max-w-[85%]">Olá, temos uma oferta...</div>
-                    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5 text-[9px] text-muted-foreground/60 max-w-[85%]">Olá, temos uma oferta...</div>
-                    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5 text-[9px] text-muted-foreground/60 max-w-[85%]">Olá, temos uma oferta...</div>
-                    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5 text-[9px] text-muted-foreground/60 max-w-[90%]">Olá, temos uma oferta...</div>
+                  <div className="w-48 relative">
+                    {/* Phone frame */}
+                    <div className="rounded-t-[24px] border-[3px] border-b-0 border-muted-foreground/20 bg-[#0b141a] overflow-hidden shadow-2xl">
+                      {/* Status bar */}
+                      <div className="flex items-center justify-between px-4 py-1.5 bg-[#1f2c34]">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-5 h-5 rounded-full bg-muted-foreground/30" />
+                          <span className="text-[9px] text-white/70 font-medium">Lead</span>
+                        </div>
+                        <div className="flex gap-1">
+                          <div className="w-3 h-3 rounded-full bg-muted-foreground/20" />
+                          <div className="w-3 h-3 rounded-full bg-muted-foreground/20" />
+                        </div>
+                      </div>
+                      {/* WhatsApp-like background */}
+                      <div className="bg-[#0b141a] p-2.5 space-y-2 min-h-[120px] relative">
+                        {/* WA pattern overlay */}
+                        <div className="absolute inset-0 opacity-[0.04]" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'200\' height=\'200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'p\' width=\'40\' height=\'40\' patternUnits=\'userSpaceOnUse\'%3E%3Ccircle cx=\'20\' cy=\'20\' r=\'1.5\' fill=\'white\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=\'200\' height=\'200\' fill=\'url(%23p)\'/%3E%3C/svg%3E")'}} />
+                        {/* Sent messages (right aligned - green bubbles) */}
+                        <div className="flex justify-end relative z-10">
+                          <div className="rounded-lg rounded-tr-sm bg-[#005c4b] px-2.5 py-1.5 max-w-[80%]">
+                            <p className="text-[8px] text-white/90 leading-relaxed">Olá! Temos uma oferta especial para sua empresa...</p>
+                            <span className="text-[6px] text-white/40 float-right mt-0.5">10:30</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-end relative z-10">
+                          <div className="rounded-lg rounded-tr-sm bg-[#005c4b] px-2.5 py-1.5 max-w-[80%]">
+                            <p className="text-[8px] text-white/90 leading-relaxed">Posso te apresentar nossos serviços?</p>
+                            <span className="text-[6px] text-white/40 float-right mt-0.5">10:31</span>
+                          </div>
+                        </div>
+                        {/* Reply from lead - spilling out */}
+                        <div className="flex justify-start relative z-10">
+                          <div className="rounded-lg rounded-tl-sm bg-[#1f2c34] px-2.5 py-1.5 max-w-[85%] border border-white/5">
+                            <p className="text-[8px] text-white/80 leading-relaxed">Não entendi o motivo do contato 🤔</p>
+                            <span className="text-[6px] text-white/30 float-right mt-0.5">10:45</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             }
             trackers={
               <div className={cardBase}>
-                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-destructive/8 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-destructive/12 rounded-full blur-[50px] pointer-events-none" />
                 <div className="flex items-start justify-between relative z-10">
                   <div>
                     <h3 className="font-semibold text-foreground text-sm mb-0.5">Leads frios</h3>
-                    <p className="text-xs text-muted-foreground">Contatos sem aderência</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">Contatos sem aderência ao seu produto. Listas compradas, dados desatualizados e zero qualificação prévia.</p>
                   </div>
-                  <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0 ml-3">
                     <UserX size={16} className="text-destructive" />
                   </div>
                 </div>
@@ -76,13 +111,13 @@ export const ProblemSection = () => {
             }
             statistic={
               <div className={cardBase}>
-                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-destructive/8 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-destructive/12 rounded-full blur-[50px] pointer-events-none" />
                 <div className="flex items-start justify-between relative z-10">
                   <div>
                     <h3 className="font-semibold text-foreground text-sm mb-0.5">Prospecção manual</h3>
                     <p className="text-xs text-muted-foreground">Horas perdidas sem critério</p>
                   </div>
-                  <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0 ml-3">
                     <Clock size={16} className="text-destructive" />
                   </div>
                 </div>
@@ -94,13 +129,13 @@ export const ProblemSection = () => {
             }
             focus={
               <div className={cardBase}>
-                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-destructive/8 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-destructive/12 rounded-full blur-[50px] pointer-events-none" />
                 <div className="flex items-start justify-between relative z-10">
                   <div>
                     <h3 className="font-semibold text-foreground text-sm mb-0.5">Follow-up inconsistente</h3>
-                    <p className="text-xs text-muted-foreground">Cadência inexistente</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">Sem cadência definida. Leads esfriam, oportunidades morrem e o time perde vendas por falta de acompanhamento.</p>
                   </div>
-                  <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0 ml-3">
                     <AlertTriangle size={16} className="text-destructive" />
                   </div>
                 </div>
@@ -112,20 +147,24 @@ export const ProblemSection = () => {
             }
             productivity={
               <div className={cardBase}>
-                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-destructive/8 rounded-full blur-2xl pointer-events-none" />
-                <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center mb-2 relative z-10">
-                  <BarChart3 size={16} className="text-destructive" />
+                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-destructive/12 rounded-full blur-[50px] pointer-events-none" />
+                <div className="flex items-start justify-between relative z-10">
+                  <div>
+                    <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center mb-2">
+                      <BarChart3 size={16} className="text-destructive" />
+                    </div>
+                    <h3 className="font-semibold text-foreground text-sm mb-0.5">Funil desorganizado</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Sem visibilidade do pipeline. Sem dados. Sem previsibilidade.
+                    </p>
+                  </div>
                 </div>
-                <h3 className="font-semibold text-foreground text-sm mb-0.5 relative z-10">Funil desorganizado</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed relative z-10">
-                  Sem visibilidade do pipeline. Sem dados. Sem previsibilidade.
-                </p>
               </div>
             }
             shortcuts={
               <div className={`${cardBase} !flex-row items-center`}>
                 {/* Red glow */}
-                <div className="absolute -bottom-8 left-1/4 w-40 h-40 bg-destructive/8 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-8 left-1/4 w-40 h-40 bg-destructive/12 rounded-full blur-[60px] pointer-events-none" />
                 {/* Left side */}
                 <div className="flex-1 min-w-0 relative z-10">
                   <div className="flex items-center gap-2.5 mb-1.5">
@@ -135,7 +174,7 @@ export const ProblemSection = () => {
                     <h3 className="font-semibold text-foreground text-sm">Baixa conversão</h3>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Esforço alto com retorno mínimo. Operação que não justifica o investimento.
+                    Esforço alto com retorno mínimo. Operação que não justifica o investimento e drena recursos do time comercial.
                   </p>
                 </div>
                 {/* Right side */}
