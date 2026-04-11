@@ -1,14 +1,15 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
 import { X, Check } from "lucide-react";
+import logoIconNew from "@/assets/logo-icon-new.png";
 
 const comparisons = [
-  { old: "Buscar leads manualmente", new: "Encontrar empresas certas automaticamente" },
-  { old: "Qualificar no feeling", new: "Priorizar com IA e score inteligente" },
-  { old: "Enviar mensagem igual para todos", new: "Personalizar abordagem por contexto" },
+  { old: "Buscar leads manualmente", new: "Captação automática de leads ideais" },
+  { old: "Qualificar no feeling", new: "Score inteligente com IA" },
+  { old: "Enviar mensagem igual para todos", new: "Abordagem personalizada por contexto" },
   { old: "Depender da equipe para responder", new: "Atendimento automatizado 24/7" },
-  { old: "Perder timing no follow-up", new: "Reengajar leads na hora certa" },
-  { old: "Controlar tudo em planilhas", new: "Gerir operação em CRM integrado" },
+  { old: "Perder timing no follow-up", new: "Reengajamento no momento certo" },
+  { old: "Controlar tudo em planilhas", new: "CRM integrado com pipeline visual" },
 ];
 
 export const OpportunitySection = () => {
@@ -44,11 +45,11 @@ export const OpportunitySection = () => {
             className="rounded-2xl border border-border bg-card/30 p-6 sm:p-8"
           >
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">Modelo tradicional</h3>
-            <div className="space-y-4">
+            <div className="space-y-5">
               {comparisons.map((c, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <X size={12} className="text-destructive" />
+                  <div className="w-6 h-6 rounded-full bg-destructive/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <X size={14} className="text-destructive" strokeWidth={2.5} />
                   </div>
                   <span className="text-sm text-muted-foreground">{c.old}</span>
                 </div>
@@ -64,14 +65,17 @@ export const OpportunitySection = () => {
             className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-6 sm:p-8 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
-            <h3 className="text-sm font-semibold text-primary uppercase tracking-widest mb-6">Modelo com Wiize</h3>
-            <div className="space-y-4">
+            <div className="flex items-center gap-3 mb-6">
+              <img src={logoIconNew} alt="Wiize" className="w-7 h-7 rounded-lg" />
+              <h3 className="text-sm font-semibold text-primary uppercase tracking-widest">Modelo com Wiize</h3>
+            </div>
+            <div className="space-y-5">
               {comparisons.map((c, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Check size={12} className="text-primary" />
+                  <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check size={14} className="text-primary" strokeWidth={3} />
                   </div>
-                  <span className="text-sm text-foreground">{c.new}</span>
+                  <span className="text-sm text-foreground font-medium">{c.new}</span>
                 </div>
               ))}
             </div>
