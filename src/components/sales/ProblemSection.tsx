@@ -15,7 +15,7 @@ export const ProblemSection = () => {
     "absolute -top-12 -left-12 w-32 h-32 rounded-full bg-destructive/10 blur-[60px] pointer-events-none opacity-90";
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} className="py-20 sm:py-32 w-full relative">
+    <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative">
       <div className="container mx-auto px-4 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
