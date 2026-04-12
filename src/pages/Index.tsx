@@ -80,20 +80,14 @@ const Index = () => {
         ]}
       />
       <main className="landing-light min-h-screen bg-background overflow-x-hidden overflow-y-auto w-full max-w-full relative">
-        {/* Aurora/mesh gradient background - gives life to the page */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-          {/* Top-right warm blob */}
-          <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[50%] rounded-full opacity-[0.07]"
+        {/* Lightweight CSS background blobs - no images, instant render */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+          <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[50%] rounded-full opacity-[0.07] will-change-auto"
             style={{ background: 'radial-gradient(ellipse, hsl(158 72% 45%), transparent 70%)' }} />
-          {/* Center-left cool blob */}
-          <div className="absolute top-[30%] -left-[15%] w-[50%] h-[50%] rounded-full opacity-[0.05]"
+          <div className="absolute top-[30%] -left-[15%] w-[50%] h-[50%] rounded-full opacity-[0.05] will-change-auto"
             style={{ background: 'radial-gradient(ellipse, hsl(200 80% 55%), transparent 70%)' }} />
-          {/* Bottom emerald blob */}
-          <div className="absolute top-[60%] right-[5%] w-[45%] h-[40%] rounded-full opacity-[0.05]"
+          <div className="absolute top-[60%] right-[5%] w-[45%] h-[40%] rounded-full opacity-[0.05] will-change-auto"
             style={{ background: 'radial-gradient(ellipse, hsl(170 65% 40%), transparent 70%)' }} />
-          {/* Subtle grid pattern overlay */}
-          <div className="absolute inset-0 opacity-[0.02]"
-            style={{ backgroundImage: 'radial-gradient(hsl(220 25% 14%) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
         </div>
         <div className="relative z-10">
           <Navbar onSignupClick={trackSignupClick} />
