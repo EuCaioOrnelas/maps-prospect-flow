@@ -1,6 +1,5 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Search,
   MessageCircle,
@@ -9,76 +8,17 @@ import {
   Zap,
   Bot,
 } from "lucide-react";
+import { BentoGridShowcase } from "@/components/ui/bento-product-features";
 
-const features = [
-  {
-    icon: Search,
-    title: "Captação Inteligente",
-    description:
-      "Encontre leads qualificados no Google Maps com IA. Diagnóstico automático de cada empresa: nicho, porte, telefone validado e score de aderência ao seu produto.",
-    stat: "Captação + Diagnóstico",
-  },
-  {
-    icon: MessageCircle,
-    title: "Prospecção e Relacionamento",
-    description:
-      "Abordagem personalizada em escala. Cada lead recebe uma mensagem contextualizada com base no diagnóstico. Relacionamento contínuo com cadência inteligente.",
-    stat: "Outreach contextual",
-  },
-  {
-    icon: Send,
-    title: "Campanhas via API Oficial Meta",
-    description:
-      "Disparos em massa com a API oficial do WhatsApp — inbound e outbound. Sem risco de banimento, com templates aprovados e métricas de entrega em tempo real.",
-    stat: "Inbound + Outbound",
-  },
-  {
-    icon: LayoutDashboard,
-    title: "CRM e Lead Scoring",
-    description:
-      "Pipeline visual com Kanban, estágios personalizados e scoring automático. Saiba exatamente quais leads priorizar e quando agir para fechar mais vendas.",
-    stat: "Gestão completa",
-  },
-  {
-    icon: Zap,
-    title: "Automação de Processos",
-    description:
-      "Automatize follow-ups, movimentação de estágios, notificações e ações repetitivas. Sua operação comercial roda no piloto automático 24/7.",
-    stat: "Piloto automático",
-  },
-  {
-    icon: Bot,
-    title: "Agente de IA e Fluxos",
-    description:
-      "Agentes inteligentes que respondem leads, qualificam oportunidades e avançam conversas. Fluxos visuais de automação para criar jornadas personalizadas.",
-    stat: "IA conversacional",
-  },
-];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 100, damping: 12 },
-  },
-};
+const cardBase =
+  "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-md";
+const cardGlowMain =
+  "absolute -bottom-16 -right-16 w-44 h-44 rounded-full bg-primary/14 blur-[72px] pointer-events-none opacity-100";
+const cardGlowSecondary =
+  "absolute -top-12 -left-12 w-32 h-32 rounded-full bg-primary/10 blur-[60px] pointer-events-none opacity-90";
 
 export const FeaturesOverviewSection = () => {
   const { ref, isVisible } = useScrollAnimation();
-
-  const cardGlowMain =
-    "absolute -bottom-16 -right-16 w-44 h-44 rounded-full bg-primary/14 blur-[72px] pointer-events-none opacity-100";
-  const cardGlowSecondary =
-    "absolute -top-12 -left-12 w-32 h-32 rounded-full bg-primary/10 blur-[60px] pointer-events-none opacity-90";
 
   return (
     <section
@@ -106,40 +46,115 @@ export const FeaturesOverviewSection = () => {
         </motion.div>
 
         {isVisible && (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-          >
-            {features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <motion.div key={feature.title} variants={itemVariants}>
-                  <Card className="group relative overflow-hidden border-border/70 bg-card/80 backdrop-blur-sm hover:shadow-md transition-shadow duration-500 h-full">
-                    <div className={cardGlowSecondary} />
-                    <div className={cardGlowMain} />
-                    <CardContent className="p-5 relative z-10 flex flex-col h-full">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                          <Icon size={20} className="text-primary" />
-                        </div>
-                        <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
-                          {feature.stat}
-                        </span>
-                      </div>
-                      <h3 className="font-semibold text-foreground text-base mb-2">
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {feature.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </motion.div>
+          <BentoGridShowcase
+            className="auto-rows-[minmax(110px,auto)]"
+            integration={
+              <div className={`${cardBase}`}>
+                <div className={cardGlowSecondary} />
+                <div className={cardGlowMain} />
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                    <Search size={20} className="text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-foreground text-base mb-2">Captação Inteligente</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Encontre leads qualificados no Google Maps com IA. Diagnóstico automático de cada empresa: nicho, porte, telefone validado e score de aderência ao seu produto.
+                  </p>
+                  <div className="mt-auto pt-4">
+                    <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
+                      Captação + Diagnóstico
+                    </span>
+                  </div>
+                </div>
+              </div>
+            }
+            trackers={
+              <div className={cardBase}>
+                <div className={cardGlowSecondary} />
+                <div className={cardGlowMain} />
+                <div className="flex items-start justify-between relative z-10">
+                  <div>
+                    <h3 className="font-semibold text-foreground text-sm mb-0.5">Prospecção e Relacionamento</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Abordagem personalizada em escala. Cada lead recebe uma mensagem contextualizada com base no diagnóstico. Relacionamento contínuo com cadência inteligente.
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 ml-3">
+                    <MessageCircle size={16} className="text-primary" />
+                  </div>
+                </div>
+              </div>
+            }
+            statistic={
+              <div className={cardBase}>
+                <div className={cardGlowSecondary} />
+                <div className={cardGlowMain} />
+                <div className="relative z-10">
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                    <Send size={16} className="text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-foreground text-sm mb-0.5">Campanhas via API Oficial</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Disparos em massa com a API oficial do WhatsApp — inbound e outbound. Sem risco de banimento, com templates aprovados.
+                  </p>
+                </div>
+              </div>
+            }
+            focus={
+              <div className={cardBase}>
+                <div className={cardGlowSecondary} />
+                <div className={cardGlowMain} />
+                <div className="flex items-start justify-between relative z-10">
+                  <div>
+                    <h3 className="font-semibold text-foreground text-sm mb-0.5">CRM e Lead Scoring</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Pipeline visual com Kanban, estágios personalizados e scoring automático. Saiba quais leads priorizar e quando agir.
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 ml-3">
+                    <LayoutDashboard size={16} className="text-primary" />
+                  </div>
+                </div>
+              </div>
+            }
+            productivity={
+              <div className={cardBase}>
+                <div className={cardGlowSecondary} />
+                <div className={cardGlowMain} />
+                <div className="relative z-10">
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                    <Zap size={16} className="text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-foreground text-sm mb-0.5">Automação de Processos</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Automatize follow-ups, movimentação de estágios e ações repetitivas. Operação comercial no piloto automático 24/7.
+                  </p>
+                </div>
+              </div>
+            }
+            shortcuts={
+              <div className={`${cardBase} !flex-row items-center`}>
+                <div className={cardGlowSecondary} />
+                <div className={cardGlowMain} />
+                <div className="flex-1 min-w-0 relative z-10">
+                  <div className="flex items-center gap-2.5 mb-1.5">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Bot size={16} className="text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-foreground text-sm">Agente de IA e Fluxos</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Agentes inteligentes que respondem leads, qualificam oportunidades e avançam conversas. Fluxos visuais para criar jornadas personalizadas.
+                  </p>
+                </div>
+                <div className="flex-shrink-0 text-right pl-6 border-l border-border/50 relative z-10">
+                  <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
+                    IA conversacional
+                  </span>
+                </div>
+              </div>
+            }
+          />
         )}
       </div>
     </section>
