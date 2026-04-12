@@ -298,12 +298,12 @@ export const PricingSection = () => {
                       -{Math.round((1 - parsePrice(plan.price) / parsePrice(plan.anchorPrice)) * 100)}%
                     </span>
                   </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-sm text-muted-foreground">R$</span>
-                    <span className="font-display font-bold text-3xl md:text-4xl tabular-nums">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-base text-muted-foreground">R$</span>
+                    <span className="font-display font-bold text-4xl md:text-5xl tabular-nums">
                       <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
                     </span>
-                    <span className="text-muted-foreground">/mês</span>
+                    <span className="text-base text-muted-foreground">/mês</span>
                   </div>
                   {isAnnual && (
                     <p className="text-xs text-muted-foreground mt-1">
@@ -340,6 +340,8 @@ export const PricingSection = () => {
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Processando...
                     </>
+                  ) : plan.popular ? (
+                    "Começar a Gerar Vendas"
                   ) : (
                     "Começar Agora"
                   )}

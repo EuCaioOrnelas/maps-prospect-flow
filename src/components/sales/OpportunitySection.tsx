@@ -25,7 +25,7 @@ export const OpportunitySection = () => {
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative">
-      <div className="container mx-auto px-4 max-w-5xl">
+      <div className="container mx-auto px-4 max-w-6xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
