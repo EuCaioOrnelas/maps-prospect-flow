@@ -1,28 +1,42 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 
-function FloatingPaths({ position }: { position: number }) {
-  const paths = Array.from({ length: 36 }, (_, i) => ({
+export function FloatingPaths({
+  position,
+  className = "",
+}: {
+  position: number;
+  className?: string;
+}) {
+  const paths = Array.from({ length: 24 }, (_, i) => ({
     id: i,
-    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${
-      380 - i * 5 * position
-    } -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${
-      152 - i * 5 * position
-    } ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${
-      684 - i * 5 * position
-    } ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
-    color: `rgba(15,23,42,${0.1 + i * 0.03})`,
-    width: 0.5 + i * 0.03,
+    d: `M ${-120 + i * 14} ${54 + i * 20}
+        C ${120 + position * (36 + i * 3)} ${88 + i * 12},
+          ${320 + position * (78 + i * 3)} ${148 + i * 10},
+          ${820 + position * (118 - i * 2)} ${214 + i * 14}`,
+    width: 0.9 + i * 0.05,
+    opacity: 0.035 + i * 0.006,
+    duration: 7 + i * 0.35,
   }));
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <svg
-        className="w-full h-full text-foreground dark:text-white"
-        viewBox="-400 -300 1500 900"
+    <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`}>
+      <motion.svg
+        className="h-full w-full text-primary"
+        viewBox="0 0 900 620"
         fill="none"
-        preserveAspectRatio="xMidYMid slice"
+        preserveAspectRatio="none"
+        animate={{
+          x: position > 0 ? [0, 18, 0] : [0, -18, 0],
+          y: [0, -10, 0],
+        }}
+        transition={{
+          duration: 16,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
       >
         {paths.map((path) => (
           <motion.path
@@ -30,22 +44,22 @@ function FloatingPaths({ position }: { position: number }) {
             d={path.d}
             stroke="currentColor"
             strokeWidth={path.width}
-            strokeOpacity={0.08 + path.id * 0.015}
-            initial={{ pathLength: 0, opacity: 0 }}
+            strokeLinecap="round"
+            initial={{ pathLength: 0.18, opacity: 0 }}
             animate={{
-              pathLength: 1,
-              opacity: 1,
+              pathLength: [0.18, 1, 0.32],
+              opacity: [path.opacity, path.opacity * 1.9, path.opacity],
             }}
             transition={{
-              duration: 15 + Math.random() * 10,
+              duration: path.duration,
               repeat: Infinity,
-              repeatType: "mirror",
-              ease: "linear",
-              delay: path.id * 0.12,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: path.id * 0.08,
             }}
           />
         ))}
-      </svg>
+      </motion.svg>
     </div>
   );
 }
@@ -55,54 +69,50 @@ export function BackgroundPaths({
   children,
 }: {
   title?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }) {
   const words = title.split(" ");
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-background">
-      <div className="absolute inset-0">
-        <FloatingPaths position={1} />
-        <FloatingPaths position={-1} />
+    <div className="relative min-h-screen w-full overflow-hidden bg-background">
+      <div className="absolute inset-0 pointer-events-none">
+        <FloatingPaths position={1} className="left-0 w-1/2 opacity-80" />
+        <FloatingPaths position={-1} className="right-0 w-1/2 opacity-80" />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 md:px-6 text-center">
+      <div className="relative z-10 container mx-auto flex min-h-screen items-center justify-center px-4 text-center md:px-6">
         {children ? (
           children
         ) : (
-          <>
-            <motion.h1
-              className="text-5xl sm:text-7xl md:text-8xl font-bold tracking-tighter"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 2 }}
-            >
-              {words.map((word, wordIndex) => (
-                <span key={wordIndex} className="inline-block mr-4 last:mr-0">
-                  {word.split("").map((letter, letterIndex) => (
-                    <motion.span
-                      key={letterIndex}
-                      initial={{ y: 100, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{
-                        delay: wordIndex * 0.1 + letterIndex * 0.03,
-                        type: "spring",
-                        stiffness: 150,
-                        damping: 25,
-                      }}
-                      className="inline-block text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/80"
-                    >
-                      {letter}
-                    </motion.span>
-                  ))}
-                </span>
-              ))}
-            </motion.h1>
-          </>
+          <motion.h1
+            className="text-5xl font-bold tracking-tighter sm:text-7xl md:text-8xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8 }}
+          >
+            {words.map((word, wordIndex) => (
+              <span key={wordIndex} className="mr-4 inline-block last:mr-0">
+                {word.split("").map((letter, letterIndex) => (
+                  <motion.span
+                    key={letterIndex}
+                    initial={{ y: 36, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{
+                      delay: wordIndex * 0.08 + letterIndex * 0.025,
+                      type: "spring",
+                      stiffness: 180,
+                      damping: 22,
+                    }}
+                    className="inline-block bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent"
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+              </span>
+            ))}
+          </motion.h1>
         )}
       </div>
     </div>
   );
 }
-
-export { FloatingPaths };
