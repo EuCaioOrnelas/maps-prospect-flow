@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Building2, Check, Loader2, Send, Shield, Users, Zap } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeft, Building2, Check, Loader2, Send, Shield, Users, Zap, Globe, Headphones } from "lucide-react";
 import { z } from "zod";
 
 const formSchema = z.object({
@@ -28,10 +27,12 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 const benefits = [
-  { icon: Building2, title: "Estrutura sob medida", description: "Infraestrutura personalizada para sua operação" },
-  { icon: Users, title: "Gerente exclusivo", description: "Atendimento dedicado com especialista" },
-  { icon: Zap, title: "Volume ilimitado", description: "Números e oportunidades sem restrições" },
-  { icon: Shield, title: "Prioridade total", description: "Processamento e suporte prioritário" },
+  { icon: Building2, title: "Infraestrutura dedicada", description: "Servidores e processamento exclusivos para sua operação" },
+  { icon: Headphones, title: "Gerente de sucesso", description: "Especialista dedicado ao crescimento da sua empresa" },
+  { icon: Zap, title: "Volume ilimitado", description: "Sem limites de números, leads ou campanhas" },
+  { icon: Shield, title: "SLA prioritário", description: "Suporte técnico com tempo de resposta garantido" },
+  { icon: Globe, title: "API personalizada", description: "Integrações sob medida com seus sistemas" },
+  { icon: Users, title: "Onboarding completo", description: "Treinamento e implantação assistida" },
 ];
 
 const EnterpriseContact = () => {
@@ -52,6 +53,19 @@ const EnterpriseContact = () => {
     monthlyLeadVolume: "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+
+  const isFormValid = useMemo(() => {
+    return (
+      formData.partnerName.length >= 2 &&
+      formData.companyName.length >= 2 &&
+      formData.cnpj.replace(/\D/g, "").length >= 14 &&
+      formData.niche.length >= 2 &&
+      formData.email.includes("@") &&
+      formData.phone.replace(/\D/g, "").length >= 10 &&
+      formData.teamSize.length >= 1 &&
+      formData.objective.length >= 10
+    );
+  }, [formData]);
 
   const formatCNPJ = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 14);
@@ -107,11 +121,20 @@ const EnterpriseContact = () => {
         description: "Nossa equipe entrará em contato em até 24 horas.",
       });
     } catch (err: any) {
-      toast({
-        title: "Erro ao enviar",
-        description: err.message || "Tente novamente mais tarde.",
-        variant: "destructive",
-      });
+      const msg = err?.message || "";
+      if (msg.includes("Limite de envios")) {
+        toast({
+          title: "Limite atingido",
+          description: "Você já enviou o máximo de solicitações hoje. Tente novamente amanhã.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro ao enviar",
+          description: "Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -122,12 +145,7 @@ const EnterpriseContact = () => {
       <>
         <SEO title="Obrigado — Wiize Enterprise" description="Recebemos sua solicitação Enterprise." />
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="max-w-lg w-full text-center"
-          >
+          <div className="max-w-lg w-full text-center animate-fade-in">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
               <Check className="w-10 h-10 text-primary" />
             </div>
@@ -135,12 +153,12 @@ const EnterpriseContact = () => {
               Solicitação recebida!
             </h1>
             <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
-              Nossa equipe analisará seu perfil e entrará em contato em até <strong>24 horas úteis</strong> com uma proposta personalizada para sua operação.
+              Nossa equipe analisará seu perfil e entrará em contato em até <strong className="text-foreground">24 horas úteis</strong> com uma proposta personalizada.
             </p>
             <Button variant="hero" size="lg" onClick={() => navigate("/")}>
               Voltar ao início
             </Button>
-          </motion.div>
+          </div>
         </div>
       </>
     );
@@ -153,248 +171,281 @@ const EnterpriseContact = () => {
         description="Solicite uma estrutura personalizada para sua operação B2B. Gerente dedicado, volume ilimitado e infraestrutura sob medida."
         keywords="enterprise, B2B, vendas, automação, plano corporativo, Wiize"
       />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        {/* Background glow */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-primary/[0.04] blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-primary/[0.03] blur-[100px]" />
+        </div>
+
         {/* Header */}
-        <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-3">
+        <header className="border-b border-border/40 bg-background/90 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-4 sm:px-6 py-3">
             <div className="flex items-center justify-between">
               <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2 text-sm px-3">
                 <ArrowLeft size={16} />
-                Voltar
+                <span className="hidden sm:inline">Voltar</span>
               </Button>
               <Logo size="md" />
-              <div className="w-20" />
+              <div className="w-16 sm:w-20" />
             </div>
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-12 sm:py-16 max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16">
-            {/* Left - Info */}
-            <div className="lg:col-span-2">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <span className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full mb-6">
-                  <Building2 size={12} />
-                  ENTERPRISE
-                </span>
+        <main className="relative z-10 container mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16 max-w-6xl">
+          {/* Hero - mobile first */}
+          <div className="text-center mb-8 sm:mb-12 lg:hidden">
+            <span className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-1 rounded-full mb-4 tracking-wider">
+              <Building2 size={10} />
+              ENTERPRISE
+            </span>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-3 leading-tight">
+              Escale sua operação <span className="text-primary">sem limites</span>
+            </h1>
+            <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto leading-relaxed">
+              Receba uma proposta personalizada para maximizar seus resultados.
+            </p>
+          </div>
 
-                <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight">
-                  Escale sua operação<br />
-                  <span className="text-primary">sem limites</span>
-                </h1>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-14 items-start">
+            {/* Left - Info (desktop only) */}
+            <div className="hidden lg:block lg:col-span-2 lg:sticky lg:top-24">
+              <span className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-1 rounded-full mb-6 tracking-wider">
+                <Building2 size={10} />
+                ENTERPRISE
+              </span>
 
-                <p className="text-muted-foreground text-base sm:text-lg mb-10 leading-relaxed">
-                  Preencha o formulário e receba uma proposta personalizada para sua empresa. Nossa equipe especializada criará uma estrutura sob medida para maximizar seus resultados.
+              <h1 className="font-display text-4xl xl:text-[2.75rem] font-bold text-foreground mb-4 leading-[1.15]">
+                Escale sua operação<br />
+                <span className="text-primary">sem limites</span>
+              </h1>
+
+              <p className="text-muted-foreground text-base mb-10 leading-relaxed">
+                Preencha o formulário e receba uma proposta personalizada. Nossa equipe especializada criará uma estrutura sob medida para sua empresa.
+              </p>
+
+              <div className="grid grid-cols-1 gap-4">
+                {benefits.map((b, i) => (
+                  <div key={i} className="flex items-start gap-3.5 group">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] group-hover:bg-primary/[0.12] transition-colors">
+                      <b.icon className="h-[18px] w-[18px] text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground text-[13px] leading-tight">{b.title}</p>
+                      <p className="text-muted-foreground text-xs mt-0.5">{b.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 p-4 rounded-xl border border-border/40 bg-card/20">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  <strong className="text-foreground">⚡ Resposta rápida:</strong> Nossa equipe responde em até 24h úteis com análise completa e proposta personalizada.
                 </p>
-
-                <div className="space-y-5">
-                  {benefits.map((b, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 + i * 0.1 }}
-                      className="flex items-start gap-4"
-                    >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                        <b.icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-foreground text-sm">{b.title}</p>
-                        <p className="text-muted-foreground text-sm">{b.description}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <div className="mt-10 p-5 rounded-xl border border-border/50 bg-card/30">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    <strong className="text-foreground">💬 Resposta rápida:</strong> Nossa equipe responde em até 24 horas úteis com uma análise completa e proposta personalizada.
-                  </p>
-                </div>
-              </motion.div>
+              </div>
             </div>
 
             {/* Right - Form */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.15 }}
-              className="lg:col-span-3"
-            >
-              <div className="rounded-2xl border border-border/50 bg-card/30 backdrop-blur-sm p-6 sm:p-8">
-                <div className="mb-8">
-                  <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-2">
-                    Solicitar proposta Enterprise
-                  </h2>
-                  <p className="text-muted-foreground text-sm">
-                    Preencha os dados abaixo para que possamos montar a melhor solução para sua empresa.
-                  </p>
-                </div>
+            <div className="lg:col-span-3">
+              <div className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm p-5 sm:p-7 relative overflow-hidden">
+                {/* Form glow */}
+                <div className="pointer-events-none absolute -top-20 -right-20 w-60 h-60 rounded-full bg-primary/[0.05] blur-[80px]" />
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="partnerName">Nome do sócio / responsável *</Label>
-                      <Input
-                        id="partnerName"
-                        placeholder="João Silva"
-                        value={formData.partnerName}
-                        onChange={e => handleChange("partnerName", e.target.value)}
-                        className={errors.partnerName ? "border-destructive" : ""}
-                      />
-                      {errors.partnerName && <p className="text-xs text-destructive">{errors.partnerName}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="companyName">Nome da empresa *</Label>
-                      <Input
-                        id="companyName"
-                        placeholder="Empresa Ltda"
-                        value={formData.companyName}
-                        onChange={e => handleChange("companyName", e.target.value)}
-                        className={errors.companyName ? "border-destructive" : ""}
-                      />
-                      {errors.companyName && <p className="text-xs text-destructive">{errors.companyName}</p>}
-                    </div>
+                <div className="relative z-10">
+                  <div className="mb-6">
+                    <h2 className="font-display text-lg sm:text-xl font-bold text-foreground mb-1">
+                      Solicitar proposta Enterprise
+                    </h2>
+                    <p className="text-muted-foreground text-xs sm:text-sm">
+                      Todos os campos com * são obrigatórios.
+                    </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="cnpj">CNPJ *</Label>
-                      <Input
-                        id="cnpj"
-                        placeholder="00.000.000/0001-00"
-                        value={formData.cnpj}
-                        onChange={e => handleChange("cnpj", e.target.value)}
-                        className={errors.cnpj ? "border-destructive" : ""}
-                      />
-                      {errors.cnpj && <p className="text-xs text-destructive">{errors.cnpj}</p>}
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="partnerName" className="text-xs font-medium">Nome do sócio *</Label>
+                        <Input
+                          id="partnerName"
+                          placeholder="João Silva"
+                          value={formData.partnerName}
+                          onChange={e => handleChange("partnerName", e.target.value)}
+                          className={`h-9 text-sm ${errors.partnerName ? "border-destructive" : ""}`}
+                        />
+                        {errors.partnerName && <p className="text-[11px] text-destructive">{errors.partnerName}</p>}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="companyName" className="text-xs font-medium">Empresa *</Label>
+                        <Input
+                          id="companyName"
+                          placeholder="Empresa Ltda"
+                          value={formData.companyName}
+                          onChange={e => handleChange("companyName", e.target.value)}
+                          className={`h-9 text-sm ${errors.companyName ? "border-destructive" : ""}`}
+                        />
+                        {errors.companyName && <p className="text-[11px] text-destructive">{errors.companyName}</p>}
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="niche">Nicho de atuação *</Label>
-                      <Input
-                        id="niche"
-                        placeholder="Ex: Tecnologia, Consultoria, Agência..."
-                        value={formData.niche}
-                        onChange={e => handleChange("niche", e.target.value)}
-                        className={errors.niche ? "border-destructive" : ""}
-                      />
-                      {errors.niche && <p className="text-xs text-destructive">{errors.niche}</p>}
-                    </div>
-                  </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="cnpj" className="text-xs font-medium">CNPJ *</Label>
+                        <Input
+                          id="cnpj"
+                          placeholder="00.000.000/0001-00"
+                          value={formData.cnpj}
+                          onChange={e => handleChange("cnpj", e.target.value)}
+                          className={`h-9 text-sm ${errors.cnpj ? "border-destructive" : ""}`}
+                        />
+                        {errors.cnpj && <p className="text-[11px] text-destructive">{errors.cnpj}</p>}
+                      </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email corporativo *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="contato@empresa.com"
-                        value={formData.email}
-                        onChange={e => handleChange("email", e.target.value)}
-                        className={errors.email ? "border-destructive" : ""}
-                      />
-                      {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+                      <div className="space-y-1.5">
+                        <Label htmlFor="niche" className="text-xs font-medium">Nicho de atuação *</Label>
+                        <Input
+                          id="niche"
+                          placeholder="Tecnologia, Consultoria..."
+                          value={formData.niche}
+                          onChange={e => handleChange("niche", e.target.value)}
+                          className={`h-9 text-sm ${errors.niche ? "border-destructive" : ""}`}
+                        />
+                        {errors.niche && <p className="text-[11px] text-destructive">{errors.niche}</p>}
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Telefone / WhatsApp *</Label>
-                      <Input
-                        id="phone"
-                        placeholder="(11) 99999-9999"
-                        value={formData.phone}
-                        onChange={e => handleChange("phone", e.target.value)}
-                        className={errors.phone ? "border-destructive" : ""}
-                      />
-                      {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
-                    </div>
-                  </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="email" className="text-xs font-medium">Email corporativo *</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="contato@empresa.com"
+                          value={formData.email}
+                          onChange={e => handleChange("email", e.target.value)}
+                          className={`h-9 text-sm ${errors.email ? "border-destructive" : ""}`}
+                        />
+                        {errors.email && <p className="text-[11px] text-destructive">{errors.email}</p>}
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="teamSize">Tamanho da equipe comercial *</Label>
-                    <select
-                      id="teamSize"
-                      value={formData.teamSize}
-                      onChange={e => handleChange("teamSize", e.target.value)}
-                      className={`flex h-10 w-full rounded-md border ${errors.teamSize ? "border-destructive" : "border-input"} bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
+                      <div className="space-y-1.5">
+                        <Label htmlFor="phone" className="text-xs font-medium">WhatsApp *</Label>
+                        <Input
+                          id="phone"
+                          placeholder="(11) 99999-9999"
+                          value={formData.phone}
+                          onChange={e => handleChange("phone", e.target.value)}
+                          className={`h-9 text-sm ${errors.phone ? "border-destructive" : ""}`}
+                        />
+                        {errors.phone && <p className="text-[11px] text-destructive">{errors.phone}</p>}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="teamSize" className="text-xs font-medium">Equipe comercial *</Label>
+                        <select
+                          id="teamSize"
+                          value={formData.teamSize}
+                          onChange={e => handleChange("teamSize", e.target.value)}
+                          className={`flex h-9 w-full rounded-md border ${errors.teamSize ? "border-destructive" : "border-input"} bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
+                        >
+                          <option value="">Selecione...</option>
+                          <option value="1-5">1 a 5 pessoas</option>
+                          <option value="6-15">6 a 15 pessoas</option>
+                          <option value="16-50">16 a 50 pessoas</option>
+                          <option value="50+">Mais de 50</option>
+                        </select>
+                        {errors.teamSize && <p className="text-[11px] text-destructive">{errors.teamSize}</p>}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="monthlyLeadVolume" className="text-xs font-medium">Volume mensal desejado</Label>
+                        <Input
+                          id="monthlyLeadVolume"
+                          placeholder="Ex: 10.000, 50.000..."
+                          value={formData.monthlyLeadVolume}
+                          onChange={e => handleChange("monthlyLeadVolume", e.target.value)}
+                          className="h-9 text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="currentTools" className="text-xs font-medium">Ferramentas atuais</Label>
+                      <Input
+                        id="currentTools"
+                        placeholder="HubSpot, RD Station, planilhas..."
+                        value={formData.currentTools}
+                        onChange={e => handleChange("currentTools", e.target.value)}
+                        className="h-9 text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="objective" className="text-xs font-medium">Objetivo com a Wiize *</Label>
+                      <Textarea
+                        id="objective"
+                        placeholder="Descreva seus desafios atuais e o resultado esperado..."
+                        rows={3}
+                        value={formData.objective}
+                        onChange={e => handleChange("objective", e.target.value)}
+                        className={`text-sm resize-none ${errors.objective ? "border-destructive" : ""}`}
+                      />
+                      {errors.objective && <p className="text-[11px] text-destructive">{errors.objective}</p>}
+                    </div>
+
+                    <Button
+                      type="submit"
+                      variant="hero"
+                      size="lg"
+                      className="w-full mt-2"
+                      disabled={loading || !isFormValid}
                     >
-                      <option value="">Selecione...</option>
-                      <option value="1-5">1 a 5 pessoas</option>
-                      <option value="6-15">6 a 15 pessoas</option>
-                      <option value="16-50">16 a 50 pessoas</option>
-                      <option value="50+">Mais de 50 pessoas</option>
-                    </select>
-                    {errors.teamSize && <p className="text-xs text-destructive">{errors.teamSize}</p>}
-                  </div>
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="mr-2 h-4 w-4" />
+                          Enviar solicitação
+                        </>
+                      )}
+                    </Button>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="monthlyLeadVolume">Volume mensal de leads desejado</Label>
-                    <Input
-                      id="monthlyLeadVolume"
-                      placeholder="Ex: 10.000, 50.000..."
-                      value={formData.monthlyLeadVolume}
-                      onChange={e => handleChange("monthlyLeadVolume", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="currentTools">Ferramentas que usa atualmente</Label>
-                    <Input
-                      id="currentTools"
-                      placeholder="Ex: HubSpot, RD Station, planilhas..."
-                      value={formData.currentTools}
-                      onChange={e => handleChange("currentTools", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="objective">Qual objetivo pretende alcançar com a Wiize? *</Label>
-                    <Textarea
-                      id="objective"
-                      placeholder="Descreva como pretende usar a plataforma, seus desafios atuais e o resultado esperado..."
-                      rows={4}
-                      value={formData.objective}
-                      onChange={e => handleChange("objective", e.target.value)}
-                      className={errors.objective ? "border-destructive" : ""}
-                    />
-                    {errors.objective && <p className="text-xs text-destructive">{errors.objective}</p>}
-                  </div>
-
-                  <Button
-                    type="submit"
-                    variant="hero"
-                    size="lg"
-                    className="w-full"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="mr-2 h-4 w-4" />
-                        Enviar solicitação Enterprise
-                      </>
+                    {!isFormValid && (
+                      <p className="text-[11px] text-center text-muted-foreground/70">
+                        Preencha todos os campos obrigatórios para habilitar o envio.
+                      </p>
                     )}
-                  </Button>
 
-                  <p className="text-xs text-center text-muted-foreground">
-                    Ao enviar, você concorda com nossos{" "}
-                    <a href="/terms" className="text-primary hover:underline">Termos de Uso</a>{" "}
-                    e{" "}
-                    <a href="/privacy" className="text-primary hover:underline">Política de Privacidade</a>.
-                  </p>
-                </form>
+                    <p className="text-[10px] text-center text-muted-foreground pt-1">
+                      Ao enviar, você concorda com nossos{" "}
+                      <a href="/terms" className="text-primary hover:underline">Termos</a>{" "}
+                      e{" "}
+                      <a href="/privacy" className="text-primary hover:underline">Privacidade</a>.
+                    </p>
+                  </form>
+                </div>
               </div>
-            </motion.div>
+
+              {/* Benefits mobile */}
+              <div className="lg:hidden mt-8 grid grid-cols-2 gap-3">
+                {benefits.map((b, i) => (
+                  <div key={i} className="flex items-start gap-2.5 p-3 rounded-xl border border-border/30 bg-card/20">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08]">
+                      <b.icon className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground text-[11px] leading-tight">{b.title}</p>
+                      <p className="text-muted-foreground text-[10px] mt-0.5">{b.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </main>
       </div>
