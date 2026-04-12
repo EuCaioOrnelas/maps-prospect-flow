@@ -82,7 +82,7 @@ export const FeaturesOverviewSection = () => {
             initial="hidden"
             animate="visible"
             className={cn(
-              "grid w-full grid-cols-1 gap-4 md:grid-cols-3",
+              "grid w-full grid-cols-1 gap-4 md:grid-cols-[2fr_2fr_3fr]",
               "md:grid-rows-3",
               "auto-rows-[minmax(110px,auto)]"
             )}
@@ -145,14 +145,13 @@ export const FeaturesOverviewSection = () => {
                   </p>
                 </div>
                 {/* Flow builder background image */}
-                <div className="pointer-events-none relative flex-1 min-h-[200px] overflow-hidden mt-4">
+                <div className="pointer-events-none relative flex-1 min-h-[240px] overflow-hidden mt-6">
                   <img
                     src={flowBuilderPreview}
                     alt="Visualização do editor de fluxos"
                     loading="eager"
                     decoding="async"
-                    className="w-full mx-auto object-contain drop-shadow-lg"
-                    style={{ imageRendering: 'auto', filter: 'none' }}
+                    className="w-[110%] -ml-[5%] object-contain drop-shadow-lg"
                   />
                 </div>
               </div>
@@ -199,7 +198,7 @@ export const FeaturesOverviewSection = () => {
             </motion.div>
 
             {/* Bottom wide: Automação with horizontal timeline */}
-            <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-1">
+            <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-1 md:col-start-1">
               <div className={`${cardBase} !flex-col`}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
