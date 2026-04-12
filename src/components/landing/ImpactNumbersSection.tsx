@@ -44,24 +44,38 @@ const AnimatedCounter = ({ end, prefix = "", suffix = "", duration = 2000, isVis
 };
 
 /* ── Floating SVG paths ── */
-const FloatingPaths = ({ isVisible }: { isVisible: boolean }) => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    <svg className="w-full h-full opacity-[0.08]" viewBox="0 0 1200 400" fill="none">
-      {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-        <motion.path
-          key={i}
-          d={`M${-100 + i * 40},${220 + i * 25} Q${300 + i * 35},${80 - i * 15} ${600 + i * 25},${210 + i * 12} T${1300 + i * 40},${170 - i * 8}`}
-          stroke="hsl(var(--primary))"
-          strokeWidth={2 - i * 0.15}
-          strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={isVisible ? { pathLength: 1, opacity: 1 } : {}}
-          transition={{ duration: 2 + i * 0.3, delay: 0.2 + i * 0.15, ease: "easeOut" }}
-        />
-      ))}
-    </svg>
-  </div>
-);
+function FloatingPaths({ position }: { position: number }) {
+  const paths = Array.from({ length: 28 }, (_, i) => ({
+    id: i,
+    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position} -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position} ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position} ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
+    width: 0.4 + i * 0.02,
+  }));
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <svg className="w-full h-full text-primary" viewBox="0 0 696 316" fill="none">
+        {paths.map((path) => (
+          <motion.path
+            key={path.id}
+            d={path.d}
+            stroke="currentColor"
+            strokeWidth={path.width}
+            strokeOpacity={0.04 + path.id * 0.005}
+            initial={{ pathLength: 0.3, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 1 }}
+            transition={{
+              duration: 15 + Math.random() * 10,
+              repeat: Infinity,
+              repeatType: "mirror",
+              ease: "linear",
+              delay: path.id * 0.15,
+            }}
+          />
+        ))}
+      </svg>
+    </div>
+  );
+}
 
 /* ── Stats data ── */
 const stats = [
