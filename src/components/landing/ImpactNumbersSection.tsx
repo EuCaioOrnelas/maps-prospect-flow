@@ -43,32 +43,46 @@ const AnimatedCounter = ({ end, prefix = "", suffix = "", duration = 2000, isVis
   return <span className="tabular-nums whitespace-nowrap">{prefix}{display()}{suffix}</span>;
 };
 
-/* ── Floating SVG paths ── */
+/* ── Background Paths (from BackgroundPaths component) ── */
 function FloatingPaths({ position }: { position: number }) {
-  const paths = Array.from({ length: 28 }, (_, i) => ({
+  const paths = Array.from({ length: 36 }, (_, i) => ({
     id: i,
-    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position} -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position} ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position} ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
-    width: 0.4 + i * 0.02,
+    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${
+      380 - i * 5 * position
+    } -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${
+      152 - i * 5 * position
+    } ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${
+      684 - i * 5 * position
+    } ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
+    color: `rgba(15,23,42,${0.1 + i * 0.03})`,
+    width: 0.5 + i * 0.03,
   }));
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <svg className="w-full h-full text-primary" viewBox="0 0 696 316" fill="none">
+      <svg
+        className="w-full h-full text-foreground"
+        viewBox="0 0 696 316"
+        fill="none"
+      >
         {paths.map((path) => (
           <motion.path
             key={path.id}
             d={path.d}
             stroke="currentColor"
             strokeWidth={path.width}
-            strokeOpacity={0.04 + path.id * 0.005}
+            strokeOpacity={0.03 + path.id * 0.003}
             initial={{ pathLength: 0.3, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 1 }}
+            animate={{
+              pathLength: 1,
+              opacity: 1,
+            }}
             transition={{
-              duration: 15 + Math.random() * 10,
+              duration: 20 + Math.random() * 10,
               repeat: Infinity,
               repeatType: "mirror",
               ease: "linear",
-              delay: path.id * 0.15,
+              delay: path.id * 0.1,
             }}
           />
         ))}
@@ -110,20 +124,9 @@ export const ImpactNumbersSection = () => {
       ref={ref as React.RefObject<HTMLElement>}
       className="relative overflow-hidden py-14 sm:py-20"
     >
-      {/* Floating data paths */}
+      {/* Background paths — left and right */}
       <FloatingPaths position={1} />
       <FloatingPaths position={-1} />
-
-      {/* Subtle gradient wash */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120%] h-[70%] opacity-[0.04]"
-          style={{
-            background:
-              "radial-gradient(ellipse at 50% 100%, hsl(158 72% 45%), transparent 70%)",
-          }}
-        />
-      </div>
 
       <div className="container mx-auto px-4 relative z-10 max-w-[1160px]">
         {/* Headline */}
@@ -151,7 +154,6 @@ export const ImpactNumbersSection = () => {
                 animate={isVisible ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.15 + i * 0.12, ease: "easeOut" }}
               >
-                {/* Number */}
                 <span className="font-display text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-foreground leading-none block mb-3">
                   <AnimatedCounter
                     end={stat.value}
@@ -163,7 +165,6 @@ export const ImpactNumbersSection = () => {
                   />
                 </span>
 
-                {/* Icon + Label inline */}
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <Icon size={14} className="text-primary" />
@@ -178,7 +179,7 @@ export const ImpactNumbersSection = () => {
         </div>
       </div>
 
-      {/* Bottom gradient border — thick center, thin edges */}
+      {/* Bottom gradient border */}
       <div className="absolute bottom-0 left-0 right-0 h-[1px]">
         <div
           className="w-full h-full"
