@@ -199,6 +199,7 @@ export const FeaturesOverviewSection = () => {
                 </div>
               </div>
             </motion.div>
+          </motion.div>
         )}
       </div>
     </section>
