@@ -29,17 +29,17 @@ export function FloatingPaths({
   return (
     <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`}>
       <svg
-        className="h-full w-full"
-        viewBox="0 0 696 316"
+        className="absolute w-[140%] h-[140%] -left-[10%] -bottom-[20%]"
+        viewBox="-400 -300 1500 900"
         fill="none"
-        style={{ transform: "scaleY(-1)" }}
+        preserveAspectRatio="xMinYMax slice"
       >
         {paths.map((path) => (
           <motion.path
             key={path.id}
             d={path.d}
             fill="none"
-            stroke={`rgba(34,197,94,${0.04 + path.id * 0.012})`}
+            stroke={`rgba(34,197,94,${0.025 + path.id * 0.006})`}
             strokeWidth={path.width}
             strokeLinecap="round"
             initial={{ pathLength: 0, opacity: 0 }}
