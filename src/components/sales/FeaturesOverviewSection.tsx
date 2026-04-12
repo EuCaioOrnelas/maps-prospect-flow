@@ -7,6 +7,11 @@ import {
   LayoutDashboard,
   Zap,
   Bot,
+  ChevronRight,
+  Clock,
+  RefreshCw,
+  Target,
+  CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import flowBuilderPreview from "@/assets/flow-builder-preview.png";
@@ -18,11 +23,12 @@ const cardGlowMain =
 const cardGlowSecondary =
   "absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/[0.03] blur-[64px] pointer-events-none";
 
-const barData = [
-  { h: 30, delay: 0 }, { h: 50, delay: 0.08 }, { h: 40, delay: 0.16 },
-  { h: 65, delay: 0.24 }, { h: 55, delay: 0.32 }, { h: 80, delay: 0.4 },
-  { h: 70, delay: 0.48 }, { h: 90, delay: 0.56 }, { h: 60, delay: 0.64 },
-  { h: 95, delay: 0.72 },
+/* Pipeline steps for horizontal flow inside Operação Comercial */
+const pipelineSteps = [
+  { icon: Clock, label: "Follow-up automático" },
+  { icon: RefreshCw, label: "Pipeline atualizado" },
+  { icon: Target, label: "Lead qualificado" },
+  { icon: CheckCircle, label: "Oportunidade fechada" },
 ];
 
 const containerVariants = {
@@ -41,14 +47,6 @@ const itemVariants = {
     transition: { type: "spring" as const, stiffness: 100, damping: 10 },
   },
 };
-
-/* Timeline steps for horizontal flow inside Operação Comercial */
-const timelineSteps = [
-  { label: "Novo lead no WhatsApp" },
-  { label: "Analise com IA" },
-  { label: "A IA conduz a conversa" },
-  { label: "Fechando o negócio" },
-];
 
 export const FeaturesOverviewSection = () => {
   const { ref, isVisible } = useScrollAnimation();
@@ -134,7 +132,7 @@ export const FeaturesOverviewSection = () => {
               <div className={`${cardBase} !p-0`}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
-                <div className="relative z-10 p-3 sm:p-3.5 pb-36 sm:pb-44 flex flex-col h-full">
+                <div className="relative z-10 p-3 sm:p-3.5 flex flex-col">
                   <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider w-fit">Conversas humanas em escala</span>
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -147,15 +145,14 @@ export const FeaturesOverviewSection = () => {
                   </p>
                 </div>
                 {/* Flow builder background image */}
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] sm:h-[58%] overflow-hidden">
+                <div className="pointer-events-none relative flex-1 min-h-[180px] overflow-hidden mt-2">
                   <img
                     src={flowBuilderPreview}
                     alt="Visualização do editor de fluxos"
                     loading="eager"
                     decoding="async"
-                    className="absolute left-[55%] top-[15%] w-[160%] sm:w-[165%] min-w-[320px] max-w-none -translate-x-1/2 opacity-60 drop-shadow-2xl"
+                    className="w-[95%] mx-auto object-contain drop-shadow-2xl"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
                 </div>
               </div>
             </motion.div>
@@ -218,34 +215,35 @@ export const FeaturesOverviewSection = () => {
                   </p>
                 </div>
 
-                {/* Horizontal timeline */}
-                <div className="relative z-10 mt-4 flex items-center justify-between gap-0 px-2">
-                  {timelineSteps.map((step, i) => (
-                    <div key={i} className="flex items-center flex-1 last:flex-none">
-                      {/* Step */}
-                      <motion.div
-                        className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-full px-3 py-1.5 whitespace-nowrap"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={isVisible ? { opacity: 1, scale: 1 } : {}}
-                        transition={{ duration: 0.4, delay: 0.5 + i * 0.15, ease: "easeOut" }}
-                      >
-                        <div className="w-4 h-4 rounded-full border-2 border-primary/60 flex items-center justify-center flex-shrink-0">
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary/80" />
-                        </div>
-                        <span className="text-[10px] sm:text-[11px] font-medium text-foreground/80">{step.label}</span>
-                      </motion.div>
-                      {/* Connector line */}
-                      {i < timelineSteps.length - 1 && (
+                {/* Horizontal pipeline sequence with arrows */}
+                <div className="relative z-10 mt-4 flex items-center justify-between gap-0 px-1">
+                  {pipelineSteps.map((step, i) => {
+                    const StepIcon = step.icon;
+                    return (
+                      <div key={i} className="flex items-center flex-1 last:flex-none">
                         <motion.div
-                          className="flex-1 h-px bg-primary/20 mx-1"
-                          initial={{ scaleX: 0 }}
-                          animate={isVisible ? { scaleX: 1 } : {}}
-                          transition={{ duration: 0.4, delay: 0.65 + i * 0.15, ease: "easeOut" }}
-                          style={{ transformOrigin: "left" }}
-                        />
-                      )}
-                    </div>
-                  ))}
+                          className="flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded-lg px-2.5 py-2 whitespace-nowrap"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={isVisible ? { opacity: 1, x: 0 } : {}}
+                          transition={{ duration: 0.4, delay: 0.5 + i * 0.15, ease: "easeOut" }}
+                        >
+                          <StepIcon size={13} className="text-primary flex-shrink-0" />
+                          <span className="text-[10px] sm:text-[11px] font-medium text-foreground/80">{step.label}</span>
+                        </motion.div>
+                        {i < pipelineSteps.length - 1 && (
+                          <motion.div
+                            className="flex items-center justify-center flex-1 mx-0.5"
+                            initial={{ opacity: 0 }}
+                            animate={isVisible ? { opacity: 1 } : {}}
+                            transition={{ duration: 0.3, delay: 0.65 + i * 0.15 }}
+                          >
+                            <div className="flex-1 h-px bg-primary/20" />
+                            <ChevronRight size={14} className="text-primary/40 -mx-0.5 flex-shrink-0" />
+                          </motion.div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </motion.div>
