@@ -83,9 +83,9 @@ export const FeaturesOverviewSection = () => {
                   <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
                     <MessageCircle size={16} className="text-primary" />
                   </div>
-                   <h3 className="font-semibold text-foreground text-sm mb-0.5">Abordagem Contextual em Escala</h3>
+                   <h3 className="font-semibold text-foreground text-base mb-0.5">Abordagem Contextual em Escala</h3>
                    <p className="text-xs text-muted-foreground leading-relaxed">
-                     Cada lead recebe uma mensagem construída a partir do seu nicho, porte e diagnóstico real — não templates genéricos. Isso aumenta taxa de resposta e acelera a entrada no pipeline.
+                     Cada lead recebe uma mensagem construída a partir do seu nicho, porte e diagnóstico real, não templates genéricos. Isso aumenta taxa de resposta e acelera a entrada no pipeline.
                    </p>
                 </div>
               </div>
@@ -100,7 +100,7 @@ export const FeaturesOverviewSection = () => {
                   <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
                     <Send size={16} className="text-primary" />
                   </div>
-                   <h3 className="font-semibold text-foreground text-sm mb-0.5">Campanhas via API Oficial Meta</h3>
+                   <h3 className="font-semibold text-foreground text-base mb-0.5">Campanhas via API Oficial Meta</h3>
                    <p className="text-xs text-muted-foreground leading-relaxed">
                      Envios outbound e inbound pela API oficial do WhatsApp Business, com conformidade total às políticas da Meta. Escala real sem risco de bloqueio ou perda de número.
                    </p>
@@ -139,7 +139,7 @@ export const FeaturesOverviewSection = () => {
                   <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
                     <LayoutDashboard size={16} className="text-primary" />
                   </div>
-                   <h3 className="font-semibold text-foreground text-sm mb-0.5">CRM com Scoring Automático</h3>
+                   <h3 className="font-semibold text-foreground text-base mb-0.5">CRM com Scoring Automático</h3>
                    <p className="text-xs text-muted-foreground leading-relaxed">
                      Pipeline visual que organiza cada lead por estágio, registra histórico de interações e atribui score com base em comportamento real. Sua equipe sabe exatamente quem priorizar a cada momento.
                    </p>
@@ -156,9 +156,9 @@ export const FeaturesOverviewSection = () => {
                   <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
                     <Zap size={16} className="text-primary" />
                   </div>
-                   <h3 className="font-semibold text-foreground text-sm mb-0.5">Operação Comercial Autônoma</h3>
+                   <h3 className="font-semibold text-foreground text-base mb-0.5">Automação de Processos</h3>
                    <p className="text-xs text-muted-foreground leading-relaxed">
-                     Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida — 24 horas por dia.
+                     Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida, 24 horas por dia.
                    </p>
                 </div>
               </div>
@@ -174,10 +174,10 @@ export const FeaturesOverviewSection = () => {
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Bot size={16} className="text-primary" />
                     </div>
-                     <h3 className="font-semibold text-foreground text-sm">Agente de IA com Fluxos Estruturados</h3>
+                     <h3 className="font-semibold text-foreground text-base">Operação Comercial Autônoma</h3>
                    </div>
                    <p className="text-xs text-muted-foreground leading-relaxed">
-                     A IA responde, qualifica e conduz cada conversa dentro de fluxos definidos — avançando o lead até o momento de decisão com naturalidade e consistência, sem intervenção humana.
+                     A IA responde, qualifica e conduz cada conversa dentro de fluxos definidos, avançando o lead até o momento de decisão com naturalidade e consistência, sem intervenção humana.
                    </p>
                  </div>
                  <div className="flex-shrink-0 text-right pl-6 border-l border-border/50 relative z-10">
