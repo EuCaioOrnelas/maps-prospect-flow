@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentMethodModal, type CustomerData } from "@/components/checkout/PaymentMethodModal";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
 import type { LucideIcon } from "lucide-react";
 
 const parsePrice = (price: string) => Number(price.replace(/\./g, '').replace(',', '.'));
@@ -54,84 +54,121 @@ const PRICE_IDS = {
 
 type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[]; sectionHeader?: string; subDetail?: boolean; isNew?: boolean };
 
-const plans: {
-  name: string;
-  key: string;
-  price: string;
-  anchorPrice: string;
-  opportunities: string;
-  description: string;
-  features: PlanFeature[];
-  popular: boolean;
-  icon: LucideIcon;
-  badge?: string;
-}[] = [
-  {
-    name: "Start",
-    key: "start",
-    price: "197",
-    anchorPrice: "394",
-    opportunities: "1.000",
-    description: "Para validar e começar a gerar oportunidades",
-    features: [
-      { text: "Geração de mensagens com IA" },
-      { text: "IA analisa cada lead e identifica oportunidades reais de abordagem" },
-      { text: "CRM integrado" },
-      { text: "Campanhas de mensagem via Meta API oficial" },
-      { text: "Até 2 números WhatsApp" },
-      { text: "Suporte via email" },
-      { text: "Sem automação", disabled: true },
-      { text: "Sem follow-up", disabled: true },
-      { text: "Sem agente", disabled: true },
-    ],
-    popular: false,
-    icon: Rocket,
-  },
-  {
-    name: "Growth",
-    key: "growth",
-    price: "497",
-    anchorPrice: "1.242,50",
-    opportunities: "3.000",
-    description: "Para escalar e converter oportunidades com IA",
-    features: [
-      { text: "Geração de mensagens com IA" },
-      { text: "IA analisa cada lead e identifica oportunidades reais de abordagem" },
-      { text: "CRM integrado" },
-      { text: "Campanhas de mensagem via Meta API oficial" },
-      { text: "Até 5 números WhatsApp" },
-      { text: "Automação de atendimento" },
-      { text: "Follow-up inteligente" },
-      { text: "Agente de IA operacional" },
-      { text: "Suporte prioritário" },
-    ],
-    popular: true,
-    icon: TrendingUp,
-    badge: "⭐",
-  },
-  {
-    name: "Scale",
-    key: "scale",
-    price: "1.297",
-    anchorPrice: "3.505,41",
-    opportunities: "10.000",
-    description: "Para escalar com inteligência e tomar decisões melhores",
-    features: [
-      { text: "Tudo do Growth" },
-      { text: "Agente estratégico de IA", isNew: true },
-      { text: "Mostra quais leads priorizar", subDetail: true },
-      { text: "Sugere a melhor abordagem para cada um", subDetail: true },
-      { text: "Ajuda você a tomar decisões mais rápidas", subDetail: true },
-      { text: "Aumenta sua taxa de conversão", subDetail: true },
-      { text: "Prioridade máxima de processamento" },
-      { text: "Até 10 números WhatsApp" },
-      { text: "Suporte VIP" },
-    ],
-    popular: false,
-    icon: Building2,
-    badge: "🔥",
-  },
-];
+const mainPlans = {
+  monthly: [
+    {
+      name: "Start",
+      key: "start",
+      price: "296",
+      anchorPrice: "592",
+      opportunities: "1.000",
+      description: "Para validar e começar a gerar oportunidades",
+      features: [
+        { text: "Geração de mensagens com IA" },
+        { text: "IA analisa cada lead e identifica oportunidades reais de abordagem" },
+        { text: "CRM integrado" },
+        { text: "Campanhas de mensagem via Meta API oficial" },
+        { text: "Até 2 números WhatsApp" },
+        { text: "Suporte via email" },
+        { text: "Sem automação", disabled: true },
+        { text: "Sem follow-up", disabled: true },
+        { text: "Sem agente", disabled: true },
+      ] as PlanFeature[],
+      popular: false,
+      icon: Rocket,
+    },
+    {
+      name: "Growth",
+      key: "growth",
+      price: "696",
+      anchorPrice: "1.392",
+      opportunities: "3.000",
+      description: "Para escalar e converter oportunidades com IA",
+      features: [
+        { text: "Geração de mensagens com IA" },
+        { text: "IA analisa cada lead e identifica oportunidades reais de abordagem" },
+        { text: "CRM integrado" },
+        { text: "Campanhas de mensagem via Meta API oficial" },
+        { text: "Até 5 números WhatsApp" },
+        { text: "Automação de atendimento" },
+        { text: "Follow-up inteligente" },
+        { text: "Agente de IA operacional" },
+        { text: "Suporte prioritário" },
+      ] as PlanFeature[],
+      popular: true,
+      icon: TrendingUp,
+      badge: "⭐",
+    },
+  ],
+  annual: [
+    {
+      name: "Start",
+      key: "start",
+      price: "246",
+      anchorPrice: "592",
+      opportunities: "1.000",
+      description: "Para validar e começar a gerar oportunidades",
+      features: [
+        { text: "Geração de mensagens com IA" },
+        { text: "IA analisa cada lead e identifica oportunidades reais de abordagem" },
+        { text: "CRM integrado" },
+        { text: "Campanhas de mensagem via Meta API oficial" },
+        { text: "Até 2 números WhatsApp" },
+        { text: "Suporte via email" },
+        { text: "Sem automação", disabled: true },
+        { text: "Sem follow-up", disabled: true },
+        { text: "Sem agente", disabled: true },
+      ] as PlanFeature[],
+      popular: false,
+      icon: Rocket,
+    },
+    {
+      name: "Growth",
+      key: "growth",
+      price: "496",
+      anchorPrice: "1.392",
+      opportunities: "3.000",
+      description: "Para escalar e converter oportunidades com IA",
+      features: [
+        { text: "Geração de mensagens com IA" },
+        { text: "IA analisa cada lead e identifica oportunidades reais de abordagem" },
+        { text: "CRM integrado" },
+        { text: "Campanhas de mensagem via Meta API oficial" },
+        { text: "Até 5 números WhatsApp" },
+        { text: "Automação de atendimento" },
+        { text: "Follow-up inteligente" },
+        { text: "Agente de IA operacional" },
+        { text: "Suporte prioritário" },
+      ] as PlanFeature[],
+      popular: true,
+      icon: TrendingUp,
+      badge: "⭐",
+    },
+  ],
+};
+
+const scalePlan = {
+  name: "Scale",
+  key: "scale",
+  price: "1.496",
+  opportunities: "10.000",
+  description: "Para escalar com inteligência e tomar decisões melhores",
+  features: [
+    { text: "Tudo do Growth" },
+    { text: "Agente estratégico de IA", isNew: true },
+    { text: "Mostra quais leads priorizar", subDetail: true },
+    { text: "Sugere a melhor abordagem para cada um", subDetail: true },
+    { text: "Ajuda você a tomar decisões mais rápidas", subDetail: true },
+    { text: "Aumenta sua taxa de conversão", subDetail: true },
+    { text: "Prioridade máxima de processamento" },
+    { text: "Até 10 números WhatsApp" },
+    { text: "Suporte VIP" },
+  ] as PlanFeature[],
+  icon: Building2,
+  badge: "🔥",
+};
+
+
 export const PricingSection = () => {
   const { ref, isVisible } = useScrollAnimation();
   const { user } = useAuth();
@@ -139,7 +176,10 @@ export const PricingSection = () => {
   const navigate = useNavigate();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<{ name: string; key: string; price: string } | null>(null);
+  const [isAnnual, setIsAnnual] = useState(true);
+
+  const plans = isAnnual ? mainPlans.annual : mainPlans.monthly;
 
   const handleCardCheckout = async (customerData: CustomerData) => {
     if (!selectedPlan) return;
@@ -163,12 +203,9 @@ export const PricingSection = () => {
     }
   };
 
-  const handlePixCheckout = async (_customerData: CustomerData) => {
-    // PIX is now handled inline in the modal via QR Code
-    // This callback is kept for interface compatibility but no longer redirects
-  };
+  const handlePixCheckout = async (_customerData: CustomerData) => {};
 
-  const handlePlanClick = (plan: typeof plans[0]) => {
+  const handlePlanClick = (plan: { name: string; key: string; price: string }) => {
     setSelectedPlan(plan);
     setPaymentModalOpen(true);
   };
@@ -182,23 +219,43 @@ export const PricingSection = () => {
       >
         <div className="container mx-auto px-4 max-w-6xl">
           <div 
-            className={`text-center mb-16 transition-all duration-700 ${
+            className={`text-center mb-12 transition-all duration-700 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">
               Planos que <br className="md:hidden" /><span className="text-shimmer-highlight">cabem no bolso</span>
             </h2>
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               Um único cliente fechado já paga o plano inteiro.
               Invista em prospecção previsível.
             </p>
+
+            {/* Toggle Annual / Monthly */}
+            <div className="flex items-center justify-center gap-3">
+              <span className={`text-sm font-medium transition-colors ${!isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Mensal
+              </span>
+              <Switch
+                checked={isAnnual}
+                onCheckedChange={setIsAnnual}
+              />
+              <span className={`text-sm font-medium transition-colors ${isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Anual
+              </span>
+              {isAnnual && (
+                <span className="bg-primary/15 text-primary text-xs font-bold px-2.5 py-1 rounded-full ml-1">
+                  Economize até 30%
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+          {/* Start + Growth */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch max-w-4xl mx-auto mb-8">
             {plans.map((plan, index) => (
               <motion.div
-                key={index}
+                key={`${plan.key}-${isAnnual ? 'annual' : 'monthly'}`}
                 initial={{ opacity: 0, y: 50, scale: 0.9 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true, margin: "-100px" }}
@@ -241,7 +298,7 @@ export const PricingSection = () => {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 text-sm">R$ {plan.anchorPrice}</span>
                     <span className="bg-primary/15 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
-                      -{Math.round((1 - Number(plan.price.replace(/\./g, '').replace(',', '.')) / Number(plan.anchorPrice.replace(/\./g, '').replace(',', '.'))) * 100)}%
+                      -{Math.round((1 - parsePrice(plan.price) / parsePrice(plan.anchorPrice)) * 100)}%
                     </span>
                   </div>
                   <div className="flex items-baseline gap-1">
@@ -256,42 +313,18 @@ export const PricingSection = () => {
                   </p>
                 </div>
 
-                <TooltipProvider delayDuration={200}>
                 <ul className="space-y-3 mb-8 text-sm flex-grow">
-                  {plan.features.map((feature, i) => {
-                    if (feature.sectionHeader) {
-                      return (
-                        <li key={i} className="pt-2 pb-1">
-                          <span className="text-xs font-bold tracking-wide text-primary uppercase">{feature.sectionHeader}</span>
-                        </li>
-                      );
-                    }
-                    if (feature.subDetail) {
-                      return (
-                        <li key={i} className="flex items-start gap-3 text-sm pl-6">
-                          <span className="text-primary flex-shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
-                          <span className="text-muted-foreground">{feature.text}</span>
-                        </li>
-                      );
-                    }
-                    return (
+                  {plan.features.map((feature, i) => (
                     <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
                       {feature.disabled ? (
                         <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
                       ) : (
                         <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
-                      <span className="text-muted-foreground">
-                        {feature.text}
-                      </span>
-                      {feature.isNew && (
-                        <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">NOVO</span>
-                      )}
+                      <span className="text-muted-foreground">{feature.text}</span>
                     </li>
-                    );
-                  })}
+                  ))}
                 </ul>
-                </TooltipProvider>
 
                 <Button
                   variant={plan.popular ? "hero" : "outline"}
@@ -305,29 +338,95 @@ export const PricingSection = () => {
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Processando...
                     </>
-                  ) : plan.key === "start" ? (
-                    "Começar Agora"
-                  ) : plan.key === "scale" ? (
-                    "Escalar Agora"
-                  ) : plan.popular ? (
-                    "Começar Agora"
                   ) : (
-                    "Escolher Plano"
+                    "Começar Agora"
                   )}
-              </Button>
+                </Button>
               </motion.div>
             ))}
           </div>
 
+          {/* Scale - Single wide card */}
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            whileHover={{ y: -4, transition: { duration: 0.3 } }}
+            className="max-w-4xl mx-auto rounded-2xl glass p-6 md:p-8 mb-16"
+          >
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                    <Building2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="font-display font-bold text-lg md:text-xl">Scale</h3>
+                  <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">🔥 ENTERPRISE</span>
+                </div>
+                <p className="text-muted-foreground text-sm mb-4">{scalePlan.description}</p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {scalePlan.features.map((feature, i) => (
+                    feature.subDetail ? (
+                      <div key={i} className="flex items-start gap-2 text-sm pl-4">
+                        <span className="text-primary flex-shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
+                        <span className="text-muted-foreground">{feature.text}</span>
+                      </div>
+                    ) : (
+                      <div key={i} className="flex items-start gap-2 text-sm">
+                        <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">
+                          {feature.text}
+                        </span>
+                        {feature.isNew && (
+                          <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">NOVO</span>
+                        )}
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center md:items-end gap-3 md:min-w-[200px]">
+                <div className="text-center md:text-right">
+                  <p className="text-xs text-muted-foreground mb-1">A partir de</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm text-muted-foreground">R$</span>
+                    <span className="font-display font-bold text-3xl md:text-4xl tabular-nums">{formatPrice(1496)}</span>
+                    <span className="text-muted-foreground">/mês</span>
+                  </div>
+                  <p className="text-primary mt-1 text-xs font-medium">
+                    Até {scalePlan.opportunities} oportunidades/mês
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full md:w-auto"
+                  onClick={() => handlePlanClick(scalePlan)}
+                  disabled={loadingPlan === "scale"}
+                >
+                  {loadingPlan === "scale" ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processando...
+                    </>
+                  ) : (
+                    "Escalar Agora"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </motion.div>
 
           {/* Trust & Security Section */}
           <div 
-            className={`mt-16 transition-all duration-700 delay-600 ${
+            className={`transition-all duration-700 delay-600 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
             <div className="relative overflow-hidden rounded-2xl border border-border/50 p-6 md:p-10">
-              {/* Subtle background */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-2xl" />
               
@@ -346,7 +445,6 @@ export const PricingSection = () => {
                   </p>
                 </div>
                 
-                {/* Trust Grid - Row 1: 4 cards */}
                 <div className="hidden md:grid md:grid-cols-4 gap-4">
                   {[
                     { icon: Lock, title: "Dados Protegidos", description: "Criptografia ponta a ponta" },
@@ -364,7 +462,6 @@ export const PricingSection = () => {
                   ))}
                 </div>
 
-                {/* Trust Grid - Row 2: 3 cards */}
                 <div className="hidden md:grid md:grid-cols-3 gap-4 mt-4">
                   {[
                     { icon: ShieldCheck, title: "100% Seguro", description: "Pagamento via Stripe" },
@@ -381,7 +478,6 @@ export const PricingSection = () => {
                   ))}
                 </div>
 
-                {/* Mobile: topic list with icons */}
                 <div className="md:hidden space-y-3">
                   {[
                     { icon: Lock, title: "Dados Protegidos", description: "Criptografia ponta a ponta" },
