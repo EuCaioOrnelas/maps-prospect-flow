@@ -3,6 +3,14 @@ import { motion } from "framer-motion";
 import { Clock, UserX, MessageSquareOff, AlertTriangle, BarChart3, TrendingDown } from "lucide-react";
 import { BentoGridShowcase } from "@/components/ui/bento-product-features";
 import whatsappPhoneMockup from "@/assets/whatsapp-phone-mockup-v2.png";
+import { useEffect } from "react";
+
+// Preload the image immediately
+const preloadLink = document.createElement('link');
+preloadLink.rel = 'preload';
+preloadLink.as = 'image';
+preloadLink.href = whatsappPhoneMockup;
+document.head.appendChild(preloadLink);
 
 export const ProblemSection = () => {
   const { ref, isVisible } = useScrollAnimation();
