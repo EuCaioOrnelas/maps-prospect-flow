@@ -2,7 +2,6 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, PiggyBank, Building2 } from "lucide-react";
-import { FloatingPaths } from "@/components/ui/background-paths";
 
 /* ── Animated counter ── */
 interface CounterProps {
@@ -77,12 +76,7 @@ export const ImpactNumbersSection = () => {
       ref={ref as React.RefObject<HTMLElement>}
       className="relative overflow-hidden py-10 sm:py-14"
     >
-      {/* Background Paths */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.35]" style={{ transform: 'rotate(-12deg) translate(-280px, 60px) scaleX(1.5) scaleY(1.15)', transformOrigin: 'top left' }}>
-        <FloatingPaths position={1} isVisible={isVisible} />
-      </div>
-
-      <div className="container mx-auto px-4 relative z-10 max-w-[1160px]">
+      <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         {/* Headline */}
         <motion.div
           className="text-center mb-10 sm:mb-14"
@@ -123,7 +117,7 @@ export const ImpactNumbersSection = () => {
                   <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <Icon size={14} className="text-primary" />
                   </div>
-                  <span className="text-muted-foreground text-sm leading-relaxed">
+                  <span className="text-muted-foreground text-base leading-relaxed">
                     {stat.label}
                   </span>
                 </div>

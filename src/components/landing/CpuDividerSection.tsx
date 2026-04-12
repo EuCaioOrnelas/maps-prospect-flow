@@ -14,7 +14,7 @@ export const CpuDividerSection = () => {
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true, margin: "-50px" }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="container mx-auto px-4 max-w-5xl relative"
+        className="container mx-auto px-4 max-w-6xl relative"
       >
         <div className="opacity-60">
           <CpuArchitecture
