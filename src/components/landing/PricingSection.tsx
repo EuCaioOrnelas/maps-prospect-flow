@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, X, Sparkles, Loader2, Shield, Clock, CreditCard, ArrowRight, Rocket, TrendingUp, Building2, Lock, Server, FileCheck, ShieldCheck, BadgeCheck, RotateCcw, Flame, Info } from "lucide-react";
+import { Check, X, Sparkles, Loader2, Shield, Lock, CreditCard, Server, FileCheck, ShieldCheck, BadgeCheck, RotateCcw, Rocket, TrendingUp, Building2 } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -152,20 +152,19 @@ const scalePlan = {
   key: "scale",
   price: "1.496",
   opportunities: "10.000",
-  description: "Para escalar com inteligência e tomar decisões melhores",
+  description: "Para operações que precisam de volume, inteligência e suporte dedicado.",
   features: [
     { text: "Tudo do Growth" },
     { text: "Agente estratégico de IA", isNew: true },
-    { text: "Mostra quais leads priorizar", subDetail: true },
-    { text: "Sugere a melhor abordagem para cada um", subDetail: true },
-    { text: "Ajuda você a tomar decisões mais rápidas", subDetail: true },
-    { text: "Aumenta sua taxa de conversão", subDetail: true },
+    { text: "Priorização inteligente de leads", subDetail: true },
+    { text: "Sugestão de abordagem por lead", subDetail: true },
+    { text: "Decisões mais rápidas com dados", subDetail: true },
+    { text: "Aumento da taxa de conversão", subDetail: true },
     { text: "Prioridade máxima de processamento" },
     { text: "Até 10 números WhatsApp" },
     { text: "Suporte VIP" },
   ] as PlanFeature[],
   icon: Building2,
-  badge: "🔥",
 };
 
 
@@ -231,8 +230,8 @@ export const PricingSection = () => {
               Invista em prospecção previsível.
             </p>
 
-            {/* Toggle Annual / Monthly */}
-            <div className="flex items-center justify-center gap-3">
+            {/* Toggle Annual / Monthly - fixed height container */}
+            <div className="flex items-center justify-center gap-3 h-8">
               <span className={`text-sm font-medium transition-colors ${!isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
                 Mensal
               </span>
@@ -243,11 +242,10 @@ export const PricingSection = () => {
               <span className={`text-sm font-medium transition-colors ${isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
                 Anual
               </span>
-              {isAnnual && (
-                <span className="bg-primary/15 text-primary text-xs font-bold px-2.5 py-1 rounded-full ml-1">
-                  Economize até 30%
-                </span>
-              )}
+              {/* Always reserve space for the badge */}
+              <span className={`bg-primary/15 text-primary text-xs font-bold px-2.5 py-1 rounded-full ml-1 transition-opacity duration-200 ${isAnnual ? 'opacity-100' : 'opacity-0'}`}>
+                Economize até 30%
+              </span>
             </div>
           </div>
 
@@ -308,7 +306,12 @@ export const PricingSection = () => {
                     </span>
                     <span className="text-muted-foreground">/mês</span>
                   </div>
-                  <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
+                  {isAnnual && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Cobrado anualmente
+                    </p>
+                  )}
+                  <p className="text-primary mt-1.5 text-xs sm:text-sm font-medium">
                     Até {plan.opportunities} oportunidades/mês
                   </p>
                 </div>
@@ -346,39 +349,42 @@ export const PricingSection = () => {
             ))}
           </div>
 
-          {/* Scale - Single wide card */}
+          {/* Scale - Full width card, same style as others */}
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            whileHover={{ y: -4, transition: { duration: 0.3 } }}
-            className="max-w-4xl mx-auto rounded-2xl glass p-6 md:p-8 mb-16"
+            whileHover={{ 
+              y: -8,
+              scale: 1.01,
+              transition: { duration: 0.3 }
+            }}
+            className="group max-w-4xl mx-auto rounded-2xl glass p-5 md:p-6 mb-16"
           >
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Left: Plan info */}
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-                    <Building2 className="h-5 w-5 text-primary" />
+                    <Building2 className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                   </div>
                   <h3 className="font-display font-bold text-lg md:text-xl">Scale</h3>
-                  <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">🔥 ENTERPRISE</span>
+                  <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-0.5 rounded-full">🔥 ENTERPRISE</span>
                 </div>
-                <p className="text-muted-foreground text-sm mb-4">{scalePlan.description}</p>
+                <p className="text-muted-foreground text-xs sm:text-sm mb-4">{scalePlan.description}</p>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {scalePlan.features.map((feature, i) => (
                     feature.subDetail ? (
-                      <div key={i} className="flex items-start gap-2 text-sm pl-4">
-                        <span className="text-primary flex-shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
+                      <div key={i} className="flex items-center gap-2 text-sm pl-4">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                         <span className="text-muted-foreground">{feature.text}</span>
                       </div>
                     ) : (
-                      <div key={i} className="flex items-start gap-2 text-sm">
-                        <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
-                        <span className="text-muted-foreground">
-                          {feature.text}
-                        </span>
+                      <div key={i} className="flex items-center gap-2 text-sm">
+                        <Check size={16} className="text-primary flex-shrink-0" />
+                        <span className="text-muted-foreground">{feature.text}</span>
                         {feature.isNew && (
                           <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">NOVO</span>
                         )}
@@ -388,15 +394,16 @@ export const PricingSection = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col items-center md:items-end gap-3 md:min-w-[200px]">
+              {/* Right: Price + CTA */}
+              <div className="flex flex-col items-center md:items-end justify-center gap-4 md:min-w-[220px] md:border-l md:border-border/40 md:pl-6">
                 <div className="text-center md:text-right">
                   <p className="text-xs text-muted-foreground mb-1">A partir de</p>
-                  <div className="flex items-baseline gap-1">
+                  <div className="flex items-baseline gap-1 justify-center md:justify-end">
                     <span className="text-sm text-muted-foreground">R$</span>
-                    <span className="font-display font-bold text-3xl md:text-4xl tabular-nums">{formatPrice(1496)}</span>
-                    <span className="text-muted-foreground">/mês</span>
+                    <span className="font-display font-bold text-3xl md:text-4xl tabular-nums">1.496</span>
                   </div>
-                  <p className="text-primary mt-1 text-xs font-medium">
+                  <p className="text-muted-foreground text-sm">/mês</p>
+                  <p className="text-primary mt-1.5 text-xs font-medium">
                     Até {scalePlan.opportunities} oportunidades/mês
                   </p>
                 </div>
