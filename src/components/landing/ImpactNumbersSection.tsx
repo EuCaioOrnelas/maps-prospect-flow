@@ -2,6 +2,7 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, PiggyBank, Building2 } from "lucide-react";
+import { FloatingPaths } from "@/components/ui/background-paths";
 
 /* ── Animated counter ── */
 interface CounterProps {
@@ -76,6 +77,12 @@ export const ImpactNumbersSection = () => {
       ref={ref as React.RefObject<HTMLElement>}
       className="relative overflow-hidden py-14 sm:py-20"
     >
+      {/* Background Paths */}
+      <div className="absolute inset-0">
+        <FloatingPaths position={1} />
+        <FloatingPaths position={-1} />
+      </div>
+
       <div className="container mx-auto px-4 relative z-10 max-w-[1160px]">
         {/* Headline */}
         <motion.div
