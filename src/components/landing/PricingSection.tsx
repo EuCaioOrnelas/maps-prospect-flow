@@ -168,7 +168,6 @@ const scalePlan = {
   badge: "🔥",
 };
 
-export const faqJsonLd = {};
 
 export const PricingSection = () => {
   const { ref, isVisible } = useScrollAnimation();
