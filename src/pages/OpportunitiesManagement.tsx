@@ -1043,7 +1043,12 @@ export default function OpportunitiesManagement() {
                     <span className="text-sm text-muted-foreground">{batchProgress}/{batchTotal}</span>
                   </div>
                   <Progress value={(batchProgress / batchTotal) * 100} className="h-2" />
-                  <p className="text-xs text-muted-foreground">Qualificando: {batchCurrentName}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">Qualificando: {batchCurrentName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      ⏱ Tempo médio: ~{Math.max(1, Math.ceil((batchTotal - batchProgress) * 12 / 60))} min restante{Math.ceil((batchTotal - batchProgress) * 12 / 60) !== 1 ? 's' : ''}
+                    </p>
+                  </div>
                 </div>
               )}
 
