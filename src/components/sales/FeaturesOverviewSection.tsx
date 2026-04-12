@@ -17,11 +17,11 @@ import { cn } from "@/lib/utils";
 import flowBuilderPreview from "@/assets/flow-builder-preview.png";
 
 const cardBase =
-  "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-white/5";
+  "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-primary/5";
 const cardGlowMain =
-  "absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-white/[0.04] blur-[80px] pointer-events-none";
+  "absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] blur-[70px] pointer-events-none";
 const cardGlowSecondary =
-  "absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/[0.03] blur-[64px] pointer-events-none";
+  "absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] blur-[56px] pointer-events-none";
 
 /* Pipeline steps for horizontal flow inside Operação Comercial */
 const pipelineSteps = [
@@ -69,7 +69,7 @@ export const FeaturesOverviewSection = () => {
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
             Uma máquina integrada de
             <br />
-            <span className="text-muted-foreground">geração de oportunidades B2B</span>
+            <span className="text-shimmer-highlight">geração de oportunidades B2B</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Da captação ao fechamento, cada etapa do processo comercial conectada por dados, IA e automação — sem depender de operação manual.
@@ -100,8 +100,8 @@ export const FeaturesOverviewSection = () => {
                     </div>
                     <h3 className="font-semibold text-foreground text-[15px]">Abordagem Contextual em Escala</h3>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Cada lead recebe uma mensagem construída a partir do seu nicho, porte e diagnóstico real — não templates genéricos. Isso aumenta taxa de resposta e acelera a entrada no pipeline.
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Cada lead recebe uma mensagem construída a partir do seu nicho, porte e diagnóstico real. Isso aumenta taxa de resposta e acelera a entrada no pipeline.
                   </p>
                 </div>
               </div>
@@ -120,8 +120,8 @@ export const FeaturesOverviewSection = () => {
                     </div>
                     <h3 className="font-semibold text-foreground text-[15px]">Campanhas via API Oficial Meta</h3>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Envios outbound e inbound pela API oficial do WhatsApp Business, com conformidade total às políticas da Meta. Escala real sem risco de bloqueio ou perda de número.
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Envios outbound e inbound pela API oficial do WhatsApp Business, com conformidade total às políticas da Meta. Escala sem risco de bloqueio.
                   </p>
                 </div>
               </div>
@@ -151,7 +151,7 @@ export const FeaturesOverviewSection = () => {
                     alt="Visualização do editor de fluxos"
                     loading="eager"
                     decoding="async"
-                    className="w-[110%] -ml-[5%] object-contain drop-shadow-lg"
+                    className="w-[110%] ml-[2%] object-contain drop-shadow-lg"
                   />
                 </div>
               </div>
@@ -170,8 +170,8 @@ export const FeaturesOverviewSection = () => {
                     </div>
                     <h3 className="font-semibold text-foreground text-[15px]">CRM com Scoring Automático</h3>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Pipeline visual que organiza cada lead por estágio, registra histórico de interações e atribui score com base em comportamento real. Sua equipe sabe exatamente quem priorizar a cada momento.
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Pipeline visual que organiza cada lead por estágio, com score baseado em comportamento real. Sua equipe sabe quem priorizar.
                   </p>
                 </div>
               </div>
@@ -190,8 +190,8 @@ export const FeaturesOverviewSection = () => {
                     </div>
                     <h3 className="font-semibold text-foreground text-[15px]">Captação com Diagnóstico Automático</h3>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Extrai leads diretamente do Google Maps e analisa cada empresa: nicho de atuação, presença digital, telefones validados e nível de aderência ao seu produto. Leads prontos para abordagem, priorizados por potencial de conversão.
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Extrai leads do Google Maps e analisa cada empresa: nicho, presença digital e aderência ao produto. Leads priorizados por potencial de conversão.
                   </p>
                 </div>
               </div>
