@@ -151,18 +151,17 @@ const scalePlan = {
   name: "Scale",
   key: "scale",
   price: "1.496",
-  opportunities: "10.000",
-  description: "Para operações que precisam de volume, inteligência e suporte dedicado.",
+  opportunities: "Personalizado",
+  description: "Um plano sob medida para a sua operação. Estrutura, volume e suporte dedicado para empresas que precisam de uma solução exclusiva.",
   features: [
-    { text: "Tudo do Growth" },
-    { text: "Agente estratégico de IA", isNew: true },
-    { text: "Priorização inteligente de leads", subDetail: true },
-    { text: "Sugestão de abordagem por lead", subDetail: true },
-    { text: "Decisões mais rápidas com dados", subDetail: true },
-    { text: "Aumento da taxa de conversão", subDetail: true },
-    { text: "Prioridade máxima de processamento" },
-    { text: "Até 10 números WhatsApp" },
-    { text: "Suporte VIP" },
+    { text: "Tudo do Growth incluso" },
+    { text: "Estrutura 100% personalizada", isNew: true },
+    { text: "Número de oportunidades sob demanda" },
+    { text: "Fluxos e automações sob medida" },
+    { text: "Onboarding dedicado com especialista" },
+    { text: "Processamento com prioridade máxima" },
+    { text: "Números WhatsApp ilimitados" },
+    { text: "Gerente de conta exclusivo" },
   ] as PlanFeature[],
   icon: Building2,
 };
@@ -250,7 +249,7 @@ export const PricingSection = () => {
           </div>
 
           {/* Start + Growth */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch max-w-4xl mx-auto mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch mb-8">
             {plans.map((plan, index) => (
               <motion.div
                 key={`${plan.key}-${isAnnual ? 'annual' : 'monthly'}`}
@@ -360,7 +359,7 @@ export const PricingSection = () => {
               scale: 1.01,
               transition: { duration: 0.3 }
             }}
-            className="group max-w-4xl mx-auto rounded-2xl glass p-5 md:p-6 mb-16"
+            className="group rounded-2xl glass p-5 md:p-6 mb-16"
           >
             <div className="flex flex-col md:flex-row gap-6">
               {/* Left: Plan info */}
@@ -374,22 +373,15 @@ export const PricingSection = () => {
                 </div>
                 <p className="text-muted-foreground text-xs sm:text-sm mb-4">{scalePlan.description}</p>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {scalePlan.features.map((feature, i) => (
-                    feature.subDetail ? (
-                      <div key={i} className="flex items-center gap-2 text-sm pl-4">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        <span className="text-muted-foreground">{feature.text}</span>
-                      </div>
-                    ) : (
-                      <div key={i} className="flex items-center gap-2 text-sm">
-                        <Check size={16} className="text-primary flex-shrink-0" />
-                        <span className="text-muted-foreground">{feature.text}</span>
-                        {feature.isNew && (
-                          <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">NOVO</span>
-                        )}
-                      </div>
-                    )
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <Check size={16} className="text-primary flex-shrink-0" />
+                      <span className="text-muted-foreground">{feature.text}</span>
+                      {feature.isNew && (
+                        <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">SOB MEDIDA</span>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -401,10 +393,10 @@ export const PricingSection = () => {
                   <div className="flex items-baseline gap-1 justify-center md:justify-end">
                     <span className="text-sm text-muted-foreground">R$</span>
                     <span className="font-display font-bold text-3xl md:text-4xl tabular-nums">1.496</span>
+                    <span className="text-muted-foreground">/mês</span>
                   </div>
-                  <p className="text-muted-foreground text-sm">/mês</p>
                   <p className="text-primary mt-1.5 text-xs font-medium">
-                    Até {scalePlan.opportunities} oportunidades/mês
+                    Volume e estrutura personalizados
                   </p>
                 </div>
                 <Button

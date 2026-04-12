@@ -54,11 +54,6 @@ export const WhyItWorksSection = () => {
       className="py-12 sm:py-20 relative overflow-hidden w-full"
       ref={ref as React.RefObject<HTMLElement>}
     >
-      {/* Section-level green glows */}
-      <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full opacity-[0.10] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, hsl(158 72% 45%), transparent 70%)' }} />
-      <div className="absolute -bottom-24 -right-24 w-80 h-80 rounded-full opacity-[0.10] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, hsl(158 72% 45%), transparent 70%)' }} />
 
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         {/* Header */}
