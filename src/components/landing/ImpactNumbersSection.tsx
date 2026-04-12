@@ -35,13 +35,33 @@ const AnimatedCounter = ({ end, prefix = "", suffix = "", duration = 2000, isVis
   }, [isVisible, end, duration, delay]);
 
   const display = () => {
-    if (end >= 1000000) return `${(count / 1000000).toFixed(count >= end ? 0 : 1)}`;
+    if (end >= 1000000) return `${(count / 1000000).toFixed(1)}`;
     if (end >= 1000) return `${(count / 1000).toFixed(0)}`;
     return count.toString();
   };
 
   return <span className="tabular-nums whitespace-nowrap">{prefix}{display()}{suffix}</span>;
 };
+
+/* ── Floating SVG paths ── */
+const FloatingPaths = ({ isVisible }: { isVisible: boolean }) => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <svg className="w-full h-full opacity-[0.035]" viewBox="0 0 1200 400" fill="none">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <motion.path
+          key={i}
+          d={`M${-100 + i * 50},${200 + i * 30} Q${300 + i * 40},${100 - i * 20} ${600 + i * 30},${200 + i * 15} T${1300 + i * 50},${180 - i * 10}`}
+          stroke="hsl(var(--primary))"
+          strokeWidth={1.5 - i * 0.15}
+          strokeLinecap="round"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={isVisible ? { pathLength: 1, opacity: 1 } : {}}
+          transition={{ duration: 2.5 + i * 0.4, delay: 0.3 + i * 0.2, ease: "easeOut" }}
+        />
+      ))}
+    </svg>
+  </div>
+);
 
 /* ── Stats data ── */
 const stats = [
@@ -76,6 +96,9 @@ export const ImpactNumbersSection = () => {
       ref={ref as React.RefObject<HTMLElement>}
       className="relative overflow-hidden py-14 sm:py-20"
     >
+      {/* Floating data paths */}
+      <FloatingPaths isVisible={isVisible} />
+
       {/* Subtle gradient wash */}
       <div className="absolute inset-0 pointer-events-none">
         <div
@@ -101,7 +124,7 @@ export const ImpactNumbersSection = () => {
           </h2>
         </motion.div>
 
-        {/* Stats row — no cards, icon left of label */}
+        {/* Stats row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
           {stats.map((stat, i) => {
             const Icon = stat.icon;
@@ -138,6 +161,17 @@ export const ImpactNumbersSection = () => {
             );
           })}
         </div>
+      </div>
+
+      {/* Bottom gradient border — thick center, thin edges */}
+      <div className="absolute bottom-0 left-0 right-0 h-[1px]">
+        <div
+          className="w-full h-full"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 50%, hsl(var(--primary) / 0.4), hsl(var(--border) / 0.15) 50%, transparent 80%)",
+          }}
+        />
       </div>
     </section>
   );
