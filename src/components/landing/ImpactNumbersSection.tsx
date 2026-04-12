@@ -77,9 +77,9 @@ export const ImpactNumbersSection = () => {
       ref={ref as React.RefObject<HTMLElement>}
       className="relative overflow-hidden py-14 sm:py-20"
     >
-      {/* Background Paths — single instance, top-left to center-bottom */}
-      <div className="absolute inset-0 pointer-events-none">
-        <FloatingPaths position={1} />
+      {/* Background Paths */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <FloatingPaths position={1} isVisible={isVisible} />
       </div>
 
       <div className="container mx-auto px-4 relative z-10 max-w-[1160px]">
