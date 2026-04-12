@@ -43,41 +43,6 @@ const AnimatedCounter = ({ end, prefix = "", suffix = "", duration = 2000, isVis
   return <span className="tabular-nums whitespace-nowrap">{prefix}{display()}{suffix}</span>;
 };
 
-/* ── Floating SVG paths – infinite loop, softer ── */
-function FloatingPaths({ position }: { position: number }) {
-  const paths = Array.from({ length: 28 }, (_, i) => ({
-    id: i,
-    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position} -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position} ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position} ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
-    width: 0.3 + i * 0.015,
-  }));
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <svg className="w-full h-full" viewBox="0 0 696 316" fill="none" preserveAspectRatio="xMidYMid slice">
-        <title>Decorative paths</title>
-        {paths.map((path) => (
-          <motion.path
-            key={path.id}
-            d={path.d}
-            stroke="hsl(158 72% 38%)"
-            strokeWidth={path.width}
-            strokeOpacity={0.03 + path.id * 0.004}
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: [0, 1, 0] }}
-            transition={{
-              duration: 8 + path.id * 0.3,
-              delay: path.id * 0.12,
-              ease: "easeInOut",
-              repeat: Infinity,
-              repeatType: "mirror",
-            }}
-          />
-        ))}
-      </svg>
-    </div>
-  );
-}
-
 /* ── Stats data ── */
 const stats = [
   {
@@ -111,10 +76,6 @@ export const ImpactNumbersSection = () => {
       ref={ref as React.RefObject<HTMLElement>}
       className="relative overflow-hidden py-14 sm:py-20"
     >
-      {/* Animated paths background */}
-      <FloatingPaths position={1} />
-      <FloatingPaths position={-1} />
-
       {/* Subtle gradient wash */}
       <div className="absolute inset-0 pointer-events-none">
         <div
@@ -129,7 +90,7 @@ export const ImpactNumbersSection = () => {
       <div className="container mx-auto px-4 relative z-10 max-w-[1160px]">
         {/* Headline */}
         <motion.div
-          className="text-center mb-10 sm:mb-12"
+          className="text-center mb-10 sm:mb-14"
           initial={{ opacity: 0, y: 20 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, ease: "easeOut" }}
@@ -140,33 +101,20 @@ export const ImpactNumbersSection = () => {
           </h2>
         </motion.div>
 
-        {/* Stats cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-7">
+        {/* Stats row — no cards, icon left of label */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
           {stats.map((stat, i) => {
             const Icon = stat.icon;
             return (
               <motion.div
                 key={stat.label}
-                className="relative rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-7 sm:p-8 text-center overflow-hidden group hover:shadow-[0_8px_30px_-10px_hsl(var(--primary)/0.12)] hover:border-primary/25 transition-all duration-300"
-                initial={{ opacity: 0, y: 24 }}
+                className="text-center"
+                initial={{ opacity: 0, y: 32 }}
                 animate={isVisible ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.15 + i * 0.12, ease: "easeOut" }}
               >
-                {/* Subtle glow */}
-                <div className="absolute -bottom-12 -right-12 w-36 h-36 rounded-full bg-primary/8 blur-[60px] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                {/* Icon */}
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={isVisible ? { scale: 1 } : {}}
-                  transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.3 + i * 0.12 }}
-                  className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-5"
-                >
-                  <Icon size={20} className="text-primary" />
-                </motion.div>
-
                 {/* Number */}
-                <span className="font-display text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-foreground leading-none block mb-2.5">
+                <span className="font-display text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-foreground leading-none block mb-3">
                   <AnimatedCounter
                     end={stat.value}
                     prefix={stat.prefix}
@@ -177,10 +125,15 @@ export const ImpactNumbersSection = () => {
                   />
                 </span>
 
-                {/* Label */}
-                <span className="text-muted-foreground text-sm max-w-[200px] mx-auto block leading-relaxed">
-                  {stat.label}
-                </span>
+                {/* Icon + Label inline */}
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Icon size={14} className="text-primary" />
+                  </div>
+                  <span className="text-muted-foreground text-sm leading-relaxed">
+                    {stat.label}
+                  </span>
+                </div>
               </motion.div>
             );
           })}
