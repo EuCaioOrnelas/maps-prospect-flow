@@ -28,7 +28,7 @@ const pipelineSteps = [
   { icon: Clock, label: "Follow-up automático" },
   { icon: RefreshCw, label: "Pipeline atualizado" },
   { icon: Target, label: "Lead qualificado" },
-  { icon: CheckCircle, label: "Oportunidade fechada" },
+  { icon: CheckCircle, label: "Venda fechada" },
 ];
 
 const containerVariants = {
@@ -145,13 +145,14 @@ export const FeaturesOverviewSection = () => {
                   </p>
                 </div>
                 {/* Flow builder background image */}
-                <div className="pointer-events-none relative flex-1 min-h-[180px] overflow-hidden mt-2">
+                <div className="pointer-events-none relative flex-1 min-h-[200px] overflow-hidden mt-4">
                   <img
                     src={flowBuilderPreview}
                     alt="Visualização do editor de fluxos"
                     loading="eager"
                     decoding="async"
-                    className="w-[95%] mx-auto object-contain drop-shadow-2xl"
+                    className="w-full mx-auto object-contain drop-shadow-lg"
+                    style={{ imageRendering: 'auto', filter: 'none' }}
                   />
                 </div>
               </div>
@@ -223,9 +224,9 @@ export const FeaturesOverviewSection = () => {
                       <div key={i} className="flex items-center flex-1 last:flex-none">
                         <motion.div
                           className="flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded-lg px-2.5 py-2 whitespace-nowrap"
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={isVisible ? { opacity: 1, x: 0 } : {}}
-                          transition={{ duration: 0.4, delay: 0.5 + i * 0.15, ease: "easeOut" }}
+                          initial={{ opacity: 0, x: -15, scale: 0.9 }}
+                          animate={isVisible ? { opacity: 1, x: 0, scale: 1 } : {}}
+                          transition={{ duration: 0.5, delay: 0.6 + i * 0.25, ease: [0.22, 1, 0.36, 1] }}
                         >
                           <StepIcon size={13} className="text-primary flex-shrink-0" />
                           <span className="text-[10px] sm:text-[11px] font-medium text-foreground/80">{step.label}</span>
@@ -233,9 +234,10 @@ export const FeaturesOverviewSection = () => {
                         {i < pipelineSteps.length - 1 && (
                           <motion.div
                             className="flex items-center justify-center flex-1 mx-0.5"
-                            initial={{ opacity: 0 }}
-                            animate={isVisible ? { opacity: 1 } : {}}
-                            transition={{ duration: 0.3, delay: 0.65 + i * 0.15 }}
+                            initial={{ opacity: 0, scaleX: 0 }}
+                            animate={isVisible ? { opacity: 1, scaleX: 1 } : {}}
+                            transition={{ duration: 0.35, delay: 0.75 + i * 0.25 }}
+                            style={{ transformOrigin: "left" }}
                           >
                             <div className="flex-1 h-px bg-primary/20" />
                             <ChevronRight size={14} className="text-primary/40 -mx-0.5 flex-shrink-0" />
