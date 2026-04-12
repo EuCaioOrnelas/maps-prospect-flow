@@ -21,7 +21,7 @@ const formSchema = z.object({
   teamSize: z.string().min(1, "Selecione o tamanho da equipe").max(50),
   objective: z.string().min(10, "Descreva seu objetivo com mais detalhes").max(1000),
   currentTools: z.string().max(500).optional(),
-  monthlyLeadVolume: z.string().max(100).optional(),
+  monthlyRevenue: z.string().max(100).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -50,7 +50,7 @@ const EnterpriseContact = () => {
     teamSize: "",
     objective: "",
     currentTools: "",
-    monthlyLeadVolume: "",
+    monthlyRevenue: "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
