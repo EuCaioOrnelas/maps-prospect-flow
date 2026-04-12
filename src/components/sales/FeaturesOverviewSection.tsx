@@ -199,29 +199,38 @@ export const FeaturesOverviewSection = () => {
                     Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida — 24 horas por dia.
                   </p>
                 </div>
-                <div className="flex-shrink-0 pl-6 border-l border-border/50 relative z-10">
-                  <svg viewBox="0 0 140 80" className="w-32 h-20" fill="none">
+                <div className="flex-shrink-0 pl-6 border-l border-border/50 relative z-10 w-36 h-20">
+                  <div className="relative w-full h-full">
                     {/* Grid lines */}
-                    {[0, 20, 40, 60].map((y) => (
-                      <line key={y} x1="0" y1={y} x2="140" y2={y} stroke="currentColor" strokeOpacity="0.06" strokeWidth="0.5" />
-                    ))}
-                    {/* Bars */}
-                    {barData.map((bar, i) => (
-                      <motion.rect
-                        key={i}
-                        x={4 + i * 14}
-                        width="8"
-                        rx="2"
-                        fill="hsl(var(--primary))"
-                        fillOpacity="0.5"
-                        initial={{ y: 80, height: 0 }}
-                        animate={isVisible ? { y: 80 - (bar.h * 0.75), height: bar.h * 0.75 } : { y: 80, height: 0 }}
-                        transition={{ duration: 0.7, delay: 0.4 + bar.delay, ease: "easeOut" }}
-                      />
-                    ))}
-                    {/* Glow ellipse at bottom */}
-                    <ellipse cx="70" cy="80" rx="60" ry="12" fill="hsl(var(--primary))" fillOpacity="0.08" />
-                  </svg>
+                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                      {[0, 1, 2, 3].map((i) => (
+                        <div key={i} className="w-full h-px bg-foreground/[0.06]" />
+                      ))}
+                    </div>
+                    {/* Animated bars */}
+                    <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-[5px] h-full px-1">
+                      {barData.map((bar, i) => (
+                        <motion.div
+                          key={i}
+                          className="flex-1 rounded-t-[3px] origin-bottom"
+                          style={{
+                            background: `linear-gradient(to top, hsl(var(--primary) / 0.7), hsl(var(--primary) / 0.3))`,
+                          }}
+                          initial={{ scaleY: 0 }}
+                          animate={isVisible ? { scaleY: 1 } : { scaleY: 0 }}
+                          transition={{
+                            duration: 0.8,
+                            delay: 0.5 + bar.delay,
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
+                        >
+                          <div style={{ height: `${bar.h}%` }} className="w-full" />
+                        </motion.div>
+                      ))}
+                    </div>
+                    {/* Bottom glow */}
+                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-6 rounded-full bg-primary/10 blur-xl pointer-events-none" />
+                  </div>
                 </div>
               </div>
             </motion.div>
