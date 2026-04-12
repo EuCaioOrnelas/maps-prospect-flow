@@ -16,6 +16,8 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
       ref={ref as React.RefObject<HTMLElement>}
     >
       <div className="absolute left-1/2 top-1/2 h-72 w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-glow opacity-20 blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-[40rem] h-[20rem] rounded-full bg-primary/[0.06] blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[30rem] h-[16rem] rounded-full bg-primary/[0.04] blur-[80px] pointer-events-none" />
       
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         <div 
