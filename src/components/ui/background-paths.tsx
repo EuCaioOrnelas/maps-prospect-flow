@@ -32,13 +32,14 @@ export function FloatingPaths({
         className="h-full w-full"
         viewBox="0 0 696 316"
         fill="none"
+        style={{ transform: "scaleY(-1)" }}
       >
         {paths.map((path) => (
           <motion.path
             key={path.id}
             d={path.d}
             fill="none"
-            stroke={`rgba(34,197,94,${0.08 + path.id * 0.025})`}
+            stroke={`rgba(34,197,94,${0.04 + path.id * 0.012})`}
             strokeWidth={path.width}
             strokeLinecap="round"
             initial={{ pathLength: 0, opacity: 0 }}
