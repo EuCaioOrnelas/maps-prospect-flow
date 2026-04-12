@@ -124,9 +124,10 @@ export const OpportunitySection = () => {
               initial={{ opacity: 0, x: 12 }}
               animate={isVisible ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.4, delay: 0.4 + i * 0.06 }}
-              className={`border-x border-primary/20 bg-primary/[0.02] px-6 sm:px-8 py-3 group cursor-default relative overflow-hidden ${i === comparisons.length - 1 ? 'border-b rounded-b-2xl pb-6' : ''}`}
+              className={`border-x border-primary/20 bg-white dark:bg-card px-6 sm:px-8 py-3 group cursor-default relative overflow-hidden ${i === comparisons.length - 1 ? 'border-b rounded-b-2xl pb-6' : ''}`}
             >
-              <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-primary/5 rounded-full blur-[50px] pointer-events-none" />
+              <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-primary/[0.08] rounded-full blur-[60px] pointer-events-none" />
+              <div className="absolute -top-8 -right-8 w-32 h-32 bg-primary/[0.05] rounded-full blur-[50px] pointer-events-none" />
               <div className="flex items-center gap-3 min-h-[32px] relative">
                 <motion.div
                   initial={{ scale: 0 }}
