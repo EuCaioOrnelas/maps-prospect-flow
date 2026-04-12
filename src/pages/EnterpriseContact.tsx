@@ -360,12 +360,12 @@ const EnterpriseContact = () => {
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label htmlFor="monthlyLeadVolume" className="text-xs font-medium">Volume mensal desejado</Label>
+                        <Label htmlFor="monthlyRevenue" className="text-xs font-medium">Faturamento mensal médio</Label>
                         <Input
-                          id="monthlyLeadVolume"
-                          placeholder="Ex: 10.000, 50.000..."
-                          value={formData.monthlyLeadVolume}
-                          onChange={e => handleChange("monthlyLeadVolume", e.target.value)}
+                          id="monthlyRevenue"
+                          placeholder="Ex: R$ 50.000, R$ 200.000..."
+                          value={formData.monthlyRevenue}
+                          onChange={e => handleChange("monthlyRevenue", e.target.value)}
                           className="h-9 text-sm"
                         />
                       </div>
