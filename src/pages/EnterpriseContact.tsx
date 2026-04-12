@@ -55,16 +55,17 @@ const EnterpriseContact = () => {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
   const isFormValid = useMemo(() => {
-    return (
-      formData.partnerName.length >= 2 &&
-      formData.companyName.length >= 2 &&
-      formData.cnpj.replace(/\D/g, "").length >= 14 &&
-      formData.niche.length >= 2 &&
+    const valid =
+      formData.partnerName.trim().length >= 2 &&
+      formData.companyName.trim().length >= 2 &&
+      formData.cnpj.trim().length >= 14 &&
+      formData.niche.trim().length >= 2 &&
       formData.email.includes("@") &&
+      formData.email.includes(".") &&
       formData.phone.replace(/\D/g, "").length >= 10 &&
       formData.teamSize.length >= 1 &&
-      formData.objective.length >= 10
-    );
+      formData.objective.trim().length >= 10;
+    return valid;
   }, [formData]);
 
   const formatCNPJ = (value: string) => {
