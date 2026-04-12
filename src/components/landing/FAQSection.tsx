@@ -12,51 +12,51 @@ import { Link } from "react-router-dom";
 const faqs = [
   {
     question: "O que é uma busca estratégica?",
-    answer: "Uma busca estratégica é uma pesquisa inteligente que utiliza nossa IA para analisar empresas no Google Maps e entregar apenas leads qualificados: empresas ativas, com contatos verificados e alto potencial de conversão. Diferente de ferramentas comuns, priorizamos qualidade sobre quantidade."
+    answer: "Uma busca estratégica é uma pesquisa inteligente que utiliza nossa IA para analisar empresas no Google Maps e entregar apenas leads qualificados: empresas ativas, com contatos verificados e alto potencial de conversão. Cada busca retorna até 60 leads pré-qualificados."
   },
   {
-    question: "Quantos leads recebo por busca?",
-    answer: "Cada busca estratégica retorna até 60 leads pré-qualificados. Nossa IA filtra e seleciona apenas empresas com atividade recente, avaliações reais e informações de contato atualizadas."
+    question: "Como funcionam os Flows de Automação?",
+    answer: "Flows são sequências visuais de automação que você monta em um editor drag-and-drop. Cada fluxo pode incluir envio de mensagens, esperas programadas, condições, coleta de dados, testes A/B, integração com Google Sheets, Gmail e Google Calendar. O sistema executa tudo automaticamente."
   },
   {
-    question: "Como funciona a geração de mensagens personalizadas com IA?",
-    answer: "O Wiize analisa cada lead encontrado — segmento, localização, perfil do negócio — e gera automaticamente uma mensagem única e personalizada usando inteligência artificial. A mensagem segue uma estrutura de 4 parágrafos (saudação, introdução, proposta de valor e CTA), aumentando drasticamente a taxa de resposta."
+    question: "O que é o Flow com IA?",
+    answer: "O Flow com IA permite que a inteligência artificial gere fluxos de automação completos a partir de uma descrição simples. Basta descrever seu objetivo (ex: 'follow-up para leads que não responderam em 48h') e a IA cria o fluxo com nós, mensagens e condições já configurados."
+  },
+  {
+    question: "O que são os Agentes de IA?",
+    answer: "Os Agentes de IA são vendedores virtuais que trabalham 24/7 no seu WhatsApp. Eles respondem mensagens automaticamente, qualificam leads com perguntas inteligentes e organizam tudo no CRM — sem precisar de prompts complexos."
+  },
+  {
+    question: "Como funcionam os disparos em massa via WhatsApp?",
+    answer: "Cada número WhatsApp conectado pode enviar até 200 mensagens por dia, respeitando as políticas anti-banimento. O sistema usa delays aleatórios, variações de texto e pausas automáticas para simular comportamento humano. O limite é resetado automaticamente à meia-noite."
+  },
+  {
+    question: "O que é a Meta API Oficial e como o Wiize a utiliza?",
+    answer: "A Meta API Oficial (Cloud API v21.0) é a interface autorizada pelo Meta para envio de mensagens via WhatsApp Business. O Wiize é integrado como Meta Business Partner. Para prospecção outbound, utilizamos a Evolution API com estratégias de proteção inteligentes."
   },
   {
     question: "O que é o Índice de Fechamento (Índ. Fech.)?",
-    answer: "O Índice de Fechamento é uma pontuação gerada pela IA que indica a probabilidade de conversão de cada lead. Ele analisa fatores como avaliações no Google Maps, quantidade de reviews, presença digital e perfil do negócio para priorizar os leads com maior potencial de se tornarem clientes."
-  },
-  {
-    question: "O que é o Diagnóstico com IA?",
-    answer: "O Diagnóstico com IA é uma análise automática que o Wiize gera para cada lead prospectado. Ele identifica oportunidades, pontos fracos do negócio e sugere a melhor abordagem comercial. Isso permite que você chegue ao lead com uma proposta relevante e consultiva, não apenas um disparo genérico."
+    answer: "O Índice de Fechamento é uma pontuação gerada pela IA que indica a probabilidade de conversão de cada lead. Ele analisa fatores como avaliações no Google Maps, quantidade de reviews, presença digital e perfil do negócio para priorizar os leads com maior potencial."
   },
   {
     question: "Posso cancelar minha assinatura a qualquer momento?",
     answer: "Sim! Você pode cancelar sua assinatura quando quiser. Não há fidelidade ou taxas de cancelamento. Seu acesso continua ativo até o final do período pago."
   },
   {
-    question: "Como funcionam os disparos em massa via WhatsApp?",
-    answer: "Cada número WhatsApp conectado pode enviar até 200 mensagens por dia, respeitando as políticas anti-banimento. O limite é resetado automaticamente à meia-noite. Se atingir o limite, as campanhas são pausadas e retomadas no dia seguinte."
-  },
-  {
     question: "Quantos números WhatsApp posso conectar?",
-    answer: "Depende do seu plano: Start permite 1 número (200 disparos/dia), Growth permite 2 números (400 disparos/dia no total), e Scale permite 5 números (1.000 disparos/dia no total). Cada número tem limite individual de 200 disparos."
-  },
-  {
-    question: "Os dados dos leads são atualizados?",
-    answer: "Sim. Todos os dados são extraídos diretamente do Google Maps em tempo real no momento da sua busca, garantindo informações sempre atualizadas como telefone, site, endereço e avaliações."
-  },
-  {
-    question: "O que é a Meta API Oficial e como o Wiize a utiliza?",
-    answer: "A Meta API Oficial (Cloud API v21.0) é a interface autorizada pelo Meta para envio de mensagens via WhatsApp Business. O Wiize é integrado como Meta Business Partner, o que significa que campanhas de relacionamento (inbound) passam pela API oficial com total conformidade. Para prospecção outbound, utilizamos a Evolution API com estratégias de proteção inteligentes para máxima segurança."
+    answer: "Depende do seu plano: Start permite 2 números (400 disparos/dia), Growth permite 5 números (1.000 disparos/dia no total). No plano Scale (Enterprise), números ilimitados."
   },
   {
     question: "Qual plano é ideal para mim?",
-    answer: "O plano Start (R$197/mês) é ideal para freelancers e autônomos com 1.000 oportunidades e 1 número WhatsApp. O Growth (R$497/mês) é perfeito para vendedores e pequenas equipes com 3.000 oportunidades e 2 números. O Scale (R$1.297/mês) é indicado para agências com 10.000 oportunidades e 5 números WhatsApp."
+    answer: "O plano Start é ideal para quem está começando com até 1.000 oportunidades/mês. O Growth é perfeito para quem quer escalar com automação, agentes de IA e 3.000 oportunidades. O Scale é para operações empresariais com volume e estrutura personalizados."
   },
   {
     question: "Preciso de uma conta Meta Business para usar o Wiize?",
-    answer: "Para campanhas via API Oficial (relacionamento/inbound), sim — você conecta sua conta Meta Business diretamente pelo Wiize em poucos cliques. Para prospecção outbound com disparos em massa, não é necessário. Basta conectar seu número WhatsApp pelo QR Code e começar."
+    answer: "Para campanhas via API Oficial (relacionamento/inbound), sim — você conecta sua conta Meta Business diretamente pelo Wiize em poucos cliques. Para prospecção outbound com disparos em massa, não é necessário. Basta conectar seu número WhatsApp pelo QR Code."
+  },
+  {
+    question: "Posso integrar Flows com Google Sheets e Gmail?",
+    answer: "Sim. Os Flows suportam integração nativa com Google Sheets (para leitura/escrita de dados), Gmail (para envio de emails automáticos) e Google Calendar (para criação de eventos). Basta conectar sua conta Google pelo Wiize."
   }
 ];
 
