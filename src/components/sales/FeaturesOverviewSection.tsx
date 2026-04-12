@@ -8,7 +8,7 @@ import {
   Zap,
   Bot,
 } from "lucide-react";
-import { BentoGridShowcase } from "@/components/ui/bento-product-features";
+import { cn } from "@/lib/utils";
 
 const cardBase =
   "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-md";
@@ -16,6 +16,23 @@ const cardGlowMain =
   "absolute -bottom-16 -right-16 w-44 h-44 rounded-full bg-primary/14 blur-[72px] pointer-events-none opacity-100";
 const cardGlowSecondary =
   "absolute -top-12 -left-12 w-32 h-32 rounded-full bg-primary/10 blur-[60px] pointer-events-none opacity-90";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring" as const, stiffness: 100, damping: 10 },
+  },
+};
 
 export const FeaturesOverviewSection = () => {
   const { ref, isVisible } = useScrollAnimation();
@@ -46,10 +63,54 @@ export const FeaturesOverviewSection = () => {
         </motion.div>
 
         {isVisible && (
-          <BentoGridShowcase
-            className="auto-rows-[minmax(110px,auto)]"
-            integration={
-              <div className={`${cardBase}`}>
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className={cn(
+              "grid w-full grid-cols-1 gap-4 md:grid-cols-3",
+              "md:grid-rows-3",
+              "auto-rows-[minmax(110px,auto)]"
+            )}
+          >
+            {/* Row 1-3 left cards + right tall card */}
+            {/* Top-left: Prospecção */}
+            <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
+              <div className={cardBase}>
+                <div className={cardGlowSecondary} />
+                <div className={cardGlowMain} />
+                <div className="relative z-10">
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                    <MessageCircle size={16} className="text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-foreground text-sm mb-0.5">Prospecção e Relacionamento</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Abordagem personalizada em escala. Cada lead recebe uma mensagem contextualizada com base no diagnóstico.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Top-center: Campanhas */}
+            <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
+              <div className={cardBase}>
+                <div className={cardGlowSecondary} />
+                <div className={cardGlowMain} />
+                <div className="relative z-10">
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                    <Send size={16} className="text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-foreground text-sm mb-0.5">Campanhas via API Oficial</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Disparos em massa com a API oficial do WhatsApp — inbound e outbound. Sem risco de banimento.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right tall: Captação Inteligente */}
+            <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-3">
+              <div className={cardBase}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="relative z-10 flex flex-col h-full">
@@ -67,57 +128,27 @@ export const FeaturesOverviewSection = () => {
                   </div>
                 </div>
               </div>
-            }
-            trackers={
-              <div className={cardBase}>
-                <div className={cardGlowSecondary} />
-                <div className={cardGlowMain} />
-                <div className="flex items-start justify-between relative z-10">
-                  <div>
-                    <h3 className="font-semibold text-foreground text-sm mb-0.5">Prospecção e Relacionamento</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Abordagem personalizada em escala. Cada lead recebe uma mensagem contextualizada com base no diagnóstico. Relacionamento contínuo com cadência inteligente.
-                    </p>
-                  </div>
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 ml-3">
-                    <MessageCircle size={16} className="text-primary" />
-                  </div>
-                </div>
-              </div>
-            }
-            statistic={
+            </motion.div>
+
+            {/* Mid-left: CRM */}
+            <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
               <div className={cardBase}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="relative z-10">
                   <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-                    <Send size={16} className="text-primary" />
+                    <LayoutDashboard size={16} className="text-primary" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm mb-0.5">Campanhas via API Oficial</h3>
+                  <h3 className="font-semibold text-foreground text-sm mb-0.5">CRM e Lead Scoring</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Disparos em massa com a API oficial do WhatsApp — inbound e outbound. Sem risco de banimento, com templates aprovados.
+                    Pipeline visual com Kanban, estágios personalizados e scoring automático. Saiba quais leads priorizar.
                   </p>
                 </div>
               </div>
-            }
-            focus={
-              <div className={cardBase}>
-                <div className={cardGlowSecondary} />
-                <div className={cardGlowMain} />
-                <div className="flex items-start justify-between relative z-10">
-                  <div>
-                    <h3 className="font-semibold text-foreground text-sm mb-0.5">CRM e Lead Scoring</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Pipeline visual com Kanban, estágios personalizados e scoring automático. Saiba quais leads priorizar e quando agir.
-                    </p>
-                  </div>
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 ml-3">
-                    <LayoutDashboard size={16} className="text-primary" />
-                  </div>
-                </div>
-              </div>
-            }
-            productivity={
+            </motion.div>
+
+            {/* Mid-center: Automação */}
+            <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
               <div className={cardBase}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
@@ -127,12 +158,14 @@ export const FeaturesOverviewSection = () => {
                   </div>
                   <h3 className="font-semibold text-foreground text-sm mb-0.5">Automação de Processos</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Automatize follow-ups, movimentação de estágios e ações repetitivas. Operação comercial no piloto automático 24/7.
+                    Automatize follow-ups, movimentação de estágios e ações repetitivas. Operação no piloto automático 24/7.
                   </p>
                 </div>
               </div>
-            }
-            shortcuts={
+            </motion.div>
+
+            {/* Bottom wide: Agente de IA */}
+            <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-1">
               <div className={`${cardBase} !flex-row items-center`}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
@@ -153,8 +186,8 @@ export const FeaturesOverviewSection = () => {
                   </span>
                 </div>
               </div>
-            }
-          />
+            </motion.div>
+          </motion.div>
         )}
       </div>
     </section>
