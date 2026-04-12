@@ -139,7 +139,7 @@ export const ImpactNumbersSection = () => {
           className="w-full h-full"
           style={{
             background:
-              "radial-gradient(ellipse at 50% 50%, hsl(var(--primary) / 0.4), hsl(var(--border) / 0.15) 50%, transparent 80%)",
+              "radial-gradient(ellipse at 50% 50%, hsl(var(--border) / 0.5), hsl(var(--border) / 0.15) 50%, transparent 80%)",
           }}
         />
       </div>
