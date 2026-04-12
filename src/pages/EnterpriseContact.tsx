@@ -372,10 +372,10 @@ const EnterpriseContact = () => {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="currentTools" className="text-xs font-medium">Ferramentas atuais</Label>
+                      <Label htmlFor="currentTools" className="text-xs font-medium">Ferramentas que usa atualmente (se houver)</Label>
                       <Input
                         id="currentTools"
-                        placeholder="HubSpot, RD Station, planilhas..."
+                        placeholder="HubSpot, RD Station, planilhas, nenhuma..."
                         value={formData.currentTools}
                         onChange={e => handleChange("currentTools", e.target.value)}
                         className="h-9 text-sm"

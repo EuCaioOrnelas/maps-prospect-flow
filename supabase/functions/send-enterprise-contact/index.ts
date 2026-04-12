@@ -55,7 +55,7 @@ serve(async (req) => {
       teamSize,
       objective,
       currentTools,
-      monthlyLeadVolume,
+      monthlyRevenue,
     } = body;
 
     if (!partnerName || !companyName || !cnpj || !niche || !email || !phone || !teamSize || !objective) {
