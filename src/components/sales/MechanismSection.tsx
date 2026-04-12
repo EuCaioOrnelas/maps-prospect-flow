@@ -114,7 +114,7 @@ export const MechanismSection = () => {
         ))}
       </div>
 
-      <div className="container mx-auto px-4 max-w-3xl relative z-10">
+      <div className="container mx-auto px-4 max-w-6xl relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
