@@ -7,6 +7,7 @@ import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { ProblemSection } from "@/components/sales/ProblemSection";
 import { OpportunitySection } from "@/components/sales/OpportunitySection";
 import { MechanismSection } from "@/components/sales/MechanismSection";
+import { FeaturesOverviewSection } from "@/components/sales/FeaturesOverviewSection";
 
 import { OfficialAPISection } from "@/components/landing/OfficialAPISection";
 import { CpuDividerSection } from "@/components/landing/CpuDividerSection";
@@ -104,6 +105,7 @@ const Index = () => {
           <ProblemSection />
           <OpportunitySection />
           <MechanismSection />
+          <FeaturesOverviewSection />
           <OfficialAPISection />
           
           <CpuDividerSection />

@@ -6,6 +6,7 @@ import { Footer } from "@/components/landing/Footer";
 import { ProblemSection } from "@/components/sales/ProblemSection";
 import { OpportunitySection } from "@/components/sales/OpportunitySection";
 import { MechanismSection } from "@/components/sales/MechanismSection";
+import { FeaturesOverviewSection } from "@/components/sales/FeaturesOverviewSection";
 import { BenefitsSection } from "@/components/sales/BenefitsSection";
 import { AuthoritySection } from "@/components/sales/AuthoritySection";
 import { DifferentialsSection } from "@/components/sales/DifferentialsSection";
@@ -42,6 +43,7 @@ const SalesPage = () => {
           <ProblemSection />
           <OpportunitySection />
           <MechanismSection />
+          <FeaturesOverviewSection />
           <BenefitsSection />
           <AuthoritySection />
           <TestimonialsSection />
