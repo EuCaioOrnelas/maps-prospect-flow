@@ -78,7 +78,7 @@ export const ImpactNumbersSection = () => {
       className="relative overflow-hidden py-14 sm:py-20"
     >
       {/* Background Paths */}
-      <div className="absolute pointer-events-none overflow-hidden opacity-[0.35]" style={{ transform: 'rotate(-12deg) translate(-200px, 120px)', transformOrigin: 'top left', top: '-50%', left: '-30%', right: '-30%', bottom: '-50%' }}>
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.35]" style={{ transform: 'rotate(-12deg) translate(-200px, 60px)', transformOrigin: 'top left' }}>
         <FloatingPaths position={1} isVisible={isVisible} />
       </div>
 
