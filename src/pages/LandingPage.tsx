@@ -72,14 +72,12 @@ const LandingPage = () => {
       <main className="landing-light min-h-screen bg-background overflow-x-hidden overflow-y-auto w-full max-w-full relative">
         {/* Aurora/mesh gradient background */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-          <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[50%] rounded-full opacity-[0.12]"
+          <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[50%] rounded-full opacity-[0.12] will-change-auto"
             style={{ background: 'radial-gradient(ellipse, hsl(158 72% 45%), transparent 70%)' }} />
-          <div className="absolute top-[30%] -left-[15%] w-[50%] h-[50%] rounded-full opacity-[0.09]"
+          <div className="absolute top-[30%] -left-[15%] w-[50%] h-[50%] rounded-full opacity-[0.09] will-change-auto"
             style={{ background: 'radial-gradient(ellipse, hsl(200 80% 55%), transparent 70%)' }} />
-          <div className="absolute top-[60%] right-[5%] w-[45%] h-[40%] rounded-full opacity-[0.09]"
+          <div className="absolute top-[60%] right-[5%] w-[45%] h-[40%] rounded-full opacity-[0.09] will-change-auto"
             style={{ background: 'radial-gradient(ellipse, hsl(170 65% 40%), transparent 70%)' }} />
-          <div className="absolute inset-0 opacity-[0.035]"
-            style={{ backgroundImage: 'radial-gradient(hsl(220 25% 14%) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
         </div>
         <div className="relative z-10">
           <Navbar onSignupClick={trackSignupClick} />
