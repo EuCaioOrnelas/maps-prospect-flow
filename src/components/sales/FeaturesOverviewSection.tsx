@@ -11,11 +11,13 @@ import {
 import { cn } from "@/lib/utils";
 
 const cardBase =
-  "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-md";
+  "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-primary/10";
 const cardGlowMain =
-  "absolute -bottom-16 -right-16 w-44 h-44 rounded-full bg-primary/14 blur-[72px] pointer-events-none opacity-100";
+  "absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-primary/20 blur-[80px] pointer-events-none opacity-100";
 const cardGlowSecondary =
-  "absolute -top-12 -left-12 w-32 h-32 rounded-full bg-primary/10 blur-[60px] pointer-events-none opacity-90";
+  "absolute -top-10 -left-10 w-40 h-40 rounded-full bg-primary/15 blur-[64px] pointer-events-none opacity-100";
+
+const barHeights = [35, 55, 45, 70, 60, 85, 75, 95];
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -175,7 +177,7 @@ export const FeaturesOverviewSection = () => {
               </div>
             </motion.div>
 
-            {/* Bottom wide: Automação (was Captação) */}
+            {/* Bottom wide: Automação with chart */}
             <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-1">
               <div className={`${cardBase} !flex-row items-center`}>
                 <div className={cardGlowSecondary} />
@@ -192,10 +194,16 @@ export const FeaturesOverviewSection = () => {
                     Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida — 24 horas por dia.
                   </p>
                 </div>
-                <div className="flex-shrink-0 text-right pl-6 border-l border-border/50 relative z-10">
-                  <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
-                    Operação 24/7
-                  </span>
+                <div className="flex-shrink-0 pl-6 border-l border-border/50 relative z-10 flex items-end gap-1.5 h-16">
+                  {barHeights.map((h, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-2.5 rounded-t-sm bg-primary/60"
+                      initial={{ height: 0 }}
+                      animate={isVisible ? { height: `${h}%` } : { height: 0 }}
+                      transition={{ duration: 0.6, delay: 0.3 + i * 0.08, ease: "easeOut" }}
+                    />
+                  ))}
                 </div>
               </div>
             </motion.div>
