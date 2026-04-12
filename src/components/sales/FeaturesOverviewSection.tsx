@@ -108,22 +108,22 @@ export const FeaturesOverviewSection = () => {
               </div>
             </motion.div>
 
-            {/* Right tall: Captação Inteligente */}
+            {/* Right tall: Agente de IA */}
             <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-3">
               <div className={cardBase}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="relative z-10 flex flex-col h-full">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-                    <Search size={20} className="text-primary" />
+                    <Bot size={20} className="text-primary" />
                   </div>
-                   <h3 className="font-semibold text-foreground text-base mb-2">Captação com Diagnóstico Automático</h3>
+                   <h3 className="font-semibold text-foreground text-base mb-2">Agente de IA com Fluxos Estruturados</h3>
                    <p className="text-sm text-muted-foreground leading-relaxed">
-                     Extrai leads diretamente do Google Maps e analisa cada empresa: nicho de atuação, presença digital, telefones validados e nível de aderência ao seu produto. O resultado é uma lista de leads prontos para abordagem, com os de maior potencial de conversão priorizados automaticamente.
+                     A IA responde, qualifica e conduz cada conversa dentro de fluxos definidos, avançando o lead até o momento de decisão com naturalidade e consistência, sem intervenção humana.
                    </p>
                    <div className="mt-auto pt-4">
                      <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
-                       Filtro inteligente de potencial
+                       Conversas humanas em escala
                      </span>
                    </div>
                 </div>
@@ -164,7 +164,7 @@ export const FeaturesOverviewSection = () => {
               </div>
             </motion.div>
 
-            {/* Bottom wide: Agente de IA */}
+            {/* Bottom wide: Captação Inteligente */}
             <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-1">
               <div className={`${cardBase} !flex-row items-center`}>
                 <div className={cardGlowSecondary} />
@@ -172,17 +172,17 @@ export const FeaturesOverviewSection = () => {
                 <div className="flex-1 min-w-0 relative z-10">
                   <div className="flex items-center gap-2.5 mb-1.5">
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Bot size={16} className="text-primary" />
+                      <Search size={16} className="text-primary" />
                     </div>
-                     <h3 className="font-semibold text-foreground text-sm">Agente de IA com Fluxos Estruturados</h3>
+                     <h3 className="font-semibold text-foreground text-sm">Captação com Diagnóstico Automático</h3>
                    </div>
                    <p className="text-xs text-muted-foreground leading-relaxed">
-                     A IA responde, qualifica e conduz cada conversa dentro de fluxos definidos — avançando o lead até o momento de decisão com naturalidade e consistência, sem intervenção humana.
+                     Extrai leads diretamente do Google Maps e analisa cada empresa: nicho de atuação, presença digital, telefones validados e nível de aderência ao seu produto. O resultado é uma lista de leads prontos para abordagem, com os de maior potencial de conversão priorizados automaticamente.
                    </p>
                  </div>
                  <div className="flex-shrink-0 text-right pl-6 border-l border-border/50 relative z-10">
                    <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
-                     Conversas humanas em escala
+                     Captação + Diagnóstico
                    </span>
                  </div>
               </div>
