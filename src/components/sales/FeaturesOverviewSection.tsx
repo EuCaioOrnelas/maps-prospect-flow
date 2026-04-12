@@ -72,7 +72,7 @@ export const FeaturesOverviewSection = () => {
             <span className="text-shimmer-highlight">geração de oportunidades B2B</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Da captação ao fechamento, cada etapa do processo comercial conectada por dados, IA e automação — sem depender de operação manual.
+            Da captação ao fechamento, cada etapa do processo comercial conectada por dados, IA e automação, sem depender de operação manual.
           </p>
         </motion.div>
 
