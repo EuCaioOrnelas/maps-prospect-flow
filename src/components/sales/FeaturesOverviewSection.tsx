@@ -75,18 +75,22 @@ export const FeaturesOverviewSection = () => {
           >
             {/* Row 1-3 left cards + right tall card */}
             {/* Top-left: Prospecção */}
+            {/* Top-left: Prospecção */}
             <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
               <div className={cardBase}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="relative z-10">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-                    <MessageCircle size={16} className="text-primary" />
+                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Prospecção Inteligente</span>
+                  <div className="flex items-center gap-2.5 mb-1">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <MessageCircle size={16} className="text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-foreground text-[15px]">Abordagem Contextual em Escala</h3>
                   </div>
-                   <h3 className="font-semibold text-foreground text-sm mb-0.5">Abordagem Contextual em Escala</h3>
-                   <p className="text-xs text-muted-foreground leading-relaxed">
-                     Cada lead recebe uma mensagem construída a partir do seu nicho, porte e diagnóstico real — não templates genéricos. Isso aumenta taxa de resposta e acelera a entrada no pipeline.
-                   </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Cada lead recebe uma mensagem construída a partir do seu nicho, porte e diagnóstico real — não templates genéricos. Isso aumenta taxa de resposta e acelera a entrada no pipeline.
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -97,13 +101,16 @@ export const FeaturesOverviewSection = () => {
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="relative z-10">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-                    <Send size={16} className="text-primary" />
+                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">API Oficial & Segurança</span>
+                  <div className="flex items-center gap-2.5 mb-1">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Send size={16} className="text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-foreground text-[15px]">Campanhas via API Oficial Meta</h3>
                   </div>
-                   <h3 className="font-semibold text-foreground text-sm mb-0.5">Campanhas via API Oficial Meta</h3>
-                   <p className="text-xs text-muted-foreground leading-relaxed">
-                     Envios outbound e inbound pela API oficial do WhatsApp Business, com conformidade total às políticas da Meta. Escala real sem risco de bloqueio ou perda de número.
-                   </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Envios outbound e inbound pela API oficial do WhatsApp Business, com conformidade total às políticas da Meta. Escala real sem risco de bloqueio ou perda de número.
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -114,18 +121,16 @@ export const FeaturesOverviewSection = () => {
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="relative z-10 flex flex-col h-full">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-                    <Bot size={20} className="text-primary" />
+                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider w-fit">Conversas humanas em escala</span>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Bot size={20} className="text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-foreground text-base">Agente de IA com Fluxos Estruturados</h3>
                   </div>
-                   <h3 className="font-semibold text-foreground text-base mb-2">Agente de IA com Fluxos Estruturados</h3>
-                   <p className="text-sm text-muted-foreground leading-relaxed">
-                     A IA responde, qualifica e conduz cada conversa dentro de fluxos definidos, avançando o lead até o momento de decisão com naturalidade e consistência, sem intervenção humana.
-                   </p>
-                   <div className="mt-auto pt-4">
-                     <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
-                       Conversas humanas em escala
-                     </span>
-                   </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    A IA responde, qualifica e conduz cada conversa dentro de fluxos definidos, avançando o lead até o momento de decisão com naturalidade e consistência, sem intervenção humana.
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -136,58 +141,64 @@ export const FeaturesOverviewSection = () => {
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="relative z-10">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-                    <LayoutDashboard size={16} className="text-primary" />
+                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Gestão & Scoring</span>
+                  <div className="flex items-center gap-2.5 mb-1">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <LayoutDashboard size={16} className="text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-foreground text-[15px]">CRM com Scoring Automático</h3>
                   </div>
-                   <h3 className="font-semibold text-foreground text-sm mb-0.5">CRM com Scoring Automático</h3>
-                   <p className="text-xs text-muted-foreground leading-relaxed">
-                     Pipeline visual que organiza cada lead por estágio, registra histórico de interações e atribui score com base em comportamento real. Sua equipe sabe exatamente quem priorizar a cada momento.
-                   </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Pipeline visual que organiza cada lead por estágio, registra histórico de interações e atribui score com base em comportamento real. Sua equipe sabe exatamente quem priorizar a cada momento.
+                  </p>
                 </div>
               </div>
             </motion.div>
 
-            {/* Mid-center: Automação */}
+            {/* Mid-center: Captação (was Automação) */}
             <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
               <div className={cardBase}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="relative z-10">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-                    <Zap size={16} className="text-primary" />
+                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Captação + Diagnóstico</span>
+                  <div className="flex items-center gap-2.5 mb-1">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Search size={16} className="text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-foreground text-[15px]">Captação com Diagnóstico Automático</h3>
                   </div>
-                   <h3 className="font-semibold text-foreground text-sm mb-0.5">Operação Comercial Autônoma</h3>
-                   <p className="text-xs text-muted-foreground leading-relaxed">
-                     Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida — 24 horas por dia.
-                   </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Extrai leads diretamente do Google Maps e analisa cada empresa: nicho de atuação, presença digital, telefones validados e nível de aderência ao seu produto. Leads prontos para abordagem, priorizados por potencial de conversão.
+                  </p>
                 </div>
               </div>
             </motion.div>
 
-            {/* Bottom wide: Captação Inteligente */}
+            {/* Bottom wide: Automação (was Captação) */}
             <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-1">
               <div className={`${cardBase} !flex-row items-center`}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="flex-1 min-w-0 relative z-10">
+                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Automação Comercial</span>
                   <div className="flex items-center gap-2.5 mb-1.5">
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Search size={16} className="text-primary" />
+                      <Zap size={16} className="text-primary" />
                     </div>
-                     <h3 className="font-semibold text-foreground text-sm">Captação com Diagnóstico Automático</h3>
-                   </div>
-                   <p className="text-xs text-muted-foreground leading-relaxed">
-                     Extrai leads diretamente do Google Maps e analisa cada empresa: nicho de atuação, presença digital, telefones validados e nível de aderência ao seu produto. O resultado é uma lista de leads prontos para abordagem, com os de maior potencial de conversão priorizados automaticamente.
-                   </p>
-                 </div>
-                 <div className="flex-shrink-0 text-right pl-6 border-l border-border/50 relative z-10">
-                   <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
-                     Captação + Diagnóstico
-                   </span>
-                 </div>
+                    <h3 className="font-semibold text-foreground text-[15px]">Operação Comercial Autônoma</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida — 24 horas por dia.
+                  </p>
+                </div>
+                <div className="flex-shrink-0 text-right pl-6 border-l border-border/50 relative z-10">
+                  <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
+                    Operação 24/7
+                  </span>
+                </div>
               </div>
             </motion.div>
-          </motion.div>
         )}
       </div>
     </section>
