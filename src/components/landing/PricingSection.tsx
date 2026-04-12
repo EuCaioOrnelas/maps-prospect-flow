@@ -307,7 +307,7 @@ export const PricingSection = () => {
                   </div>
                   {isAnnual && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Cobrado anualmente
+                      Cobrado anualmente — R$ {formatPrice(parsePrice(plan.price) * 12)}/ano
                     </p>
                   )}
                   <p className="text-primary mt-1.5 text-xs sm:text-sm font-medium">

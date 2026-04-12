@@ -73,9 +73,10 @@ export const OpportunitySection = () => {
             initial={{ opacity: 0, x: 24 }}
             animate={isVisible ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="rounded-t-2xl border border-b-0 border-primary/20 bg-primary/[0.02] px-6 sm:px-8 pt-6 sm:pt-8 pb-5 relative overflow-hidden"
+            className="rounded-t-2xl border border-b-0 border-primary/20 bg-white dark:bg-card px-6 sm:px-8 pt-6 sm:pt-8 pb-5 relative overflow-hidden"
           >
-            <div className="absolute -top-8 -right-8 w-40 h-40 bg-primary/8 rounded-full blur-[60px] pointer-events-none" />
+            <div className="absolute -top-10 -right-10 w-48 h-48 bg-primary/[0.08] rounded-full blur-[60px] pointer-events-none" />
+            <div className="absolute -bottom-8 -left-8 w-36 h-36 bg-primary/[0.05] rounded-full blur-[50px] pointer-events-none" />
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={isVisible ? { opacity: 1, y: 0 } : {}}
@@ -124,9 +125,10 @@ export const OpportunitySection = () => {
               initial={{ opacity: 0, x: 12 }}
               animate={isVisible ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.4, delay: 0.4 + i * 0.06 }}
-              className={`border-x border-primary/20 bg-primary/[0.02] px-6 sm:px-8 py-3 group cursor-default relative overflow-hidden ${i === comparisons.length - 1 ? 'border-b rounded-b-2xl pb-6' : ''}`}
+              className={`border-x border-primary/20 bg-white dark:bg-card px-6 sm:px-8 py-3 group cursor-default relative overflow-hidden ${i === comparisons.length - 1 ? 'border-b rounded-b-2xl pb-6' : ''}`}
             >
-              <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-primary/5 rounded-full blur-[50px] pointer-events-none" />
+              <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-primary/[0.08] rounded-full blur-[60px] pointer-events-none" />
+              <div className="absolute -top-8 -right-8 w-32 h-32 bg-primary/[0.05] rounded-full blur-[50px] pointer-events-none" />
               <div className="flex items-center gap-3 min-h-[32px] relative">
                 <motion.div
                   initial={{ scale: 0 }}

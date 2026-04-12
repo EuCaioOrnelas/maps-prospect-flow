@@ -88,9 +88,9 @@ export const WhyItWorksSection = () => {
               transition={{ duration: 0.5, delay: index * 0.12 }}
               className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-7 hover:border-primary/30 hover:bg-card/80 transition-all duration-300"
             >
-              {/* Subtle glow matching other cards */}
-              <div className="absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] blur-[70px] pointer-events-none" />
-              <div className="absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] blur-[56px] pointer-events-none" />
+              {/* Visible green glow */}
+              <div className="absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-primary/[0.10] blur-[60px] pointer-events-none" />
+              <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-primary/[0.07] blur-[50px] pointer-events-none" />
 
               <div className="relative z-10">
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
@@ -112,9 +112,9 @@ export const WhyItWorksSection = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="relative mt-5 lg:mt-6 overflow-hidden rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm p-8 md:p-10"
         >
-          {/* Subtle glows matching card style */}
-          <div className="absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] blur-[70px] pointer-events-none" />
-          <div className="absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] blur-[56px] pointer-events-none" />
+          {/* Visible green glow */}
+          <div className="absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-primary/[0.10] blur-[60px] pointer-events-none" />
+          <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-primary/[0.07] blur-[50px] pointer-events-none" />
 
           <div className="relative z-10">
             <div className="text-center mb-8">
