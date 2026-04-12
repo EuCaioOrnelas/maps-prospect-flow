@@ -75,10 +75,10 @@ export const ImpactNumbersSection = () => {
   return (
     <section
       ref={ref as React.RefObject<HTMLElement>}
-      className="relative overflow-hidden py-14 sm:py-20"
+      className="relative overflow-hidden py-10 sm:py-14"
     >
       {/* Background Paths */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.35]" style={{ transform: 'rotate(-12deg) translate(-240px, 60px) scale(1.15)', transformOrigin: 'top left' }}>
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.35]" style={{ transform: 'rotate(-12deg) translate(-280px, 60px) scale(1.15)', transformOrigin: 'top left' }}>
         <FloatingPaths position={1} isVisible={isVisible} />
       </div>
 
