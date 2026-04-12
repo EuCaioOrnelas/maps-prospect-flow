@@ -1,122 +1,77 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Cpu, MessageSquare, Server } from "lucide-react";
-
-/* ── Animated counter ── */
-const AnimatedCounter = ({ end, suffix = "", isVisible, delay = 0 }: { end: number; suffix?: string; isVisible: boolean; delay?: number }) => {
-  const [count, setCount] = useState(0);
-  const hasStarted = useRef(false);
-
-  useEffect(() => {
-    if (!isVisible || hasStarted.current) return;
-    const timer = setTimeout(() => {
-      hasStarted.current = true;
-      const startTime = performance.now();
-      const duration = 2200;
-      const animate = (t: number) => {
-        const p = Math.min((t - startTime) / duration, 1);
-        const eased = 1 - Math.pow(1 - p, 3);
-        setCount(Math.floor(eased * end));
-        if (p < 1) requestAnimationFrame(animate);
-        else setCount(end);
-      };
-      requestAnimationFrame(animate);
-    }, delay);
-    return () => clearTimeout(timer);
-  }, [isVisible, end, delay]);
-
-  const display = () => {
-    if (end >= 1000000) return `${(count / 1000000).toFixed(1)}`;
-    if (end >= 1000) return new Intl.NumberFormat("pt-BR").format(count);
-    return count.toString();
-  };
-
-  return <span className="tabular-nums">{display()}{suffix}</span>;
-};
+import { Shield, Cpu, MessageSquare, BarChart3 } from "lucide-react";
 
 const stats = [
-  { value: 50000, prefix: "+", suffix: "", label: "leads analisados e processados" },
-  { value: 500, prefix: "+", suffix: "", label: "empresas utilizando a plataforma" },
-  { value: 6, prefix: "+R$ ", suffix: " mi", label: "em vendas geradas com o sistema" },
+  { value: "50K+", label: "Leads processados" },
+  { value: "1M+", label: "Mensagens enviadas" },
+  { value: "500+", label: "Empresas ativas" },
+  { value: "98%", label: "Uptime da plataforma" },
 ];
 
-const techPillars = [
-  { icon: Cpu, label: "IA avançada" },
-  { icon: MessageSquare, label: "API oficial do WhatsApp" },
-  { icon: Server, label: "Infraestrutura escalável" },
+const pillars = [
+  { icon: Shield, title: "API Oficial do WhatsApp", desc: "Operação segura, sem risco de banimento. Parceiro oficial Meta Business." },
+  { icon: Cpu, title: "IA proprietária", desc: "Modelos treinados para qualificação, personalização e atendimento B2B." },
+  { icon: MessageSquare, title: "CRM nativo", desc: "Pipeline, score, histórico e automação integrados sem ferramentas externas." },
+  { icon: BarChart3, title: "Métricas em tempo real", desc: "Dashboards com visibilidade total sobre performance e conversão." },
 ];
 
 export const AuthoritySection = () => {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} className="py-20 sm:py-28 w-full relative overflow-hidden">
-      {/* Background accent */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.015] to-transparent pointer-events-none" />
-
-      <div className="container mx-auto px-4 max-w-5xl relative z-10">
-        {/* Headline */}
+    <section ref={ref as React.RefObject<HTMLElement>} className="py-20 sm:py-32 w-full relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.02] to-transparent" />
+      
+      <div className="container mx-auto px-4 max-w-6xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-14"
+          className="text-center mb-16"
         >
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-3 leading-tight">
-            Crescimento validado{" "}
-            <span className="text-shimmer-highlight">na prática</span>
+          <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary mb-4">
+            Infraestrutura robusta
+          </span>
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+            Tecnologia de empresa<br />
+            <span className="text-shimmer-highlight">de verdade</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            Números que representam impacto real em operações comerciais B2B.
-          </p>
         </motion.div>
 
-        {/* Stats */}
+        {/* Stats row */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-14"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16"
         >
-          {stats.map((s, i) => (
-            <div
-              key={s.label}
-              className="relative text-center p-8 rounded-2xl border border-border/60 bg-white/[0.03]"
-            >
-              <div className="absolute -bottom-6 -right-6 w-28 h-28 rounded-full bg-primary/[0.04] blur-[50px] pointer-events-none" />
-              <div className="relative z-10">
-                <span className="font-display text-4xl sm:text-5xl font-bold text-foreground block mb-2">
-                  {s.prefix}
-                  <AnimatedCounter end={s.value} suffix={s.suffix} isVisible={isVisible} delay={300 + i * 200} />
-                </span>
-                <span className="text-sm text-muted-foreground">{s.label}</span>
-              </div>
+          {stats.map((s) => (
+            <div key={s.label} className="text-center p-6 rounded-2xl border border-border bg-card/30">
+              <div className="text-3xl sm:text-4xl font-bold text-primary mb-1">{s.value}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">{s.label}</div>
             </div>
           ))}
         </motion.div>
 
-        {/* Tech pillars */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={isVisible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10"
-        >
-          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
-            Sistema baseado em
-          </span>
-          <div className="flex items-center gap-8">
-            {techPillars.map((p) => (
-              <div key={p.label} className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <p.icon size={16} className="text-primary" />
-                </div>
-                <span className="text-sm font-medium text-foreground">{p.label}</span>
+        {/* Pillars */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {pillars.map((p, i) => (
+            <motion.div
+              key={p.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={isVisible ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5, delay: 0.3 + 0.1 * i }}
+              className="p-6 rounded-2xl border border-border bg-card/50"
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <p.icon size={20} className="text-primary" />
               </div>
-            ))}
-          </div>
-        </motion.div>
+              <h3 className="font-semibold text-foreground mb-2 text-sm">{p.title}</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
