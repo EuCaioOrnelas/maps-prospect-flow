@@ -23,36 +23,12 @@ const cardGlowMain =
 const cardGlowSecondary =
   "absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/[0.03] blur-[64px] pointer-events-none";
 
-const barData = [
-  { h: 30, delay: 0 }, { h: 50, delay: 0.08 }, { h: 40, delay: 0.16 },
-  { h: 65, delay: 0.24 }, { h: 55, delay: 0.32 }, { h: 80, delay: 0.4 },
-  { h: 70, delay: 0.48 }, { h: 90, delay: 0.56 }, { h: 60, delay: 0.64 },
-  { h: 95, delay: 0.72 },
-];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 100, damping: 10 },
-  },
-};
-
-/* Timeline steps for horizontal flow inside Operação Comercial */
-const timelineSteps = [
-  { label: "Novo lead no WhatsApp" },
-  { label: "Analise com IA" },
-  { label: "A IA conduz a conversa" },
-  { label: "Fechando o negócio" },
+/* Pipeline steps for horizontal flow inside Operação Comercial */
+const pipelineSteps = [
+  { icon: Clock, label: "Follow-up automático" },
+  { icon: RefreshCw, label: "Pipeline atualizado" },
+  { icon: Target, label: "Lead qualificado" },
+  { icon: CheckCircle, label: "Oportunidade fechada" },
 ];
 
 export const FeaturesOverviewSection = () => {
