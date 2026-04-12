@@ -57,25 +57,24 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
           <div className="absolute -bottom-14 -right-14 w-40 h-40 rounded-full bg-primary/10 blur-[64px] pointer-events-none" />
           <div className="absolute -top-10 -left-10 w-28 h-28 rounded-full bg-primary/8 blur-[50px] pointer-events-none" />
 
-          {/* Icon with semi-circle extending outside */}
-          <div className={`relative z-10 mb-3 ${isLeft ? "flex justify-end" : ""}`}>
-            <div className="relative">
-              {/* Semi-circle background extending outside card */}
-              <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-primary/8 pointer-events-none" />
-              <div className="relative w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
-                <Icon size={18} className="text-primary" />
+          {/* Content */}
+          <div className={`relative z-10 flex items-start gap-3 ${isLeft ? "flex-row-reverse text-right" : ""}`}>
+            <div className="flex-shrink-0">
+              <span className="text-[9px] font-bold tracking-[0.14em] text-primary/35 block leading-none mb-1">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div className="relative">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-primary/8 pointer-events-none" />
+                <div className="relative w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
+                  <Icon size={18} className="text-primary" />
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Content */}
-          <div className="relative z-10">
-            <span className="text-[9px] font-bold tracking-[0.14em] text-primary/35 block leading-none mb-1">
-              {String(index + 1).padStart(2, "0")}
-            </span>
-            <h3 className="text-sm font-bold text-foreground leading-tight mb-1">{step.title}</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
-            <p className={`text-[10px] text-muted-foreground/50 mt-1.5`}>{step.micro}</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-bold text-foreground leading-tight mb-1">{step.title}</h3>
+              <p className="text-[13px] text-muted-foreground leading-relaxed">{step.desc}</p>
+              <p className="text-[11px] text-muted-foreground/50 mt-1">{step.micro}</p>
+            </div>
           </div>
         </div>
       </div>
