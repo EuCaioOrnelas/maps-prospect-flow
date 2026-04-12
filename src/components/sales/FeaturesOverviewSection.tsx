@@ -7,6 +7,11 @@ import {
   LayoutDashboard,
   Zap,
   Bot,
+  ChevronRight,
+  Clock,
+  RefreshCw,
+  Target,
+  CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import flowBuilderPreview from "@/assets/flow-builder-preview.png";
