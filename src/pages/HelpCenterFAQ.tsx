@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, HelpCircle, Search, Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target, BarChart3, Plug, Wallet, Sparkles } from "lucide-react";
+import { ArrowLeft, HelpCircle, Search, Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target, BarChart3, Plug, Wallet, Sparkles, Workflow } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -223,6 +223,37 @@ const categories = [
       {
         question: "O agente funciona com o CRM?",
         answer: "Sim! O agente integra com o CRM automaticamente. Quando um lead responde, o agente pode mover o lead para etapas específicas do pipeline, como 'Respondeu', 'Qualificado' ou 'Perdido', baseado nas regras que você configurar."
+      },
+    ]
+  },
+  {
+    id: "flows",
+    title: "Flows e Automações",
+    icon: Sparkles,
+    questions: [
+      {
+        question: "O que são os Flows de Automação?",
+        answer: "Flows são sequências visuais de automação que você monta em um editor drag-and-drop. Cada fluxo pode incluir envio de mensagens, esperas programadas, condições (se respondeu/não respondeu), coleta de dados, testes A/B, integração com Google Sheets, Gmail e Google Calendar. O sistema executa tudo automaticamente após o disparo."
+      },
+      {
+        question: "Quais nós estão disponíveis no editor de Flows?",
+        answer: "O editor oferece diversos nós: Mensagem (texto, imagem, vídeo, áudio), Espera (timer configurável), Condição (baseada em resposta, horário, variáveis), Coleta de Dados, Botões interativos, Teste A/B, Split Aleatório, Ação (webhook, CRM), Transferência para humano, integração com Gmail, Google Sheets e Google Calendar, e nó de Agente de IA."
+      },
+      {
+        question: "O que é o Flow com IA?",
+        answer: "O Flow com IA permite que a inteligência artificial gere fluxos de automação completos a partir de uma descrição simples. Basta descrever seu objetivo (ex: 'follow-up para leads que não responderam em 48h') e a IA cria o fluxo com nós, mensagens e condições já configurados. Você pode editar e ajustar depois."
+      },
+      {
+        question: "Posso criar fluxos a partir de templates prontos?",
+        answer: "Sim. O Wiize oferece templates pré-configurados para os cenários mais comuns: boas-vindas, follow-up, qualificação de leads, pesquisa de satisfação e reengajamento. Basta selecionar o template e personalizá-lo."
+      },
+      {
+        question: "Posso integrar Flows com Google Sheets e Gmail?",
+        answer: "Sim. Os Flows suportam integração nativa com Google Sheets (para leitura/escrita de dados), Gmail (para envio de emails automáticos) e Google Calendar (para criação de eventos). Basta conectar sua conta Google pelo Wiize."
+      },
+      {
+        question: "Qual o limite de fluxos que posso criar?",
+        answer: "Não há limite de fluxos. Você pode criar quantos fluxos quiser e ativá-los simultaneamente. Cada fluxo pode ter suas próprias regras de disparo e condições de operação."
       },
     ]
   },
