@@ -132,7 +132,7 @@ export const FeaturesOverviewSection = () => {
               <div className={`${cardBase} !p-0`}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
-                <div className="relative z-10 p-3 sm:p-3.5 pb-36 sm:pb-44 flex flex-col h-full">
+                <div className="relative z-10 p-3 sm:p-3.5 flex flex-col">
                   <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider w-fit">Conversas humanas em escala</span>
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -145,15 +145,14 @@ export const FeaturesOverviewSection = () => {
                   </p>
                 </div>
                 {/* Flow builder background image */}
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] sm:h-[58%] overflow-hidden">
+                <div className="pointer-events-none relative flex-1 min-h-[180px] overflow-hidden mt-2">
                   <img
                     src={flowBuilderPreview}
                     alt="Visualização do editor de fluxos"
                     loading="eager"
                     decoding="async"
-                    className="absolute left-[55%] top-[15%] w-[160%] sm:w-[165%] min-w-[320px] max-w-none -translate-x-1/2 opacity-60 drop-shadow-2xl"
+                    className="w-[95%] mx-auto object-contain drop-shadow-2xl"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
                 </div>
               </div>
             </motion.div>
