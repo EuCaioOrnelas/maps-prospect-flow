@@ -215,34 +215,35 @@ export const FeaturesOverviewSection = () => {
                   </p>
                 </div>
 
-                {/* Horizontal timeline */}
-                <div className="relative z-10 mt-4 flex items-center justify-between gap-0 px-2">
-                  {timelineSteps.map((step, i) => (
-                    <div key={i} className="flex items-center flex-1 last:flex-none">
-                      {/* Step */}
-                      <motion.div
-                        className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-full px-3 py-1.5 whitespace-nowrap"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={isVisible ? { opacity: 1, scale: 1 } : {}}
-                        transition={{ duration: 0.4, delay: 0.5 + i * 0.15, ease: "easeOut" }}
-                      >
-                        <div className="w-4 h-4 rounded-full border-2 border-primary/60 flex items-center justify-center flex-shrink-0">
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary/80" />
-                        </div>
-                        <span className="text-[10px] sm:text-[11px] font-medium text-foreground/80">{step.label}</span>
-                      </motion.div>
-                      {/* Connector line */}
-                      {i < timelineSteps.length - 1 && (
+                {/* Horizontal pipeline sequence with arrows */}
+                <div className="relative z-10 mt-4 flex items-center justify-between gap-0 px-1">
+                  {pipelineSteps.map((step, i) => {
+                    const StepIcon = step.icon;
+                    return (
+                      <div key={i} className="flex items-center flex-1 last:flex-none">
                         <motion.div
-                          className="flex-1 h-px bg-primary/20 mx-1"
-                          initial={{ scaleX: 0 }}
-                          animate={isVisible ? { scaleX: 1 } : {}}
-                          transition={{ duration: 0.4, delay: 0.65 + i * 0.15, ease: "easeOut" }}
-                          style={{ transformOrigin: "left" }}
-                        />
-                      )}
-                    </div>
-                  ))}
+                          className="flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded-lg px-2.5 py-2 whitespace-nowrap"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={isVisible ? { opacity: 1, x: 0 } : {}}
+                          transition={{ duration: 0.4, delay: 0.5 + i * 0.15, ease: "easeOut" }}
+                        >
+                          <StepIcon size={13} className="text-primary flex-shrink-0" />
+                          <span className="text-[10px] sm:text-[11px] font-medium text-foreground/80">{step.label}</span>
+                        </motion.div>
+                        {i < pipelineSteps.length - 1 && (
+                          <motion.div
+                            className="flex items-center justify-center flex-1 mx-0.5"
+                            initial={{ opacity: 0 }}
+                            animate={isVisible ? { opacity: 1 } : {}}
+                            transition={{ duration: 0.3, delay: 0.65 + i * 0.15 }}
+                          >
+                            <div className="flex-1 h-px bg-primary/20" />
+                            <ChevronRight size={14} className="text-primary/40 -mx-0.5 flex-shrink-0" />
+                          </motion.div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </motion.div>
