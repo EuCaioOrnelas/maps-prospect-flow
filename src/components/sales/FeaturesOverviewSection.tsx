@@ -50,15 +50,15 @@ export const FeaturesOverviewSection = () => {
           className="text-center mb-16"
         >
           <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary mb-4">
-            Funcionalidades
+            Plataforma completa
           </span>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Tudo que você precisa para
+            Uma máquina integrada de
             <br />
-            <span className="text-muted-foreground">vender mais no automático</span>
+            <span className="text-muted-foreground">geração de oportunidades B2B</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Uma plataforma completa que conecta captação, prospecção, campanhas, CRM e IA em um único sistema integrado.
+            Da captação ao fechamento, cada etapa do processo comercial conectada por dados, IA e automação — sem depender de operação manual.
           </p>
         </motion.div>
 
@@ -83,10 +83,10 @@ export const FeaturesOverviewSection = () => {
                   <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
                     <MessageCircle size={16} className="text-primary" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm mb-0.5">Prospecção e Relacionamento</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Abordagem personalizada em escala. Cada lead recebe uma mensagem contextualizada com base no diagnóstico.
-                  </p>
+                   <h3 className="font-semibold text-foreground text-sm mb-0.5">Abordagem Contextual em Escala</h3>
+                   <p className="text-xs text-muted-foreground leading-relaxed">
+                     Cada lead recebe uma mensagem construída a partir do seu nicho, porte e diagnóstico real — não templates genéricos. Isso aumenta taxa de resposta e acelera a entrada no pipeline.
+                   </p>
                 </div>
               </div>
             </motion.div>
@@ -100,10 +100,10 @@ export const FeaturesOverviewSection = () => {
                   <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
                     <Send size={16} className="text-primary" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm mb-0.5">Campanhas via API Oficial</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Disparos em massa com a API oficial do WhatsApp — inbound e outbound. Sem risco de banimento.
-                  </p>
+                   <h3 className="font-semibold text-foreground text-sm mb-0.5">Campanhas via API Oficial Meta</h3>
+                   <p className="text-xs text-muted-foreground leading-relaxed">
+                     Envios outbound e inbound pela API oficial do WhatsApp Business, com conformidade total às políticas da Meta. Escala real sem risco de bloqueio ou perda de número.
+                   </p>
                 </div>
               </div>
             </motion.div>
@@ -117,15 +117,15 @@ export const FeaturesOverviewSection = () => {
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
                     <Search size={20} className="text-primary" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-base mb-2">Captação Inteligente</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Encontre leads qualificados no Google Maps com IA. Diagnóstico automático de cada empresa: nicho, porte, telefone validado e score de aderência ao seu produto.
-                  </p>
-                  <div className="mt-auto pt-4">
-                    <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
-                      Captação + Diagnóstico
-                    </span>
-                  </div>
+                   <h3 className="font-semibold text-foreground text-base mb-2">Captação com Diagnóstico Automático</h3>
+                   <p className="text-sm text-muted-foreground leading-relaxed">
+                     Extrai leads diretamente do Google Maps e analisa cada empresa: nicho de atuação, presença digital, telefones validados e nível de aderência ao seu produto. O resultado é uma lista de leads prontos para abordagem, com os de maior potencial de conversão priorizados automaticamente.
+                   </p>
+                   <div className="mt-auto pt-4">
+                     <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
+                       Filtro inteligente de potencial
+                     </span>
+                   </div>
                 </div>
               </div>
             </motion.div>
@@ -139,10 +139,10 @@ export const FeaturesOverviewSection = () => {
                   <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
                     <LayoutDashboard size={16} className="text-primary" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm mb-0.5">CRM e Lead Scoring</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Pipeline visual com Kanban, estágios personalizados e scoring automático. Saiba quais leads priorizar.
-                  </p>
+                   <h3 className="font-semibold text-foreground text-sm mb-0.5">CRM com Scoring Automático</h3>
+                   <p className="text-xs text-muted-foreground leading-relaxed">
+                     Pipeline visual que organiza cada lead por estágio, registra histórico de interações e atribui score com base em comportamento real. Sua equipe sabe exatamente quem priorizar a cada momento.
+                   </p>
                 </div>
               </div>
             </motion.div>
@@ -156,10 +156,10 @@ export const FeaturesOverviewSection = () => {
                   <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
                     <Zap size={16} className="text-primary" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm mb-0.5">Automação de Processos</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Automatize follow-ups, movimentação de estágios e ações repetitivas. Operação no piloto automático 24/7.
-                  </p>
+                   <h3 className="font-semibold text-foreground text-sm mb-0.5">Operação Comercial Autônoma</h3>
+                   <p className="text-xs text-muted-foreground leading-relaxed">
+                     Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida — 24 horas por dia.
+                   </p>
                 </div>
               </div>
             </motion.div>
@@ -174,17 +174,17 @@ export const FeaturesOverviewSection = () => {
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Bot size={16} className="text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-sm">Agente de IA e Fluxos</h3>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Agentes inteligentes que respondem leads, qualificam oportunidades e avançam conversas. Fluxos visuais para criar jornadas personalizadas.
-                  </p>
-                </div>
-                <div className="flex-shrink-0 text-right pl-6 border-l border-border/50 relative z-10">
-                  <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
-                    IA conversacional
-                  </span>
-                </div>
+                     <h3 className="font-semibold text-foreground text-sm">Agente de IA com Fluxos Estruturados</h3>
+                   </div>
+                   <p className="text-xs text-muted-foreground leading-relaxed">
+                     A IA responde, qualifica e conduz cada conversa dentro de fluxos definidos — avançando o lead até o momento de decisão com naturalidade e consistência, sem intervenção humana.
+                   </p>
+                 </div>
+                 <div className="flex-shrink-0 text-right pl-6 border-l border-border/50 relative z-10">
+                   <span className="text-[11px] font-medium text-primary/70 bg-primary/5 px-2.5 py-1 rounded-full">
+                     Conversas humanas em escala
+                   </span>
+                 </div>
               </div>
             </motion.div>
           </motion.div>
