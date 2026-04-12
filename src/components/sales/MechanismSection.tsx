@@ -25,7 +25,7 @@ const floatingElements = [
 
 function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: number; isLeft: boolean }) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(cardRef, { once: true, margin: "-60px" });
+  const inView = useInView(cardRef, { once: true, margin: "0px 0px -15% 0px" });
   const Icon = step.icon;
 
   return (
@@ -84,7 +84,7 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
 }
 
 export const MechanismSection = () => {
-  const { ref, isVisible } = useScrollAnimation();
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.05, rootMargin: '0px 0px -10% 0px' });
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative overflow-hidden">

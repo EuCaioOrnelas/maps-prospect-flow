@@ -105,7 +105,7 @@ export const ImpactNumbersSection = () => {
   return (
     <section
       ref={ref as React.RefObject<HTMLElement>}
-      className="relative overflow-hidden py-28 sm:py-36"
+      className="relative overflow-hidden py-16 sm:py-20"
     >
       {/* Animated paths background – always rendered, infinite */}
       <FloatingPaths position={1} />
@@ -122,8 +122,7 @@ export const ImpactNumbersSection = () => {
         />
       </div>
 
-      {/* Top + bottom divider lines */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      {/* Bottom divider line only */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
       <div className="container mx-auto px-4 relative z-10 max-w-5xl">

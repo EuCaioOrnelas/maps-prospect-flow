@@ -3,6 +3,14 @@ import { motion } from "framer-motion";
 import { Clock, UserX, MessageSquareOff, AlertTriangle, BarChart3, TrendingDown } from "lucide-react";
 import { BentoGridShowcase } from "@/components/ui/bento-product-features";
 import whatsappPhoneMockup from "@/assets/whatsapp-phone-mockup-v2.png";
+import { useEffect } from "react";
+
+// Preload the image immediately
+const preloadLink = document.createElement('link');
+preloadLink.rel = 'preload';
+preloadLink.as = 'image';
+preloadLink.href = whatsappPhoneMockup;
+document.head.appendChild(preloadLink);
 
 export const ProblemSection = () => {
   const { ref, isVisible } = useScrollAnimation();
@@ -58,6 +66,9 @@ export const ProblemSection = () => {
                   <img
                     src={whatsappPhoneMockup}
                     alt="Ilustração de conversa no WhatsApp"
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
                     className="absolute left-[62%] top-[11%] w-[146%] sm:w-[148%] min-w-[360px] max-w-none -translate-x-1/2 drop-shadow-2xl"
                   />
                 </div>
