@@ -187,7 +187,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "Wiize Enterprise <onboarding@resend.dev>",
-        to: ["wiize.app@gmail.com"],
+        to: ["agenciawiize@gmail.com"],
         subject: `🏢 Nova Solicitação Enterprise — ${companyName} (${niche})`,
         html: htmlContent,
         reply_to: email,
