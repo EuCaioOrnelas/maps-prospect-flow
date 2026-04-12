@@ -83,7 +83,7 @@ export const WhyItWorksSection = () => {
         </div>
 
         {/* 3 Pillars */}
-        <div className="relative grid md:grid-cols-3 gap-5 lg:gap-6 mb-10 md:mb-12">
+        <div className="relative grid md:grid-cols-3 gap-5 lg:gap-6">
           {pillars.map((pillar, index) => (
             <motion.div
               key={index}
@@ -109,48 +109,54 @@ export const WhyItWorksSection = () => {
           ))}
         </div>
 
-        {/* Results - visually connected */}
+        {/* Results - visually connected, no gap */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="relative rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm p-8 md:p-10"
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="relative mt-5 lg:mt-6 overflow-hidden rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm p-8 md:p-10"
         >
-          {/* Glow inside results block */}
-          <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full opacity-[0.08] pointer-events-none"
+          {/* Multiple green glows */}
+          <div className="absolute -top-16 -left-16 w-56 h-56 rounded-full opacity-[0.14] pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse, hsl(158 72% 45%), transparent 70%)' }} />
+          <div className="absolute -bottom-16 -right-16 w-56 h-56 rounded-full opacity-[0.14] pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse, hsl(158 72% 45%), transparent 70%)' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full opacity-[0.06] pointer-events-none"
             style={{ background: 'radial-gradient(ellipse, hsl(158 72% 45%), transparent 70%)' }} />
 
-          <div className="text-center mb-8">
-            <h3 className="font-display text-xl md:text-2xl font-bold text-foreground mb-2">
-              O que isso muda na prática
-            </h3>
-            <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-              Cada etapa do processo foi desenhada para eliminar gargalos e maximizar conversão.
-            </p>
-          </div>
+          <div className="relative z-10">
+            <div className="text-center mb-8">
+              <h3 className="font-display text-xl md:text-2xl font-bold text-foreground mb-2">
+                O que isso muda na prática
+              </h3>
+              <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+                Cada etapa do processo foi desenhada para eliminar gargalos e maximizar conversão.
+              </p>
+            </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-            {results.map((result, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.08 }}
-                className="text-center p-5 rounded-xl hover:bg-card/60 transition-all duration-300"
-              >
-                <span className="font-display text-3xl md:text-4xl font-bold text-primary block mb-1">
-                  {result.metric}
-                </span>
-                <span className="text-sm font-semibold text-foreground block mb-2">
-                  {result.label}
-                </span>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {result.description}
-                </p>
-              </motion.div>
-            ))}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+              {results.map((result, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.08 }}
+                  className="text-center p-5 rounded-xl hover:bg-card/60 transition-all duration-300"
+                >
+                  <span className="font-display text-3xl md:text-4xl font-bold text-primary block mb-1">
+                    {result.metric}
+                  </span>
+                  <span className="text-sm font-semibold text-foreground block mb-2">
+                    {result.label}
+                  </span>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {result.description}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </motion.div>
       </div>

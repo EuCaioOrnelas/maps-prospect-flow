@@ -7,6 +7,7 @@ interface Testimonial {
   name: string;
   role: string;
   company: string;
+  avatar: string;
 }
 
 const testimonials: Testimonial[] = [
@@ -15,54 +16,63 @@ const testimonials: Testimonial[] = [
     name: "Mariana S.",
     role: "Diretora Comercial",
     company: "AgênciaMax",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop&crop=face",
   },
   {
     text: "As mensagens geradas pela IA são incríveis. Cada lead recebe uma abordagem única e relevante. Nossa taxa de resposta aumentou 40% logo no primeiro mês.",
     name: "Rafael O.",
     role: "Gerente de Vendas",
     company: "TechSolutions",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face",
   },
   {
     text: "O agente de IA no WhatsApp é um game-changer. Responde leads automaticamente, faz follow-up inteligente e já converteu clientes enquanto dormíamos.",
     name: "Camila F.",
     role: "Head de Growth",
     company: "StartupHub",
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop&crop=face",
   },
   {
     text: "Antes perdia horas criando mensagens genéricas. Agora a IA analisa cada lead e cria uma abordagem personalizada em segundos. Produtividade no máximo.",
     name: "Lucas M.",
     role: "CEO",
     company: "Vendas Express",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop&crop=face",
   },
   {
     text: "O ROI foi imediato. A combinação de prospecção inteligente + mensagens personalizadas com IA nos trouxe 5 novos clientes no primeiro mês.",
     name: "Amanda C.",
     role: "Empreendedora",
     company: "Costa Marketing",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=96&h=96&fit=crop&crop=face",
   },
   {
     text: "A automação de atendimento com IA transformou nosso processo. O agente qualifica leads, responde dúvidas e agenda reuniões sem intervenção humana.",
     name: "Juliana P.",
     role: "Coordenadora de Vendas",
     company: "Grupo Êxito",
+    avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=96&h=96&fit=crop&crop=face",
   },
   {
     text: "Excelente custo-benefício. A IA gera mensagens tão personalizadas que os leads acham que escrevemos uma por uma. Um cliente já pagou 6 meses de plano.",
     name: "Pedro A.",
     role: "Diretor de Marketing",
     company: "Almeida & Cia",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face",
   },
   {
     text: "As campanhas com mensagens personalizadas por IA têm taxa de conversão absurda. Cada lead recebe algo único, não parece automação. Resultados reais.",
     name: "Beatriz L.",
     role: "Gerente de Projetos",
     company: "Lima Digital",
+    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=96&h=96&fit=crop&crop=face",
   },
   {
     text: "Encontrar oportunidades + gerar mensagens personalizadas + agente de IA para atender. Tudo integrado. Nunca foi tão fácil converter novos clientes.",
     name: "Thiago S.",
     role: "Fundador",
     company: "Agência Impulso",
+    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=96&h=96&fit=crop&crop=face",
   },
 ];
 
@@ -93,33 +103,33 @@ const TestimonialsColumn = ({
       >
         {[...new Array(2)].map((_, index) => (
           <div key={index} className="flex flex-col gap-6">
-            {testimonials.map(({ text, name, role, company }, i) => {
-              const initials = name.split(" ").map(n => n[0]).join("").toUpperCase();
-              return (
-                <div
-                  key={`${index}-${i}`}
-                  className="glass rounded-2xl p-6 hover:bg-card/80 transition-all duration-300"
-                >
-                  <Quote size={24} className="text-primary/30 mb-4" />
-                  <p className="text-muted-foreground leading-relaxed mb-6 text-sm md:text-base">
-                    {text}
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full border-2 border-primary/20 bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
-                      {initials}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground text-sm md:text-base">
-                        {name}
-                      </p>
-                      <p className="text-muted-foreground text-xs md:text-sm">
-                        {role} • {company}
-                      </p>
-                    </div>
+            {testimonials.map(({ text, name, role, company, avatar }, i) => (
+              <div
+                key={`${index}-${i}`}
+                className="glass rounded-2xl p-6 hover:bg-card/80 transition-all duration-300"
+              >
+                <Quote size={24} className="text-primary/30 mb-4" />
+                <p className="text-muted-foreground leading-relaxed mb-6 text-sm md:text-base">
+                  {text}
+                </p>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={avatar}
+                    alt={name}
+                    className="w-12 h-12 rounded-full border-2 border-primary/20 object-cover shrink-0"
+                    loading="lazy"
+                  />
+                  <div>
+                    <p className="font-semibold text-foreground text-sm md:text-base">
+                      {name}
+                    </p>
+                    <p className="text-muted-foreground text-xs md:text-sm">
+                      {role} • {company}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         ))}
       </motion.div>
@@ -146,10 +156,10 @@ export const TestimonialsSection = () => {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass mb-6 border border-primary/10">
             <div className="flex -space-x-2">
-              <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" />
-              <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" />
-              <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" />
-              <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" />
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=40&h=40&fit=crop&crop=face" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" loading="lazy" />
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" loading="lazy" />
+              <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" loading="lazy" />
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" loading="lazy" />
             </div>
             <span className="text-xs font-medium text-foreground tracking-tight">+500 pessoas já utilizam a Wiize</span>
           </div>
