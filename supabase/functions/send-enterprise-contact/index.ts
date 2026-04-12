@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +15,33 @@ serve(async (req) => {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY not configured");
+    }
+
+    // Get client IP for rate limiting
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
+
+    // Rate limit: 3 submissions per IP per day (86400 seconds)
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: rateLimitResult } = await supabase.rpc("check_rate_limit", {
+      p_identifier: clientIP,
+      p_endpoint: "enterprise-contact",
+      p_max_requests: 3,
+      p_window_seconds: 86400,
+    });
+
+    if (rateLimitResult && !rateLimitResult.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: "Limite de envios atingido. Tente novamente em 24 horas.",
+          retry_after: rateLimitResult.retry_after,
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const body = await req.json();
