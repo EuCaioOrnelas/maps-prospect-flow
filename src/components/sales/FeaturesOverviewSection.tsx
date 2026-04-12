@@ -11,13 +11,18 @@ import {
 import { cn } from "@/lib/utils";
 
 const cardBase =
-  "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-primary/10";
+  "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-white/5";
 const cardGlowMain =
-  "absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-primary/20 blur-[80px] pointer-events-none opacity-100";
+  "absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-white/[0.04] blur-[80px] pointer-events-none";
 const cardGlowSecondary =
-  "absolute -top-10 -left-10 w-40 h-40 rounded-full bg-primary/15 blur-[64px] pointer-events-none opacity-100";
+  "absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/[0.03] blur-[64px] pointer-events-none";
 
-const barHeights = [35, 55, 45, 70, 60, 85, 75, 95];
+const barData = [
+  { h: 30, delay: 0 }, { h: 50, delay: 0.08 }, { h: 40, delay: 0.16 },
+  { h: 65, delay: 0.24 }, { h: 55, delay: 0.32 }, { h: 80, delay: 0.4 },
+  { h: 70, delay: 0.48 }, { h: 90, delay: 0.56 }, { h: 60, delay: 0.64 },
+  { h: 95, delay: 0.72 },
+];
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -194,16 +199,29 @@ export const FeaturesOverviewSection = () => {
                     Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida — 24 horas por dia.
                   </p>
                 </div>
-                <div className="flex-shrink-0 pl-6 border-l border-border/50 relative z-10 flex items-end gap-1.5 h-16">
-                  {barHeights.map((h, i) => (
-                    <motion.div
-                      key={i}
-                      className="w-2.5 rounded-t-sm bg-primary/60"
-                      initial={{ height: 0 }}
-                      animate={isVisible ? { height: `${h}%` } : { height: 0 }}
-                      transition={{ duration: 0.6, delay: 0.3 + i * 0.08, ease: "easeOut" }}
-                    />
-                  ))}
+                <div className="flex-shrink-0 pl-6 border-l border-border/50 relative z-10">
+                  <svg viewBox="0 0 140 80" className="w-32 h-20" fill="none">
+                    {/* Grid lines */}
+                    {[0, 20, 40, 60].map((y) => (
+                      <line key={y} x1="0" y1={y} x2="140" y2={y} stroke="currentColor" strokeOpacity="0.06" strokeWidth="0.5" />
+                    ))}
+                    {/* Bars */}
+                    {barData.map((bar, i) => (
+                      <motion.rect
+                        key={i}
+                        x={4 + i * 14}
+                        width="8"
+                        rx="2"
+                        fill="hsl(var(--primary))"
+                        fillOpacity="0.5"
+                        initial={{ y: 80, height: 0 }}
+                        animate={isVisible ? { y: 80 - (bar.h * 0.75), height: bar.h * 0.75 } : { y: 80, height: 0 }}
+                        transition={{ duration: 0.7, delay: 0.4 + bar.delay, ease: "easeOut" }}
+                      />
+                    ))}
+                    {/* Glow ellipse at bottom */}
+                    <ellipse cx="70" cy="80" rx="60" ry="12" fill="hsl(var(--primary))" fillOpacity="0.08" />
+                  </svg>
                 </div>
               </div>
             </motion.div>
