@@ -104,10 +104,7 @@ const Index = () => {
           <OpportunitySection />
           <MechanismSection />
           <FeaturesOverviewSection />
-          <OfficialAPISection />
-          
-          <CpuDividerSection />
-          <AIAgentsSection />
+          <WhyItWorksSection />
           <TestimonialsSection />
           <PricingSection />
           <FAQSection />
