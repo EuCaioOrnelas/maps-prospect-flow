@@ -126,8 +126,9 @@ export const MechanismSection = () => {
           <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary mb-4">
             Como funciona
           </span>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-foreground mb-4 leading-tight">
             O sistema por trás das{" "}
+            <br className="hidden sm:block" />
             <span className="text-shimmer-highlight">vendas em escala</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
@@ -138,7 +139,7 @@ export const MechanismSection = () => {
         {/* Timeline */}
         <div className="relative">
           {/* Central line — grows with scroll via CSS */}
-          <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-px">
+          <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-px overflow-visible">
             <motion.div
               initial={{ scaleY: 0 }}
               animate={isVisible ? { scaleY: 1 } : {}}
