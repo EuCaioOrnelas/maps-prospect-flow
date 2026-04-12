@@ -82,13 +82,13 @@ export const FeaturesOverviewSection = () => {
             initial="hidden"
             animate="visible"
             className={cn(
-              "grid w-full grid-cols-1 gap-4 md:grid-cols-3",
+              "grid w-full grid-cols-1 gap-4 md:grid-cols-5",
               "md:grid-rows-3",
               "auto-rows-[minmax(110px,auto)]"
             )}
           >
             {/* Top-left: Prospecção */}
-            <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
+            <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-1">
               <div className={cardBase}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
@@ -108,7 +108,7 @@ export const FeaturesOverviewSection = () => {
             </motion.div>
 
             {/* Top-center: Campanhas */}
-            <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
+            <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-1">
               <div className={cardBase}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
