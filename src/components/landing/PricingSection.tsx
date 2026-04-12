@@ -405,17 +405,9 @@ export const PricingSection = () => {
                   variant="outline"
                   size="lg"
                   className="w-full md:w-auto"
-                  onClick={() => handlePlanClick(scalePlan)}
-                  disabled={loadingPlan === "scale"}
+                  onClick={() => navigate("/enterprise")}
                 >
-                  {loadingPlan === "scale" ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processando...
-                    </>
-                  ) : (
-                    "Escalar Agora"
-                  )}
+                  Falar com Especialista
                 </Button>
               </div>
             </div>

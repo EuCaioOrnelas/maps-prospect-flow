@@ -9,28 +9,36 @@ import {
 
 const objections = [
   {
-    q: "Isso funciona para o meu nicho?",
-    a: "A Wiize é adaptável a qualquer segmento B2B. A captação e personalização são configuradas por nicho, localização e perfil de cliente ideal. Empresas de tecnologia, agências, consultorias, serviços locais e indústrias já utilizam a plataforma.",
+    q: "Como o Wiize encontra leads qualificados?",
+    a: "O Wiize utiliza IA para analisar empresas no Google Maps em tempo real. Nossa tecnologia cruza dados como avaliações, presença digital, localização e segmento para entregar apenas leads com alto potencial de conversão — não é uma lista genérica, é prospecção inteligente.",
+  },
+  {
+    q: "Qual a diferença entre prospecção outbound e campanhas inbound?",
+    a: "Prospecção outbound são mensagens enviadas proativamente para leads novos (via Evolution API com aquecimento de chips). Campanhas inbound são mensagens de relacionamento para quem já interagiu com você (via Meta API Oficial com templates aprovados). O Wiize integra ambos os modelos em uma única plataforma.",
+  },
+  {
+    q: "Como funcionam os Fluxos de Automação (Flows)?",
+    a: "Os Flows são sequências visuais de automação que você monta no editor drag-and-drop. Cada fluxo pode incluir envio de mensagens, esperas programadas, condições (se respondeu/não respondeu), coleta de dados, integração com Google Sheets, Gmail e Calendário. O sistema executa tudo automaticamente após o disparo.",
+  },
+  {
+    q: "O que é o Flow com IA?",
+    a: "O Flow com IA permite que a inteligência artificial gere fluxos de automação completos a partir de uma descrição simples. Basta descrever seu objetivo (ex: 'follow-up para leads que não responderam em 48h') e a IA cria o fluxo com nós, mensagens e condições já configurados.",
+  },
+  {
+    q: "Como funciona o Agente de IA no WhatsApp?",
+    a: "O Agente de IA é um vendedor virtual que responde automaticamente no WhatsApp 24/7. Ele qualifica leads com perguntas inteligentes, segue o estilo de comunicação da sua empresa e organiza tudo no CRM. Você define regras de operação, limites de respostas e critérios de transferência para atendimento humano.",
+  },
+  {
+    q: "O sistema é seguro para enviar mensagens em escala?",
+    a: "Sim. Para outbound, o Wiize implementa aquecimento progressivo de chips em 4 níveis (20 dias), delays aleatórios, variações automáticas de texto e pausas inteligentes. Para inbound, operamos via API oficial do Meta com total conformidade. A combinação dessas camadas reduz drasticamente riscos de bloqueio.",
   },
   {
     q: "Preciso de equipe técnica para implementar?",
-    a: "Não. A operação foi desenhada para simplificar execução. Você configura em minutos e a plataforma cuida de toda a automação. Nosso time de suporte ajuda no onboarding sem custo adicional.",
+    a: "Não. O Wiize foi desenhado para simplificar a execução. Conecte seu número por QR Code, configure buscas e campanhas em minutos, e a plataforma cuida de toda a automação. Nosso time de suporte ajuda no onboarding sem custo adicional.",
   },
   {
-    q: "É seguro usar WhatsApp para prospecção?",
-    a: "A Wiize opera via API oficial do WhatsApp Business (parceiro Meta). Isso garante conformidade, segurança e zero risco de banimento quando usado seguindo as diretrizes.",
-  },
-  {
-    q: "Vou perder o controle da operação?",
-    a: "O contrário. Tudo fica registrado no CRM integrado: histórico de conversas, pipeline de vendas, score de leads e métricas em tempo real. Você tem mais visibilidade, não menos.",
-  },
-  {
-    q: "A IA responde qualquer coisa para os leads?",
-    a: "Não. O fluxo de IA é orientado e configurável. Ele segue diretrizes definidas por você para qualificação e avanço comercial, com possibilidade de transferência para atendimento humano a qualquer momento.",
-  },
-  {
-    q: "Quanto tempo leva para ver resultados?",
-    a: "A maioria das empresas vê as primeiras oportunidades na primeira semana. Com a automação rodando, o volume de leads qualificados e reuniões agendadas cresce consistentemente mês a mês.",
+    q: "O CRM é realmente integrado com tudo?",
+    a: "Sim. Cada lead prospectado, mensagem enviada, resposta recebida e interação do agente de IA é registrada automaticamente no CRM Kanban. Você visualiza o pipeline completo, move leads entre etapas, adiciona notas e tags, e acompanha métricas de conversão em tempo real.",
   },
 ];
 
@@ -50,8 +58,8 @@ export const ObjectionsSection = () => {
             Dúvidas frequentes
           </span>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Respostas diretas<br />
-            <span className="text-muted-foreground">para decisões rápidas</span>
+            Entenda como o sistema<br />
+            <span className="text-muted-foreground">funciona na prática</span>
           </h2>
         </motion.div>
 
