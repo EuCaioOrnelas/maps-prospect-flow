@@ -9,9 +9,7 @@ import { OpportunitySection } from "@/components/sales/OpportunitySection";
 import { MechanismSection } from "@/components/sales/MechanismSection";
 import { FeaturesOverviewSection } from "@/components/sales/FeaturesOverviewSection";
 
-import { OfficialAPISection } from "@/components/landing/OfficialAPISection";
-import { CpuDividerSection } from "@/components/landing/CpuDividerSection";
-import { AIAgentsSection } from "@/components/landing/AIAgentsSection";
+import { WhyItWorksSection } from "@/components/sales/WhyItWorksSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { FAQSection } from "@/components/landing/FAQSection";
@@ -106,10 +104,7 @@ const Index = () => {
           <OpportunitySection />
           <MechanismSection />
           <FeaturesOverviewSection />
-          <OfficialAPISection />
-          
-          <CpuDividerSection />
-          <AIAgentsSection />
+          <WhyItWorksSection />
           <TestimonialsSection />
           <PricingSection />
           <FAQSection />
