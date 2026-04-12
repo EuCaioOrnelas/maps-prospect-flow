@@ -2,7 +2,7 @@ import { SEO } from "@/components/SEO";
 import { faqJsonLd } from "@/components/landing/FAQSection";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { ImpactNumbersSection } from "@/components/landing/ImpactNumbersSection";
+
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { ProblemSection } from "@/components/sales/ProblemSection";
 import { OpportunitySection } from "@/components/sales/OpportunitySection";
@@ -101,7 +101,7 @@ const Index = () => {
           <Navbar onSignupClick={trackSignupClick} />
           <HeroSection onSignupClick={trackSignupClick} />
           <TrustedBySection />
-          <ImpactNumbersSection />
+          
           <ProblemSection />
           <OpportunitySection />
           <MechanismSection />
