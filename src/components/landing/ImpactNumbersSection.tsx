@@ -1,6 +1,7 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { TrendingUp, PiggyBank, Building2 } from "lucide-react";
 
 /* ── Animated counter ── */
 interface CounterProps {
@@ -83,19 +84,22 @@ const stats = [
     value: 6000000,
     prefix: "+R$ ",
     suffix: " mi",
-    label: "faturados com nossas soluções",
+    label: "em faturamento gerado",
+    icon: TrendingUp,
   },
   {
     value: 532000,
     prefix: "+R$ ",
     suffix: " mil",
-    label: "economizados com anúncios",
+    label: "economizados em aquisição",
+    icon: PiggyBank,
   },
   {
     value: 50000,
     prefix: "+",
     suffix: " mil",
-    label: "empresas prospectadas",
+    label: "empresas mapeadas com IA",
+    icon: Building2,
   },
 ];
 
@@ -105,9 +109,9 @@ export const ImpactNumbersSection = () => {
   return (
     <section
       ref={ref as React.RefObject<HTMLElement>}
-      className="relative overflow-hidden py-16 sm:py-20"
+      className="relative overflow-hidden py-14 sm:py-20"
     >
-      {/* Animated paths background – always rendered, infinite */}
+      {/* Animated paths background */}
       <FloatingPaths position={1} />
       <FloatingPaths position={-1} />
 
@@ -122,59 +126,64 @@ export const ImpactNumbersSection = () => {
         />
       </div>
 
-      {/* Bottom divider line only */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
-      <div className="container mx-auto px-4 relative z-10 max-w-5xl">
+      <div className="container mx-auto px-4 relative z-10 max-w-[1160px]">
         {/* Headline */}
-        <motion.h2
-          className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold text-center text-foreground leading-[1.15] mb-20 md:whitespace-nowrap"
-          initial={{ opacity: 0, y: 24 }}
+        <motion.div
+          className="text-center mb-10 sm:mb-12"
+          initial={{ opacity: 0, y: 20 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7, ease: "easeOut" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          Nosso negócio é fazer{" "}
-          <span className="text-shimmer-highlight inline">negócios crescerem</span>
-        </motion.h2>
+          <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground leading-tight">
+            Crescimento validado{" "}
+            <span className="text-shimmer-highlight">na prática</span>
+          </h2>
+        </motion.div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-          {stats.map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              className="relative flex flex-col items-center text-center py-8 md:py-0 md:px-6 lg:px-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={isVisible ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.25 + i * 0.15, ease: "easeOut" }}
-            >
-              {/* Horizontal divider mobile – thick center, fading edges */}
-              {i > 0 && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[70%] h-[2px] md:hidden"
-                  style={{ background: 'radial-gradient(ellipse at center, hsl(var(--border)) 0%, transparent 100%)' }}
-                />
-              )}
-              {/* Vertical divider desktop – thick center, fading edges */}
-              {i > 0 && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-[60%] w-[2px] hidden md:block"
-                  style={{ background: 'linear-gradient(to bottom, transparent 0%, hsl(var(--border)) 30%, hsl(var(--border)) 70%, transparent 100%)' }}
-                />
-              )}
+        {/* Stats cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-7">
+          {stats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <motion.div
+                key={stat.label}
+                className="relative rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-7 sm:p-8 text-center overflow-hidden group hover:shadow-[0_8px_30px_-10px_hsl(var(--primary)/0.12)] hover:border-primary/25 transition-all duration-300"
+                initial={{ opacity: 0, y: 24 }}
+                animate={isVisible ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: 0.15 + i * 0.12, ease: "easeOut" }}
+              >
+                {/* Subtle glow */}
+                <div className="absolute -bottom-12 -right-12 w-36 h-36 rounded-full bg-primary/8 blur-[60px] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-              <span className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-none mb-3 whitespace-nowrap">
-                <AnimatedCounter
-                  end={stat.value}
-                  prefix={stat.prefix}
-                  suffix={stat.suffix}
-                  isVisible={isVisible}
-                  delay={300 + i * 200}
-                  duration={2200}
-                />
-              </span>
-              <span className="text-muted-foreground text-sm sm:text-base max-w-[220px]">
-                {stat.label}
-              </span>
-            </motion.div>
-          ))}
+                {/* Icon */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={isVisible ? { scale: 1 } : {}}
+                  transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.3 + i * 0.12 }}
+                  className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-5"
+                >
+                  <Icon size={20} className="text-primary" />
+                </motion.div>
+
+                {/* Number */}
+                <span className="font-display text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-foreground leading-none block mb-2.5">
+                  <AnimatedCounter
+                    end={stat.value}
+                    prefix={stat.prefix}
+                    suffix={stat.suffix}
+                    isVisible={isVisible}
+                    delay={300 + i * 200}
+                    duration={2200}
+                  />
+                </span>
+
+                {/* Label */}
+                <span className="text-muted-foreground text-sm max-w-[200px] mx-auto block leading-relaxed">
+                  {stat.label}
+                </span>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
