@@ -55,7 +55,7 @@ serve(async (req) => {
       teamSize,
       objective,
       currentTools,
-      monthlyLeadVolume,
+      monthlyRevenue,
     } = body;
 
     if (!partnerName || !companyName || !cnpj || !niche || !email || !phone || !teamSize || !objective) {
@@ -134,12 +134,12 @@ serve(async (req) => {
                   <td style="padding:8px 0;color:#6b7280;font-size:13px;vertical-align:top;">Equipe Comercial</td>
                   <td style="padding:8px 0;color:#111827;font-size:14px;font-weight:600;">${teamSize} pessoas</td>
                 </tr>
-                ${monthlyLeadVolume ? `<tr>
-                  <td style="padding:8px 0;color:#6b7280;font-size:13px;vertical-align:top;">Volume Mensal Desejado</td>
-                  <td style="padding:8px 0;color:#111827;font-size:14px;font-weight:600;">${monthlyLeadVolume} leads</td>
+                ${monthlyRevenue ? `<tr>
+                  <td style="padding:8px 0;color:#6b7280;font-size:13px;vertical-align:top;">Faturamento Mensal Médio</td>
+                  <td style="padding:8px 0;color:#111827;font-size:14px;font-weight:600;">${monthlyRevenue}</td>
                 </tr>` : ""}
                 ${currentTools ? `<tr>
-                  <td style="padding:8px 0;color:#6b7280;font-size:13px;vertical-align:top;">Ferramentas Atuais</td>
+                  <td style="padding:8px 0;color:#6b7280;font-size:13px;vertical-align:top;">Ferramentas Utilizadas</td>
                   <td style="padding:8px 0;color:#111827;font-size:14px;font-weight:600;">${currentTools}</td>
                 </tr>` : ""}
               </table>

@@ -21,7 +21,7 @@ const formSchema = z.object({
   teamSize: z.string().min(1, "Selecione o tamanho da equipe").max(50),
   objective: z.string().min(10, "Descreva seu objetivo com mais detalhes").max(1000),
   currentTools: z.string().max(500).optional(),
-  monthlyLeadVolume: z.string().max(100).optional(),
+  monthlyRevenue: z.string().max(100).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -50,7 +50,7 @@ const EnterpriseContact = () => {
     teamSize: "",
     objective: "",
     currentTools: "",
-    monthlyLeadVolume: "",
+    monthlyRevenue: "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
@@ -360,22 +360,22 @@ const EnterpriseContact = () => {
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label htmlFor="monthlyLeadVolume" className="text-xs font-medium">Volume mensal desejado</Label>
+                        <Label htmlFor="monthlyRevenue" className="text-xs font-medium">Faturamento mensal médio</Label>
                         <Input
-                          id="monthlyLeadVolume"
-                          placeholder="Ex: 10.000, 50.000..."
-                          value={formData.monthlyLeadVolume}
-                          onChange={e => handleChange("monthlyLeadVolume", e.target.value)}
+                          id="monthlyRevenue"
+                          placeholder="Ex: R$ 50.000, R$ 200.000..."
+                          value={formData.monthlyRevenue}
+                          onChange={e => handleChange("monthlyRevenue", e.target.value)}
                           className="h-9 text-sm"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="currentTools" className="text-xs font-medium">Ferramentas atuais</Label>
+                      <Label htmlFor="currentTools" className="text-xs font-medium">Ferramentas que usa atualmente (se houver)</Label>
                       <Input
                         id="currentTools"
-                        placeholder="HubSpot, RD Station, planilhas..."
+                        placeholder="HubSpot, RD Station, planilhas, nenhuma..."
                         value={formData.currentTools}
                         onChange={e => handleChange("currentTools", e.target.value)}
                         className="h-9 text-sm"
