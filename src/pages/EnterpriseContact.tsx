@@ -154,7 +154,7 @@ const EnterpriseContact = () => {
               Solicitação recebida!
             </h1>
             <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
-              Nossa equipe analisará seu perfil e entrará em contato em até <strong className="text-foreground">24 horas úteis</strong> com uma proposta personalizada.
+              Em até <strong className="text-foreground">24 horas</strong> entraremos em contato para entender melhor sua operação e montar um plano totalmente personalizado para sua empresa.
             </p>
             <Button variant="hero" size="lg" onClick={() => navigate("/")}>
               Voltar ao início
