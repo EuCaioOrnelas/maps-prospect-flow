@@ -111,7 +111,8 @@ export const ImpactNumbersSection = () => {
       className="relative overflow-hidden py-14 sm:py-20"
     >
       {/* Floating data paths */}
-      <FloatingPaths isVisible={isVisible} />
+      <FloatingPaths position={1} />
+      <FloatingPaths position={-1} />
 
       {/* Subtle gradient wash */}
       <div className="absolute inset-0 pointer-events-none">
