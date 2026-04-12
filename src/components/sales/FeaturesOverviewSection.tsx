@@ -9,6 +9,7 @@ import {
   Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import flowBuilderPreview from "@/assets/flow-builder-preview.png";
 
 const cardBase =
   "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-white/5";
@@ -40,6 +41,14 @@ const itemVariants = {
     transition: { type: "spring" as const, stiffness: 100, damping: 10 },
   },
 };
+
+/* Timeline steps for horizontal flow inside Operação Comercial */
+const timelineSteps = [
+  { label: "Novo lead no WhatsApp" },
+  { label: "Analise com IA" },
+  { label: "A IA conduz a conversa" },
+  { label: "Fechando o negócio" },
+];
 
 export const FeaturesOverviewSection = () => {
   const { ref, isVisible } = useScrollAnimation();
@@ -80,8 +89,6 @@ export const FeaturesOverviewSection = () => {
               "auto-rows-[minmax(110px,auto)]"
             )}
           >
-            {/* Row 1-3 left cards + right tall card */}
-            {/* Top-left: Prospecção */}
             {/* Top-left: Prospecção */}
             <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
               <div className={cardBase}>
@@ -122,12 +129,12 @@ export const FeaturesOverviewSection = () => {
               </div>
             </motion.div>
 
-            {/* Right tall: Agente de IA */}
+            {/* Right tall: Agente de IA - with flow builder image */}
             <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-3">
-              <div className={cardBase}>
+              <div className={`${cardBase} !p-0`}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
-                <div className="relative z-10 flex flex-col h-full">
+                <div className="relative z-10 p-3 sm:p-3.5 pb-36 sm:pb-44 flex flex-col h-full">
                   <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider w-fit">Conversas humanas em escala</span>
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -138,6 +145,17 @@ export const FeaturesOverviewSection = () => {
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     A IA responde, qualifica e conduz cada conversa dentro de fluxos definidos, avançando o lead até o momento de decisão com naturalidade e consistência, sem intervenção humana.
                   </p>
+                </div>
+                {/* Flow builder background image */}
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] sm:h-[58%] overflow-hidden">
+                  <img
+                    src={flowBuilderPreview}
+                    alt="Visualização do editor de fluxos"
+                    loading="eager"
+                    decoding="async"
+                    className="absolute left-[55%] top-[15%] w-[160%] sm:w-[165%] min-w-[320px] max-w-none -translate-x-1/2 opacity-60 drop-shadow-2xl"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
                 </div>
               </div>
             </motion.div>
@@ -162,7 +180,7 @@ export const FeaturesOverviewSection = () => {
               </div>
             </motion.div>
 
-            {/* Mid-center: Captação (was Automação) */}
+            {/* Mid-center: Captação */}
             <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
               <div className={cardBase}>
                 <div className={cardGlowSecondary} />
@@ -182,12 +200,12 @@ export const FeaturesOverviewSection = () => {
               </div>
             </motion.div>
 
-            {/* Bottom wide: Automação with chart */}
+            {/* Bottom wide: Automação with horizontal timeline */}
             <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-1">
-              <div className={`${cardBase} !flex-row items-center`}>
+              <div className={`${cardBase} !flex-col`}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
-                <div className="flex-1 min-w-0 relative z-10">
+                <div className="relative z-10">
                   <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Automação Comercial</span>
                   <div className="flex items-center gap-2.5 mb-1.5">
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -196,41 +214,38 @@ export const FeaturesOverviewSection = () => {
                     <h3 className="font-semibold text-foreground text-[15px]">Operação Comercial Autônoma</h3>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida — 24 horas por dia.
+                    Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida, 24 horas por dia.
                   </p>
                 </div>
-                <div className="flex-shrink-0 pl-6 border-l border-border/50 relative z-10 w-36 h-20">
-                  <div className="relative w-full h-full">
-                    {/* Grid lines */}
-                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                      {[0, 1, 2, 3].map((i) => (
-                        <div key={i} className="w-full h-px bg-foreground/[0.06]" />
-                      ))}
-                    </div>
-                    {/* Animated bars */}
-                    <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-[5px] h-full px-1">
-                      {barData.map((bar, i) => (
+
+                {/* Horizontal timeline */}
+                <div className="relative z-10 mt-4 flex items-center justify-between gap-0 px-2">
+                  {timelineSteps.map((step, i) => (
+                    <div key={i} className="flex items-center flex-1 last:flex-none">
+                      {/* Step */}
+                      <motion.div
+                        className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-full px-3 py-1.5 whitespace-nowrap"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={isVisible ? { opacity: 1, scale: 1 } : {}}
+                        transition={{ duration: 0.4, delay: 0.5 + i * 0.15, ease: "easeOut" }}
+                      >
+                        <div className="w-4 h-4 rounded-full border-2 border-primary/60 flex items-center justify-center flex-shrink-0">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary/80" />
+                        </div>
+                        <span className="text-[10px] sm:text-[11px] font-medium text-foreground/80">{step.label}</span>
+                      </motion.div>
+                      {/* Connector line */}
+                      {i < timelineSteps.length - 1 && (
                         <motion.div
-                          key={i}
-                          className="flex-1 rounded-t-[3px] origin-bottom"
-                          style={{
-                            background: `linear-gradient(to top, hsl(var(--primary) / 0.7), hsl(var(--primary) / 0.3))`,
-                          }}
-                          initial={{ scaleY: 0 }}
-                          animate={isVisible ? { scaleY: 1 } : { scaleY: 0 }}
-                          transition={{
-                            duration: 0.8,
-                            delay: 0.5 + bar.delay,
-                            ease: [0.22, 1, 0.36, 1],
-                          }}
-                        >
-                          <div style={{ height: `${bar.h}%` }} className="w-full" />
-                        </motion.div>
-                      ))}
+                          className="flex-1 h-px bg-primary/20 mx-1"
+                          initial={{ scaleX: 0 }}
+                          animate={isVisible ? { scaleX: 1 } : {}}
+                          transition={{ duration: 0.4, delay: 0.65 + i * 0.15, ease: "easeOut" }}
+                          style={{ transformOrigin: "left" }}
+                        />
+                      )}
                     </div>
-                    {/* Bottom glow */}
-                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-6 rounded-full bg-primary/10 blur-xl pointer-events-none" />
-                  </div>
+                  ))}
                 </div>
               </div>
             </motion.div>
