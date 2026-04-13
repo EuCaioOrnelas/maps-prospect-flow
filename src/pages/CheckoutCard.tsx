@@ -472,6 +472,38 @@ export default function CheckoutCard() {
               </div>
             </div>
 
+            {/* Testimonials */}
+            <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
+              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                O que dizem nossos clientes
+              </p>
+              <div className="space-y-3">
+                <div className="rounded-xl bg-muted/40 p-3.5 space-y-2">
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-3 w-3 text-amber-500 fill-amber-500" />
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground italic leading-relaxed">
+                    "Triplicamos nossos leads em 2 meses. A automação de WhatsApp é absurda, economiza horas do meu dia."
+                  </p>
+                  <p className="text-[11px] font-semibold text-foreground">Rafael M. — Agência Digital</p>
+                </div>
+                <div className="rounded-xl bg-muted/40 p-3.5 space-y-2">
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-3 w-3 text-amber-500 fill-amber-500" />
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground italic leading-relaxed">
+                    "Melhor investimento que fiz pro meu negócio. O CRM + IA mudou minha forma de prospectar clientes."
+                  </p>
+                  <p className="text-[11px] font-semibold text-foreground">Camila S. — Consultoria</p>
+                </div>
+              </div>
+            </div>
+
             {/* Security badges */}
             <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
               <div className="flex items-center gap-2">
@@ -519,38 +551,6 @@ export default function CheckoutCard() {
                 <p className="text-[10px] text-muted-foreground/70">
                   Pagamentos processados por <span className="font-semibold">Asaas</span> — intermediadora regulamentada pelo Banco Central
                 </p>
-              </div>
-            </div>
-
-            {/* Testimonials */}
-            <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
-              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                O que dizem nossos clientes
-              </p>
-              <div className="space-y-3">
-                <div className="rounded-xl bg-muted/40 p-3.5 space-y-2">
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-3 w-3 text-amber-500 fill-amber-500" />
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground italic leading-relaxed">
-                    "Triplicamos nossos leads em 2 meses. A automação de WhatsApp é absurda, economiza horas do meu dia."
-                  </p>
-                  <p className="text-[11px] font-semibold text-foreground">Rafael M. — Agência Digital</p>
-                </div>
-                <div className="rounded-xl bg-muted/40 p-3.5 space-y-2">
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-3 w-3 text-amber-500 fill-amber-500" />
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground italic leading-relaxed">
-                    "Melhor investimento que fiz pro meu negócio. O CRM + IA mudou minha forma de prospectar clientes."
-                  </p>
-                  <p className="text-[11px] font-semibold text-foreground">Camila S. — Consultoria</p>
-                </div>
               </div>
             </div>
           </motion.div>
