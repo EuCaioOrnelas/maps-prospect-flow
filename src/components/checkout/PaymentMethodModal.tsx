@@ -90,6 +90,7 @@ export function PaymentMethodModal({
   const navigate = useNavigate();
   const [step, setStep] = useState<"data" | "method">("data");
   const [selectedMethod, setSelectedMethod] = useState<"card" | "pix" | null>(null);
+  const [asaasCardLoading, setAsaasCardLoading] = useState(false);
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: defaultName || "",
     email: defaultEmail || "",
@@ -97,15 +98,53 @@ export function PaymentMethodModal({
     taxId: "",
   });
 
+  const isAnnual = billingPeriod === "annual";
+
   const handleDataSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setStep("method");
+    if (isAnnual) {
+      // Annual: skip method selection, go straight to Asaas card checkout
+      setStep("method");
+      setSelectedMethod("card");
+    } else {
+      setStep("method");
+    }
+  };
+
+  const handleAsaasCardCheckout = async () => {
+    setAsaasCardLoading(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data, error } = await supabase.functions.invoke("create-asaas-card-checkout", {
+        body: { planKey, customerData },
+      });
+      if (error) throw new Error(error.message);
+      if (!data?.checkoutUrl) throw new Error("URL de checkout não gerada");
+      
+      // Redirect to Asaas hosted checkout
+      window.location.href = data.checkoutUrl;
+    } catch (err: any) {
+      const { toast } = await import("@/hooks/use-toast");
+      toast({
+        title: "Erro ao criar checkout",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setAsaasCardLoading(false);
+    }
   };
 
   const handleConfirm = () => {
     if (!selectedMethod) return;
     if (selectedMethod === "card") {
-      onSelectCard(customerData);
+      if (isAnnual) {
+        // Annual card → Asaas checkout with installments
+        handleAsaasCardCheckout();
+      } else {
+        // Monthly card → Stripe
+        onSelectCard(customerData);
+      }
     } else {
       const params = new URLSearchParams({ plan: planKey, planName, planPrice });
       if (billingPeriod) params.set("billing", billingPeriod);
@@ -253,13 +292,13 @@ export function PaymentMethodModal({
               {/* Card option */}
               <button
                 onClick={() => setSelectedMethod("card")}
-                disabled={loading}
+                disabled={loading || asaasCardLoading}
                 className={cn(
                   "w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-200 text-left group active:scale-[0.98]",
                   selectedMethod === "card"
                     ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                     : "border-border/50 hover:border-primary/40 hover:bg-primary/[0.02]",
-                  loading && "opacity-50 cursor-not-allowed"
+                  (loading || asaasCardLoading) && "opacity-50 cursor-not-allowed"
                 )}
               >
                 <div className={cn(
@@ -270,7 +309,18 @@ export function PaymentMethodModal({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground text-sm">Cartão de Crédito</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Recorrência automática • Stripe</p>
+                  {isAnnual ? (
+                    <>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        12x de R$ {planKey === "start" ? "246,00" : "496,00"} • Asaas
+                      </p>
+                      <p className="text-[10px] text-emerald-600 font-medium mt-1">
+                        Parcele no cartão em até 12x
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-0.5">Recorrência automática • Stripe</p>
+                  )}
                 </div>
                 <div className={cn(
                   "h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
@@ -282,55 +332,57 @@ export function PaymentMethodModal({
                 </div>
               </button>
 
-              {/* PIX option */}
-              <button
-                onClick={() => setSelectedMethod("pix")}
-                disabled={loading}
-                className={cn(
-                  "w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-200 text-left group active:scale-[0.98]",
-                  selectedMethod === "pix"
-                    ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                    : "border-border/50 hover:border-primary/40 hover:bg-primary/[0.02]",
-                  loading && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                <div className={cn(
-                  "flex h-14 w-14 items-center justify-center rounded-xl transition-colors shrink-0",
-                  selectedMethod === "pix" ? "bg-primary/15" : "bg-primary/8 group-hover:bg-primary/12"
-                )}>
-                  <QrCode className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground text-sm">PIX Recorrente</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Débito automático mensal via PIX</p>
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <RefreshCw className="h-3 w-3 text-muted-foreground/70" />
-                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium">
-                      Autorize a recorrência e cancele quando quiser
-                    </span>
+              {/* PIX option — only for monthly */}
+              {!isAnnual && (
+                <button
+                  onClick={() => setSelectedMethod("pix")}
+                  disabled={loading}
+                  className={cn(
+                    "w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-200 text-left group active:scale-[0.98]",
+                    selectedMethod === "pix"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                      : "border-border/50 hover:border-primary/40 hover:bg-primary/[0.02]",
+                    loading && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <div className={cn(
+                    "flex h-14 w-14 items-center justify-center rounded-xl transition-colors shrink-0",
+                    selectedMethod === "pix" ? "bg-primary/15" : "bg-primary/8 group-hover:bg-primary/12"
+                  )}>
+                    <QrCode className="h-6 w-6 text-primary" />
                   </div>
-                </div>
-                <div className={cn(
-                  "h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
-                  selectedMethod === "pix"
-                    ? "border-primary bg-primary"
-                    : "border-muted-foreground/30 group-hover:border-primary/50"
-                )}>
-                  {selectedMethod === "pix" && <Check className="h-3 w-3 text-primary-foreground" />}
-                </div>
-              </button>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground text-sm">PIX Recorrente</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Débito automático mensal via PIX</p>
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <RefreshCw className="h-3 w-3 text-muted-foreground/70" />
+                      <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium">
+                        Autorize a recorrência e cancele quando quiser
+                      </span>
+                    </div>
+                  </div>
+                  <div className={cn(
+                    "h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                    selectedMethod === "pix"
+                      ? "border-primary bg-primary"
+                      : "border-muted-foreground/30 group-hover:border-primary/50"
+                  )}>
+                    {selectedMethod === "pix" && <Check className="h-3 w-3 text-primary-foreground" />}
+                  </div>
+                </button>
+              )}
 
               {/* Confirm button */}
               <Button
                 onClick={handleConfirm}
-                disabled={!selectedMethod || loading}
+                disabled={!selectedMethod || loading || asaasCardLoading}
                 className="w-full mt-2"
                 size="lg"
               >
-                {loading ? (
+                {(loading || asaasCardLoading) ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Processando...
+                    {asaasCardLoading ? "Redirecionando..." : "Processando..."}
                   </>
                 ) : (
                   "Continuar para pagamento"
