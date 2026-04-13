@@ -2154,6 +2154,7 @@ export type Database = {
           searches_used: number
           signup_ip: string | null
           subscription_current_period_end: string | null
+          subscription_price_cents: number | null
           terms_accepted_at: string | null
           trial_messages_sent: number | null
           trial_start_at: string | null
@@ -2179,6 +2180,7 @@ export type Database = {
           searches_used?: number
           signup_ip?: string | null
           subscription_current_period_end?: string | null
+          subscription_price_cents?: number | null
           terms_accepted_at?: string | null
           trial_messages_sent?: number | null
           trial_start_at?: string | null
@@ -2204,6 +2206,7 @@ export type Database = {
           searches_used?: number
           signup_ip?: string | null
           subscription_current_period_end?: string | null
+          subscription_price_cents?: number | null
           terms_accepted_at?: string | null
           trial_messages_sent?: number | null
           trial_start_at?: string | null

@@ -25,17 +25,23 @@ const PLAN_NAMES: Record<string, string> = {
   scale: "Wiize Scale",
 };
 
+// New prices for NEW subscribers (used as fallback)
 const PLAN_PRICES: Record<string, string> = {
-  start: "R$ 197",
-  growth: "R$ 497",
+  start: "R$ 296",
+  growth: "R$ 696",
   scale: "R$ 897",
 };
 
 const PLAN_PRICES_CENTS: Record<string, number> = {
-  start: 19700,
-  growth: 49700,
+  start: 29600,
+  growth: 69600,
   scale: 89700,
 };
+
+// Helper to format cents to BRL string
+function formatPrice(cents: number): string {
+  return `R$ ${(cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`;
+}
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -83,7 +89,7 @@ Deno.serve(async (req) => {
 
     const { data: targetUsers, error } = await supabaseClient
       .from("profiles")
-      .select("id, email, name, plan, subscription_current_period_end, is_blocked")
+      .select("id, email, name, plan, subscription_current_period_end, is_blocked, subscription_price_cents")
       .neq("plan", "free")
       .not("subscription_current_period_end", "is", null)
       .lt("subscription_current_period_end", sevenDaysFromNow.toISOString())
@@ -152,8 +158,10 @@ Deno.serve(async (req) => {
 
         const origin = "https://wiize.com.br";
         const planName = PLAN_NAMES[user.plan] || user.plan;
-        const planPrice = PLAN_PRICES[user.plan] || "";
-        const priceNumber = planPrice.replace("R$ ", "").replace(".", "");
+        // Use user's locked-in price (grandfathering), fallback to current prices
+        const userPriceCents = user.subscription_price_cents || PLAN_PRICES_CENTS[user.plan] || 0;
+        const planPrice = formatPrice(userPriceCents);
+        const priceNumber = String(Math.round(userPriceCents / 100));
 
         // Build checkout URL pointing to our own /checkout-pix page
         const ownCheckoutUrl = `${origin}/checkout-pix?plan=${user.plan}&planName=${encodeURIComponent(planName)}&planPrice=${priceNumber}&email=${encodeURIComponent(user.email || "")}&name=${encodeURIComponent(user.name || "")}&renewal=true`;
@@ -179,7 +187,7 @@ Deno.serve(async (req) => {
                 email: user.email,
                 user_name: user.name,
                 plan: user.plan,
-                amount_cents: PLAN_PRICES_CENTS[user.plan] || 0,
+                amount_cents: userPriceCents,
                 status: "pending",
                 checkout_url: checkoutUrl,
                 renewal_stage: currentStage,

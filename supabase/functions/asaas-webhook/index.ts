@@ -24,8 +24,9 @@ function extractPlanFromDescription(description: string): string | null {
 }
 
 function extractPlanFromValue(value: number): string | null {
-  if (value === 197) return "start";
-  if (value === 497) return "growth";
+  // Support both old and new prices
+  if (value === 197 || value === 296) return "start";
+  if (value === 497 || value === 696) return "growth";
   if (value === 897) return "scale";
   return null;
 }
@@ -108,7 +109,7 @@ async function findProfile(supabaseClient: any, externalReference: string | null
   return null;
 }
 
-async function activatePlan(supabaseClient: any, profile: any, planKey: string, checkoutIdPrefix: string | null) {
+async function activatePlan(supabaseClient: any, profile: any, planKey: string, checkoutIdPrefix: string | null, paymentValue?: number) {
   const searchesLimit = getPlanSearchesLimit(planKey);
   const currentPeriodEnd = profile.subscription_current_period_end
     ? new Date(profile.subscription_current_period_end)
@@ -124,6 +125,10 @@ async function activatePlan(supabaseClient: any, profile: any, planKey: string, 
     periodEnd.setDate(periodEnd.getDate() + 30);
   }
 
+  // Calculate price in cents from payment value (grandfathering support)
+  const defaultPrices: Record<string, number> = { start: 29600, growth: 69600, scale: 89700 };
+  const priceCents = paymentValue ? Math.round(paymentValue * 100) : (defaultPrices[planKey] || 0);
+
   const { error: updateError } = await supabaseClient
     .from("profiles")
     .update({
@@ -133,6 +138,7 @@ async function activatePlan(supabaseClient: any, profile: any, planKey: string, 
       subscription_current_period_end: periodEnd.toISOString(),
       last_searches_reset: new Date().toISOString(),
       payment_provider: "asaas",
+      subscription_price_cents: priceCents,
       updated_at: new Date().toISOString(),
     })
     .eq("id", profile.id);
@@ -229,7 +235,7 @@ serve(async (req) => {
       const profile = await findProfile(supabaseClient, null, checkoutIdPrefix);
 
       if (profile && planKey) {
-        await activatePlan(supabaseClient, profile, planKey, checkoutIdPrefix);
+        await activatePlan(supabaseClient, profile, planKey, checkoutIdPrefix, authorization.value);
         return new Response(
           JSON.stringify({ received: true, action: "pix_auto_activated", plan: planKey }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -302,7 +308,7 @@ serve(async (req) => {
         });
       }
 
-      await activatePlan(supabaseClient, profile, planKey, checkoutPrefix);
+      await activatePlan(supabaseClient, profile, planKey, checkoutPrefix, value);
 
       return new Response(
         JSON.stringify({ received: true, plan: planKey, userId: profile.id, action: "activated" }),

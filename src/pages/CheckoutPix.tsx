@@ -49,8 +49,8 @@ export default function CheckoutPix() {
 
   // Auto-resolve price from plan key when not provided (e.g. renewal links)
   const PLAN_PRICES: Record<string, string> = {
-    start: "197",
-    growth: "497",
+    start: "296",
+    growth: "696",
     scale: "897",
   };
   const planPrice = planPriceParam || PLAN_PRICES[planKey] || "";
