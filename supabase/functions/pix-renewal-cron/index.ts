@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
                 email: user.email,
                 user_name: user.name,
                 plan: user.plan,
-                amount_cents: PLAN_PRICES_CENTS[user.plan] || 0,
+                amount_cents: userPriceCents,
                 status: "pending",
                 checkout_url: checkoutUrl,
                 renewal_stage: currentStage,
