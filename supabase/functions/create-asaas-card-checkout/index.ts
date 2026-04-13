@@ -109,10 +109,11 @@ serve(async (req) => {
     }
 
     // 2. Create payment link with installment options
-    const origin = req.headers.get("origin") || "https://leadspro.lovable.app";
+    // Use the domain registered in Asaas account for callback URLs
+    const callbackDomain = customerData.callbackDomain || "https://maps-prospect-flow.lovable.app";
     const externalRef = userId || customerData.email;
 
-    const paymentLinkBody = {
+    const paymentLinkBody: Record<string, any> = {
       name: `${plan.name} Anual`,
       description: `Assinatura anual ${plan.name} - 12x de R$ ${plan.installmentValue.toFixed(2).replace('.', ',')}`,
       billingType: "CREDIT_CARD",
@@ -120,11 +121,10 @@ serve(async (req) => {
       maxInstallmentCount: 12,
       value: plan.priceAnnual,
       dueDateLimitDays: 3,
-      subscriptionCycle: null,
       externalReference: externalRef,
       notificationEnabled: true,
       callback: {
-        successUrl: `${origin}/checkout-success?provider=asaas`,
+        successUrl: `${callbackDomain}/checkout-success?provider=asaas`,
         autoRedirect: true,
       },
     };
