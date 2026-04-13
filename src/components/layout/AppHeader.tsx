@@ -63,6 +63,20 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
 
         {/* Right side content */}
         <div className="flex items-center gap-4 sm:gap-6 ml-auto">
+          {/* Trial countdown badge */}
+          {isFreeTrial && (
+            <Link
+              to="/upgrade"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/15 border border-warning/30 hover:bg-warning/25 transition-colors cursor-pointer"
+            >
+              <Clock size={14} className="text-warning animate-pulse" />
+              <span className="text-xs font-semibold text-warning">
+                {trialDaysRemaining <= 0 ? "Trial expirado" : `${trialDaysRemaining}d restante${trialDaysRemaining !== 1 ? 's' : ''}`}
+              </span>
+              <span className="text-[10px] text-warning/70 hidden sm:inline">· Teste grátis</span>
+            </Link>
+          )}
+
           {/* Credits indicator */}
           <div className="hidden sm:flex items-center gap-2 text-sm">
             <Search size={14} className="text-muted-foreground" />
