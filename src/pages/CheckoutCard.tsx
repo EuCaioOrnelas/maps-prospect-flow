@@ -20,6 +20,9 @@ import {
   Calendar,
   Hash,
   ChevronDown,
+  RotateCcw,
+  Star,
+  Quote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
