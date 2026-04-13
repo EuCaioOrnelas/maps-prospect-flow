@@ -113,7 +113,7 @@ serve(async (req) => {
     }
 
     // 2. Determine final price
-    let finalPrice = plan.priceDecimal;
+    let finalPrice = isAnnual ? plan.priceAnnual : plan.priceMonthly;
     
     // TEMP: Allow test override price
     if (testOverridePrice && typeof testOverridePrice === "number" && testOverridePrice > 0) {
