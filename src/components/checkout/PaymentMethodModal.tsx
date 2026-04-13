@@ -90,7 +90,7 @@ export function PaymentMethodModal({
   const navigate = useNavigate();
   const [step, setStep] = useState<"data" | "method">("data");
   const [selectedMethod, setSelectedMethod] = useState<"card" | "pix" | null>(null);
-  const [asaasCardLoading, setAsaasCardLoading] = useState(false);
+  
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: defaultName || "",
     email: defaultEmail || "",
