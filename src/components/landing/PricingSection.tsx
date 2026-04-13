@@ -71,7 +71,6 @@ const mainPlans = {
       opportunities: "1.000",
       description: "Para gerar e validar oportunidades todos os dias",
       features: [
-        { text: "Até 1.000 oportunidades/mês" },
         { text: "Oportunidades com IA" },
         { text: "Mensagens com IA prontas" },
         { text: "Gestão de leads (CRM)" },
@@ -117,7 +116,7 @@ const mainPlans = {
       opportunities: "1.000",
       description: "Para gerar e validar oportunidades todos os dias",
       features: [
-        { text: "Até 1.000 oportunidades/mês" },
+        
         { text: "Oportunidades com IA" },
         { text: "Mensagens com IA prontas" },
         { text: "Gestão de leads (CRM)" },
