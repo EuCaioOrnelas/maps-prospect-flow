@@ -9,7 +9,7 @@ const corsHeaders = {
 const ASAAS_API = "https://api.asaas.com/v3";
 
 const logStep = (step: string, details?: any) => {
-  console.log(`[ASAAS-CARD-CHECKOUT] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
+  console.log(`[ASAAS-CARD-SUB] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
 const PLAN_CONFIG: Record<string, { name: string; priceAnnual: number; installmentValue: number }> = {
@@ -31,13 +31,20 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { planKey, customerData } = await req.json();
-    if (!planKey || !customerData) throw new Error("planKey and customerData are required");
+    const { planKey, customerData, creditCard } = await req.json();
+    if (!planKey || !customerData || !creditCard) {
+      throw new Error("planKey, customerData and creditCard are required");
+    }
 
     const plan = PLAN_CONFIG[planKey];
     if (!plan) throw new Error(`Invalid plan: ${planKey}`);
 
     logStep("Request received", { planKey, email: customerData.email });
+
+    // Validate credit card data
+    if (!creditCard.holderName || !creditCard.number || !creditCard.expiryMonth || !creditCard.expiryYear || !creditCard.ccv) {
+      throw new Error("Dados do cartão incompletos");
+    }
 
     // Authenticate user
     let userId: string | null = null;
@@ -69,6 +76,7 @@ serve(async (req) => {
     }
 
     const phone = customerData.phone?.replace(/\D/g, "") || "";
+    const postalCode = customerData.postalCode?.replace(/\D/g, "") || "";
 
     // 1. Create or find customer on Asaas
     const findRes = await fetch(`${ASAAS_API}/customers?cpfCnpj=${cpfCnpj}`, {
@@ -108,46 +116,57 @@ serve(async (req) => {
       logStep("Customer created", { customerId });
     }
 
-    // 2. Create payment link with installment options
-    // Use the domain registered in Asaas account for callback URLs
-    const callbackDomain = customerData.callbackDomain || "https://wiize.com.br";
-    const externalRef = userId || customerData.email;
+    // 2. Create subscription with credit card (YEARLY cycle)
+    const nextDueDate = new Date();
+    nextDueDate.setDate(nextDueDate.getDate() + 1); // tomorrow
+    const dueDateStr = nextDueDate.toISOString().split("T")[0];
 
-    const paymentLinkBody: Record<string, any> = {
-      name: `${plan.name} Anual`,
-      description: `Assinatura anual ${plan.name} - 12x de R$ ${plan.installmentValue.toFixed(2).replace('.', ',')}`,
+    const subscriptionBody = {
+      customer: customerId,
       billingType: "CREDIT_CARD",
-      chargeType: "INSTALLMENT",
-      maxInstallmentCount: 12,
+      cycle: "YEARLY",
       value: plan.priceAnnual,
-      dueDateLimitDays: 3,
-      externalReference: externalRef,
-      notificationEnabled: true,
-      callback: {
-        successUrl: `${callbackDomain}/checkout-success?provider=asaas`,
-        autoRedirect: true,
+      nextDueDate: dueDateStr,
+      description: `${plan.name} Anual`,
+      externalReference: userId || customerData.email,
+      maxInstallmentCount: 12,
+      creditCard: {
+        holderName: creditCard.holderName,
+        number: creditCard.number.replace(/\s/g, ""),
+        expiryMonth: creditCard.expiryMonth,
+        expiryYear: creditCard.expiryYear,
+        ccv: creditCard.ccv,
+      },
+      creditCardHolderInfo: {
+        name: customerData.name,
+        email: customerData.email,
+        cpfCnpj: cpfCnpj,
+        postalCode: postalCode || "00000000",
+        addressNumber: customerData.addressNumber || "0",
+        phone: phone,
       },
     };
 
-    logStep("Creating payment link", { value: plan.priceAnnual, installments: 12 });
+    logStep("Creating subscription", { customer: customerId, cycle: "YEARLY", value: plan.priceAnnual });
 
-    const linkRes = await fetch(`${ASAAS_API}/paymentLinks`, {
+    const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
       method: "POST",
       headers: {
         "access_token": apiKey,
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
-      body: JSON.stringify(paymentLinkBody),
+      body: JSON.stringify(subscriptionBody),
     });
 
-    const linkJson = await linkRes.json();
-    if (!linkRes.ok || linkJson.errors) {
-      logStep("Payment link creation failed", linkJson);
-      throw new Error(`Erro Asaas: ${JSON.stringify(linkJson.errors || linkJson)}`);
+    const subJson = await subRes.json();
+    if (!subRes.ok || subJson.errors) {
+      logStep("Subscription creation failed", subJson);
+      const errorMsg = subJson.errors?.map((e: any) => e.description).join(", ") || JSON.stringify(subJson);
+      throw new Error(errorMsg);
     }
 
-    logStep("Payment link created", { id: linkJson.id, url: linkJson.url });
+    logStep("Subscription created", { id: subJson.id, status: subJson.status });
 
     // 3. Track checkout lead
     try {
@@ -158,7 +177,7 @@ serve(async (req) => {
         phone: customerData.phone || null,
         tax_id: customerData.taxId || null,
         plan_attempted: plan.name,
-        stripe_session_id: `asaas_card_${linkJson.id}`,
+        stripe_session_id: `asaas_card_sub_${subJson.id}`,
         checkout_started_at: new Date().toISOString(),
         checkout_completed: false,
       });
@@ -169,8 +188,9 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        checkoutUrl: linkJson.url,
-        paymentLinkId: linkJson.id,
+        subscriptionId: subJson.id,
+        status: subJson.status,
+        success: true,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
