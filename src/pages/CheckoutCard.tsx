@@ -121,7 +121,7 @@ export default function CheckoutCard() {
           installmentCount,
           customerData: {
             ...customerData,
-            postalCode: customerData.postalCode || "00000000",
+            postalCode: "00000000",
             addressNumber: "0",
           },
           creditCard: {
