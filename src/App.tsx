@@ -78,6 +78,7 @@ const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "Create
 const SalesPage = lazyWithRetry(() => import("./pages/SalesPage"), "SalesPage");
 const EnterpriseContact = lazyWithRetry(() => import("./pages/EnterpriseContact"), "EnterpriseContact");
 const TrialExpired = lazyWithRetry(() => import("./pages/TrialExpired"), "TrialExpired");
+const ManageSubscription = lazyWithRetry(() => import("./pages/ManageSubscription"), "ManageSubscription");
 
 const queryClient = new QueryClient({
   defaultOptions: {
