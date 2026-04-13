@@ -25,17 +25,23 @@ const PLAN_NAMES: Record<string, string> = {
   scale: "Wiize Scale",
 };
 
+// New prices for NEW subscribers (used as fallback)
 const PLAN_PRICES: Record<string, string> = {
-  start: "R$ 197",
-  growth: "R$ 497",
+  start: "R$ 296",
+  growth: "R$ 696",
   scale: "R$ 897",
 };
 
 const PLAN_PRICES_CENTS: Record<string, number> = {
-  start: 19700,
-  growth: 49700,
+  start: 29600,
+  growth: 69600,
   scale: 89700,
 };
+
+// Helper to format cents to BRL string
+function formatPrice(cents: number): string {
+  return `R$ ${(cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`;
+}
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
