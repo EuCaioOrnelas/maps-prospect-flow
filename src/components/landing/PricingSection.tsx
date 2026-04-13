@@ -330,8 +330,6 @@ export const PricingSection = () => {
                     <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
                       {feature.disabled ? (
                         <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
-                      ) : feature.subtle ? (
-                        <Check size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
                       ) : (
                         <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
