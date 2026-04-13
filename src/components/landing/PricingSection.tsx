@@ -512,6 +512,7 @@ export const PricingSection = () => {
         planName={selectedPlan?.name || ""}
         planPrice={selectedPlan?.price || ""}
         planKey={selectedPlan?.key || ""}
+        billingPeriod={isAnnual ? "annual" : "monthly"}
         onSelectCard={handleCardCheckout}
         onSelectPix={handlePixCheckout}
         loading={loadingPlan !== null}

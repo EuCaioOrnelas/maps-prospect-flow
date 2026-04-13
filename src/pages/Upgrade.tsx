@@ -600,6 +600,7 @@ const Upgrade = () => {
         planName={selectedPlanData?.name || ""}
         planPrice={selectedPlanData?.price || ""}
         planKey={selectedPlanKey || ""}
+        billingPeriod={isAnnual ? "annual" : "monthly"}
         onSelectCard={handleCardCheckout}
         onSelectPix={handlePixCheckout}
         loading={loadingPlan !== null}
