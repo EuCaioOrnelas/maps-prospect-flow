@@ -32,13 +32,15 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { planKey, customerData, testOverridePrice } = await req.json();
+    const { planKey, customerData, testOverridePrice, billingPeriod } = await req.json();
     if (!planKey || !customerData) throw new Error("planKey and customerData are required");
 
     const plan = PLAN_CONFIG[planKey];
     if (!plan) throw new Error(`Invalid plan: ${planKey}`);
 
-    logStep("Request received", { planKey, email: customerData.email });
+    const isAnnual = billingPeriod === "annual";
+
+    logStep("Request received", { planKey, email: customerData.email, billingPeriod: billingPeriod || "monthly" });
 
     // Authenticate user
     let userId: string | null = null;
