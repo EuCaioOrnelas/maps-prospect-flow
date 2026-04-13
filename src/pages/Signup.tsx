@@ -165,9 +165,9 @@ const Signup = () => {
   };
 
   const benefits = [
-    "10 buscas estratégicas grátis",
-    "Download ilimitado de leads",
-    "Sem cartão de crédito",
+    "Até 120 oportunidades geradas",
+    "Acesso total: CRM, IA, Fluxos, Campanhas",
+    "7 dias grátis — sem cartão de crédito",
   ];
 
   return (
