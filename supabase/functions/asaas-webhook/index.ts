@@ -125,6 +125,9 @@ async function activatePlan(supabaseClient: any, profile: any, planKey: string, 
     periodEnd.setDate(periodEnd.getDate() + 30);
   }
 
+  // Calculate price in cents from payment value
+  const priceCents = Math.round(paymentValue * 100);
+
   const { error: updateError } = await supabaseClient
     .from("profiles")
     .update({
@@ -134,6 +137,7 @@ async function activatePlan(supabaseClient: any, profile: any, planKey: string, 
       subscription_current_period_end: periodEnd.toISOString(),
       last_searches_reset: new Date().toISOString(),
       payment_provider: "asaas",
+      subscription_price_cents: priceCents,
       updated_at: new Date().toISOString(),
     })
     .eq("id", profile.id);
