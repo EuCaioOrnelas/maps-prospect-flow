@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import metaIcon from "@/assets/logos/meta-icon.png";
 import gptIcon from "@/assets/logos/gpt-icon.png";
 import { VideoModal } from "./VideoModal";
