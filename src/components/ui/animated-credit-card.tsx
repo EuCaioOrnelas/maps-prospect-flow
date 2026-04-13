@@ -57,7 +57,7 @@ export default function AnimatedCreditCard({
         >
           {/* Front */}
           <div
-            className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 shadow-2xl shadow-emerald-500/30"
+            className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 shadow-2xl shadow-emerald-500/20"
             style={{ backfaceVisibility: "hidden" }}
           >
             {/* Shimmer */}
@@ -68,17 +68,20 @@ export default function AnimatedCreditCard({
             />
 
             <div className="relative z-10 flex flex-col justify-between h-full p-5 sm:p-6">
-              {/* Top */}
+              {/* Top — Wiize watermark */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-7 rounded bg-amber-300/80 shadow-inner" />
-                  <Wifi className="h-5 w-5 text-white/60 rotate-90" />
-                </div>
-                <span className="text-white/60 text-xs font-medium tracking-widest">CREDIT</span>
+                <span className="text-white/25 text-sm font-bold tracking-widest uppercase">WIIZE</span>
+                <span className="text-white/50 text-xs font-medium tracking-widest">CRÉDITO</span>
+              </div>
+
+              {/* Middle — Chip + Contactless */}
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-7 rounded bg-amber-300/80 shadow-inner" />
+                <Wifi className="h-5 w-5 text-white/60 rotate-90" />
               </div>
 
               {/* Number */}
-              <div className="mt-auto mb-4">
+              <div className="mb-3">
                 <p className="text-white text-lg sm:text-xl font-mono tracking-[0.2em] drop-shadow">
                   {formatDisplay(cardNumber)}
                 </p>
@@ -87,13 +90,13 @@ export default function AnimatedCreditCard({
               {/* Bottom */}
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-white/50 text-[9px] uppercase tracking-wider mb-0.5">Card Holder</p>
+                  <p className="text-white/50 text-[9px] uppercase tracking-wider mb-0.5">Titular</p>
                   <p className="text-white text-sm font-semibold tracking-wide truncate max-w-[200px]">
                     {cardHolder || "SEU NOME AQUI"}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-white/50 text-[9px] uppercase tracking-wider mb-0.5">Expires</p>
+                  <p className="text-white/50 text-[9px] uppercase tracking-wider mb-0.5">Validade</p>
                   <p className="text-white text-sm font-semibold">
                     {expiryDate || "••/••"}
                   </p>
@@ -122,20 +125,20 @@ export default function AnimatedCreditCard({
             </div>
 
             <div className="px-6 mt-6 space-y-1">
-              <p className="text-white/40 text-[9px]">This card is property of issuing bank</p>
-              <p className="text-white/40 text-[9px]">Customer Service: 1-800-VISA</p>
+              <p className="text-white/40 text-[9px]">Este cartão é propriedade do banco emissor</p>
+              <p className="text-white/40 text-[9px]">Atendimento: 0800-VISA</p>
             </div>
           </div>
         </motion.div>
 
-        {/* Floating orbs */}
+        {/* Floating orbs — subtle */}
         <motion.div
-          className="absolute -top-3 -right-3 w-16 h-16 rounded-full bg-emerald-400/15 blur-xl"
+          className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-emerald-400/10 blur-xl"
           animate={{ y: [0, -8, 0], x: [0, 5, 0] }}
           transition={{ duration: 4, repeat: Infinity }}
         />
         <motion.div
-          className="absolute -bottom-3 -left-3 w-20 h-20 rounded-full bg-emerald-300/10 blur-xl"
+          className="absolute -bottom-2 -left-2 w-14 h-14 rounded-full bg-emerald-300/8 blur-xl"
           animate={{ y: [0, 6, 0], x: [0, -4, 0] }}
           transition={{ duration: 5, repeat: Infinity }}
         />

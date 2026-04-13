@@ -19,18 +19,12 @@ import {
   User,
   Calendar,
   Hash,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 function formatCurrency(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
@@ -80,6 +74,7 @@ export default function CheckoutCard() {
   const [cardCvv, setCardCvv] = useState("");
   const [installments, setInstallments] = useState("12");
   const [cvvFocused, setCvvFocused] = useState(false);
+  const [installmentDropdownOpen, setInstallmentDropdownOpen] = useState(false);
 
   // Load customer data from sessionStorage
   useEffect(() => {
@@ -96,6 +91,14 @@ export default function CheckoutCard() {
       navigate("/upgrade");
     }
   }, [navigate]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    if (!installmentDropdownOpen) return;
+    const handler = () => setInstallmentDropdownOpen(false);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [installmentDropdownOpen]);
 
   const isCardValid =
     cardNumber.replace(/\s/g, "").length >= 13 &&
@@ -199,7 +202,7 @@ export default function CheckoutCard() {
         <div className="grid gap-6 sm:gap-8 lg:grid-cols-[1fr_380px]">
           {/* Left — Card form */}
           <motion.div
-            className="flex flex-col items-center gap-6"
+            className="flex flex-col items-center gap-0"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -239,27 +242,29 @@ export default function CheckoutCard() {
                 </div>
               </motion.div>
             ) : (
-              <div className="w-full max-w-md space-y-6">
-                <div className="text-center space-y-2">
+              <div className="w-full max-w-md">
+                <div className="text-center space-y-2 mb-4">
                   <h1 className="text-2xl font-bold text-foreground">Pagamento com Cartão</h1>
                   <p className="text-sm text-muted-foreground">
-                    Assinatura anual — <strong>{installmentCount}x de {formatCurrency(installmentValue)}</strong>
+                    Assinatura anual — <strong>{formatCurrency(planConfig.annual)}</strong>
                   </p>
                   <p className="text-xs text-muted-foreground/80">
                     Renovação automática anual. Cancele quando quiser.
                   </p>
                 </div>
 
-                {/* Animated 3D Credit Card */}
-                <AnimatedCreditCard
-                  cardNumber={cardNumber}
-                  cardHolder={cardHolder}
-                  expiryDate={cardExpiry}
-                  isFlipped={cvvFocused}
-                />
+                {/* Animated 3D Credit Card — overlapping the form card */}
+                <div className="relative z-10 mb-[-40px]">
+                  <AnimatedCreditCard
+                    cardNumber={cardNumber}
+                    cardHolder={cardHolder}
+                    expiryDate={cardExpiry}
+                    isFlipped={cvvFocused}
+                  />
+                </div>
 
                 {/* Card form */}
-                <div className="space-y-4 rounded-2xl border border-border/40 bg-card p-5">
+                <div className="space-y-4 rounded-2xl border border-border/40 bg-card pt-14 pb-5 px-5">
                   <div className="flex items-center gap-2 mb-2">
                     <CreditCard className="h-5 w-5 text-primary" />
                     <p className="text-sm font-semibold text-foreground">Dados do cartão</p>
@@ -327,47 +332,84 @@ export default function CheckoutCard() {
 
                   <div className="h-px bg-border/30 my-2" />
 
-                  {/* Installment selector */}
-                  <div className="space-y-1.5">
+                  {/* Installment selector — custom dropdown */}
+                  <div className="space-y-1.5 relative">
                     <Label className="text-xs font-medium">Parcelas</Label>
-                    <Select value={installments} onValueChange={setInstallments}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {INSTALLMENT_OPTIONS.map((n) => {
-                          const val = Math.round(planConfig.annual / n);
-                          return (
-                            <SelectItem key={n} value={String(n)}>
-                              {n}x de {formatCurrency(val)} {n === 1 ? "(à vista)" : ""}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInstallmentDropdownOpen(!installmentDropdownOpen);
+                      }}
+                      className="flex h-10 w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      <span>
+                        {installmentCount}x de {formatCurrency(installmentValue)}
+                        {installmentCount === 1 ? " (à vista)" : ""}
+                      </span>
+                      <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", installmentDropdownOpen && "rotate-180")} />
+                    </button>
+
+                    <AnimatePresence>
+                      {installmentDropdownOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute bottom-full left-0 right-0 mb-1 z-50 rounded-xl border border-border bg-card shadow-xl shadow-black/10 overflow-hidden max-h-[280px] overflow-y-auto"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {INSTALLMENT_OPTIONS.map((n) => {
+                            const val = Math.round(planConfig.annual / n);
+                            const isSelected = installments === String(n);
+                            return (
+                              <button
+                                key={n}
+                                type="button"
+                                onClick={() => {
+                                  setInstallments(String(n));
+                                  setInstallmentDropdownOpen(false);
+                                }}
+                                className={cn(
+                                  "flex w-full items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-muted/60",
+                                  isSelected && "bg-emerald-500/10 text-emerald-700 font-medium"
+                                )}
+                              >
+                                <span>{n}x de {formatCurrency(val)}</span>
+                                {n === 1 && <span className="text-xs text-muted-foreground">à vista</span>}
+                                {isSelected && <Check className="h-3.5 w-3.5 text-emerald-600" />}
+                              </button>
+                            );
+                          })}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleSubmit}
-                  size="lg"
-                  disabled={loading || !isCardValid}
-                  className="w-full gap-2 h-12 text-base"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Processando pagamento...
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="h-4 w-4" />
-                      Assinar — {installmentCount}x de {formatCurrency(installmentValue)}
-                    </>
-                  )}
-                </Button>
+                <div className="mt-5">
+                  <Button
+                    onClick={handleSubmit}
+                    size="lg"
+                    disabled={loading || !isCardValid}
+                    className="w-full gap-2 h-12 text-base"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Processando pagamento...
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="h-4 w-4" />
+                        Assinar agora
+                      </>
+                    )}
+                  </Button>
+                </div>
 
-                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
+                <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
                   <p className="text-[11px] text-muted-foreground">
                     Ao confirmar, você autoriza a cobrança de <strong>{formatCurrency(planConfig.annual)}</strong> em {installmentCount}x de {formatCurrency(installmentValue)} no cartão de crédito, com <strong>renovação automática anual</strong>. Cancele a qualquer momento pelo seu perfil.
                   </p>
