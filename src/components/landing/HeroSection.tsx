@@ -806,7 +806,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               </Link>
               <button onClick={() => setVideoOpen(true)} className="group shrink-0">
                 <Button variant="ghost" size="lg" className="rounded-full text-base px-8 h-12 border border-transparent hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all">
-                  Ver como funciona
+                  Ver Demonstração
                   <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </button>

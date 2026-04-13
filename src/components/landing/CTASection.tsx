@@ -30,12 +30,12 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
             <span className="text-sm text-muted-foreground">Comece em menos de 1 minuto</span>
           </div>
           <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6 text-foreground">
-            Teste gratuitamente<br />
-            <span className="text-shimmer-highlight">por 7 dias</span>
+            Comece agora<br />
+            <span className="text-shimmer-highlight">sem compromisso</span>
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Experimente toda a plataforma sem compromisso.
-            Acesse captação, IA, CRM, automações e campanhas durante 7 dias grátis.
+            Teste a Wiize gratuitamente por 7 dias com acesso completo.
+            Captação, IA, CRM, automações e campanhas — tudo liberado sem cartão.
           </p>
           <Link to="/signup" onClick={onSignupClick}>
             <Button variant="hero" size="xl" className="group rounded-full">

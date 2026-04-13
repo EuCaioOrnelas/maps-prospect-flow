@@ -76,6 +76,7 @@ const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEdito
 const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "CreateFlowAI");
 const SalesPage = lazyWithRetry(() => import("./pages/SalesPage"), "SalesPage");
 const EnterpriseContact = lazyWithRetry(() => import("./pages/EnterpriseContact"), "EnterpriseContact");
+const TrialExpired = lazyWithRetry(() => import("./pages/TrialExpired"), "TrialExpired");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -125,6 +126,7 @@ const App = () => (
                 <Route path="/ajuda/faq" element={<LightThemeWrapper><HelpCenterFAQ /></LightThemeWrapper>} />
                 <Route path="/upgrade" element={<LightThemeWrapper><Upgrade /></LightThemeWrapper>} />
                 <Route path="/upgrade-promo" element={<LightThemeWrapper><UpgradePromo /></LightThemeWrapper>} />
+                <Route path="/trial-expired" element={<ProtectedRoute><TrialExpired /></ProtectedRoute>} />
                 <Route path="/checkout-success" element={<LightThemeWrapper><CheckoutSuccess /></LightThemeWrapper>} />
                 <Route path="/checkout-failed" element={<LightThemeWrapper><CheckoutFailed /></LightThemeWrapper>} />
                 <Route path="/checkout-pix" element={<LightThemeWrapper><CheckoutPix /></LightThemeWrapper>} />
