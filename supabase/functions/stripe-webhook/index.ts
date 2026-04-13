@@ -332,8 +332,11 @@ serve(async (req) => {
             // Get subscription details from the session
             if (session.subscription) {
               const newSubscription = await stripe.subscriptions.retrieve(session.subscription as string);
-              const priceId = newSubscription.items.data[0]?.price.id;
+              const priceItem = newSubscription.items.data[0]?.price;
+              const priceId = priceItem?.id;
+              const stripePriceCents = priceItem?.unit_amount || 0;
               const plan = PRICE_TO_PLAN[priceId] || "free";
+              const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
               const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
 
               // Calculate new limit based on transition type (upgrade/downgrade/same)
@@ -366,6 +369,7 @@ serve(async (req) => {
                   searches_limit: newLimit,
                   searches_used: newSearchesUsed,
                   payment_provider: "stripe",
+                  subscription_price_cents: stripePriceCents,
                 })
                 .eq("id", profile.id);
 
