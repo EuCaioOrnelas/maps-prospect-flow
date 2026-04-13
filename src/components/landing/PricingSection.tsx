@@ -330,10 +330,12 @@ export const PricingSection = () => {
                     <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
                       {feature.disabled ? (
                         <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                      ) : feature.highlight ? (
+                        <span className="flex-shrink-0 mt-0.5 w-4" />
                       ) : (
                         <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
-                      <span className="text-muted-foreground">{feature.text}</span>
+                      <span className={feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"}>{feature.text}</span>
                     </li>
                   ))}
                 </ul>
@@ -351,7 +353,7 @@ export const PricingSection = () => {
                       Processando...
                     </>
                   ) : plan.popular ? (
-                    "Começar a Gerar Vendas"
+                    "Escalar com IA"
                   ) : (
                     "Começar Agora"
                   )}
