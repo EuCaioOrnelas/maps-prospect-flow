@@ -18,9 +18,6 @@ serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get("ASAAS_API_KEY");
-    if (!apiKey) throw new Error("ASAAS_API_KEY not configured");
-
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -38,21 +35,92 @@ serve(async (req) => {
     const userEmail = authData.user.email;
     logStep("User authenticated", { userId, email: userEmail });
 
-    const { action } = await req.json();
+    const body = await req.json();
+    const { action } = body;
 
-    // Get profile to find payment provider and CPF
+    // Get profile
     const { data: profile } = await supabaseClient
       .from("profiles")
-      .select("email, cpf, plan, payment_provider, subscription_current_period_end")
+      .select("email, cpf, plan, payment_provider, subscription_current_period_end, stripe_customer_id")
       .eq("id", userId)
       .single();
 
     if (!profile) throw new Error("Perfil não encontrado");
 
     const email = profile.email || userEmail;
+    const paymentProvider = profile.payment_provider || "";
+
+    // Check if Stripe user
+    const isStripe = paymentProvider === "stripe";
+
+    if (isStripe) {
+      // For Stripe, return profile info and indicate stripe provider
+      // Get cancellation history
+      const { data: cancellations } = await supabaseClient
+        .from("subscription_cancellations")
+        .select("*")
+        .eq("user_id", userId)
+        .order("cancelled_at", { ascending: false })
+        .limit(5);
+
+      if (action === "get-info") {
+        // Try to get Stripe portal URL
+        let portalUrl = null;
+        try {
+          const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+          if (stripeKey && profile.stripe_customer_id) {
+            const portalRes = await fetch("https://api.stripe.com/v1/billing_portal/sessions", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${stripeKey}`,
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: `customer=${profile.stripe_customer_id}&return_url=${encodeURIComponent("https://maps-prospect-flow.lovable.app/minha-assinatura")}`,
+            });
+            const portalData = await portalRes.json();
+            if (portalData.url) portalUrl = portalData.url;
+          }
+        } catch (e) {
+          logStep("Stripe portal error", { error: String(e) });
+        }
+
+        return new Response(JSON.stringify({
+          profile,
+          subscriptions: [],
+          payments: [],
+          paymentMethod: null,
+          asaasCustomerFound: false,
+          provider: "stripe",
+          stripePortalUrl: portalUrl,
+          cancellations: cancellations || [],
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // For Stripe cancellation, just log it - actual cancel happens on Stripe portal
+      if (action === "cancel-subscription") {
+        await supabaseClient.from("subscription_cancellations").insert({
+          user_id: userId,
+          provider: "stripe",
+          billing_type: "CREDIT_CARD",
+          cancelled_at: new Date().toISOString(),
+          active_until: profile.subscription_current_period_end,
+          notes: "Usuário redirecionado ao portal Stripe para cancelamento",
+        });
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: "Redirecionando para o portal de pagamentos para completar o cancelamento.",
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
+    // Asaas flow
+    const apiKey = Deno.env.get("ASAAS_API_KEY");
+    if (!apiKey) throw new Error("ASAAS_API_KEY not configured");
+
     const cpf = profile.cpf?.replace(/\D/g, "") || "";
 
-    // Find customer on Asaas by CPF or email
+    // Find customer on Asaas
     let customerId: string | null = null;
 
     if (cpf) {
@@ -71,6 +139,14 @@ serve(async (req) => {
       if (findJson.data?.length > 0) customerId = findJson.data[0].id;
     }
 
+    // Get cancellation history
+    const { data: cancellations } = await supabaseClient
+      .from("subscription_cancellations")
+      .select("*")
+      .eq("user_id", userId)
+      .order("cancelled_at", { ascending: false })
+      .limit(5);
+
     if (!customerId) {
       logStep("No Asaas customer found", { email, cpf });
       return new Response(JSON.stringify({
@@ -79,6 +155,8 @@ serve(async (req) => {
         payments: [],
         paymentMethod: null,
         asaasCustomerFound: false,
+        provider: "asaas",
+        cancellations: cancellations || [],
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -114,11 +192,10 @@ serve(async (req) => {
         } : null,
       }));
 
-      // Get credit card info from subscriptions
+      // Get credit card info
       let paymentMethod = null;
       const activeCardSub = subscriptions.find((s: any) => s.billingType === "CREDIT_CARD" && s.status === "ACTIVE");
       if (activeCardSub) {
-        // Fetch subscription details for card info
         const subDetailRes = await fetch(`${ASAAS_API}/subscriptions/${activeCardSub.id}`, {
           headers: { "access_token": apiKey, "Accept": "application/json" },
         });
@@ -151,13 +228,14 @@ serve(async (req) => {
         payments,
         paymentMethod,
         asaasCustomerFound: true,
+        provider: "asaas",
+        cancellations: cancellations || [],
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "cancel-subscription") {
-      const { subscriptionId } = await req.json().catch(() => ({}));
+      const { subscriptionId } = body;
 
-      // Find active subscription
       let targetSubId = subscriptionId;
       if (!targetSubId) {
         const subsRes = await fetch(`${ASAAS_API}/subscriptions?customer=${customerId}&status=ACTIVE`, {
@@ -173,18 +251,45 @@ serve(async (req) => {
         throw new Error("Nenhuma assinatura ativa encontrada");
       }
 
-      // Cancel subscription (don't delete, just cancel so current period is preserved)
+      // Get subscription details before cancelling
+      const subDetailRes = await fetch(`${ASAAS_API}/subscriptions/${targetSubId}`, {
+        headers: { "access_token": apiKey, "Accept": "application/json" },
+      });
+      const subDetail = await subDetailRes.json();
+
+      // Cancel subscription
       const cancelRes = await fetch(`${ASAAS_API}/subscriptions/${targetSubId}`, {
         method: "DELETE",
         headers: { "access_token": apiKey, "Accept": "application/json" },
       });
-
       const cancelJson = await cancelRes.json();
       logStep("Subscription cancelled", { targetSubId, result: cancelJson });
+
+      // Find last paid payment date
+      const lastPaidPayment = (await (await fetch(`${ASAAS_API}/payments?customer=${customerId}&status=RECEIVED&limit=1&offset=0`, {
+        headers: { "access_token": apiKey, "Accept": "application/json" },
+      })).json()).data?.[0];
+
+      // Log cancellation
+      await supabaseClient.from("subscription_cancellations").insert({
+        user_id: userId,
+        provider: "asaas",
+        subscription_id: targetSubId,
+        billing_type: subDetail.billingType || "CREDIT_CARD",
+        cancelled_at: new Date().toISOString(),
+        last_charge_date: lastPaidPayment?.paymentDate || lastPaidPayment?.dueDate || null,
+        active_until: subDetail.nextDueDate || profile.subscription_current_period_end,
+        notes: `Cancelamento da assinatura ${subDetail.description || targetSubId}. Ciclo: ${subDetail.cycle || "N/A"}. Valor: ${subDetail.value || "N/A"}`,
+      });
 
       return new Response(JSON.stringify({
         success: true,
         message: "Assinatura cancelada. Seu plano permanece ativo até o final do período atual.",
+        cancellationDetails: {
+          cancelledAt: new Date().toISOString(),
+          lastChargeDate: lastPaidPayment?.paymentDate || lastPaidPayment?.dueDate || null,
+          activeUntil: subDetail.nextDueDate || profile.subscription_current_period_end,
+        },
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
