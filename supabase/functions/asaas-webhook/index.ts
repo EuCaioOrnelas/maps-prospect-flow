@@ -308,7 +308,7 @@ serve(async (req) => {
         });
       }
 
-      await activatePlan(supabaseClient, profile, planKey, checkoutPrefix);
+      await activatePlan(supabaseClient, profile, planKey, checkoutPrefix, value);
 
       return new Response(
         JSON.stringify({ received: true, plan: planKey, userId: profile.id, action: "activated" }),
