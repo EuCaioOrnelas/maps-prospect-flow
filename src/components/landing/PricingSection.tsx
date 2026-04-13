@@ -94,7 +94,7 @@ const mainPlans = {
       opportunities: "3.000",
       description: "Para automatizar, escalar e converter leads no piloto automático",
       features: [
-        { text: "Tudo do Start (leads, CRM e disparos)", subtle: true },
+        { text: "Tudo do Start (leads, CRM e disparos)", highlight: true },
         { text: "Automação de atendimento" },
         { text: "Follow-up automático inteligente" },
         { text: "Agente de IA em conversas" },
@@ -140,7 +140,7 @@ const mainPlans = {
       opportunities: "3.000",
       description: "Para automatizar, escalar e converter leads no piloto automático",
       features: [
-        { text: "Tudo do Start (leads, CRM e disparos)", subtle: true },
+        { text: "Tudo do Start (leads, CRM e disparos)", highlight: true },
         { text: "Automação de atendimento" },
         { text: "Follow-up automático inteligente" },
         { text: "Agente de IA em conversas" },
@@ -330,8 +330,6 @@ export const PricingSection = () => {
                     <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
                       {feature.disabled ? (
                         <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
-                      ) : feature.subtle ? (
-                        <Check size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
                       ) : (
                         <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
