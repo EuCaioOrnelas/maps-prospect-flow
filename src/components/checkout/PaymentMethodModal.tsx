@@ -90,7 +90,7 @@ export function PaymentMethodModal({
   const navigate = useNavigate();
   const [step, setStep] = useState<"data" | "method">("data");
   const [selectedMethod, setSelectedMethod] = useState<"card" | "pix" | null>(null);
-  const [asaasCardLoading, setAsaasCardLoading] = useState(false);
+  
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: defaultName || "",
     email: defaultEmail || "",
@@ -111,36 +111,15 @@ export function PaymentMethodModal({
     }
   };
 
-  const handleAsaasCardCheckout = async () => {
-    setAsaasCardLoading(true);
-    try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data, error } = await supabase.functions.invoke("create-asaas-card-checkout", {
-        body: { planKey, customerData },
-      });
-      if (error) throw new Error(error.message);
-      if (!data?.checkoutUrl) throw new Error("URL de checkout não gerada");
-      
-      // Redirect to Asaas hosted checkout
-      window.location.href = data.checkoutUrl;
-    } catch (err: any) {
-      const { toast } = await import("@/hooks/use-toast");
-      toast({
-        title: "Erro ao criar checkout",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setAsaasCardLoading(false);
-    }
-  };
-
   const handleConfirm = () => {
     if (!selectedMethod) return;
     if (selectedMethod === "card") {
       if (isAnnual) {
-        // Annual card → Asaas checkout with installments
-        handleAsaasCardCheckout();
+        // Annual card → custom card checkout page (Asaas subscription)
+        const params = new URLSearchParams({ plan: planKey, planName });
+        sessionStorage.setItem("cardCustomerData", JSON.stringify(customerData));
+        navigate(`/checkout-card?${params.toString()}`);
+        setTimeout(() => onOpenChange(false), 50);
       } else {
         // Monthly card → Stripe
         onSelectCard(customerData);
@@ -292,13 +271,13 @@ export function PaymentMethodModal({
               {/* Card option */}
               <button
                 onClick={() => setSelectedMethod("card")}
-                disabled={loading || asaasCardLoading}
+                disabled={loading}
                 className={cn(
                   "w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-200 text-left group active:scale-[0.98]",
                   selectedMethod === "card"
                     ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                     : "border-border/50 hover:border-primary/40 hover:bg-primary/[0.02]",
-                  (loading || asaasCardLoading) && "opacity-50 cursor-not-allowed"
+                  loading && "opacity-50 cursor-not-allowed"
                 )}
               >
                 <div className={cn(
@@ -375,14 +354,14 @@ export function PaymentMethodModal({
               {/* Confirm button */}
               <Button
                 onClick={handleConfirm}
-                disabled={!selectedMethod || loading || asaasCardLoading}
+                disabled={!selectedMethod || loading}
                 className="w-full mt-2"
                 size="lg"
               >
-                {(loading || asaasCardLoading) ? (
+                {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    {asaasCardLoading ? "Redirecionando..." : "Processando..."}
+                    Processando...
                   </>
                 ) : (
                   "Continuar para pagamento"
