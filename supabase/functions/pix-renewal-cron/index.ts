@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
 
     const { data: targetUsers, error } = await supabaseClient
       .from("profiles")
-      .select("id, email, name, plan, subscription_current_period_end, is_blocked")
+      .select("id, email, name, plan, subscription_current_period_end, is_blocked, subscription_price_cents")
       .neq("plan", "free")
       .not("subscription_current_period_end", "is", null)
       .lt("subscription_current_period_end", sevenDaysFromNow.toISOString())
@@ -158,8 +158,10 @@ Deno.serve(async (req) => {
 
         const origin = "https://wiize.com.br";
         const planName = PLAN_NAMES[user.plan] || user.plan;
-        const planPrice = PLAN_PRICES[user.plan] || "";
-        const priceNumber = planPrice.replace("R$ ", "").replace(".", "");
+        // Use user's locked-in price (grandfathering), fallback to current prices
+        const userPriceCents = user.subscription_price_cents || PLAN_PRICES_CENTS[user.plan] || 0;
+        const planPrice = formatPrice(userPriceCents);
+        const priceNumber = String(Math.round(userPriceCents / 100));
 
         // Build checkout URL pointing to our own /checkout-pix page
         const ownCheckoutUrl = `${origin}/checkout-pix?plan=${user.plan}&planName=${encodeURIComponent(planName)}&planPrice=${priceNumber}&email=${encodeURIComponent(user.email || "")}&name=${encodeURIComponent(user.name || "")}&renewal=true`;
