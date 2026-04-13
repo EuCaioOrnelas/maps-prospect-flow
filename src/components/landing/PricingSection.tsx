@@ -94,7 +94,7 @@ const mainPlans = {
       opportunities: "3.000",
       description: "Para automatizar, escalar e converter leads no piloto automático",
       features: [
-        { text: "Tudo do Start (leads, CRM e disparos)", subtle: true },
+        { text: "Tudo do Start (leads, CRM e disparos)", highlight: true },
         { text: "Automação de atendimento" },
         { text: "Follow-up automático inteligente" },
         { text: "Agente de IA em conversas" },
