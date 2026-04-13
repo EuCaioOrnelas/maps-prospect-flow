@@ -90,6 +90,7 @@ export function PaymentMethodModal({
   const navigate = useNavigate();
   const [step, setStep] = useState<"data" | "method">("data");
   const [selectedMethod, setSelectedMethod] = useState<"card" | "pix" | null>(null);
+  const [asaasCardLoading, setAsaasCardLoading] = useState(false);
   const [customerData, setCustomerData] = useState<CustomerData>({
     name: defaultName || "",
     email: defaultEmail || "",
@@ -97,15 +98,53 @@ export function PaymentMethodModal({
     taxId: "",
   });
 
+  const isAnnual = billingPeriod === "annual";
+
   const handleDataSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setStep("method");
+    if (isAnnual) {
+      // Annual: skip method selection, go straight to Asaas card checkout
+      setStep("method");
+      setSelectedMethod("card");
+    } else {
+      setStep("method");
+    }
+  };
+
+  const handleAsaasCardCheckout = async () => {
+    setAsaasCardLoading(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data, error } = await supabase.functions.invoke("create-asaas-card-checkout", {
+        body: { planKey, customerData },
+      });
+      if (error) throw new Error(error.message);
+      if (!data?.checkoutUrl) throw new Error("URL de checkout não gerada");
+      
+      // Redirect to Asaas hosted checkout
+      window.location.href = data.checkoutUrl;
+    } catch (err: any) {
+      const { toast } = await import("@/hooks/use-toast");
+      toast({
+        title: "Erro ao criar checkout",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setAsaasCardLoading(false);
+    }
   };
 
   const handleConfirm = () => {
     if (!selectedMethod) return;
     if (selectedMethod === "card") {
-      onSelectCard(customerData);
+      if (isAnnual) {
+        // Annual card → Asaas checkout with installments
+        handleAsaasCardCheckout();
+      } else {
+        // Monthly card → Stripe
+        onSelectCard(customerData);
+      }
     } else {
       const params = new URLSearchParams({ plan: planKey, planName, planPrice });
       if (billingPeriod) params.set("billing", billingPeriod);
