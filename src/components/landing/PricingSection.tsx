@@ -59,7 +59,7 @@ const PRICE_IDS: Record<string, Record<string, string>> = {
   },
 };
 
-type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[]; sectionHeader?: string; subDetail?: boolean; isNew?: boolean };
+type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subtle?: boolean; subItems?: string[]; sectionHeader?: string; subDetail?: boolean; isNew?: boolean };
 
 const mainPlans = {
   monthly: [
