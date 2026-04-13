@@ -109,7 +109,7 @@ async function findProfile(supabaseClient: any, externalReference: string | null
   return null;
 }
 
-async function activatePlan(supabaseClient: any, profile: any, planKey: string, checkoutIdPrefix: string | null) {
+async function activatePlan(supabaseClient: any, profile: any, planKey: string, checkoutIdPrefix: string | null, paymentValue?: number) {
   const searchesLimit = getPlanSearchesLimit(planKey);
   const currentPeriodEnd = profile.subscription_current_period_end
     ? new Date(profile.subscription_current_period_end)
