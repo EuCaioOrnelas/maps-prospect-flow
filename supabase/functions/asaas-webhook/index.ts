@@ -235,7 +235,7 @@ serve(async (req) => {
       const profile = await findProfile(supabaseClient, null, checkoutIdPrefix);
 
       if (profile && planKey) {
-        await activatePlan(supabaseClient, profile, planKey, checkoutIdPrefix);
+        await activatePlan(supabaseClient, profile, planKey, checkoutIdPrefix, authorization.value);
         return new Response(
           JSON.stringify({ received: true, action: "pix_auto_activated", plan: planKey }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
