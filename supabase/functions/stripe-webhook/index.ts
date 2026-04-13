@@ -489,7 +489,9 @@ serve(async (req) => {
 
           if (profile) {
             if (subscription.status === "active") {
-              const priceId = subscription.items.data[0]?.price.id;
+              const priceItem2 = subscription.items.data[0]?.price;
+              const priceId = priceItem2?.id;
+              const subPriceCents = priceItem2?.unit_amount || 0;
               const plan = PRICE_TO_PLAN[priceId] || "free";
               const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
 
@@ -512,6 +514,7 @@ serve(async (req) => {
                   searches_limit: newLimit,
                   searches_used: newSearchesUsed,
                   payment_provider: "stripe",
+                  subscription_price_cents: subPriceCents,
                 })
                 .eq("id", profile.id);
 
