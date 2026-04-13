@@ -111,36 +111,15 @@ export function PaymentMethodModal({
     }
   };
 
-  const handleAsaasCardCheckout = async () => {
-    setAsaasCardLoading(true);
-    try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data, error } = await supabase.functions.invoke("create-asaas-card-checkout", {
-        body: { planKey, customerData },
-      });
-      if (error) throw new Error(error.message);
-      if (!data?.checkoutUrl) throw new Error("URL de checkout não gerada");
-      
-      // Redirect to Asaas hosted checkout
-      window.location.href = data.checkoutUrl;
-    } catch (err: any) {
-      const { toast } = await import("@/hooks/use-toast");
-      toast({
-        title: "Erro ao criar checkout",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setAsaasCardLoading(false);
-    }
-  };
-
   const handleConfirm = () => {
     if (!selectedMethod) return;
     if (selectedMethod === "card") {
       if (isAnnual) {
-        // Annual card → Asaas checkout with installments
-        handleAsaasCardCheckout();
+        // Annual card → custom card checkout page (Asaas subscription)
+        const params = new URLSearchParams({ plan: planKey, planName });
+        sessionStorage.setItem("cardCustomerData", JSON.stringify(customerData));
+        navigate(`/checkout-card?${params.toString()}`);
+        setTimeout(() => onOpenChange(false), 50);
       } else {
         // Monthly card → Stripe
         onSelectCard(customerData);
