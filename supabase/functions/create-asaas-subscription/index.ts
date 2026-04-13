@@ -13,8 +13,8 @@ const logStep = (step: string, details?: any) => {
 };
 
 const PLAN_CONFIG: Record<string, { name: string; priceDecimal: number }> = {
-  start: { name: "Wiize Start", priceDecimal: 197.00 },
-  growth: { name: "Wiize Growth", priceDecimal: 497.00 },
+  start: { name: "Wiize Start", priceDecimal: 296.00 },
+  growth: { name: "Wiize Growth", priceDecimal: 696.00 },
   scale: { name: "Wiize Scale", priceDecimal: 897.00 },
 };
 
