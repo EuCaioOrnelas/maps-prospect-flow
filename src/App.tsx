@@ -134,6 +134,7 @@ const App = () => (
                 <Route path="/checkout-pix" element={<LightThemeWrapper><CheckoutPix /></LightThemeWrapper>} />
                 <Route path="/checkout-card" element={<LightThemeWrapper><CheckoutCard /></LightThemeWrapper>} />
                 <Route path="/renewal-success" element={<LightThemeWrapper><RenewalSuccess /></LightThemeWrapper>} />
+                <Route path="/minha-assinatura" element={<Suspense fallback={<PageLoader />}><ManageSubscription /></Suspense>} />
                 <Route path="/contato" element={<LightThemeWrapper><Contact /></LightThemeWrapper>} />
                 <Route path="/d7x9k2m4-meta-review" element={<LightThemeWrapper><MetaAppDocumentation /></LightThemeWrapper>} />
                 <Route
