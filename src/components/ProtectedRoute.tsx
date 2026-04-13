@@ -99,8 +99,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/404" replace />;
   }
 
-  // Redirect users without active paid subscription to upgrade page
-  if (profile?.plan === 'free' && location.pathname !== '/upgrade' && location.pathname !== '/consultoria') {
+  // Check if free trial has expired — redirect to upgrade
+  const isFreeTrial = profile?.plan === 'free';
+  if (isFreeTrial && isTrialExpired && location.pathname !== '/upgrade' && location.pathname !== '/consultoria') {
+    return <Navigate to="/upgrade?expired=true" replace />;
+  }
+
+  // Free users with active trial can access the platform
+  // Free users without trial also go to upgrade
+  if (isFreeTrial && !profile?.trial_start_at && !profile?.trial_end_at && location.pathname !== '/upgrade' && location.pathname !== '/consultoria') {
     return <Navigate to="/upgrade?expired=true" replace />;
   }
 

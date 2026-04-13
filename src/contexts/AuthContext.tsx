@@ -17,7 +17,11 @@ interface Profile {
   created_at?: string;
   avatar_url?: string;
   trial_start_at?: string;
+  trial_end_at?: string;
   trial_messages_sent?: number;
+  trial_leads_used?: number;
+  trial_flows_used?: number;
+  trial_campaigns_used?: number;
   is_blocked?: boolean;
 }
 
@@ -52,25 +56,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   // Calculate trial status
-  const calculateTrialStatus = (trialStartAt?: string, plan?: string) => {
-    if (plan && plan !== 'free') {
+  const calculateTrialStatus = (profile?: Profile | null) => {
+    if (!profile) return { isExpired: false, daysRemaining: 0 };
+    if (profile.plan && profile.plan !== 'free') {
       return { isExpired: false, daysRemaining: 0 };
     }
     
-    if (!trialStartAt) {
-      return { isExpired: false, daysRemaining: 30 };
+    // Use trial_end_at if available (new system), fallback to trial_start_at
+    if (profile.trial_end_at) {
+      const endDate = new Date(profile.trial_end_at);
+      const now = new Date();
+      const msRemaining = endDate.getTime() - now.getTime();
+      const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+      return { isExpired: msRemaining <= 0, daysRemaining };
     }
     
-    const trialStart = new Date(trialStartAt);
+    if (!profile.trial_start_at) {
+      return { isExpired: false, daysRemaining: 7 };
+    }
+    
+    const trialStart = new Date(profile.trial_start_at);
     const now = new Date();
     const daysPassed = Math.floor((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24));
-    const daysRemaining = Math.max(0, 30 - daysPassed);
-    const isExpired = daysPassed >= 30;
+    const daysRemaining = Math.max(0, 7 - daysPassed);
+    const isExpired = daysPassed >= 7;
     
     return { isExpired, daysRemaining };
   };
 
-  const trialStatus = calculateTrialStatus(profile?.trial_start_at, profile?.plan);
+  const trialStatus = calculateTrialStatus(profile);
   const isTrialExpired = trialStatus.isExpired;
   const trialDaysRemaining = trialStatus.daysRemaining;
   const isBlocked = profile?.is_blocked === true;

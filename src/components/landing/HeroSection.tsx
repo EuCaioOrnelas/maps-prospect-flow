@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import metaIcon from "@/assets/logos/meta-icon.png";
 import gptIcon from "@/assets/logos/gpt-icon.png";
+import { VideoModal } from "./VideoModal";
 import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
 import avatar3 from "@/assets/avatars/avatar3.jpg";
@@ -705,6 +706,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const [stageProgress, setStageProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [jumpTarget, setJumpTarget] = useState<number | null>(null);
+  const [videoOpen, setVideoOpen] = useState(false);
+  const [hasWatchedVideo, setHasWatchedVideo] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
   const animationStartRef = useRef<number>(0);
@@ -797,16 +800,16 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             <div className="flex flex-col sm:flex-row items-center justify-center xl:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
               <Link to="/signup" className="shrink-0" onClick={onSignupClick}>
                 <Button variant="hero" size="lg" className="group rounded-full text-base px-8 h-12">
-                  Gerar vendas
+                  {hasWatchedVideo ? "Testar grátis" : "Gerar vendas"}
                   <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <a href="#features" className="group shrink-0">
+              <button onClick={() => setVideoOpen(true)} className="group shrink-0">
                 <Button variant="ghost" size="lg" className="rounded-full text-base px-8 h-12 border border-transparent hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all">
                   Ver como funciona
                   <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
-              </a>
+              </button>
             </div>
           </div>
 
@@ -881,6 +884,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
           <ArrowDown size={18} className="text-primary-foreground" />
         </div>
       </a>
+
+      <VideoModal
+        open={videoOpen}
+        onOpenChange={setVideoOpen}
+        onVideoWatched={() => setHasWatchedVideo(true)}
+        onSignupClick={onSignupClick}
+      />
 
       {/* Keyframe animations */}
       <style>{`

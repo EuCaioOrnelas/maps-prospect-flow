@@ -30,21 +30,21 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
             <span className="text-sm text-muted-foreground">Comece em menos de 1 minuto</span>
           </div>
           <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6 text-foreground">
-            Comece a prospectar<br />
-            <span className="text-shimmer-highlight">agora mesmo</span>
+            Teste gratuitamente<br />
+            <span className="text-shimmer-highlight">por 7 dias</span>
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Não perca mais tempo buscando leads manualmente.
-            Automatize sua prospecção e escale seus resultados.
+            Experimente toda a plataforma sem compromisso.
+            Acesse captação, IA, CRM, automações e campanhas durante 7 dias grátis.
           </p>
           <Link to="/signup" onClick={onSignupClick}>
             <Button variant="hero" size="xl" className="group rounded-full">
-              Começar Agora
+              Testar Grátis por 7 Dias
               <ArrowRight className="group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
           <p className="text-sm text-muted-foreground mt-6">
-            Garantia de 7 dias • Cancele quando quiser • Setup em 30 segundos
+            Sem cartão de crédito • Acesso completo • Cancele quando quiser
           </p>
         </div>
       </div>
