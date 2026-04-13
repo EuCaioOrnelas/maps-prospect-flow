@@ -2156,6 +2156,10 @@ export type Database = {
           subscription_current_period_end: string | null
           subscription_price_cents: number | null
           terms_accepted_at: string | null
+          trial_campaigns_used: number
+          trial_end_at: string | null
+          trial_flows_used: number
+          trial_leads_used: number
           trial_messages_sent: number | null
           trial_start_at: string | null
           updated_at: string
@@ -2182,6 +2186,10 @@ export type Database = {
           subscription_current_period_end?: string | null
           subscription_price_cents?: number | null
           terms_accepted_at?: string | null
+          trial_campaigns_used?: number
+          trial_end_at?: string | null
+          trial_flows_used?: number
+          trial_leads_used?: number
           trial_messages_sent?: number | null
           trial_start_at?: string | null
           updated_at?: string
@@ -2208,6 +2216,10 @@ export type Database = {
           subscription_current_period_end?: string | null
           subscription_price_cents?: number | null
           terms_accepted_at?: string | null
+          trial_campaigns_used?: number
+          trial_end_at?: string | null
+          trial_flows_used?: number
+          trial_leads_used?: number
           trial_messages_sent?: number | null
           trial_start_at?: string | null
           updated_at?: string
