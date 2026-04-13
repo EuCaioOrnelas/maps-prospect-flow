@@ -88,7 +88,7 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
             style={{ pointerEvents: "auto" }}
           />
           {/* Overlay to block seek bar */}
-          <div className="absolute bottom-0 left-0 right-0 h-[44px] bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-auto z-10" />
+          <div className="absolute bottom-0 left-0 right-0 h-[30px] bg-gradient-to-t from-black/40 to-transparent pointer-events-auto z-10" />
         </div>
 
         {/* CTA */}
