@@ -47,6 +47,7 @@ const HelpCenterFAQ = lazyWithRetry(() => import("./pages/HelpCenterFAQ"), "Help
 const CheckoutSuccess = lazyWithRetry(() => import("./pages/CheckoutSuccess"), "CheckoutSuccess");
 const CheckoutFailed = lazyWithRetry(() => import("./pages/CheckoutFailed"), "CheckoutFailed");
 const CheckoutPix = lazyWithRetry(() => import("./pages/CheckoutPix"), "CheckoutPix");
+const CheckoutCard = lazyWithRetry(() => import("./pages/CheckoutCard"), "CheckoutCard");
 const RenewalSuccess = lazyWithRetry(() => import("./pages/RenewalSuccess"), "RenewalSuccess");
 const Contact = lazyWithRetry(() => import("./pages/Contact"), "Contact");
 const Profile = lazyWithRetry(() => import("./pages/Profile"), "Profile");
