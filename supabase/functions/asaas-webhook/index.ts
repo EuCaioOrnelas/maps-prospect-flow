@@ -125,8 +125,9 @@ async function activatePlan(supabaseClient: any, profile: any, planKey: string, 
     periodEnd.setDate(periodEnd.getDate() + 30);
   }
 
-  // Calculate price in cents from payment value
-  const priceCents = Math.round(paymentValue * 100);
+  // Calculate price in cents from payment value (grandfathering support)
+  const defaultPrices: Record<string, number> = { start: 29600, growth: 69600, scale: 89700 };
+  const priceCents = paymentValue ? Math.round(paymentValue * 100) : (defaultPrices[planKey] || 0);
 
   const { error: updateError } = await supabaseClient
     .from("profiles")
