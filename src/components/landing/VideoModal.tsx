@@ -45,7 +45,7 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         id="video-modal-container"
-        className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-6xl w-full p-0 gap-0 border border-border bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden"
+        className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-6xl w-full p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border bg-card">
