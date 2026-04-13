@@ -25,12 +25,12 @@ export const ClosingSection = ({ onSignupClick }: ClosingSectionProps) => {
           <p className="text-sm text-muted-foreground uppercase tracking-widest mb-6">Decisão estratégica</p>
           
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
-            Teste a Wiize gratuitamente<br className="hidden sm:block" />
-            <span className="text-shimmer-highlight">por 7 dias, sem compromisso.</span>
+            Comece agora<br className="hidden sm:block" />
+            <span className="text-shimmer-highlight">sem compromisso.</span>
           </h2>
           
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-10">
-            Acesse todas as funcionalidades da plataforma durante 7 dias sem precisar de cartão. Captação, IA, CRM, automações e campanhas — tudo liberado para você testar.
+            Teste a Wiize gratuitamente por 7 dias com acesso completo a todas as funcionalidades. Captação, IA, CRM, automações e campanhas — tudo liberado sem precisar de cartão.
           </p>
 
           <Link to="/signup" onClick={onSignupClick}>
