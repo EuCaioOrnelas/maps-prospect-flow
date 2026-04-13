@@ -885,6 +885,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
         </div>
       </a>
 
+      <VideoModal
+        open={videoOpen}
+        onOpenChange={setVideoOpen}
+        onVideoWatched={() => setHasWatchedVideo(true)}
+        onSignupClick={onSignupClick}
+      />
+
       {/* Keyframe animations */}
       <style>{`
         @keyframes fadeSlideUp {
