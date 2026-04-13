@@ -14,13 +14,13 @@ import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const PRICE_IDS: Record<string, Record<string, string>> = {
   monthly: {
-    start: "price_1SlykAK8CM0R6xMMOCM684rz",
-    growth: "price_1SlykkK8CM0R6xMMZu7WJesV",
+    start: "price_1TLZi1K8CM0R6xMMDOg3MSTp",
+    growth: "price_1TLZlSK8CM0R6xMMFtvROCby",
     scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
   },
   annual: {
-    start: "price_1SlykAK8CM0R6xMMOCM684rz",
-    growth: "price_1SlykkK8CM0R6xMMZu7WJesV",
+    start: "price_1TLZkSK8CM0R6xMMwr1Ke1IX",
+    growth: "price_1TLZn8K8CM0R6xMMaEz5JuVW",
     scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
   },
 };
@@ -600,6 +600,7 @@ const Upgrade = () => {
         planName={selectedPlanData?.name || ""}
         planPrice={selectedPlanData?.price || ""}
         planKey={selectedPlanKey || ""}
+        billingPeriod={isAnnual ? "annual" : "monthly"}
         onSelectCard={handleCardCheckout}
         onSelectPix={handlePixCheckout}
         loading={loadingPlan !== null}

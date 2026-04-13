@@ -46,14 +46,14 @@ export default function CheckoutPix() {
   const planKey = searchParams.get("plan") || "";
   const planName = searchParams.get("planName") || "";
   const planPriceParam = searchParams.get("planPrice") || "";
+  const billingPeriod = searchParams.get("billing") || "monthly";
 
   // Auto-resolve price from plan key when not provided (e.g. renewal links)
-  const PLAN_PRICES: Record<string, string> = {
-    start: "296",
-    growth: "696",
-    scale: "897",
+  const PLAN_PRICES: Record<string, Record<string, string>> = {
+    monthly: { start: "296", growth: "696", scale: "897" },
+    annual: { start: "2952", growth: "5952", scale: "897" },
   };
-  const planPrice = planPriceParam || PLAN_PRICES[planKey] || "";
+  const planPrice = planPriceParam || PLAN_PRICES[billingPeriod]?.[planKey] || PLAN_PRICES.monthly[planKey] || "";
 
   const isRenewal = searchParams.get("renewal") === "true";
   const renewalEmail = searchParams.get("email") || "";
@@ -126,7 +126,7 @@ export default function CheckoutPix() {
     trackScoreEvent("checkout_started", { plan: planKey, method: "pix", source: "asaas" });
     
     try {
-      const body: any = { planKey, customerData };
+      const body: any = { planKey, customerData, billingPeriod };
       const { data, error } = await supabase.functions.invoke(
         "create-asaas-subscription",
         { body }

@@ -18,9 +18,14 @@ const ADMIN_EMAILS = ["caiowiize@gmail.com"];
 
 // Plan name mapping from price IDs
 const PRICE_TO_PLAN: { [key: string]: string } = {
+  "price_1TLZi1K8CM0R6xMMDOg3MSTp": "start",
+  "price_1TLZkSK8CM0R6xMMwr1Ke1IX": "start",
+  "price_1TLZlSK8CM0R6xMMFtvROCby": "growth",
+  "price_1TLZn8K8CM0R6xMMaEz5JuVW": "growth",
+  "price_1SlylcK8CM0R6xMMyHRWAd8G": "scale",
+  // Legacy
   "price_1SlykAK8CM0R6xMMOCM684rz": "start",
   "price_1SlykkK8CM0R6xMMZu7WJesV": "growth",
-  "price_1SlylcK8CM0R6xMMyHRWAd8G": "scale",
 };
 
 // Helper to paginate through all Stripe list results

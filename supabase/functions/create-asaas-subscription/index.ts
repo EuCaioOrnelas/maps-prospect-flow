@@ -12,10 +12,10 @@ const logStep = (step: string, details?: any) => {
   console.log(`[ASAAS-PIX-AUTO] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
-const PLAN_CONFIG: Record<string, { name: string; priceDecimal: number }> = {
-  start: { name: "Wiize Start", priceDecimal: 296.00 },
-  growth: { name: "Wiize Growth", priceDecimal: 696.00 },
-  scale: { name: "Wiize Scale", priceDecimal: 897.00 },
+const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number; priceAnnual: number }> = {
+  start: { name: "Wiize Start", priceMonthly: 296.00, priceAnnual: 2952.00 },
+  growth: { name: "Wiize Growth", priceMonthly: 696.00, priceAnnual: 5952.00 },
+  scale: { name: "Wiize Scale", priceMonthly: 897.00, priceAnnual: 897.00 },
 };
 
 serve(async (req) => {
@@ -32,13 +32,15 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { planKey, customerData, testOverridePrice } = await req.json();
+    const { planKey, customerData, testOverridePrice, billingPeriod } = await req.json();
     if (!planKey || !customerData) throw new Error("planKey and customerData are required");
 
     const plan = PLAN_CONFIG[planKey];
     if (!plan) throw new Error(`Invalid plan: ${planKey}`);
 
-    logStep("Request received", { planKey, email: customerData.email });
+    const isAnnual = billingPeriod === "annual";
+
+    logStep("Request received", { planKey, email: customerData.email, billingPeriod: billingPeriod || "monthly" });
 
     // Authenticate user
     let userId: string | null = null;
@@ -111,7 +113,7 @@ serve(async (req) => {
     }
 
     // 2. Determine final price
-    let finalPrice = plan.priceDecimal;
+    let finalPrice = isAnnual ? plan.priceAnnual : plan.priceMonthly;
     
     // TEMP: Allow test override price
     if (testOverridePrice && typeof testOverridePrice === "number" && testOverridePrice > 0) {
@@ -126,16 +128,16 @@ serve(async (req) => {
 
     const authorizationBody = {
       customerId: customerId,
-      frequency: "MONTHLY",
+      frequency: isAnnual ? "YEARLY" : "MONTHLY",
       contractId: contractId.slice(0, 35),
       startDate: startDate.toISOString().split("T")[0],
       originalValue: finalPrice,
       value: finalPrice,
-      description: `${plan.name} mensal`.slice(0, 35),
+      description: `${plan.name} ${isAnnual ? "anual" : "mensal"}`.slice(0, 35),
       immediateQrCode: {
         originalValue: finalPrice,
         value: finalPrice,
-        description: `${plan.name} - 1a parcela`.slice(0, 35),
+        description: `${plan.name} - ${isAnnual ? "anual" : "1a parcela"}`.slice(0, 35),
         externalReference: externalRef,
         expirationSeconds: 3600,
       },

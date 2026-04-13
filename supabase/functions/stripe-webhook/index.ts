@@ -27,11 +27,15 @@ const logStep = (step: string, details?: any) => {
 
 // Map price IDs to plan names - includes all historical price IDs
 const PRICE_TO_PLAN: Record<string, string> = {
-  // Current prices
-  "price_1SlykAK8CM0R6xMMOCM684rz": "start",   // R$197/month
-  "price_1SlykkK8CM0R6xMMZu7WJesV": "growth",  // R$497/month
+  // New prices (2026)
+  "price_1TLZi1K8CM0R6xMMDOg3MSTp": "start",   // R$296/month
+  "price_1TLZkSK8CM0R6xMMwr1Ke1IX": "start",   // R$246/month (annual)
+  "price_1TLZlSK8CM0R6xMMFtvROCby": "growth",  // R$696/month
+  "price_1TLZn8K8CM0R6xMMaEz5JuVW": "growth",  // R$496/month (annual)
   "price_1SlylcK8CM0R6xMMyHRWAd8G": "scale",   // R$897/month
   // Legacy prices - must be mapped for existing subscriptions
+  "price_1SlykAK8CM0R6xMMOCM684rz": "start",   // R$197/month (legacy)
+  "price_1SlykkK8CM0R6xMMZu7WJesV": "growth",  // R$497/month (legacy)
   "price_1SXrv7K8CM0R6xMMo4FlSVIk": "start",   // R$67/year (legacy)
   "price_1SXruNK8CM0R6xMMVD8Gksi4": "start",   // R$9.90/month (legacy)
   "price_1SZj5bK8CM0R6xMMFocrHWkj": "start",   // R$29.90/month (legacy)
