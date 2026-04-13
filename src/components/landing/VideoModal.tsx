@@ -45,24 +45,24 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         id="video-modal-container"
-        className="sm:max-w-4xl w-[96vw] p-0 gap-0 border border-border bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden"
+        className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-6xl w-full p-0 gap-0 border border-border bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border bg-card">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="relative flex items-center justify-center">
               <div className="w-2 h-2 rounded-full bg-primary" />
               <div className="absolute w-2 h-2 rounded-full bg-primary animate-ping opacity-40" />
             </div>
             <div className="flex items-center gap-2">
               <Play size={13} className="text-primary fill-primary" />
-              <span className="text-sm font-semibold text-foreground tracking-tight">Demonstração — Wiize</span>
+              <span className="text-xs sm:text-sm font-semibold text-foreground tracking-tight">Demonstração — Wiize</span>
             </div>
           </div>
           <div className="flex items-center gap-1">
             <button
               onClick={toggleFullscreen}
-              className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+              className="hidden sm:flex p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
             >
               {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
             </button>
@@ -79,7 +79,7 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
         <div className="relative w-full bg-black" style={{ paddingBottom: "56.25%" }}>
           <iframe
             className="absolute inset-0 w-full h-full"
-            src={open ? "https://www.youtube.com/embed/b8tqLSoVzqA?si=V_vX3t7FN5_fOifA&rel=0&modestbranding=1&disablekb=1" : ""}
+            src={open ? "https://www.youtube.com/embed/b8tqLSoVzqA?si=V_vX3t7FN5_fOifA&rel=0&modestbranding=1&disablekb=1&autoplay=1" : ""}
             title="Wiize — Demonstração"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -92,12 +92,12 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
         </div>
 
         {/* CTA */}
-        <div className="px-6 py-5 bg-card flex flex-col items-center gap-3 border-t border-border">
-          <p className="text-muted-foreground text-sm text-center">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 bg-card flex flex-col items-center gap-3 border-t border-border">
+          <p className="text-muted-foreground text-xs sm:text-sm text-center">
             Teste gratuitamente por 7 dias — sem compromisso
           </p>
           <Link to="/signup" onClick={() => { onSignupClick?.(); onOpenChange(false); }}>
-            <Button variant="hero" size="lg" className="group rounded-full text-base px-10 h-12">
+            <Button variant="hero" size="lg" className="group rounded-full text-sm sm:text-base px-8 sm:px-10 h-11 sm:h-12">
               Testar grátis por 7 dias
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </Button>
