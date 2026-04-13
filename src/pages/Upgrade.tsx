@@ -304,21 +304,6 @@ const Upgrade = () => {
         </>
       )}
 
-      {/* Promo Banner */}
-      <div className={`${isCleanPage ? '' : 'lg:pl-14'} bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 border-b border-primary/20 overflow-hidden`}>
-        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 relative">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_70%)] animate-pulse" />
-          <p className="text-center text-xs sm:text-sm text-muted-foreground relative z-10">
-            <Sparkles size={14} className="inline-block mr-1 sm:mr-1.5 text-primary animate-pulse" />
-            <span className="text-primary font-semibold">Promoção:</span>{" "}
-            <span className="hidden xs:inline">até </span>50% OFF{" "}
-            <span className="hidden sm:inline">em todos os planos</span>
-            <span className="inline-flex items-center gap-1 ml-1 bg-primary/20 text-primary text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full">
-              Limitado
-            </span>
-          </p>
-        </div>
-      </div>
 
       {/* Content */}
       <main className={`container mx-auto px-3 sm:px-4 py-6 sm:py-12 ${isCleanPage ? '' : 'lg:pl-14'}`}>
