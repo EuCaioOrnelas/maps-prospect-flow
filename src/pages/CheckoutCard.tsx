@@ -475,7 +475,7 @@ export default function CheckoutCard() {
             {/* Testimonials */}
             <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
               <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                <MessageCircle className="h-4 w-4 text-emerald-500 fill-emerald-500" />
                 O que dizem nossos clientes
               </p>
               <div className="space-y-3">
@@ -493,7 +493,18 @@ export default function CheckoutCard() {
                 <div className="rounded-xl bg-muted/40 p-3.5 space-y-2">
                   <div className="flex items-center gap-1">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-3 w-3 text-amber-500 fill-amber-500" />
+                      <Star
+                        key={i}
+                        className={cn(
+                          "h-3 w-3",
+                          i < 4 ? "text-amber-500 fill-amber-500" : "text-amber-500"
+                        )}
+                        style={i === 4 ? {
+                          clipPath: "inset(0 50% 0 0)",
+                          fill: "currentColor",
+                          position: "relative",
+                        } as React.CSSProperties : undefined}
+                      />
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground italic leading-relaxed">
