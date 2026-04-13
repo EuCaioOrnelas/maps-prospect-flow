@@ -71,9 +71,10 @@ const mainPlans = {
       opportunities: "1.000",
       description: "Para gerar e validar oportunidades todos os dias",
       features: [
-        { text: "Oportunidades com IA" },
-        { text: "Mensagens com IA prontas" },
-        { text: "Gestão de leads (CRM)" },
+        { text: "Oportunidades com alto potencial de fechamento" },
+        { text: "Mensagens Geradas por IA para iniciar conversas" },
+        { text: "Gestão de contatos em um só lugar (CRM)" },
+        { text: "Priorize oportunidades com maior chance de fechamento (Score)" },
         { text: "Disparos via WhatsApp e Meta" },
         { text: "Até 2 números conectados" },
         { text: "Suporte por email" },
@@ -94,6 +95,7 @@ const mainPlans = {
       description: "Para automatizar, escalar e converter leads no piloto automático",
       features: [
         { text: "Tudo do Start (leads, CRM e disparos)", highlight: true },
+        { text: "Priorize oportunidades com maior chance de fechamento (Score)" },
         { text: "Automação de atendimento" },
         { text: "Follow-up automático inteligente" },
         { text: "Agente de IA em conversas" },
@@ -116,10 +118,10 @@ const mainPlans = {
       opportunities: "1.000",
       description: "Para gerar e validar oportunidades todos os dias",
       features: [
-        
-        { text: "Oportunidades com IA" },
-        { text: "Mensagens com IA prontas" },
-        { text: "Gestão de leads (CRM)" },
+        { text: "Oportunidades com alto potencial de fechamento" },
+        { text: "Mensagens Geradas por IA para iniciar conversas" },
+        { text: "Gestão de contatos em um só lugar (CRM)" },
+        { text: "Priorize oportunidades com maior chance de fechamento (Score)" },
         { text: "Disparos via WhatsApp e Meta" },
         { text: "Até 2 números conectados" },
         { text: "Suporte por email" },
@@ -140,6 +142,7 @@ const mainPlans = {
       description: "Para automatizar, escalar e converter leads no piloto automático",
       features: [
         { text: "Tudo do Start (leads, CRM e disparos)", highlight: true },
+        { text: "Priorize oportunidades com maior chance de fechamento (Score)" },
         { text: "Automação de atendimento" },
         { text: "Follow-up automático inteligente" },
         { text: "Agente de IA em conversas" },
