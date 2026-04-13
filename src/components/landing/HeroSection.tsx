@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import metaIcon from "@/assets/logos/meta-icon.png";
 import gptIcon from "@/assets/logos/gpt-icon.png";
+import { VideoModal } from "./VideoModal";
 import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
 import avatar3 from "@/assets/avatars/avatar3.jpg";
@@ -705,6 +706,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const [stageProgress, setStageProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [jumpTarget, setJumpTarget] = useState<number | null>(null);
+  const [videoOpen, setVideoOpen] = useState(false);
+  const [hasWatchedVideo, setHasWatchedVideo] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
   const animationStartRef = useRef<number>(0);
