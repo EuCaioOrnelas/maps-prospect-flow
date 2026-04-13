@@ -22,7 +22,7 @@ import {
   ChevronDown,
   RotateCcw,
   Star,
-  Quote,
+  MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
