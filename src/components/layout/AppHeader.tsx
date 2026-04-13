@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Search, User, Settings, LogOut } from "lucide-react";
+import { Search, User, Settings, LogOut, Clock } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -27,7 +27,8 @@ interface AppHeaderProps {
 }
 
 export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
-  const { signOut } = useAuth();
+  const { signOut, trialDaysRemaining } = useAuth();
+  const isFreeTrial = profile?.plan === 'free';
 
   const getPlanName = (plan: string) => {
     switch (plan) {
