@@ -158,7 +158,14 @@ export function PaymentMethodModal({
                   {step === "data" ? "Seus dados" : "Forma de pagamento"}
                 </DialogTitle>
                 <DialogDescription>
-                  Plano <strong>{planName}</strong> — R$ {planPrice}/mês
+                  {billingPeriod === "annual" ? (
+                    <>Plano <strong>{planName}</strong> — R$ {(() => {
+                      const monthly = Number(planPrice);
+                      return (monthly * 12).toLocaleString("pt-BR");
+                    })()}/ano</>
+                  ) : (
+                    <>Plano <strong>{planName}</strong> — R$ {planPrice}/mês</>
+                  )}
                 </DialogDescription>
               </div>
             </div>
