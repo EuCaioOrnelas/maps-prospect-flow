@@ -1,6 +1,7 @@
 import * as React from "react"
-import { motion, useMotionValue, useTransform } from "framer-motion"
+import { motion, useMotionValue, useSpring } from "framer-motion"
 import { Wifi } from "lucide-react"
+import logoIconNew from "@/assets/logo-icon-new.png"
 
 interface AnimatedCreditCardProps {
   cardNumber: string
@@ -15,23 +16,31 @@ export default function AnimatedCreditCard({
   expiryDate,
   isFlipped,
 }: AnimatedCreditCardProps) {
-  const x = useMotionValue(0)
-  const y = useMotionValue(0)
-  const rotateX = useTransform(y, [-100, 100], [10, -10])
-  const rotateY = useTransform(x, [-100, 100], [-10, 10])
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+  const rotateX = useSpring(0, { stiffness: 80, damping: 20 })
+  const rotateY = useSpring(0, { stiffness: 80, damping: 20 })
 
-  const handleMouseMove = (event: React.MouseEvent) => {
-    const rect = event.currentTarget.getBoundingClientRect()
-    const centerX = rect.left + rect.width / 2
-    const centerY = rect.top + rect.height / 2
-    x.set(event.clientX - centerX)
-    y.set(event.clientY - centerY)
-  }
-
-  const handleMouseLeave = () => {
-    x.set(0)
-    y.set(0)
-  }
+  React.useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const centerX = window.innerWidth / 2
+      const centerY = window.innerHeight / 2
+      const x = (e.clientX - centerX) / centerX
+      const y = (e.clientY - centerY) / centerY
+      rotateY.set(x * 12)
+      rotateX.set(-y * 8)
+    }
+    const handleMouseLeave = () => {
+      rotateX.set(0)
+      rotateY.set(0)
+    }
+    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mouseleave", handleMouseLeave)
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mouseleave", handleMouseLeave)
+    }
+  }, [rotateX, rotateY])
 
   const formatDisplay = (num: string) => {
     const clean = num.replace(/\s/g, "")
@@ -44,10 +53,6 @@ export default function AnimatedCreditCard({
       <motion.div
         className="relative w-full max-w-[380px] aspect-[1.586/1] cursor-pointer select-none"
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        whileHover={{ scale: 1.02 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
       >
         <motion.div
           className="w-full h-full"
@@ -68,9 +73,9 @@ export default function AnimatedCreditCard({
             />
 
             <div className="relative z-10 flex flex-col justify-between h-full p-5 sm:p-6">
-              {/* Top — Wiize watermark */}
+              {/* Top — Wiize logo */}
               <div className="flex items-center justify-between">
-                <span className="text-white/25 text-sm font-bold tracking-widest uppercase">WIIZE</span>
+                <img src={logoIconNew} alt="Wiize" className="h-7 w-7 object-contain rounded opacity-40" />
                 <span className="text-white/50 text-xs font-medium tracking-widest">CRÉDITO</span>
               </div>
 
@@ -111,10 +116,7 @@ export default function AnimatedCreditCard({
             className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 shadow-2xl"
             style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
           >
-            {/* Magnetic strip */}
             <div className="w-full h-12 bg-black/70 mt-6" />
-
-            {/* Signature + CVV */}
             <div className="px-6 mt-5">
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-9 bg-white/20 rounded" />
@@ -123,7 +125,6 @@ export default function AnimatedCreditCard({
                 </div>
               </div>
             </div>
-
             <div className="px-6 mt-6 space-y-1">
               <p className="text-white/40 text-[9px]">Este cartão é propriedade do banco emissor</p>
               <p className="text-white/40 text-[9px]">Atendimento: 0800-VISA</p>
@@ -131,14 +132,14 @@ export default function AnimatedCreditCard({
           </div>
         </motion.div>
 
-        {/* Floating orbs — subtle */}
+        {/* Subtle floating orbs */}
         <motion.div
-          className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-emerald-400/10 blur-xl"
+          className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-emerald-400/10 blur-xl pointer-events-none"
           animate={{ y: [0, -8, 0], x: [0, 5, 0] }}
           transition={{ duration: 4, repeat: Infinity }}
         />
         <motion.div
-          className="absolute -bottom-2 -left-2 w-14 h-14 rounded-full bg-emerald-300/8 blur-xl"
+          className="absolute -bottom-2 -left-2 w-14 h-14 rounded-full bg-emerald-300/5 blur-xl pointer-events-none"
           animate={{ y: [0, 6, 0], x: [0, -4, 0] }}
           transition={{ duration: 5, repeat: Infinity }}
         />
