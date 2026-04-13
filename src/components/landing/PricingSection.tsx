@@ -59,7 +59,7 @@ const PRICE_IDS: Record<string, Record<string, string>> = {
   },
 };
 
-type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subItems?: string[]; sectionHeader?: string; subDetail?: boolean; isNew?: boolean };
+type PlanFeature = { text: string; disabled?: boolean; highlight?: boolean; subtle?: boolean; subItems?: string[]; sectionHeader?: string; subDetail?: boolean; isNew?: boolean };
 
 const mainPlans = {
   monthly: [
@@ -78,7 +78,7 @@ const mainPlans = {
         { text: "Disparos via WhatsApp e Meta" },
         { text: "Até 2 números conectados" },
         { text: "Suporte por email" },
-        { text: "⚠️ Operação semi-automática", highlight: true },
+        { text: "Operação semi-automática", subtle: true },
         { text: "Sem automação", disabled: true },
         { text: "Sem follow-up", disabled: true },
         { text: "Sem agente de IA", disabled: true },
@@ -94,7 +94,7 @@ const mainPlans = {
       opportunities: "3.000",
       description: "Para automatizar, escalar e converter leads no piloto automático",
       features: [
-        { text: "Tudo do Start (leads, CRM e disparos)" },
+        { text: "Tudo do Start (leads, CRM e disparos)", subtle: true },
         { text: "Automação de atendimento" },
         { text: "Follow-up automático inteligente" },
         { text: "Agente de IA em conversas" },
@@ -124,7 +124,7 @@ const mainPlans = {
         { text: "Disparos via WhatsApp e Meta" },
         { text: "Até 2 números conectados" },
         { text: "Suporte por email" },
-        { text: "⚠️ Operação semi-automática", highlight: true },
+        { text: "Operação semi-automática", subtle: true },
         { text: "Sem automação", disabled: true },
         { text: "Sem follow-up", disabled: true },
         { text: "Sem agente de IA", disabled: true },
@@ -140,7 +140,7 @@ const mainPlans = {
       opportunities: "3.000",
       description: "Para automatizar, escalar e converter leads no piloto automático",
       features: [
-        { text: "Tudo do Start (leads, CRM e disparos)" },
+        { text: "Tudo do Start (leads, CRM e disparos)", subtle: true },
         { text: "Automação de atendimento" },
         { text: "Follow-up automático inteligente" },
         { text: "Agente de IA em conversas" },
@@ -331,11 +331,17 @@ export const PricingSection = () => {
                       {feature.disabled ? (
                         <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
                       ) : feature.highlight ? (
-                        <span className="flex-shrink-0 mt-0.5 w-4" />
+                        <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                      ) : feature.subtle ? (
+                        <Check size={16} className="text-muted-foreground/50 flex-shrink-0 mt-0.5" />
                       ) : (
                         <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
-                      <span className={feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"}>{feature.text}</span>
+                      <span className={
+                        feature.highlight ? "text-primary font-semibold" :
+                        feature.subtle ? "text-muted-foreground/60 italic" :
+                        "text-muted-foreground"
+                      }>{feature.text}</span>
                     </li>
                   ))}
                 </ul>
