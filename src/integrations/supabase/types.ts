@@ -3011,6 +3011,45 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_cancellations: {
+        Row: {
+          active_until: string | null
+          billing_type: string | null
+          cancelled_at: string
+          created_at: string
+          id: string
+          last_charge_date: string | null
+          notes: string | null
+          provider: string
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          active_until?: string | null
+          billing_type?: string | null
+          cancelled_at?: string
+          created_at?: string
+          id?: string
+          last_charge_date?: string | null
+          notes?: string | null
+          provider?: string
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          active_until?: string | null
+          billing_type?: string | null
+          cancelled_at?: string
+          created_at?: string
+          id?: string
+          last_charge_date?: string | null
+          notes?: string | null
+          provider?: string
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscription_events: {
         Row: {
           carry_over: number | null
