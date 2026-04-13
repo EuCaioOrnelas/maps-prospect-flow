@@ -126,7 +126,7 @@ export default function CheckoutPix() {
     trackScoreEvent("checkout_started", { plan: planKey, method: "pix", source: "asaas" });
     
     try {
-      const body: any = { planKey, customerData };
+      const body: any = { planKey, customerData, billingPeriod };
       const { data, error } = await supabase.functions.invoke(
         "create-asaas-subscription",
         { body }

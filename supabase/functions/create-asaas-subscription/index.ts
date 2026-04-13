@@ -12,10 +12,10 @@ const logStep = (step: string, details?: any) => {
   console.log(`[ASAAS-PIX-AUTO] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
-const PLAN_CONFIG: Record<string, { name: string; priceDecimal: number }> = {
-  start: { name: "Wiize Start", priceDecimal: 296.00 },
-  growth: { name: "Wiize Growth", priceDecimal: 696.00 },
-  scale: { name: "Wiize Scale", priceDecimal: 897.00 },
+const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number; priceAnnual: number }> = {
+  start: { name: "Wiize Start", priceMonthly: 296.00, priceAnnual: 2952.00 },
+  growth: { name: "Wiize Growth", priceMonthly: 696.00, priceAnnual: 5952.00 },
+  scale: { name: "Wiize Scale", priceMonthly: 897.00, priceAnnual: 897.00 },
 };
 
 serve(async (req) => {
