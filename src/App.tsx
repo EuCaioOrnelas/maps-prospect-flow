@@ -131,6 +131,7 @@ const App = () => (
                 <Route path="/checkout-success" element={<LightThemeWrapper><CheckoutSuccess /></LightThemeWrapper>} />
                 <Route path="/checkout-failed" element={<LightThemeWrapper><CheckoutFailed /></LightThemeWrapper>} />
                 <Route path="/checkout-pix" element={<LightThemeWrapper><CheckoutPix /></LightThemeWrapper>} />
+                <Route path="/checkout-card" element={<LightThemeWrapper><CheckoutCard /></LightThemeWrapper>} />
                 <Route path="/renewal-success" element={<LightThemeWrapper><RenewalSuccess /></LightThemeWrapper>} />
                 <Route path="/contato" element={<LightThemeWrapper><Contact /></LightThemeWrapper>} />
                 <Route path="/d7x9k2m4-meta-review" element={<LightThemeWrapper><MetaAppDocumentation /></LightThemeWrapper>} />
