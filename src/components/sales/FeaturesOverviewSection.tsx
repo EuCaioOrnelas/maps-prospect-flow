@@ -216,23 +216,23 @@ export const FeaturesOverviewSection = () => {
                 </div>
 
                 {/* Horizontal pipeline sequence with arrows */}
-                <div className="relative z-10 mt-4 flex items-center justify-between gap-0 px-1">
+                <div className="relative z-10 mt-4 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-0 px-1">
                   {pipelineSteps.map((step, i) => {
                     const StepIcon = step.icon;
                     return (
-                      <div key={i} className="flex items-center flex-1 last:flex-none">
+                      <div key={i} className="flex items-center flex-1 min-w-0 last:flex-none">
                         <motion.div
-                          className="flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded-lg px-2.5 py-2 whitespace-nowrap"
+                          className="flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded-lg px-2 sm:px-2.5 py-1.5 sm:py-2 whitespace-nowrap"
                           initial={{ opacity: 0, x: -15, scale: 0.9 }}
                           animate={isVisible ? { opacity: 1, x: 0, scale: 1 } : {}}
                           transition={{ duration: 0.5, delay: 0.6 + i * 0.25, ease: [0.22, 1, 0.36, 1] }}
                         >
                           <StepIcon size={13} className="text-primary flex-shrink-0" />
-                          <span className="text-[10px] sm:text-[11px] font-medium text-foreground/80">{step.label}</span>
+                          <span className="text-[9px] sm:text-[11px] font-medium text-foreground/80">{step.label}</span>
                         </motion.div>
                         {i < pipelineSteps.length - 1 && (
                           <motion.div
-                            className="flex items-center justify-center flex-1 mx-0.5"
+                            className="hidden sm:flex items-center justify-center flex-1 mx-0.5"
                             initial={{ opacity: 0, scaleX: 0 }}
                             animate={isVisible ? { opacity: 1, scaleX: 1 } : {}}
                             transition={{ duration: 0.35, delay: 0.75 + i * 0.25 }}

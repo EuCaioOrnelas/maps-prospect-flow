@@ -45,24 +45,26 @@ export const DifferentialsSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="rounded-2xl border border-border bg-card/30 overflow-hidden"
+          className="rounded-2xl border border-border bg-card/30 overflow-x-auto"
         >
-          {/* Header */}
-          <div className="grid grid-cols-4 gap-4 p-4 sm:p-6 border-b border-border bg-card/50">
-            <div className="text-sm font-medium text-muted-foreground">Funcionalidade</div>
-            <div className="text-sm font-semibold text-primary text-center">Wiize</div>
-            <div className="text-sm font-medium text-muted-foreground text-center">Manual / SDR</div>
-            <div className="text-sm font-medium text-muted-foreground text-center">Ferramentas isoladas</div>
-          </div>
-          {/* Rows */}
-          {rows.map((r, i) => (
-            <div key={i} className={`grid grid-cols-4 gap-4 p-4 sm:px-6 ${i < rows.length - 1 ? 'border-b border-border/50' : ''}`}>
-              <div className="text-sm text-foreground">{r.feature}</div>
-              <div className="flex justify-center"><Cell ok={r.wiize} /></div>
-              <div className="flex justify-center"><Cell ok={r.manual} /></div>
-              <div className="flex justify-center"><Cell ok={r.tools} /></div>
+          <div className="min-w-[520px]">
+            {/* Header */}
+            <div className="grid grid-cols-[1.8fr_1fr_1fr_1fr] gap-2 sm:gap-4 p-3 sm:p-6 border-b border-border bg-card/50">
+              <div className="text-xs sm:text-sm font-medium text-muted-foreground">Funcionalidade</div>
+              <div className="text-xs sm:text-sm font-semibold text-primary text-center">Wiize</div>
+              <div className="text-xs sm:text-sm font-medium text-muted-foreground text-center">Manual / SDR</div>
+              <div className="text-xs sm:text-sm font-medium text-muted-foreground text-center">Ferramentas isoladas</div>
             </div>
-          ))}
+            {/* Rows */}
+            {rows.map((r, i) => (
+              <div key={i} className={`grid grid-cols-[1.8fr_1fr_1fr_1fr] gap-2 sm:gap-4 p-3 sm:px-6 ${i < rows.length - 1 ? 'border-b border-border/50' : ''}`}>
+                <div className="text-xs sm:text-sm text-foreground">{r.feature}</div>
+                <div className="flex justify-center"><Cell ok={r.wiize} /></div>
+                <div className="flex justify-center"><Cell ok={r.manual} /></div>
+                <div className="flex justify-center"><Cell ok={r.tools} /></div>
+              </div>
+            ))}
+          </div>
         </motion.div>
       </div>
     </section>

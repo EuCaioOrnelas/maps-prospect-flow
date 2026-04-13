@@ -36,8 +36,8 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
       transition={{ duration: 0.55, delay: 0.1, ease: "easeOut" }}
       className="relative flex items-center"
     >
-      {/* Center node */}
-      <div className="absolute left-1/2 -translate-x-1/2 z-20">
+      {/* Center node - desktop only */}
+      <div className="absolute left-1/2 -translate-x-1/2 z-20 hidden md:block">
         <motion.div
           initial={{ scale: 0 }}
           animate={inView ? { scale: 1 } : {}}
@@ -46,11 +46,23 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
         />
       </div>
 
+      {/* Mobile step number dot */}
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 z-20 md:hidden">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={inView ? { scale: 1 } : {}}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="w-8 h-8 rounded-full border-2 border-primary bg-card shadow-[0_0_8px_hsl(var(--primary)/0.25)] flex items-center justify-center"
+        >
+          <span className="text-[10px] font-bold text-primary">{String(index + 1).padStart(2, "0")}</span>
+        </motion.div>
+      </div>
+
       {/* Card */}
-      <div className={`w-[calc(50%-28px)] ${isLeft ? "mr-auto" : "ml-auto"}`}>
+      <div className={`w-full pl-12 md:pl-0 md:w-[calc(50%-28px)] ${isLeft ? "md:mr-auto" : "md:ml-auto"}`}>
         <div
-          className={`group relative rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm p-5 overflow-hidden hover:shadow-[0_4px_24px_-6px_hsl(var(--primary)/0.15)] hover:border-primary/30 transition-all duration-300 cursor-default ${
-            isLeft ? "text-right" : "text-left"
+          className={`group relative rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm p-4 sm:p-5 overflow-hidden hover:shadow-[0_4px_24px_-6px_hsl(var(--primary)/0.15)] hover:border-primary/30 transition-all duration-300 cursor-default text-left ${
+            isLeft ? "md:text-right" : ""
           }`}
         >
           {/* Glow */}
@@ -58,9 +70,9 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
           <div className="absolute -top-10 -left-10 w-28 h-28 rounded-full bg-primary/8 blur-[50px] pointer-events-none" />
 
           {/* Content */}
-          <div className={`relative z-10 flex items-start gap-3 ${isLeft ? "flex-row-reverse text-right" : ""}`}>
+          <div className={`relative z-10 flex items-start gap-3 ${isLeft ? "md:flex-row-reverse md:text-right" : ""}`}>
             <div className="flex-shrink-0">
-              <span className="text-[9px] font-bold tracking-[0.14em] text-primary/35 block leading-none mb-1">
+              <span className="text-[9px] font-bold tracking-[0.14em] text-primary/35 block leading-none mb-1 hidden md:block">
                 {String(index + 1).padStart(2, "0")}
               </span>
               <div className="relative">
@@ -87,13 +99,13 @@ export const MechanismSection = () => {
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative overflow-hidden">
-      {/* Background ambient — no harsh side lines */}
+      {/* Background ambient */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[10%] -left-[5%] w-[350px] h-[350px] bg-primary/[0.04] rounded-full blur-[100px]" />
         <div className="absolute top-[50%] -right-[8%] w-[400px] h-[400px] bg-primary/[0.03] rounded-full blur-[120px]" />
         <div className="absolute bottom-[10%] left-[10%] w-[300px] h-[300px] bg-primary/[0.03] rounded-full blur-[100px]" />
 
-        {/* Floating stat cards with animation */}
+        {/* Floating stat cards */}
         {floatingElements.map((el, i) => (
           <motion.div
             key={i}
@@ -137,8 +149,8 @@ export const MechanismSection = () => {
 
         {/* Timeline */}
         <div className="relative">
-          {/* Central line — grows with scroll via CSS */}
-          <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-px overflow-visible">
+          {/* Central line — desktop only */}
+          <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-px overflow-visible hidden md:block">
             <motion.div
               initial={{ scaleY: 0 }}
               animate={isVisible ? { scaleY: 1 } : {}}
@@ -154,6 +166,9 @@ export const MechanismSection = () => {
               />
             )}
           </div>
+
+          {/* Mobile vertical line */}
+          <div className="absolute left-[15px] top-0 bottom-0 w-px bg-gradient-to-b from-primary/40 via-primary/20 to-primary/40 md:hidden" />
 
           {/* Input badge */}
           <motion.div
@@ -171,8 +186,8 @@ export const MechanismSection = () => {
             </div>
           </motion.div>
 
-          {/* Steps — each triggers its own animation on scroll */}
-          <div className="flex flex-col gap-8 sm:gap-10">
+          {/* Steps */}
+          <div className="flex flex-col gap-6 sm:gap-8 md:gap-10">
             {steps.map((step, i) => (
               <StepCard key={i} step={step} index={i} isLeft={i % 2 === 0} />
             ))}

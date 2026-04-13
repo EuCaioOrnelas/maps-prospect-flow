@@ -149,7 +149,7 @@ export const ProblemSection = () => {
               </div>
             }
             shortcuts={
-              <div className={`${cardBase} !flex-row items-center`}>
+              <div className={`${cardBase} !flex-col sm:!flex-row items-start sm:items-center`}>
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="flex-1 min-w-0 relative z-10">
@@ -163,7 +163,7 @@ export const ProblemSection = () => {
                     Esforço alto com retorno mínimo. Operação que não justifica o investimento e drena recursos do time comercial.
                   </p>
                 </div>
-                <div className="flex-shrink-0 text-right pl-6 border-l border-border/50 relative z-10">
+                <div className="flex-shrink-0 text-left sm:text-right pt-3 sm:pt-0 sm:pl-6 border-t sm:border-t-0 sm:border-l border-border/50 relative z-10 w-full sm:w-auto">
                   <span className="text-4xl font-bold text-destructive/80 tracking-tight">0,5%</span>
                   <p className="text-[11px] text-muted-foreground mt-0.5">a cada 200 prospecções, 1 venda</p>
                 </div>
