@@ -16,14 +16,21 @@ import {
   BadgeCheck,
   Shield,
   ShieldCheck,
-  PartyPopper,
   User,
   Calendar,
   Hash,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function formatCurrency(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
@@ -45,10 +52,12 @@ function formatExpiry(value: string) {
   return digits;
 }
 
-const PLAN_PRICES: Record<string, { annual: number; installment: number; name: string }> = {
-  start: { annual: 295200, installment: 24600, name: "Wiize Start" },
-  growth: { annual: 595200, installment: 49600, name: "Wiize Growth" },
+const PLAN_PRICES: Record<string, { annual: number; name: string }> = {
+  start: { annual: 295200, name: "Wiize Start" },
+  growth: { annual: 595200, name: "Wiize Growth" },
 };
+
+const INSTALLMENT_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 export default function CheckoutCard() {
   const [searchParams] = useSearchParams();
@@ -69,8 +78,8 @@ export default function CheckoutCard() {
   const [cardHolder, setCardHolder] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [addressNumber, setAddressNumber] = useState("");
+  const [installments, setInstallments] = useState("12");
+  const [cvvFocused, setCvvFocused] = useState(false);
 
   // Load customer data from sessionStorage
   useEffect(() => {
@@ -92,8 +101,10 @@ export default function CheckoutCard() {
     cardNumber.replace(/\s/g, "").length >= 13 &&
     cardHolder.trim().length >= 3 &&
     cardExpiry.length >= 4 &&
-    cardCvv.length >= 3 &&
-    postalCode.replace(/\D/g, "").length >= 8;
+    cardCvv.length >= 3;
+
+  const installmentCount = parseInt(installments);
+  const installmentValue = planConfig ? Math.round(planConfig.annual / installmentCount) : 0;
 
   const handleSubmit = async () => {
     if (!customerData || !planKey || !isCardValid) return;
@@ -107,10 +118,11 @@ export default function CheckoutCard() {
       const { data, error } = await supabase.functions.invoke("create-asaas-card-checkout", {
         body: {
           planKey,
+          installmentCount,
           customerData: {
             ...customerData,
-            postalCode: postalCode.replace(/\D/g, ""),
-            addressNumber: addressNumber || "0",
+            postalCode: "00000000",
+            addressNumber: "0",
           },
           creditCard: {
             holderName: cardHolder,
@@ -231,12 +243,20 @@ export default function CheckoutCard() {
                 <div className="text-center space-y-2">
                   <h1 className="text-2xl font-bold text-foreground">Pagamento com Cartão</h1>
                   <p className="text-sm text-muted-foreground">
-                    Assinatura anual em <strong>12x de {formatCurrency(planConfig.installment)}</strong>
+                    Assinatura anual — <strong>{installmentCount}x de {formatCurrency(installmentValue)}</strong>
                   </p>
                   <p className="text-xs text-muted-foreground/80">
                     Renovação automática anual. Cancele quando quiser.
                   </p>
                 </div>
+
+                {/* Animated 3D Credit Card */}
+                <AnimatedCreditCard
+                  cardNumber={cardNumber}
+                  cardHolder={cardHolder}
+                  expiryDate={cardExpiry}
+                  isFlipped={cvvFocused}
+                />
 
                 {/* Card form */}
                 <div className="space-y-4 rounded-2xl border border-border/40 bg-card p-5">
@@ -299,39 +319,32 @@ export default function CheckoutCard() {
                         onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
                         maxLength={4}
                         type="password"
+                        onFocus={() => setCvvFocused(true)}
+                        onBlur={() => setCvvFocused(false)}
                       />
                     </div>
                   </div>
 
                   <div className="h-px bg-border/30 my-2" />
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="postal-code" className="text-xs font-medium">
-                        CEP
-                      </Label>
-                      <Input
-                        id="postal-code"
-                        placeholder="00000-000"
-                        value={postalCode}
-                        onChange={(e) => {
-                          const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
-                          setPostalCode(digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits);
-                        }}
-                        maxLength={9}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="address-number" className="text-xs font-medium">
-                        Nº endereço
-                      </Label>
-                      <Input
-                        id="address-number"
-                        placeholder="123"
-                        value={addressNumber}
-                        onChange={(e) => setAddressNumber(e.target.value)}
-                      />
-                    </div>
+                  {/* Installment selector */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Parcelas</Label>
+                    <Select value={installments} onValueChange={setInstallments}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INSTALLMENT_OPTIONS.map((n) => {
+                          const val = Math.round(planConfig.annual / n);
+                          return (
+                            <SelectItem key={n} value={String(n)}>
+                              {n}x de {formatCurrency(val)} {n === 1 ? "(à vista)" : ""}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -349,14 +362,14 @@ export default function CheckoutCard() {
                   ) : (
                     <>
                       <Lock className="h-4 w-4" />
-                      Assinar — 12x de {formatCurrency(planConfig.installment)}
+                      Assinar — {installmentCount}x de {formatCurrency(installmentValue)}
                     </>
                   )}
                 </Button>
 
                 <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
                   <p className="text-[11px] text-muted-foreground">
-                    Ao confirmar, você autoriza a cobrança de <strong>{formatCurrency(planConfig.annual)}</strong> em 12 parcelas no cartão de crédito, com <strong>renovação automática anual</strong>. Cancele a qualquer momento pelo seu perfil.
+                    Ao confirmar, você autoriza a cobrança de <strong>{formatCurrency(planConfig.annual)}</strong> em {installmentCount}x de {formatCurrency(installmentValue)} no cartão de crédito, com <strong>renovação automática anual</strong>. Cancele a qualquer momento pelo seu perfil.
                   </p>
                 </div>
               </div>
@@ -387,7 +400,7 @@ export default function CheckoutCard() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Parcelas</span>
-                  <span className="font-semibold text-foreground">12x de {formatCurrency(planConfig.installment)}</span>
+                  <span className="font-semibold text-foreground">{installmentCount}x de {formatCurrency(installmentValue)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Método</span>
@@ -402,9 +415,14 @@ export default function CheckoutCard() {
                 <div className="h-px bg-border/50" />
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-foreground">Total</span>
-                  <span className="font-bold text-lg text-foreground">
-                    {formatCurrency(planConfig.annual)}
-                  </span>
+                  <div className="text-right">
+                    <span className="font-bold text-lg text-foreground block">
+                      {formatCurrency(planConfig.annual)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {installmentCount}x de {formatCurrency(installmentValue)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -430,8 +448,8 @@ export default function CheckoutCard() {
                     <CreditCard className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground">Parcelamento em 12x</p>
-                    <p className="text-xs text-muted-foreground">Renovação anual automática</p>
+                    <p className="text-xs font-semibold text-foreground">Parcelamento flexível</p>
+                    <p className="text-xs text-muted-foreground">Escolha de 1x a 12x sem juros</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">

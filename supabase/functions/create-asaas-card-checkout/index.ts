@@ -31,10 +31,12 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { planKey, customerData, creditCard } = await req.json();
+    const { planKey, customerData, creditCard, installmentCount } = await req.json();
     if (!planKey || !customerData || !creditCard) {
       throw new Error("planKey, customerData and creditCard are required");
     }
+
+    const maxInstallments = Math.min(Math.max(installmentCount || 12, 1), 12);
 
     const plan = PLAN_CONFIG[planKey];
     if (!plan) throw new Error(`Invalid plan: ${planKey}`);
@@ -129,7 +131,7 @@ serve(async (req) => {
       nextDueDate: dueDateStr,
       description: `${plan.name} Anual`,
       externalReference: userId || customerData.email,
-      maxInstallmentCount: 12,
+      maxInstallmentCount: maxInstallments,
       creditCard: {
         holderName: creditCard.holderName,
         number: creditCard.number.replace(/\s/g, ""),
