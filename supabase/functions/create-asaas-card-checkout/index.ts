@@ -110,7 +110,7 @@ serve(async (req) => {
 
     // 2. Create payment link with installment options
     // Use the domain registered in Asaas account for callback URLs
-    const callbackDomain = customerData.callbackDomain || "https://maps-prospect-flow.lovable.app";
+    const callbackDomain = customerData.callbackDomain || "https://wiize.com.br";
     const externalRef = userId || customerData.email;
 
     const paymentLinkBody: Record<string, any> = {
