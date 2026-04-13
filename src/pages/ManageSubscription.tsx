@@ -6,13 +6,13 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  CreditCard, FileText, Shield, AlertTriangle, CheckCircle,
-  Clock, XCircle, LogOut, ChevronRight, Banknote, Loader2,
-  Calendar, Receipt, Info, ArrowLeft,
+  CreditCard, FileText, AlertTriangle, CheckCircle,
+  Clock, XCircle, Banknote, Loader2,
+  Receipt, Info, ArrowLeft, Headphones, HelpCircle,
+  ExternalLink, Shield, MessageCircle, RefreshCw,
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -85,6 +85,12 @@ function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 }
 
+const fadeUp = (delay: number) => ({
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+});
+
 export default function ManageSubscription() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -149,110 +155,216 @@ export default function ManageSubscription() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 text-emerald-500 animate-spin" />
-          <p className="text-zinc-400 text-sm">Carregando dados da assinatura...</p>
+      <div className="min-h-screen bg-[#060606] flex items-center justify-center relative overflow-hidden">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-500/[0.04] rounded-full blur-[120px]" />
+        <div className="flex flex-col items-center gap-4 relative z-10">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
+            <Loader2 className="h-8 w-8 text-emerald-500 animate-spin relative z-10" />
+          </div>
+          <p className="text-zinc-500 text-sm font-medium">Carregando dados da assinatura...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-zinc-100">
+    <div className="min-h-screen bg-[#060606] text-zinc-100 relative overflow-hidden">
+      {/* Background glows */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-emerald-500/[0.03] rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 right-0 w-[500px] h-[400px] bg-emerald-600/[0.02] rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-0 w-[300px] h-[300px] bg-emerald-400/[0.015] rounded-full blur-[100px]" />
+      </div>
+
+      {/* Grid pattern overlay */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.015]"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+          backgroundSize: "60px 60px",
+        }}
+      />
+
       {/* Header */}
-      <div className="border-b border-zinc-800 bg-[#0a0a0a]/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <div className="border-b border-zinc-800/60 bg-[#060606]/90 backdrop-blur-2xl sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <Logo size="sm" asLink={false} />
-            <span className="text-zinc-500">|</span>
-            <span className="text-sm text-zinc-400 font-medium">Minha Assinatura</span>
+            <div className="h-5 w-px bg-zinc-800" />
+            <span className="text-sm text-zinc-400 font-medium tracking-wide">Minha Assinatura</span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/dashboard")}
-            className="text-zinc-400 hover:text-zinc-200"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={fetchInfo}
+              className="text-zinc-500 hover:text-zinc-300 h-8 w-8 p-0"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/dashboard")}
+              className="text-zinc-400 hover:text-zinc-200 text-xs"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Voltar ao painel
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-        {/* Plan Summary */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="bg-zinc-900/60 border-zinc-800">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between flex-wrap gap-4">
-                <div>
-                  <p className="text-sm text-zinc-500 mb-1">Plano atual</p>
-                  <h2 className="text-2xl font-bold text-zinc-100 capitalize">
+      <div className="max-w-5xl mx-auto px-6 py-10 space-y-8 relative z-10">
+        {/* Hero: Plan Summary */}
+        <motion.div {...fadeUp(0)}>
+          <Card className="bg-gradient-to-br from-zinc-900/80 via-zinc-900/60 to-zinc-900/40 border-zinc-800/60 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/[0.06] rounded-full blur-[80px]" />
+            <CardContent className="p-8 relative z-10">
+              <div className="flex items-start justify-between flex-wrap gap-6">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">Plano atual</p>
+                  <h2 className="text-3xl font-bold text-zinc-50 capitalize tracking-tight">
                     Wiize {profile?.plan || "Free"}
                   </h2>
-                  <p className="text-sm text-zinc-400 mt-1">
+                  <p className="text-sm text-zinc-500 mt-2">
                     {profile?.email}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-zinc-500 mb-1">Ativo até</p>
-                  <p className="text-lg font-semibold text-zinc-100">
+                <div className="text-right space-y-1">
+                  <p className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">Ativo até</p>
+                  <p className="text-2xl font-bold text-zinc-50 tabular-nums">
                     {profile?.subscription_current_period_end
                       ? formatDate(profile.subscription_current_period_end)
                       : "—"}
                   </p>
+                  {hasActiveSub && (
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-[10px]">
+                      <CheckCircle className="h-3 w-3 mr-1" /> Renovação ativa
+                    </Badge>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Payment Method */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <Card className="bg-zinc-900/60 border-zinc-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2 text-zinc-200">
-                <CreditCard className="h-4 w-4 text-emerald-500" />
-                Forma de Pagamento
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {paymentMethod ? (
-                <div className="flex items-center gap-3 bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
-                  <div className="h-10 w-14 bg-zinc-700 rounded-lg flex items-center justify-center text-xs font-bold text-zinc-300 uppercase">
-                    {paymentMethod.brand || "CARD"}
+        {/* Two-column grid: Payment Method + Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Payment Method */}
+          <motion.div {...fadeUp(0.06)}>
+            <Card className="bg-zinc-900/50 border-zinc-800/50 h-full">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2 text-zinc-300 font-semibold">
+                  <div className="h-7 w-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <CreditCard className="h-3.5 w-3.5 text-emerald-500" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-zinc-200">
-                      •••• •••• •••• {paymentMethod.lastDigits}
-                    </p>
-                    <p className="text-xs text-zinc-500">Cartão de crédito</p>
+                  Forma de Pagamento
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {paymentMethod ? (
+                  <div className="flex items-center gap-4 bg-zinc-800/40 rounded-xl p-4 border border-zinc-700/30">
+                    <div className="h-12 w-16 bg-gradient-to-br from-zinc-700 to-zinc-800 rounded-lg flex items-center justify-center text-[10px] font-bold text-zinc-300 uppercase tracking-wider border border-zinc-600/30">
+                      {paymentMethod.brand || "CARD"}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-200 tracking-wide">
+                        •••• •••• •••• {paymentMethod.lastDigits}
+                      </p>
+                      <p className="text-xs text-zinc-500 mt-0.5">Cartão de crédito</p>
+                    </div>
                   </div>
-                </div>
-              ) : isPix ? (
-                <div className="flex items-center gap-3 bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
-                  <div className="h-10 w-14 bg-emerald-500/10 rounded-lg flex items-center justify-center">
-                    <Banknote className="h-5 w-5 text-emerald-500" />
+                ) : isPix ? (
+                  <div className="flex items-center gap-4 bg-zinc-800/40 rounded-xl p-4 border border-zinc-700/30">
+                    <div className="h-12 w-16 bg-emerald-500/10 rounded-lg flex items-center justify-center border border-emerald-500/20">
+                      <Banknote className="h-5 w-5 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-200">PIX Automático</p>
+                      <p className="text-xs text-zinc-500 mt-0.5">Pagamento recorrente via banco</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-zinc-200">PIX</p>
-                    <p className="text-xs text-zinc-500">Pagamento recorrente via PIX</p>
+                ) : (
+                  <div className="text-center py-6">
+                    <CreditCard className="h-8 w-8 text-zinc-700 mx-auto mb-2" />
+                    <p className="text-xs text-zinc-600">Nenhuma forma de pagamento encontrada</p>
                   </div>
-                </div>
-              ) : (
-                <p className="text-sm text-zinc-500">Nenhuma forma de pagamento encontrada.</p>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Quick Actions */}
+          <motion.div {...fadeUp(0.09)}>
+            <Card className="bg-zinc-900/50 border-zinc-800/50 h-full">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2 text-zinc-300 font-semibold">
+                  <div className="h-7 w-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <HelpCircle className="h-3.5 w-3.5 text-emerald-500" />
+                  </div>
+                  Precisa de ajuda?
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <a
+                  href="https://wa.me/5511999999999"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 bg-zinc-800/40 hover:bg-zinc-800/60 rounded-xl p-3.5 border border-zinc-700/30 transition-all group cursor-pointer"
+                >
+                  <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                    <MessageCircle className="h-4 w-4 text-emerald-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-zinc-200">Falar com suporte</p>
+                    <p className="text-[11px] text-zinc-500">WhatsApp · Resposta rápida</p>
+                  </div>
+                  <ExternalLink className="h-3.5 w-3.5 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                </a>
+
+                <a
+                  href="/ajuda"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 bg-zinc-800/40 hover:bg-zinc-800/60 rounded-xl p-3.5 border border-zinc-700/30 transition-all group cursor-pointer"
+                >
+                  <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                    <HelpCircle className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-zinc-200">Central de Ajuda</p>
+                    <p className="text-[11px] text-zinc-500">Dúvidas frequentes e tutoriais</p>
+                  </div>
+                  <ExternalLink className="h-3.5 w-3.5 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                </a>
+
+                <a
+                  href="mailto:suporte@wiize.com.br"
+                  className="flex items-center gap-3 bg-zinc-800/40 hover:bg-zinc-800/60 rounded-xl p-3.5 border border-zinc-700/30 transition-all group cursor-pointer"
+                >
+                  <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+                    <Headphones className="h-4 w-4 text-amber-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-zinc-200">E-mail de suporte</p>
+                    <p className="text-[11px] text-zinc-500">suporte@wiize.com.br</p>
+                  </div>
+                  <ExternalLink className="h-3.5 w-3.5 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                </a>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
 
         {/* Active Subscriptions */}
         {subscriptions.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <Card className="bg-zinc-900/60 border-zinc-800">
+          <motion.div {...fadeUp(0.12)}>
+            <Card className="bg-zinc-900/50 border-zinc-800/50">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2 text-zinc-200">
-                  <Receipt className="h-4 w-4 text-emerald-500" />
+                <CardTitle className="text-sm flex items-center gap-2 text-zinc-300 font-semibold">
+                  <div className="h-7 w-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <Receipt className="h-3.5 w-3.5 text-emerald-500" />
+                  </div>
                   Assinaturas
                 </CardTitle>
               </CardHeader>
@@ -261,30 +373,25 @@ export default function ManageSubscription() {
                   const st = statusMap[sub.status] || statusMap.PENDING;
                   const StIcon = st.icon;
                   return (
-                    <div key={sub.id} className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
-                      <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-                        <p className="font-medium text-zinc-200 text-sm">{sub.description || "Assinatura Wiize"}</p>
-                        <Badge variant="outline" className={`text-xs ${st.color}`}>
+                    <div key={sub.id} className="bg-zinc-800/30 rounded-xl p-5 border border-zinc-700/30">
+                      <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+                        <p className="font-semibold text-zinc-200 text-sm">{sub.description || "Assinatura Wiize"}</p>
+                        <Badge variant="outline" className={`text-[10px] ${st.color}`}>
                           <StIcon className="h-3 w-3 mr-1" /> {st.label}
                         </Badge>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                        <div>
-                          <p className="text-zinc-500">Valor</p>
-                          <p className="text-zinc-300 font-medium">{formatCurrency(sub.value)}</p>
-                        </div>
-                        <div>
-                          <p className="text-zinc-500">Ciclo</p>
-                          <p className="text-zinc-300 font-medium">{cycleMap[sub.cycle] || sub.cycle}</p>
-                        </div>
-                        <div>
-                          <p className="text-zinc-500">Pagamento</p>
-                          <p className="text-zinc-300 font-medium">{billingTypeMap[sub.billingType] || sub.billingType}</p>
-                        </div>
-                        <div>
-                          <p className="text-zinc-500">Próx. cobrança</p>
-                          <p className="text-zinc-300 font-medium">{formatDate(sub.nextDueDate)}</p>
-                        </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {[
+                          { label: "Valor", value: formatCurrency(sub.value) },
+                          { label: "Ciclo", value: cycleMap[sub.cycle] || sub.cycle },
+                          { label: "Pagamento", value: billingTypeMap[sub.billingType] || sub.billingType },
+                          { label: "Próx. cobrança", value: formatDate(sub.nextDueDate) },
+                        ].map((item) => (
+                          <div key={item.label} className="bg-zinc-800/40 rounded-lg p-3 border border-zinc-700/20">
+                            <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-1">{item.label}</p>
+                            <p className="text-sm text-zinc-200 font-semibold">{item.value}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   );
@@ -295,125 +402,163 @@ export default function ManageSubscription() {
         )}
 
         {/* Payment History */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <Card className="bg-zinc-900/60 border-zinc-800">
+        <motion.div {...fadeUp(0.15)}>
+          <Card className="bg-zinc-900/50 border-zinc-800/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2 text-zinc-200">
-                <FileText className="h-4 w-4 text-emerald-500" />
-                Histórico de Cobranças
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm flex items-center gap-2 text-zinc-300 font-semibold">
+                  <div className="h-7 w-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <FileText className="h-3.5 w-3.5 text-emerald-500" />
+                  </div>
+                  Histórico de Cobranças
+                </CardTitle>
+                {payments.length > 0 && (
+                  <span className="text-[10px] text-zinc-600 bg-zinc-800/50 px-2 py-1 rounded-full">
+                    {payments.length} {payments.length === 1 ? "registro" : "registros"}
+                  </span>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {payments.length > 0 ? (
                 <div className="space-y-2">
-                  {payments.map((p) => {
+                  {/* Table header */}
+                  <div className="grid grid-cols-[1fr_100px_80px_60px] gap-3 px-4 py-2 text-[10px] uppercase tracking-widest text-zinc-600 font-semibold">
+                    <span>Cobrança</span>
+                    <span className="text-right">Valor</span>
+                    <span className="text-center">Status</span>
+                    <span className="text-right">Fatura</span>
+                  </div>
+                  {payments.map((p, i) => {
                     const st = statusMap[p.status] || statusMap.PENDING;
                     const StIcon = st.icon;
                     return (
-                      <div key={p.id} className="flex items-center justify-between bg-zinc-800/30 rounded-lg px-4 py-3 border border-zinc-700/30">
-                        <div className="flex items-center gap-3">
-                          <StIcon className={`h-4 w-4 ${st.color.includes("emerald") ? "text-emerald-400" : st.color.includes("red") ? "text-red-400" : st.color.includes("amber") ? "text-amber-400" : "text-zinc-400"}`} />
-                          <div>
-                            <p className="text-sm text-zinc-200 font-medium">
-                              {formatCurrency(p.value)}
-                            </p>
-                            <p className="text-xs text-zinc-500">
+                      <motion.div
+                        key={p.id}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.03, duration: 0.3 }}
+                        className="grid grid-cols-[1fr_100px_80px_60px] gap-3 items-center bg-zinc-800/20 hover:bg-zinc-800/40 rounded-lg px-4 py-3 border border-zinc-800/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <StIcon className={`h-3.5 w-3.5 shrink-0 ${st.color.includes("emerald") ? "text-emerald-400" : st.color.includes("red") ? "text-red-400" : st.color.includes("amber") ? "text-amber-400" : "text-zinc-400"}`} />
+                          <div className="min-w-0">
+                            <p className="text-xs text-zinc-300 font-medium truncate">
                               {formatDate(p.dueDate)} · {billingTypeMap[p.billingType] || p.billingType}
-                              {p.creditCard && ` · •••${p.creditCard.creditCardNumber}`}
                             </p>
+                            {p.creditCard && (
+                              <p className="text-[10px] text-zinc-600 mt-0.5">•••{p.creditCard.creditCardNumber}</p>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={`text-[10px] ${st.color}`}>
+                        <p className="text-sm text-zinc-200 font-semibold text-right tabular-nums">
+                          {formatCurrency(p.value)}
+                        </p>
+                        <div className="flex justify-center">
+                          <Badge variant="outline" className={`text-[9px] ${st.color}`}>
                             {st.label}
                           </Badge>
-                          {p.invoiceUrl && (
+                        </div>
+                        <div className="text-right">
+                          {p.invoiceUrl ? (
                             <a href={p.invoiceUrl} target="_blank" rel="noopener noreferrer"
-                              className="text-emerald-500 hover:text-emerald-400 text-xs underline">
-                              Fatura
+                              className="text-emerald-500 hover:text-emerald-400 transition-colors">
+                              <ExternalLink className="h-3.5 w-3.5 inline" />
                             </a>
+                          ) : (
+                            <span className="text-zinc-700">—</span>
                           )}
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-zinc-500 text-center py-6">Nenhuma cobrança encontrada.</p>
+                <div className="text-center py-12">
+                  <FileText className="h-10 w-10 text-zinc-800 mx-auto mb-3" />
+                  <p className="text-sm text-zinc-600 font-medium">Nenhuma cobrança encontrada</p>
+                  <p className="text-[11px] text-zinc-700 mt-1">As cobranças aparecerão aqui após o primeiro pagamento</p>
+                </div>
               )}
             </CardContent>
           </Card>
         </motion.div>
 
         {/* Cancellation Section */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card className="bg-zinc-900/60 border-zinc-800 border-red-500/10">
+        <motion.div {...fadeUp(0.2)}>
+          <Card className="bg-zinc-900/50 border-zinc-800/50 border-t-red-500/10">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2 text-zinc-200">
-                <AlertTriangle className="h-4 w-4 text-red-400" />
-                Cancelar Renovação
+              <CardTitle className="text-sm flex items-center gap-2 text-zinc-300 font-semibold">
+                <div className="h-7 w-7 rounded-lg bg-red-500/10 flex items-center justify-center">
+                  <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
+                </div>
+                Cancelar Renovação Automática
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {cancelled ? (
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-center">
-                  <CheckCircle className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
-                  <p className="text-sm text-emerald-300 font-medium">Renovação cancelada com sucesso</p>
-                  <p className="text-xs text-zinc-400 mt-1">
-                    Seu plano continua ativo até {profile?.subscription_current_period_end ? formatDate(profile.subscription_current_period_end) : "o final do período"}.
+                <div className="bg-emerald-500/[0.06] border border-emerald-500/15 rounded-xl p-6 text-center">
+                  <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle className="h-6 w-6 text-emerald-500" />
+                  </div>
+                  <p className="text-sm text-emerald-300 font-semibold">Renovação cancelada com sucesso</p>
+                  <p className="text-xs text-zinc-500 mt-2 max-w-sm mx-auto">
+                    Seu plano continua ativo até <strong className="text-zinc-300">{profile?.subscription_current_period_end ? formatDate(profile.subscription_current_period_end) : "o final do período"}</strong>. Não haverá novas cobranças.
                   </p>
                 </div>
               ) : isPix && !hasActiveSub ? (
-                /* PIX cancellation instructions */
                 <div className="space-y-4">
-                  <p className="text-sm text-zinc-400">
-                    Como seu pagamento é via PIX recorrente, o cancelamento deve ser feito diretamente no seu banco:
-                  </p>
-                  <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50 space-y-3">
-                    <h4 className="text-sm font-semibold text-zinc-200">Passo a passo:</h4>
-                    <ol className="space-y-2 text-sm text-zinc-400">
-                      <li className="flex gap-2">
-                        <span className="text-emerald-500 font-bold shrink-0">1.</span>
-                        Abra o app do seu banco e vá em <strong className="text-zinc-200">PIX</strong>
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="text-emerald-500 font-bold shrink-0">2.</span>
-                        Procure por <strong className="text-zinc-200">PIX Automático</strong> ou <strong className="text-zinc-200">Autorizações de PIX</strong>
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="text-emerald-500 font-bold shrink-0">3.</span>
-                        Encontre a cobrança da <strong className="text-zinc-200">Wiize / ASAAS</strong>
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="text-emerald-500 font-bold shrink-0">4.</span>
-                        Toque em <strong className="text-zinc-200">Cancelar autorização</strong>
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="text-emerald-500 font-bold shrink-0">5.</span>
-                        Confirme o cancelamento
-                      </li>
+                  <div className="bg-amber-500/[0.06] border border-amber-500/15 rounded-xl p-4 flex gap-3">
+                    <Info className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      Como seu pagamento é via <strong className="text-zinc-300">PIX recorrente</strong>, o cancelamento deve ser feito diretamente no app do seu banco.
+                    </p>
+                  </div>
+                  <div className="bg-zinc-800/30 rounded-xl p-5 border border-zinc-700/30">
+                    <h4 className="text-sm font-semibold text-zinc-200 mb-4 flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-emerald-500" />
+                      Passo a passo para cancelar
+                    </h4>
+                    <ol className="space-y-3">
+                      {[
+                        { text: "Abra o app do seu banco e vá em", bold: "PIX" },
+                        { text: "Procure por", bold: "PIX Automático ou Autorizações" },
+                        { text: "Encontre a cobrança da", bold: "Wiize / ASAAS" },
+                        { text: "Toque em", bold: "Cancelar autorização" },
+                        { text: "Confirme o cancelamento e pronto!", bold: "" },
+                      ].map((step, i) => (
+                        <li key={i} className="flex gap-3 items-start">
+                          <span className="h-6 w-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-[10px] font-bold text-emerald-400 shrink-0">
+                            {i + 1}
+                          </span>
+                          <p className="text-sm text-zinc-400 leading-relaxed pt-0.5">
+                            {step.text}{step.bold && <> <strong className="text-zinc-200">{step.bold}</strong></>}
+                          </p>
+                        </li>
+                      ))}
                     </ol>
                   </div>
-                  <p className="text-xs text-zinc-500">
-                    Após cancelar no banco, seu plano continua ativo até o final do período vigente. Não haverá novas cobranças.
+                  <p className="text-[11px] text-zinc-600 text-center">
+                    Após cancelar no banco, seu plano continua ativo até o final do período vigente.
                   </p>
                 </div>
               ) : hasActiveSub ? (
-                /* Card/subscription cancellation */
                 <div className="space-y-4">
-                  <p className="text-sm text-zinc-400">
-                    Ao cancelar, a renovação automática será desativada. Seu plano continua ativo até o fim do período atual.
+                  <p className="text-sm text-zinc-400 leading-relaxed">
+                    Ao cancelar, a renovação automática será desativada. Seu plano continua ativo até o fim do período atual — sem novas cobranças.
                   </p>
-                  <div className="bg-zinc-800/30 rounded-lg p-3 border border-zinc-700/30">
-                    <div className="flex items-center gap-2 text-xs text-zinc-400">
-                      <Info className="h-3.5 w-3.5 text-amber-400" />
-                      <span>Você não será cobrado novamente após o cancelamento.</span>
-                    </div>
+                  <div className="bg-amber-500/[0.06] border border-amber-500/15 rounded-lg p-3 flex gap-2.5 items-center">
+                    <Info className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                    <span className="text-xs text-zinc-400">Você não será cobrado novamente após o cancelamento.</span>
                   </div>
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="w-full" disabled={cancelling}>
+                      <Button
+                        variant="outline"
+                        className="w-full border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-300 transition-all"
+                        disabled={cancelling}
+                      >
                         {cancelling ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : (
@@ -449,20 +594,25 @@ export default function ManageSubscription() {
                   </AlertDialog>
                 </div>
               ) : (
-                <p className="text-sm text-zinc-500 text-center py-4">
-                  Nenhuma assinatura ativa encontrada para cancelar.
-                </p>
+                <div className="text-center py-8">
+                  <Shield className="h-10 w-10 text-zinc-800 mx-auto mb-3" />
+                  <p className="text-sm text-zinc-600 font-medium">Nenhuma assinatura ativa para cancelar</p>
+                </div>
               )}
             </CardContent>
           </Card>
         </motion.div>
 
         {/* Footer */}
-        <div className="text-center pb-8">
-          <p className="text-xs text-zinc-600">
-            Dúvidas? Entre em contato pelo chat de atendimento.
+        <motion.div {...fadeUp(0.25)} className="text-center pb-10 space-y-3">
+          <div className="flex items-center justify-center gap-2 text-zinc-600">
+            <Shield className="h-3.5 w-3.5" />
+            <span className="text-[11px] font-medium">Seus dados estão protegidos com criptografia de ponta</span>
+          </div>
+          <p className="text-[10px] text-zinc-700">
+            © {new Date().getFullYear()} Wiize. Todos os direitos reservados.
           </p>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
