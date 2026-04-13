@@ -271,13 +271,13 @@ export function PaymentMethodModal({
               {/* Card option */}
               <button
                 onClick={() => setSelectedMethod("card")}
-                disabled={loading || asaasCardLoading}
+                disabled={loading}
                 className={cn(
                   "w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-200 text-left group active:scale-[0.98]",
                   selectedMethod === "card"
                     ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                     : "border-border/50 hover:border-primary/40 hover:bg-primary/[0.02]",
-                  (loading || asaasCardLoading) && "opacity-50 cursor-not-allowed"
+                  loading && "opacity-50 cursor-not-allowed"
                 )}
               >
                 <div className={cn(
@@ -354,14 +354,14 @@ export function PaymentMethodModal({
               {/* Confirm button */}
               <Button
                 onClick={handleConfirm}
-                disabled={!selectedMethod || loading || asaasCardLoading}
+                disabled={!selectedMethod || loading}
                 className="w-full mt-2"
                 size="lg"
               >
-                {(loading || asaasCardLoading) ? (
+                {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    {asaasCardLoading ? "Redirecionando..." : "Processando..."}
+                    Processando...
                   </>
                 ) : (
                   "Continuar para pagamento"
