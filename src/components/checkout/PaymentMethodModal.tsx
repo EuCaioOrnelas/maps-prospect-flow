@@ -39,6 +39,7 @@ interface PaymentMethodModalProps {
   planName: string;
   planPrice: string;
   planKey: string;
+  billingPeriod?: "monthly" | "annual";
   onSelectCard: (data: CustomerData) => void;
   onSelectPix: (data: CustomerData) => void;
   loading: boolean;
@@ -106,8 +107,8 @@ export function PaymentMethodModal({
       onSelectCard(customerData);
     } else {
       const params = new URLSearchParams({ plan: planKey, planName, planPrice });
+      if (billingPeriod) params.set("billing", billingPeriod);
       sessionStorage.setItem("pixCustomerData", JSON.stringify(customerData));
-      // Navigate first, then close modal to avoid delay
       navigate(`/checkout-pix?${params.toString()}`);
       setTimeout(() => onOpenChange(false), 50);
     }
