@@ -190,7 +190,8 @@ export const PricingSection = () => {
     if (!selectedPlan) return;
     setLoadingPlan(selectedPlan.key);
     try {
-      const priceId = PRICE_IDS[selectedPlan.key as keyof typeof PRICE_IDS];
+      const billingKey = isAnnual ? "annual" : "monthly";
+      const priceId = PRICE_IDS[billingKey][selectedPlan.key];
       const response = await supabase.functions.invoke("create-checkout", {
         body: { priceId, guestEmail: user ? undefined : customerData.email },
       });
