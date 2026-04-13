@@ -164,7 +164,7 @@ export default function ManageSubscription() {
       <div className="border-b border-zinc-800 bg-[#0a0a0a]/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Logo className="h-8" />
+            <Logo size="sm" asLink={false} />
             <span className="text-zinc-500">|</span>
             <span className="text-sm text-zinc-400 font-medium">Minha Assinatura</span>
           </div>
