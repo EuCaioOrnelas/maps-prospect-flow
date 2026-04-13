@@ -69,17 +69,19 @@ const mainPlans = {
       price: "296",
       anchorPrice: "592",
       opportunities: "1.000",
-      description: "Para validar e começar a gerar oportunidades",
+      description: "Para gerar e validar oportunidades todos os dias",
       features: [
-        { text: "Geração de mensagens com IA" },
-        { text: "IA analisa cada lead e identifica oportunidades reais de abordagem" },
-        { text: "CRM integrado" },
-        { text: "Campanhas de mensagem via Meta API oficial" },
-        { text: "Até 2 números WhatsApp" },
-        { text: "Suporte via email" },
+        { text: "Até 1.000 oportunidades/mês" },
+        { text: "Oportunidades com IA" },
+        { text: "Mensagens com IA prontas" },
+        { text: "Gestão de leads (CRM)" },
+        { text: "Disparos via WhatsApp e Meta" },
+        { text: "Até 2 números conectados" },
+        { text: "Suporte por email" },
+        { text: "⚠️ Operação semi-automática", highlight: true },
         { text: "Sem automação", disabled: true },
         { text: "Sem follow-up", disabled: true },
-        { text: "Sem agente", disabled: true },
+        { text: "Sem agente de IA", disabled: true },
       ] as PlanFeature[],
       popular: false,
       icon: Rocket,
@@ -90,17 +92,16 @@ const mainPlans = {
       price: "696",
       anchorPrice: "1.392",
       opportunities: "3.000",
-      description: "Para escalar e converter oportunidades com IA",
+      description: "Para automatizar, escalar e converter leads no piloto automático",
       features: [
-        { text: "Geração de mensagens com IA" },
-        { text: "IA analisa cada lead e identifica oportunidades reais de abordagem" },
-        { text: "CRM integrado" },
-        { text: "Campanhas de mensagem via Meta API oficial" },
-        { text: "Até 5 números WhatsApp" },
+        { text: "Tudo do Start (leads, CRM e disparos)" },
         { text: "Automação de atendimento" },
-        { text: "Follow-up inteligente" },
-        { text: "Agente de IA operacional" },
+        { text: "Follow-up automático inteligente" },
+        { text: "Agente de IA em conversas" },
+        { text: "Fluxos de vendas automatizados" },
+        { text: "Até 5 números conectados" },
         { text: "Suporte prioritário" },
+        { text: "👉 Escala com operação automática", highlight: true },
       ] as PlanFeature[],
       popular: true,
       icon: TrendingUp,
@@ -114,17 +115,19 @@ const mainPlans = {
       price: "246",
       anchorPrice: "592",
       opportunities: "1.000",
-      description: "Para validar e começar a gerar oportunidades",
+      description: "Para gerar e validar oportunidades todos os dias",
       features: [
-        { text: "Geração de mensagens com IA" },
-        { text: "IA analisa cada lead e identifica oportunidades reais de abordagem" },
-        { text: "CRM integrado" },
-        { text: "Campanhas de mensagem via Meta API oficial" },
-        { text: "Até 2 números WhatsApp" },
-        { text: "Suporte via email" },
+        { text: "Até 1.000 oportunidades/mês" },
+        { text: "Oportunidades com IA" },
+        { text: "Mensagens com IA prontas" },
+        { text: "Gestão de leads (CRM)" },
+        { text: "Disparos via WhatsApp e Meta" },
+        { text: "Até 2 números conectados" },
+        { text: "Suporte por email" },
+        { text: "⚠️ Operação semi-automática", highlight: true },
         { text: "Sem automação", disabled: true },
         { text: "Sem follow-up", disabled: true },
-        { text: "Sem agente", disabled: true },
+        { text: "Sem agente de IA", disabled: true },
       ] as PlanFeature[],
       popular: false,
       icon: Rocket,
@@ -135,17 +138,16 @@ const mainPlans = {
       price: "496",
       anchorPrice: "1.392",
       opportunities: "3.000",
-      description: "Para escalar e converter oportunidades com IA",
+      description: "Para automatizar, escalar e converter leads no piloto automático",
       features: [
-        { text: "Geração de mensagens com IA" },
-        { text: "IA analisa cada lead e identifica oportunidades reais de abordagem" },
-        { text: "CRM integrado" },
-        { text: "Campanhas de mensagem via Meta API oficial" },
-        { text: "Até 5 números WhatsApp" },
+        { text: "Tudo do Start (leads, CRM e disparos)" },
         { text: "Automação de atendimento" },
-        { text: "Follow-up inteligente" },
-        { text: "Agente de IA operacional" },
+        { text: "Follow-up automático inteligente" },
+        { text: "Agente de IA em conversas" },
+        { text: "Fluxos de vendas automatizados" },
+        { text: "Até 5 números conectados" },
         { text: "Suporte prioritário" },
+        { text: "👉 Escala com operação automática", highlight: true },
       ] as PlanFeature[],
       popular: true,
       icon: TrendingUp,
@@ -328,10 +330,12 @@ export const PricingSection = () => {
                     <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
                       {feature.disabled ? (
                         <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                      ) : feature.highlight ? (
+                        <span className="flex-shrink-0 mt-0.5 w-4" />
                       ) : (
                         <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                       )}
-                      <span className="text-muted-foreground">{feature.text}</span>
+                      <span className={feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"}>{feature.text}</span>
                     </li>
                   ))}
                 </ul>
@@ -349,7 +353,7 @@ export const PricingSection = () => {
                       Processando...
                     </>
                   ) : plan.popular ? (
-                    "Começar a Gerar Vendas"
+                    "Escalar com IA"
                   ) : (
                     "Começar Agora"
                   )}
