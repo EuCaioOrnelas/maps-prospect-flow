@@ -98,9 +98,9 @@ export const FeaturesOverviewSection = () => {
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <MessageCircle size={16} className="text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-[15px]">Abordagem Contextual em Escala</h3>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                     <h3 className="font-semibold text-foreground text-base">Abordagem Contextual em Escala</h3>
+                   </div>
+                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Cada lead recebe uma mensagem construída a partir do seu nicho, porte e diagnóstico real. Isso aumenta taxa de resposta e acelera a entrada no pipeline.
                   </p>
                 </div>
@@ -118,9 +118,9 @@ export const FeaturesOverviewSection = () => {
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Send size={16} className="text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-[15px]">Campanhas via API Oficial Meta</h3>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                     <h3 className="font-semibold text-foreground text-base">Campanhas via API Oficial Meta</h3>
+                   </div>
+                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Envios outbound e inbound pela API oficial do WhatsApp Business, com conformidade total às políticas da Meta. Escala sem risco de bloqueio.
                   </p>
                 </div>
@@ -168,9 +168,9 @@ export const FeaturesOverviewSection = () => {
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <LayoutDashboard size={16} className="text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-[15px]">CRM com Scoring Automático</h3>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                     <h3 className="font-semibold text-foreground text-base">CRM com Scoring Automático</h3>
+                   </div>
+                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Pipeline visual que organiza cada lead por estágio, com score baseado em comportamento real. Sua equipe sabe quem priorizar.
                   </p>
                 </div>
@@ -188,9 +188,9 @@ export const FeaturesOverviewSection = () => {
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Search size={16} className="text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-[15px]">Captação com Diagnóstico Automático</h3>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                     <h3 className="font-semibold text-foreground text-base">Captação com Diagnóstico Automático</h3>
+                   </div>
+                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Extrai leads do Google Maps e analisa cada empresa: nicho, presença digital e aderência ao produto. Leads priorizados por potencial de conversão.
                   </p>
                 </div>
@@ -208,9 +208,9 @@ export const FeaturesOverviewSection = () => {
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Zap size={16} className="text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-[15px]">Operação Comercial Autônoma</h3>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                     <h3 className="font-semibold text-foreground text-base">Operação Comercial Autônoma</h3>
+                   </div>
+                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida, 24 horas por dia.
                   </p>
                 </div>
