@@ -56,8 +56,8 @@ export const ProblemSection = () => {
                   <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
                     <MessageSquareOff size={18} className="text-destructive" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm mb-1">Mensagens genéricas</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed max-w-[240px]">
+                  <h3 className="font-semibold text-foreground text-base mb-1">Mensagens genéricas</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-[260px]">
                     Abordagens iguais para todos. Sem contexto, sem personalização. Leads ignoram e você perde oportunidades reais.
                   </p>
                 </div>
@@ -80,8 +80,8 @@ export const ProblemSection = () => {
                 <div className={cardGlowMain} />
                 <div className="flex items-start justify-between relative z-10">
                   <div>
-                    <h3 className="font-semibold text-foreground text-sm mb-0.5">Leads frios</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <h3 className="font-semibold text-foreground text-base mb-0.5">Leads frios</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       Contatos sem aderência ao seu produto. Listas compradas, dados desatualizados e zero qualificação prévia.
                     </p>
                   </div>
@@ -103,8 +103,8 @@ export const ProblemSection = () => {
                   <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center mb-2">
                     <Clock size={16} className="text-destructive" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm mb-0.5">Prospecção manual</h3>
-                  <p className="text-xs text-muted-foreground">Horas perdidas sem critério</p>
+                   <h3 className="font-semibold text-foreground text-base mb-0.5">Prospecção manual</h3>
+                   <p className="text-sm text-muted-foreground">Horas perdidas sem critério</p>
                 </div>
                 <div className="mt-auto pt-2 relative z-10">
                   <span className="text-2xl font-bold text-destructive/80 tracking-tight">3h+</span>
@@ -118,8 +118,8 @@ export const ProblemSection = () => {
                 <div className={cardGlowMain} />
                 <div className="flex items-start justify-between relative z-10">
                   <div>
-                    <h3 className="font-semibold text-foreground text-sm mb-0.5">Follow-up inconsistente</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <h3 className="font-semibold text-foreground text-base mb-0.5">Follow-up inconsistente</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       Sem cadência definida. Leads esfriam, oportunidades morrem e o time perde vendas por falta de acompanhamento.
                     </p>
                   </div>
@@ -141,8 +141,8 @@ export const ProblemSection = () => {
                   <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center mb-2">
                     <BarChart3 size={16} className="text-destructive" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm mb-0.5">Funil desorganizado</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                   <h3 className="font-semibold text-foreground text-base mb-0.5">Funil desorganizado</h3>
+                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Sem visibilidade do pipeline. Sem dados. Sem previsibilidade.
                   </p>
                 </div>
@@ -157,10 +157,10 @@ export const ProblemSection = () => {
                     <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
                       <TrendingDown size={16} className="text-destructive" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-sm">Baixa conversão</h3>
+                    <h3 className="font-semibold text-foreground text-base">Baixa conversão</h3>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Esforço alto com retorno mínimo. Operação que não justifica o investimento e drena recursos do time comercial.
+                   <p className="text-sm text-muted-foreground leading-relaxed">
+                     Esforço alto com retorno mínimo. Operação que não justifica o investimento e drena recursos do time comercial.
                   </p>
                 </div>
                 <div className="flex-shrink-0 text-left sm:text-right pt-3 sm:pt-0 sm:pl-6 border-t sm:border-t-0 sm:border-l border-border/50 relative z-10 w-full sm:w-auto">
