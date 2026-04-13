@@ -80,6 +80,7 @@ export function PaymentMethodModal({
   planName,
   planPrice,
   planKey,
+  billingPeriod,
   onSelectCard,
   onSelectPix,
   loading,
