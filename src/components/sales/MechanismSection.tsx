@@ -138,7 +138,7 @@ export const MechanismSection = () => {
         {/* Timeline */}
         <div className="relative">
           {/* Central line — grows with scroll via CSS */}
-          <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-px overflow-visible">
+          <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-px overflow-visible hidden md:block">
             <motion.div
               initial={{ scaleY: 0 }}
               animate={isVisible ? { scaleY: 1 } : {}}
