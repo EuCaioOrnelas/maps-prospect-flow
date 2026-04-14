@@ -588,200 +588,6 @@ const Profile = () => {
             </Card>
           </div>
 
-          {/* Plan Card */}
-          <Card className="border-border/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2">
-                <Crown className="h-5 w-5 text-warning" />
-                Plano e Assinatura
-              </CardTitle>
-              <CardDescription>
-                Gerencie seu plano e pagamentos
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Current Plan Info */}
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Plano atual:</span>
-                    <span className={`font-bold ${getPlanColor(profile?.plan || 'free')}`}>
-                      {getPlanName(profile?.plan || 'free')}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {(profile?.searches_used || 0).toLocaleString('pt-BR')} de {(profile?.searches_limit || 10).toLocaleString('pt-BR')} oportunidades utilizadas
-                  </p>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
-                          <RefreshCcw className="h-3 w-3" />
-                          Reset das oportunidades mensais: {getNextSearchResetLabel()}
-                        </p>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="max-w-xs">
-                        <div className="space-y-1 text-sm">
-                          <p><strong>Último reset:</strong> {getLastResetLabel()}</p>
-                          <p><strong>Próximo reset:</strong> {getNextResetDate()}</p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                {profile?.plan === 'scale' ? (
-                  <div className="flex items-center gap-2 text-sm text-emerald-500">
-                    <Check className="h-4 w-4" />
-                    Plano máximo
-                  </div>
-                ) : (
-                  <Link to="/upgrade">
-                    <Button variant="default" className="gap-2">
-                      <Crown className="h-4 w-4" />
-                      Fazer upgrade
-                    </Button>
-                  </Link>
-                )}
-              </div>
-
-              {/* Subscription Management - Provider-specific */}
-              {!isFreePlan && (
-                <>
-                  {((profile as any)?.payment_provider === 'abacate_pay' || ((profile as any)?.payment_provider == null && !(profile as any)?.stripe_customer_id)) && (profile as any)?.payment_provider !== 'stripe' ? (
-                    // PIX Subscription Management
-                    <div className="p-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                          <CreditCard className="h-4 w-4 text-emerald-500" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">Assinatura via PIX</p>
-                          <p className="text-xs text-muted-foreground">Pagamento mensal</p>
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      {profile?.subscription_current_period_end && (
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground flex items-center gap-1.5">
-                              <Calendar className="h-3.5 w-3.5" />
-                              Vencimento
-                            </span>
-                            <span className="font-semibold">
-                              {formatDate(profile.subscription_current_period_end)}
-                            </span>
-                          </div>
-
-                          {(() => {
-                            const expiry = new Date(profile.subscription_current_period_end);
-                            const now = new Date();
-                            const daysLeft = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                            const isExpired = daysLeft < 0;
-                            const isExpiringSoon = daysLeft >= 0 && daysLeft <= 5;
-
-                            return (
-                              <div className={`p-3 rounded-md text-xs space-y-1 ${
-                                isExpired 
-                                  ? 'bg-destructive/10 border border-destructive/20' 
-                                  : isExpiringSoon 
-                                    ? 'bg-warning/10 border border-warning/20'
-                                    : 'bg-emerald-500/5 border border-emerald-500/10'
-                              }`}>
-                                {isExpired ? (
-                                  <>
-                                    <p className="font-semibold text-destructive flex items-center gap-1">
-                                      <AlertCircle className="h-3.5 w-3.5" />
-                                      Assinatura vencida
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                      Sua assinatura venceu. Renove para manter o acesso ao plano {getPlanName(profile.plan)}.
-                                    </p>
-                                  </>
-                                ) : isExpiringSoon ? (
-                                  <>
-                                    <p className="font-semibold text-warning flex items-center gap-1">
-                                      <AlertCircle className="h-3.5 w-3.5" />
-                                      Vence em {daysLeft} dia{daysLeft !== 1 ? 's' : ''}
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                      Após o vencimento, se o PIX não for pago, seu plano será automaticamente cancelado e voltará para o plano Gratuito.
-                                    </p>
-                                  </>
-                                ) : (
-                                  <>
-                                    <p className="font-semibold text-emerald-600 flex items-center gap-1">
-                                      <Check className="h-3.5 w-3.5" />
-                                      Assinatura ativa — {daysLeft} dias restantes
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                      Próximo ao vencimento, enviaremos um novo PIX para renovação automática.
-                                    </p>
-                                  </>
-                                )}
-                              </div>
-                            );
-                          })()}
-
-                          {/* Renewal Button for PIX */}
-                          {(() => {
-                            const expiry = new Date(profile.subscription_current_period_end);
-                            const now = new Date();
-                            const daysLeft = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                            if (daysLeft <= 5) {
-                              return (
-                                <Link to={`/checkout-pix?plan=${profile.plan}&planName=Wiize%20${getPlanName(profile.plan)}&email=${encodeURIComponent(user?.email || '')}&name=${encodeURIComponent(profile.name || '')}&renewal=true`}>
-                                  <Button className="w-full gap-2 mt-1" size="sm">
-                                    <RefreshCcw className="h-3.5 w-3.5" />
-                                    Renovar agora via PIX
-                                  </Button>
-                                </Link>
-                              );
-                            }
-                            return null;
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    // Stripe Subscription Management
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-blue-500/20 bg-blue-500/5">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="h-4 w-4 text-blue-500" />
-                          <span className="font-medium text-sm">Assinatura via Cartão</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Gerencie seu cartão, cancele ou altere seu plano pelo portal de pagamentos
-                        </p>
-                        {profile?.subscription_current_period_end && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            Próxima cobrança: {formatDate(profile.subscription_current_period_end)}
-                          </p>
-                        )}
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        onClick={handleManageSubscription}
-                        disabled={isLoadingPortal}
-                        className="gap-2"
-                      >
-                        {isLoadingPortal ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <ExternalLink className="h-4 w-4" />
-                        )}
-                        Gerenciar
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-
           {/* Company Profile Card */}
           <Card className="border-border/50">
             <CardHeader className="pb-4">
@@ -928,7 +734,7 @@ const Profile = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0">
                   {[
                     { icon: Building2, label: "Empresa", value: companyProfile.company_name },
                     { icon: User, label: "Atendente", value: companyProfile.attendant_name },
@@ -938,15 +744,130 @@ const Profile = () => {
                     { icon: Sparkles, label: "Diferencial", value: companyProfile.company_differential },
                     { icon: Rocket, label: "Objetivo", value: companyProfile.company_objective },
                   ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
-                      <item.icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">{item.label}</p>
-                        <p className="text-sm font-medium">{item.value || "—"}</p>
+                    <div key={i} className="flex items-start gap-3 py-3 border-b border-border/30 last:border-0">
+                      <item.icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{item.label}</p>
+                        <p className="text-sm mt-0.5 break-words">{item.value || "—"}</p>
                       </div>
                     </div>
                   ))}
                 </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Plan Card */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="h-5 w-5 text-warning" />
+                Plano e Assinatura
+              </CardTitle>
+              <CardDescription>
+                Gerencie seu plano e pagamentos
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Plano atual:</span>
+                    <span className={`font-bold ${getPlanColor(profile?.plan || 'free')}`}>
+                      {getPlanName(profile?.plan || 'free')}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {(profile?.searches_used || 0).toLocaleString('pt-BR')} de {(profile?.searches_limit || 10).toLocaleString('pt-BR')} oportunidades utilizadas
+                  </p>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
+                          <RefreshCcw className="h-3 w-3" />
+                          Reset das oportunidades mensais: {getNextSearchResetLabel()}
+                        </p>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-xs">
+                        <div className="space-y-1 text-sm">
+                          <p><strong>Último reset:</strong> {getLastResetLabel()}</p>
+                          <p><strong>Próximo reset:</strong> {getNextResetDate()}</p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                {profile?.plan === 'scale' ? (
+                  <div className="flex items-center gap-2 text-sm text-emerald-500">
+                    <Check className="h-4 w-4" />
+                    Plano máximo
+                  </div>
+                ) : (
+                  <Link to="/upgrade">
+                    <Button variant="default" className="gap-2">
+                      <Crown className="h-4 w-4" />
+                      Fazer upgrade
+                    </Button>
+                  </Link>
+                )}
+              </div>
+
+              {!isFreePlan && (
+                <>
+                  {((profile as any)?.payment_provider === 'abacate_pay' || ((profile as any)?.payment_provider == null && !(profile as any)?.stripe_customer_id)) && (profile as any)?.payment_provider !== 'stripe' ? (
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-md bg-emerald-500/10 flex items-center justify-center">
+                            <span className="text-sm font-bold text-emerald-500">₱</span>
+                          </div>
+                          <span className="font-medium text-sm">Assinatura via PIX</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Gerencie sua assinatura, cancele ou altere seu plano pelo portal de pagamentos
+                        </p>
+                        {profile?.subscription_current_period_end && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Próxima cobrança: {formatDate(profile.subscription_current_period_end)}
+                          </p>
+                        )}
+                      </div>
+                      <Link to="/minha-assinatura">
+                        <Button variant="outline" className="gap-2">
+                          <ExternalLink className="h-4 w-4" />
+                          Gerenciar
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-blue-500/20 bg-blue-500/5">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-md bg-blue-500/10 flex items-center justify-center">
+                            <CreditCard className="h-4 w-4 text-blue-500" />
+                          </div>
+                          <span className="font-medium text-sm">Assinatura via Cartão</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Gerencie sua assinatura, cancele ou altere seu plano pelo portal de pagamentos
+                        </p>
+                        {profile?.subscription_current_period_end && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Próxima cobrança: {formatDate(profile.subscription_current_period_end)}
+                          </p>
+                        )}
+                      </div>
+                      <Link to="/minha-assinatura">
+                        <Button variant="outline" className="gap-2">
+                          <ExternalLink className="h-4 w-4" />
+                          Gerenciar
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
