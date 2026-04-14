@@ -63,10 +63,10 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         // WA flow executions for time saved
         flowExecsRes,
         // Score snapshots today vs yesterday for health
-66:         scoreTodayRes,
-67:         scoreYesterdayRes,
-68:         // Score decay: negative score logs in last 7 days
-69:         scoreDecayRes,
+        scoreTodayRes,
+        scoreYesterdayRes,
+        // Score decay: negative score logs in last 7 days
+        scoreDecayRes,
       ] = await Promise.all([
         supabase.from("leads").select("estimated_value").eq("user_id", user.id),
         supabase.from("leads").select("estimated_value").eq("user_id", user.id)
