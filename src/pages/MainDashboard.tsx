@@ -132,6 +132,7 @@ export default function MainDashboard() {
                 conversasAtivas={kpis.conversasAtivasPeriodo}
                 oportunidadesQuentes={kpis.oportunidadesQuentesPeriodo}
                 cumulativeByMonth={data.cumulativeByMonth}
+                leadsByDay={data.leadsByDay}
                 estimatedSales={forecast.totalEstimatedSales}
                 averageTicket={forecast.averageTicket}
                 opportunitySales={forecast.opportunitySales}
