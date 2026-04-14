@@ -130,8 +130,9 @@ export function ExecutiveKPIs({
                       {kpi.title}
                     </p>
                     <p className={cn(
-                      "text-2xl font-bold leading-none",
-                      isInsufficientData && kpi.title === "Gargalo Atual" ? "text-base text-muted-foreground" : "text-foreground"
+                      "font-bold leading-none whitespace-nowrap",
+                      isInsufficientData && kpi.title === "Gargalo Atual" ? "text-base text-muted-foreground" : 
+                      kpi.value.length > 16 ? "text-lg text-foreground" : "text-2xl text-foreground"
                     )}>
                       {kpi.value}
                     </p>
