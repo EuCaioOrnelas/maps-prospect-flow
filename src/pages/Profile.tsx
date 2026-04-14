@@ -626,10 +626,10 @@ const Profile = () => {
                   </Button>
                 </div>
               ) : isEditingCompany ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm flex items-center gap-1.5">
+                <div className="space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                         <Building2 className="h-3.5 w-3.5" /> Nome da empresa
                       </Label>
                       <Input
@@ -637,10 +637,11 @@ const Profile = () => {
                         onChange={(e) => setCompanyForm(f => ({ ...f, company_name: e.target.value }))}
                         placeholder="Ex: Agência Digital XYZ"
                         maxLength={200}
+                        className="h-11"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm flex items-center gap-1.5">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                         <User className="h-3.5 w-3.5" /> Nome do atendente
                       </Label>
                       <Input
@@ -648,11 +649,12 @@ const Profile = () => {
                         onChange={(e) => setCompanyForm(f => ({ ...f, attendant_name: e.target.value }))}
                         placeholder="Ex: João Silva"
                         maxLength={200}
+                        className="h-11"
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm flex items-center gap-1.5">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <Target className="h-3.5 w-3.5" /> Nicho da empresa
                     </Label>
                     <Input
@@ -660,54 +662,59 @@ const Profile = () => {
                       onChange={(e) => setCompanyForm(f => ({ ...f, company_niche: e.target.value }))}
                       placeholder="Ex: Marketing Digital, Consultoria"
                       maxLength={200}
+                      className="h-11"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm flex items-center gap-1.5">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <ShoppingBag className="h-3.5 w-3.5" /> Produtos/Serviços
                     </Label>
                     <Textarea
                       value={companyForm.company_products}
                       onChange={(e) => setCompanyForm(f => ({ ...f, company_products: e.target.value }))}
                       placeholder="Ex: Criação de Google Meu Negócio, gestão de redes sociais..."
-                      rows={2}
+                      rows={3}
                       maxLength={500}
+                      className="resize-none"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm flex items-center gap-1.5">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <Users className="h-3.5 w-3.5" /> Público-alvo
                     </Label>
                     <Textarea
                       value={companyForm.company_target_audience}
                       onChange={(e) => setCompanyForm(f => ({ ...f, company_target_audience: e.target.value }))}
                       placeholder="Ex: Pequenas empresas, restaurantes..."
-                      rows={2}
+                      rows={3}
                       maxLength={500}
+                      className="resize-none"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm flex items-center gap-1.5">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <Sparkles className="h-3.5 w-3.5" /> Diferencial
                     </Label>
                     <Textarea
                       value={companyForm.company_differential}
                       onChange={(e) => setCompanyForm(f => ({ ...f, company_differential: e.target.value }))}
                       placeholder="Ex: Atendimento personalizado, 10 anos de experiência..."
-                      rows={2}
+                      rows={3}
                       maxLength={500}
+                      className="resize-none"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm flex items-center gap-1.5">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <Rocket className="h-3.5 w-3.5" /> Objetivo
                     </Label>
                     <Textarea
                       value={companyForm.company_objective}
                       onChange={(e) => setCompanyForm(f => ({ ...f, company_objective: e.target.value }))}
                       placeholder="Ex: Aumentar carteira de clientes..."
-                      rows={2}
+                      rows={3}
                       maxLength={500}
+                      className="resize-none"
                     />
                   </div>
                   <div className="flex gap-2 justify-end">
@@ -734,7 +741,7 @@ const Profile = () => {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
                   {[
                     { icon: Building2, label: "Empresa", value: companyProfile.company_name },
                     { icon: User, label: "Atendente", value: companyProfile.attendant_name },
@@ -744,11 +751,13 @@ const Profile = () => {
                     { icon: Sparkles, label: "Diferencial", value: companyProfile.company_differential },
                     { icon: Rocket, label: "Objetivo", value: companyProfile.company_objective },
                   ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 py-3 border-b border-border/30 last:border-0">
-                      <item.icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{item.label}</p>
-                        <p className="text-sm mt-0.5 break-words">{item.value || "—"}</p>
+                    <div key={i} className="flex items-start gap-3 py-3.5 border-b border-border/20">
+                      <div className="h-7 w-7 rounded-md bg-muted/60 flex items-center justify-center shrink-0 mt-0.5">
+                        <item.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5">{item.label}</p>
+                        <p className="text-sm break-words line-clamp-2">{item.value || "—"}</p>
                       </div>
                     </div>
                   ))}
@@ -920,6 +929,9 @@ const Profile = () => {
             </CardContent>
           </Card>
 
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           <Card className="border-border/50">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
@@ -945,12 +957,8 @@ const Profile = () => {
                   </Button>
                 </Link>
               </div>
-
             </CardContent>
           </Card>
-
-          {/* Theme Toggle */}
-          <ThemeToggle />
         </div>
       </main>
 
