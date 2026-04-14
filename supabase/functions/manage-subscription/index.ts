@@ -41,7 +41,7 @@ serve(async (req) => {
     // Get profile
     const { data: profile } = await supabaseClient
       .from("profiles")
-      .select("email, cpf, plan, payment_provider, subscription_current_period_end, stripe_customer_id")
+      .select("email, cpf, plan, payment_provider, subscription_current_period_end")
       .eq("id", userId)
       .single();
 
