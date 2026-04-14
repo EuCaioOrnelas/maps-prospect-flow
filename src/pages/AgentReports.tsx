@@ -700,15 +700,15 @@ export default function AgentReports() {
         (selectedAgent === "all" || m.agent_id === selectedAgent)
       );
       
-      const messagesSent = dayMessages.filter(m => m.direction === 'outgoing').length;
-      const messagesReceived = dayMessages.filter(m => m.direction === 'incoming').length;
+      const messagesSent = dayMessages.filter(m => m.direction === 'outgoing' || m.direction === 'sent').length;
+      const messagesReceived = dayMessages.filter(m => m.direction === 'incoming' || m.direction === 'received').length;
       const conversationsStarted = dayConversations.length;
       
       const escalated = dayConversations.filter(c => c.status === 'escalated').length;
       const escalationRate = conversationsStarted > 0 ? Math.round((escalated / conversationsStarted) * 100) : 0;
       
       const errors = dayMessages.filter(m => m.message_type === 'error').length;
-      const errorRate = messagesSent > 0 ? Math.round((errors / messagesSent) * 100) : 0;
+      const errorRate = messagesSent > 0 ? Math.round((errors / (messagesSent || 1)) * 100) : 0;
       
       // Calculate daily health score
       const completed = dayConversations.filter(c => c.status === 'completed').length;
