@@ -15,9 +15,11 @@ import { Calendar } from "lucide-react";
 import { DashboardHero } from "@/components/dashboard/v2/DashboardHero";
 import { ExecutiveKPIs } from "@/components/dashboard/v2/ExecutiveKPIs";
 import { OpportunityRadar } from "@/components/dashboard/v2/OpportunityRadar";
+import { OperationalFunnel } from "@/components/dashboard/v2/OperationalFunnel";
+import { AIActivityCard } from "@/components/dashboard/v2/AIActivityCard";
 import { ExecutiveAlerts } from "@/components/dashboard/v2/ExecutiveAlerts";
 import { ForecastChart } from "@/components/dashboard/v2/ForecastChart";
-
+import { ChannelPerformance } from "@/components/dashboard/v2/ChannelPerformance";
 import { QuickActions } from "@/components/dashboard/v2/QuickActions";
 
 import { ActivationChecklistInline } from "@/components/dashboard/ActivationChecklist";
@@ -150,21 +152,40 @@ export default function MainDashboard() {
                 aiMinutesSaved={kpis.aiMinutesSaved}
               />
 
-              {/* 3 — Forecast */}
-              <ForecastChart
-                leadsProspected={data.leadsProspected}
-                totalResponses={data.totalResponses}
-                messagesSent={data.messagesSent}
-                averageTicket={forecast.averageTicket}
-                opportunitySales={forecast.opportunitySales}
-                scoreSales={forecast.scoreSales}
-                scoreBuckets={forecast.scoreBuckets}
-              />
+              {/* 3 — Forecast + Channel Performance (moved above Radar) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ForecastChart
+                  leadsProspected={data.leadsProspected}
+                  totalResponses={data.totalResponses}
+                  messagesSent={data.messagesSent}
+                  averageTicket={forecast.averageTicket}
+                  opportunitySales={forecast.opportunitySales}
+                  scoreSales={forecast.scoreSales}
+                  scoreBuckets={forecast.scoreBuckets}
+                />
+                <ChannelPerformance
+                  responseRate={data.responseRate}
+                  messagesSent={data.messagesSent}
+                  totalResponses={data.totalResponses}
+                />
+              </div>
 
               {/* 4 — Opportunity Radar */}
               <OpportunityRadar radarLeads={kpis.radarLeads} />
 
-              {/* 5 — Alerts */}
+              {/* 5 — Funnel + AI Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <OperationalFunnel
+                  leadsProspected={data.leadsProspected}
+                  messagesSent={data.messagesSent}
+                  totalResponses={data.totalResponses}
+                />
+                <AIActivityCard
+                  totalResponses={data.totalResponses}
+                  messagesSent={data.messagesSent}
+                  leadsProspected={data.leadsProspected}
+                />
+              </div>
 
               {/* 6 — Alerts */}
               <ExecutiveAlerts
