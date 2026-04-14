@@ -910,6 +910,36 @@ export type Database = {
         }
         Relationships: []
       }
+      company_services: {
+        Row: {
+          average_ticket: number
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          average_ticket?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          average_ticket?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       coupon_redemptions: {
         Row: {
           coupon_code: string

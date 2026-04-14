@@ -1,9 +1,15 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, ArrowRight, Rocket } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowRight, Rocket, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface DashboardHeroProps {
   financialImpact: number;
@@ -13,6 +19,10 @@ interface DashboardHeroProps {
   hotLeads: number;
   activeConversations: number;
   cumulativeByMonth: { month: string; total: number }[];
+  estimatedSales: number;
+  averageTicket: number;
+  opportunitySales: number;
+  scoreSales: number;
 }
 
 function fmt(n: number) {
@@ -27,6 +37,10 @@ export function DashboardHero({
   hotLeads,
   activeConversations,
   cumulativeByMonth,
+  estimatedSales,
+  averageTicket,
+  opportunitySales,
+  scoreSales,
 }: DashboardHeroProps) {
   const navigate = useNavigate();
   const hasChange = financialChange !== 0;
@@ -39,9 +53,32 @@ export function DashboardHero({
         {/* Left content */}
         <div className="flex-1 space-y-4">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-primary tracking-wide uppercase">
-              Cockpit de Crescimento
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-medium text-primary tracking-wide uppercase">
+                Cockpit de Crescimento
+              </p>
+              <TooltipProvider>
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <button className="text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                      <Info size={14} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-sm text-xs space-y-2 p-3">
+                    <p className="font-semibold text-foreground">Como calculamos o valor em oportunidades:</p>
+                    <div className="space-y-1.5">
+                      <p><strong>1. Oportunidades prospectadas:</strong> Cada lead gerado na Gestão de Oportunidades tem 1% de chance estimada de venda. Ex: 100 leads = ~1 venda.</p>
+                      <p><strong>2. Score de contatos:</strong> Leads com score são calculados por faixa: Frio (1-3%), Baixo (4-8%), Engajado (10-18%), Alto valor (20-35%), Pronto p/ venda (40-65%).</p>
+                      <p><strong>3. Ticket médio:</strong> Usamos a média dos tickets dos seus serviços cadastrados (R$ {fmt(averageTicket)}).</p>
+                      <p><strong>4. Sem duplicidade:</strong> Leads que aparecem tanto em oportunidades quanto em score são contados apenas uma vez.</p>
+                      <p className="text-muted-foreground/70 pt-1">
+                        Atualmente: {opportunitySales} venda(s) estimada(s) por oportunidades + {scoreSales} por score = {estimatedSales} total × R$ {fmt(averageTicket)} = R$ {fmt(financialImpact)}
+                      </p>
+                    </div>
+                  </TooltipContent>
+                </UITooltip>
+              </TooltipProvider>
+            </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground leading-tight">
               Seu comercial gerou{" "}
               <span className="text-primary">
