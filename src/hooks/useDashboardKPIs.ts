@@ -178,6 +178,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
       // 2. % leads quentes (score>=601) → 0-25 pts
       // 3. % leads frios (score<=200, penalidade) → 0 to -15 pts
       // 4. Oportunidades recentes (últimos 7 dias) → 0-20 pts
+      // 5. Score decay (leads que perderam pontos nos últimos 7 dias) → penalidade
       // Total: 0-100 scale
       const scorePoints = Math.min(40, (avgScore / 1000) * 40);
       const hotRatio = totalLeadsWithScore > 0 ? hotCount / totalLeadsWithScore : 0;
@@ -185,7 +186,15 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
       const coldRatio = totalLeadsWithScore > 0 ? coldCount / totalLeadsWithScore : 0;
       const coldPenalty = Math.min(15, coldRatio * 30);
       const oppPoints = Math.min(20, recentOppCount * 2);
-      const healthScore = Math.max(0, Math.round(scorePoints + hotPoints - coldPenalty + oppPoints));
+
+      // Score decay penalty: count unique leads that lost points in last 7 days
+      const decayLogs = scoreDecayRes.data || [];
+      const decayLeadIds = new Set(decayLogs.map((l: any) => l.lead_id));
+      const decayCount = decayLeadIds.size;
+      const decayRatio = totalLeadsWithScore > 0 ? decayCount / totalLeadsWithScore : 0;
+      const decayPenalty = Math.min(10, decayRatio * 25);
+
+      const healthScore = Math.max(0, Math.round(scorePoints + hotPoints - coldPenalty + oppPoints - decayPenalty));
 
       let healthStatus: string;
       let healthDetail: string;
