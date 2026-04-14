@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMainDashboard } from "@/hooks/useMainDashboard";
+import { useCockpitForecast } from "@/hooks/useCockpitForecast";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
@@ -34,8 +35,6 @@ const PERIOD_OPTIONS = [
   { value: '90', label: 'Últimos 90 dias' },
 ];
 
-const CPL_BENCHMARK = 11.77;
-
 export default function MainDashboard() {
   const { profile } = useAuth();
   useAutoScoreTracking("main_dashboard");
@@ -43,10 +42,11 @@ export default function MainDashboard() {
   const [period, setPeriod] = useState('30');
   const periodDays = parseInt(period);
   const data = useMainDashboard(periodDays);
+  const forecast = useCockpitForecast(periodDays);
 
-  // Derived metrics
-  const financialImpact = data.leadsProspected * CPL_BENCHMARK;
-  const prevFinancialImpact = data.prevLeadsProspected * CPL_BENCHMARK;
+  // Derived metrics using forecast data
+  const financialImpact = forecast.totalEstimatedRevenue;
+  const prevFinancialImpact = 0; // We don't have prev period forecast yet
   const financialChange = data.prevLeadsProspected > 0
     ? ((data.leadsProspected - data.prevLeadsProspected) / data.prevLeadsProspected) * 100
     : 0;
@@ -64,6 +64,7 @@ export default function MainDashboard() {
 
   const aiHoursSaved = Math.round((data.totalResponses * 0.5) + (data.leadsProspected * 0.02) + (data.messagesSent * 0.01));
   const activeConversations = Math.round(data.totalResponses * 0.35);
+
 
   const firstName = profile?.name?.split(' ')[0] || 'Usuário';
   const hour = new Date().getHours();
@@ -149,6 +150,10 @@ export default function MainDashboard() {
                 hotLeads={hotLeads}
                 activeConversations={activeConversations}
                 cumulativeByMonth={data.cumulativeByMonth}
+                estimatedSales={forecast.totalEstimatedSales}
+                averageTicket={forecast.averageTicket}
+                opportunitySales={forecast.opportunitySales}
+                scoreSales={forecast.scoreSales}
               />
 
               {/* 2 — Executive KPIs */}
@@ -198,6 +203,10 @@ export default function MainDashboard() {
                   leadsProspected={data.leadsProspected}
                   totalResponses={data.totalResponses}
                   messagesSent={data.messagesSent}
+                  averageTicket={forecast.averageTicket}
+                  opportunitySales={forecast.opportunitySales}
+                  scoreSales={forecast.scoreSales}
+                  scoreBuckets={forecast.scoreBuckets}
                 />
                 <ChannelPerformance
                   responseRate={data.responseRate}
