@@ -36,6 +36,7 @@ export interface DashboardMetrics {
   monthlyLeads: number;
   activeDays: number;
   monthlyBreakdown: MonthlyBreakdown[];
+  leadsByDay: { date: string; count: number }[];
 }
 
 export function useMainDashboard(periodDays: number): DashboardMetrics {
@@ -62,6 +63,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
     monthlyLeads: 0,
     activeDays: 0,
     monthlyBreakdown: [] as MonthlyBreakdown[],
+    leadsByDay: [] as { date: string; count: number }[],
   });
 
   useEffect(() => {
@@ -168,10 +170,13 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
 
       // Build cumulative by month
       const monthMap: Record<string, number> = {};
+      const dayMap: Record<string, number> = {};
       allTimeData.forEach((r: any) => {
         const d = new Date(r.created_at);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         monthMap[key] = (monthMap[key] || 0) + (r.results_count || 0);
+        const dayKey = d.toISOString().slice(0, 10);
+        dayMap[dayKey] = (dayMap[dayKey] || 0) + (r.results_count || 0);
       });
       const sortedMonths = Object.keys(monthMap).sort();
       let cumTotal = 0;
@@ -219,6 +224,11 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         };
       });
 
+      // Build leadsByDay sorted
+      const leadsByDay = Object.entries(dayMap)
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
       setRawData({
         leadsProspected, prevLeadsProspected,
         messagesSent, prevMessagesSent,
@@ -236,6 +246,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         monthlyLeads: leadsProspected,
         activeDays: activeDaysSet.size,
         monthlyBreakdown,
+        leadsByDay,
       });
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
