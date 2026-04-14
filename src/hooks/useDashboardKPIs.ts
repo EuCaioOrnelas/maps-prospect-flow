@@ -2,6 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { subDays, subHours } from "date-fns";
+import { TrendingDown, TrendingUp, Flame, Zap, Clock, AlertCircle, ThermometerSun } from "lucide-react";
+import React from "react";
+import type { ExecutiveAlert } from "@/components/dashboard/v2/ExecutiveAlerts";
 
 export interface DashboardKPIData {
   receitaPotencial: number;
@@ -14,8 +17,8 @@ export interface DashboardKPIData {
   leadsGeradosPeriodo: number;
   conversasAtivasPeriodo: number;
   oportunidadesQuentesPeriodo: number;
-  // Data for Radar de Oportunidades
   radarLeads: RadarLead[];
+  executiveAlerts: ExecutiveAlert[];
   loading: boolean;
 }
 
