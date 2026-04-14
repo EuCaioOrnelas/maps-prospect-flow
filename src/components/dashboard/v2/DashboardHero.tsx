@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, ArrowRight, Rocket, Info } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowRight, Rocket, Info, Megaphone, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { cn } from "@/lib/utils";
