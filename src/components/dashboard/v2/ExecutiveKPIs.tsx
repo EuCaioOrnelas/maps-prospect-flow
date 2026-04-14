@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { DollarSign, Flame, AlertTriangle, Bot } from "lucide-react";
+import { DollarSign, Flame, AlertTriangle, Bot, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -28,10 +28,6 @@ function fmt(n: number) {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function fmtInt(n: number) {
-  return n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
-}
-
 export function ExecutiveKPIs({
   receitaPotencial,
   receitaPotencialGrowth,
@@ -46,9 +42,15 @@ export function ExecutiveKPIs({
   const aiMins = aiMinutesSaved % 60;
   const aiDisplay = aiHours > 0 ? `${aiHours}h ${aiMins}min` : `${aiMins}min`;
 
+  const isInsufficientData = healthStatus === "Dados Insuficientes";
+
   const healthBadgeType: 'positive' | 'negative' | 'neutral' = 
     healthStatus === "Excelente" || healthStatus === "Operação Saudável" ? 'positive' :
-    healthStatus === "Atenção Necessária" || healthStatus === "Score Baixo" || healthStatus === "Sem Prospecção" ? 'negative' : 'neutral';
+    healthStatus === "Atenção Necessária" || healthStatus === "Score Baixo" || healthStatus === "Crítico" ? 'negative' : 'neutral';
+
+  const healthTooltip = isInsufficientData
+    ? "O cálculo de saúde requer no mínimo 300 leads prospectados e 50 leads no CRM. Após atingir esses volumes, o diagnóstico será calculado com base em: score médio, % de leads quentes, penalidade de leads frios, oportunidades recentes e perda de score."
+    : "Saúde da operação calculada com: score médio (0-40pts), % leads quentes score≥601 (0-25pts), penalidade leads frios score≤200, oportunidades recentes últimos 7 dias (0-20pts), e penalidade por perda de score. Fatores sem dados são excluídos do cálculo.";
 
   const kpis: KPIData[] = [
     {
@@ -77,7 +79,7 @@ export function ExecutiveKPIs({
       badgeType: healthBadgeType,
       subtitle: healthDetail,
       icon: <AlertTriangle size={18} />,
-      tooltip: "Saúde da operação comercial calculada com base no score médio dos leads e volume de oportunidades geradas.",
+      tooltip: healthTooltip,
       showBadge: false,
     },
     {
@@ -104,22 +106,30 @@ export function ExecutiveKPIs({
                     <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                       {kpi.icon}
                     </div>
-                    {kpi.showBadge && kpi.badge && (
-                      <span className={cn(
-                        "text-xs font-semibold px-2 py-0.5 rounded-full",
-                        kpi.badgeType === 'positive' && "bg-primary/10 text-primary",
-                        kpi.badgeType === 'negative' && "bg-destructive/10 text-destructive",
-                        kpi.badgeType === 'neutral' && "bg-muted text-muted-foreground",
-                      )}>
-                        {kpi.badge}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {kpi.showBadge && kpi.badge && (
+                        <span className={cn(
+                          "text-xs font-semibold px-2 py-0.5 rounded-full",
+                          kpi.badgeType === 'positive' && "bg-primary/10 text-primary",
+                          kpi.badgeType === 'negative' && "bg-destructive/10 text-destructive",
+                          kpi.badgeType === 'neutral' && "bg-muted text-muted-foreground",
+                        )}>
+                          {kpi.badge}
+                        </span>
+                      )}
+                      {kpi.title === "Gargalo Atual" && (
+                        <Info size={14} className="text-muted-foreground/50" />
+                      )}
+                    </div>
                   </div>
                   <div>
                     <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
                       {kpi.title}
                     </p>
-                    <p className="text-2xl font-bold text-foreground leading-none">
+                    <p className={cn(
+                      "text-2xl font-bold leading-none",
+                      isInsufficientData && kpi.title === "Gargalo Atual" ? "text-base text-muted-foreground" : "text-foreground"
+                    )}>
                       {kpi.value}
                     </p>
                     <p className="text-xs text-muted-foreground/60 mt-1">{kpi.subtitle}</p>

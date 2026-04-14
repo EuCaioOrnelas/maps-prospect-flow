@@ -60,6 +60,8 @@ export function DashboardHero({
 
   const chartData = buildChartData(cumulativeByMonth, periodDays);
 
+  const periodLabel = periodDays <= 7 ? '7 dias' : periodDays <= 30 ? '30 dias' : '90 dias';
+
   return (
     <>
       <Card className="relative overflow-hidden border-border/40 bg-gradient-to-br from-card via-card to-primary/[0.03] rounded-2xl">
@@ -112,7 +114,7 @@ export function DashboardHero({
                     "text-sm font-semibold",
                     financialChange > 0 ? "text-primary" : "text-destructive"
                   )}>
-                    {financialChange > 0 ? '+' : ''}{financialChange.toFixed(0)}% vs período anterior
+                    {financialChange > 0 ? '+' : ''}{financialChange.toFixed(0)}% vs {periodLabel} anterior
                   </span>
                 </div>
               )}
@@ -220,6 +222,8 @@ function buildChartData(
 ): { label: string; total: number }[] {
   if (cumulativeByMonth.length === 0) return [];
 
+  const lastTotal = cumulativeByMonth[cumulativeByMonth.length - 1]?.total || 0;
+
   if (periodDays <= 7) {
     const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     const result = [];
@@ -228,32 +232,17 @@ function buildChartData(
       d.setDate(d.getDate() - i);
       result.push({
         label: days[d.getDay()],
-        total: cumulativeByMonth.length > 0 ? Math.round(cumulativeByMonth[cumulativeByMonth.length - 1].total * ((7 - i) / 7)) : 0,
+        total: Math.round(lastTotal * ((7 - i) / 7)),
       });
     }
     return result;
   }
 
   if (periodDays <= 30) {
-    // Always show Semana 1 through up to Semana 5 based on how many weeks the 30-day window spans
-    const now = new Date();
-    const startDate = new Date(now);
-    startDate.setDate(startDate.getDate() - 29);
-
-    // Determine the distinct week numbers (1-5) each day falls in
-    const weekSet = new Set<number>();
-    for (let i = 0; i < 30; i++) {
-      const d = new Date(startDate);
-      d.setDate(d.getDate() + i);
-      const weekOfMonth = Math.ceil(d.getDate() / 7);
-      weekSet.add(weekOfMonth);
-    }
-
-    // Always start from 1 up to the max week found
-    const maxWeek = Math.max(...Array.from(weekSet));
-    const totalWeeks = maxWeek; // e.g. 5
-    const lastTotal = cumulativeByMonth.length > 0 ? cumulativeByMonth[cumulativeByMonth.length - 1].total : 0;
-
+    // Always show Semana 1 through Semana N (up to 5)
+    // Calculate how many full weeks are in the 30-day window
+    const totalWeeks = Math.min(5, Math.ceil(30 / 7));
+    
     const result: { label: string; total: number }[] = [];
     for (let w = 1; w <= totalWeeks; w++) {
       result.push({
