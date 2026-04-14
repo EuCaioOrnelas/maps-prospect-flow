@@ -2,6 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { subDays, subHours } from "date-fns";
+import { TrendingDown, TrendingUp, Flame, Zap, Clock, AlertCircle, ThermometerSun } from "lucide-react";
+import React from "react";
+import type { ExecutiveAlert } from "@/components/dashboard/v2/ExecutiveAlerts";
 
 export interface DashboardKPIData {
   receitaPotencial: number;
@@ -14,8 +17,8 @@ export interface DashboardKPIData {
   leadsGeradosPeriodo: number;
   conversasAtivasPeriodo: number;
   oportunidadesQuentesPeriodo: number;
-  // Data for Radar de Oportunidades
   radarLeads: RadarLead[];
+  executiveAlerts: ExecutiveAlert[];
   loading: boolean;
 }
 
@@ -221,12 +224,12 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         }
 
         // 5. Score decay penalty — only if there was decay
-        const decayLogs = scoreDecayRes.data || [];
-        const decayLeadIds = new Set(decayLogs.map((l: any) => l.lead_id));
-        const decayCount = decayLeadIds.size;
-        if (decayCount > 0 && totalLeadsWithScore > 0) {
+        const decayLogsInner = scoreDecayRes.data || [];
+        const decayLeadIdsInner = new Set(decayLogsInner.map((l: any) => l.lead_id));
+        const decayCountInner = decayLeadIdsInner.size;
+        if (decayCountInner > 0 && totalLeadsWithScore > 0) {
           totalMaxPoints += 10;
-          const decayRatio = decayCount / totalLeadsWithScore;
+          const decayRatio = decayCountInner / totalLeadsWithScore;
           totalPoints -= Math.min(10, decayRatio * 25);
         }
 
@@ -304,6 +307,85 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         .sort((a, b) => b.scoreGrowth7d - a.scoreGrowth7d)
         .slice(0, 6);
 
+      // --- Executive Alerts (real data-driven) ---
+      const executiveAlerts: ExecutiveAlert[] = [];
+
+      // 1. Leads with highest score growth today
+      const topGrowthToday = Array.from(scoreGrowthByLead.entries())
+        .sort((a, b) => b[1] - a[1]);
+      if (topGrowthToday.length > 0 && topGrowthToday[0][1] >= 100) {
+        executiveAlerts.push({
+          type: 'success',
+          icon: React.createElement(Flame, { size: 14 }),
+          text: `${topGrowthToday.filter(([_, v]) => v >= 100).length} leads tiveram aumento de score superior a 100 pts nas últimas 24h`,
+          route: '/crm-score',
+        });
+      }
+
+      // 2. Score decay alert
+      const globalDecayLogs = scoreDecayRes.data || [];
+      const globalDecayLeadIds = new Set(globalDecayLogs.map((l: any) => l.lead_id));
+      const globalDecayCount = globalDecayLeadIds.size;
+      if (globalDecayCount > 0) {
+        executiveAlerts.push({
+          type: 'warning',
+          icon: React.createElement(TrendingDown, { size: 14 }),
+          text: `${globalDecayCount} leads perderam pontos de score nos últimos 7 dias — risco de esfriamento`,
+          route: '/crm-score',
+        });
+      }
+
+      // 3. Hot leads ready for sale
+      const readyForSale = allScores.filter((s: number) => s >= 801).length;
+      if (readyForSale > 0) {
+        executiveAlerts.push({
+          type: 'success',
+          icon: React.createElement(Zap, { size: 14 }),
+          text: `${readyForSale} leads com score acima de 800 — prontos para abordagem de venda`,
+          route: '/crm',
+        });
+      }
+
+      // 4. Cold leads warning
+      const coldLeadsCount = allScores.filter((s: number) => s <= 200 && s > 0).length;
+      if (coldLeadsCount > 5) {
+        executiveAlerts.push({
+          type: 'danger',
+          icon: React.createElement(ThermometerSun, { size: 14 }),
+          text: `${coldLeadsCount} leads frios (score ≤200) — considere reativação ou limpeza`,
+          route: '/crm-score',
+        });
+      }
+
+      // 5. Peak activity hour (based on score logs timestamps)
+      const scoreLogs24h = recentScoreLogsRes.data || [];
+      if (scoreLogs24h.length > 5) {
+        const hourCounts = new Map<number, number>();
+        scoreLogs24h.forEach((log: any) => {
+          const h = new Date(log.created_at).getHours();
+          hourCounts.set(h, (hourCounts.get(h) || 0) + 1);
+        });
+        const peakHour = Array.from(hourCounts.entries()).sort((a, b) => b[1] - a[1])[0];
+        if (peakHour) {
+          executiveAlerts.push({
+            type: 'info',
+            icon: React.createElement(Clock, { size: 14 }),
+            text: `Pico de atividade dos leads: ${peakHour[0].toString().padStart(2, '0')}:00 — melhor horário para envios`,
+            route: '/whatsapp-campaign',
+          });
+        }
+      }
+
+      // 6. No activity fallback
+      if (executiveAlerts.length === 0) {
+        executiveAlerts.push({
+          type: 'info',
+          icon: React.createElement(AlertCircle, { size: 14 }),
+          text: 'Sem alertas no momento. Continue prospectando para gerar diagnósticos.',
+          route: '/opportunities',
+        });
+      }
+
       return {
         receitaPotencial,
         receitaPotencialGrowth,
@@ -316,6 +398,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         conversasAtivasPeriodo,
         oportunidadesQuentesPeriodo,
         radarLeads,
+        executiveAlerts,
       };
     },
     enabled: !!user,
@@ -335,6 +418,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
       conversasAtivasPeriodo: 0,
       oportunidadesQuentesPeriodo: 0,
       radarLeads: [],
+      executiveAlerts: [],
       loading: true,
     };
   }

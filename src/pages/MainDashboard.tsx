@@ -16,10 +16,8 @@ import { DashboardHero } from "@/components/dashboard/v2/DashboardHero";
 import { ExecutiveKPIs } from "@/components/dashboard/v2/ExecutiveKPIs";
 import { OpportunityRadar } from "@/components/dashboard/v2/OpportunityRadar";
 import { OperationalFunnel } from "@/components/dashboard/v2/OperationalFunnel";
-import { AIActivityCard } from "@/components/dashboard/v2/AIActivityCard";
 import { ExecutiveAlerts } from "@/components/dashboard/v2/ExecutiveAlerts";
 import { ForecastChart } from "@/components/dashboard/v2/ForecastChart";
-import { ChannelPerformance } from "@/components/dashboard/v2/ChannelPerformance";
 import { QuickActions } from "@/components/dashboard/v2/QuickActions";
 
 import { ActivationChecklistInline } from "@/components/dashboard/ActivationChecklist";
@@ -152,7 +150,7 @@ export default function MainDashboard() {
                 aiMinutesSaved={kpis.aiMinutesSaved}
               />
 
-              {/* 3 — Forecast + Channel Performance (moved above Radar) */}
+              {/* 3 — Forecast + Funnel */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ForecastChart
                   leadsProspected={data.leadsProspected}
@@ -163,8 +161,8 @@ export default function MainDashboard() {
                   scoreSales={forecast.scoreSales}
                   scoreBuckets={forecast.scoreBuckets}
                 />
-                <ChannelPerformance
-                  responseRate={data.responseRate}
+                <OperationalFunnel
+                  leadsProspected={data.leadsProspected}
                   messagesSent={data.messagesSent}
                   totalResponses={data.totalResponses}
                 />
@@ -173,27 +171,9 @@ export default function MainDashboard() {
               {/* 4 — Opportunity Radar */}
               <OpportunityRadar radarLeads={kpis.radarLeads} />
 
-              {/* 5 — Funnel + AI Activity */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <OperationalFunnel
-                  leadsProspected={data.leadsProspected}
-                  messagesSent={data.messagesSent}
-                  totalResponses={data.totalResponses}
-                />
-                <AIActivityCard
-                  totalResponses={data.totalResponses}
-                  messagesSent={data.messagesSent}
-                  leadsProspected={data.leadsProspected}
-                />
-              </div>
-
-              {/* 6 — Alerts */}
+              {/* 5 — Alerts */}
               <ExecutiveAlerts
-                leadsProspected={data.leadsProspected}
-                totalResponses={data.totalResponses}
-                responseRate={data.responseRate}
-                prevResponseRate={data.prevResponseRate}
-                campaigns={data.campaigns}
+                alerts={kpis.executiveAlerts}
               />
 
               {/* 7 — Quick Actions */}

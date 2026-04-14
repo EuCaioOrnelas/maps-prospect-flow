@@ -62,7 +62,7 @@ export function OperationalFunnel({ leadsProspected, messagesSent, totalResponse
       <CardContent className="space-y-2 pb-6">
         <TooltipProvider>
           {steps.map((step, i) => {
-            const widthPct = Math.max((step.value / maxVal) * 100, 6);
+            const widthPct = Math.max((step.value / maxVal) * 100, 8);
             const convRate = i > 0 && steps[i - 1].value > 0
               ? ((step.value / steps[i - 1].value) * 100).toFixed(1)
               : null;
@@ -78,23 +78,21 @@ export function OperationalFunnel({ leadsProspected, messagesSent, totalResponse
                 )}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="flex items-center gap-3 group cursor-help">
-                      <span className="text-xs text-muted-foreground w-[140px] text-right shrink-0 truncate">
+                    <div className="flex flex-col items-center group cursor-help gap-1">
+                      <span className="text-xs text-muted-foreground truncate">
                         {step.label}
                       </span>
-                      <div className="flex-1 relative">
-                        <div
-                          className={cn(
-                            "h-8 rounded-lg flex items-center px-3 transition-all duration-500 group-hover:shadow-sm",
-                            i === 0 ? "bg-primary/20" : "bg-primary/[0.08]",
-                            "group-hover:bg-primary/25"
-                          )}
-                          style={{ width: `${widthPct}%`, minWidth: '50px' }}
-                        >
-                          <span className="text-xs font-bold text-foreground">
-                            {step.value.toLocaleString('pt-BR')}
-                          </span>
-                        </div>
+                      <div
+                        className={cn(
+                          "h-8 rounded-lg flex items-center justify-center transition-all duration-500 group-hover:shadow-sm",
+                          i === 0 ? "bg-primary/20" : "bg-primary/[0.08]",
+                          "group-hover:bg-primary/25"
+                        )}
+                        style={{ width: `${widthPct}%`, minWidth: '50px' }}
+                      >
+                        <span className="text-xs font-bold text-foreground">
+                          {step.value.toLocaleString('pt-BR')}
+                        </span>
                       </div>
                     </div>
                   </TooltipTrigger>
@@ -106,7 +104,7 @@ export function OperationalFunnel({ leadsProspected, messagesSent, totalResponse
             );
           })}
         </TooltipProvider>
-        <p className="text-[9px] text-muted-foreground/35 text-right pt-2">
+        <p className="text-[9px] text-muted-foreground/35 text-center pt-2">
           *Reuniões e negociações são estimativas baseadas em médias de mercado
         </p>
       </CardContent>
