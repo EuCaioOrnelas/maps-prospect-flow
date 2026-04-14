@@ -1409,7 +1409,11 @@ export default function AgentReports() {
                           <p className="font-medium">Taxa de Resposta do Agente</p>
                           <p className="text-xs text-muted-foreground">(Respondidas ÷ Recebidas) × 100</p>
                         </div>
-                        <p className="text-2xl font-bold">{aggregatedMetrics.autoClosureRate}%</p>
+                        <p className="text-2xl font-bold">
+                          {filteredMetrics.length > 0 
+                            ? Math.round(filteredMetrics.reduce((s, m) => s + m.responseRate, 0) / filteredMetrics.length) 
+                            : 0}%
+                        </p>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                         <div>
