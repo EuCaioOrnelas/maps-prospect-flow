@@ -323,11 +323,14 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
       }
 
       // 2. Score decay alert
-      if (decayCount > 0) {
+      const globalDecayLogs = scoreDecayRes.data || [];
+      const globalDecayLeadIds = new Set(globalDecayLogs.map((l: any) => l.lead_id));
+      const globalDecayCount = globalDecayLeadIds.size;
+      if (globalDecayCount > 0) {
         executiveAlerts.push({
           type: 'warning',
           icon: React.createElement(TrendingDown, { size: 14 }),
-          text: `${decayCount} leads perderam pontos de score nos últimos 7 dias — risco de esfriamento`,
+          text: `${globalDecayCount} leads perderam pontos de score nos últimos 7 dias — risco de esfriamento`,
           route: '/crm-score',
         });
       }
