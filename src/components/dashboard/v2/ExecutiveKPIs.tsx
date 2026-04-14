@@ -58,7 +58,7 @@ export function ExecutiveKPIs({
   const kpis: KPIData[] = [
     {
       title: "Receita Potencial Atual",
-      value: `R$ ${fmt(receitaPotencial)}`,
+      value: `R$ ${fmtCompact(receitaPotencial)}`,
       badge: receitaPotencialGrowth !== 0 ? `${receitaPotencialGrowth > 0 ? '+' : ''}${receitaPotencialGrowth.toFixed(0)}%` : '—',
       badgeType: receitaPotencialGrowth > 0 ? 'positive' : receitaPotencialGrowth < 0 ? 'negative' : 'neutral',
       subtitle: "Soma do valor em negociação do CRM",
