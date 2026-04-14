@@ -224,12 +224,12 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         }
 
         // 5. Score decay penalty — only if there was decay
-        const decayLogs = scoreDecayRes.data || [];
-        const decayLeadIds = new Set(decayLogs.map((l: any) => l.lead_id));
-        const decayCount = decayLeadIds.size;
-        if (decayCount > 0 && totalLeadsWithScore > 0) {
+        const decayLogsInner = scoreDecayRes.data || [];
+        const decayLeadIdsInner = new Set(decayLogsInner.map((l: any) => l.lead_id));
+        const decayCountInner = decayLeadIdsInner.size;
+        if (decayCountInner > 0 && totalLeadsWithScore > 0) {
           totalMaxPoints += 10;
-          const decayRatio = decayCount / totalLeadsWithScore;
+          const decayRatio = decayCountInner / totalLeadsWithScore;
           totalPoints -= Math.min(10, decayRatio * 25);
         }
 
@@ -415,6 +415,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
       conversasAtivasPeriodo: 0,
       oportunidadesQuentesPeriodo: 0,
       radarLeads: [],
+      executiveAlerts: [],
       loading: true,
     };
   }
