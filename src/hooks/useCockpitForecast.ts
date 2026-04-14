@@ -46,47 +46,49 @@ export function useCockpitForecast(periodDays: number): CockpitForecast {
 
       const now = new Date();
       const periodStart = subDays(now, periodDays);
+      const prevPeriodStart = subDays(now, periodDays * 2);
 
-      // Fetch leads prospected in period (from search_history)
-      const { data: searchData } = await supabase
-        .from("search_history")
-        .select("results_count, leads")
-        .eq("user_id", user.id)
-        .gte("created_at", periodStart.toISOString());
+      // Fetch current AND previous period in parallel
+      const [currentSearchRes, prevSearchRes, currentScoredRes, prevScoredRes] = await Promise.all([
+        supabase.from("search_history").select("results_count, leads").eq("user_id", user.id)
+          .gte("created_at", periodStart.toISOString()),
+        supabase.from("search_history").select("results_count, leads").eq("user_id", user.id)
+          .gte("created_at", prevPeriodStart.toISOString())
+          .lt("created_at", periodStart.toISOString()),
+        supabase.from("revenue_leads").select("id, phone_e164, score_total").eq("user_id", user.id)
+          .gte("created_at", periodStart.toISOString()),
+        supabase.from("revenue_leads").select("id, phone_e164, score_total").eq("user_id", user.id)
+          .gte("created_at", prevPeriodStart.toISOString())
+          .lt("created_at", periodStart.toISOString()),
+      ]);
 
-      const totalProspected = (searchData || []).reduce(
-        (s, r) => s + (r.results_count || 0),
-        0
-      );
-
-      // Extract phone numbers from prospected leads for deduplication
-      const prospectedPhones = new Set<string>();
-      (searchData || []).forEach((search: any) => {
-        const leads = search.leads;
-        if (Array.isArray(leads)) {
-          leads.forEach((lead: any) => {
-            const phone = lead.phone || lead.telefone || "";
-            const key = phone.replace(/\D/g, "").slice(-8);
-            if (key.length >= 8) prospectedPhones.add(key);
-          });
-        }
-      });
-
-      // Fetch scored leads (from revenue_leads) created in period
-      const { data: scoredData } = await supabase
-        .from("revenue_leads")
-        .select("id, phone_e164, score_total")
-        .eq("user_id", user.id)
-        .gte("created_at", periodStart.toISOString());
+      const extractData = (searchData: any[], scoredData: any[]) => {
+        const totalProspected = searchData.reduce((s, r) => s + (r.results_count || 0), 0);
+        const prospectedPhones = new Set<string>();
+        searchData.forEach((search: any) => {
+          const leads = search.leads;
+          if (Array.isArray(leads)) {
+            leads.forEach((lead: any) => {
+              const phone = lead.phone || lead.telefone || "";
+              const key = phone.replace(/\D/g, "").slice(-8);
+              if (key.length >= 8) prospectedPhones.add(key);
+            });
+          }
+        });
+        return {
+          totalProspected,
+          prospectedPhones: Array.from(prospectedPhones),
+          scoredLeads: scoredData.map((l) => ({
+            id: l.id,
+            phoneKey: l.phone_e164.replace(/\D/g, "").slice(-8),
+            score: l.score_total || 0,
+          })),
+        };
+      };
 
       return {
-        totalProspected,
-        prospectedPhones: Array.from(prospectedPhones),
-        scoredLeads: (scoredData || []).map((l) => ({
-          id: l.id,
-          phoneKey: l.phone_e164.replace(/\D/g, "").slice(-8),
-          score: l.score_total || 0,
-        })),
+        current: extractData(currentSearchRes.data || [], currentScoredRes.data || []),
+        prev: extractData(prevSearchRes.data || [], prevScoredRes.data || []),
       };
     },
     enabled: !!user,
