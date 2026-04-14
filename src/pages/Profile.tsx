@@ -824,11 +824,11 @@ const Profile = () => {
               {!isFreePlan && (
                 <>
                   {((profile as any)?.payment_provider === 'abacate_pay' || ((profile as any)?.payment_provider == null && !(profile as any)?.stripe_customer_id)) && (profile as any)?.payment_provider !== 'stripe' ? (
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5">
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-primary/20 bg-primary/5">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-md bg-emerald-500/10 flex items-center justify-center">
-                            <span className="text-sm font-bold text-emerald-500">₱</span>
+                          <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
+                            <span className="text-sm font-bold text-primary">₱</span>
                           </div>
                           <span className="font-medium text-sm">Assinatura via PIX</span>
                         </div>
@@ -850,11 +850,11 @@ const Profile = () => {
                       </Link>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-blue-500/20 bg-blue-500/5">
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-primary/20 bg-primary/5">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-md bg-blue-500/10 flex items-center justify-center">
-                            <CreditCard className="h-4 w-4 text-blue-500" />
+                          <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
+                            <CreditCard className="h-4 w-4 text-primary" />
                           </div>
                           <span className="font-medium text-sm">Assinatura via Cartão</span>
                         </div>
