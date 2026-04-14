@@ -7,6 +7,7 @@ interface OperationalFunnelProps {
   leadsProspected: number;
   messagesSent: number;
   totalResponses: number;
+  opportunitiesGenerated: number;
 }
 
 interface FunnelStep {
@@ -15,36 +16,30 @@ interface FunnelStep {
   tooltip: string;
 }
 
-export function OperationalFunnel({ leadsProspected, messagesSent, totalResponses }: OperationalFunnelProps) {
+export function OperationalFunnel({ leadsProspected, messagesSent, totalResponses, opportunitiesGenerated }: OperationalFunnelProps) {
   const qualifiedRate = 0.34;
-  const meetingRate = 0.30;
-  const dealRate = 0.42;
-
   const qualified = Math.round(leadsProspected * qualifiedRate);
-  const meetings = Math.round(totalResponses * meetingRate);
-  const deals = Math.round(meetings * dealRate);
 
   const steps: FunnelStep[] = [
     { label: "Leads Captados", value: leadsProspected, tooltip: "Total de leads encontrados pela plataforma" },
     { label: "Qualificados IA", value: qualified, tooltip: "Leads que passaram pelo score de qualificação" },
     { label: "Mensagens Enviadas", value: messagesSent, tooltip: "Mensagens enviadas via campanhas" },
-    { label: "Responderam", value: totalResponses, tooltip: "Leads que responderam às mensagens" },
-    { label: "Reuniões Sugeridas", value: meetings, tooltip: "Estimativa de reuniões com base na taxa de resposta" },
-    { label: "Negociações Ativas", value: deals, tooltip: "Estimativa de negociações com potencial de fechamento" },
+    { label: "Responderam", value: totalResponses, tooltip: "Leads que responderam às mensagens (WhatsApp + Meta API)" },
+    { label: "Oportunidades Geradas", value: opportunitiesGenerated, tooltip: "Oportunidades geradas no período (mesma lógica do cockpit)" },
   ];
 
   const maxVal = Math.max(...steps.map(s => s.value), 1);
 
   if (leadsProspected === 0 && messagesSent === 0) {
     return (
-      <Card className="border-border/40 rounded-2xl">
+      <Card className="border-border/40 rounded-2xl h-full flex flex-col">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Filter size={16} className="text-primary" />
             Funil Operacional
           </CardTitle>
         </CardHeader>
-        <CardContent className="py-8 text-center">
+        <CardContent className="flex-1 flex items-center justify-center">
           <p className="text-sm text-muted-foreground/60">Sem dados para exibir o funil</p>
         </CardContent>
       </Card>
@@ -52,14 +47,14 @@ export function OperationalFunnel({ leadsProspected, messagesSent, totalResponse
   }
 
   return (
-    <Card className="border-border/40 rounded-2xl">
-      <CardHeader className="pb-3">
+    <Card className="border-border/40 rounded-2xl h-full flex flex-col">
+      <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Filter size={16} className="text-primary" />
           Funil Operacional
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 pb-6">
+      <CardContent className="flex-1 flex flex-col justify-center space-y-1.5 pb-4">
         <TooltipProvider>
           {steps.map((step, i) => {
             const widthPct = Math.max((step.value / maxVal) * 100, 8);
@@ -104,9 +99,6 @@ export function OperationalFunnel({ leadsProspected, messagesSent, totalResponse
             );
           })}
         </TooltipProvider>
-        <p className="text-[9px] text-muted-foreground/35 text-center pt-2">
-          *Reuniões e negociações são estimativas baseadas em médias de mercado
-        </p>
       </CardContent>
     </Card>
   );

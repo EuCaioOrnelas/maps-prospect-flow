@@ -22,10 +22,6 @@ function fmt(n: number) {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function fmtInt(n: number) {
-  return n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
-}
-
 export function ForecastChart({
   leadsProspected,
   totalResponses,
@@ -37,7 +33,6 @@ export function ForecastChart({
 }: ForecastChartProps) {
   const totalSales = opportunitySales + scoreSales;
 
-  // Three scenarios based on actual data
   const conservative = Math.round(totalSales * 0.5 * averageTicket);
   const realistic = Math.round(totalSales * averageTicket);
   const aggressive = Math.round(totalSales * 1.5 * averageTicket);
@@ -51,8 +46,8 @@ export function ForecastChart({
   const hasData = totalSales > 0;
 
   return (
-    <Card className="border-border/40 rounded-2xl">
-      <CardHeader className="pb-3">
+    <Card className="border-border/40 rounded-2xl h-full flex flex-col">
+      <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <TrendingUp size={16} className="text-primary" />
           Forecast Próximos 30 Dias
@@ -80,25 +75,25 @@ export function ForecastChart({
         </CardTitle>
         <p className="text-xs text-muted-foreground/60">Baseado em score + leads ativos + ticket médio</p>
       </CardHeader>
-      <CardContent className="pb-5">
+      <CardContent className="flex-1 flex flex-col pb-4">
         {!hasData ? (
-          <p className="text-sm text-muted-foreground/60 text-center py-8">
+          <p className="text-sm text-muted-foreground/60 text-center py-8 flex-1 flex items-center justify-center">
             Dados insuficientes para previsão. Prospecte leads ou engaje contatos para gerar forecast.
           </p>
         ) : (
-          <div className="space-y-5">
+          <div className="flex flex-col flex-1 gap-3">
             {/* Scenario cards */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {scenarios.map((s) => (
-                <div key={s.name} className="text-center p-3 rounded-xl bg-muted/30 border border-border/20">
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{s.name}</p>
-                  <p className="text-lg font-bold text-foreground mt-1">R$ {fmt(s.value)}</p>
+                <div key={s.name} className="text-center p-2.5 rounded-xl bg-muted/30 border border-border/20">
+                  <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">{s.name}</p>
+                  <p className="text-base font-bold text-foreground mt-0.5">R$ {fmt(s.value)}</p>
                 </div>
               ))}
             </div>
 
-            {/* Chart */}
-            <div className="h-[160px]">
+            {/* Chart - fills remaining space */}
+            <div className="flex-1 min-h-[140px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={scenarios} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} vertical={false} />
