@@ -69,6 +69,9 @@ const Profile = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { services, isLoading: isLoadingServices, upsertServices } = useCompanyServices();
+  const [isEditingServices, setIsEditingServices] = useState(false);
+  const [serviceForm, setServiceForm] = useState<{ name: string; average_ticket: number; description: string }[]>([]);
 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
