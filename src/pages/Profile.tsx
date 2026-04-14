@@ -751,7 +751,7 @@ const Profile = () => {
                     { icon: Sparkles, label: "Diferencial", value: companyProfile.company_differential },
                     { icon: Rocket, label: "Objetivo", value: companyProfile.company_objective },
                   ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 p-3.5 rounded-lg border border-border/40 bg-muted/30">
+                    <div key={i} className="flex items-start gap-3 p-3.5 rounded-lg border border-border/30 bg-background/80 shadow-[0_0_15px_-3px_hsl(var(--primary)/0.06)]">
                       <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                         <item.icon className="h-4 w-4 text-primary" />
                       </div>
