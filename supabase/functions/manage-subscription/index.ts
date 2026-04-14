@@ -39,13 +39,14 @@ serve(async (req) => {
     const { action } = body;
 
     // Get profile
-    const { data: profile } = await supabaseClient
+    const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
       .select("email, cpf, plan, payment_provider, subscription_current_period_end")
       .eq("id", userId)
       .single();
 
-    if (!profile) throw new Error("Perfil não encontrado");
+    logStep("Profile query result", { profile: !!profile, error: profileError?.message });
+    if (!profile) throw new Error(`Perfil não encontrado: ${profileError?.message || 'null'}`);
 
     const email = profile.email || userEmail;
     const paymentProvider = profile.payment_provider || "";
