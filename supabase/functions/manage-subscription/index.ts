@@ -39,9 +39,9 @@ serve(async (req) => {
     const { action } = body;
 
     // Get profile
-    const { data: profile } = await supabaseClient
+    const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
-      .select("email, cpf, plan, payment_provider, subscription_current_period_end, stripe_customer_id")
+      .select("email, cpf, plan, payment_provider, subscription_current_period_end")
       .eq("id", userId)
       .single();
 
@@ -68,17 +68,26 @@ serve(async (req) => {
         let portalUrl = null;
         try {
           const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-          if (stripeKey && profile.stripe_customer_id) {
-            const portalRes = await fetch("https://api.stripe.com/v1/billing_portal/sessions", {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${stripeKey}`,
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              body: `customer=${profile.stripe_customer_id}&return_url=${encodeURIComponent("https://maps-prospect-flow.lovable.app/minha-assinatura")}`,
+          if (stripeKey && email) {
+            // Find Stripe customer by email
+            const custSearchRes = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(email)}&limit=1`, {
+              headers: { "Authorization": `Bearer ${stripeKey}` },
             });
-            const portalData = await portalRes.json();
-            if (portalData.url) portalUrl = portalData.url;
+            const custSearchData = await custSearchRes.json();
+            const stripeCustomerId = custSearchData.data?.[0]?.id;
+
+            if (stripeCustomerId) {
+              const portalRes = await fetch("https://api.stripe.com/v1/billing_portal/sessions", {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${stripeKey}`,
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: `customer=${stripeCustomerId}&return_url=${encodeURIComponent("https://maps-prospect-flow.lovable.app/minha-assinatura")}`,
+              });
+              const portalData = await portalRes.json();
+              if (portalData.url) portalUrl = portalData.url;
+            }
           }
         } catch (e) {
           logStep("Stripe portal error", { error: String(e) });
