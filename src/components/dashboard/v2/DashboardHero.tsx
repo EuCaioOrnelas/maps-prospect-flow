@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, ArrowRight, Rocket, Info, Megaphone, Users } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowRight, Rocket, Info, Megaphone, Users, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ interface DashboardHeroProps {
   conversasAtivas: number;
   oportunidadesQuentes: number;
   cumulativeByMonth: { month: string; total: number }[];
+  leadsByDay: { date: string; count: number }[];
   estimatedSales: number;
   averageTicket: number;
   opportunitySales: number;
@@ -53,6 +54,7 @@ export function DashboardHero({
   conversasAtivas,
   oportunidadesQuentes,
   cumulativeByMonth,
+  leadsByDay,
   estimatedSales,
   averageTicket,
   opportunitySales,
@@ -63,7 +65,7 @@ export function DashboardHero({
   const hasChange = financialChange !== 0;
   const [showCampaignDialog, setShowCampaignDialog] = useState(false);
 
-  const chartData = buildChartData(cumulativeByMonth, periodDays);
+  const chartData = buildChartData(cumulativeByMonth, periodDays, leadsByDay);
 
   const periodLabel = periodDays <= 7 ? '7 dias' : periodDays <= 30 ? '30 dias' : '90 dias';
 
@@ -150,7 +152,7 @@ export function DashboardHero({
             </div>
           </div>
 
-          {chartData.length > 1 && (
+          {chartData.length > 1 ? (
             <div className="w-full lg:w-[280px] h-[120px] shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 8, right: 12, left: 12, bottom: 2 }}>
@@ -188,6 +190,11 @@ export function DashboardHero({
                   />
                 </AreaChart>
               </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="w-full lg:w-[280px] h-[120px] shrink-0 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/40 bg-muted/20">
+              <BarChart3 size={24} className="text-muted-foreground/40" />
+              <span className="text-xs text-muted-foreground/60 text-center px-4">Dados insuficientes para gerar o gráfico</span>
             </div>
           )}
         </div>
@@ -266,67 +273,72 @@ export function DashboardHero({
 
 function buildChartData(
   cumulativeByMonth: { month: string; total: number }[],
-  periodDays: number
+  periodDays: number,
+  leadsByDay: { date: string; count: number }[] = []
 ): { label: string; total: number }[] {
-  if (cumulativeByMonth.length === 0) return [];
-
-  const lastTotal = cumulativeByMonth[cumulativeByMonth.length - 1]?.total || 0;
 
   if (periodDays <= 7) {
     const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    const result = [];
+    const result: { label: string; total: number }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      result.push({
-        label: days[d.getDay()],
-        total: Math.round(lastTotal * ((7 - i) / 7)),
-      });
+      const dateKey = d.toISOString().slice(0, 10);
+      const dayData = leadsByDay.find(l => l.date === dateKey);
+      result.push({ label: days[d.getDay()], total: dayData?.count || 0 });
     }
-    return result;
+    // Build cumulative
+    let cumulative = 0;
+    const cumulativeResult = result.map(r => {
+      cumulative += r.total;
+      return { label: r.label, total: cumulative };
+    });
+    // Only return if there's any data
+    return cumulative > 0 ? cumulativeResult : [];
   }
 
   if (periodDays <= 30) {
-    const totalWeeks = Math.max(1, Math.ceil(periodDays / 7));
-    
-    const result: { label: string; total: number }[] = [];
-    for (let w = 1; w <= totalWeeks; w++) {
-      result.push({
-        label: `Semana ${w}`,
-        total: Math.round(lastTotal * (w / totalWeeks)),
+    const now = new Date();
+    const weekBuckets: { label: string; total: number }[] = [];
+    const totalWeeks = Math.max(1, Math.ceil(30 / 7));
+    for (let w = 0; w < totalWeeks; w++) {
+      const weekEnd = new Date(now);
+      weekEnd.setDate(weekEnd.getDate() - (totalWeeks - 1 - w) * 7);
+      const weekStart = new Date(weekEnd);
+      weekStart.setDate(weekStart.getDate() - 6);
+      
+      let weekTotal = 0;
+      leadsByDay.forEach(l => {
+        if (l.date >= weekStart.toISOString().slice(0, 10) && l.date <= weekEnd.toISOString().slice(0, 10)) {
+          weekTotal += l.count;
+        }
       });
+      weekBuckets.push({ label: `Semana ${w + 1}`, total: weekTotal });
     }
-
-    return result;
+    // Build cumulative
+    let cumulative = 0;
+    const cumulativeResult = weekBuckets.map(r => {
+      cumulative += r.total;
+      return { label: r.label, total: cumulative };
+    });
+    return cumulative > 0 ? cumulativeResult : [];
   }
 
-  const cumulativeTimeline = cumulativeByMonth
-    .map(({ month, total }) => {
-      const [monthPart, yearPart] = month.split('/').map(Number);
-      return {
-        timestamp: new Date(2000 + yearPart, monthPart - 1, 1).getTime(),
-        total,
-      };
-    })
-    .filter((entry) => !Number.isNaN(entry.timestamp));
-
-  return Array.from({ length: 3 }, (_, index) => {
-    const date = new Date();
-    date.setDate(1);
-    date.setMonth(date.getMonth() - (2 - index));
-
-    const targetTimestamp = new Date(date.getFullYear(), date.getMonth(), 1).getTime();
-    const total = cumulativeTimeline.reduce((latestTotal, entry) => {
-      if (entry.timestamp <= targetTimestamp) {
-        return entry.total;
+  // 90 days — aggregate by month using real daily data
+  const now = new Date();
+  const result: { label: string; total: number }[] = [];
+  let cumulative = 0;
+  for (let i = 2; i >= 0; i--) {
+    const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthKey = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
+    let monthTotal = 0;
+    leadsByDay.forEach(l => {
+      if (l.date.startsWith(monthKey)) {
+        monthTotal += l.count;
       }
-
-      return latestTotal;
-    }, 0);
-
-    return {
-      label: MONTH_LABELS_PT_BR[date.getMonth()],
-      total,
-    };
-  });
+    });
+    cumulative += monthTotal;
+    result.push({ label: MONTH_LABELS_PT_BR[monthDate.getMonth()], total: cumulative });
+  }
+  return cumulative > 0 ? result : [];
 }
