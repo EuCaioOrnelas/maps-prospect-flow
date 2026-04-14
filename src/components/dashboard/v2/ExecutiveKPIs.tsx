@@ -24,7 +24,10 @@ interface ExecutiveKPIsProps {
   aiMinutesSaved: number;
 }
 
-function fmt(n: number) {
+function fmtCompact(n: number) {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}B`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
+  if (n >= 10_000) return `${(n / 1_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`;
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
@@ -55,7 +58,7 @@ export function ExecutiveKPIs({
   const kpis: KPIData[] = [
     {
       title: "Receita Potencial Atual",
-      value: `R$ ${fmt(receitaPotencial)}`,
+      value: `R$ ${fmtCompact(receitaPotencial)}`,
       badge: receitaPotencialGrowth !== 0 ? `${receitaPotencialGrowth > 0 ? '+' : ''}${receitaPotencialGrowth.toFixed(0)}%` : '—',
       badgeType: receitaPotencialGrowth > 0 ? 'positive' : receitaPotencialGrowth < 0 ? 'negative' : 'neutral',
       subtitle: "Soma do valor em negociação do CRM",
@@ -127,8 +130,9 @@ export function ExecutiveKPIs({
                       {kpi.title}
                     </p>
                     <p className={cn(
-                      "text-2xl font-bold leading-none",
-                      isInsufficientData && kpi.title === "Gargalo Atual" ? "text-base text-muted-foreground" : "text-foreground"
+                      "font-bold leading-none whitespace-nowrap",
+                      isInsufficientData && kpi.title === "Gargalo Atual" ? "text-base text-muted-foreground" : 
+                      kpi.value.length > 16 ? "text-lg text-foreground" : "text-2xl text-foreground"
                     )}>
                       {kpi.value}
                     </p>
