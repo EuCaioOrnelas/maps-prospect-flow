@@ -203,7 +203,6 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         healthStatus = "Crítico";
         healthDetail = `Pipeline parado. Inicie campanhas e prospecção urgentemente`;
       }
-      }
 
       return {
         receitaPotencial,
