@@ -741,23 +741,23 @@ const Profile = () => {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
-                    { icon: Building2, label: "Empresa", value: companyProfile.company_name },
-                    { icon: User, label: "Atendente", value: companyProfile.attendant_name },
-                    { icon: Target, label: "Nicho", value: companyProfile.company_niche },
-                    { icon: ShoppingBag, label: "Produtos/Serviços", value: companyProfile.company_products },
-                    { icon: Users, label: "Público-alvo", value: companyProfile.company_target_audience },
-                    { icon: Sparkles, label: "Diferencial", value: companyProfile.company_differential },
-                    { icon: Rocket, label: "Objetivo", value: companyProfile.company_objective },
+                    { icon: Building2, label: "Empresa", value: companyProfile.company_name, color: "text-emerald-500" },
+                    { icon: User, label: "Atendente", value: companyProfile.attendant_name, color: "text-emerald-500" },
+                    { icon: Target, label: "Nicho", value: companyProfile.company_niche, color: "text-emerald-600" },
+                    { icon: ShoppingBag, label: "Produtos/Serviços", value: companyProfile.company_products, color: "text-emerald-600" },
+                    { icon: Users, label: "Público-alvo", value: companyProfile.company_target_audience, color: "text-emerald-500" },
+                    { icon: Sparkles, label: "Diferencial", value: companyProfile.company_differential, color: "text-emerald-500" },
+                    { icon: Rocket, label: "Objetivo", value: companyProfile.company_objective, color: "text-emerald-600" },
                   ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 py-3.5 border-b border-border/20">
-                      <div className="h-7 w-7 rounded-md bg-muted/60 flex items-center justify-center shrink-0 mt-0.5">
-                        <item.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div key={i} className="flex items-start gap-3 p-3.5 rounded-lg border border-border/40 bg-muted/30">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                        <item.icon className={`h-4 w-4 ${item.color}`} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5">{item.label}</p>
-                        <p className="text-sm break-words line-clamp-2">{item.value || "—"}</p>
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-1">{item.label}</p>
+                        <p className="text-sm break-words line-clamp-2 leading-relaxed">{item.value || "—"}</p>
                       </div>
                     </div>
                   ))}
