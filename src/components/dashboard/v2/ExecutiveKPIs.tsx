@@ -24,7 +24,10 @@ interface ExecutiveKPIsProps {
   aiMinutesSaved: number;
 }
 
-function fmt(n: number) {
+function fmtCompact(n: number) {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}B`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
+  if (n >= 10_000) return `${(n / 1_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`;
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
