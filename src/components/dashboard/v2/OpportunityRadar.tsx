@@ -3,79 +3,35 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Radar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-
-interface Opportunity {
-  company: string;
-  segment: string;
-  score: number;
-  potential: number;
-  temperature: 'hot' | 'warm' | 'cold';
-  nextAction: string;
-}
+import type { RadarLead } from "@/hooks/useDashboardKPIs";
 
 interface OpportunityRadarProps {
-  leadsProspected: number;
-  totalResponses: number;
-  campaigns: any[];
-  messagesSent: number;
+  radarLeads: RadarLead[];
 }
 
-function generateOpportunities(leadsProspected: number, totalResponses: number, campaigns: any[]): Opportunity[] {
-  if (leadsProspected === 0 && totalResponses === 0) return [];
-
-  // Generate realistic-looking data based on actual metrics
-  const segments = ['Saúde', 'Imobiliário', 'SaaS', 'Varejo', 'Educação', 'Indústria', 'Serviços', 'Logística'];
-  const companies = ['Alpha Group', 'Beta Solutions', 'Gamma Corp', 'Delta Tech', 'Omega Services', 'Sigma Labs'];
-  const actions = ['Abordar hoje', 'Nutrir', 'SDR urgente', 'Agendar demo', 'Follow-up', 'Enviar proposta'];
-
-  const count = Math.min(Math.max(Math.round(totalResponses * 0.3), 3), 6);
-  
-  return Array.from({ length: count }, (_, i) => {
-    const score = Math.max(60, Math.min(99, 95 - i * 7 + Math.round(Math.random() * 5)));
-    const potentialBase = leadsProspected > 50 ? 15000 : 8000;
-    return {
-      company: companies[i % companies.length],
-      segment: segments[i % segments.length],
-      score,
-      potential: potentialBase + Math.round(Math.random() * 30000),
-      temperature: score >= 90 ? 'hot' as const : score >= 70 ? 'warm' as const : 'cold' as const,
-      nextAction: actions[i % actions.length],
-    };
-  });
+function fmt(n: number) {
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function ScoreBadge({ score }: { score: number }) {
-  return (
-    <span className={cn(
-      "inline-flex items-center justify-center w-10 h-7 rounded-lg text-xs font-bold",
-      score >= 90 && "bg-primary/15 text-primary",
-      score >= 70 && score < 90 && "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400",
-      score < 70 && "bg-destructive/15 text-destructive",
-    )}>
-      {score}
-    </span>
-  );
-}
-
-function TempBadge({ temp }: { temp: 'hot' | 'warm' | 'cold' }) {
-  const config = {
-    hot: { label: 'Quente', class: 'bg-primary/10 text-primary' },
-    warm: { label: 'Morno', class: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' },
-    cold: { label: 'Frio', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
+function StatusBadge({ status }: { status: string }) {
+  const config: Record<string, string> = {
+    "Pronto p/ venda": "bg-primary/10 text-primary",
+    "Alto valor": "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    "Engajado": "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
+    "Baixo engajamento": "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+    "Frio": "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   };
-  const c = config[temp];
   return (
-    <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", c.class)}>
-      {c.label}
+    <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap", config[status] || "bg-muted text-muted-foreground")}>
+      {status}
     </span>
   );
 }
 
-export function OpportunityRadar({ leadsProspected, totalResponses, campaigns, messagesSent }: OpportunityRadarProps) {
+export function OpportunityRadar({ radarLeads }: OpportunityRadarProps) {
   const navigate = useNavigate();
-  const opportunities = generateOpportunities(leadsProspected, totalResponses, campaigns);
 
-  if (opportunities.length === 0) {
+  if (radarLeads.length === 0) {
     return (
       <Card className="border-border/40 rounded-2xl">
         <CardHeader className="pb-3">
@@ -112,29 +68,40 @@ export function OpportunityRadar({ leadsProspected, totalResponses, campaigns, m
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/30">
-                <th className="text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-6 pb-2">Empresa</th>
+                <th className="text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-6 pb-2">Lead</th>
                 <th className="text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-3 pb-2">Segmento</th>
                 <th className="text-center text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-3 pb-2">Score IA</th>
                 <th className="text-right text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-3 pb-2">Potencial</th>
-                <th className="text-center text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-3 pb-2">Temp.</th>
-                <th className="text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-6 pb-2">Próxima ação</th>
+                <th className="text-center text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-3 pb-2">Status</th>
+                <th className="text-right text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-6 pb-2">Crescimento 7d</th>
               </tr>
             </thead>
             <tbody>
-              {opportunities.map((opp, i) => (
+              {radarLeads.map((lead) => (
                 <tr
-                  key={i}
+                  key={lead.id}
                   className="border-b border-border/20 last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
-                  onClick={() => navigate('/opportunities')}
+                  onClick={() => navigate('/crm')}
                 >
-                  <td className="px-6 py-3 font-medium text-foreground">{opp.company}</td>
-                  <td className="px-3 py-3 text-muted-foreground">{opp.segment}</td>
-                  <td className="px-3 py-3 text-center"><ScoreBadge score={opp.score} /></td>
-                  <td className="px-3 py-3 text-right font-medium text-foreground">
-                    R$ {opp.potential.toLocaleString('pt-BR')}
+                  <td className="px-6 py-3 font-medium text-foreground">{lead.name}</td>
+                  <td className="px-3 py-3 text-muted-foreground">{lead.segment || "—"}</td>
+                  <td className="px-3 py-3 text-center">
+                    <span className={cn(
+                      "inline-flex items-center justify-center w-12 h-7 rounded-lg text-xs font-bold",
+                      lead.score >= 601 && "bg-primary/15 text-primary",
+                      lead.score >= 401 && lead.score < 601 && "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400",
+                      lead.score < 401 && "bg-muted text-muted-foreground",
+                    )}>
+                      {lead.score}
+                    </span>
                   </td>
-                  <td className="px-3 py-3 text-center"><TempBadge temp={opp.temperature} /></td>
-                  <td className="px-6 py-3 text-muted-foreground">{opp.nextAction}</td>
+                  <td className="px-3 py-3 text-right font-medium text-foreground">
+                    R$ {fmt(lead.potential)}
+                  </td>
+                  <td className="px-3 py-3 text-center"><StatusBadge status={lead.status} /></td>
+                  <td className="px-6 py-3 text-right">
+                    <span className="text-xs font-semibold text-primary">+{lead.scoreGrowth7d}pts</span>
+                  </td>
                 </tr>
               ))}
             </tbody>

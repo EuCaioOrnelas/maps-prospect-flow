@@ -152,38 +152,7 @@ export default function MainDashboard() {
                 aiMinutesSaved={kpis.aiMinutesSaved}
               />
 
-              {/* 3 — Opportunity Radar */}
-              <OpportunityRadar
-                leadsProspected={data.leadsProspected}
-                totalResponses={data.totalResponses}
-                campaigns={data.campaigns}
-                messagesSent={data.messagesSent}
-              />
-
-              {/* 4 — Funnel + AI Activity */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <OperationalFunnel
-                  leadsProspected={data.leadsProspected}
-                  messagesSent={data.messagesSent}
-                  totalResponses={data.totalResponses}
-                />
-                <AIActivityCard
-                  totalResponses={data.totalResponses}
-                  messagesSent={data.messagesSent}
-                  leadsProspected={data.leadsProspected}
-                />
-              </div>
-
-              {/* 5 — Alerts */}
-              <ExecutiveAlerts
-                leadsProspected={data.leadsProspected}
-                totalResponses={data.totalResponses}
-                responseRate={data.responseRate}
-                prevResponseRate={data.prevResponseRate}
-                campaigns={data.campaigns}
-              />
-
-              {/* 6 — Forecast + Channel Performance */}
+              {/* 3 — Forecast + Channel Performance (moved above Radar) */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ForecastChart
                   leadsProspected={data.leadsProspected}
@@ -200,6 +169,32 @@ export default function MainDashboard() {
                   totalResponses={data.totalResponses}
                 />
               </div>
+
+              {/* 4 — Opportunity Radar */}
+              <OpportunityRadar radarLeads={kpis.radarLeads} />
+
+              {/* 5 — Funnel + AI Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <OperationalFunnel
+                  leadsProspected={data.leadsProspected}
+                  messagesSent={data.messagesSent}
+                  totalResponses={data.totalResponses}
+                />
+                <AIActivityCard
+                  totalResponses={data.totalResponses}
+                  messagesSent={data.messagesSent}
+                  leadsProspected={data.leadsProspected}
+                />
+              </div>
+
+              {/* 6 — Alerts */}
+              <ExecutiveAlerts
+                leadsProspected={data.leadsProspected}
+                totalResponses={data.totalResponses}
+                responseRate={data.responseRate}
+                prevResponseRate={data.prevResponseRate}
+                campaigns={data.campaigns}
+              />
 
               {/* 7 — Quick Actions */}
               <QuickActions />
