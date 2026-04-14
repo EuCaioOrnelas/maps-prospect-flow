@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMainDashboard } from "@/hooks/useMainDashboard";
 import { useCockpitForecast } from "@/hooks/useCockpitForecast";
+import { useDashboardKPIs } from "@/hooks/useDashboardKPIs";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
@@ -43,28 +44,12 @@ export default function MainDashboard() {
   const periodDays = parseInt(period);
   const data = useMainDashboard(periodDays);
   const forecast = useCockpitForecast(periodDays);
+  const kpis = useDashboardKPIs(periodDays);
 
-  // Derived metrics using forecast data
   const financialImpact = forecast.totalEstimatedRevenue;
-  const prevFinancialImpact = 0; // We don't have prev period forecast yet
   const financialChange = data.prevLeadsProspected > 0
     ? ((data.leadsProspected - data.prevLeadsProspected) / data.prevLeadsProspected) * 100
     : 0;
-
-  const hotLeads = Math.round(data.totalResponses * 0.28);
-  const prevHotLeads = Math.round(data.prevTotalResponses * 0.28);
-  const hotLeadsChange = hotLeads - prevHotLeads;
-
-  const responseRateChange = data.responseRate - data.prevResponseRate;
-  const bottleneck = responseRateChange < -5
-    ? { label: 'Resposta Inicial Baixa', change: responseRateChange, detail: 'Taxa de resposta em queda' }
-    : data.messagesSent === 0
-    ? { label: 'Sem Campanhas', change: 0, detail: 'Nenhuma campanha ativa' }
-    : { label: 'Operação Saudável', change: Math.abs(responseRateChange), detail: 'Métricas dentro do esperado' };
-
-  const aiHoursSaved = Math.round((data.totalResponses * 0.5) + (data.leadsProspected * 0.02) + (data.messagesSent * 0.01));
-  const activeConversations = Math.round(data.totalResponses * 0.35);
-
 
   const firstName = profile?.name?.split(' ')[0] || 'Usuário';
   const hour = new Date().getHours();
@@ -145,25 +130,26 @@ export default function MainDashboard() {
               <DashboardHero
                 financialImpact={financialImpact}
                 financialChange={financialChange}
-                leadsProspected={data.leadsProspected}
-                totalResponses={data.totalResponses}
-                hotLeads={hotLeads}
-                activeConversations={activeConversations}
+                leadsGerados={kpis.leadsGeradosPeriodo}
+                conversasAtivas={kpis.conversasAtivasPeriodo}
+                oportunidadesQuentes={kpis.oportunidadesQuentesPeriodo}
                 cumulativeByMonth={data.cumulativeByMonth}
                 estimatedSales={forecast.totalEstimatedSales}
                 averageTicket={forecast.averageTicket}
                 opportunitySales={forecast.opportunitySales}
                 scoreSales={forecast.scoreSales}
+                periodDays={periodDays}
               />
 
               {/* 2 — Executive KPIs */}
               <ExecutiveKPIs
-                financialImpact={financialImpact}
-                financialChange={financialChange}
-                hotLeads={hotLeads}
-                hotLeadsChange={hotLeadsChange}
-                bottleneck={bottleneck}
-                aiHoursSaved={aiHoursSaved}
+                receitaPotencial={kpis.receitaPotencial}
+                receitaPotencialGrowth={kpis.receitaPotencialGrowth}
+                leadsQuentesHoje={kpis.leadsQuentesHoje}
+                leadsQuentesOntem={kpis.leadsQuentesOntem}
+                healthStatus={kpis.healthStatus}
+                healthDetail={kpis.healthDetail}
+                aiMinutesSaved={kpis.aiMinutesSaved}
               />
 
               {/* 3 — Opportunity Radar */}

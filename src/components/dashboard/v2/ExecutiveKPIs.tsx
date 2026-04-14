@@ -1,75 +1,94 @@
 import { Card } from "@/components/ui/card";
-import { DollarSign, Flame, AlertTriangle, Bot, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { DollarSign, Flame, AlertTriangle, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface KPIData {
   title: string;
   value: string;
-  badge: string;
+  badge?: string;
   badgeType: 'positive' | 'negative' | 'neutral';
   subtitle: string;
   icon: React.ReactNode;
   tooltip?: string;
+  showBadge: boolean;
 }
 
 interface ExecutiveKPIsProps {
-  financialImpact: number;
-  financialChange: number;
-  hotLeads: number;
-  hotLeadsChange: number;
-  bottleneck: { label: string; change: number; detail: string };
-  aiHoursSaved: number;
+  receitaPotencial: number;
+  receitaPotencialGrowth: number;
+  leadsQuentesHoje: number;
+  leadsQuentesOntem: number;
+  healthStatus: string;
+  healthDetail: string;
+  aiMinutesSaved: number;
 }
 
 function fmt(n: number) {
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtInt(n: number) {
   return n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 }
 
 export function ExecutiveKPIs({
-  financialImpact,
-  financialChange,
-  hotLeads,
-  hotLeadsChange,
-  bottleneck,
-  aiHoursSaved,
+  receitaPotencial,
+  receitaPotencialGrowth,
+  leadsQuentesHoje,
+  leadsQuentesOntem,
+  healthStatus,
+  healthDetail,
+  aiMinutesSaved,
 }: ExecutiveKPIsProps) {
+  const hotLeadsChange = leadsQuentesHoje - leadsQuentesOntem;
+  const aiHours = Math.floor(aiMinutesSaved / 60);
+  const aiMins = aiMinutesSaved % 60;
+  const aiDisplay = aiHours > 0 ? `${aiHours}h ${aiMins}min` : `${aiMins}min`;
+
+  const healthBadgeType: 'positive' | 'negative' | 'neutral' = 
+    healthStatus === "Excelente" || healthStatus === "Operação Saudável" ? 'positive' :
+    healthStatus === "Atenção Necessária" || healthStatus === "Score Baixo" || healthStatus === "Sem Prospecção" ? 'negative' : 'neutral';
+
   const kpis: KPIData[] = [
     {
       title: "Receita Potencial Atual",
-      value: `R$ ${fmt(financialImpact)}`,
-      badge: financialChange !== 0 ? `${financialChange > 0 ? '+' : ''}${financialChange.toFixed(0)}%` : '—',
-      badgeType: financialChange > 0 ? 'positive' : financialChange < 0 ? 'negative' : 'neutral',
-      subtitle: "Pipeline ponderado ativo",
+      value: `R$ ${fmt(receitaPotencial)}`,
+      badge: receitaPotencialGrowth !== 0 ? `${receitaPotencialGrowth > 0 ? '+' : ''}${receitaPotencialGrowth.toFixed(0)}%` : '—',
+      badgeType: receitaPotencialGrowth > 0 ? 'positive' : receitaPotencialGrowth < 0 ? 'negative' : 'neutral',
+      subtitle: "Soma do valor em negociação do CRM",
       icon: <DollarSign size={18} />,
-      tooltip: "Estimativa baseada nos leads ativos e taxa de conversão histórica",
+      tooltip: "Soma total dos valores em negociação de todos os leads no CRM. Crescimento comparado aos últimos 30 dias.",
+      showBadge: true,
     },
     {
       title: "Leads Quentes Hoje",
-      value: String(hotLeads),
+      value: String(leadsQuentesHoje),
       badge: hotLeadsChange > 0 ? `+${hotLeadsChange}` : hotLeadsChange < 0 ? String(hotLeadsChange) : '—',
       badgeType: hotLeadsChange > 0 ? 'positive' : hotLeadsChange < 0 ? 'negative' : 'neutral',
-      subtitle: "Alta chance de resposta",
+      subtitle: "Crescimento de score >150pts em 24h",
       icon: <Flame size={18} />,
-      tooltip: "Leads com score acima de 80 ou resposta recente",
+      tooltip: "Leads que tiveram um aumento relevante de 150+ pontos no score nas últimas 24 horas. Comparado com o dia anterior.",
+      showBadge: true,
     },
     {
       title: "Gargalo Atual",
-      value: bottleneck.label,
-      badge: `${bottleneck.change > 0 ? '+' : ''}${bottleneck.change.toFixed(0)}%`,
-      badgeType: bottleneck.change < 0 ? 'negative' : 'positive',
-      subtitle: bottleneck.detail,
+      value: healthStatus,
+      badgeType: healthBadgeType,
+      subtitle: healthDetail,
       icon: <AlertTriangle size={18} />,
-      tooltip: "Principal ponto de atenção identificado pela IA",
+      tooltip: "Saúde da operação comercial calculada com base no score médio dos leads e volume de oportunidades geradas.",
+      showBadge: false,
     },
     {
       title: "IA Economizou",
-      value: `${aiHoursSaved}h`,
+      value: aiDisplay,
       badge: "automático",
       badgeType: 'positive',
-      subtitle: "Respostas + follow-up + CRM",
+      subtitle: "Tempo economizado com respostas IA + fluxos",
       icon: <Bot size={18} />,
-      tooltip: "Horas estimadas economizadas com automação inteligente",
+      tooltip: "Calculado com base nos caracteres escritos pela IA (200 chars/min humano) + nós percorridos nos fluxos automatizados (2 min/nó).",
+      showBadge: true,
     },
   ];
 
@@ -85,14 +104,24 @@ export function ExecutiveKPIs({
                     <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                       {kpi.icon}
                     </div>
-                    <span className={cn(
-                      "text-xs font-semibold px-2 py-0.5 rounded-full",
-                      kpi.badgeType === 'positive' && "bg-primary/10 text-primary",
-                      kpi.badgeType === 'negative' && "bg-destructive/10 text-destructive",
-                      kpi.badgeType === 'neutral' && "bg-muted text-muted-foreground",
-                    )}>
-                      {kpi.badge}
-                    </span>
+                    {kpi.showBadge && kpi.badge && (
+                      <span className={cn(
+                        "text-xs font-semibold px-2 py-0.5 rounded-full",
+                        kpi.badgeType === 'positive' && "bg-primary/10 text-primary",
+                        kpi.badgeType === 'negative' && "bg-destructive/10 text-destructive",
+                        kpi.badgeType === 'neutral' && "bg-muted text-muted-foreground",
+                      )}>
+                        {kpi.badge}
+                      </span>
+                    )}
+                    {!kpi.showBadge && (
+                      <span className={cn(
+                        "w-2.5 h-2.5 rounded-full",
+                        kpi.badgeType === 'positive' && "bg-primary",
+                        kpi.badgeType === 'negative' && "bg-destructive",
+                        kpi.badgeType === 'neutral' && "bg-muted-foreground",
+                      )} />
+                    )}
                   </div>
                   <div>
                     <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
@@ -104,7 +133,6 @@ export function ExecutiveKPIs({
                     <p className="text-xs text-muted-foreground/60 mt-1">{kpi.subtitle}</p>
                   </div>
                 </div>
-                {/* Hover glow */}
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               </Card>
             </TooltipTrigger>

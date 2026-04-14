@@ -21,16 +21,13 @@ const SCORE_BUCKETS: ScoreBucket[] = [
 ];
 
 export interface CockpitForecast {
-  // Opportunity-based (1% each prospected lead)
   opportunityLeads: number;
   opportunitySales: number;
   opportunityRevenue: number;
-  // Score-based
   scoredLeads: number;
   scoreSales: number;
   scoreRevenue: number;
   scoreBuckets: { label: string; count: number; estimatedSales: number; revenue: number }[];
-  // Combined (deduplicated)
   totalEstimatedSales: number;
   totalEstimatedRevenue: number;
   averageTicket: number;
@@ -113,19 +110,20 @@ export function useCockpitForecast(periodDays: number): CockpitForecast {
 
   const prospectedSet = new Set(data.prospectedPhones);
 
-  // Deduplicate: scored leads that were ALSO prospected are counted only as opportunity leads
-  const pureScoreLeads = data.scoredLeads.filter(
-    (l) => !prospectedSet.has(l.phoneKey)
-  );
+  // PRIORITY: Score takes priority. Scored leads use score-based conversion.
+  // Prospected-only leads (NOT in score) use 1% flat conversion.
+  const scoredPhoneKeys = new Set(data.scoredLeads.map(l => l.phoneKey));
 
-  // Opportunity-based: 1% conversion
-  const opportunityLeads = data.totalProspected;
+  // Opportunity-based: only leads that are NOT scored — 1% conversion
+  const pureOpportunityCount = data.totalProspected - 
+    Array.from(prospectedSet).filter(p => scoredPhoneKeys.has(p)).length;
+  const opportunityLeads = Math.max(0, pureOpportunityCount);
   const opportunitySales = Math.round(opportunityLeads * 0.01);
   const opportunityRevenue = Math.round(opportunitySales * averageTicket);
 
-  // Score-based forecast (only non-prospected scored leads)
+  // Score-based forecast (ALL scored leads, since score takes priority)
   const bucketResults = SCORE_BUCKETS.map((bucket) => {
-    const inBucket = pureScoreLeads.filter(
+    const inBucket = data.scoredLeads.filter(
       (l) => l.score >= bucket.min && l.score <= bucket.max
     );
     const avgConversion = (bucket.conversionLow + bucket.conversionHigh) / 2;
@@ -138,7 +136,7 @@ export function useCockpitForecast(periodDays: number): CockpitForecast {
     };
   });
 
-  const scoredLeadsCount = pureScoreLeads.length;
+  const scoredLeadsCount = data.scoredLeads.length;
   const scoreSales = bucketResults.reduce((s, b) => s + b.estimatedSales, 0);
   const scoreRevenue = Math.round(scoreSales * averageTicket);
 

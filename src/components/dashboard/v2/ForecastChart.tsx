@@ -19,6 +19,10 @@ interface ForecastChartProps {
 }
 
 function fmt(n: number) {
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtInt(n: number) {
   return n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 }
 
