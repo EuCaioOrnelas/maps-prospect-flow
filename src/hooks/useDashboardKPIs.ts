@@ -63,8 +63,10 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         // WA flow executions for time saved
         flowExecsRes,
         // Score snapshots today vs yesterday for health
-        scoreTodayRes,
-        scoreYesterdayRes,
+66:         scoreTodayRes,
+67:         scoreYesterdayRes,
+68:         // Score decay: negative score logs in last 7 days
+69:         scoreDecayRes,
       ] = await Promise.all([
         supabase.from("leads").select("estimated_value").eq("user_id", user.id),
         supabase.from("leads").select("estimated_value").eq("user_id", user.id)
@@ -101,6 +103,10 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         supabase.from("revenue_leads").select("score_total").eq("user_id", user.id),
         // Search history for opportunity trend
         supabase.from("search_history").select("results_count").eq("user_id", user.id)
+          .gte("created_at", subDays(now, 7).toISOString()),
+        // Negative score changes in last 7 days (leads losing points)
+        supabase.from("revenue_score_logs").select("lead_id, points_applied").eq("user_id", user.id)
+          .lt("points_applied", 0)
           .gte("created_at", subDays(now, 7).toISOString()),
       ]);
 
