@@ -778,7 +778,7 @@ const Profile = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Plano atual:</span>
@@ -893,7 +893,7 @@ const Profile = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
@@ -910,7 +910,7 @@ const Profile = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
