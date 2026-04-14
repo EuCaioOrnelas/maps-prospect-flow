@@ -421,8 +421,8 @@ export default function AgentReports() {
       const agentConversations = conversations.filter(c => c.agent_id === agent.id);
       const agentMessages = messageLogs.filter(m => m.agent_id === agent.id);
       
-      const messagesSent = agentMessages.filter(m => m.direction === 'outgoing').length;
-      const messagesReceived = agentMessages.filter(m => m.direction === 'incoming').length;
+      const messagesSent = agentMessages.filter(m => m.direction === 'outgoing' || m.direction === 'sent').length;
+      const messagesReceived = agentMessages.filter(m => m.direction === 'incoming' || m.direction === 'received').length;
       const conversationsStarted = agentConversations.length;
       
       // Response times calculation
@@ -484,8 +484,9 @@ export default function AgentReports() {
         m.content?.toLowerCase().includes('fallback') ||
         m.content?.toLowerCase().includes('não entendi')
       ).length;
-      const errorRate = messagesSent > 0 
-        ? Math.round((errorMessages / messagesSent) * 100)
+      const totalOutgoing = agentMessages.filter(m => m.direction === 'outgoing' || m.direction === 'sent').length;
+      const errorRate = totalOutgoing > 0 
+        ? Math.round((errorMessages / totalOutgoing) * 100)
         : 0;
 
       // Sensitive words detection
@@ -503,7 +504,7 @@ export default function AgentReports() {
 
       // Repeated messages detection
       const outgoingContents = agentMessages
-        .filter(m => m.direction === 'outgoing' && m.content && m.content.length > 20)
+        .filter(m => (m.direction === 'outgoing' || m.direction === 'sent') && m.content && m.content.length > 20)
         .map(m => m.content?.toLowerCase().trim() || '');
       const uniqueMessages = new Set(outgoingContents);
       const repeatedMessagesRate = outgoingContents.length > 0 
@@ -699,15 +700,15 @@ export default function AgentReports() {
         (selectedAgent === "all" || m.agent_id === selectedAgent)
       );
       
-      const messagesSent = dayMessages.filter(m => m.direction === 'outgoing').length;
-      const messagesReceived = dayMessages.filter(m => m.direction === 'incoming').length;
+      const messagesSent = dayMessages.filter(m => m.direction === 'outgoing' || m.direction === 'sent').length;
+      const messagesReceived = dayMessages.filter(m => m.direction === 'incoming' || m.direction === 'received').length;
       const conversationsStarted = dayConversations.length;
       
       const escalated = dayConversations.filter(c => c.status === 'escalated').length;
       const escalationRate = conversationsStarted > 0 ? Math.round((escalated / conversationsStarted) * 100) : 0;
       
       const errors = dayMessages.filter(m => m.message_type === 'error').length;
-      const errorRate = messagesSent > 0 ? Math.round((errors / messagesSent) * 100) : 0;
+      const errorRate = messagesSent > 0 ? Math.round((errors / (messagesSent || 1)) * 100) : 0;
       
       // Calculate daily health score
       const completed = dayConversations.filter(c => c.status === 'completed').length;
@@ -1409,7 +1410,11 @@ export default function AgentReports() {
                           <p className="font-medium">Taxa de Resposta do Agente</p>
                           <p className="text-xs text-muted-foreground">(Respondidas ÷ Recebidas) × 100</p>
                         </div>
-                        <p className="text-2xl font-bold">{aggregatedMetrics.autoClosureRate}%</p>
+                        <p className="text-2xl font-bold">
+                          {filteredMetrics.length > 0 
+                            ? Math.round(filteredMetrics.reduce((s, m) => s + m.responseRate, 0) / filteredMetrics.length) 
+                            : 0}%
+                        </p>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                         <div>

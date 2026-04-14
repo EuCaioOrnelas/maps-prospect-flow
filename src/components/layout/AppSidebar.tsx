@@ -109,22 +109,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       active: currentPath === "/dashboard"
     },
     {
-      title: "Oportunidades",
-      url: "/reports/prospeccao",
-      icon: FileSearch,
-      active: currentPath === "/reports/prospeccao"
-    },
-    {
       title: "Disparos",
       url: "/whatsapp/reports",
       icon: Send,
       active: currentPath === "/whatsapp/reports"
-    },
-    {
-      title: "Aquecimento",
-      url: "/warming/reports",
-      icon: Flame,
-      active: currentPath === "/warming/reports"
     },
     {
       title: "Agentes IA",
