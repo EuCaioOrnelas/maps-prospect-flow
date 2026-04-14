@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Input } from "@/components/ui/input";
+import { useCompanyServices } from "@/hooks/useCompanyServices";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -47,6 +48,9 @@ import {
   Users,
   Rocket,
   Pencil,
+  DollarSign,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +69,9 @@ const Profile = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { services, isLoading: isLoadingServices, upsertServices } = useCompanyServices();
+  const [isEditingServices, setIsEditingServices] = useState(false);
+  const [serviceForm, setServiceForm] = useState<{ name: string; average_ticket: number; description: string }[]>([]);
 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -761,6 +768,161 @@ const Profile = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Services Card */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-primary" />
+                    Serviços Vendidos
+                  </CardTitle>
+                  <CardDescription>
+                    Serviços e ticket médio usados pela IA para calcular oportunidades e forecast
+                  </CardDescription>
+                </div>
+                {!isEditingServices && services.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setServiceForm(services.map(s => ({ name: s.name, average_ticket: s.average_ticket, description: s.description || "" })));
+                    setIsEditingServices(true);
+                  }} className="gap-2">
+                    <Pencil className="h-3.5 w-3.5" />
+                    Editar
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoadingServices ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Carregando...
+                </div>
+              ) : !isEditingServices && services.length === 0 ? (
+                <div className="text-center py-6 space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum serviço cadastrado. Adicione seus serviços para que a IA calcule oportunidades e forecast de receita.
+                  </p>
+                  <Button onClick={() => {
+                    setServiceForm([{ name: "", average_ticket: 0, description: "" }]);
+                    setIsEditingServices(true);
+                  }} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Adicionar serviços
+                  </Button>
+                </div>
+              ) : isEditingServices ? (
+                <div className="space-y-4">
+                  <p className="text-xs text-muted-foreground">
+                    O ticket médio é a média entre o valor mínimo e máximo que você cobra por esse serviço.
+                  </p>
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                    {serviceForm.map((service, index) => (
+                      <div key={index} className="p-3 rounded-xl border border-border/50 bg-muted/20 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-medium text-muted-foreground">Serviço {index + 1}</span>
+                          {serviceForm.length > 1 && (
+                            <button
+                              onClick={() => setServiceForm(prev => prev.filter((_, i) => i !== index))}
+                              className="text-destructive/60 hover:text-destructive transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                        <Input
+                          value={service.name}
+                          onChange={(e) => setServiceForm(prev => prev.map((s, i) => i === index ? { ...s, name: e.target.value } : s))}
+                          placeholder="Nome do serviço (ex: Gestão de Redes Sociais)"
+                          className="text-sm"
+                          maxLength={100}
+                        />
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
+                          <Input
+                            type="number"
+                            value={service.average_ticket || ""}
+                            onChange={(e) => setServiceForm(prev => prev.map((s, i) => i === index ? { ...s, average_ticket: parseFloat(e.target.value) || 0 } : s))}
+                            placeholder="Ticket médio (ex: 2500)"
+                            className="text-sm pl-9"
+                            min={0}
+                          />
+                        </div>
+                        <Input
+                          value={service.description}
+                          onChange={(e) => setServiceForm(prev => prev.map((s, i) => i === index ? { ...s, description: e.target.value } : s))}
+                          placeholder="Descrição breve (opcional)"
+                          className="text-sm"
+                          maxLength={200}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {serviceForm.length < 10 && (
+                    <Button variant="outline" size="sm" onClick={() => setServiceForm(prev => [...prev, { name: "", average_ticket: 0, description: "" }])} className="gap-1.5 text-xs w-full">
+                      <Plus size={14} />
+                      Adicionar outro serviço
+                    </Button>
+                  )}
+
+                  {serviceForm.some(s => s.average_ticket > 0) && (
+                    <div className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg">
+                      <span className="font-medium text-foreground">Ticket médio geral: </span>
+                      R$ {(serviceForm.filter(s => s.average_ticket > 0).reduce((a, b) => a + b.average_ticket, 0) / serviceForm.filter(s => s.average_ticket > 0).length).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setIsEditingServices(false)}>
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={async () => {
+                        const valid = serviceForm.filter(s => s.name.trim().length >= 2 && s.average_ticket > 0);
+                        if (valid.length === 0) {
+                          toast({ title: "Preencha ao menos 1 serviço", description: "Nome e ticket médio são obrigatórios.", variant: "destructive" });
+                          return;
+                        }
+                        await upsertServices.mutateAsync(valid);
+                        setIsEditingServices(false);
+                        toast({ title: "Serviços salvos!", description: "O forecast e oportunidades serão recalculados." });
+                      }}
+                      disabled={upsertServices.isPending}
+                      className="gap-2"
+                    >
+                      {upsertServices.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      Salvar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {services.map((service, i) => (
+                    <div key={service.id} className="flex items-start gap-3 p-3.5 rounded-lg border border-border/30 bg-background/80 shadow-[0_0_15px_-3px_hsl(var(--primary)/0.06)]">
+                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <DollarSign className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium">{service.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Ticket médio: R$ {Number(service.average_ticket).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
+                        </p>
+                        {service.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{service.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg">
+                    <span className="font-medium text-foreground">Ticket médio geral: </span>
+                    R$ {(services.reduce((a, b) => a + Number(b.average_ticket), 0) / services.length).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
+                  </div>
                 </div>
               )}
             </CardContent>
