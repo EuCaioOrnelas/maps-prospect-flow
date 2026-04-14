@@ -45,8 +45,7 @@ serve(async (req) => {
       .eq("id", userId)
       .single();
 
-    logStep("Profile query result", { profile: !!profile, error: profileError?.message });
-    if (!profile) throw new Error(`Perfil não encontrado: ${profileError?.message || 'null'}`);
+    if (!profile) throw new Error("Perfil não encontrado");
 
     const email = profile.email || userEmail;
     const paymentProvider = profile.payment_provider || "";
