@@ -1,9 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, TrendingDown, TrendingUp, Clock } from "lucide-react";
+import { AlertCircle, TrendingDown, TrendingUp, Clock, Flame, ThermometerSun, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
-interface Alert {
+export interface ExecutiveAlert {
   type: 'danger' | 'warning' | 'success' | 'info';
   icon: React.ReactNode;
   text: string;
@@ -11,58 +11,13 @@ interface Alert {
 }
 
 interface ExecutiveAlertsProps {
-  leadsProspected: number;
-  totalResponses: number;
-  responseRate: number;
-  prevResponseRate: number;
-  campaigns: any[];
+  alerts: ExecutiveAlert[];
 }
 
-export function ExecutiveAlerts({ leadsProspected, totalResponses, responseRate, prevResponseRate, campaigns }: ExecutiveAlertsProps) {
+export function ExecutiveAlerts({ alerts }: ExecutiveAlertsProps) {
   const navigate = useNavigate();
-  const alerts: Alert[] = [];
 
-  // Hot leads without follow-up
-  const unfollowed = Math.round(totalResponses * 0.22);
-  if (unfollowed > 0) {
-    alerts.push({
-      type: 'danger',
-      icon: <AlertCircle size={14} />,
-      text: `${unfollowed} leads quentes sem follow-up há 48h`,
-      route: '/crm',
-    });
-  }
-
-  // Response rate drop
-  const rateChange = responseRate - prevResponseRate;
-  if (rateChange < -5 && prevResponseRate > 0) {
-    alerts.push({
-      type: 'warning',
-      icon: <TrendingDown size={14} />,
-      text: `Taxa de resposta caiu ${Math.abs(rateChange).toFixed(0)}% no período`,
-      route: '/reports',
-    });
-  }
-
-  // Positive segment
-  if (leadsProspected > 50) {
-    alerts.push({
-      type: 'success',
-      icon: <TrendingUp size={14} />,
-      text: `Performance de prospecção acima da média do período`,
-      route: '/opportunities',
-    });
-  }
-
-  // Best time
-  alerts.push({
-    type: 'info',
-    icon: <Clock size={14} />,
-    text: `Melhor horário de envio: 09:30 às 11:00`,
-    route: '/whatsapp-campaign',
-  });
-
-  if (alerts.length === 0) return null;
+  if (!alerts || alerts.length === 0) return null;
 
   const colorMap = {
     danger: 'bg-destructive/10 border-destructive/20 text-destructive',
