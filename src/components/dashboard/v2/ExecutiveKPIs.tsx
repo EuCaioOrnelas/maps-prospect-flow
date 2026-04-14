@@ -114,14 +114,6 @@ export function ExecutiveKPIs({
                         {kpi.badge}
                       </span>
                     )}
-                    {!kpi.showBadge && (
-                      <span className={cn(
-                        "w-2.5 h-2.5 rounded-full",
-                        kpi.badgeType === 'positive' && "bg-primary",
-                        kpi.badgeType === 'negative' && "bg-destructive",
-                        kpi.badgeType === 'neutral' && "bg-muted-foreground",
-                      )} />
-                    )}
                   </div>
                   <div>
                     <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
