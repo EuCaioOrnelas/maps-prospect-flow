@@ -261,7 +261,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
       // Get CRM leads with their details
       const { data: crmLeadsForRadar } = await supabase
         .from("leads")
-        .select("id, name, phone, segment, estimated_value")
+        .select("id, company_name, phone, category, estimated_value")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(500);
