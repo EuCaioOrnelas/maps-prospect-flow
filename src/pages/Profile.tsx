@@ -824,7 +824,7 @@ const Profile = () => {
               {!isFreePlan && (
                 <>
                   {((profile as any)?.payment_provider === 'abacate_pay' || ((profile as any)?.payment_provider == null && !(profile as any)?.stripe_customer_id)) && (profile as any)?.payment_provider !== 'stripe' ? (
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-primary/20 bg-primary/5">
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-muted/40">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
@@ -850,7 +850,7 @@ const Profile = () => {
                       </Link>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-primary/20 bg-primary/5">
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-muted/40">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
