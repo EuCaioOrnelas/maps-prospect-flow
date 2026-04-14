@@ -48,6 +48,9 @@ import {
   Users,
   Rocket,
   Pencil,
+  DollarSign,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
