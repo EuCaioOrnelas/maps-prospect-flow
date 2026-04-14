@@ -421,8 +421,8 @@ export default function AgentReports() {
       const agentConversations = conversations.filter(c => c.agent_id === agent.id);
       const agentMessages = messageLogs.filter(m => m.agent_id === agent.id);
       
-      const messagesSent = agentMessages.filter(m => m.direction === 'outgoing').length;
-      const messagesReceived = agentMessages.filter(m => m.direction === 'incoming').length;
+      const messagesSent = agentMessages.filter(m => m.direction === 'outgoing' || m.direction === 'sent').length;
+      const messagesReceived = agentMessages.filter(m => m.direction === 'incoming' || m.direction === 'received').length;
       const conversationsStarted = agentConversations.length;
       
       // Response times calculation
@@ -484,8 +484,9 @@ export default function AgentReports() {
         m.content?.toLowerCase().includes('fallback') ||
         m.content?.toLowerCase().includes('não entendi')
       ).length;
-      const errorRate = messagesSent > 0 
-        ? Math.round((errorMessages / messagesSent) * 100)
+      const totalOutgoing = agentMessages.filter(m => m.direction === 'outgoing' || m.direction === 'sent').length;
+      const errorRate = totalOutgoing > 0 
+        ? Math.round((errorMessages / totalOutgoing) * 100)
         : 0;
 
       // Sensitive words detection
@@ -503,7 +504,7 @@ export default function AgentReports() {
 
       // Repeated messages detection
       const outgoingContents = agentMessages
-        .filter(m => m.direction === 'outgoing' && m.content && m.content.length > 20)
+        .filter(m => (m.direction === 'outgoing' || m.direction === 'sent') && m.content && m.content.length > 20)
         .map(m => m.content?.toLowerCase().trim() || '');
       const uniqueMessages = new Set(outgoingContents);
       const repeatedMessagesRate = outgoingContents.length > 0 
