@@ -44,6 +44,8 @@ function fmtInt(n: number) {
   return n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 }
 
+const MONTH_LABELS_PT_BR = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
 export function DashboardHero({
   financialImpact,
   financialChange,
@@ -151,14 +153,23 @@ export function DashboardHero({
           {chartData.length > 1 && (
             <div className="w-full lg:w-[280px] h-[120px] shrink-0">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                <AreaChart data={chartData} margin={{ top: 8, right: 12, left: 12, bottom: 2 }}>
                   <defs>
                     <linearGradient id="heroGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
                       <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval={0}
+                    minTickGap={0}
+                    tickMargin={8}
+                    padding={{ left: 16, right: 12 }}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'hsl(var(--card))',
@@ -276,9 +287,7 @@ function buildChartData(
   }
 
   if (periodDays <= 30) {
-    // Always show Semana 1 through Semana N (up to 5)
-    // Calculate how many full weeks are in the 30-day window
-    const totalWeeks = Math.min(5, Math.ceil(30 / 7));
+    const totalWeeks = Math.max(1, Math.ceil(periodDays / 7));
     
     const result: { label: string; total: number }[] = [];
     for (let w = 1; w <= totalWeeks; w++) {
@@ -291,6 +300,33 @@ function buildChartData(
     return result;
   }
 
-  // 90 days — show last 3 months
-  return cumulativeByMonth.slice(-3).map(m => ({ label: m.month, total: m.total }));
+  const cumulativeTimeline = cumulativeByMonth
+    .map(({ month, total }) => {
+      const [monthPart, yearPart] = month.split('/').map(Number);
+      return {
+        timestamp: new Date(2000 + yearPart, monthPart - 1, 1).getTime(),
+        total,
+      };
+    })
+    .filter((entry) => !Number.isNaN(entry.timestamp));
+
+  return Array.from({ length: 3 }, (_, index) => {
+    const date = new Date();
+    date.setDate(1);
+    date.setMonth(date.getMonth() - (2 - index));
+
+    const targetTimestamp = new Date(date.getFullYear(), date.getMonth(), 1).getTime();
+    const total = cumulativeTimeline.reduce((latestTotal, entry) => {
+      if (entry.timestamp <= targetTimestamp) {
+        return entry.total;
+      }
+
+      return latestTotal;
+    }, 0);
+
+    return {
+      label: MONTH_LABELS_PT_BR[date.getMonth()],
+      total,
+    };
+  });
 }
