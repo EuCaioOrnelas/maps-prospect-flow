@@ -291,9 +291,9 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
           const potential = Number(lead.estimated_value) || avgTicket;
           return {
             id: lead.id,
-            name: lead.name || "Sem nome",
+            name: lead.company_name || "Sem nome",
             phone: lead.phone || "",
-            segment: lead.segment || "",
+            segment: lead.category || "",
             score,
             potential,
             status: getStatusFromScore(score),
