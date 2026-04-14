@@ -30,6 +30,7 @@ export interface CockpitForecast {
   scoreBuckets: { label: string; count: number; estimatedSales: number; revenue: number }[];
   totalEstimatedSales: number;
   totalEstimatedRevenue: number;
+  prevTotalEstimatedRevenue: number;
   averageTicket: number;
   loading: boolean;
 }
