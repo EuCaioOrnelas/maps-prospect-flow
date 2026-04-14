@@ -9,11 +9,16 @@ import { SEO } from "@/components/SEO";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
-import { DashboardKPIs } from "@/components/dashboard/DashboardKPIs";
-import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel";
-import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
-import { DashboardImpactAccumulated } from "@/components/dashboard/DashboardImpactAccumulated";
-import { DashboardEvolutionChart } from "@/components/dashboard/DashboardEvolutionChart";
+
+import { DashboardHero } from "@/components/dashboard/v2/DashboardHero";
+import { ExecutiveKPIs } from "@/components/dashboard/v2/ExecutiveKPIs";
+import { OpportunityRadar } from "@/components/dashboard/v2/OpportunityRadar";
+import { OperationalFunnel } from "@/components/dashboard/v2/OperationalFunnel";
+import { AIActivityCard } from "@/components/dashboard/v2/AIActivityCard";
+import { ExecutiveAlerts } from "@/components/dashboard/v2/ExecutiveAlerts";
+import { ForecastChart } from "@/components/dashboard/v2/ForecastChart";
+import { ChannelPerformance } from "@/components/dashboard/v2/ChannelPerformance";
+import { QuickActions } from "@/components/dashboard/v2/QuickActions";
 
 import { ActivationChecklistInline } from "@/components/dashboard/ActivationChecklist";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
@@ -29,6 +34,8 @@ const PERIOD_OPTIONS = [
   { value: '90', label: 'Últimos 90 dias' },
 ];
 
+const CPL_BENCHMARK = 11.77;
+
 export default function MainDashboard() {
   const { profile } = useAuth();
   useAutoScoreTracking("main_dashboard");
@@ -37,7 +44,30 @@ export default function MainDashboard() {
   const periodDays = parseInt(period);
   const data = useMainDashboard(periodDays);
 
-  
+  // Derived metrics
+  const financialImpact = data.leadsProspected * CPL_BENCHMARK;
+  const prevFinancialImpact = data.prevLeadsProspected * CPL_BENCHMARK;
+  const financialChange = data.prevLeadsProspected > 0
+    ? ((data.leadsProspected - data.prevLeadsProspected) / data.prevLeadsProspected) * 100
+    : 0;
+
+  const hotLeads = Math.round(data.totalResponses * 0.28);
+  const prevHotLeads = Math.round(data.prevTotalResponses * 0.28);
+  const hotLeadsChange = hotLeads - prevHotLeads;
+
+  const responseRateChange = data.responseRate - data.prevResponseRate;
+  const bottleneck = responseRateChange < -5
+    ? { label: 'Resposta Inicial Baixa', change: responseRateChange, detail: 'Taxa de resposta em queda' }
+    : data.messagesSent === 0
+    ? { label: 'Sem Campanhas', change: 0, detail: 'Nenhuma campanha ativa' }
+    : { label: 'Operação Saudável', change: Math.abs(responseRateChange), detail: 'Métricas dentro do esperado' };
+
+  const aiHoursSaved = Math.round((data.totalResponses * 0.5) + (data.leadsProspected * 0.02) + (data.messagesSent * 0.01));
+  const activeConversations = Math.round(data.totalResponses * 0.35);
+
+  const firstName = profile?.name?.split(' ')[0] || 'Usuário';
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
 
   if (data.loading) {
     return (
@@ -50,14 +80,18 @@ export default function MainDashboard() {
             <main className="flex-1 p-4 sm:p-6 lg:p-8">
               <div className="max-w-7xl mx-auto space-y-6">
                 <div className="flex justify-between items-center">
-                  <Skeleton className="h-8 w-48" />
+                  <Skeleton className="h-8 w-64" />
                   <Skeleton className="h-9 w-40" />
                 </div>
-                <Skeleton className="h-52" />
-                <div className="grid grid-cols-2 gap-3">
-                  {[1,2].map(i => <Skeleton key={i} className="h-24" />)}
+                <Skeleton className="h-48 rounded-2xl" />
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[1,2,3,4].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)}
                 </div>
-                <Skeleton className="h-48" />
+                <Skeleton className="h-64 rounded-2xl" />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Skeleton className="h-80 rounded-2xl" />
+                  <Skeleton className="h-80 rounded-2xl" />
+                </div>
               </div>
             </main>
           </div>
@@ -70,7 +104,7 @@ export default function MainDashboard() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
         <BackgroundGlow />
-        <SEO title="Visão Geral | Wiize" description="Visão geral da sua operação de prospecção e vendas" />
+        <SEO title="Cockpit de Crescimento | Wiize" description="Dashboard executivo de prospecção, receita e performance comercial" />
         <AppSidebar profile={profile} />
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
           <AppHeader profile={profile} />
@@ -78,74 +112,102 @@ export default function MainDashboard() {
             <ExpiredSubscriptionDialog />
             <OnboardingModal isOpen={showOnboarding} onClose={closeOnboarding} />
             <TrialFeedbackModal isOpen={showTrialFeedback} onClose={closeTrialFeedback} />
-            <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+            
+            <div className="max-w-7xl mx-auto space-y-6 relative z-10">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+                    {greeting}, {firstName} 👋
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                </div>
+                <Select value={period} onValueChange={setPeriod}>
+                  <SelectTrigger className="w-[170px] h-9 text-xs border-border/50">
+                    <Calendar size={13} className="mr-1.5" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PERIOD_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <RenewalBanner />
               <ActivationChecklistInline />
 
-              {/* 1️⃣ Impacto Financeiro */}
-              <DashboardImpactAccumulated
-                allTimeLeads={data.allTimeLeads}
+              {/* 1 — Hero Impact */}
+              <DashboardHero
+                financialImpact={financialImpact}
+                financialChange={financialChange}
+                leadsProspected={data.leadsProspected}
+                totalResponses={data.totalResponses}
+                hotLeads={hotLeads}
+                activeConversations={activeConversations}
                 cumulativeByMonth={data.cumulativeByMonth}
-                periodDays={periodDays}
-                leadsProspected={data.leadsProspected}
-                prevLeadsProspected={data.prevLeadsProspected}
-                totalResponses={data.totalResponses}
-                prevTotalResponses={data.prevTotalResponses}
-                periodFilter={
-                  <Select value={period} onValueChange={setPeriod}>
-                    <SelectTrigger className="w-[170px] h-8 text-xs">
-                      <Calendar size={13} className="mr-1.5" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PERIOD_OPTIONS.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                }
               />
 
-              {/* 2️⃣ KPIs Estratégicos */}
-              <DashboardKPIs
-                leadsProspected={data.leadsProspected}
-                prevLeadsProspected={data.prevLeadsProspected}
-                totalResponses={data.totalResponses}
-                prevTotalResponses={data.prevTotalResponses}
-                messagesSent={data.messagesSent}
-                prevMessagesSent={data.prevMessagesSent}
-                responseRate={data.responseRate}
-                prevResponseRate={data.prevResponseRate}
+              {/* 2 — Executive KPIs */}
+              <ExecutiveKPIs
+                financialImpact={financialImpact}
+                financialChange={financialChange}
+                hotLeads={hotLeads}
+                hotLeadsChange={hotLeadsChange}
+                bottleneck={bottleneck}
+                aiHoursSaved={aiHoursSaved}
               />
 
-              {/* 3️⃣ Funil + Evolução */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <DashboardFunnel
-                  leadsProspected={data.leadsProspected}
-                  totalResponses={data.totalResponses}
-                  prevLeadsProspected={data.prevLeadsProspected}
-                  prevTotalResponses={data.prevTotalResponses}
-                  messagesSent={data.messagesSent}
-                  prevMessagesSent={data.prevMessagesSent}
-                  periodDays={periodDays}
-                />
-                <DashboardEvolutionChart
-                  monthlyData={data.monthlyBreakdown}
-                />
-              </div>
-
-              {/* 4️⃣ Insights */}
-              <DashboardInsights
+              {/* 3 — Opportunity Radar */}
+              <OpportunityRadar
                 leadsProspected={data.leadsProspected}
-                prevLeadsProspected={data.prevLeadsProspected}
-                responseRate={data.responseRate}
-                prevResponseRate={data.prevResponseRate}
                 totalResponses={data.totalResponses}
                 campaigns={data.campaigns}
                 messagesSent={data.messagesSent}
-                prevMessagesSent={data.prevMessagesSent}
               />
+
+              {/* 4 — Funnel + AI Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <OperationalFunnel
+                  leadsProspected={data.leadsProspected}
+                  messagesSent={data.messagesSent}
+                  totalResponses={data.totalResponses}
+                />
+                <AIActivityCard
+                  totalResponses={data.totalResponses}
+                  messagesSent={data.messagesSent}
+                  leadsProspected={data.leadsProspected}
+                />
+              </div>
+
+              {/* 5 — Alerts */}
+              <ExecutiveAlerts
+                leadsProspected={data.leadsProspected}
+                totalResponses={data.totalResponses}
+                responseRate={data.responseRate}
+                prevResponseRate={data.prevResponseRate}
+                campaigns={data.campaigns}
+              />
+
+              {/* 6 — Forecast + Channel Performance */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ForecastChart
+                  leadsProspected={data.leadsProspected}
+                  totalResponses={data.totalResponses}
+                  messagesSent={data.messagesSent}
+                />
+                <ChannelPerformance
+                  responseRate={data.responseRate}
+                  messagesSent={data.messagesSent}
+                  totalResponses={data.totalResponses}
+                />
+              </div>
+
+              {/* 7 — Quick Actions */}
+              <QuickActions />
             </div>
           </main>
         </div>
