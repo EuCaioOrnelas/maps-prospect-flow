@@ -97,65 +97,51 @@ export function useCockpitForecast(periodDays: number): CockpitForecast {
 
   if (isLoading || servicesLoading || !data) {
     return {
-      opportunityLeads: 0,
-      opportunitySales: 0,
-      opportunityRevenue: 0,
-      scoredLeads: 0,
-      scoreSales: 0,
-      scoreRevenue: 0,
-      scoreBuckets: [],
-      totalEstimatedSales: 0,
-      totalEstimatedRevenue: 0,
-      averageTicket,
-      loading: true,
+      opportunityLeads: 0, opportunitySales: 0, opportunityRevenue: 0,
+      scoredLeads: 0, scoreSales: 0, scoreRevenue: 0, scoreBuckets: [],
+      totalEstimatedSales: 0, totalEstimatedRevenue: 0, prevTotalEstimatedRevenue: 0,
+      averageTicket, loading: true,
     };
   }
 
-  const prospectedSet = new Set(data.prospectedPhones);
+  const calcRevenue = (periodData: typeof data.current) => {
+    const prospectedSet = new Set(periodData.prospectedPhones);
+    const scoredPhoneKeys = new Set(periodData.scoredLeads.map(l => l.phoneKey));
+    const pureOppCount = Math.max(0, periodData.totalProspected -
+      Array.from(prospectedSet).filter(p => scoredPhoneKeys.has(p)).length);
+    const oppSales = Math.round(pureOppCount * 0.01);
+    const oppRevenue = Math.round(oppSales * averageTicket);
 
-  // PRIORITY: Score takes priority. Scored leads use score-based conversion.
-  // Prospected-only leads (NOT in score) use 1% flat conversion.
-  const scoredPhoneKeys = new Set(data.scoredLeads.map(l => l.phoneKey));
+    let sSales = 0;
+    SCORE_BUCKETS.forEach((bucket) => {
+      const inBucket = periodData.scoredLeads.filter(l => l.score >= bucket.min && l.score <= bucket.max);
+      sSales += Math.round(inBucket.length * ((bucket.conversionLow + bucket.conversionHigh) / 2));
+    });
+    const sRevenue = Math.round(sSales * averageTicket);
+    return { oppSales, oppRevenue, sSales, sRevenue, total: oppRevenue + sRevenue, totalSales: oppSales + sSales, pureOppCount };
+  };
 
-  // Opportunity-based: only leads that are NOT scored — 1% conversion
-  const pureOpportunityCount = data.totalProspected - 
-    Array.from(prospectedSet).filter(p => scoredPhoneKeys.has(p)).length;
-  const opportunityLeads = Math.max(0, pureOpportunityCount);
-  const opportunitySales = Math.round(opportunityLeads * 0.01);
-  const opportunityRevenue = Math.round(opportunitySales * averageTicket);
+  const current = calcRevenue(data.current);
+  const prev = calcRevenue(data.prev);
 
-  // Score-based forecast (ALL scored leads, since score takes priority)
   const bucketResults = SCORE_BUCKETS.map((bucket) => {
-    const inBucket = data.scoredLeads.filter(
-      (l) => l.score >= bucket.min && l.score <= bucket.max
-    );
+    const inBucket = data.current.scoredLeads.filter(l => l.score >= bucket.min && l.score <= bucket.max);
     const avgConversion = (bucket.conversionLow + bucket.conversionHigh) / 2;
     const estimatedSales = Math.round(inBucket.length * avgConversion);
-    return {
-      label: bucket.label,
-      count: inBucket.length,
-      estimatedSales,
-      revenue: Math.round(estimatedSales * averageTicket),
-    };
+    return { label: bucket.label, count: inBucket.length, estimatedSales, revenue: Math.round(estimatedSales * averageTicket) };
   });
 
-  const scoredLeadsCount = data.scoredLeads.length;
-  const scoreSales = bucketResults.reduce((s, b) => s + b.estimatedSales, 0);
-  const scoreRevenue = Math.round(scoreSales * averageTicket);
-
-  const totalEstimatedSales = opportunitySales + scoreSales;
-  const totalEstimatedRevenue = opportunityRevenue + scoreRevenue;
-
   return {
-    opportunityLeads,
-    opportunitySales,
-    opportunityRevenue,
-    scoredLeads: scoredLeadsCount,
-    scoreSales,
-    scoreRevenue,
+    opportunityLeads: current.pureOppCount,
+    opportunitySales: current.oppSales,
+    opportunityRevenue: current.oppRevenue,
+    scoredLeads: data.current.scoredLeads.length,
+    scoreSales: current.sSales,
+    scoreRevenue: current.sRevenue,
     scoreBuckets: bucketResults,
-    totalEstimatedSales,
-    totalEstimatedRevenue,
+    totalEstimatedSales: current.totalSales,
+    totalEstimatedRevenue: current.total,
+    prevTotalEstimatedRevenue: prev.total,
     averageTicket,
     loading: false,
   };
