@@ -158,26 +158,51 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
 
       const aiMinutesSaved = Math.round(aiTypingMinutes + flowMinutes);
 
-      // --- Health Status ---
+      // --- Health Status (global, no period filter) ---
+      // Fetch ALL scores and last 7 days opportunities for health calc
       const allScores = (scoreTodayRes.data || []).map((l: any) => l.score_total || 0);
-      const avgScore = allScores.length > 0 ? allScores.reduce((a: number, b: number) => a + b, 0) / allScores.length : 0;
+      const totalLeadsWithScore = allScores.length;
+      const avgScore = totalLeadsWithScore > 0 ? allScores.reduce((a: number, b: number) => a + b, 0) / totalLeadsWithScore : 0;
+      const hotCount = allScores.filter((s: number) => s >= 601).length;
+      const coldCount = allScores.filter((s: number) => s <= 200).length;
       const recentOppCount = (scoreYesterdayRes.data || []).reduce((s, r) => s + (r.results_count || 0), 0);
 
-      let healthStatus = "Operação Saudável";
-      let healthDetail = "Score e oportunidades dentro do esperado";
+      // Health calculation: weighted score of multiple factors
+      // 1. Score médio (0-1000) → normalize to 0-40 pts
+      // 2. % leads quentes (score>=601) → 0-25 pts
+      // 3. % leads frios (score<=200, penalidade) → 0 to -15 pts
+      // 4. Oportunidades recentes (últimos 7 dias) → 0-20 pts
+      // Total: 0-100 scale
+      const scorePoints = Math.min(40, (avgScore / 1000) * 40);
+      const hotRatio = totalLeadsWithScore > 0 ? hotCount / totalLeadsWithScore : 0;
+      const hotPoints = Math.min(25, hotRatio * 100);
+      const coldRatio = totalLeadsWithScore > 0 ? coldCount / totalLeadsWithScore : 0;
+      const coldPenalty = Math.min(15, coldRatio * 30);
+      const oppPoints = Math.min(20, recentOppCount * 2);
+      const healthScore = Math.max(0, Math.round(scorePoints + hotPoints - coldPenalty + oppPoints));
 
-      if (avgScore < 150 && recentOppCount < 10) {
-        healthStatus = "Atenção Necessária";
-        healthDetail = "Score médio baixo e poucas oportunidades recentes";
-      } else if (avgScore < 200) {
-        healthStatus = "Score Baixo";
-        healthDetail = "Engajamento dos leads precisa melhorar";
-      } else if (recentOppCount === 0) {
-        healthStatus = "Sem Prospecção";
-        healthDetail = "Nenhuma oportunidade gerada recentemente";
-      } else if (avgScore >= 400) {
+      let healthStatus: string;
+      let healthDetail: string;
+
+      if (totalLeadsWithScore === 0 && recentOppCount === 0) {
+        healthStatus = "Sem Dados";
+        healthDetail = "Comece a prospectar para gerar diagnóstico";
+      } else if (healthScore >= 70) {
         healthStatus = "Excelente";
-        healthDetail = "Score alto e pipeline ativo";
+        healthDetail = `Score médio ${Math.round(avgScore)}, ${hotCount} leads quentes, ${recentOppCount} oportunidades recentes`;
+      } else if (healthScore >= 50) {
+        healthStatus = "Operação Saudável";
+        healthDetail = `Score médio ${Math.round(avgScore)}, métricas dentro do esperado`;
+      } else if (healthScore >= 30) {
+        healthStatus = "Atenção Necessária";
+        healthDetail = `Score médio ${Math.round(avgScore)}. Aumente o engajamento e prospecção`;
+      } else if (healthScore >= 15) {
+        healthStatus = "Score Baixo";
+        healthDetail = `Score médio ${Math.round(avgScore)}. Engajamento dos leads precisa melhorar`;
+      } else {
+        healthStatus = "Crítico";
+        healthDetail = `Pipeline parado. Inicie campanhas e prospecção urgentemente`;
+      }
       }
 
       return {

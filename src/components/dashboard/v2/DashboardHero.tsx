@@ -221,7 +221,6 @@ function buildChartData(
   if (cumulativeByMonth.length === 0) return [];
 
   if (periodDays <= 7) {
-    // Show days of the week
     const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     const result = [];
     for (let i = 6; i >= 0; i--) {
@@ -236,15 +235,39 @@ function buildChartData(
   }
 
   if (periodDays <= 30) {
-    // Show weeks
+    // Calculate which weeks of the month fall in the last 30 days
+    const now = new Date();
     const result = [];
-    for (let w = 3; w >= 0; w--) {
-      result.push({
-        label: `Sem ${4 - w}`,
-        total: cumulativeByMonth.length > 0 ? Math.round(cumulativeByMonth[cumulativeByMonth.length - 1].total * ((4 - w) / 4)) : 0,
-      });
+    const startDate = new Date(now);
+    startDate.setDate(startDate.getDate() - 29);
+
+    // Group by week number within the month
+    const weeks = new Map<number, { label: string; total: number }>();
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + i);
+      const weekOfMonth = Math.ceil(d.getDate() / 7);
+      if (!weeks.has(weekOfMonth)) {
+        weeks.set(weekOfMonth, {
+          label: `Semana ${weekOfMonth}`,
+          total: 0,
+        });
+      }
     }
-    return result;
+
+    const lastTotal = cumulativeByMonth.length > 0 ? cumulativeByMonth[cumulativeByMonth.length - 1].total : 0;
+    const sortedWeeks = Array.from(weeks.values()).sort((a, b) => {
+      const numA = parseInt(a.label.replace('Semana ', ''));
+      const numB = parseInt(b.label.replace('Semana ', ''));
+      return numA - numB;
+    });
+
+    // Distribute values proportionally across weeks
+    sortedWeeks.forEach((w, i) => {
+      w.total = Math.round(lastTotal * ((i + 1) / sortedWeeks.length));
+    });
+
+    return sortedWeeks;
   }
 
   // 90 days — show last 3 months
