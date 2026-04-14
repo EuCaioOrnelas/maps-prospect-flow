@@ -47,8 +47,8 @@ export default function MainDashboard() {
   const kpis = useDashboardKPIs(periodDays);
 
   const financialImpact = forecast.totalEstimatedRevenue;
-  const financialChange = data.prevLeadsProspected > 0
-    ? ((data.leadsProspected - data.prevLeadsProspected) / data.prevLeadsProspected) * 100
+  const financialChange = forecast.prevTotalEstimatedRevenue > 0
+    ? ((forecast.totalEstimatedRevenue - forecast.prevTotalEstimatedRevenue) / forecast.prevTotalEstimatedRevenue) * 100
     : 0;
 
   const firstName = profile?.name?.split(' ')[0] || 'Usuário';

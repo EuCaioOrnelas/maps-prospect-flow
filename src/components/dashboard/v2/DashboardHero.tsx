@@ -235,39 +235,34 @@ function buildChartData(
   }
 
   if (periodDays <= 30) {
-    // Calculate which weeks of the month fall in the last 30 days
+    // Always show Semana 1 through up to Semana 5 based on how many weeks the 30-day window spans
     const now = new Date();
-    const result = [];
     const startDate = new Date(now);
     startDate.setDate(startDate.getDate() - 29);
 
-    // Group by week number within the month
-    const weeks = new Map<number, { label: string; total: number }>();
+    // Determine the distinct week numbers (1-5) each day falls in
+    const weekSet = new Set<number>();
     for (let i = 0; i < 30; i++) {
       const d = new Date(startDate);
       d.setDate(d.getDate() + i);
       const weekOfMonth = Math.ceil(d.getDate() / 7);
-      if (!weeks.has(weekOfMonth)) {
-        weeks.set(weekOfMonth, {
-          label: `Semana ${weekOfMonth}`,
-          total: 0,
-        });
-      }
+      weekSet.add(weekOfMonth);
     }
 
+    // Always start from 1 up to the max week found
+    const maxWeek = Math.max(...Array.from(weekSet));
+    const totalWeeks = maxWeek; // e.g. 5
     const lastTotal = cumulativeByMonth.length > 0 ? cumulativeByMonth[cumulativeByMonth.length - 1].total : 0;
-    const sortedWeeks = Array.from(weeks.values()).sort((a, b) => {
-      const numA = parseInt(a.label.replace('Semana ', ''));
-      const numB = parseInt(b.label.replace('Semana ', ''));
-      return numA - numB;
-    });
 
-    // Distribute values proportionally across weeks
-    sortedWeeks.forEach((w, i) => {
-      w.total = Math.round(lastTotal * ((i + 1) / sortedWeeks.length));
-    });
+    const result: { label: string; total: number }[] = [];
+    for (let w = 1; w <= totalWeeks; w++) {
+      result.push({
+        label: `Semana ${w}`,
+        total: Math.round(lastTotal * (w / totalWeeks)),
+      });
+    }
 
-    return sortedWeeks;
+    return result;
   }
 
   // 90 days — show last 3 months
