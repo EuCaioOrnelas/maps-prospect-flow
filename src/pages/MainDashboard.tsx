@@ -165,6 +165,7 @@ export default function MainDashboard() {
                   leadsProspected={data.leadsProspected}
                   messagesSent={data.messagesSent}
                   totalResponses={data.totalResponses}
+                  opportunitiesGenerated={kpis.oportunidadesQuentesPeriodo}
                 />
               </div>
 

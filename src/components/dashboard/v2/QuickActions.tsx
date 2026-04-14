@@ -15,7 +15,7 @@ export function QuickActions() {
       if (!user) return;
       const { data: leads, error } = await supabase
         .from("leads")
-        .select("name, phone, email, stage, estimated_value, created_at")
+        .select("company_name, contact_name, phone, email, estimated_value, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -25,9 +25,9 @@ export function QuickActions() {
         return;
       }
 
-      const header = "Nome,Telefone,Email,Etapa,Valor,Criado em\n";
+      const header = "Empresa,Contato,Telefone,Email,Valor,Criado em\n";
       const rows = leads.map(l =>
-        `"${l.name || ''}","${l.phone || ''}","${l.email || ''}","${l.stage || ''}","${l.estimated_value || ''}","${l.created_at || ''}"`
+        `"${l.company_name || ''}","${l.contact_name || ''}","${l.phone || ''}","${l.email || ''}","${l.estimated_value || ''}","${l.created_at || ''}"`
       ).join("\n");
 
       const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
