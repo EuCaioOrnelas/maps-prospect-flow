@@ -63,6 +63,8 @@ export default function CheckoutCard() {
 
   const planKey = searchParams.get("plan") || "";
   const planName = searchParams.get("planName") || "";
+  const billingPeriod = searchParams.get("billing") || "annual";
+  const isAnnual = billingPeriod === "annual";
 
   const planConfig = PLAN_PRICES[planKey];
 
