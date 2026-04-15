@@ -158,6 +158,7 @@ export default function CheckoutCard() {
     cardCvv.length >= 3 &&
     cepValid === true &&
     addressStreet.trim().length >= 2 &&
+    addressNeighborhood.trim().length >= 1 &&
     addressNumber.trim().length >= 1;
 
   const installmentCount = isAnnual ? parseInt(installments) : 1;
