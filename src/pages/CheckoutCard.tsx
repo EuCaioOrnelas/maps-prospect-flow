@@ -425,7 +425,10 @@ export default function CheckoutCard() {
 
                 <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
                   <p className="text-[11px] text-muted-foreground">
-                    Ao confirmar, você autoriza a cobrança de <strong>{formatCurrency(planConfig.annual)}</strong> em {installmentCount}x de {formatCurrency(installmentValue)} no cartão de crédito, com <strong>renovação automática anual</strong>. Cancele a qualquer momento pelo seu perfil.
+                    {isAnnual
+                      ? <>Ao confirmar, você autoriza a cobrança de <strong>{formatCurrency(planConfig.annual)}</strong> em {installmentCount}x de {formatCurrency(installmentValue)} no cartão de crédito, com <strong>renovação automática anual</strong>. Cancele a qualquer momento pelo seu perfil.</>
+                      : <>Ao confirmar, você autoriza a cobrança mensal de <strong>{formatCurrency(planConfig.monthly)}</strong> no cartão de crédito, com <strong>renovação automática todo mês</strong>. Cancele a qualquer momento pelo seu perfil.</>
+                    }
                   </p>
                 </div>
               </div>
@@ -452,12 +455,14 @@ export default function CheckoutCard() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Período</span>
-                  <span className="font-semibold text-foreground">Anual (12 meses)</span>
+                  <span className="font-semibold text-foreground">{isAnnual ? "Anual (12 meses)" : "Mensal"}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Parcelas</span>
-                  <span className="font-semibold text-foreground">{installmentCount}x de {formatCurrency(installmentValue)}</span>
-                </div>
+                {isAnnual && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Parcelas</span>
+                    <span className="font-semibold text-foreground">{installmentCount}x de {formatCurrency(installmentValue)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Método</span>
                   <span className="font-semibold text-primary flex items-center gap-1">
@@ -473,11 +478,17 @@ export default function CheckoutCard() {
                   <span className="font-semibold text-foreground">Total</span>
                   <div className="text-right">
                     <span className="font-bold text-lg text-foreground block">
-                      {formatCurrency(planConfig.annual)}
+                      {isAnnual ? formatCurrency(planConfig.annual) : formatCurrency(planConfig.monthly)}
                     </span>
-                    <span className="text-xs text-muted-foreground">
-                      {installmentCount}x de {formatCurrency(installmentValue)}
-                    </span>
+                    {isAnnual ? (
+                      <span className="text-xs text-muted-foreground">
+                        {installmentCount}x de {formatCurrency(installmentValue)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        cobrado todo mês
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
