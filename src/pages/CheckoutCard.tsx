@@ -49,9 +49,9 @@ function formatExpiry(value: string) {
   return digits;
 }
 
-const PLAN_PRICES: Record<string, { annual: number; name: string }> = {
-  start: { annual: 295200, name: "Wiize Start" },
-  growth: { annual: 595200, name: "Wiize Growth" },
+const PLAN_PRICES: Record<string, { monthly: number; annual: number; name: string }> = {
+  start: { monthly: 29600, annual: 295200, name: "Wiize Start" },
+  growth: { monthly: 69600, annual: 595200, name: "Wiize Growth" },
 };
 
 const INSTALLMENT_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -63,6 +63,8 @@ export default function CheckoutCard() {
 
   const planKey = searchParams.get("plan") || "";
   const planName = searchParams.get("planName") || "";
+  const billingPeriod = searchParams.get("billing") || "annual";
+  const isAnnual = billingPeriod === "annual";
 
   const planConfig = PLAN_PRICES[planKey];
 
@@ -109,8 +111,9 @@ export default function CheckoutCard() {
     cardExpiry.length >= 4 &&
     cardCvv.length >= 3;
 
-  const installmentCount = parseInt(installments);
-  const installmentValue = planConfig ? Math.round(planConfig.annual / installmentCount) : 0;
+  const installmentCount = isAnnual ? parseInt(installments) : 1;
+  const totalPrice = planConfig ? (isAnnual ? planConfig.annual : planConfig.monthly) : 0;
+  const installmentValue = planConfig ? (isAnnual ? Math.round(planConfig.annual / installmentCount) : planConfig.monthly) : 0;
 
   const handleSubmit = async () => {
     if (!customerData || !planKey || !isCardValid) return;
@@ -124,7 +127,8 @@ export default function CheckoutCard() {
       const { data, error } = await supabase.functions.invoke("create-asaas-card-checkout", {
         body: {
           planKey,
-          installmentCount,
+          installmentCount: isAnnual ? installmentCount : undefined,
+          billingPeriod,
           customerData: {
             ...customerData,
             postalCode: "00000000",
@@ -144,7 +148,7 @@ export default function CheckoutCard() {
       if (data?.error) throw new Error(data.error);
 
       setSuccess(true);
-      toast({ title: "🎉 Assinatura criada!", description: "Seu plano anual foi ativado com sucesso." });
+      toast({ title: "🎉 Assinatura criada!", description: isAnnual ? "Seu plano anual foi ativado com sucesso." : "Seu plano mensal foi ativado com sucesso." });
       setTimeout(() => navigate("/checkout-success?provider=asaas"), 2500);
     } catch (err: any) {
       toast({
@@ -249,10 +253,13 @@ export default function CheckoutCard() {
                 <div className="text-center space-y-2 mb-4">
                   <h1 className="text-2xl font-bold text-foreground">Pagamento com Cartão</h1>
                   <p className="text-sm text-muted-foreground">
-                    Assinatura anual — <strong>{formatCurrency(planConfig.annual)}</strong>
+                    {isAnnual
+                      ? <>Assinatura anual — <strong>{formatCurrency(planConfig.annual)}</strong></>
+                      : <>Assinatura mensal — <strong>{formatCurrency(planConfig.monthly)}</strong>/mês</>
+                    }
                   </p>
                   <p className="text-xs text-muted-foreground/80">
-                    Renovação automática anual. Cancele quando quiser.
+                    Renovação automática {isAnnual ? "anual" : "mensal"}. Cancele quando quiser.
                   </p>
                 </div>
 
@@ -333,62 +340,66 @@ export default function CheckoutCard() {
                     </div>
                   </div>
 
-                  <div className="h-px bg-border/30 my-2" />
+                  {isAnnual && (
+                    <>
+                      <div className="h-px bg-border/30 my-2" />
 
-                  {/* Installment selector — custom dropdown */}
-                  <div className="space-y-1.5 relative">
-                    <Label className="text-xs font-medium">Parcelas</Label>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setInstallmentDropdownOpen(!installmentDropdownOpen);
-                      }}
-                      className="flex h-10 w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    >
-                      <span>
-                        {installmentCount}x de {formatCurrency(installmentValue)}
-                        {installmentCount === 1 ? " (à vista)" : ""}
-                      </span>
-                      <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", installmentDropdownOpen && "rotate-180")} />
-                    </button>
-
-                    <AnimatePresence>
-                      {installmentDropdownOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -4, scale: 0.98 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                          transition={{ duration: 0.15 }}
-                          className="absolute bottom-full left-0 right-0 mb-1 z-50 rounded-xl border border-border bg-card shadow-xl shadow-black/10 overflow-hidden max-h-[280px] overflow-y-auto"
-                          onClick={(e) => e.stopPropagation()}
+                      {/* Installment selector — custom dropdown */}
+                      <div className="space-y-1.5 relative">
+                        <Label className="text-xs font-medium">Parcelas</Label>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInstallmentDropdownOpen(!installmentDropdownOpen);
+                          }}
+                          className="flex h-10 w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
                         >
-                          {INSTALLMENT_OPTIONS.map((n) => {
-                            const val = Math.round(planConfig.annual / n);
-                            const isSelected = installments === String(n);
-                            return (
-                              <button
-                                key={n}
-                                type="button"
-                                onClick={() => {
-                                  setInstallments(String(n));
-                                  setInstallmentDropdownOpen(false);
-                                }}
-                                className={cn(
-                                  "flex w-full items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-muted/60",
-                                  isSelected && "bg-emerald-500/10 text-emerald-700 font-medium"
-                                )}
-                              >
-                                <span>{n}x de {formatCurrency(val)}</span>
-                                {n === 1 && <span className="text-xs text-muted-foreground">à vista</span>}
-                                {isSelected && <Check className="h-3.5 w-3.5 text-emerald-600" />}
-                              </button>
-                            );
-                          })}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                          <span>
+                            {installmentCount}x de {formatCurrency(installmentValue)}
+                            {installmentCount === 1 ? " (à vista)" : ""}
+                          </span>
+                          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", installmentDropdownOpen && "rotate-180")} />
+                        </button>
+
+                        <AnimatePresence>
+                          {installmentDropdownOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute bottom-full left-0 right-0 mb-1 z-50 rounded-xl border border-border bg-card shadow-xl shadow-black/10 overflow-hidden max-h-[280px] overflow-y-auto"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {INSTALLMENT_OPTIONS.map((n) => {
+                                const val = Math.round(planConfig.annual / n);
+                                const isSelected = installments === String(n);
+                                return (
+                                  <button
+                                    key={n}
+                                    type="button"
+                                    onClick={() => {
+                                      setInstallments(String(n));
+                                      setInstallmentDropdownOpen(false);
+                                    }}
+                                    className={cn(
+                                      "flex w-full items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-muted/60",
+                                      isSelected && "bg-emerald-500/10 text-emerald-700 font-medium"
+                                    )}
+                                  >
+                                    <span>{n}x de {formatCurrency(val)}</span>
+                                    {n === 1 && <span className="text-xs text-muted-foreground">à vista</span>}
+                                    {isSelected && <Check className="h-3.5 w-3.5 text-emerald-600" />}
+                                  </button>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="mt-5">
@@ -414,7 +425,10 @@ export default function CheckoutCard() {
 
                 <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
                   <p className="text-[11px] text-muted-foreground">
-                    Ao confirmar, você autoriza a cobrança de <strong>{formatCurrency(planConfig.annual)}</strong> em {installmentCount}x de {formatCurrency(installmentValue)} no cartão de crédito, com <strong>renovação automática anual</strong>. Cancele a qualquer momento pelo seu perfil.
+                    {isAnnual
+                      ? <>Ao confirmar, você autoriza a cobrança de <strong>{formatCurrency(planConfig.annual)}</strong> em {installmentCount}x de {formatCurrency(installmentValue)} no cartão de crédito, com <strong>renovação automática anual</strong>. Cancele a qualquer momento pelo seu perfil.</>
+                      : <>Ao confirmar, você autoriza a cobrança mensal de <strong>{formatCurrency(planConfig.monthly)}</strong> no cartão de crédito, com <strong>renovação automática todo mês</strong>. Cancele a qualquer momento pelo seu perfil.</>
+                    }
                   </p>
                 </div>
               </div>
@@ -441,12 +455,14 @@ export default function CheckoutCard() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Período</span>
-                  <span className="font-semibold text-foreground">Anual (12 meses)</span>
+                  <span className="font-semibold text-foreground">{isAnnual ? "Anual (12 meses)" : "Mensal"}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Parcelas</span>
-                  <span className="font-semibold text-foreground">{installmentCount}x de {formatCurrency(installmentValue)}</span>
-                </div>
+                {isAnnual && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Parcelas</span>
+                    <span className="font-semibold text-foreground">{installmentCount}x de {formatCurrency(installmentValue)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Método</span>
                   <span className="font-semibold text-primary flex items-center gap-1">
@@ -462,11 +478,17 @@ export default function CheckoutCard() {
                   <span className="font-semibold text-foreground">Total</span>
                   <div className="text-right">
                     <span className="font-bold text-lg text-foreground block">
-                      {formatCurrency(planConfig.annual)}
+                      {isAnnual ? formatCurrency(planConfig.annual) : formatCurrency(planConfig.monthly)}
                     </span>
-                    <span className="text-xs text-muted-foreground">
-                      {installmentCount}x de {formatCurrency(installmentValue)}
-                    </span>
+                    {isAnnual ? (
+                      <span className="text-xs text-muted-foreground">
+                        {installmentCount}x de {formatCurrency(installmentValue)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        cobrado todo mês
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
