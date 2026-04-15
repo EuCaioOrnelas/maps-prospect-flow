@@ -152,6 +152,7 @@ serve(async (req) => {
         postalCode: postalCode || "01310100",
         addressNumber: addressNum,
         address: address,
+        province: neighborhood,
         phone: phone,
       },
     };
