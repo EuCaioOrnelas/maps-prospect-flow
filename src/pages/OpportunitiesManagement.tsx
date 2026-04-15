@@ -1075,7 +1075,7 @@ export default function OpportunitiesManagement() {
                     className="group relative overflow-hidden bg-card border border-border/60 rounded-[var(--radius-card)] p-5 transition-colors hover:border-border"
                   >
                     {/* Green glow */}
-                    <div className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 blur-2xl pointer-events-none" />
+                    <div className="absolute -bottom-10 -right-10 w-36 h-36 rounded-full bg-emerald-500/[0.04] dark:bg-emerald-500/[0.07] blur-3xl pointer-events-none" />
 
                     <div className="relative z-10 flex flex-col gap-3">
                       <div className={`w-10 h-10 rounded-xl ${kpi.circle} flex items-center justify-center`}>
