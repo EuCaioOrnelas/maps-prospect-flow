@@ -397,7 +397,7 @@ const TrialExpired = () => {
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
                 <Shield className="h-6 w-6 text-primary" />
               </div>
-              <div><p className="font-semibold text-foreground">100% Seguro</p><p className="text-sm text-muted-foreground">Pagamento via Stripe</p></div>
+              <div><p className="font-semibold text-foreground">100% Seguro</p><p className="text-sm text-muted-foreground">Pagamento certificado</p></div>
             </div>
             <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
