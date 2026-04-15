@@ -18,7 +18,7 @@ interface RevenueLead {
 }
 
 interface ScoreRankingTabProps {
-  leads: RevenueLead[];
+  leads?: RevenueLead[];
 }
 
 const BUCKET_SHORT_LABELS: Record<string, string> = {
