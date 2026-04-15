@@ -253,10 +253,13 @@ export default function CheckoutCard() {
                 <div className="text-center space-y-2 mb-4">
                   <h1 className="text-2xl font-bold text-foreground">Pagamento com Cartão</h1>
                   <p className="text-sm text-muted-foreground">
-                    Assinatura anual — <strong>{formatCurrency(planConfig.annual)}</strong>
+                    {isAnnual
+                      ? <>Assinatura anual — <strong>{formatCurrency(planConfig.annual)}</strong></>
+                      : <>Assinatura mensal — <strong>{formatCurrency(planConfig.monthly)}</strong>/mês</>
+                    }
                   </p>
                   <p className="text-xs text-muted-foreground/80">
-                    Renovação automática anual. Cancele quando quiser.
+                    Renovação automática {isAnnual ? "anual" : "mensal"}. Cancele quando quiser.
                   </p>
                 </div>
 
