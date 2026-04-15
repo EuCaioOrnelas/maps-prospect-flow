@@ -1,0 +1,1 @@
+ALTER TABLE public.checkout_leads ADD COLUMN IF NOT EXISTS neighborhood TEXT;

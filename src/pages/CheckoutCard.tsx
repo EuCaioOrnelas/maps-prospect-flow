@@ -81,6 +81,7 @@ export default function CheckoutCard() {
   const [installments, setInstallments] = useState("12");
   const [postalCode, setPostalCode] = useState("");
   const [addressStreet, setAddressStreet] = useState("");
+  const [addressNeighborhood, setAddressNeighborhood] = useState("");
   const [addressNumber, setAddressNumber] = useState("");
   const [cepValidating, setCepValidating] = useState(false);
   const [cepValid, setCepValid] = useState<boolean | null>(null);
@@ -119,6 +120,7 @@ export default function CheckoutCard() {
       setCepValid(null);
       setCepError("");
       setAddressStreet("");
+      setAddressNeighborhood("");
       return;
     }
 
@@ -132,9 +134,11 @@ export default function CheckoutCard() {
           setCepValid(false);
           setCepError("CEP não encontrado");
           setAddressStreet("");
+          setAddressNeighborhood("");
         } else {
           setCepValid(true);
           setAddressStreet(data.logradouro || "");
+          setAddressNeighborhood(data.bairro || "");
         }
       } catch {
         setCepValid(false);
@@ -154,6 +158,7 @@ export default function CheckoutCard() {
     cardCvv.length >= 3 &&
     cepValid === true &&
     addressStreet.trim().length >= 2 &&
+    addressNeighborhood.trim().length >= 1 &&
     addressNumber.trim().length >= 1;
 
   const installmentCount = isAnnual ? parseInt(installments) : 1;
@@ -179,6 +184,7 @@ export default function CheckoutCard() {
             postalCode: postalCode.replace(/\D/g, ""),
             address: addressStreet,
             addressNumber: addressNumber || "S/N",
+            neighborhood: addressNeighborhood,
           },
           creditCard: {
             holderName: cardHolder,
@@ -393,42 +399,30 @@ export default function CheckoutCard() {
                     <p className="text-sm font-semibold text-foreground">Endereço de cobrança</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="postal-code" className="text-xs font-medium">CEP</Label>
-                      <div className="relative">
-                        <Input
-                          id="postal-code"
-                          placeholder="00000-000"
-                          value={postalCode}
-                          onChange={(e) => {
-                            const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
-                            setPostalCode(digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits);
-                          }}
-                          maxLength={9}
-                          className={cn(
-                            cepValid === false && "border-destructive",
-                            cepValid === true && "border-emerald-500"
-                          )}
-                        />
-                        {cepValidating && (
-                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground" />
-                        )}
-                        {cepValid === true && !cepValidating && (
-                          <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-emerald-500" />
-                        )}
-                      </div>
-                      {cepError && <p className="text-[10px] text-destructive">{cepError}</p>}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="address-number" className="text-xs font-medium">Número</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="postal-code" className="text-xs font-medium">CEP</Label>
+                    <div className="relative">
                       <Input
-                        id="address-number"
-                        placeholder="Nº"
-                        value={addressNumber}
-                        onChange={(e) => setAddressNumber(e.target.value)}
+                        id="postal-code"
+                        placeholder="00000-000"
+                        value={postalCode}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+                          setPostalCode(digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits);
+                        }}
+                        maxLength={9}
+                        className={cn(
+                          cepValid === false && "border-destructive"
+                        )}
                       />
+                      {cepValidating && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                      )}
+                      {cepValid === true && !cepValidating && (
+                        <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-emerald-500" />
+                      )}
                     </div>
+                    {cepError && <p className="text-[10px] text-destructive">{cepError}</p>}
                   </div>
 
                   <div className="space-y-1.5">
@@ -440,6 +434,28 @@ export default function CheckoutCard() {
                       onChange={(e) => setAddressStreet(e.target.value)}
                       disabled={cepValidating}
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="address-neighborhood" className="text-xs font-medium">Bairro</Label>
+                      <Input
+                        id="address-neighborhood"
+                        placeholder="Bairro"
+                        value={addressNeighborhood}
+                        onChange={(e) => setAddressNeighborhood(e.target.value)}
+                        disabled={cepValidating}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="address-number" className="text-xs font-medium">Número</Label>
+                      <Input
+                        id="address-number"
+                        placeholder="Nº"
+                        value={addressNumber}
+                        onChange={(e) => setAddressNumber(e.target.value)}
+                      />
+                    </div>
                   </div>
 
                   {isAnnual && (

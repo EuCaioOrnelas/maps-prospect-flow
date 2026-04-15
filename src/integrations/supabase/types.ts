@@ -828,6 +828,7 @@ export type Database = {
           email: string
           id: string
           name: string | null
+          neighborhood: string | null
           phone: string | null
           plan_attempted: string
           postal_code: string | null
@@ -846,6 +847,7 @@ export type Database = {
           email: string
           id?: string
           name?: string | null
+          neighborhood?: string | null
           phone?: string | null
           plan_attempted: string
           postal_code?: string | null
@@ -864,6 +866,7 @@ export type Database = {
           email?: string
           id?: string
           name?: string | null
+          neighborhood?: string | null
           phone?: string | null
           plan_attempted?: string
           postal_code?: string | null
