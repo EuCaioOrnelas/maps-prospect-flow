@@ -177,6 +177,7 @@ export default function CheckoutCard() {
           customerData: {
             ...customerData,
             postalCode: postalCode.replace(/\D/g, ""),
+            address: addressStreet,
             addressNumber: addressNumber || "S/N",
           },
           creditCard: {
