@@ -507,19 +507,41 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
         </Card>
 
         <Card className="bg-card border-border/50">
-          <CardHeader><CardTitle className="text-base">Top 10 Leads por Score</CardTitle></CardHeader>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-yellow-400" />
+              Top 10 Leads por Score
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">Ranking dos leads com maior pontuação geral</p>
+          </CardHeader>
           <CardContent>
             {leads.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={[...leads].sort((a, b) => b.score_total - a.score_total).slice(0, 10)} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" domain={[0, 1000]} tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="name" type="category" width={100} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }}
-                    tickFormatter={(v) => v ? (v.length > 12 ? v.slice(0, 12) + "…" : v) : v} />
-                  <RechartsTooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
-                  <Bar dataKey="score_total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="space-y-2">
+                {[...leads].sort((a, b) => b.score_total - a.score_total).slice(0, 10).map((lead, i) => {
+                  const bucket = mapBucket(lead.status_bucket, lead.score_total);
+                  return (
+                    <div key={lead.id} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/20 border border-border/30">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {i === 0 ? <Trophy className="h-4 w-4 text-yellow-400 shrink-0" /> :
+                         i === 1 ? <Trophy className="h-4 w-4 text-gray-400 shrink-0" /> :
+                         i === 2 ? <Trophy className="h-4 w-4 text-orange-600 shrink-0" /> :
+                         <span className="text-xs font-bold text-muted-foreground w-4 text-center shrink-0">{i + 1}</span>}
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{lead.name || fmtPhone(lead.phone_e164)}</p>
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", BUCKET_BADGE_COLORS[bucket])}>
+                              {BUCKET_SHORT_LABELS[bucket]}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <p className={`text-lg font-bold tabular-nums shrink-0 ${getScoreColor(lead.score_total)}`}>
+                        {fmtNum(lead.score_total)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
               <EmptyListState message="Conecte seu WhatsApp e comece a interagir com leads" icon={Users} />
             )}
