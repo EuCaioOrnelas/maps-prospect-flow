@@ -819,6 +819,8 @@ export type Database = {
       }
       checkout_leads: {
         Row: {
+          address: string | null
+          address_number: string | null
           checkout_completed: boolean
           checkout_completed_at: string | null
           checkout_started_at: string
@@ -828,12 +830,15 @@ export type Database = {
           name: string | null
           phone: string | null
           plan_attempted: string
+          postal_code: string | null
           stripe_session_id: string | null
           tax_id: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          address?: string | null
+          address_number?: string | null
           checkout_completed?: boolean
           checkout_completed_at?: string | null
           checkout_started_at?: string
@@ -843,12 +848,15 @@ export type Database = {
           name?: string | null
           phone?: string | null
           plan_attempted: string
+          postal_code?: string | null
           stripe_session_id?: string | null
           tax_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          address?: string | null
+          address_number?: string | null
           checkout_completed?: boolean
           checkout_completed_at?: string | null
           checkout_started_at?: string
@@ -858,6 +866,7 @@ export type Database = {
           name?: string | null
           phone?: string | null
           plan_attempted?: string
+          postal_code?: string | null
           stripe_session_id?: string | null
           tax_id?: string | null
           updated_at?: string
