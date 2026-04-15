@@ -340,62 +340,66 @@ export default function CheckoutCard() {
                     </div>
                   </div>
 
-                  <div className="h-px bg-border/30 my-2" />
+                  {isAnnual && (
+                    <>
+                      <div className="h-px bg-border/30 my-2" />
 
-                  {/* Installment selector — custom dropdown */}
-                  <div className="space-y-1.5 relative">
-                    <Label className="text-xs font-medium">Parcelas</Label>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setInstallmentDropdownOpen(!installmentDropdownOpen);
-                      }}
-                      className="flex h-10 w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    >
-                      <span>
-                        {installmentCount}x de {formatCurrency(installmentValue)}
-                        {installmentCount === 1 ? " (à vista)" : ""}
-                      </span>
-                      <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", installmentDropdownOpen && "rotate-180")} />
-                    </button>
-
-                    <AnimatePresence>
-                      {installmentDropdownOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -4, scale: 0.98 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                          transition={{ duration: 0.15 }}
-                          className="absolute bottom-full left-0 right-0 mb-1 z-50 rounded-xl border border-border bg-card shadow-xl shadow-black/10 overflow-hidden max-h-[280px] overflow-y-auto"
-                          onClick={(e) => e.stopPropagation()}
+                      {/* Installment selector — custom dropdown */}
+                      <div className="space-y-1.5 relative">
+                        <Label className="text-xs font-medium">Parcelas</Label>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInstallmentDropdownOpen(!installmentDropdownOpen);
+                          }}
+                          className="flex h-10 w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
                         >
-                          {INSTALLMENT_OPTIONS.map((n) => {
-                            const val = Math.round(planConfig.annual / n);
-                            const isSelected = installments === String(n);
-                            return (
-                              <button
-                                key={n}
-                                type="button"
-                                onClick={() => {
-                                  setInstallments(String(n));
-                                  setInstallmentDropdownOpen(false);
-                                }}
-                                className={cn(
-                                  "flex w-full items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-muted/60",
-                                  isSelected && "bg-emerald-500/10 text-emerald-700 font-medium"
-                                )}
-                              >
-                                <span>{n}x de {formatCurrency(val)}</span>
-                                {n === 1 && <span className="text-xs text-muted-foreground">à vista</span>}
-                                {isSelected && <Check className="h-3.5 w-3.5 text-emerald-600" />}
-                              </button>
-                            );
-                          })}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                          <span>
+                            {installmentCount}x de {formatCurrency(installmentValue)}
+                            {installmentCount === 1 ? " (à vista)" : ""}
+                          </span>
+                          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", installmentDropdownOpen && "rotate-180")} />
+                        </button>
+
+                        <AnimatePresence>
+                          {installmentDropdownOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute bottom-full left-0 right-0 mb-1 z-50 rounded-xl border border-border bg-card shadow-xl shadow-black/10 overflow-hidden max-h-[280px] overflow-y-auto"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {INSTALLMENT_OPTIONS.map((n) => {
+                                const val = Math.round(planConfig.annual / n);
+                                const isSelected = installments === String(n);
+                                return (
+                                  <button
+                                    key={n}
+                                    type="button"
+                                    onClick={() => {
+                                      setInstallments(String(n));
+                                      setInstallmentDropdownOpen(false);
+                                    }}
+                                    className={cn(
+                                      "flex w-full items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-muted/60",
+                                      isSelected && "bg-emerald-500/10 text-emerald-700 font-medium"
+                                    )}
+                                  >
+                                    <span>{n}x de {formatCurrency(val)}</span>
+                                    {n === 1 && <span className="text-xs text-muted-foreground">à vista</span>}
+                                    {isSelected && <Check className="h-3.5 w-3.5 text-emerald-600" />}
+                                  </button>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="mt-5">
