@@ -80,6 +80,7 @@ serve(async (req) => {
     const postalCode = customerData.postalCode?.replace(/\D/g, "") || "";
     const address = customerData.address || "";
     const addressNum = customerData.addressNumber || "S/N";
+    const neighborhood = customerData.neighborhood || "";
 
     // 1. Create or find customer on Asaas
     const findRes = await fetch(`${ASAAS_API}/customers?cpfCnpj=${cpfCnpj}`, {
