@@ -120,6 +120,7 @@ export default function CheckoutCard() {
       setCepValid(null);
       setCepError("");
       setAddressStreet("");
+      setAddressNeighborhood("");
       return;
     }
 
