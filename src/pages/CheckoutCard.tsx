@@ -134,9 +134,11 @@ export default function CheckoutCard() {
           setCepValid(false);
           setCepError("CEP não encontrado");
           setAddressStreet("");
+          setAddressNeighborhood("");
         } else {
           setCepValid(true);
           setAddressStreet(data.logradouro || "");
+          setAddressNeighborhood(data.bairro || "");
         }
       } catch {
         setCepValid(false);
