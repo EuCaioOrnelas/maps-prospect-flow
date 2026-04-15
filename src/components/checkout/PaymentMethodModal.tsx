@@ -288,7 +288,7 @@ export function PaymentMethodModal({
                       </p>
                     </>
                   ) : (
-                    <p className="text-xs text-muted-foreground mt-0.5">Recorrência automática • Stripe</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Recorrência automática • Cancele quando quiser</p>
                   )}
                 </div>
                 <div className={cn(
