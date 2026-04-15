@@ -80,7 +80,11 @@ export default function CheckoutCard() {
   const [cardCvv, setCardCvv] = useState("");
   const [installments, setInstallments] = useState("12");
   const [postalCode, setPostalCode] = useState("");
+  const [addressStreet, setAddressStreet] = useState("");
   const [addressNumber, setAddressNumber] = useState("");
+  const [cepValidating, setCepValidating] = useState(false);
+  const [cepValid, setCepValid] = useState<boolean | null>(null);
+  const [cepError, setCepError] = useState("");
   const [cvvFocused, setCvvFocused] = useState(false);
   const [installmentDropdownOpen, setInstallmentDropdownOpen] = useState(false);
 
@@ -108,12 +112,49 @@ export default function CheckoutCard() {
     return () => document.removeEventListener("click", handler);
   }, [installmentDropdownOpen]);
 
+  // CEP validation via ViaCEP
+  useEffect(() => {
+    const cleanCep = postalCode.replace(/\D/g, "");
+    if (cleanCep.length !== 8) {
+      setCepValid(null);
+      setCepError("");
+      setAddressStreet("");
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      setCepValidating(true);
+      setCepError("");
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const data = await res.json();
+        if (data.erro) {
+          setCepValid(false);
+          setCepError("CEP não encontrado");
+          setAddressStreet("");
+        } else {
+          setCepValid(true);
+          setAddressStreet(data.logradouro || "");
+        }
+      } catch {
+        setCepValid(false);
+        setCepError("Erro ao validar CEP");
+      } finally {
+        setCepValidating(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [postalCode]);
+
   const isCardValid =
     cardNumber.replace(/\s/g, "").length >= 13 &&
     cardHolder.trim().length >= 3 &&
     cardExpiry.length >= 4 &&
     cardCvv.length >= 3 &&
-    postalCode.replace(/\D/g, "").length === 8;
+    cepValid === true &&
+    addressStreet.trim().length >= 2 &&
+    addressNumber.trim().length >= 1;
 
   const installmentCount = isAnnual ? parseInt(installments) : 1;
   const totalPrice = planConfig ? (isAnnual ? planConfig.annual : planConfig.monthly) : 0;
