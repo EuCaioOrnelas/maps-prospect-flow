@@ -194,6 +194,7 @@ serve(async (req) => {
         postal_code: postalCode || null,
         address: address || null,
         address_number: addressNum || null,
+        neighborhood: neighborhood || null,
         plan_attempted: plan.name,
         stripe_session_id: `asaas_sub_${subJson.id}`,
         checkout_started_at: new Date().toISOString(),
