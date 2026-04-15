@@ -490,10 +490,10 @@ export const PricingSection = () => {
                 <div className="md:hidden space-y-3">
                   {[
                     { icon: Lock, title: "Dados Protegidos", description: "Criptografia ponta a ponta" },
-                    { icon: CreditCard, title: "Pagamento Seguro", description: "Processamento via Stripe" },
+                    { icon: CreditCard, title: "Pagamento Seguro", description: "Processamento certificado" },
                     { icon: Server, title: "Uptime 99.9%", description: "Disponibilidade contínua" },
                     { icon: FileCheck, title: "LGPD Compliant", description: "Proteção de dados" },
-                    { icon: ShieldCheck, title: "100% Seguro", description: "Pagamento via Stripe" },
+                    { icon: ShieldCheck, title: "100% Seguro", description: "Pagamento certificado" },
                     { icon: BadgeCheck, title: "Cancele quando quiser", description: "Sem fidelidade" },
                     { icon: RotateCcw, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
                   ].map((item, i) => (
