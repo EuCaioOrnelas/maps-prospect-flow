@@ -240,7 +240,7 @@ serve(async (req) => {
                   // === REVENUE SCORING: Fire event for inbound messages ===
                   const normalizedPhone = normalizeBrazilianMobileE164(from);
                   if (normalizedPhone) {
-                    fireRevenueEvent({
+                    await fireRevenueEvent({
                       user_id: userId,
                       phone_e164: normalizedPhone,
                       direction: 'inbound',
