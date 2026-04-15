@@ -69,8 +69,8 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
       {metrics.map((metric) => (
         <Card key={metric.label} className="border-border/50 relative overflow-hidden">
-          {/* Subtle green glow */}
-          <div className="absolute inset-0 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.06] pointer-events-none" />
+          {/* Green glow */}
+          <div className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 blur-2xl pointer-events-none" />
           <CardContent className="p-5 relative">
             <div className="flex flex-col gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/[0.07] dark:bg-primary/[0.12] flex items-center justify-center">
