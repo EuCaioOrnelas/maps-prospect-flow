@@ -1072,24 +1072,27 @@ export default function OpportunitiesManagement() {
                 ].map((kpi) => (
                   <div
                     key={kpi.label}
-                    className="group relative overflow-hidden bg-card border border-border/60 rounded-[10px] px-5 py-4 transition-colors hover:border-border"
+                    className="group relative overflow-hidden bg-card border border-border/60 rounded-[var(--radius-card)] p-5 transition-colors hover:border-border"
                   >
-                    {/* Background accent circle */}
-                    <div className={`absolute -top-5 -right-4 w-[72px] h-[72px] rounded-full ${kpi.circle} pointer-events-none transition-transform duration-500 group-hover:scale-110`} />
+                    {/* Subtle background glow */}
+                    <div className={`absolute -top-5 -right-5 w-[72px] h-[72px] rounded-full ${kpi.circle} pointer-events-none`} />
 
-                    <div className="relative z-10">
-                      <div className="flex items-start justify-between mb-4">
-                        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{kpi.label}</span>
-                        <div className="flex items-center gap-1.5">
-                          {(kpi as any).extra || null}
-                          {kpi.icon}
-                        </div>
+                    <div className="relative z-10 flex items-start gap-4">
+                      {/* Icon on the left */}
+                      <div className={`w-10 h-10 rounded-xl ${kpi.circle} flex items-center justify-center shrink-0`}>
+                        {kpi.icon}
                       </div>
-                      {loading ? (
-                        <Skeleton className="h-8 w-14" />
-                      ) : (
-                        <p className="text-[30px] font-bold tracking-[-0.02em] text-foreground leading-none tabular-nums">{kpi.value}</p>
-                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{kpi.label}</p>
+                          {(kpi as any).extra || null}
+                        </div>
+                        {loading ? (
+                          <Skeleton className="h-8 w-14" />
+                        ) : (
+                          <p className="text-[30px] font-bold leading-tight tabular-nums" style={{ fontVariantNumeric: 'tabular-nums' }}>{kpi.value}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
