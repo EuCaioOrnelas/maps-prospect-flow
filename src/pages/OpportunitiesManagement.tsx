@@ -1074,15 +1074,14 @@ export default function OpportunitiesManagement() {
                     key={kpi.label}
                     className="group relative overflow-hidden bg-card border border-border/60 rounded-[var(--radius-card)] p-5 transition-colors hover:border-border"
                   >
-                    {/* Subtle background glow */}
-                    <div className={`absolute -top-5 -right-5 w-[72px] h-[72px] rounded-full ${kpi.circle} pointer-events-none`} />
+                    {/* Subtle green glow */}
+                    <div className="absolute inset-0 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.06] pointer-events-none" />
 
-                    <div className="relative z-10 flex items-start gap-4">
-                      {/* Icon on the left */}
-                      <div className={`w-10 h-10 rounded-xl ${kpi.circle} flex items-center justify-center shrink-0`}>
+                    <div className="relative z-10 flex flex-col gap-3">
+                      <div className={`w-10 h-10 rounded-xl ${kpi.circle} flex items-center justify-center`}>
                         {kpi.icon}
                       </div>
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0">
                         <div className="flex items-center gap-1.5 mb-1">
                           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{kpi.label}</p>
                           {(kpi as any).extra || null}

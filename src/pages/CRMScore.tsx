@@ -455,13 +455,14 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
         <div key={ri} className={`grid grid-cols-1 ${row.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-4`}>
           {row.map((kpi) => (
             <Card key={kpi.label} className="relative overflow-hidden bg-card border-border/60">
-              <div className={`absolute -top-5 -right-5 w-[72px] h-[72px] rounded-full ${kpi.circleColor}`} />
+              {/* Subtle green glow */}
+              <div className="absolute inset-0 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.06] pointer-events-none" />
               <CardContent className="p-5 relative">
-                <div className="flex items-start gap-4">
-                  <div className={`w-10 h-10 rounded-xl ${kpi.circleColor} flex items-center justify-center shrink-0`}>
+                <div className="flex flex-col gap-3">
+                  <div className={`w-10 h-10 rounded-xl ${kpi.circleColor} flex items-center justify-center`}>
                     <kpi.icon className={`h-[17px] w-[17px] ${kpi.color}`} />
                   </div>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">{kpi.label}</p>
                     <p className="text-[30px] font-bold leading-tight tabular-nums" style={{ fontVariantNumeric: 'tabular-nums' }}>{kpi.value}</p>
                   </div>
