@@ -102,28 +102,18 @@ export function PaymentMethodModal({
 
   const handleDataSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isAnnual) {
-      // Annual: skip method selection, go straight to Asaas card checkout
-      setStep("method");
-      setSelectedMethod("card");
-    } else {
-      setStep("method");
-    }
+    setStep("method");
   };
 
   const handleConfirm = () => {
     if (!selectedMethod) return;
     if (selectedMethod === "card") {
-      if (isAnnual) {
-        // Annual card → custom card checkout page (Asaas subscription)
-        const params = new URLSearchParams({ plan: planKey, planName });
-        sessionStorage.setItem("cardCustomerData", JSON.stringify(customerData));
-        navigate(`/checkout-card?${params.toString()}`);
-        setTimeout(() => onOpenChange(false), 50);
-      } else {
-        // Monthly card → Stripe
-        onSelectCard(customerData);
-      }
+      // All card checkouts → Asaas subscription (monthly or annual)
+      const params = new URLSearchParams({ plan: planKey, planName });
+      if (billingPeriod) params.set("billing", billingPeriod);
+      sessionStorage.setItem("cardCustomerData", JSON.stringify(customerData));
+      navigate(`/checkout-card?${params.toString()}`);
+      setTimeout(() => onOpenChange(false), 50);
     } else {
       const params = new URLSearchParams({ plan: planKey, planName, planPrice });
       if (billingPeriod) params.set("billing", billingPeriod);
