@@ -70,23 +70,25 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
       {metrics.map((metric) => (
         <Card key={metric.label} className="border-border/50 relative overflow-hidden">
           <CardContent className="p-5">
-            {/* Decorative circle behind the icon */}
+            {/* Subtle background glow */}
             <div className="absolute -top-5 -right-5 w-[72px] h-[72px] rounded-full bg-primary/[0.07] dark:bg-primary/[0.12]" />
-            {/* Icon on top-right */}
-            <div className="absolute top-3 right-3">
-              <metric.icon className={`w-4 h-4 ${metric.color}`} />
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">
-                {metric.label}
-              </p>
-              <div className="flex items-baseline gap-1.5">
-                <p className="text-[30px] font-bold leading-tight" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {metric.label === 'Taxa de Conversão' ? `${metric.value}%` : metric.value}
+            <div className="flex items-start gap-4">
+              {/* Icon on the left */}
+              <div className="w-10 h-10 rounded-xl bg-primary/[0.07] dark:bg-primary/[0.12] flex items-center justify-center shrink-0">
+                <metric.icon className={`w-[17px] h-[17px] ${metric.color}`} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">
+                  {metric.label}
                 </p>
-                {metric.subValue && (
-                  <span className="text-[10px] text-muted-foreground">{metric.subValue}</span>
-                )}
+                <div className="flex items-baseline gap-1.5">
+                  <p className="text-[30px] font-bold leading-tight" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    {metric.label === 'Taxa de Conversão' ? `${metric.value}%` : metric.value}
+                  </p>
+                  {metric.subValue && (
+                    <span className="text-[10px] text-muted-foreground">{metric.subValue}</span>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>

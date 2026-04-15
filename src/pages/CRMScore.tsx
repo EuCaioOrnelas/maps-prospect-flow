@@ -456,10 +456,16 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
           {row.map((kpi) => (
             <Card key={kpi.label} className="relative overflow-hidden bg-card border-border/60">
               <div className={`absolute -top-5 -right-5 w-[72px] h-[72px] rounded-full ${kpi.circleColor}`} />
-              <kpi.icon className={`absolute top-3 right-3 h-4 w-4 ${kpi.color}`} />
               <CardContent className="p-5 relative">
-                <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2">{kpi.label}</p>
-                <p className="text-[30px] font-bold leading-none tabular-nums">{kpi.value}</p>
+                <div className="flex items-start gap-4">
+                  <div className={`w-10 h-10 rounded-xl ${kpi.circleColor} flex items-center justify-center shrink-0`}>
+                    <kpi.icon className={`h-[17px] w-[17px] ${kpi.color}`} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">{kpi.label}</p>
+                    <p className="text-[30px] font-bold leading-tight tabular-nums" style={{ fontVariantNumeric: 'tabular-nums' }}>{kpi.value}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ))}
