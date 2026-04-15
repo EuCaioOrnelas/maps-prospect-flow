@@ -111,7 +111,8 @@ export default function CheckoutCard() {
     cardNumber.replace(/\s/g, "").length >= 13 &&
     cardHolder.trim().length >= 3 &&
     cardExpiry.length >= 4 &&
-    cardCvv.length >= 3;
+    cardCvv.length >= 3 &&
+    postalCode.replace(/\D/g, "").length === 8;
 
   const installmentCount = isAnnual ? parseInt(installments) : 1;
   const totalPrice = planConfig ? (isAnnual ? planConfig.annual : planConfig.monthly) : 0;
@@ -133,8 +134,8 @@ export default function CheckoutCard() {
           billingPeriod,
           customerData: {
             ...customerData,
-            postalCode: "00000000",
-            addressNumber: "0",
+            postalCode: postalCode.replace(/\D/g, ""),
+            addressNumber: addressNumber || "S/N",
           },
           creditCard: {
             holderName: cardHolder,
