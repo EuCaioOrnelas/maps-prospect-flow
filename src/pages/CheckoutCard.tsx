@@ -19,6 +19,7 @@ import {
   User,
   Calendar,
   Hash,
+  MapPin,
   ChevronDown,
   RotateCcw,
   Star,
