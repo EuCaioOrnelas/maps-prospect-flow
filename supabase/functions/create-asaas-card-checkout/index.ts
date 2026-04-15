@@ -187,7 +187,7 @@ serve(async (req) => {
         phone: customerData.phone || null,
         tax_id: customerData.taxId || null,
         plan_attempted: plan.name,
-        stripe_session_id: `asaas_card_sub_${subJson.id}`,
+        stripe_session_id: `asaas_sub_${subJson.id}`,
         checkout_started_at: new Date().toISOString(),
         checkout_completed: false,
       });
