@@ -148,7 +148,7 @@ export default function CheckoutCard() {
       if (data?.error) throw new Error(data.error);
 
       setSuccess(true);
-      toast({ title: "🎉 Assinatura criada!", description: "Seu plano anual foi ativado com sucesso." });
+      toast({ title: "🎉 Assinatura criada!", description: isAnnual ? "Seu plano anual foi ativado com sucesso." : "Seu plano mensal foi ativado com sucesso." });
       setTimeout(() => navigate("/checkout-success?provider=asaas"), 2500);
     } catch (err: any) {
       toast({
