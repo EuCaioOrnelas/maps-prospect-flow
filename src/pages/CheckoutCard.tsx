@@ -81,6 +81,7 @@ export default function CheckoutCard() {
   const [installments, setInstallments] = useState("12");
   const [postalCode, setPostalCode] = useState("");
   const [addressStreet, setAddressStreet] = useState("");
+  const [addressNeighborhood, setAddressNeighborhood] = useState("");
   const [addressNumber, setAddressNumber] = useState("");
   const [cepValidating, setCepValidating] = useState(false);
   const [cepValid, setCepValid] = useState<boolean | null>(null);
