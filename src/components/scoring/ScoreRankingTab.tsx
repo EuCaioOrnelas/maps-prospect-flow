@@ -1,36 +1,75 @@
-import { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Medal, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { ScoreUserDetailDialog } from "./ScoreUserDetailDialog";
+import { Trophy, Medal, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export const ScoreRankingTab = () => {
-  const [ranking, setRanking] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState("total_score");
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+interface RevenueLead {
+  id: string;
+  name: string | null;
+  phone_e164: string;
+  score_total: number;
+  score_engagement: number;
+  score_intent: number;
+  score_risk: number;
+  score_urgency: number;
+  status_bucket: string;
+}
 
-  useEffect(() => {
-    loadRanking();
-  }, [sortBy]);
+interface ScoreRankingTabProps {
+  leads: RevenueLead[];
+}
 
-  const loadRanking = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("score-processor", {
-        body: { action: "get_ranking", limit: 50, sort_by: sortBy },
-      });
-      if (error) throw error;
-      setRanking(data?.ranking || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const BUCKET_SHORT_LABELS: Record<string, string> = {
+  COLD: "Frio",
+  LOW_ENGAGEMENT: "Baixo engaj.",
+  ENGAGED: "Engajado",
+  HIGH_VALUE: "Alto valor",
+  READY_TO_SELL: "Pronto p/ venda",
+};
+
+const BUCKET_BADGE_COLORS: Record<string, string> = {
+  READY_TO_SELL: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  HIGH_VALUE: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+  ENGAGED: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  LOW_ENGAGEMENT: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  COLD: "bg-red-500/20 text-red-400 border-red-500/30",
+};
+
+const mapBucket = (bucket: string, score: number): string => {
+  if (score >= 801) return "READY_TO_SELL";
+  if (score >= 601) return "HIGH_VALUE";
+  if (score >= 401) return "ENGAGED";
+  if (score >= 201) return "LOW_ENGAGEMENT";
+  return "COLD";
+};
+
+const fmtPhone = (p: string) => {
+  const d = p.replace(/\D/g, "");
+  if (d.length === 13) return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, 9)}-${d.slice(9)}`;
+  return p;
+};
+
+const fmtNum = (n: number) => new Intl.NumberFormat("pt-BR").format(Math.round(n));
+
+const getScoreColor = (score: number) => {
+  if (score >= 801) return "text-emerald-400";
+  if (score >= 601) return "text-purple-400";
+  if (score >= 401) return "text-blue-400";
+  if (score >= 201) return "text-yellow-400";
+  return "text-red-400";
+};
+
+type SortKey = "score_total" | "score_engagement" | "score_intent" | "score_risk" | "score_urgency";
+
+export const ScoreRankingTab = ({ leads }: ScoreRankingTabProps) => {
+  const [sortBy, setSortBy] = useState<SortKey>("score_total");
+
+  const sorted = useMemo(
+    () => [...leads].sort((a, b) => b[sortBy] - a[sortBy]),
+    [leads, sortBy]
+  );
 
   const getMedalIcon = (index: number) => {
     if (index === 0) return <Trophy className="h-5 w-5 text-yellow-400" />;
@@ -39,91 +78,65 @@ export const ScoreRankingTab = () => {
     return <span className="w-5 text-center text-sm text-muted-foreground font-medium">{index + 1}</span>;
   };
 
-  const TrendIcon = ({ trend }: { trend: string }) => {
-    if (trend === "rising") return <TrendingUp className="h-4 w-4 text-emerald-400" />;
-    if (trend === "falling") return <TrendingDown className="h-4 w-4 text-destructive" />;
-    return <Minus className="h-4 w-4 text-muted-foreground" />;
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 81) return "text-purple-400";
-    if (score >= 61) return "text-emerald-400";
-    if (score >= 41) return "text-blue-400";
-    if (score >= 21) return "text-yellow-400";
-    return "text-red-400";
-  };
-
-  const LABEL_COLORS: Record<string, string> = {
-    "Frio": "bg-red-500/20 text-red-400 border-red-500/30",
-    "Baixo engajamento": "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    "Engajado": "bg-blue-500/20 text-blue-400 border-blue-500/30",
-    "Alto valor": "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-    "Pronto para upgrade": "bg-purple-500/20 text-purple-400 border-purple-500/30",
-  };
-
   return (
     <Card className="bg-card border-border/50">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Trophy className="h-5 w-5 text-yellow-400" />
-            Ranking de Usuários
+            Ranking de Leads
           </CardTitle>
-          <Select value={sortBy} onValueChange={setSortBy}>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
             <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="total_score">Maior Score Total</SelectItem>
-              <SelectItem value="purchase_intent">Intenção de Compra</SelectItem>
-              <SelectItem value="engagement">Engajamento</SelectItem>
-              <SelectItem value="value">Uso de Features</SelectItem>
-              <SelectItem value="activation">Ativação</SelectItem>
-              <SelectItem value="churn_risk">Risco de Churn</SelectItem>
+              <SelectItem value="score_total">Maior Score Total</SelectItem>
+              <SelectItem value="score_engagement">Engajamento</SelectItem>
+              <SelectItem value="score_intent">Intenção de Compra</SelectItem>
+              <SelectItem value="score_urgency">Urgência</SelectItem>
+              <SelectItem value="score_risk">Risco</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </CardHeader>
       <CardContent>
-        {loading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+        {sorted.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
+            <Users className="h-8 w-8" />
+            <p className="text-sm">Nenhum lead com score disponível ainda.</p>
           </div>
-        ) : ranking.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">Nenhum dado de ranking disponível.</p>
         ) : (
           <div className="space-y-2">
-            {ranking.map((user: any, index: number) => (
-              <div
-                key={user.id}
-                onClick={() => setSelectedUserId(user.user_id)}
-                className="flex items-center gap-4 p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer border border-transparent hover:border-border/50"
-              >
-                <div className="w-8 flex justify-center">{getMedalIcon(index)}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{user.profiles?.name || "Sem nome"}</p>
-                  <p className="text-xs text-muted-foreground truncate">{user.profiles?.email}</p>
+            {sorted.map((lead, index) => {
+              const bucket = mapBucket(lead.status_bucket, lead.score_total);
+              return (
+                <div
+                  key={lead.id}
+                  className="flex items-center gap-4 p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors border border-transparent hover:border-border/50"
+                >
+                  <div className="w-8 flex justify-center">{getMedalIcon(index)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{lead.name || fmtPhone(lead.phone_e164)}</p>
+                    <p className="text-xs text-muted-foreground truncate">{fmtPhone(lead.phone_e164)}</p>
+                  </div>
+                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", BUCKET_BADGE_COLORS[bucket] || "")}>
+                    {BUCKET_SHORT_LABELS[bucket] || bucket}
+                  </Badge>
+                  <div className="text-right min-w-[60px]">
+                    <p className={`text-xl font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>
+                      {fmtNum(lead.score_total)}
+                    </p>
+                    {sortBy !== "score_total" && (
+                      <p className="text-[10px] text-muted-foreground tabular-nums">
+                        {fmtNum(lead[sortBy])} {sortBy.replace("score_", "")}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <Badge variant="outline" className={LABEL_COLORS[user.score_label] || ""}>
-                  {user.score_label}
-                </Badge>
-                <TrendIcon trend={user.trend} />
-                <div className="text-right min-w-[60px]">
-                  <p className={`text-xl font-bold ${getScoreColor(Number(user.total_score))}`}>
-                    {Number(user.total_score).toFixed(0)}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>
-
-      {selectedUserId && (
-        <ScoreUserDetailDialog
-          userId={selectedUserId}
-          open={!!selectedUserId}
-          onOpenChange={(open) => !open && setSelectedUserId(null)}
-        />
-      )}
     </Card>
   );
 };
