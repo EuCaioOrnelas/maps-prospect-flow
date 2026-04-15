@@ -35,7 +35,7 @@ export function ExecutiveAlerts({ alerts }: ExecutiveAlertsProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-1.5 pb-5">
-        {alerts.map((alert, i) => (
+        {alerts.filter(a => !a.text.includes('NaN')).map((alert, i) => (
           <div
             key={i}
             className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-muted/50 border border-border/30 cursor-pointer hover:bg-muted/80 transition-colors"
