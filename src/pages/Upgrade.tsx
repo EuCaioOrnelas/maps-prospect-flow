@@ -565,7 +565,7 @@ const Upgrade = () => {
               </div>
               <div>
                 <p className="font-semibold text-foreground">100% Seguro</p>
-                <p className="text-sm text-muted-foreground">Pagamento via Stripe</p>
+                <p className="text-sm text-muted-foreground">Pagamento certificado</p>
               </div>
             </div>
             <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
