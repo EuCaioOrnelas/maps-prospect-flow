@@ -12,9 +12,9 @@ const logStep = (step: string, details?: any) => {
   console.log(`[ASAAS-CARD-SUB] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
-const PLAN_CONFIG: Record<string, { name: string; priceAnnual: number; installmentValue: number }> = {
-  start: { name: "Wiize Start", priceAnnual: 2952.00, installmentValue: 246.00 },
-  growth: { name: "Wiize Growth", priceAnnual: 5952.00, installmentValue: 496.00 },
+const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number; priceAnnual: number; installmentValue: number }> = {
+  start: { name: "Wiize Start", priceMonthly: 296.00, priceAnnual: 2952.00, installmentValue: 246.00 },
+  growth: { name: "Wiize Growth", priceMonthly: 696.00, priceAnnual: 5952.00, installmentValue: 496.00 },
 };
 
 serve(async (req) => {
@@ -31,17 +31,16 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { planKey, customerData, creditCard, installmentCount } = await req.json();
+    const { planKey, customerData, creditCard, installmentCount, billingPeriod } = await req.json();
     if (!planKey || !customerData || !creditCard) {
       throw new Error("planKey, customerData and creditCard are required");
     }
 
-    const maxInstallments = Math.min(Math.max(installmentCount || 12, 1), 12);
-
+    const isAnnual = billingPeriod === "annual";
     const plan = PLAN_CONFIG[planKey];
     if (!plan) throw new Error(`Invalid plan: ${planKey}`);
 
-    logStep("Request received", { planKey, email: customerData.email });
+    logStep("Request received", { planKey, email: customerData.email, billingPeriod: billingPeriod || "annual" });
 
     // Validate credit card data
     if (!creditCard.holderName || !creditCard.number || !creditCard.expiryMonth || !creditCard.expiryYear || !creditCard.ccv) {
@@ -118,20 +117,24 @@ serve(async (req) => {
       logStep("Customer created", { customerId });
     }
 
-    // 2. Create subscription with credit card (YEARLY cycle)
+    // 2. Determine cycle, value and installments
+    const cycle = isAnnual ? "YEARLY" : "MONTHLY";
+    const value = isAnnual ? plan.priceAnnual : plan.priceMonthly;
+    const maxInstallments = isAnnual ? Math.min(Math.max(installmentCount || 12, 1), 12) : 1;
+
+    // 3. Create subscription with credit card
     const nextDueDate = new Date();
     nextDueDate.setDate(nextDueDate.getDate() + 1); // tomorrow
     const dueDateStr = nextDueDate.toISOString().split("T")[0];
 
-    const subscriptionBody = {
+    const subscriptionBody: Record<string, any> = {
       customer: customerId,
       billingType: "CREDIT_CARD",
-      cycle: "YEARLY",
-      value: plan.priceAnnual,
+      cycle: cycle,
+      value: value,
       nextDueDate: dueDateStr,
-      description: `${plan.name} Anual`,
+      description: `${plan.name} ${isAnnual ? "Anual" : "Mensal"}`,
       externalReference: userId || customerData.email,
-      maxInstallmentCount: maxInstallments,
       creditCard: {
         holderName: creditCard.holderName,
         number: creditCard.number.replace(/\s/g, ""),
@@ -149,7 +152,12 @@ serve(async (req) => {
       },
     };
 
-    logStep("Creating subscription", { customer: customerId, cycle: "YEARLY", value: plan.priceAnnual });
+    // Only add installments for annual
+    if (isAnnual && maxInstallments > 1) {
+      subscriptionBody.maxInstallmentCount = maxInstallments;
+    }
+
+    logStep("Creating subscription", { customer: customerId, cycle, value });
 
     const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
       method: "POST",
@@ -168,9 +176,9 @@ serve(async (req) => {
       throw new Error(errorMsg);
     }
 
-    logStep("Subscription created", { id: subJson.id, status: subJson.status });
+    logStep("Subscription created", { id: subJson.id, status: subJson.status, cycle });
 
-    // 3. Track checkout lead
+    // 4. Track checkout lead
     try {
       await supabaseClient.from("checkout_leads").insert({
         user_id: userId || null,
