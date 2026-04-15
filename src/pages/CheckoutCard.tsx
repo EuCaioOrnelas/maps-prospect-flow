@@ -78,6 +78,8 @@ export default function CheckoutCard() {
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
   const [installments, setInstallments] = useState("12");
+  const [postalCode, setPostalCode] = useState("");
+  const [addressNumber, setAddressNumber] = useState("");
   const [cvvFocused, setCvvFocused] = useState(false);
   const [installmentDropdownOpen, setInstallmentDropdownOpen] = useState(false);
 
