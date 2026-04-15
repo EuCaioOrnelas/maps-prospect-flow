@@ -386,28 +386,42 @@ export default function CheckoutCard() {
                     </div>
                   </div>
 
+                  <div className="h-px bg-border/30 my-1" />
+
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="h-5 w-5 text-primary" />
+                    <p className="text-sm font-semibold text-foreground">Endereço de cobrança</p>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label htmlFor="postal-code" className="text-xs font-medium flex items-center gap-1.5">
-                        <MapPin className="h-3 w-3 text-muted-foreground" />
-                        CEP
-                      </Label>
-                      <Input
-                        id="postal-code"
-                        placeholder="00000-000"
-                        value={postalCode}
-                        onChange={(e) => {
-                          const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
-                          setPostalCode(digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits);
-                        }}
-                        maxLength={9}
-                      />
+                      <Label htmlFor="postal-code" className="text-xs font-medium">CEP</Label>
+                      <div className="relative">
+                        <Input
+                          id="postal-code"
+                          placeholder="00000-000"
+                          value={postalCode}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+                            setPostalCode(digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits);
+                          }}
+                          maxLength={9}
+                          className={cn(
+                            cepValid === false && "border-destructive",
+                            cepValid === true && "border-emerald-500"
+                          )}
+                        />
+                        {cepValidating && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                        )}
+                        {cepValid === true && !cepValidating && (
+                          <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-emerald-500" />
+                        )}
+                      </div>
+                      {cepError && <p className="text-[10px] text-destructive">{cepError}</p>}
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="address-number" className="text-xs font-medium flex items-center gap-1.5">
-                        <Hash className="h-3 w-3 text-muted-foreground" />
-                        Número
-                      </Label>
+                      <Label htmlFor="address-number" className="text-xs font-medium">Número</Label>
                       <Input
                         id="address-number"
                         placeholder="Nº"
@@ -415,6 +429,17 @@ export default function CheckoutCard() {
                         onChange={(e) => setAddressNumber(e.target.value)}
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="address-street" className="text-xs font-medium">Endereço</Label>
+                    <Input
+                      id="address-street"
+                      placeholder="Rua, Avenida..."
+                      value={addressStreet}
+                      onChange={(e) => setAddressStreet(e.target.value)}
+                      disabled={cepValidating}
+                    />
                   </div>
 
                   {isAnnual && (
