@@ -83,7 +83,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         supabase.from("leads").select("estimated_value").eq("user_id", user.id)
           .gte("created_at", subDays(now, 60).toISOString())
           .lt("created_at", thirtyDaysAgo.toISOString()),
-        supabase.from("revenue_score_logs").select("lead_id, points_applied").eq("user_id", user.id)
+        supabase.from("revenue_score_logs").select("lead_id, points_applied, created_at").eq("user_id", user.id)
           .gte("created_at", last24h.toISOString()),
         supabase.from("revenue_score_logs").select("lead_id, points_applied").eq("user_id", user.id)
           .gte("created_at", last48h.toISOString())
@@ -362,11 +362,13 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
       if (scoreLogs24h.length > 5) {
         const hourCounts = new Map<number, number>();
         scoreLogs24h.forEach((log: any) => {
+          if (!log.created_at) return;
           const h = new Date(log.created_at).getHours();
+          if (isNaN(h)) return;
           hourCounts.set(h, (hourCounts.get(h) || 0) + 1);
         });
         const peakHour = Array.from(hourCounts.entries()).sort((a, b) => b[1] - a[1])[0];
-        if (peakHour) {
+        if (peakHour && !isNaN(peakHour[0])) {
           executiveAlerts.push({
             type: 'info',
             icon: React.createElement(Clock, { size: 14 }),
