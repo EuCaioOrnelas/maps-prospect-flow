@@ -555,6 +555,7 @@ const UpgradePromo = () => {
         planName={plans.find((p) => p.key === selectedPlanKey)?.name || ""}
         planPrice={selectedPlanKey ? String(plans.find((p) => p.key === selectedPlanKey)?.price || "") : ""}
         planKey={selectedPlanKey || ""}
+        billingPeriod="monthly"
         onSelectCard={handleCardCheckout}
         onSelectPix={handlePixCheckout}
         loading={loadingPlan !== null}
