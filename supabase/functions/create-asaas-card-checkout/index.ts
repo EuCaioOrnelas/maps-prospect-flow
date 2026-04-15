@@ -78,6 +78,8 @@ serve(async (req) => {
 
     const phone = customerData.phone?.replace(/\D/g, "") || "";
     const postalCode = customerData.postalCode?.replace(/\D/g, "") || "";
+    const address = customerData.address || "";
+    const addressNum = customerData.addressNumber || "S/N";
 
     // 1. Create or find customer on Asaas
     const findRes = await fetch(`${ASAAS_API}/customers?cpfCnpj=${cpfCnpj}`, {
@@ -146,8 +148,9 @@ serve(async (req) => {
         name: customerData.name,
         email: customerData.email,
         cpfCnpj: cpfCnpj,
-        postalCode: postalCode || "00000000",
-        addressNumber: customerData.addressNumber || "0",
+        postalCode: postalCode || "01310100",
+        addressNumber: addressNum,
+        address: address,
         phone: phone,
       },
     };
@@ -186,6 +189,9 @@ serve(async (req) => {
         name: customerData.name,
         phone: customerData.phone || null,
         tax_id: customerData.taxId || null,
+        postal_code: postalCode || null,
+        address: address || null,
+        address_number: addressNum || null,
         plan_attempted: plan.name,
         stripe_session_id: `asaas_sub_${subJson.id}`,
         checkout_started_at: new Date().toISOString(),
