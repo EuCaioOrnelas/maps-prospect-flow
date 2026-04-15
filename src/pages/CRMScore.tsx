@@ -456,7 +456,7 @@ const ScoreDashboard = ({ leads }: { leads: RevenueLead[] }) => {
           {row.map((kpi) => (
             <Card key={kpi.label} className="relative overflow-hidden bg-card border-border/60">
               {/* Green glow */}
-              <div className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-10 -right-10 w-36 h-36 rounded-full bg-emerald-500/[0.04] dark:bg-emerald-500/[0.07] blur-3xl pointer-events-none" />
               <CardContent className="p-5 relative">
                 <div className="flex flex-col gap-3">
                   <div className={`w-10 h-10 rounded-xl ${kpi.circleColor} flex items-center justify-center`}>
