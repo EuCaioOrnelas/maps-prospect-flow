@@ -111,8 +111,9 @@ export default function CheckoutCard() {
     cardExpiry.length >= 4 &&
     cardCvv.length >= 3;
 
-  const installmentCount = parseInt(installments);
-  const installmentValue = planConfig ? Math.round(planConfig.annual / installmentCount) : 0;
+  const installmentCount = isAnnual ? parseInt(installments) : 1;
+  const totalPrice = planConfig ? (isAnnual ? planConfig.annual : planConfig.monthly) : 0;
+  const installmentValue = planConfig ? (isAnnual ? Math.round(planConfig.annual / installmentCount) : planConfig.monthly) : 0;
 
   const handleSubmit = async () => {
     if (!customerData || !planKey || !isCardValid) return;
@@ -126,7 +127,8 @@ export default function CheckoutCard() {
       const { data, error } = await supabase.functions.invoke("create-asaas-card-checkout", {
         body: {
           planKey,
-          installmentCount,
+          installmentCount: isAnnual ? installmentCount : undefined,
+          billingPeriod,
           customerData: {
             ...customerData,
             postalCode: "00000000",
