@@ -506,7 +506,7 @@ const UpgradePromo = () => {
           transition={{ delay: 0.8 }}
         >
           {[
-            { icon: Shield, title: "100% Seguro", desc: "Pagamento via Stripe" },
+            { icon: Shield, title: "100% Seguro", desc: "Pagamento certificado" },
             { icon: Clock, title: "Cancele quando quiser", desc: "Sem fidelidade" },
             { icon: CreditCard, title: "Garantia 7 dias", desc: "Devolução sem burocracia" },
           ].map(({ icon: Icon, title, desc }) => (
