@@ -3,6 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Medal, Users } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 interface RevenueLead {
@@ -37,7 +41,7 @@ const BUCKET_BADGE_COLORS: Record<string, string> = {
   COLD: "bg-red-500/20 text-red-400 border-red-500/30",
 };
 
-const mapBucket = (bucket: string, score: number): string => {
+const mapBucket = (_bucket: string, score: number): string => {
   if (score >= 801) return "READY_TO_SELL";
   if (score >= 601) return "HIGH_VALUE";
   if (score >= 401) return "ENGAGED";
@@ -63,8 +67,27 @@ const getScoreColor = (score: number) => {
 
 type SortKey = "score_total" | "score_engagement" | "score_intent" | "score_risk" | "score_urgency";
 
-export const ScoreRankingTab = ({ leads }: ScoreRankingTabProps) => {
+export const ScoreRankingTab = ({ leads: externalLeads }: ScoreRankingTabProps) => {
   const [sortBy, setSortBy] = useState<SortKey>("score_total");
+  const { user } = useAuth();
+
+  // Fallback: fetch from DB when leads prop is not provided (admin page)
+  const { data: fetchedLeads = [], isLoading } = useQuery({
+    queryKey: ["ranking-leads-fallback", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("revenue_leads")
+        .select("id, name, phone_e164, score_total, score_engagement, score_intent, score_risk, score_urgency, status_bucket")
+        .eq("user_id", user.id)
+        .order("score_total", { ascending: false });
+      if (error) throw error;
+      return (data || []) as RevenueLead[];
+    },
+    enabled: !!user && !externalLeads,
+  });
+
+  const leads = externalLeads || fetchedLeads;
 
   const sorted = useMemo(
     () => [...leads].sort((a, b) => b[sortBy] - a[sortBy]),
@@ -77,6 +100,16 @@ export const ScoreRankingTab = ({ leads }: ScoreRankingTabProps) => {
     if (index === 2) return <Medal className="h-5 w-5 text-orange-600" />;
     return <span className="w-5 text-center text-sm text-muted-foreground font-medium">{index + 1}</span>;
   };
+
+  if (!externalLeads && isLoading) {
+    return (
+      <Card className="bg-card border-border/50">
+        <CardContent className="p-6 space-y-2">
+          {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-card border-border/50">
