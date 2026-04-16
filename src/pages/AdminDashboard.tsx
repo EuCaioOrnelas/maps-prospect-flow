@@ -574,27 +574,42 @@ export default function AdminDashboard() {
             </div>
             {/* Revenue by provider with percentages */}
             <div className="mt-4 pt-4 border-t border-border/30 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-2">
-                  Stripe MRR
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-500">{pctStripe}%</span>
-                </span>
-                <span className="font-semibold text-foreground">{formatCurrency(stripeMrrVal)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-2">
-                  Asaas Cartão
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-500">{pctAsaasCard}%</span>
-                </span>
-                <span className="font-semibold text-foreground">{formatCurrency(asaasCardMrrVal)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-2">
-                  PIX MRR
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500">{pctPix}%</span>
-                </span>
-                <span className="font-semibold text-foreground">{formatCurrency(pixMrrVal)}</span>
-              </div>
+                {stripeMrrVal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      Stripe MRR
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-500">{pctStripe}%</span>
+                    </span>
+                    <span className="font-semibold text-foreground">{formatCurrency(stripeMrrVal)}</span>
+                  </div>
+                )}
+                {asaasCardMrrVal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      Asaas Cartão
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-500">{pctAsaasCard}%</span>
+                    </span>
+                    <span className="font-semibold text-foreground">{formatCurrency(asaasCardMrrVal)}</span>
+                  </div>
+                )}
+                {pixMrrVal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      PIX MRR
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500">{pctPix}%</span>
+                    </span>
+                    <span className="font-semibold text-foreground">{formatCurrency(pixMrrVal)}</span>
+                  </div>
+                )}
+                {otherMrrVal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      Outros
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-500/10 text-gray-500">{pctOther}%</span>
+                    </span>
+                    <span className="font-semibold text-foreground">{formatCurrency(otherMrrVal)}</span>
+                  </div>
+                )}
               <div className="flex justify-between text-sm pt-1 border-t border-border/20">
                 <span className="text-muted-foreground font-medium">Total MRR</span>
                 <span className="font-bold" style={{ color: WIIZE_GREEN }}>{formatCurrency(totalMRR)}</span>
