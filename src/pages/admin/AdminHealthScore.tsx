@@ -32,7 +32,7 @@ export default function AdminHealthScore() {
     const load = async () => {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, email, name, plan, searches_used, searches_limit, last_login_at, created_at")
+        .select("id, email, name, plan, searches_used, searches_limit, updated_at, created_at")
         .neq("plan", "free")
         .order("created_at", { ascending: false })
         .limit(200);
@@ -52,7 +52,7 @@ export default function AdminHealthScore() {
       const now = Date.now();
       const scored: UserHealth[] = profiles.map(p => {
         // Login recency: 30 = logged in last 3 days, 20 = last 7d, 10 = last 30d, 0 = older
-        const lastLogin = p.last_login_at ? new Date(p.last_login_at).getTime() : 0;
+        const lastLogin = p.updated_at ? new Date(p.updated_at).getTime() : 0;
         const daysSinceLogin = lastLogin ? (now - lastLogin) / 86400000 : 999;
         const loginScore = daysSinceLogin <= 3 ? 30 : daysSinceLogin <= 7 ? 20 : daysSinceLogin <= 30 ? 10 : 0;
 
@@ -77,7 +77,7 @@ export default function AdminHealthScore() {
           plan: p.plan || "free",
           score: total,
           factors: { login: loginScore, usage: usageScore, campaigns: campaignScore, ai: aiScore },
-          lastLogin: p.last_login_at,
+          lastLogin: p.updated_at,
           riskLevel,
         };
       });
