@@ -85,7 +85,6 @@ export default function AdminChurn() {
       const subEvents = data?.subEvents || [];
       const profiles = data?.profiles || [];
       const expiredProfiles = data?.expiredProfiles || [];
-      const failedPixCheckouts = data?.failedPixCheckouts || [];
 
       setTotalUsers(profiles.length || 0);
 
@@ -170,10 +169,8 @@ export default function AdminChurn() {
           cancelled_at: profile.subscription_current_period_end,
           active_until: profile.subscription_current_period_end,
           billing_type: isPix ? "PIX" : null,
-          notes: isPix
-            ? "PIX expirado por falta de pagamento — fallback do sistema"
-            : "Assinatura expirada sem log de cancelamento — fallback do sistema",
-          cancellation_reason: feedback?.cancellation_reason || null,
+          notes: "Assinatura expirada por falta de pagamento",
+          cancellation_reason: feedback?.cancellation_reason || "falta_pagamento",
           usage_level: feedback?.usage_level || null,
           additional_comments: feedback?.additional_comments || null,
           intends_to_return: feedback?.intends_to_return || null,
@@ -181,36 +178,6 @@ export default function AdminChurn() {
           feedback_provider: feedback?.provider || null,
           plan: profile.plan || null,
           name: profile.name || null,
-        });
-      });
-
-      failedPixCheckouts.forEach((checkout: any) => {
-        if (checkout.user_id && addedUserIds.has(checkout.user_id)) return;
-
-        if (checkout.user_id) {
-          addedUserIds.add(checkout.user_id);
-        }
-
-        const profile = checkout.user_id ? profileMap.get(checkout.user_id) : null;
-        const feedback = checkout.user_id ? feedbackMap.get(checkout.user_id) : null;
-
-        merged.push({
-          id: `failed-pix-${checkout.id}`,
-          user_id: checkout.user_id || null,
-          email: checkout.email || profile?.email || null,
-          provider: "pix",
-          cancelled_at: checkout.created_at || checkout.checkout_started_at,
-          active_until: null,
-          billing_type: "PIX",
-          notes: "PIX gerado e não pago — checkout não concluído",
-          cancellation_reason: feedback?.cancellation_reason || null,
-          usage_level: feedback?.usage_level || null,
-          additional_comments: feedback?.additional_comments || null,
-          intends_to_return: feedback?.intends_to_return || null,
-          details: feedback?.details || null,
-          feedback_provider: feedback?.provider || "pix",
-          plan: profile?.plan || checkout.plan_attempted || null,
-          name: profile?.name || checkout.email || null,
         });
       });
 
