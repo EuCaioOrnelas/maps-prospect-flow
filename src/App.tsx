@@ -101,8 +101,10 @@ const AdminProxies = lazyWithRetry(() => import("./pages/admin/AdminProxies"), "
 const AdminWebhooks = lazyWithRetry(() => import("./pages/admin/AdminWebhooks"), "AdminWebhooks");
 const AdminTermos = lazyWithRetry(() => import("./pages/admin/AdminTermos"), "AdminTermos");
 const AdminAuditoria = lazyWithRetry(() => import("./pages/admin/AdminAuditoria"), "AdminAuditoria");
+const AdminHealthScore = lazyWithRetry(() => import("./pages/admin/AdminHealthScore"), "AdminHealthScore");
+const AdminGrowthIntelligence = lazyWithRetry(() => import("./pages/admin/AdminGrowthIntelligence"), "AdminGrowthIntelligence");
 
-const queryClient = new QueryClient({
+
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,
