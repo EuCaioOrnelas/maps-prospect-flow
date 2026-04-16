@@ -196,19 +196,30 @@ function useNewSystemMetrics(): NewSystemMetrics {
       const recentMRR = monthlyMRR.slice(-3);
 
       // Churn = cancellations / active at start of month (avg 3m)
+      // Only trust real churn if we have enough cancellation data
       let totalChurnPct = 0;
       let churnMonths = 0;
+      let totalCancellations = 0;
       for (let i = 0; i < recentSales.length; i++) {
         const active = recentMRR[i]?.activeCount || 0;
+        totalCancellations += recentSales[i].cancellations || 0;
         if (active > 0) {
           totalChurnPct += (recentSales[i].cancellations || 0) / active;
           churnMonths++;
         }
       }
-      let realChurnRate = churnMonths > 0 ? totalChurnPct / churnMonths : 0;
-      // floor 1%, cap 15%
-      if (realChurnRate <= 0) realChurnRate = 0.02;
-      realChurnRate = Math.min(Math.max(realChurnRate, 0.01), 0.15);
+
+      let realChurnRate: number;
+      let usingDefaultChurn: boolean;
+      if (totalCancellations >= MIN_CANCELLATIONS_FOR_REAL_CHURN && churnMonths > 0) {
+        // Enough internal data — use real churn
+        realChurnRate = Math.min(Math.max(totalChurnPct / churnMonths, 0.01), 0.15);
+        usingDefaultChurn = false;
+      } else {
+        // Not enough data — use the 6% default baseline (realistic)
+        realChurnRate = DEFAULT_REALISTIC_CHURN;
+        usingDefaultChurn = true;
+      }
 
       // Weighted avg new clients/MRR
       let wSumClients = 0, wSumValue = 0, wTotal = 0;
@@ -251,6 +262,9 @@ function useNewSystemMetrics(): NewSystemMetrics {
         avgNewClients,
         avgExpansionMRR,
         avgCancellations,
+        usingDefaultChurn,
+        stripeMRR,
+        newSystemMRR,
       });
     })();
   }, []);
