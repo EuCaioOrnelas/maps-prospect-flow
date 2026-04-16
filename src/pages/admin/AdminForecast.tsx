@@ -2,13 +2,34 @@ import { useEffect, useMemo, useState } from "react";
 import {
   TrendingUp, TrendingDown, Target, DollarSign, BarChart3, AlertTriangle,
   Calendar, Users, ArrowUpRight, ArrowDownRight, Sparkles, ShieldCheck,
-  Activity, Repeat, Heart, Zap, Info,
+  Activity, Repeat, Heart, Zap, Info, HelpCircle, RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 
+// ============================================================
+// CONSTANTS — easy to tweak in one place
+// ============================================================
+
+/** Plan monthly prices (R$). Used as fallback when subscription_price_cents is null. */
 const PLAN_PRICES_MONTHLY: Record<string, number> = { start: 296, growth: 696, scale: 897 };
+
+/** Auto-refresh interval (ms). Page reloads data every 5 minutes. */
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+
+/**
+ * Minimum cancellations across the last 3 months in the NEW system
+ * required before we trust the calculated churn rate.
+ * Below this we use the DEFAULT_REALISTIC_CHURN baseline (6%).
+ */
+const MIN_CANCELLATIONS_FOR_REAL_CHURN = 3;
+
+/** Default churn for the realistic scenario when there isn't enough internal data. */
+const DEFAULT_REALISTIC_CHURN = 0.06;
 
 interface NewSystemMetrics {
   loading: boolean;
@@ -27,12 +48,9 @@ interface NewSystemMetrics {
   /** Breakdown by source for transparency */
   stripeMRR: number;
   newSystemMRR: number;
+  /** Last refresh timestamp */
+  lastRefresh: Date;
 }
-
-// Minimum confidence threshold: at least 3 cancellations across last 3 months in NEW system
-const MIN_CANCELLATIONS_FOR_REAL_CHURN = 3;
-// Default fallback churn for the realistic scenario (used to derive 9% pess and 4% opt)
-const DEFAULT_REALISTIC_CHURN = 0.06;
 
 /**
  * Pulls forecast data ONLY from the new management system:
@@ -56,34 +74,50 @@ function useNewSystemMetrics(): NewSystemMetrics {
     usingDefaultChurn: true,
     stripeMRR: 0,
     newSystemMRR: 0,
+    lastRefresh: new Date(),
   });
 
-  useEffect(() => {
-    (async () => {
+  // ----------------------------------------------------------------
+  // FETCH FUNCTION — runs once on mount, then every AUTO_REFRESH_MS
+  // ----------------------------------------------------------------
+  const fetchAll = async () => {
       const now = new Date();
       const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
 
-      // 1) Active subscriptions (NOT free) — INCLUDES stripe for MRR but we'll separate sources
+      // ============================================================
+      // STEP 1 — Pull active subscribers from `profiles`
+      // We include ALL paid plans (free excluded). Stripe is kept here
+      // because we need its REVENUE; we'll separate sources below.
+      // ============================================================
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_blocked")
         .neq("plan", "free")
         .eq("is_blocked", false);
 
-      // 2) Cancellations from new system (excludes stripe — Stripe churn is unreliable for our forecast)
+      // ============================================================
+      // STEP 2 — Pull cancellations from new system ONLY
+      // Stripe cancellations are unreliable for forecasting (we don't
+      // have full webhook history), so we ignore them.
+      // ============================================================
       const { data: cancellations } = await supabase
         .from("subscription_cancellations")
         .select("provider, billing_type, cancelled_at, active_until")
         .gte("cancelled_at", sixMonthsAgo.toISOString());
 
-      // 3) Paid PIX invoices (real new revenue from the management system)
+      // ============================================================
+      // STEP 3 — Pull paid PIX invoices (renewal + new sales revenue)
+      // ============================================================
       const { data: pixPaid } = await supabase
         .from("pix_invoices")
         .select("amount_cents, paid_at, plan, user_id")
         .eq("status", "paid")
         .gte("paid_at", sixMonthsAgo.toISOString());
 
-      // 4) Stripe MRR — use ONLY revenue from existing function (no churn data)
+      // ============================================================
+      // STEP 4 — Stripe MRR (revenue only, no churn data)
+      // Pulled from existing edge function `get-stripe-mrr`.
+      // ============================================================
       let stripeMRR = 0;
       try {
         const { data: stripeData } = await supabase.functions.invoke("get-stripe-mrr");
@@ -92,21 +126,30 @@ function useNewSystemMetrics(): NewSystemMetrics {
         stripeMRR = 0;
       }
 
-      // ---- Separate stripe (revenue only) from new system (full data) ----
+      // ============================================================
+      // STEP 5 — Filter sources
+      // newSystemProfiles: everything EXCEPT stripe (used for churn/ticket math)
+      // newSystemCancellations: only non-stripe cancellations
+      // ============================================================
       const newSystemProfiles = (profiles || []).filter(
         (p: any) => p.payment_provider !== "stripe"
       );
-      // Cancellations: ALWAYS only new system (stripe churn ignored)
       const newSystemCancellations = (cancellations || []).filter(
         (c: any) => c.provider !== "stripe"
       );
 
-      // ---- Active MRR + subscribers from NEW SYSTEM only (for ticket/churn math) ----
+      // ============================================================
+      // STEP 6 — Calculate New System MRR + active count
+      // For each active subscription, derive monthly value:
+      //   - If period > 300 days → annual plan, divide price by 12
+      //   - Else → monthly plan, use price as-is
+      //   - Fallback to PLAN_PRICES_MONTHLY if subscription_price_cents is null
+      // ============================================================
       let newSystemMRR = 0;
       let totalSubscribers = 0;
       for (const p of newSystemProfiles as any[]) {
         const periodEnd = p.subscription_current_period_end;
-        if (periodEnd && new Date(periodEnd) < now) continue;
+        if (periodEnd && new Date(periodEnd) < now) continue; // expired
         let monthlyValue = PLAN_PRICES_MONTHLY[p.plan] || 0;
         if (p.subscription_price_cents) {
           const priceReais = p.subscription_price_cents / 100;
@@ -121,18 +164,22 @@ function useNewSystemMetrics(): NewSystemMetrics {
         totalSubscribers++;
       }
 
-      // Total MRR shown in forecast = Stripe (revenue only) + New System (full)
+      // Final MRR shown on screen = Stripe revenue + New System revenue
       const totalMRR = stripeMRR + newSystemMRR;
       const averageTicket = totalSubscribers > 0 ? newSystemMRR / totalSubscribers : 0;
 
-      // ---- Monthly aggregates (last 6 months) ----
+      // ============================================================
+      // STEP 7 — Build month keys for last 6 months: ["2025-06", ...]
+      // ============================================================
       const monthKeys: string[] = [];
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
       }
 
-      // New clients/month from profiles created_at (excluding stripe)
+      // ============================================================
+      // STEP 8 — Aggregate new clients & revenue per month
+      // ============================================================
       const monthlyNewClients: Record<string, number> = {};
       const monthlyNewRevenue: Record<string, number> = {};
       for (const p of newSystemProfiles as any[]) {
@@ -143,7 +190,7 @@ function useNewSystemMetrics(): NewSystemMetrics {
         monthlyNewRevenue[key] = (monthlyNewRevenue[key] || 0) + (PLAN_PRICES_MONTHLY[p.plan] || 0);
       }
 
-      // Add PIX paid invoices revenue per month (renewal revenue)
+      // PIX renewal revenue per month
       const monthlyPixRevenue: Record<string, number> = {};
       for (const inv of (pixPaid || []) as any[]) {
         if (!inv.paid_at) continue;
@@ -163,19 +210,19 @@ function useNewSystemMetrics(): NewSystemMetrics {
         monthlyCancellations[key] = (monthlyCancellations[key] || 0) + 1;
       }
 
-      // Build monthly series — MRR proxy = current totalMRR adjusted backward
-      // (we don't have historical MRR snapshots, so we use cumulative new - cancelled)
-      let runningClients = totalSubscribers;
+      // ============================================================
+      // STEP 9 — Reconstruct historical MRR per month
+      // We don't have MRR snapshots, so we walk BACKWARDS from today's
+      // total: each month, subtract net new clients to get past active count.
+      // ============================================================
       const monthlyMRR: { month: string; mrr: number; activeCount: number }[] = [];
       const monthlySales: { month: string; newSales: number; salesValue: number; cancellations: number }[] = [];
 
-      // Walk backward to estimate active count history
       const reversed = [...monthKeys].reverse();
       const activeHistory: Record<string, number> = {};
       let backClients = totalSubscribers;
       for (const key of reversed) {
         activeHistory[key] = backClients;
-        // Reverse the flow: subtract net new of that month
         backClients = backClients - (monthlyNewClients[key] || 0) + (monthlyCancellations[key] || 0);
       }
 
@@ -191,12 +238,15 @@ function useNewSystemMetrics(): NewSystemMetrics {
         });
       }
 
-      // ---- Compute averages from last 3 months (real data) ----
+      // ============================================================
+      // STEP 10 — Compute baseline metrics (last 3 months)
+      // ============================================================
       const recentSales = monthlySales.slice(-3);
       const recentMRR = monthlyMRR.slice(-3);
 
-      // Churn = cancellations / active at start of month (avg 3m)
-      // Only trust real churn if we have enough cancellation data
+      // -- Churn rate: cancellations / active (avg of last 3 months) --
+      // If we don't have at least MIN_CANCELLATIONS_FOR_REAL_CHURN data
+      // points, fall back to DEFAULT_REALISTIC_CHURN (6%).
       let totalChurnPct = 0;
       let churnMonths = 0;
       let totalCancellations = 0;
@@ -212,16 +262,14 @@ function useNewSystemMetrics(): NewSystemMetrics {
       let realChurnRate: number;
       let usingDefaultChurn: boolean;
       if (totalCancellations >= MIN_CANCELLATIONS_FOR_REAL_CHURN && churnMonths > 0) {
-        // Enough internal data — use real churn
         realChurnRate = Math.min(Math.max(totalChurnPct / churnMonths, 0.01), 0.15);
         usingDefaultChurn = false;
       } else {
-        // Not enough data — use the 6% default baseline (realistic)
         realChurnRate = DEFAULT_REALISTIC_CHURN;
         usingDefaultChurn = true;
       }
 
-      // Weighted avg new clients/MRR
+      // -- Weighted avg new clients/MRR (last month counts 2x) --
       let wSumClients = 0, wSumValue = 0, wTotal = 0;
       recentSales.forEach((s, i) => {
         const w = i === recentSales.length - 1 ? 2 : 1;
@@ -232,7 +280,8 @@ function useNewSystemMetrics(): NewSystemMetrics {
       const avgNewClients = wTotal > 0 ? wSumClients / wTotal : 0;
       const avgNewMRR = wTotal > 0 ? wSumValue / wTotal : 0;
 
-      // Expansion: MRR growth not explained by new sales/churn
+      // -- Expansion MRR: portion of monthly MRR delta NOT explained by
+      //    new sales or churn (i.e. upgrades & extra seats). --
       let totalExpansion = 0;
       let expMonths = 0;
       for (let i = 1; i < monthlyMRR.length; i++) {
@@ -265,8 +314,15 @@ function useNewSystemMetrics(): NewSystemMetrics {
         usingDefaultChurn,
         stripeMRR,
         newSystemMRR,
+        lastRefresh: new Date(),
       });
-    })();
+  };
+
+  // Run once on mount + every AUTO_REFRESH_MS thereafter
+  useEffect(() => {
+    fetchAll();
+    const id = setInterval(fetchAll, AUTO_REFRESH_MS);
+    return () => clearInterval(id);
   }, []);
 
   return data;
@@ -296,21 +352,36 @@ import {
  *   Otimista:    churn ×0.75, vendas ×1.3, expansão ×1.4
  * ============================================================ */
 
-// Scenario multipliers applied to historical averages
-// Scenario multipliers applied to historical averages.
-// Churn defaults map: 6% base → Pessimistic 9% (×1.5), Realistic 6% (×1.0), Optimistic 4% (×0.667)
+// ============================================================
+// SCENARIO MODEL — easy to tweak per scenario
+// ============================================================
+//
+// SCENARIO_MULT: applied to historical averages each month.
+//   - churn:     multiplier on baseline churn rate
+//                  → Pess 6% × 1.5 = 9% | Real 6% | Otim 6% × 0.667 ≈ 4%
+//   - sales:     multiplier on avgNewMRR (new sales per month)
+//   - expansion: multiplier on avgExpansionMRR (upgrades / extra seats)
+//
 const SCENARIO_MULT = {
   pessimistic: { churn: 1.5,   sales: 0.65, expansion: 0.3 },
   realistic:   { churn: 1.0,   sales: 1.0,  expansion: 1.0 },
   optimistic:  { churn: 0.667, sales: 1.3,  expansion: 1.4 },
 };
 
-// Non-linear ramps (behavioral curves over 12 months)
+// SALES_RAMP: month-by-month behavioral curve over 12 months.
+//   - Pess: contracts in months 1-3, slow recovery after
+//   - Real: gentle compound growth (+2-4% / month)
+//   - Otim: accelerated ramp, decelerating at the end
 const SALES_RAMP = {
   pessimistic: [0.60, 0.50, 0.45, 0.50, 0.58, 0.65, 0.72, 0.78, 0.84, 0.90, 0.95, 1.00],
   realistic:   [1.00, 1.02, 1.05, 1.08, 1.11, 1.15, 1.19, 1.23, 1.27, 1.31, 1.36, 1.40],
   optimistic:  [1.05, 1.12, 1.20, 1.30, 1.40, 1.50, 1.58, 1.65, 1.70, 1.74, 1.77, 1.80],
 };
+
+// CHURN_RAMP: spike pattern for churn over 12 months.
+//   - Pess: peaks in month 2-3 (operational deterioration)
+//   - Real: flat (uses base churn)
+//   - Otim: continuous improvement
 const CHURN_RAMP = {
   pessimistic: [1.20, 1.30, 1.25, 1.15, 1.08, 1.03, 1.00, 0.98, 0.96, 0.95, 0.94, 0.93],
   realistic:   [1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00],
@@ -573,15 +644,34 @@ export default function AdminForecast() {
     <div className="p-6 lg:p-8 space-y-7 max-w-[1440px] mx-auto">
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Forecast de Receita</h1>
-          <p className="text-xs text-muted-foreground/70 mt-1">
-            Projeção automática baseada em métricas reais · MRR(n) = MRR(n-1) + New + Expansion − Churn
-          </p>
+        <div className="flex items-start gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">Forecast de Receita</h1>
+              <ForecastHelpDialog
+                avgNewMRR={forecast.drivers.avgNewMRR}
+                avgExpansionMRR={forecast.drivers.avgExpansionMRR}
+                churnRate={forecast.drivers.realChurnRate}
+                currentMRR={totalMRR}
+                usingDefaultChurn={m.usingDefaultChurn}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              Projeção automática baseada em métricas reais · MRR(n) = MRR(n-1) + New + Expansion − Churn
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
-          <Activity size={12} className="text-primary" />
-          <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Data-Driven</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/40 border border-border/30">
+            <RefreshCw size={10} className="text-muted-foreground/60" />
+            <span className="text-[9px] font-medium text-muted-foreground/70">
+              Atualizado {m.lastRefresh.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} · auto 5min
+            </span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+            <Activity size={12} className="text-primary" />
+            <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Data-Driven</span>
+          </div>
         </div>
       </div>
 
@@ -930,12 +1020,68 @@ function ScenarioCard({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 pt-3 border-t border-border/20">
-          <MiniMetric label="Churn" value={`${churn.toFixed(1)}%`} sub={`−R$ ${fmt(churnMRR)}`} />
-          <MiniMetric label="New MRR" value={`+R$ ${fmt(newMRR)}`} sub="" />
-          <MiniMetric label="Expansão" value={`+R$ ${fmt(expansion)}`} sub="" />
-          <MiniMetric label="Net" value={`${delta >= 0 ? "+" : ""}R$ ${fmt(delta)}`} sub="" highlight={delta >= 0} />
-        </div>
+        {/* Info button — opens popover with full breakdown */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="w-full flex items-center justify-between gap-2 pt-3 mt-1 border-t border-border/20 group/info hover:opacity-80 transition-opacity"
+            >
+              <div className="flex items-center gap-1.5">
+                <Info size={11} className="text-muted-foreground/60 group-hover/info:text-foreground transition-colors" />
+                <span className="text-[10px] font-medium text-muted-foreground/70 group-hover/info:text-foreground transition-colors">
+                  Ver decomposição (Churn · New · Expansão · Net)
+                </span>
+              </div>
+              <ArrowUpRight size={10} className="text-muted-foreground/40 group-hover/info:text-foreground transition-colors" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="bottom"
+            align="end"
+            className="w-72 p-4 rounded-xl border-border/40 bg-popover/95 backdrop-blur-xl shadow-xl"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-border/20">
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${palette.text}`}>{label}</p>
+                <span className="text-[9px] text-muted-foreground/50">Próximos 30 dias</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <BreakdownItem
+                  label="Churn"
+                  primary={`${churn.toFixed(1)}%`}
+                  secondary={`−R$ ${fmt(churnMRR)}`}
+                  tone="red"
+                />
+                <BreakdownItem
+                  label="New MRR"
+                  primary={`+R$ ${fmt(newMRR)}`}
+                  secondary="Novas vendas"
+                  tone="emerald"
+                />
+                <BreakdownItem
+                  label="Expansão"
+                  primary={`+R$ ${fmt(expansion)}`}
+                  secondary="Upgrades"
+                  tone="blue"
+                />
+                <BreakdownItem
+                  label="Net"
+                  primary={`${delta >= 0 ? "+" : ""}R$ ${fmt(delta)}`}
+                  secondary="Saldo final"
+                  tone={delta >= 0 ? "emerald" : "red"}
+                  highlight
+                />
+              </div>
+
+              <div className="pt-2 border-t border-border/20 text-[9px] text-muted-foreground/60 leading-relaxed">
+                <strong className="text-muted-foreground/80">Cálculo:</strong>{" "}
+                Net = New + Expansão − Churn = {fmt(newMRR)} + {fmt(expansion)} − {fmt(churnMRR)} = <strong className={delta >= 0 ? "text-emerald-500" : "text-red-500"}>R$ {fmt(delta)}</strong>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </CardContent>
     </Card>
   );
@@ -1001,5 +1147,214 @@ function LegendDot({ color, label, solid }: { color: string; label: string; soli
       />
       <span className="text-[10px] font-medium text-muted-foreground/70">{label}</span>
     </div>
+  );
+}
+
+// ============================================================
+// BreakdownItem — used inside the ScenarioCard popover to show
+// each component of the projection (Churn / New MRR / Expansion / Net)
+// ============================================================
+function BreakdownItem({
+  label, primary, secondary, tone, highlight,
+}: {
+  label: string;
+  primary: string;
+  secondary: string;
+  tone: "red" | "emerald" | "blue";
+  highlight?: boolean;
+}) {
+  const colorMap = {
+    red: "text-red-500",
+    emerald: "text-emerald-500",
+    blue: "text-blue-500",
+  };
+  return (
+    <div className={`p-2.5 rounded-lg ${highlight ? "bg-muted/40 ring-1 ring-border/40" : "bg-muted/20"}`}>
+      <p className="text-[8px] font-semibold text-muted-foreground/60 uppercase tracking-wider">{label}</p>
+      <p className={`text-sm font-bold mt-1 ${colorMap[tone]}`}>{primary}</p>
+      {secondary && <p className="text-[9px] text-muted-foreground/50 mt-0.5">{secondary}</p>}
+    </div>
+  );
+}
+
+// ============================================================
+// ForecastHelpDialog — explains how the calculation works.
+// Shown next to the page title.
+// ============================================================
+function ForecastHelpDialog({
+  avgNewMRR, avgExpansionMRR, churnRate, currentMRR, usingDefaultChurn,
+}: {
+  avgNewMRR: number;
+  avgExpansionMRR: number;
+  churnRate: number;
+  currentMRR: number;
+  usingDefaultChurn: boolean;
+}) {
+  const churnMRR = currentMRR * churnRate;
+  const netNew = avgNewMRR + avgExpansionMRR - churnMRR;
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary"
+          aria-label="Como funciona o forecast"
+        >
+          <HelpCircle size={16} />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles size={18} className="text-primary" />
+            Como funciona o Forecast
+          </DialogTitle>
+          <DialogDescription>
+            Toda projeção é calculada a partir dos seus dados reais. Aqui está cada fórmula.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5 mt-2">
+          {/* MRR base */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <DollarSign size={14} className="text-primary" /> 1. MRR Base (atual)
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Soma da receita mensal de <strong>Stripe</strong> + <strong>Novo Sistema</strong> (Asaas/PIX).
+              Anuais são divididos por 12 para virar mensal.
+            </p>
+            <div className="text-[11px] font-mono bg-muted/40 px-3 py-2 rounded-lg">
+              MRR atual = R$ {fmt(currentMRR)}
+            </div>
+          </section>
+
+          {/* Churn */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <TrendingDown size={14} className="text-red-500" /> 2. Churn (perda mensal)
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {usingDefaultChurn ? (
+                <>
+                  Como o novo sistema ainda <strong>não tem cancelamentos suficientes</strong> (mínimo 3 nos últimos 3 meses),
+                  usamos o baseline de <strong>6%</strong>. Quando houver dados reais, calculamos automaticamente:
+                  <code className="block mt-1.5 text-[11px] font-mono bg-muted/40 px-3 py-2 rounded-lg text-foreground">
+                    Churn % = média(cancelamentos / clientes ativos) últimos 3 meses
+                  </code>
+                </>
+              ) : (
+                <>
+                  Calculado a partir dos seus dados reais:
+                  <code className="block mt-1.5 text-[11px] font-mono bg-muted/40 px-3 py-2 rounded-lg text-foreground">
+                    Churn % = média(cancelamentos / clientes ativos) últimos 3 meses
+                  </code>
+                </>
+              )}
+            </p>
+            <div className="text-[11px] font-mono bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg text-red-500">
+              Churn atual = {(churnRate * 100).toFixed(1)}% → −R$ {fmt(churnMRR)}/mês
+            </div>
+          </section>
+
+          {/* New MRR */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <TrendingUp size={14} className="text-emerald-500" /> 3. New MRR (novas vendas)
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Média ponderada das novas vendas dos últimos 3 meses (mês atual conta 2x):
+            </p>
+            <code className="block text-[11px] font-mono bg-muted/40 px-3 py-2 rounded-lg text-foreground">
+              New MRR = (vendas_M1 + vendas_M2 + 2 × vendas_M3) / 4
+            </code>
+            <div className="text-[11px] font-mono bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-lg text-emerald-500">
+              New MRR atual = +R$ {fmt(avgNewMRR)}/mês
+            </div>
+          </section>
+
+          {/* Expansion */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <ArrowUpRight size={14} className="text-blue-500" /> 4. Expansão (upgrades)
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Variação de MRR mensal que <strong>não vem</strong> de novas vendas nem de churn — ou seja, upgrades de plano:
+            </p>
+            <code className="block text-[11px] font-mono bg-muted/40 px-3 py-2 rounded-lg text-foreground">
+              Expansão = (MRR_atual − MRR_anterior) − Novas Vendas + Churn
+            </code>
+            <div className="text-[11px] font-mono bg-blue-500/10 border border-blue-500/20 px-3 py-2 rounded-lg text-blue-500">
+              Expansão atual = +R$ {fmt(avgExpansionMRR)}/mês
+            </div>
+          </section>
+
+          {/* Net & Growth */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <Target size={14} className="text-primary" /> 5. Net New MRR e Crescimento
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              É o que sobra ao final do mês. Determina o <strong>crescimento percentual</strong>:
+            </p>
+            <code className="block text-[11px] font-mono bg-muted/40 px-3 py-2 rounded-lg text-foreground">
+              Net New MRR = New + Expansão − Churn{"\n"}
+              Growth % = Net New MRR / MRR atual
+            </code>
+            <div className="text-[11px] font-mono bg-primary/10 border border-primary/20 px-3 py-2 rounded-lg text-primary">
+              Net atual = R$ {fmt(avgNewMRR)} + R$ {fmt(avgExpansionMRR)} − R$ {fmt(churnMRR)} = <strong>R$ {fmt(netNew)}</strong>
+              {"\n"}Growth = {currentMRR > 0 ? ((netNew / currentMRR) * 100).toFixed(2) : "0"}% / mês
+            </div>
+          </section>
+
+          {/* Why growth seems small */}
+          <section className="space-y-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+            <h3 className="text-sm font-bold text-amber-600 flex items-center gap-2">
+              <AlertTriangle size={14} /> Por que o crescimento parece pequeno?
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              SaaS funciona por <strong>composto</strong>: 5% ao mês = 79% ao ano. O baseline de 6% de churn
+              consome boa parte das novas vendas no início. Para acelerar:
+            </p>
+            <ul className="text-xs text-muted-foreground/80 space-y-1 ml-4 list-disc">
+              <li><strong className="text-foreground">↑ New MRR:</strong> mais vendas/mês reduz dependência de retenção</li>
+              <li><strong className="text-foreground">↓ Churn:</strong> cada 1% a menos = ~R$ {fmt(currentMRR * 0.01)} salvos/mês</li>
+              <li><strong className="text-foreground">↑ Expansão:</strong> upgrades aumentam ticket sem CAC novo</li>
+            </ul>
+          </section>
+
+          {/* Cenários */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold text-foreground">6. Cenários</h3>
+            <div className="grid grid-cols-3 gap-2 text-[10px]">
+              <div className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                <p className="font-bold text-red-500">PESSIMISTA</p>
+                <p className="text-muted-foreground mt-1">Churn ×1.5 = 9%</p>
+                <p className="text-muted-foreground">Vendas ×0.65</p>
+                <p className="text-muted-foreground">Expansão ×0.3</p>
+              </div>
+              <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <p className="font-bold text-blue-500">REALISTA</p>
+                <p className="text-muted-foreground mt-1">Churn 6% (base)</p>
+                <p className="text-muted-foreground">Vendas 100%</p>
+                <p className="text-muted-foreground">Expansão 100%</p>
+              </div>
+              <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <p className="font-bold text-emerald-500">OTIMISTA</p>
+                <p className="text-muted-foreground mt-1">Churn ×0.667 = 4%</p>
+                <p className="text-muted-foreground">Vendas ×1.3</p>
+                <p className="text-muted-foreground">Expansão ×1.4</p>
+              </div>
+            </div>
+          </section>
+
+          <div className="text-[10px] text-muted-foreground/60 leading-relaxed pt-3 border-t border-border/20">
+            <strong>Auto-refresh:</strong> a página recarrega os dados a cada 5 minutos automaticamente, sem cron.
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
