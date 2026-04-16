@@ -582,46 +582,83 @@ function ScenarioCard({
   color: "red" | "blue" | "green"; highlighted?: boolean;
 }) {
   const palette = {
-    red: { text: "text-red-500", bg: "bg-red-500/10", border: highlighted ? "border-red-500/60" : "border-red-500/25", glow: "shadow-red-500/5" },
-    blue: { text: "text-blue-500", bg: "bg-blue-500/10", border: highlighted ? "border-blue-500/60" : "border-blue-500/25", glow: "shadow-blue-500/10" },
-    green: { text: "text-emerald-500", bg: "bg-emerald-500/10", border: highlighted ? "border-emerald-500/60" : "border-emerald-500/25", glow: "shadow-emerald-500/5" },
+    red: {
+      text: "text-red-500",
+      bg: "bg-red-500/10",
+      ring: highlighted ? "ring-2 ring-red-500/40" : "",
+      gradient: "from-red-500/[0.08] via-transparent to-transparent",
+      bar: "bg-red-500",
+      badgeBg: "bg-red-500",
+    },
+    blue: {
+      text: "text-blue-500",
+      bg: "bg-blue-500/10",
+      ring: highlighted ? "ring-2 ring-blue-500/50" : "",
+      gradient: "from-blue-500/[0.10] via-transparent to-transparent",
+      bar: "bg-blue-500",
+      badgeBg: "bg-blue-500",
+    },
+    green: {
+      text: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+      ring: highlighted ? "ring-2 ring-emerald-500/40" : "",
+      gradient: "from-emerald-500/[0.08] via-transparent to-transparent",
+      bar: "bg-emerald-500",
+      badgeBg: "bg-emerald-500",
+    },
   }[color];
   const Icon = color === "red" ? TrendingDown : color === "green" ? TrendingUp : Target;
-  const deltaPct = value > 0 && (value - delta) > 0 ? ((delta / (value - delta)) * 100).toFixed(1) : "0";
+  const baseValue = value - delta;
+  const deltaPct = baseValue > 0 ? ((delta / baseValue) * 100).toFixed(1) : "0";
+  const isPositive = delta >= 0;
 
   return (
-    <Card className={`relative border ${palette.border} bg-card rounded-2xl ${highlighted ? `shadow-lg ${palette.glow}` : "shadow-sm"} hover:shadow-md transition-all overflow-hidden`}>
+    <Card className={`relative overflow-hidden border border-border/50 bg-card rounded-2xl ${palette.ring} ${highlighted ? "shadow-xl shadow-blue-500/5" : "shadow-sm"} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300`}>
+      {/* Gradient accent */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${palette.gradient} pointer-events-none`} />
+      {/* Side bar accent */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${palette.bar}`} />
+
       {highlighted && (
-        <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-blue-500 text-white text-[8px] font-bold uppercase tracking-wider z-10">
+        <div className={`absolute top-4 right-4 flex items-center gap-1 px-2.5 py-1 rounded-full ${palette.badgeBg} text-white text-[9px] font-bold uppercase tracking-wider z-10 shadow-md`}>
+          <Sparkles size={9} />
           Recomendado
         </div>
       )}
-      <CardContent className="p-5 space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className={`p-2 rounded-xl ${palette.bg}`}>
-              <Icon size={16} className={palette.text} />
-            </div>
-            <div>
-              <p className={`text-xs font-bold uppercase tracking-wider ${palette.text}`}>{label}</p>
-              <p className="text-[9px] text-muted-foreground/70 mt-0.5">{subtitle}</p>
-            </div>
+
+      <CardContent className="relative p-6 space-y-5">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className={`p-2.5 rounded-xl ${palette.bg} ring-1 ring-border/30`}>
+            <Icon size={18} className={palette.text} strokeWidth={2.5} />
+          </div>
+          <div>
+            <p className={`text-[11px] font-bold uppercase tracking-[0.12em] ${palette.text}`}>{label}</p>
+            <p className="text-[10px] text-muted-foreground/70 mt-0.5">{subtitle}</p>
           </div>
         </div>
 
+        {/* Big value */}
         <div>
-          <p className="text-3xl font-extrabold text-foreground tracking-tight">R$ {fmt(value)}</p>
-          <div className="flex items-center gap-2 mt-1.5">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${palette.bg} ${palette.text}`}>
-              {delta >= 0 ? "+" : ""}R$ {fmt(delta)}
-            </span>
-            <span className={`text-[10px] font-medium ${palette.text}`}>
-              ({delta >= 0 ? "+" : ""}{deltaPct}%)
+          <p className="text-[10px] font-medium text-muted-foreground/70 uppercase tracking-wider mb-1">MRR projetado · 30d</p>
+          <p className="text-[34px] font-extrabold text-foreground tracking-tight leading-none">
+            R$ {fmt(value)}
+          </p>
+          <div className="flex items-center gap-2 mt-3">
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${palette.bg}`}>
+              {isPositive ? <ArrowUpRight size={11} className={palette.text} /> : <ArrowDownRight size={11} className={palette.text} />}
+              <span className={`text-[11px] font-bold ${palette.text}`}>
+                {isPositive ? "+" : ""}R$ {fmt(delta)}
+              </span>
+            </div>
+            <span className={`text-[11px] font-semibold ${palette.text}`}>
+              {isPositive ? "+" : ""}{deltaPct}%
             </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border/30">
+        {/* Drivers row */}
+        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/40">
           <DriverMini label="Churn" value={`${churn.toFixed(1)}%`} color={palette.text} />
           <DriverMini label="New MRR" value={`R$ ${fmt(newMRR)}`} color={palette.text} />
           <DriverMini label="Expansão" value={`R$ ${fmt(expansion)}`} color={palette.text} />
