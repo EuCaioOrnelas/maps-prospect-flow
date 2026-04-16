@@ -986,52 +986,96 @@ function ScenarioCard({
   color: "red" | "blue" | "green"; highlighted?: boolean;
 }) {
   const palette = {
-    red: { text: "text-red-500", bg: "bg-red-500/8", ring: highlighted ? "ring-2 ring-red-500/30" : "", bar: "bg-red-500", badge: "bg-red-500" },
-    blue: { text: "text-blue-500", bg: "bg-blue-500/8", ring: highlighted ? "ring-2 ring-blue-500/40" : "", bar: "bg-blue-500", badge: "bg-blue-500" },
-    green: { text: "text-emerald-500", bg: "bg-emerald-500/8", ring: highlighted ? "ring-2 ring-emerald-500/30" : "", bar: "bg-emerald-500", badge: "bg-emerald-500" },
+    red: {
+      text: "text-red-500",
+      bg: "bg-red-500/10",
+      ring: highlighted ? "ring-2 ring-red-500/30" : "ring-1 ring-red-500/10",
+      glow: "from-red-500/15 via-red-500/5 to-transparent",
+      badge: "bg-red-500",
+      iconBg: "bg-gradient-to-br from-red-500/15 to-red-500/5",
+    },
+    blue: {
+      text: "text-blue-500",
+      bg: "bg-blue-500/10",
+      ring: highlighted ? "ring-2 ring-blue-500/40" : "ring-1 ring-blue-500/10",
+      glow: "from-blue-500/15 via-blue-500/5 to-transparent",
+      badge: "bg-blue-500",
+      iconBg: "bg-gradient-to-br from-blue-500/15 to-blue-500/5",
+    },
+    green: {
+      text: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+      ring: highlighted ? "ring-2 ring-emerald-500/30" : "ring-1 ring-emerald-500/10",
+      glow: "from-emerald-500/15 via-emerald-500/5 to-transparent",
+      badge: "bg-emerald-500",
+      iconBg: "bg-gradient-to-br from-emerald-500/15 to-emerald-500/5",
+    },
   }[color];
-  
+
   const Icon = color === "red" ? TrendingDown : color === "green" ? TrendingUp : Target;
   const baseValue = value - delta;
   const deltaPct = baseValue > 0 ? ((delta / baseValue) * 100).toFixed(1) : "0";
   const isPositive = delta >= 0;
 
   return (
-    <Card className={`relative overflow-hidden border border-border/30 bg-card/80 backdrop-blur-sm rounded-2xl ${palette.ring} ${highlighted ? "shadow-lg shadow-blue-500/5" : "shadow-sm"} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300`}>
-      <div className={`absolute left-0 top-0 bottom-0 w-1 ${palette.bar} rounded-l-2xl`} />
-      
+    <Card
+      className={`relative overflow-hidden border-border/40 bg-card rounded-2xl ${palette.ring} ${
+        highlighted ? "shadow-xl shadow-blue-500/10" : "shadow-md"
+      } hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group`}
+    >
+      {/* Top glow accent — replaces the ugly left bar */}
+      <div className={`absolute inset-x-0 top-0 h-32 bg-gradient-to-b ${palette.glow} pointer-events-none`} />
+
       {highlighted && (
-        <div className={`absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full ${palette.badge} text-white text-[8px] font-bold uppercase tracking-wider shadow-sm`}>
-          <Sparkles size={8} />
+        <div className={`absolute top-3 right-3 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full ${palette.badge} text-white text-[9px] font-bold uppercase tracking-wider shadow-lg`}>
+          <Sparkles size={9} />
           Recomendado
         </div>
       )}
 
-      <CardContent className="relative p-5 space-y-4">
-        <div className="flex items-center gap-2.5">
-          <div className={`p-2 rounded-xl ${palette.bg}`}>
-            <Icon size={16} className={palette.text} strokeWidth={2.5} />
+      <CardContent className="relative p-6 space-y-5">
+        {/* Header: Icon + label */}
+        <div className="flex items-start gap-3">
+          <div className={`p-2.5 rounded-xl ${palette.iconBg} ring-1 ring-inset ring-border/20`}>
+            <Icon size={18} className={palette.text} strokeWidth={2.5} />
           </div>
-          <div>
-            <p className={`text-[11px] font-bold uppercase tracking-wider ${palette.text}`}>{label}</p>
-            <p className="text-[9px] text-muted-foreground/50 mt-0.5">{subtitle}</p>
+          <div className="flex-1 min-w-0">
+            <p className={`text-xs font-bold uppercase tracking-wider ${palette.text}`}>{label}</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-0.5 truncate">{subtitle}</p>
           </div>
         </div>
 
+        {/* Big number + delta */}
         <div>
-          <p className="text-[28px] font-extrabold text-foreground tracking-tight leading-none">
+          <p className="text-[32px] font-extrabold text-foreground tracking-tight leading-none">
             R$ {fmt(value)}
           </p>
-          <div className="flex items-center gap-2 mt-2">
-            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md ${palette.bg}`}>
-              {isPositive ? <ArrowUpRight size={10} className={palette.text} /> : <ArrowDownRight size={10} className={palette.text} />}
-              <span className={`text-[10px] font-bold ${palette.text}`}>
+          <div className="flex items-center gap-2 mt-3">
+            <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg ${palette.bg}`}>
+              {isPositive ? <ArrowUpRight size={11} className={palette.text} strokeWidth={2.5} /> : <ArrowDownRight size={11} className={palette.text} strokeWidth={2.5} />}
+              <span className={`text-[11px] font-bold ${palette.text}`}>
                 {isPositive ? "+" : ""}R$ {fmt(delta)}
               </span>
             </div>
-            <span className={`text-[10px] font-semibold ${palette.text}`}>
-              ({isPositive ? "+" : ""}{deltaPct}%)
+            <span className={`text-[11px] font-semibold ${palette.text}`}>
+              {isPositive ? "+" : ""}{deltaPct}%
             </span>
+          </div>
+        </div>
+
+        {/* Inline mini stats grid */}
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <div className="rounded-lg bg-muted/30 px-2.5 py-2">
+            <p className="text-[8px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Churn</p>
+            <p className="text-xs font-bold text-red-500 mt-0.5">{churn.toFixed(1)}%</p>
+          </div>
+          <div className="rounded-lg bg-muted/30 px-2.5 py-2">
+            <p className="text-[8px] font-semibold text-muted-foreground/60 uppercase tracking-wider">New</p>
+            <p className="text-xs font-bold text-emerald-500 mt-0.5">+{fmt(newMRR)}</p>
+          </div>
+          <div className="rounded-lg bg-muted/30 px-2.5 py-2">
+            <p className="text-[8px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Exp</p>
+            <p className="text-xs font-bold text-blue-500 mt-0.5">+{fmt(expansion)}</p>
           </div>
         </div>
 
@@ -1040,15 +1084,12 @@ function ScenarioCard({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="w-full flex items-center justify-between gap-2 pt-3 mt-1 border-t border-border/20 group/info hover:opacity-80 transition-opacity"
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-border/40 transition-all group/info"
             >
-              <div className="flex items-center gap-1.5">
-                <Info size={11} className="text-muted-foreground/60 group-hover/info:text-foreground transition-colors" />
-                <span className="text-[10px] font-medium text-muted-foreground/70 group-hover/info:text-foreground transition-colors">
-                  Ver decomposição (Churn · New · Expansão · Net)
-                </span>
-              </div>
-              <ArrowUpRight size={10} className="text-muted-foreground/40 group-hover/info:text-foreground transition-colors" />
+              <Info size={11} className="text-muted-foreground/70 group-hover/info:text-foreground transition-colors" />
+              <span className="text-[10px] font-semibold text-muted-foreground/80 group-hover/info:text-foreground transition-colors">
+                Ver decomposição completa
+              </span>
             </button>
           </PopoverTrigger>
           <PopoverContent
