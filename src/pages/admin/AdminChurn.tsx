@@ -37,6 +37,7 @@ const reasonLabels: Record<string, string> = {
   missing_feature: "Falta recurso",
   no_time: "Sem tempo",
   other: "Outro",
+  falta_pagamento: "Falta de pagamento",
   "Não entendi como usar": "Não entendeu",
   "Não tive tempo para implementar": "Sem tempo",
   "Não vi resultado": "Sem resultado",
