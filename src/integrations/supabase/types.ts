@@ -2211,12 +2211,22 @@ export type Database = {
           subscription_current_period_end: string | null
           subscription_price_cents: number | null
           terms_accepted_at: string | null
+          trial_asaas_customer_id: string | null
+          trial_asaas_subscription_id: string | null
+          trial_auto_charge_cancelled: boolean | null
+          trial_auto_charge_cancelled_at: string | null
+          trial_billing_period: string | null
           trial_campaigns_used: number
+          trial_card_brand: string | null
+          trial_card_last4: string | null
+          trial_card_token: string | null
           trial_end_at: string | null
           trial_flows_used: number
           trial_leads_used: number
           trial_messages_sent: number | null
+          trial_plan_chosen: string | null
           trial_start_at: string | null
+          trial_will_charge_at: string | null
           updated_at: string
         }
         Insert: {
@@ -2245,12 +2255,22 @@ export type Database = {
           subscription_current_period_end?: string | null
           subscription_price_cents?: number | null
           terms_accepted_at?: string | null
+          trial_asaas_customer_id?: string | null
+          trial_asaas_subscription_id?: string | null
+          trial_auto_charge_cancelled?: boolean | null
+          trial_auto_charge_cancelled_at?: string | null
+          trial_billing_period?: string | null
           trial_campaigns_used?: number
+          trial_card_brand?: string | null
+          trial_card_last4?: string | null
+          trial_card_token?: string | null
           trial_end_at?: string | null
           trial_flows_used?: number
           trial_leads_used?: number
           trial_messages_sent?: number | null
+          trial_plan_chosen?: string | null
           trial_start_at?: string | null
+          trial_will_charge_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -2279,12 +2299,22 @@ export type Database = {
           subscription_current_period_end?: string | null
           subscription_price_cents?: number | null
           terms_accepted_at?: string | null
+          trial_asaas_customer_id?: string | null
+          trial_asaas_subscription_id?: string | null
+          trial_auto_charge_cancelled?: boolean | null
+          trial_auto_charge_cancelled_at?: string | null
+          trial_billing_period?: string | null
           trial_campaigns_used?: number
+          trial_card_brand?: string | null
+          trial_card_last4?: string | null
+          trial_card_token?: string | null
           trial_end_at?: string | null
           trial_flows_used?: number
           trial_leads_used?: number
           trial_messages_sent?: number | null
+          trial_plan_chosen?: string | null
           trial_start_at?: string | null
+          trial_will_charge_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -5051,6 +5081,10 @@ export type Database = {
       }
       check_signup_fraud: {
         Args: { p_fingerprint: string; p_ip: string }
+        Returns: Json
+      }
+      check_signup_fraud_strict: {
+        Args: { p_cpf?: string; p_fingerprint: string; p_ip: string }
         Returns: Json
       }
       cleanup_rate_limits: { Args: never; Returns: undefined }
