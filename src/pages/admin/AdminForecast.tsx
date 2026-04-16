@@ -1149,3 +1149,212 @@ function LegendDot({ color, label, solid }: { color: string; label: string; soli
     </div>
   );
 }
+
+// ============================================================
+// BreakdownItem — used inside the ScenarioCard popover to show
+// each component of the projection (Churn / New MRR / Expansion / Net)
+// ============================================================
+function BreakdownItem({
+  label, primary, secondary, tone, highlight,
+}: {
+  label: string;
+  primary: string;
+  secondary: string;
+  tone: "red" | "emerald" | "blue";
+  highlight?: boolean;
+}) {
+  const colorMap = {
+    red: "text-red-500",
+    emerald: "text-emerald-500",
+    blue: "text-blue-500",
+  };
+  return (
+    <div className={`p-2.5 rounded-lg ${highlight ? "bg-muted/40 ring-1 ring-border/40" : "bg-muted/20"}`}>
+      <p className="text-[8px] font-semibold text-muted-foreground/60 uppercase tracking-wider">{label}</p>
+      <p className={`text-sm font-bold mt-1 ${colorMap[tone]}`}>{primary}</p>
+      {secondary && <p className="text-[9px] text-muted-foreground/50 mt-0.5">{secondary}</p>}
+    </div>
+  );
+}
+
+// ============================================================
+// ForecastHelpDialog — explains how the calculation works.
+// Shown next to the page title.
+// ============================================================
+function ForecastHelpDialog({
+  avgNewMRR, avgExpansionMRR, churnRate, currentMRR, usingDefaultChurn,
+}: {
+  avgNewMRR: number;
+  avgExpansionMRR: number;
+  churnRate: number;
+  currentMRR: number;
+  usingDefaultChurn: boolean;
+}) {
+  const churnMRR = currentMRR * churnRate;
+  const netNew = avgNewMRR + avgExpansionMRR - churnMRR;
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary"
+          aria-label="Como funciona o forecast"
+        >
+          <HelpCircle size={16} />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles size={18} className="text-primary" />
+            Como funciona o Forecast
+          </DialogTitle>
+          <DialogDescription>
+            Toda projeção é calculada a partir dos seus dados reais. Aqui está cada fórmula.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5 mt-2">
+          {/* MRR base */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <DollarSign size={14} className="text-primary" /> 1. MRR Base (atual)
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Soma da receita mensal de <strong>Stripe</strong> + <strong>Novo Sistema</strong> (Asaas/PIX).
+              Anuais são divididos por 12 para virar mensal.
+            </p>
+            <div className="text-[11px] font-mono bg-muted/40 px-3 py-2 rounded-lg">
+              MRR atual = R$ {fmt(currentMRR)}
+            </div>
+          </section>
+
+          {/* Churn */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <TrendingDown size={14} className="text-red-500" /> 2. Churn (perda mensal)
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {usingDefaultChurn ? (
+                <>
+                  Como o novo sistema ainda <strong>não tem cancelamentos suficientes</strong> (mínimo 3 nos últimos 3 meses),
+                  usamos o baseline de <strong>6%</strong>. Quando houver dados reais, calculamos automaticamente:
+                  <code className="block mt-1.5 text-[11px] font-mono bg-muted/40 px-3 py-2 rounded-lg text-foreground">
+                    Churn % = média(cancelamentos / clientes ativos) últimos 3 meses
+                  </code>
+                </>
+              ) : (
+                <>
+                  Calculado a partir dos seus dados reais:
+                  <code className="block mt-1.5 text-[11px] font-mono bg-muted/40 px-3 py-2 rounded-lg text-foreground">
+                    Churn % = média(cancelamentos / clientes ativos) últimos 3 meses
+                  </code>
+                </>
+              )}
+            </p>
+            <div className="text-[11px] font-mono bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg text-red-500">
+              Churn atual = {(churnRate * 100).toFixed(1)}% → −R$ {fmt(churnMRR)}/mês
+            </div>
+          </section>
+
+          {/* New MRR */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <TrendingUp size={14} className="text-emerald-500" /> 3. New MRR (novas vendas)
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Média ponderada das novas vendas dos últimos 3 meses (mês atual conta 2x):
+            </p>
+            <code className="block text-[11px] font-mono bg-muted/40 px-3 py-2 rounded-lg text-foreground">
+              New MRR = (vendas_M1 + vendas_M2 + 2 × vendas_M3) / 4
+            </code>
+            <div className="text-[11px] font-mono bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-lg text-emerald-500">
+              New MRR atual = +R$ {fmt(avgNewMRR)}/mês
+            </div>
+          </section>
+
+          {/* Expansion */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <ArrowUpRight size={14} className="text-blue-500" /> 4. Expansão (upgrades)
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Variação de MRR mensal que <strong>não vem</strong> de novas vendas nem de churn — ou seja, upgrades de plano:
+            </p>
+            <code className="block text-[11px] font-mono bg-muted/40 px-3 py-2 rounded-lg text-foreground">
+              Expansão = (MRR_atual − MRR_anterior) − Novas Vendas + Churn
+            </code>
+            <div className="text-[11px] font-mono bg-blue-500/10 border border-blue-500/20 px-3 py-2 rounded-lg text-blue-500">
+              Expansão atual = +R$ {fmt(avgExpansionMRR)}/mês
+            </div>
+          </section>
+
+          {/* Net & Growth */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <Target size={14} className="text-primary" /> 5. Net New MRR e Crescimento
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              É o que sobra ao final do mês. Determina o <strong>crescimento percentual</strong>:
+            </p>
+            <code className="block text-[11px] font-mono bg-muted/40 px-3 py-2 rounded-lg text-foreground">
+              Net New MRR = New + Expansão − Churn{"\n"}
+              Growth % = Net New MRR / MRR atual
+            </code>
+            <div className="text-[11px] font-mono bg-primary/10 border border-primary/20 px-3 py-2 rounded-lg text-primary">
+              Net atual = R$ {fmt(avgNewMRR)} + R$ {fmt(avgExpansionMRR)} − R$ {fmt(churnMRR)} = <strong>R$ {fmt(netNew)}</strong>
+              {"\n"}Growth = {currentMRR > 0 ? ((netNew / currentMRR) * 100).toFixed(2) : "0"}% / mês
+            </div>
+          </section>
+
+          {/* Why growth seems small */}
+          <section className="space-y-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+            <h3 className="text-sm font-bold text-amber-600 flex items-center gap-2">
+              <AlertTriangle size={14} /> Por que o crescimento parece pequeno?
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              SaaS funciona por <strong>composto</strong>: 5% ao mês = 79% ao ano. O baseline de 6% de churn
+              consome boa parte das novas vendas no início. Para acelerar:
+            </p>
+            <ul className="text-xs text-muted-foreground/80 space-y-1 ml-4 list-disc">
+              <li><strong className="text-foreground">↑ New MRR:</strong> mais vendas/mês reduz dependência de retenção</li>
+              <li><strong className="text-foreground">↓ Churn:</strong> cada 1% a menos = ~R$ {fmt(currentMRR * 0.01)} salvos/mês</li>
+              <li><strong className="text-foreground">↑ Expansão:</strong> upgrades aumentam ticket sem CAC novo</li>
+            </ul>
+          </section>
+
+          {/* Cenários */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold text-foreground">6. Cenários</h3>
+            <div className="grid grid-cols-3 gap-2 text-[10px]">
+              <div className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                <p className="font-bold text-red-500">PESSIMISTA</p>
+                <p className="text-muted-foreground mt-1">Churn ×1.5 = 9%</p>
+                <p className="text-muted-foreground">Vendas ×0.65</p>
+                <p className="text-muted-foreground">Expansão ×0.3</p>
+              </div>
+              <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <p className="font-bold text-blue-500">REALISTA</p>
+                <p className="text-muted-foreground mt-1">Churn 6% (base)</p>
+                <p className="text-muted-foreground">Vendas 100%</p>
+                <p className="text-muted-foreground">Expansão 100%</p>
+              </div>
+              <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <p className="font-bold text-emerald-500">OTIMISTA</p>
+                <p className="text-muted-foreground mt-1">Churn ×0.667 = 4%</p>
+                <p className="text-muted-foreground">Vendas ×1.3</p>
+                <p className="text-muted-foreground">Expansão ×1.4</p>
+              </div>
+            </div>
+          </section>
+
+          <div className="text-[10px] text-muted-foreground/60 leading-relaxed pt-3 border-t border-border/20">
+            <strong>Auto-refresh:</strong> a página recarrega os dados a cada 5 minutos automaticamente, sem cron.
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
