@@ -22,7 +22,7 @@ import { QuickActions } from "@/components/dashboard/v2/QuickActions";
 
 import { ActivationChecklistInline } from "@/components/dashboard/ActivationChecklist";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
-import { RenewalBanner } from "@/components/dashboard/RenewalBanner";
+import { TrialAutoChargeBanner } from "@/components/dashboard/TrialAutoChargeBanner";
 import { ExpiredSubscriptionDialog } from "@/components/ExpiredSubscriptionDialog";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { TrialFeedbackModal } from "@/components/onboarding/TrialFeedbackModal";
@@ -121,7 +121,7 @@ export default function MainDashboard() {
                 </Select>
               </div>
 
-              <RenewalBanner />
+              <TrialAutoChargeBanner />
               <ActivationChecklistInline />
 
               {/* 1 — Hero Impact */}
