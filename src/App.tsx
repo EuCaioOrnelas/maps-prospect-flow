@@ -177,7 +177,7 @@ const App = () => (
                   <Route path="relatorios" element={<AdminRelatorios />} />
                   {/* Receita */}
                   <Route path="pix-billing" element={<AdminPixBilling />} />
-                  <Route path="stripe" element={<AdminStripe />} />
+                  
                   <Route path="assinaturas" element={<AdminAssinaturas />} />
                   <Route path="churn" element={<AdminChurn />} />
                   <Route path="forecast" element={<AdminForecast />} />
@@ -186,7 +186,7 @@ const App = () => (
                   <Route path="ativacao" element={<AdminAtivacao />} />
                   <Route path="retencao" element={<AdminRetencao />} />
                   <Route path="landing-pages" element={<AdminLandingPages />} />
-                  <Route path="score-leads" element={<CRMScore />} />
+                  
                   {/* IA */}
                   <Route path="ia/agentes" element={<AdminIAAgentes />} />
                   <Route path="ia/performance" element={<AdminIAPerformance />} />
