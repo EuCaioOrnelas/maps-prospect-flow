@@ -166,6 +166,8 @@ const Upgrade = () => {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
   const [isAnnual, setIsAnnual] = useState(true);
+  const [upgradePreview, setUpgradePreview] = useState<any>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const currentPlan = profile?.plan || "free";
   const { trackScoreEvent } = useAutoScoreTracking("upgrade");
