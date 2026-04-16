@@ -25,6 +25,7 @@ import Upgrade from "./pages/Upgrade";
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"), "Dashboard");
 const MainDashboard = lazyWithRetry(() => import("./pages/MainDashboard"), "MainDashboard");
 const Admin = lazyWithRetry(() => import("./pages/Admin"), "Admin");
+const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"), "AdminDashboard");
 const AdminLandingPages = lazyWithRetry(() => import("./pages/AdminLandingPages"), "AdminLandingPages");
 const AdminAnnouncements = lazyWithRetry(() => import("./pages/AdminAnnouncements"), "AdminAnnouncements");
 const LandingPage = lazyWithRetry(() => import("./pages/LandingPage"), "LandingPage");
