@@ -41,7 +41,7 @@ import { DisclaimerModal } from "@/components/whatsapp/DisclaimerModal";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { FreeTrialLimitModal } from "@/components/whatsapp/FreeTrialLimitModal";
 import { WarmingWarningModal } from "@/components/whatsapp/WarmingWarningModal";
-import { FirstCampaignPromoModal } from "@/components/whatsapp/FirstCampaignPromoModal";
+
 import { CampaignDrafts } from "@/components/whatsapp/CampaignDrafts";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -138,7 +138,7 @@ const WhatsAppCampaign = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showTrialLimitModal, setShowTrialLimitModal] = useState(false);
   const [showWarmingWarningModal, setShowWarmingWarningModal] = useState(false);
-  const [showPromoModal, setShowPromoModal] = useState(false);
+  
   const [warmingInfo, setWarmingInfo] = useState<{
     level: number;
     status: "cold" | "warm" | "hot";
@@ -595,23 +595,6 @@ const WhatsAppCampaign = () => {
       trackScoreEvent("campaign_sent", { leads_count: selectedLeads.length });
       trackScoreEvent("message_campaign_created");
 
-      // Show promo popup for free users on their first campaign (only once, persisted in DB)
-      if (isFreePlan && !isTrialExpired && user) {
-        const { count } = await supabase
-          .from("user_events")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .eq("event_name", "promo_first_campaign_seen");
-
-        if (!count || count === 0) {
-          await supabase.from("user_events").insert({
-            user_id: user.id,
-            event_name: "promo_first_campaign_seen",
-            event_data: { coupon: "FIRST50" },
-          });
-          setTimeout(() => setShowPromoModal(true), 800);
-        }
-      }
 
       // Reset form state and redirect immediately
       handleNewCampaign();
@@ -1376,11 +1359,6 @@ const WhatsAppCampaign = () => {
           )}
         </div>
       </main>
-      {/* First campaign promo modal for free users */}
-      <FirstCampaignPromoModal
-        open={showPromoModal}
-        onClose={() => setShowPromoModal(false)}
-      />
     </div>
   );
 };
