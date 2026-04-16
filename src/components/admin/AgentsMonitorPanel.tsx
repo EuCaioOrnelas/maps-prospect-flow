@@ -138,9 +138,23 @@ export function AgentsMonitorPanel() {
 
   const fetchOpenAIStatus = useCallback(async () => {
     try {
-      // Check recent agent message logs for errors
+      // ============================================================
+      // CUSTO REAL ESTIMADO POR CARACTERES (gpt-4o-mini)
+      // ------------------------------------------------------------
+      // Preços OpenAI gpt-4o-mini (referência abr/2025):
+      //   - Input:  $0.150 / 1M tokens
+      //   - Output: $0.600 / 1M tokens
+      // Heurística texto português: 1 token ≈ 4 caracteres.
+      //
+      // direction = 'received'  → input do modelo (mensagem do lead)
+      // direction = 'sent'      → output do modelo (resposta do agente)
+      // ============================================================
+      const PRICE_INPUT_PER_TOKEN  = 0.150 / 1_000_000; // USD
+      const PRICE_OUTPUT_PER_TOKEN = 0.600 / 1_000_000; // USD
+      const CHARS_PER_TOKEN = 4;
+
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      
+
       const { data: recentLogs, error } = await supabase
         .from('agent_message_logs')
         .select('id, direction, created_at, content')
@@ -149,19 +163,22 @@ export function AgentsMonitorPanel() {
 
       if (error) throw error;
 
-      const totalCalls = recentLogs?.filter(l => l.direction === 'sent').length || 0;
-      
-      // Check for error patterns in content (simplified check)
-      const errorPatterns = ['error', 'failed', 'timeout', 'rate limit'];
-      const errorLogs = recentLogs?.filter(log => 
-        log.content && errorPatterns.some(pattern => 
-          log.content.toLowerCase().includes(pattern)
-        )
-      ).length || 0;
+      const sentLogs     = recentLogs?.filter(l => l.direction === 'sent')     || [];
+      const receivedLogs = recentLogs?.filter(l => l.direction === 'received') || [];
+      const totalCalls   = sentLogs.length;
 
-      // Estimate cost (GPT-4o-mini: ~$0.00015 per 1K input tokens, ~$0.0006 per 1K output tokens)
-      // Average estimate: ~$0.001 per call
-      const estimatedCost = totalCalls * 0.001;
+      // Custo real: soma caracteres de entrada × preço input + saída × preço output.
+      const inputChars  = receivedLogs.reduce((acc, l) => acc + (l.content?.length || 0), 0);
+      const outputChars = sentLogs.reduce((acc, l) => acc + (l.content?.length || 0), 0);
+      const inputTokens  = inputChars  / CHARS_PER_TOKEN;
+      const outputTokens = outputChars / CHARS_PER_TOKEN;
+      const estimatedCost = inputTokens * PRICE_INPUT_PER_TOKEN + outputTokens * PRICE_OUTPUT_PER_TOKEN;
+
+      // Padrões de erro detectáveis no conteúdo das mensagens enviadas pelo agente.
+      const errorPatterns = ['error', 'failed', 'timeout', 'rate limit', 'erro ao'];
+      const errorLogs = sentLogs.filter(log =>
+        log.content && errorPatterns.some(p => log.content.toLowerCase().includes(p))
+      ).length;
 
       let status: OpenAIStatusType = 'ok';
       let message = 'Funcionando normalmente';
@@ -183,7 +200,7 @@ export function AgentsMonitorPanel() {
         lastCheck: new Date(),
         recentErrors: errorLogs,
         recentCalls: totalCalls,
-        estimatedCost
+        estimatedCost,
       });
     } catch (error) {
       console.error('Error checking OpenAI status:', error);
