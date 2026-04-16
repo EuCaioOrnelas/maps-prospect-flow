@@ -282,10 +282,26 @@ export function useAdminDashboard() {
     }
   }, []);
 
+  // Carrega cancelamentos do NOVO SISTEMA (Asaas/PIX/abacate_pay) - exclui Stripe.
+  const loadNewSystemChurn = useCallback(async () => {
+    try {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await supabase
+        .from("subscription_cancellations")
+        .select("id, provider, cancelled_at")
+        .neq("provider", "stripe")
+        .gte("cancelled_at", thirtyDaysAgo);
+      if (error) throw error;
+      setNewSystemChurn({ cancellations30d: data?.length ?? 0 });
+    } catch {
+      setNewSystemChurn({ cancellations30d: 0 });
+    }
+  }, []);
+
   useEffect(() => {
     (async () => {
       setLoading(true);
-      await Promise.all([loadStats(), loadStripeMRR(), loadNonStripeMRR(), loadAlerts()]);
+      await Promise.all([loadStats(), loadStripeMRR(), loadNonStripeMRR(), loadAlerts(), loadNewSystemChurn()]);
       setLoading(false);
     })();
   }, []);
@@ -299,7 +315,13 @@ export function useAdminDashboard() {
     return (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0) + (asaasCardMRR?.asaasCardSubscriptions ?? 0) + (otherMRR?.otherSubscriptions ?? 0);
   }, [stripeMRR, pixMRR, asaasCardMRR, otherMRR]);
 
-  const churnRate = stripeMRR?.churnRate ?? 0;
+  // Churn = cancelamentos (novo sistema) ÷ base ativa total nos últimos 30 dias.
+  // IGNORA Stripe (não temos webhooks confiáveis dele); 0 se não houver cancelamentos.
+  const churnRate = useMemo(() => {
+    if (totalSubscribers <= 0) return 0;
+    return (newSystemChurn.cancellations30d / totalSubscribers) * 100;
+  }, [newSystemChurn, totalSubscribers]);
+  const churnCancellations30d = newSystemChurn.cancellations30d;
 
   // Average ticket: uses monthly-equivalent values
   const averageTicket = useMemo(() => {
