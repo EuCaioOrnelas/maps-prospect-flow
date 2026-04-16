@@ -156,7 +156,8 @@ export default function AdminChurn() {
   const now = Date.now();
   const last30d = records.filter(r => new Date(r.cancelled_at).getTime() > now - 30 * 86400000);
   const last7d = records.filter(r => new Date(r.cancelled_at).getTime() > now - 7 * 86400000);
-  const churnRate30d = totalUsers > 0 ? ((last30d.length / totalUsers) * 100).toFixed(1) : "0";
+  const last30dRate = totalUsers > 0 ? ((last30d.length / totalUsers) * 100).toFixed(1) : "0";
+  const last7dRate = totalUsers > 0 ? ((last7d.length / totalUsers) * 100).toFixed(1) : "0";
   const churnRateTotal = totalUsers > 0 ? ((records.length / totalUsers) * 100).toFixed(1) : "0";
 
   // Top reason
@@ -169,22 +170,17 @@ export default function AdminChurn() {
   });
   const topReason = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0];
 
-  // Provider breakdown
-  const stripeChurns = records.filter(r => r.provider === "stripe").length;
-  const asaasChurns = records.filter(r => r.provider === "asaas" || r.feedback_provider === "asaas").length;
-  const pixChurns = records.filter(r => r.provider === "pix" || r.feedback_provider === "pix").length;
-
   // Intends to return
   const returnYes = records.filter(r => r.intends_to_return === "yes").length;
   const returnMaybe = records.filter(r => r.intends_to_return === "maybe").length;
 
   const kpis = [
-    { label: "Total Cancelamentos", value: records.length, icon: UserX, color: "text-red-500" },
-    { label: "Churns 30 dias", value: last30d.length, icon: Calendar, color: "text-amber-500" },
-    { label: "Churns 7 dias", value: last7d.length, icon: TrendingDown, color: "text-orange-500" },
+    { label: "Total Cancelamentos", value: records.length, subtext: `${churnRateTotal}% da base`, icon: UserX, color: "text-red-500" },
+    { label: "Churns 30 dias", value: `${last30dRate}%`, subtext: `(${last30d.length} usuários)`, icon: Calendar, color: "text-amber-500" },
+    { label: "Churns 7 dias", value: `${last7dRate}%`, subtext: `(${last7d.length} usuários)`, icon: TrendingDown, color: "text-orange-500" },
     { label: "Taxa Churn Total", value: `${churnRateTotal}%`, icon: Percent, color: "text-red-500" },
-    { label: "Taxa Churn 30d", value: `${churnRate30d}%`, icon: BarChart3, color: "text-amber-500" },
     { label: "Principal Motivo", value: topReason ? topReason[0] : "—", icon: AlertTriangle, color: "text-primary", small: true },
+    { label: "Pretendem Voltar", value: returnYes + returnMaybe, subtext: `${returnYes} sim · ${returnMaybe} talvez`, icon: Users, color: "text-emerald-500" },
   ];
 
   return (
@@ -196,8 +192,8 @@ export default function AdminChurn() {
         </p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* KPI Cards - Harmonizado */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {kpis.map((kpi) => (
           <Card key={kpi.label} className="border-border/40 bg-card/80">
             <CardContent className="p-4">
@@ -206,38 +202,12 @@ export default function AdminChurn() {
                 <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider leading-tight">{kpi.label}</p>
               </div>
               <p className={`${kpi.small ? "text-sm" : "text-xl"} font-bold text-foreground`}>{kpi.value}</p>
+              {kpi.subtext && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">{kpi.subtext}</p>
+              )}
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      {/* Provider breakdown */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="border-border/40 bg-card/80">
-          <CardContent className="p-4">
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stripe</p>
-            <p className="text-lg font-bold text-foreground mt-1">{stripeChurns}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/40 bg-card/80">
-          <CardContent className="p-4">
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Asaas Cartão</p>
-            <p className="text-lg font-bold text-foreground mt-1">{asaasChurns}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/40 bg-card/80">
-          <CardContent className="p-4">
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">PIX</p>
-            <p className="text-lg font-bold text-foreground mt-1">{pixChurns}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/40 bg-card/80">
-          <CardContent className="p-4">
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Pretendem voltar</p>
-            <p className="text-lg font-bold text-foreground mt-1">{returnYes + returnMaybe}</p>
-            <p className="text-[10px] text-muted-foreground">{returnYes} sim · {returnMaybe} talvez</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Table */}
