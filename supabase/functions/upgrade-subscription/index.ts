@@ -106,7 +106,7 @@ serve(async (req) => {
         from_billing_period: profile.billing_period,
         to_billing_period: newBillingPeriod,
         remaining_searches_carried: remaining,
-        proration_credit_cents: prorationCents,
+        proration_credit_cents: 0,
         old_subscription_id: profile.asaas_subscription_id,
         provider: "asaas",
         status: "pending",
@@ -131,17 +131,15 @@ serve(async (req) => {
       }
     }
 
-    // === Step 2: compute new price minus proration ===
+    // === Step 2: new plan is charged at FULL price (no financial discount).
+    // The "value" of unused days is preserved 100% as bonus opportunities.
     const newPriceFull = newBillingPeriod === "annual"
       ? PLAN_PRICE_ANNUAL[newPlan]
       : PLAN_PRICE_MONTHLY[newPlan];
-    const prorationReais = prorationCents / 100;
-    const firstChargeValue = Math.max(newPriceFull - prorationReais, 1); // never below R$1
-    log("New plan pricing", { newPriceFull, prorationReais, firstChargeValue });
+    log("New plan pricing (full price, no discount)", { newPriceFull });
 
-    // === Step 3: register the new opportunities balance immediately ===
-    // The new subscription will be created by the regular checkout flow.
-    // Here we only carry the bonus + clear searches_used so the user can use the carried opportunities + the new plan limit when activated.
+    // === Step 3: carry remaining opportunities as permanent bonus.
+    // bonus_searches NEVER renews — once consumed, it's gone.
     await supabase
       .from("profiles")
       .update({
@@ -149,7 +147,6 @@ serve(async (req) => {
       })
       .eq("id", user.id);
 
-    // Update upgrade log
     if (upgradeRow) {
       await supabase
         .from("subscription_upgrades")
@@ -162,10 +159,10 @@ serve(async (req) => {
         success: true,
         upgradeId: upgradeRow?.id ?? null,
         carriedBonus: remaining,
-        prorationCents,
-        firstChargeValue,
+        prorationCents: 0,
+        firstChargeValue: newPriceFull,
         newPriceFull,
-        message: `Saldo de ${remaining} oportunidade(s) preservado. Crédito proporcional de R$ ${prorationReais.toFixed(2)} aplicado na próxima fatura.`,
+        message: `${remaining} oportunidade(s) do plano anterior foram convertidas em saldo bônus permanente no seu novo plano.`,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
