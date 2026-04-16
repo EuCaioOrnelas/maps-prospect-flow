@@ -48,6 +48,8 @@ interface NewSystemMetrics {
   /** Breakdown by source for transparency */
   stripeMRR: number;
   newSystemMRR: number;
+  stripeSubscribers: number;
+  newSystemSubscribers: number;
   /** Last refresh timestamp */
   lastRefresh: Date;
 }
