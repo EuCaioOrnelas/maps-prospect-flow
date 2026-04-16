@@ -150,6 +150,8 @@ export function useAdminDashboard() {
       let pixActiveSubs = 0;
       let asaasCardMrrTotal = 0;
       let asaasCardSubs = 0;
+      let otherMrrTotal = 0;
+      let otherSubs = 0;
 
       const typedProfiles = profiles as PayingProfile[];
       setPayingProfiles(typedProfiles);
@@ -182,11 +184,13 @@ export function useAdminDashboard() {
         } else if (provider === "asaas") {
           asaasCardMrrTotal += monthlyValue;
           asaasCardSubs++;
-        } else if (!provider) {
-          // No provider set but has subscription_price_cents - could be asaas card
+        } else if (provider === "stripe") {
+          // Skip - already counted via get-stripe-mrr
+        } else if (!provider || provider !== "stripe") {
+          // Unknown provider - count as "other" toward total but not in specific buckets
           if (p.subscription_price_cents) {
-            asaasCardMrrTotal += monthlyValue;
-            asaasCardSubs++;
+            otherMrrTotal += monthlyValue;
+            otherSubs++;
           }
         }
       }
