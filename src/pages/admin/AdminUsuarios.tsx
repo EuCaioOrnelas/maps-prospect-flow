@@ -114,7 +114,7 @@ export default function AdminUsuarios() {
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString("pt-BR") : "—"}
+                      {user.updated_at ? new Date(user.updated_at).toLocaleDateString("pt-BR") : "—"}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(user.created_at).toLocaleDateString("pt-BR")}

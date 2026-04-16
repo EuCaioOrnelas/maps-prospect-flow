@@ -101,6 +101,8 @@ const AdminProxies = lazyWithRetry(() => import("./pages/admin/AdminProxies"), "
 const AdminWebhooks = lazyWithRetry(() => import("./pages/admin/AdminWebhooks"), "AdminWebhooks");
 const AdminTermos = lazyWithRetry(() => import("./pages/admin/AdminTermos"), "AdminTermos");
 const AdminAuditoria = lazyWithRetry(() => import("./pages/admin/AdminAuditoria"), "AdminAuditoria");
+const AdminHealthScore = lazyWithRetry(() => import("./pages/admin/AdminHealthScore"), "AdminHealthScore");
+const AdminGrowthIntelligence = lazyWithRetry(() => import("./pages/admin/AdminGrowthIntelligence"), "AdminGrowthIntelligence");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -186,6 +188,7 @@ const App = () => (
                   <Route path="ativacao" element={<AdminAtivacao />} />
                   <Route path="retencao" element={<AdminRetencao />} />
                   <Route path="landing-pages" element={<AdminLandingPages />} />
+                  <Route path="health-score" element={<AdminHealthScore />} />
                   {/* IA */}
                   <Route path="ia/agentes" element={<AdminIAAgentes />} />
                   <Route path="ia/performance" element={<AdminIAPerformance />} />
@@ -195,6 +198,7 @@ const App = () => (
                   <Route path="operacoes/proxies" element={<AdminProxies />} />
                   <Route path="operacoes/webhooks" element={<AdminWebhooks />} />
                   {/* Growth */}
+                  <Route path="growth-intel" element={<AdminGrowthIntelligence />} />
                   <Route path="email-tests" element={<AdminEmailTests />} />
                   <Route path="email-flows" element={<AdminEmailFlows />} />
                   <Route path="email-flows/:id" element={<AdminEmailFlowEditor />} />
