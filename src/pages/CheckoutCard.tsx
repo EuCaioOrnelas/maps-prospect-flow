@@ -52,7 +52,7 @@ function formatExpiry(value: string) {
 
 const PLAN_PRICES: Record<string, { monthly: number; annual: number; name: string }> = {
   start: { monthly: 29600, annual: 295200, name: "Wiize Start" },
-  growth: { monthly: 69600, annual: 595200, name: "Wiize Growth" },
+  growth: { monthly: 69600, annual: 715200, name: "Wiize Growth" },
 };
 
 const INSTALLMENT_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
