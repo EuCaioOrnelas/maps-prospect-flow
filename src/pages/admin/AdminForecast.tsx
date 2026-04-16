@@ -119,15 +119,20 @@ function useNewSystemMetrics(): NewSystemMetrics {
         .gte("paid_at", sixMonthsAgo.toISOString());
 
       // ============================================================
-      // STEP 4 — Stripe MRR (revenue only, no churn data)
+      // STEP 4 — Stripe MRR + active subscriber count (revenue side)
       // Pulled from existing edge function `get-stripe-mrr`.
+      // We use the COUNT for Clientes Ativos and the MRR for revenue.
+      // We DO NOT use Stripe churn (unreliable history).
       // ============================================================
       let stripeMRR = 0;
+      let stripeSubscribers = 0;
       try {
         const { data: stripeData } = await supabase.functions.invoke("get-stripe-mrr");
         stripeMRR = stripeData?.totalMRR || 0;
+        stripeSubscribers = stripeData?.activeSubscriptions || 0;
       } catch {
         stripeMRR = 0;
+        stripeSubscribers = 0;
       }
 
       // ============================================================
@@ -150,7 +155,7 @@ function useNewSystemMetrics(): NewSystemMetrics {
       //   - Fallback to PLAN_PRICES_MONTHLY if subscription_price_cents is null
       // ============================================================
       let newSystemMRR = 0;
-      let totalSubscribers = 0;
+      let newSystemSubscribers = 0;
       for (const p of newSystemProfiles as any[]) {
         const periodEnd = p.subscription_current_period_end;
         if (periodEnd && new Date(periodEnd) < now) continue; // expired
@@ -165,12 +170,16 @@ function useNewSystemMetrics(): NewSystemMetrics {
           }
         }
         newSystemMRR += monthlyValue;
-        totalSubscribers++;
+        newSystemSubscribers++;
       }
 
-      // Final MRR shown on screen = Stripe revenue + New System revenue
+      // ============================================================
+      // STEP 6.5 — Combine subscribers (Stripe + New System)
+      // Final MRR = both sources · Final subs = both sources
+      // ============================================================
+      const totalSubscribers = stripeSubscribers + newSystemSubscribers;
       const totalMRR = stripeMRR + newSystemMRR;
-      const averageTicket = totalSubscribers > 0 ? newSystemMRR / totalSubscribers : 0;
+      const averageTicket = totalSubscribers > 0 ? totalMRR / totalSubscribers : 0;
 
       // ============================================================
       // STEP 7 — Build month keys for last 6 months: ["2025-06", ...]
