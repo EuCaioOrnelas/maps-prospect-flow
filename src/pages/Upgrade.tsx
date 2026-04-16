@@ -603,6 +603,94 @@ const Upgrade = () => {
           </div>
         </div>
 
+        {/* How upgrades work — simple, plain-language explainer (only for paid users) */}
+        {hasPaidPlan && (
+          <div className="max-w-5xl mx-auto mb-12 animate-fade-in">
+            <div className="text-center mb-6">
+              <h2 className="font-display text-2xl sm:text-3xl font-bold mb-2">
+                Como funciona o upgrade?
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Sem letras miúdas. Você sabe exatamente o que paga e o que ganha.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Monthly upgrade explainer */}
+              <div className="rounded-2xl glass p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                    <Calendar className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-lg">Se você é do plano mensal</h3>
+                    <p className="text-xs text-muted-foreground">Upgrade imediato</p>
+                  </div>
+                </div>
+
+                <ul className="space-y-3 text-sm">
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">1</span>
+                    <span className="text-muted-foreground"><strong className="text-foreground">Você paga o valor cheio do novo plano</strong>, igual a uma mensalidade normal.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">2</span>
+                    <span className="text-muted-foreground">Sua mensalidade antiga é <strong className="text-foreground">cancelada na hora</strong>. Você não paga duplicado.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">3</span>
+                    <span className="text-muted-foreground">As <strong className="text-foreground">oportunidades que sobraram</strong> do plano antigo viram <strong className="text-foreground">saldo bônus permanente</strong>. Nunca expiram.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">4</span>
+                    <span className="text-muted-foreground">Próxima cobrança: <strong className="text-foreground">daqui a 30 dias</strong>.</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Annual upgrade explainer */}
+              <div className="rounded-2xl glass p-6 border-2 border-primary/30">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                    <Calculator className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-lg">Se você é do plano anual</h3>
+                    <p className="text-xs text-muted-foreground">Você só paga a diferença</p>
+                  </div>
+                </div>
+
+                <ul className="space-y-3 text-sm">
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">1</span>
+                    <span className="text-muted-foreground">Você já pagou um ano inteiro do plano atual. <strong className="text-foreground">Cobramos só a diferença</strong> entre os planos pelos dias que ainda faltam até sua renovação.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">2</span>
+                    <span className="text-muted-foreground">Pode <strong className="text-foreground">parcelar no cartão sem juros</strong>. As parcelas terminam antes da sua renovação.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">3</span>
+                    <span className="text-muted-foreground">Sua data de renovação <strong className="text-foreground">não muda</strong>. Você continua pagando o mesmo valor anual atual.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">4</span>
+                    <span className="text-muted-foreground">As oportunidades que sobraram viram <strong className="text-foreground">saldo bônus permanente</strong>. Nunca expiram.</span>
+                  </li>
+                </ul>
+
+                <div className="mt-4 p-3 rounded-lg bg-muted/40 border border-border/50 text-xs text-muted-foreground">
+                  <strong className="text-foreground">Por que o valor muda todo dia?</strong> Quanto mais perto da renovação, menos dias faltam — então a diferença a pagar fica menor. Você nunca paga por dias que já consumiu.
+                </div>
+              </div>
+            </div>
+
+            <p className="text-center text-xs text-muted-foreground mt-6">
+              Ao clicar em <strong>Fazer Upgrade</strong>, você verá o valor exato e as parcelas antes de confirmar.
+            </p>
+          </div>
+        )}
+
         {/* Manage subscription */}
         {hasPaidPlan && (
           <div className="flex justify-center mb-8">
