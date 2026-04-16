@@ -327,6 +327,8 @@ function useNewSystemMetrics(): NewSystemMetrics {
         usingDefaultChurn,
         stripeMRR,
         newSystemMRR,
+        stripeSubscribers,
+        newSystemSubscribers,
         lastRefresh: new Date(),
       });
   };
