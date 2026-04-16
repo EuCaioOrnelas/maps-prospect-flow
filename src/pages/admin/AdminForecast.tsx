@@ -352,21 +352,36 @@ import {
  *   Otimista:    churn ×0.75, vendas ×1.3, expansão ×1.4
  * ============================================================ */
 
-// Scenario multipliers applied to historical averages
-// Scenario multipliers applied to historical averages.
-// Churn defaults map: 6% base → Pessimistic 9% (×1.5), Realistic 6% (×1.0), Optimistic 4% (×0.667)
+// ============================================================
+// SCENARIO MODEL — easy to tweak per scenario
+// ============================================================
+//
+// SCENARIO_MULT: applied to historical averages each month.
+//   - churn:     multiplier on baseline churn rate
+//                  → Pess 6% × 1.5 = 9% | Real 6% | Otim 6% × 0.667 ≈ 4%
+//   - sales:     multiplier on avgNewMRR (new sales per month)
+//   - expansion: multiplier on avgExpansionMRR (upgrades / extra seats)
+//
 const SCENARIO_MULT = {
   pessimistic: { churn: 1.5,   sales: 0.65, expansion: 0.3 },
   realistic:   { churn: 1.0,   sales: 1.0,  expansion: 1.0 },
   optimistic:  { churn: 0.667, sales: 1.3,  expansion: 1.4 },
 };
 
-// Non-linear ramps (behavioral curves over 12 months)
+// SALES_RAMP: month-by-month behavioral curve over 12 months.
+//   - Pess: contracts in months 1-3, slow recovery after
+//   - Real: gentle compound growth (+2-4% / month)
+//   - Otim: accelerated ramp, decelerating at the end
 const SALES_RAMP = {
   pessimistic: [0.60, 0.50, 0.45, 0.50, 0.58, 0.65, 0.72, 0.78, 0.84, 0.90, 0.95, 1.00],
   realistic:   [1.00, 1.02, 1.05, 1.08, 1.11, 1.15, 1.19, 1.23, 1.27, 1.31, 1.36, 1.40],
   optimistic:  [1.05, 1.12, 1.20, 1.30, 1.40, 1.50, 1.58, 1.65, 1.70, 1.74, 1.77, 1.80],
 };
+
+// CHURN_RAMP: spike pattern for churn over 12 months.
+//   - Pess: peaks in month 2-3 (operational deterioration)
+//   - Real: flat (uses base churn)
+//   - Otim: continuous improvement
 const CHURN_RAMP = {
   pessimistic: [1.20, 1.30, 1.25, 1.15, 1.08, 1.03, 1.00, 0.98, 0.96, 0.95, 0.94, 0.93],
   realistic:   [1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00],
