@@ -19,6 +19,8 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+const SignupChoosePlan = lazyWithRetry(() => import("./pages/SignupChoosePlan"), "SignupChoosePlan");
+const SignupWithCard = lazyWithRetry(() => import("./pages/SignupWithCard"), "SignupWithCard");
 import NotFound from "./pages/NotFound";
 import Upgrade from "./pages/Upgrade";
 
@@ -140,6 +142,8 @@ const App = () => (
                 <Route path="/enterprise" element={<LightThemeWrapper><EnterpriseContact /></LightThemeWrapper>} />
                 <Route path="/login" element={<LightThemeWrapper><Login /></LightThemeWrapper>} />
                 <Route path="/signup" element={<LightThemeWrapper><Signup /></LightThemeWrapper>} />
+                <Route path="/signup/escolher-plano" element={<LightThemeWrapper><SignupChoosePlan /></LightThemeWrapper>} />
+                <Route path="/signup/cartao-trial" element={<LightThemeWrapper><SignupWithCard /></LightThemeWrapper>} />
                 <Route path="/forgot-password" element={<LightThemeWrapper><ForgotPassword /></LightThemeWrapper>} />
                 <Route path="/reset-password" element={<LightThemeWrapper><ResetPassword /></LightThemeWrapper>} />
                 <Route path="/terms" element={<LightThemeWrapper><Terms /></LightThemeWrapper>} />
