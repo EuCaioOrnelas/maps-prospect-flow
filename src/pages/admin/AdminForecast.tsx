@@ -121,59 +121,87 @@ export default function AdminForecast() {
     // Build projection rows (realistic breakdown)
     const now = new Date();
     const projection: ProjMonth[] = [];
+    const avgNewMRR = avgNewClients * averageTicket;
+    const currentMRR = totalMRR;
+    const currentClients = Math.max(totalSubscribers, 1);
+
+    // === Build 12-month compound projection com ramps ===
+    // Expansão real: clientes ativos × upgrade rate × upgrade médio
+    const buildProjection = (
+      churnBase: number,
+      salesMult: number,
+      upgradeRate: number,
+      salesRamp: number[],
+      churnRamp: number[],
+    ) => {
+      const months: { mrr: number; newM: number; expM: number; churnM: number; clients: number }[] = [];
+      let mrr = currentMRR;
+      let clients = currentClients;
+      for (let i = 0; i < 12; i++) {
+        const churnRate = churnBase * churnRamp[i];
+        const churnLoss = mrr * churnRate;
+        const newM = avgNewMRR * salesMult * salesRamp[i];
+        const expM = clients * upgradeRate * UPGRADE_AVG;
+        const nextMRR = Math.max(currentMRR * 0.45, mrr + newM + expM - churnLoss);
+        // Atualiza nº clientes (proxy via MRR/ticket)
+        const lostClients = clients * churnRate;
+        const newClients = avgNewClients * salesMult * salesRamp[i];
+        clients = Math.max(1, clients - lostClients + newClients);
+        mrr = nextMRR;
+        months.push({ mrr: Math.round(mrr), newM: Math.round(newM), expM: Math.round(expM), churnM: Math.round(churnLoss), clients: Math.round(clients) });
+      }
+      return months;
+    };
+
+    const pessSeries = buildProjection(CHURN.pessimistic, SALES.pessimistic, UPGRADE_RATE.pessimistic, SALES_RAMP.pessimistic, CHURN_RAMP.pessimistic);
+    const realSeries = buildProjection(CHURN.realistic, SALES.realistic, UPGRADE_RATE.realistic, SALES_RAMP.realistic, CHURN_RAMP.realistic);
+    const optSeries = buildProjection(CHURN.optimistic, SALES.optimistic, UPGRADE_RATE.optimistic, SALES_RAMP.optimistic, CHURN_RAMP.optimistic);
+
+    // Build projection rows (realistic breakdown)
+    const now = new Date();
+    const projection: ProjMonth[] = [];
     let prevMRR = currentMRR;
     for (let i = 0; i < 12; i++) {
       const date = new Date(now.getFullYear(), now.getMonth() + 1 + i, 1);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      const churn = prevMRR * CHURN.realistic;
-      const newM = avgNewMRR;
-      const expM = prevMRR * BASE_EXPANSION_RATE;
-      const net = newM + expM - churn;
+      const r = realSeries[i];
+      const net = r.newM + r.expM - r.churnM;
       projection.push({
         month: monthKey,
         label: fmtMonth(monthKey),
-        pessimistic: pessMonths[i],
-        realistic: realMonths[i],
-        optimistic: optMonths[i],
-        newMRR: Math.round(newM),
-        expansionMRR: Math.round(expM),
-        churnMRR: Math.round(churn),
+        pessimistic: pessSeries[i].mrr,
+        realistic: realSeries[i].mrr,
+        optimistic: optSeries[i].mrr,
+        newMRR: r.newM,
+        expansionMRR: r.expM,
+        churnMRR: r.churnM,
         netNewMRR: Math.round(net),
         growthRate: prevMRR > 0 ? net / prevMRR : 0,
       });
-      prevMRR = realMonths[i];
+      prevMRR = realSeries[i].mrr;
     }
 
-    // 30-day cards
+    // 30-day cards (mês 1)
     const next30 = {
-      pessimistic: pessMonths[0],
-      realistic: realMonths[0],
-      optimistic: optMonths[0],
+      pessimistic: pessSeries[0].mrr,
+      realistic: realSeries[0].mrr,
+      optimistic: optSeries[0].mrr,
     };
 
-    // 30-day breakdowns per scenario
-    const scenarioBreakdown = (churnRate: number, salesMult: number, expMult: number) => ({
-      churnMRR: Math.round(currentMRR * churnRate),
-      newMRR: Math.round(avgNewMRR * salesMult),
-      expansionMRR: Math.round(currentMRR * BASE_EXPANSION_RATE * expMult),
-    });
-
     const breakdown = {
-      pessimistic: scenarioBreakdown(CHURN.pessimistic, SALES.pessimistic, EXPANSION.pessimistic),
-      realistic: scenarioBreakdown(CHURN.realistic, SALES.realistic, EXPANSION.realistic),
-      optimistic: scenarioBreakdown(CHURN.optimistic, SALES.optimistic, EXPANSION.optimistic),
+      pessimistic: { churnMRR: pessSeries[0].churnM, newMRR: pessSeries[0].newM, expansionMRR: pessSeries[0].expM },
+      realistic:   { churnMRR: realSeries[0].churnM, newMRR: realSeries[0].newM, expansionMRR: realSeries[0].expM },
+      optimistic:  { churnMRR: optSeries[0].churnM, newMRR: optSeries[0].newM, expansionMRR: optSeries[0].expM },
     };
 
     // SaaS health metrics
-    const churnMRR = currentMRR * CHURN.realistic;
-    const netNew = avgNewMRR + currentMRR * BASE_EXPANSION_RATE - churnMRR;
+    const churnMRR = realSeries[0].churnM;
+    const expMRR = realSeries[0].expM;
+    const netNew = avgNewMRR + expMRR - churnMRR;
     const growthRate = currentMRR > 0 ? netNew / currentMRR : 0;
-    // LTV = ticket / churn rate
     const ltv = averageTicket / CHURN.realistic;
-    // CAC payback estimado (simplificado): assume CAC = 1.5x ticket -> payback meses
     const estCAC = averageTicket * 1.5;
     const cacPayback = averageTicket > 0 ? estCAC / averageTicket : 0;
-    // Retenção mensal
     const retention = (1 - CHURN.realistic) * 100;
 
     // Historical chart data
@@ -191,7 +219,7 @@ export default function AdminForecast() {
       metrics: {
         churnMRR: Math.round(churnMRR),
         newMRR: Math.round(avgNewMRR),
-        expansionMRR: Math.round(currentMRR * BASE_EXPANSION_RATE),
+        expansionMRR: Math.round(expMRR),
         netNewMRR: Math.round(netNew),
         growthRate,
         avgNewClients: Math.round(avgNewClients),
