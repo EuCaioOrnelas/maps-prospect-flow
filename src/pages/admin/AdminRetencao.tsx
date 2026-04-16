@@ -171,13 +171,44 @@ export default function AdminRetencao() {
               Quanto dos seus usuários continuam ativos com o passar do tempo
             </p>
           </div>
-          <Tabs value={String(periodMonths)} onValueChange={(v) => setPeriodMonths(Number(v) as 3 | 6 | 12)}>
-            <TabsList>
-              <TabsTrigger value="3">3 meses</TabsTrigger>
-              <TabsTrigger value="6">6 meses</TabsTrigger>
-              <TabsTrigger value="12">12 meses</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {/* Filtro de período: presets + custom (início/fim) */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Tabs value={periodMode} onValueChange={(v) => setPeriodMode(v as any)}>
+              <TabsList>
+                <TabsTrigger value="3">3 meses</TabsTrigger>
+                <TabsTrigger value="6">6 meses</TabsTrigger>
+                <TabsTrigger value="12">12 meses</TabsTrigger>
+                <TabsTrigger value="custom">Custom</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            {periodMode === "custom" && (
+              <>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn("h-9 justify-start text-xs", !customStart && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                      {customStart ? format(customStart, "MMM/yy", { locale: ptBR }) : "Início"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={customStart} onSelect={setCustomStart} initialFocus />
+                  </PopoverContent>
+                </Popover>
+                <span className="text-xs text-muted-foreground">→</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn("h-9 justify-start text-xs", !customEnd && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                      {customEnd ? format(customEnd, "MMM/yy", { locale: ptBR }) : "Fim"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={customEnd} onSelect={setCustomEnd} initialFocus />
+                  </PopoverContent>
+                </Popover>
+              </>
+            )}
+          </div>
         </div>
 
         {/* KPIs */}
