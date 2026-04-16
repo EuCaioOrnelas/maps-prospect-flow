@@ -22,7 +22,17 @@ interface NewSystemMetrics {
   avgNewClients: number;
   avgExpansionMRR: number;
   avgCancellations: number;
+  /** true when we don't have enough internal data and we're using the default 6% baseline */
+  usingDefaultChurn: boolean;
+  /** Breakdown by source for transparency */
+  stripeMRR: number;
+  newSystemMRR: number;
 }
+
+// Minimum confidence threshold: at least 3 cancellations across last 3 months in NEW system
+const MIN_CANCELLATIONS_FOR_REAL_CHURN = 3;
+// Default fallback churn for the realistic scenario (used to derive 9% pess and 4% opt)
+const DEFAULT_REALISTIC_CHURN = 0.06;
 
 /**
  * Pulls forecast data ONLY from the new management system:
@@ -38,11 +48,14 @@ function useNewSystemMetrics(): NewSystemMetrics {
     averageTicket: 0,
     monthlyMRR: [],
     monthlySales: [],
-    realChurnRate: 0,
+    realChurnRate: DEFAULT_REALISTIC_CHURN,
     avgNewMRR: 0,
     avgNewClients: 0,
     avgExpansionMRR: 0,
     avgCancellations: 0,
+    usingDefaultChurn: true,
+    stripeMRR: 0,
+    newSystemMRR: 0,
   });
 
   useEffect(() => {
@@ -50,14 +63,14 @@ function useNewSystemMetrics(): NewSystemMetrics {
       const now = new Date();
       const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
 
-      // 1) Active subscriptions (NOT stripe, NOT free) — new management system
+      // 1) Active subscriptions (NOT free) — INCLUDES stripe for MRR but we'll separate sources
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_blocked")
         .neq("plan", "free")
         .eq("is_blocked", false);
 
-      // 2) Cancellations from new system (excludes stripe)
+      // 2) Cancellations from new system (excludes stripe — Stripe churn is unreliable for our forecast)
       const { data: cancellations } = await supabase
         .from("subscription_cancellations")
         .select("provider, billing_type, cancelled_at, active_until")
@@ -70,16 +83,26 @@ function useNewSystemMetrics(): NewSystemMetrics {
         .eq("status", "paid")
         .gte("paid_at", sixMonthsAgo.toISOString());
 
-      // ---- Filter: exclude stripe entirely ----
+      // 4) Stripe MRR — use ONLY revenue from existing function (no churn data)
+      let stripeMRR = 0;
+      try {
+        const { data: stripeData } = await supabase.functions.invoke("get-stripe-mrr");
+        stripeMRR = stripeData?.totalMRR || 0;
+      } catch {
+        stripeMRR = 0;
+      }
+
+      // ---- Separate stripe (revenue only) from new system (full data) ----
       const newSystemProfiles = (profiles || []).filter(
         (p: any) => p.payment_provider !== "stripe"
       );
+      // Cancellations: ALWAYS only new system (stripe churn ignored)
       const newSystemCancellations = (cancellations || []).filter(
         (c: any) => c.provider !== "stripe"
       );
 
-      // ---- Active MRR + subscribers ----
-      let totalMRR = 0;
+      // ---- Active MRR + subscribers from NEW SYSTEM only (for ticket/churn math) ----
+      let newSystemMRR = 0;
       let totalSubscribers = 0;
       for (const p of newSystemProfiles as any[]) {
         const periodEnd = p.subscription_current_period_end;
@@ -94,10 +117,13 @@ function useNewSystemMetrics(): NewSystemMetrics {
             monthlyValue = daysSpan > 300 ? priceReais / 12 : priceReais;
           }
         }
-        totalMRR += monthlyValue;
+        newSystemMRR += monthlyValue;
         totalSubscribers++;
       }
-      const averageTicket = totalSubscribers > 0 ? totalMRR / totalSubscribers : 0;
+
+      // Total MRR shown in forecast = Stripe (revenue only) + New System (full)
+      const totalMRR = stripeMRR + newSystemMRR;
+      const averageTicket = totalSubscribers > 0 ? newSystemMRR / totalSubscribers : 0;
 
       // ---- Monthly aggregates (last 6 months) ----
       const monthKeys: string[] = [];
@@ -170,19 +196,30 @@ function useNewSystemMetrics(): NewSystemMetrics {
       const recentMRR = monthlyMRR.slice(-3);
 
       // Churn = cancellations / active at start of month (avg 3m)
+      // Only trust real churn if we have enough cancellation data
       let totalChurnPct = 0;
       let churnMonths = 0;
+      let totalCancellations = 0;
       for (let i = 0; i < recentSales.length; i++) {
         const active = recentMRR[i]?.activeCount || 0;
+        totalCancellations += recentSales[i].cancellations || 0;
         if (active > 0) {
           totalChurnPct += (recentSales[i].cancellations || 0) / active;
           churnMonths++;
         }
       }
-      let realChurnRate = churnMonths > 0 ? totalChurnPct / churnMonths : 0;
-      // floor 1%, cap 15%
-      if (realChurnRate <= 0) realChurnRate = 0.02;
-      realChurnRate = Math.min(Math.max(realChurnRate, 0.01), 0.15);
+
+      let realChurnRate: number;
+      let usingDefaultChurn: boolean;
+      if (totalCancellations >= MIN_CANCELLATIONS_FOR_REAL_CHURN && churnMonths > 0) {
+        // Enough internal data — use real churn
+        realChurnRate = Math.min(Math.max(totalChurnPct / churnMonths, 0.01), 0.15);
+        usingDefaultChurn = false;
+      } else {
+        // Not enough data — use the 6% default baseline (realistic)
+        realChurnRate = DEFAULT_REALISTIC_CHURN;
+        usingDefaultChurn = true;
+      }
 
       // Weighted avg new clients/MRR
       let wSumClients = 0, wSumValue = 0, wTotal = 0;
@@ -225,6 +262,9 @@ function useNewSystemMetrics(): NewSystemMetrics {
         avgNewClients,
         avgExpansionMRR,
         avgCancellations,
+        usingDefaultChurn,
+        stripeMRR,
+        newSystemMRR,
       });
     })();
   }, []);
@@ -257,10 +297,12 @@ import {
  * ============================================================ */
 
 // Scenario multipliers applied to historical averages
+// Scenario multipliers applied to historical averages.
+// Churn defaults map: 6% base → Pessimistic 9% (×1.5), Realistic 6% (×1.0), Optimistic 4% (×0.667)
 const SCENARIO_MULT = {
-  pessimistic: { churn: 1.4, sales: 0.65, expansion: 0.3 },
-  realistic:   { churn: 1.0, sales: 1.0,  expansion: 1.0 },
-  optimistic:  { churn: 0.75, sales: 1.3,  expansion: 1.4 },
+  pessimistic: { churn: 1.5,   sales: 0.65, expansion: 0.3 },
+  realistic:   { churn: 1.0,   sales: 1.0,  expansion: 1.0 },
+  optimistic:  { churn: 0.667, sales: 1.3,  expansion: 1.4 },
 };
 
 // Non-linear ramps (behavioral curves over 12 months)
@@ -575,12 +617,14 @@ export default function AdminForecast() {
       <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/30 border border-border/20">
         <ShieldCheck size={13} className="text-emerald-500 shrink-0" />
         <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
-          <span className="font-semibold text-muted-foreground">Métricas calculadas automaticamente:</span>{" "}
-          Churn {(forecast.drivers.realChurnRate * 100).toFixed(1)}% (média 3m) · 
-          New MRR R$ {fmt(forecast.drivers.avgNewMRR)}/mês · 
-          Expansão R$ {fmt(forecast.drivers.avgExpansionMRR)}/mês · 
-          ~{forecast.drivers.avgNewClients} novos clientes/mês · 
-          ~{forecast.drivers.avgCancellations} cancelamentos/mês
+          <span className="font-semibold text-muted-foreground">Receita:</span>{" "}
+          Stripe R$ {fmt(m.stripeMRR)} + Novo Sistema R$ {fmt(m.newSystemMRR)} ·{" "}
+          <span className="font-semibold text-muted-foreground">Churn:</span>{" "}
+          {m.usingDefaultChurn
+            ? `${(forecast.drivers.realChurnRate * 100).toFixed(1)}% (baseline · dados insuficientes)`
+            : `${(forecast.drivers.realChurnRate * 100).toFixed(1)}% (real · novo sistema)`} ·{" "}
+          New MRR R$ {fmt(forecast.drivers.avgNewMRR)}/mês ·{" "}
+          ~{forecast.drivers.avgNewClients} novos/mês
         </p>
       </div>
 
