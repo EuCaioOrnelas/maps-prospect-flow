@@ -47,12 +47,31 @@ export default function AdminRetencao() {
   const [d30, setD30] = useState(0);
   const [dau, setDau] = useState(0);
   const [mau, setMau] = useState(0);
-  const [periodMonths, setPeriodMonths] = useState<3 | 6 | 12>(6);
+  // 'custom' permite ao admin escolher início e fim livremente.
+  const [periodMode, setPeriodMode] = useState<"3" | "6" | "12" | "custom">("6");
+  const [customStart, setCustomStart] = useState<Date | undefined>();
+  const [customEnd, setCustomEnd] = useState<Date | undefined>();
+
+  // Calcula o range de meses a exibir baseado no modo (preset ou custom).
+  const { startDate, endDate, monthsCount } = useMemo(() => {
+    const now = new Date();
+    if (periodMode === "custom" && customStart && customEnd) {
+      const s = new Date(customStart.getFullYear(), customStart.getMonth(), 1);
+      const e = new Date(customEnd.getFullYear(), customEnd.getMonth(), 1);
+      const months = Math.max(1, (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth()) + 1);
+      return { startDate: s, endDate: e, monthsCount: Math.min(months, 24) };
+    }
+    const m = parseInt(periodMode === "custom" ? "6" : periodMode);
+    const s = new Date(now.getFullYear(), now.getMonth() - (m - 1), 1);
+    const e = new Date(now.getFullYear(), now.getMonth(), 1);
+    return { startDate: s, endDate: e, monthsCount: m };
+  }, [periodMode, customStart, customEnd]);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
 
+      // Busca todos os profiles para análise de cohort baseada em created_at e updated_at.
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, created_at, updated_at");
@@ -65,10 +84,9 @@ export default function AdminRetencao() {
       const thirtyAgo = today - 30 * 86400000;
       const oneAgo = today - 86400000;
 
-      // DAU/MAU/D7/D30 metrics
+      // KPIs gerais (sempre baseados em todos os usuários, independente do range do cohort).
       const dauCount = profiles.filter((p: any) => new Date(p.updated_at).getTime() >= oneAgo).length;
       const mauCount = profiles.filter((p: any) => new Date(p.updated_at).getTime() >= thirtyAgo).length;
-      // D7 retention = ativos nos últimos 7 dias / total cadastrado
       const total = profiles.length || 1;
       const active7  = profiles.filter((p: any) => new Date(p.updated_at).getTime() >= sevenAgo).length;
       const active30 = profiles.filter((p: any) => new Date(p.updated_at).getTime() >= thirtyAgo).length;
@@ -78,10 +96,10 @@ export default function AdminRetencao() {
       setD7((active7 / total) * 100);
       setD30((active30 / total) * 100);
 
-      // Build cohorts for last N months
+      // Monta os cohorts no range solicitado (preset ou custom).
       const cohortKeys: string[] = [];
-      for (let i = periodMonths - 1; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      for (let i = 0; i < monthsCount; i++) {
+        const d = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
         cohortKeys.push(monthKey(d));
       }
 
@@ -90,7 +108,7 @@ export default function AdminRetencao() {
         const cohortStart = new Date(parseInt(yStr), parseInt(mStr) - 1, 1);
         const cohortEnd = new Date(parseInt(yStr), parseInt(mStr), 1);
 
-        // Users created within this cohort month
+        // Usuários reais cadastrados naquele mês.
         const cohortUsers = profiles.filter((p: any) => {
           const c = new Date(p.created_at);
           return c >= cohortStart && c < cohortEnd;
@@ -99,13 +117,12 @@ export default function AdminRetencao() {
         const size = cohortUsers.length;
         const cells: CohortCell[] = [];
 
-        const monthsToShow = periodMonths - cIdx;
+        const monthsToShow = monthsCount - cIdx;
         for (let m = 0; m < monthsToShow; m++) {
           const periodStart = new Date(parseInt(yStr), parseInt(mStr) - 1 + m, 1);
           const periodEnd   = new Date(parseInt(yStr), parseInt(mStr) + m, 1);
 
           if (m === 0) {
-            // M0 is always 100% by definition (everyone was active when they signed up)
             cells.push({ value: size > 0 ? 100 : null, absolute: size });
             continue;
           }
@@ -113,7 +130,6 @@ export default function AdminRetencao() {
           if (size === 0) { cells.push({ value: null, absolute: null }); continue; }
           if (periodStart > now) { cells.push({ value: null, absolute: null }); continue; }
 
-          // Count users from this cohort whose updated_at falls in this period
           const retained = cohortUsers.filter((u: any) => {
             const updated = new Date(u.updated_at);
             return updated >= periodStart && updated < periodEnd;
@@ -121,8 +137,7 @@ export default function AdminRetencao() {
           cells.push({ value: (retained / size) * 100, absolute: retained });
         }
 
-        // Pad with nulls
-        while (cells.length < periodMonths) cells.push({ value: null, absolute: null });
+        while (cells.length < monthsCount) cells.push({ value: null, absolute: null });
 
         return { cohortKey: cKey, cohortLabel: shortLabel(cKey), cohortSize: size, cells };
       });
@@ -131,7 +146,7 @@ export default function AdminRetencao() {
       setLoading(false);
     };
     load();
-  }, [periodMonths]);
+  }, [startDate.getTime(), endDate.getTime(), monthsCount]);
 
   const getColor = (value: number | null) => {
     if (value === null) return "bg-muted/20 text-muted-foreground/30";
