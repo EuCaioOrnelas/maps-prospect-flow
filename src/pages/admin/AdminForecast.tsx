@@ -63,14 +63,14 @@ function useNewSystemMetrics(): NewSystemMetrics {
       const now = new Date();
       const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
 
-      // 1) Active subscriptions (NOT stripe, NOT free) — new management system
+      // 1) Active subscriptions (NOT free) — INCLUDES stripe for MRR but we'll separate sources
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_blocked")
         .neq("plan", "free")
         .eq("is_blocked", false);
 
-      // 2) Cancellations from new system (excludes stripe)
+      // 2) Cancellations from new system (excludes stripe — Stripe churn is unreliable for our forecast)
       const { data: cancellations } = await supabase
         .from("subscription_cancellations")
         .select("provider, billing_type, cancelled_at, active_until")
@@ -83,16 +83,26 @@ function useNewSystemMetrics(): NewSystemMetrics {
         .eq("status", "paid")
         .gte("paid_at", sixMonthsAgo.toISOString());
 
-      // ---- Filter: exclude stripe entirely ----
+      // 4) Stripe MRR — use ONLY revenue from existing function (no churn data)
+      let stripeMRR = 0;
+      try {
+        const { data: stripeData } = await supabase.functions.invoke("get-stripe-mrr");
+        stripeMRR = stripeData?.totalMRR || 0;
+      } catch {
+        stripeMRR = 0;
+      }
+
+      // ---- Separate stripe (revenue only) from new system (full data) ----
       const newSystemProfiles = (profiles || []).filter(
         (p: any) => p.payment_provider !== "stripe"
       );
+      // Cancellations: ALWAYS only new system (stripe churn ignored)
       const newSystemCancellations = (cancellations || []).filter(
         (c: any) => c.provider !== "stripe"
       );
 
-      // ---- Active MRR + subscribers ----
-      let totalMRR = 0;
+      // ---- Active MRR + subscribers from NEW SYSTEM only (for ticket/churn math) ----
+      let newSystemMRR = 0;
       let totalSubscribers = 0;
       for (const p of newSystemProfiles as any[]) {
         const periodEnd = p.subscription_current_period_end;
@@ -107,10 +117,13 @@ function useNewSystemMetrics(): NewSystemMetrics {
             monthlyValue = daysSpan > 300 ? priceReais / 12 : priceReais;
           }
         }
-        totalMRR += monthlyValue;
+        newSystemMRR += monthlyValue;
         totalSubscribers++;
       }
-      const averageTicket = totalSubscribers > 0 ? totalMRR / totalSubscribers : 0;
+
+      // Total MRR shown in forecast = Stripe (revenue only) + New System (full)
+      const totalMRR = stripeMRR + newSystemMRR;
+      const averageTicket = totalSubscribers > 0 ? newSystemMRR / totalSubscribers : 0;
 
       // ---- Monthly aggregates (last 6 months) ----
       const monthKeys: string[] = [];
