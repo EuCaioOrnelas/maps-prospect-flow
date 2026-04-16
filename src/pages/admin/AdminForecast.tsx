@@ -566,32 +566,33 @@ export default function AdminForecast() {
 
   // KPIs
   const kpis = useMemo(() => {
-    const m = forecast?.metrics;
+    const fm = forecast?.metrics;
     const d = forecast?.drivers;
+    const usingDefaultChurn = m.usingDefaultChurn;
     return [
       { label: "MRR Atual", value: `R$ ${fmt(totalMRR)}`, sub: "Receita recorrente mensal", icon: DollarSign, accent: "text-primary", tooltip: "Soma de todas as assinaturas ativas" },
       { label: "Clientes Ativos", value: totalSubscribers.toLocaleString("pt-BR"), sub: "Assinaturas pagantes", icon: Users, accent: "text-blue-500", tooltip: "Total de assinantes com plano ativo" },
       { label: "Ticket Médio", value: `R$ ${fmt(averageTicket)}`, sub: "MRR / clientes", icon: Target, accent: "text-emerald-500", tooltip: "MRR total ÷ número de clientes" },
-      { label: "Net New MRR", value: m ? `${m.netNewMRR >= 0 ? "+" : ""}R$ ${fmt(m.netNewMRR)}` : "—", sub: "New + Exp − Churn", icon: m && m.netNewMRR >= 0 ? ArrowUpRight : ArrowDownRight, accent: (m?.netNewMRR ?? 0) >= 0 ? "text-emerald-500" : "text-red-500", tooltip: `Baseado na média: +R$${fmt(m?.newMRR ?? 0)} new, +R$${fmt(m?.expansionMRR ?? 0)} exp, −R$${fmt(m?.churnMRR ?? 0)} churn` },
+      { label: "Net New MRR", value: fm ? `${fm.netNewMRR >= 0 ? "+" : ""}R$ ${fmt(fm.netNewMRR)}` : "—", sub: "New + Exp − Churn", icon: fm && fm.netNewMRR >= 0 ? ArrowUpRight : ArrowDownRight, accent: (fm?.netNewMRR ?? 0) >= 0 ? "text-emerald-500" : "text-red-500", tooltip: `Baseado na média: +R$${fmt(fm?.newMRR ?? 0)} new, +R$${fmt(fm?.expansionMRR ?? 0)} exp, −R$${fmt(fm?.churnMRR ?? 0)} churn` },
       {
         label: "Churn Rate",
         // Mostra o churn REAL atual (0% se não houver cancelamentos suficientes).
         // O baseline de 6% é usado APENAS no cenário Realista da projeção.
         value: d
-          ? m.usingDefaultChurn
+          ? usingDefaultChurn
             ? `${((avgCancellations / Math.max(totalSubscribers, 1)) * 100).toFixed(1)}%`
             : `${(d.realChurnRate * 100).toFixed(1)}%`
           : "—",
-        sub: m.usingDefaultChurn
+        sub: usingDefaultChurn
           ? `${avgCancellations} cancel/mês · baseline 6% no realista`
           : `~${avgCancellations} cancel/mês (real)`,
         icon: AlertTriangle,
         accent: "text-amber-500",
-        tooltip: m.usingDefaultChurn
+        tooltip: usingDefaultChurn
           ? "Churn real atual = cancelamentos ÷ clientes ativos. Sem cancelamentos suficientes (mín. 3 em 3 meses), aplicamos um baseline de 6% APENAS no cenário Realista da projeção."
           : "Calculado: cancelamentos ÷ clientes ativos (média 3 meses)",
       },
-      { label: "Growth Rate", value: m ? `${(m.growthRate * 100).toFixed(1)}%` : "—", sub: "Crescimento líquido/mês", icon: BarChart3, accent: (m?.growthRate ?? 0) >= 0 ? "text-emerald-500" : "text-red-500", tooltip: "Net New MRR ÷ MRR atual" },
+      { label: "Growth Rate", value: fm ? `${(fm.growthRate * 100).toFixed(1)}%` : "—", sub: "Crescimento líquido/mês", icon: BarChart3, accent: (fm?.growthRate ?? 0) >= 0 ? "text-emerald-500" : "text-red-500", tooltip: "Net New MRR ÷ MRR atual" },
     ];
   }, [totalMRR, totalSubscribers, averageTicket, forecast]);
 
