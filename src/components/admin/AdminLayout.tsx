@@ -11,7 +11,8 @@ function AdminLayoutInner() {
     <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
       <BackgroundGlow />
       <AdminSidebar />
-      <main className="flex-1 min-w-0 overflow-auto">
+      {/* Offset for collapsed sidebar width */}
+      <main className="flex-1 min-w-0 overflow-auto ml-[72px]">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

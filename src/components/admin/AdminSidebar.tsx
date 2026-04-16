@@ -1,19 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import ThemeSwitch from "@/components/ui/theme-switch";
 import { cn } from "@/lib/utils";
+import { SidebarNavItem } from "@/components/layout/SidebarNavItem";
+import ThemeSwitch from "@/components/ui/theme-switch";
+import logoIconNew from "@/assets/logo-icon-new.png";
 import {
   LayoutDashboard,
   DollarSign,
   Users,
   Bot,
-  Settings,
   Rocket,
   Shield,
-  ChevronDown,
-  BarChart3,
-  AlertTriangle,
-  FileText,
   CreditCard,
   TrendingUp,
   UserCheck,
@@ -28,202 +25,268 @@ import {
   Trophy,
   Target,
   Bell,
-  Lock,
   ScrollText,
-  ClipboardList,
+  Lock,
   Receipt,
   ArrowLeft,
   PieChart,
   Activity,
+  FileText,
 } from "lucide-react";
-import logoIconNew from "@/assets/logo-icon-new.png";
 
 interface NavItem {
-  label: string;
-  href: string;
+  title: string;
+  url: string;
   icon: React.ElementType;
 }
 
 interface NavSection {
-  label: string;
+  title: string;
   icon: React.ElementType;
   items: NavItem[];
 }
 
 const NAV_SECTIONS: NavSection[] = [
   {
-    label: "Painel Executivo",
-    icon: LayoutDashboard,
-    items: [
-      { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-      { label: "KPIs", href: "/admin/kpis", icon: BarChart3 },
-      { label: "Alertas", href: "/admin/alertas", icon: AlertTriangle },
-      { label: "Relatórios", href: "/admin/relatorios", icon: FileText },
-    ],
-  },
-  {
-    label: "Receita",
+    title: "Receita",
     icon: DollarSign,
     items: [
-      { label: "Billing PIX", href: "/admin/pix-billing", icon: Receipt },
-      { label: "Stripe", href: "/admin/stripe", icon: CreditCard },
-      { label: "Assinaturas", href: "/admin/assinaturas", icon: ClipboardList },
-      { label: "Churn", href: "/admin/churn", icon: TrendingUp },
-      { label: "Forecast", href: "/admin/forecast", icon: PieChart },
+      { title: "Billing PIX", url: "/admin/pix-billing", icon: Receipt },
+      { title: "Stripe", url: "/admin/stripe", icon: CreditCard },
+      { title: "Assinaturas", url: "/admin/assinaturas", icon: FileText },
+      { title: "Churn", url: "/admin/churn", icon: TrendingUp },
+      { title: "Forecast", url: "/admin/forecast", icon: PieChart },
     ],
   },
   {
-    label: "Produto",
+    title: "Produto",
     icon: Users,
     items: [
-      { label: "Usuários", href: "/admin/usuarios", icon: Users },
-      { label: "Ativação", href: "/admin/ativacao", icon: UserCheck },
-      { label: "Retenção", href: "/admin/retencao", icon: Activity },
-      { label: "Score Leads", href: "/admin/score-leads", icon: Target },
-      { label: "Landing Pages", href: "/admin/landing-pages", icon: Globe },
+      { title: "Usuários", url: "/admin/usuarios", icon: Users },
+      { title: "Ativação", url: "/admin/ativacao", icon: UserCheck },
+      { title: "Retenção", url: "/admin/retencao", icon: Activity },
+      { title: "Score Leads", url: "/admin/score-leads", icon: Target },
+      { title: "Landing Pages", url: "/admin/landing-pages", icon: Globe },
     ],
   },
   {
-    label: "IA",
+    title: "IA",
     icon: Bot,
     items: [
-      { label: "Agentes IA", href: "/admin/ia/agentes", icon: Bot },
-      { label: "Performance", href: "/admin/ia/performance", icon: Zap },
-      { label: "Custos", href: "/admin/ia/custos", icon: DollarSign },
+      { title: "Agentes IA", url: "/admin/ia/agentes", icon: Bot },
+      { title: "Performance", url: "/admin/ia/performance", icon: Zap },
+      { title: "Custos", url: "/admin/ia/custos", icon: DollarSign },
     ],
   },
   {
-    label: "Operações",
+    title: "Operações",
     icon: Server,
     items: [
-      { label: "APIs", href: "/admin/operacoes/apis", icon: Wifi },
-      { label: "Proxies", href: "/admin/operacoes/proxies", icon: Server },
-      { label: "Webhooks", href: "/admin/operacoes/webhooks", icon: Webhook },
+      { title: "APIs", url: "/admin/operacoes/apis", icon: Wifi },
+      { title: "Proxies", url: "/admin/operacoes/proxies", icon: Server },
+      { title: "Webhooks", url: "/admin/operacoes/webhooks", icon: Webhook },
     ],
   },
   {
-    label: "Growth",
+    title: "Growth",
     icon: Rocket,
     items: [
-      { label: "Growth Intel", href: "/admin/growth-intel", icon: Target },
-      { label: "Emails", href: "/admin/email-tests", icon: Mail },
-      { label: "Fluxos", href: "/admin/email-flows", icon: Workflow },
-      { label: "Score Usuários", href: "/admin/user-scoring", icon: Trophy },
-      { label: "Trial Automação", href: "/admin/trial-automation", icon: Zap },
-      { label: "Testes", href: "/admin/tests", icon: FlaskConical },
+      { title: "Growth Intel", url: "/admin/growth-intel", icon: Target },
+      { title: "Emails", url: "/admin/email-tests", icon: Mail },
+      { title: "Fluxos", url: "/admin/email-flows", icon: Workflow },
+      { title: "Score Usuários", url: "/admin/user-scoring", icon: Trophy },
+      { title: "Trial Automação", url: "/admin/trial-automation", icon: Zap },
+      { title: "Testes", url: "/admin/tests", icon: FlaskConical },
     ],
   },
   {
-    label: "Admin",
+    title: "Admin",
     icon: Shield,
     items: [
-      { label: "Avisos", href: "/admin/announcements", icon: Bell },
-      { label: "Termos", href: "/admin/termos", icon: ScrollText },
-      { label: "Auditoria", href: "/admin/auditoria", icon: Lock },
+      { title: "Avisos", url: "/admin/announcements", icon: Bell },
+      { title: "Termos", url: "/admin/termos", icon: ScrollText },
+      { title: "Auditoria", url: "/admin/auditoria", icon: Lock },
     ],
   },
 ];
 
 export function AdminSidebar() {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const location = useLocation();
   const currentPath = location.pathname;
+  const expandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+  // Auto-open section containing active route
+  useEffect(() => {
     const initial: Record<string, boolean> = {};
     NAV_SECTIONS.forEach((section) => {
-      if (section.items.some((item) => currentPath === item.href || currentPath.startsWith(item.href + "/"))) {
-        initial[section.label] = true;
+      if (section.items.some((item) => isItemActive(item.url))) {
+        initial[section.title] = true;
       }
     });
-    initial["Painel Executivo"] = true;
-    return initial;
-  });
+    setOpenSections(initial);
+  }, [currentPath]);
 
-  const toggleSection = (label: string) => {
-    setOpenSections((prev) => ({ ...prev, [label]: !prev[label] }));
+  useEffect(() => {
+    if (isHovered) {
+      expandTimeoutRef.current = setTimeout(() => setIsExpanded(true), 50);
+    } else {
+      if (expandTimeoutRef.current) clearTimeout(expandTimeoutRef.current);
+      setIsExpanded(false);
+    }
+    return () => {
+      if (expandTimeoutRef.current) clearTimeout(expandTimeoutRef.current);
+    };
+  }, [isHovered]);
+
+  const isItemActive = (url: string) => {
+    if (url === "/admin") return currentPath === "/admin";
+    return currentPath === url || currentPath.startsWith(url + "/");
   };
 
-  const isItemActive = (href: string) => {
-    if (href === "/admin") return currentPath === "/admin";
-    return currentPath === href || currentPath.startsWith(href + "/");
+  const toggleSection = (title: string) => {
+    if (isExpanded) {
+      setOpenSections((prev) => ({ ...prev, [title]: !prev[title] }));
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
   };
 
   return (
-    <aside className="w-[260px] min-h-screen border-r border-border/40 bg-card/50 flex flex-col shrink-0">
-      <div className="h-16 flex items-center px-5 border-b border-border/30">
-        <Link to="/admin" className="flex items-center gap-2.5">
-          <img src={logoIconNew} alt="Wiize" className="h-7 w-7" />
-          <span className="font-semibold text-foreground text-[15px] tracking-tight">Wiize</span>
-          <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-md">Admin</span>
-        </Link>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
-        {NAV_SECTIONS.map((section) => {
-          const isOpen = openSections[section.label] ?? false;
-          const SectionIcon = section.icon;
-          const hasActiveChild = section.items.some((item) => isItemActive(item.href));
-
-          return (
-            <div key={section.label}>
-              <button
-                onClick={() => toggleSection(section.label)}
-                className={cn(
-                  "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors",
-                  hasActiveChild
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )}
-              >
-                <SectionIcon size={16} className={cn(hasActiveChild && "text-primary")} />
-                <span className="flex-1 text-left">{section.label}</span>
-                <ChevronDown
-                  size={14}
-                  className={cn("transition-transform duration-200", isOpen && "rotate-180")}
-                />
-              </button>
-
-              {isOpen && (
-                <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border/30 pl-3">
-                  {section.items.map((item) => {
-                    const ItemIcon = item.icon;
-                    const isActive = isItemActive(item.href);
-                    return (
-                      <Link
-                        key={item.href}
-                        to={item.href}
-                        className={cn(
-                          "flex items-center gap-2 px-2.5 py-[7px] rounded-lg text-[13px] transition-colors",
-                          isActive
-                            ? "bg-primary/10 text-primary font-medium"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                        )}
-                      >
-                        <ItemIcon size={14} />
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
+    <div
+      className="fixed left-0 top-0 h-screen z-[60] flex"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={handleMouseLeave}
+    >
+      <aside
+        className={cn(
+          "h-full bg-sidebar border-r border-sidebar-border flex flex-col",
+          "transition-[width] duration-300 ease-out overflow-hidden",
+          isHovered ? "w-60" : "w-[72px]"
+        )}
+      >
+        {/* Logo */}
+        <div className="h-[58px] min-h-[58px] flex items-center border-b border-sidebar-border px-4">
+          <Link to="/admin" className="flex items-center gap-0 h-12 group cursor-pointer">
+            <img
+              src={logoIconNew}
+              alt="Wiize"
+              className="h-10 w-10 object-contain rounded-lg transition-all duration-200 ease-out group-hover:scale-105 shrink-0"
+            />
+            <span
+              className={cn(
+                "tracking-tight text-foreground whitespace-nowrap transition-all duration-200 ease-out flex items-center gap-2",
+                isHovered ? "opacity-100 translate-x-0 text-[1.5rem]" : "opacity-0 -translate-x-2 w-0 overflow-hidden"
               )}
-            </div>
-          );
-        })}
-      </nav>
-
-      <div className="border-t border-border/30 p-3 space-y-2">
-        <div className="flex items-center justify-between px-2.5 py-1">
-          <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Tema</span>
-          <ThemeSwitch />
+              style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500, lineHeight: 1 }}
+            >
+              wiize
+              <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md">
+                Admin
+              </span>
+            </span>
+          </Link>
         </div>
-        <Link
-          to="/dashboard"
-          className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
-        >
-          <ArrowLeft size={14} />
-          <span>Voltar ao app</span>
-        </Link>
-      </div>
-    </aside>
+
+        {/* Navigation */}
+        <nav className="flex-1 py-4 overflow-y-auto overflow-x-hidden">
+          <ul className="space-y-1 px-4">
+            {/* Dashboard - top level */}
+            <li>
+              <SidebarNavItem
+                title="Cockpit"
+                icon={LayoutDashboard}
+                url="/admin"
+                isActive={currentPath === "/admin"}
+                isExpanded={isExpanded}
+                tooltip="Cockpit Executivo"
+              />
+            </li>
+
+            {/* Sections */}
+            {NAV_SECTIONS.map((section) => {
+              const isOpen = openSections[section.title] ?? false;
+              const hasActiveChild = section.items.some((item) => isItemActive(item.url));
+
+              return (
+                <li key={section.title}>
+                  <SidebarNavItem
+                    title={section.title}
+                    icon={section.icon}
+                    onClick={() => toggleSection(section.title)}
+                    isActive={hasActiveChild}
+                    isExpanded={isExpanded}
+                    hasSubmenu
+                    isSubmenuOpen={isOpen}
+                    tooltip={section.title}
+                  />
+
+                  {isExpanded && (
+                    <div
+                      className={cn(
+                        "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                        isOpen ? "max-h-[400px] opacity-100 mt-1" : "max-h-0 opacity-0"
+                      )}
+                    >
+                      <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full">
+                        {section.items.map((item) => {
+                          const active = isItemActive(item.url);
+                          return (
+                            <li key={item.url}>
+                              <Link
+                                to={item.url}
+                                className={cn(
+                                  "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200 text-[14px]",
+                                  active
+                                    ? "bg-sidebar-accent/60 text-primary font-medium"
+                                    : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                                )}
+                              >
+                                <item.icon size={18} className="shrink-0" />
+                                <span className="whitespace-nowrap truncate">{item.title}</span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {/* Bottom */}
+        <div className="py-4 border-t border-sidebar-border">
+          <ul className="space-y-1 px-4">
+            <li className="flex items-center justify-center px-2.5 py-1">
+              {isExpanded ? (
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Tema</span>
+                  <ThemeSwitch />
+                </div>
+              ) : (
+                <ThemeSwitch />
+              )}
+            </li>
+            <li>
+              <SidebarNavItem
+                title="Voltar ao app"
+                icon={ArrowLeft}
+                url="/dashboard"
+                isActive={false}
+                isExpanded={isExpanded}
+                tooltip="Voltar ao app"
+              />
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
   );
 }
