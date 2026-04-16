@@ -652,8 +652,11 @@ export type Database = {
           additional_comments: string | null
           cancellation_reason: string
           created_at: string
+          details: string | null
           email: string | null
           id: string
+          intends_to_return: string | null
+          provider: string | null
           usage_level: string | null
           user_id: string
         }
@@ -661,8 +664,11 @@ export type Database = {
           additional_comments?: string | null
           cancellation_reason: string
           created_at?: string
+          details?: string | null
           email?: string | null
           id?: string
+          intends_to_return?: string | null
+          provider?: string | null
           usage_level?: string | null
           user_id: string
         }
@@ -670,8 +676,11 @@ export type Database = {
           additional_comments?: string | null
           cancellation_reason?: string
           created_at?: string
+          details?: string | null
           email?: string | null
           id?: string
+          intends_to_return?: string | null
+          provider?: string | null
           usage_level?: string | null
           user_id?: string
         }
