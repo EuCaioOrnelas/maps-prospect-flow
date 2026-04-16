@@ -274,7 +274,7 @@ export default function AdminGrowthIntelligence() {
               </TableHeader>
               <TableBody>
                 {inactiveRecoverable.map(u => {
-                  const daysInactive = Math.round((Date.now() - new Date(u.last_login_at).getTime()) / 86400000);
+                  const daysInactive = Math.round((Date.now() - new Date(u.updated_at).getTime()) / 86400000);
                   return (
                     <TableRow key={u.id}>
                       <TableCell>
@@ -285,7 +285,7 @@ export default function AdminGrowthIntelligence() {
                       </TableCell>
                       <TableCell><Badge variant="secondary" className="text-xs">{u.plan}</Badge></TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {new Date(u.last_login_at).toLocaleDateString("pt-BR")}
+                        {new Date(u.updated_at).toLocaleDateString("pt-BR")}
                       </TableCell>
                       <TableCell>
                         <span className={cn("text-sm font-medium", daysInactive > 30 ? "text-red-500" : "text-amber-500")}>{daysInactive}d</span>

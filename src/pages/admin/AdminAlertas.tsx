@@ -69,7 +69,7 @@ export default function AdminAlertas() {
         .from("profiles")
         .select("id", { count: "exact", head: true })
         .neq("plan", "free")
-        .lt("last_login_at", thirtyDaysAgo);
+        .lt("updated_at", thirtyDaysAgo);
 
       if (inactivePaid && inactivePaid > 0) {
         generatedAlerts.push({
