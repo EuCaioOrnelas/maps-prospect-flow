@@ -13,6 +13,7 @@ import { ActivationChecklist } from "@/components/dashboard/ActivationChecklist"
 import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { DashboardThemeProvider } from "@/contexts/ThemeContext";
 import { lazyWithRetry } from "@/lib/runtimeRecovery";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 // Eager load critical pages
 import Index from "./pages/Index";
