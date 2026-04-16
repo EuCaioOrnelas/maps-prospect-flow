@@ -121,6 +121,7 @@ export default function ManageSubscription() {
   const [stripePortalUrl, setStripePortalUrl] = useState<string | null>(null);
   const [cancellations, setCancellations] = useState<CancellationInfo[]>([]);
   const [cancellationDetails, setCancellationDetails] = useState<any>(null);
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
