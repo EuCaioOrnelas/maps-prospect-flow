@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 // Quick prompts: short preview text + full detailed prompt
 const quickPrompts = [
@@ -416,6 +417,7 @@ export default function CreateFlowAI() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { trackScoreEvent } = useAutoScoreTracking("create_flow_ai");
   const [prompt, setPrompt] = useState("");
   const [expandedPrompt, setExpandedPrompt] = useState<number | null>(null);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({ minHeight: 56, maxHeight: 240 });

@@ -10,9 +10,11 @@ import { ChatOfficialApiDialog } from "@/components/chat/ChatOfficialApiDialog";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { AlertTriangle, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const Chat = () => {
   const { user } = useAuth();
+  useAutoScoreTracking("chat");
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [showApiDialog, setShowApiDialog] = useState<boolean | null>(null);

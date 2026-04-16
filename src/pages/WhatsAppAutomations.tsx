@@ -29,6 +29,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getFlowTemplate } from "@/data/flowTemplates";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   draft: { label: "Rascunho", color: "bg-muted text-muted-foreground" },
@@ -56,6 +57,7 @@ export default function WhatsAppAutomations() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  useAutoScoreTracking("whatsapp_automations");
   const [showTemplatesDialog, setShowTemplatesDialog] = useState(false);
   const [templateSearch, setTemplateSearch] = useState("");
 

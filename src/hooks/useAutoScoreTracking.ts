@@ -22,8 +22,12 @@ export function useAutoScoreTracking(pageName: string) {
     // Page-specific events
     switch (pageName) {
       case "dashboard":
-      case "main_dashboard":
         trackScoreEvent("dashboard_viewed");
+        break;
+      case "main_dashboard":
+      case "cockpit":
+        trackScoreEvent("dashboard_viewed");
+        trackScoreEvent("cockpit_dashboard_viewed");
         break;
       case "upgrade":
       case "upgrade_promo":
@@ -47,6 +51,31 @@ export function useAutoScoreTracking(pageName: string) {
         break;
       case "profile":
         trackScoreEvent("profile_viewed");
+        break;
+      // Novas páginas com eventos dedicados
+      case "wa_flow":
+      case "whatsapp_automations":
+      case "whatsapp_flow_editor":
+        trackScoreEvent("wa_flow_page_viewed");
+        break;
+      case "create_flow_ai":
+        trackScoreEvent("wa_flow_page_viewed");
+        break;
+      case "meta_campaigns":
+        trackScoreEvent("meta_campaigns_page_viewed");
+        break;
+      case "opportunities":
+      case "opportunities_management":
+        trackScoreEvent("opportunities_page_viewed");
+        break;
+      case "chat":
+        trackScoreEvent("chat_page_viewed");
+        break;
+      case "ai_agents":
+        trackScoreEvent("ai_agent_page_viewed");
+        break;
+      case "crm_score":
+        trackScoreEvent("crm_score_page_viewed");
         break;
       case "agents":
       case "crm":

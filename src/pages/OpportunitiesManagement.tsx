@@ -36,6 +36,7 @@ import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog"
 import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
+import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 interface OpportunityLead {
   id: string;
@@ -69,6 +70,7 @@ export default function OpportunitiesManagement() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  useAutoScoreTracking("opportunities_management");
   const [leads, setLeads] = useState<OpportunityLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
