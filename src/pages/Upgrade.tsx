@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, X, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, Rocket, TrendingUp, Building2 } from "lucide-react";
+import { Check, X, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, Rocket, TrendingUp, Building2, Calculator, Calendar, Gift } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import { PaymentMethodModal, type CustomerData } from "@/components/checkout/Pay
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import type { LucideIcon } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
@@ -663,6 +664,94 @@ const Upgrade = () => {
         defaultEmail={user?.email || ""}
         defaultName={profile?.name || ""}
       />
+
+      {/* Upgrade Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-lg bg-card border border-border">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl flex items-center gap-2">
+              <Calculator className="text-primary" size={22} />
+              Resumo do seu upgrade
+            </DialogTitle>
+            <DialogDescription>
+              Veja exatamente como sua cobrança e seu saldo ficam após o upgrade.
+            </DialogDescription>
+          </DialogHeader>
+
+          {upgradePreview?.scenario === "annual_to_annual" && upgradePreview.annualUpgrade && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <Calendar size={16} className="text-primary" /> Plano anual → você mantém sua assinatura atual
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Sua assinatura atual continua válida até{" "}
+                  <strong className="text-foreground">
+                    {new Date(upgradePreview.annualUpgrade.currentPeriodEnd).toLocaleDateString("pt-BR")}
+                  </strong>
+                  . Você só paga a <strong className="text-foreground">diferença proporcional</strong> entre os planos
+                  pelos <strong className="text-foreground">{upgradePreview.annualUpgrade.daysRemaining} dias restantes</strong>.
+                </p>
+              </div>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Valor diário do plano atual</span><span className="font-mono">R$ {upgradePreview.annualUpgrade.oldDailyPrice.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Valor diário do novo plano</span><span className="font-mono">R$ {upgradePreview.annualUpgrade.newDailyPrice.toFixed(2)}</span></div>
+                <div className="flex justify-between text-primary font-semibold"><span>Diferença por dia</span><span className="font-mono">R$ {upgradePreview.annualUpgrade.dailyDifference.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Dias restantes</span><span className="font-mono">{upgradePreview.annualUpgrade.daysRemaining}</span></div>
+                <div className="border-t border-border pt-2 flex justify-between text-base font-bold"><span>Total a cobrar agora</span><span className="font-mono text-primary">R$ {upgradePreview.annualUpgrade.totalDifferenceToCharge.toFixed(2)}</span></div>
+                <p className="text-xs text-muted-foreground">
+                  Parcelável em até <strong>{upgradePreview.annualUpgrade.maxInstallments}x de R$ {upgradePreview.annualUpgrade.installmentValue.toFixed(2)}</strong> (limitado aos meses restantes da sua assinatura).
+                </p>
+              </div>
+
+              <div className="p-3 rounded-lg bg-muted/40 border border-border/50 text-xs text-muted-foreground">
+                💡 <strong className="text-foreground">Por que o valor muda todo dia?</strong> No plano anual, quanto mais perto do vencimento você fizer o upgrade, menor a diferença a pagar — porque você paga apenas pelos dias que faltam até a renovação.
+              </div>
+
+              {upgradePreview.carriedBonus > 0 && (
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-sm flex items-center gap-2">
+                  <Gift size={16} className="text-emerald-600" />
+                  <span><strong>+{upgradePreview.carriedBonus}</strong> oportunidades viram <strong>saldo bônus</strong> permanente no novo plano.</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {upgradePreview?.scenario === "monthly_to_monthly" && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <Calendar size={16} className="text-primary" /> Plano mensal → migração imediata
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Sua assinatura atual será <strong className="text-foreground">cancelada agora</strong> e você passa a pagar o valor cheio do novo plano a partir de hoje. Sem desconto financeiro — em troca, suas oportunidades restantes viram <strong className="text-foreground">saldo bônus</strong>.
+                </p>
+              </div>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Valor do novo plano</span><span className="font-mono font-bold text-primary">R$ {upgradePreview.newPriceFull},00/mês</span></div>
+              </div>
+
+              {upgradePreview.carriedBonus > 0 && (
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-sm flex items-center gap-2">
+                  <Gift size={16} className="text-emerald-600" />
+                  <span><strong>+{upgradePreview.carriedBonus}</strong> oportunidades viram <strong>saldo bônus</strong> permanente (não renova, mas nunca expira enquanto não consumir).</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setPreviewOpen(false)} disabled={loadingPlan !== null}>
+              Cancelar
+            </Button>
+            <Button variant="hero" onClick={confirmUpgrade} disabled={loadingPlan !== null}>
+              {loadingPlan ? <><Loader2 size={16} className="animate-spin mr-2" />Processando...</> : "Confirmar e ir ao pagamento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
