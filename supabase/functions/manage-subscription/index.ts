@@ -256,7 +256,47 @@ serve(async (req) => {
         }
       }
 
+      // If no traditional subscription found, try PIX Automático authorizations
       if (!targetSubId) {
+        logStep("No traditional subscription found, checking PIX Automático authorizations");
+        const pixAuthRes = await fetch(`${ASAAS_API}/pix/automatic/authorizations?customer=${customerId}&status=ACTIVE`, {
+          headers: { "access_token": apiKey, "Accept": "application/json" },
+        });
+        const pixAuthJson = await pixAuthRes.json();
+        
+        if (pixAuthJson.data?.length > 0) {
+          const pixAuth = pixAuthJson.data[0];
+          logStep("Found PIX Automático authorization", { id: pixAuth.id, value: pixAuth.value });
+
+          // Cancel PIX Automático authorization
+          const cancelPixRes = await fetch(`${ASAAS_API}/pix/automatic/authorizations/${pixAuth.id}/cancel`, {
+            method: "POST",
+            headers: { "access_token": apiKey, "Accept": "application/json" },
+          });
+          const cancelPixJson = await cancelPixRes.json();
+          logStep("PIX Automático authorization cancelled", { result: cancelPixJson });
+
+          // Log cancellation
+          await supabaseClient.from("subscription_cancellations").insert({
+            user_id: userId,
+            provider: "asaas",
+            subscription_id: pixAuth.id,
+            billing_type: "PIX",
+            cancelled_at: new Date().toISOString(),
+            active_until: profile.subscription_current_period_end,
+            notes: `Cancelamento PIX Automático. Valor: R$${pixAuth.value || "N/A"}`,
+          });
+
+          return new Response(JSON.stringify({
+            success: true,
+            message: "PIX Automático cancelado. Seu plano permanece ativo até o final do período atual.",
+            cancellationDetails: {
+              cancelledAt: new Date().toISOString(),
+              activeUntil: profile.subscription_current_period_end,
+            },
+          }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
         throw new Error("Nenhuma assinatura ativa encontrada");
       }
 
