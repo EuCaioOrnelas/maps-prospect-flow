@@ -104,7 +104,7 @@ const AdminAuditoria = lazyWithRetry(() => import("./pages/admin/AdminAuditoria"
 const AdminHealthScore = lazyWithRetry(() => import("./pages/admin/AdminHealthScore"), "AdminHealthScore");
 const AdminGrowthIntelligence = lazyWithRetry(() => import("./pages/admin/AdminGrowthIntelligence"), "AdminGrowthIntelligence");
 
-
+const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,
