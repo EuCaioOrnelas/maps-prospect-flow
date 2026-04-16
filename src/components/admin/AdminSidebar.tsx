@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import ThemeSwitch from "@/components/ui/theme-switch";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -78,7 +79,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Usuários", href: "/admin/usuarios", icon: Users },
       { label: "Ativação", href: "/admin/ativacao", icon: UserCheck },
       { label: "Retenção", href: "/admin/retencao", icon: Activity },
-      { label: "Health Score", href: "/admin/health-score", icon: Target },
+      { label: "Score Leads", href: "/admin/score-leads", icon: Target },
       { label: "Landing Pages", href: "/admin/landing-pages", icon: Globe },
     ],
   },
@@ -210,7 +211,11 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      <div className="border-t border-border/30 p-3">
+      <div className="border-t border-border/30 p-3 space-y-2">
+        <div className="flex items-center justify-between px-2.5 py-1">
+          <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Tema</span>
+          <ThemeSwitch />
+        </div>
         <Link
           to="/dashboard"
           className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"

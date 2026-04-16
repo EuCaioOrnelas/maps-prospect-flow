@@ -101,7 +101,7 @@ const AdminProxies = lazyWithRetry(() => import("./pages/admin/AdminProxies"), "
 const AdminWebhooks = lazyWithRetry(() => import("./pages/admin/AdminWebhooks"), "AdminWebhooks");
 const AdminTermos = lazyWithRetry(() => import("./pages/admin/AdminTermos"), "AdminTermos");
 const AdminAuditoria = lazyWithRetry(() => import("./pages/admin/AdminAuditoria"), "AdminAuditoria");
-const AdminHealthScore = lazyWithRetry(() => import("./pages/admin/AdminHealthScore"), "AdminHealthScore");
+
 const AdminGrowthIntelligence = lazyWithRetry(() => import("./pages/admin/AdminGrowthIntelligence"), "AdminGrowthIntelligence");
 
 const queryClient = new QueryClient({
@@ -188,7 +188,7 @@ const App = () => (
                   <Route path="ativacao" element={<AdminAtivacao />} />
                   <Route path="retencao" element={<AdminRetencao />} />
                   <Route path="landing-pages" element={<AdminLandingPages />} />
-                  <Route path="health-score" element={<AdminHealthScore />} />
+                  <Route path="score-leads" element={<CRMScore />} />
                   {/* IA */}
                   <Route path="ia/agentes" element={<AdminIAAgentes />} />
                   <Route path="ia/performance" element={<AdminIAPerformance />} />

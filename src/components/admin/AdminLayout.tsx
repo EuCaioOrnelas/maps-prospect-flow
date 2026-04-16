@@ -1,15 +1,37 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { AdminSidebar } from "./AdminSidebar";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { DashboardThemeProvider } from "@/contexts/ThemeContext";
+import { motion, AnimatePresence } from "framer-motion";
 
-export function AdminLayout() {
+function AdminLayoutInner() {
+  const location = useLocation();
+
   return (
     <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
       <BackgroundGlow />
       <AdminSidebar />
       <main className="flex-1 min-w-0 overflow-auto">
-        <Outlet />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
     </div>
+  );
+}
+
+export function AdminLayout() {
+  return (
+    <DashboardThemeProvider>
+      <AdminLayoutInner />
+    </DashboardThemeProvider>
   );
 }
