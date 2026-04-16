@@ -21,10 +21,32 @@ import {
  * Churn nunca > 15% no dashboard principal.
  * ============================================================ */
 
+// Churn mensal por cenário (calibrado SaaS WhatsApp PME Brasil)
 const CHURN = { optimistic: 0.04, realistic: 0.06, pessimistic: 0.09 };
-const SALES = { optimistic: 1.35, realistic: 1.0, pessimistic: 0.75 };
-const EXPANSION = { optimistic: 1.30, realistic: 1.0, pessimistic: 0 };
-const BASE_EXPANSION_RATE = 0.015; // 1.5% base — saudável para SMB
+// Multiplicadores de novas vendas (vs baseline histórico)
+const SALES = { optimistic: 1.35, realistic: 1.0, pessimistic: 0.55 };
+// Expansão real: clientes × upgrade rate × upgrade médio (R$)
+const UPGRADE_RATE = { optimistic: 0.10, realistic: 0.06, pessimistic: 0.0 };
+const UPGRADE_AVG = 90; // R$ médio de upgrade por cliente que faz upsell
+
+/**
+ * Curva de ramp-up por cenário (12 meses) — multiplica as novas vendas mensais.
+ * Pessimista: queda nos primeiros 3 meses (mercado contraído / churn > vendas),
+ *             estabiliza no mês 4 e recupera devagar.
+ * Realista:   crescimento gradual orgânico.
+ * Otimista:   aceleração composta plausível.
+ */
+const SALES_RAMP = {
+  pessimistic: [0.55, 0.45, 0.40, 0.50, 0.60, 0.70, 0.78, 0.85, 0.90, 0.95, 1.00, 1.05],
+  realistic:   [1.00, 1.03, 1.06, 1.10, 1.14, 1.18, 1.22, 1.27, 1.32, 1.37, 1.42, 1.48],
+  optimistic:  [1.10, 1.20, 1.32, 1.45, 1.58, 1.72, 1.86, 2.00, 2.15, 2.30, 2.45, 2.60],
+};
+// Curva de churn (pessimista pico nos meses iniciais, depois normaliza)
+const CHURN_RAMP = {
+  pessimistic: [1.30, 1.40, 1.35, 1.20, 1.10, 1.05, 1.00, 0.98, 0.96, 0.95, 0.95, 0.95],
+  realistic:   [1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00],
+  optimistic:  [0.95, 0.92, 0.90, 0.88, 0.86, 0.84, 0.82, 0.80, 0.78, 0.76, 0.74, 0.72],
+};
 
 const COLORS = {
   realistic: "#3b82f6",   // azul
@@ -77,24 +99,39 @@ export default function AdminForecast() {
 
     const avgNewMRR = avgNewClients * averageTicket;
     const currentMRR = totalMRR;
+    const currentClients = Math.max(totalSubscribers, 1);
 
-    // === Build 12-month compound projection ===
-    const buildProjection = (churnRate: number, salesMult: number, expMult: number) => {
-      const months: number[] = [];
+    // === Build 12-month compound projection com ramps ===
+    // Expansão real: clientes ativos × upgrade rate × upgrade médio
+    const buildProjection = (
+      churnBase: number,
+      salesMult: number,
+      upgradeRate: number,
+      salesRamp: number[],
+      churnRamp: number[],
+    ) => {
+      const months: { mrr: number; newM: number; expM: number; churnM: number; clients: number }[] = [];
       let mrr = currentMRR;
+      let clients = currentClients;
       for (let i = 0; i < 12; i++) {
+        const churnRate = churnBase * churnRamp[i];
         const churnLoss = mrr * churnRate;
-        const newMRR = avgNewMRR * salesMult;
-        const expMRR = mrr * BASE_EXPANSION_RATE * expMult;
-        mrr = Math.max(currentMRR * 0.25, mrr + newMRR + expMRR - churnLoss); // floor: nunca abaixo de 25% do atual
-        months.push(Math.round(mrr));
+        const newM = avgNewMRR * salesMult * salesRamp[i];
+        const expM = clients * upgradeRate * UPGRADE_AVG;
+        const nextMRR = Math.max(currentMRR * 0.45, mrr + newM + expM - churnLoss);
+        // Atualiza nº clientes (proxy via MRR/ticket)
+        const lostClients = clients * churnRate;
+        const newClients = avgNewClients * salesMult * salesRamp[i];
+        clients = Math.max(1, clients - lostClients + newClients);
+        mrr = nextMRR;
+        months.push({ mrr: Math.round(mrr), newM: Math.round(newM), expM: Math.round(expM), churnM: Math.round(churnLoss), clients: Math.round(clients) });
       }
       return months;
     };
 
-    const pessMonths = buildProjection(CHURN.pessimistic, SALES.pessimistic, EXPANSION.pessimistic);
-    const realMonths = buildProjection(CHURN.realistic, SALES.realistic, EXPANSION.realistic);
-    const optMonths = buildProjection(CHURN.optimistic, SALES.optimistic, EXPANSION.optimistic);
+    const pessSeries = buildProjection(CHURN.pessimistic, SALES.pessimistic, UPGRADE_RATE.pessimistic, SALES_RAMP.pessimistic, CHURN_RAMP.pessimistic);
+    const realSeries = buildProjection(CHURN.realistic, SALES.realistic, UPGRADE_RATE.realistic, SALES_RAMP.realistic, CHURN_RAMP.realistic);
+    const optSeries = buildProjection(CHURN.optimistic, SALES.optimistic, UPGRADE_RATE.optimistic, SALES_RAMP.optimistic, CHURN_RAMP.optimistic);
 
     // Build projection rows (realistic breakdown)
     const now = new Date();
@@ -103,55 +140,44 @@ export default function AdminForecast() {
     for (let i = 0; i < 12; i++) {
       const date = new Date(now.getFullYear(), now.getMonth() + 1 + i, 1);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      const churn = prevMRR * CHURN.realistic;
-      const newM = avgNewMRR;
-      const expM = prevMRR * BASE_EXPANSION_RATE;
-      const net = newM + expM - churn;
+      const r = realSeries[i];
+      const net = r.newM + r.expM - r.churnM;
       projection.push({
         month: monthKey,
         label: fmtMonth(monthKey),
-        pessimistic: pessMonths[i],
-        realistic: realMonths[i],
-        optimistic: optMonths[i],
-        newMRR: Math.round(newM),
-        expansionMRR: Math.round(expM),
-        churnMRR: Math.round(churn),
+        pessimistic: pessSeries[i].mrr,
+        realistic: realSeries[i].mrr,
+        optimistic: optSeries[i].mrr,
+        newMRR: r.newM,
+        expansionMRR: r.expM,
+        churnMRR: r.churnM,
         netNewMRR: Math.round(net),
         growthRate: prevMRR > 0 ? net / prevMRR : 0,
       });
-      prevMRR = realMonths[i];
+      prevMRR = realSeries[i].mrr;
     }
 
-    // 30-day cards
+    // 30-day cards (mês 1)
     const next30 = {
-      pessimistic: pessMonths[0],
-      realistic: realMonths[0],
-      optimistic: optMonths[0],
+      pessimistic: pessSeries[0].mrr,
+      realistic: realSeries[0].mrr,
+      optimistic: optSeries[0].mrr,
     };
 
-    // 30-day breakdowns per scenario
-    const scenarioBreakdown = (churnRate: number, salesMult: number, expMult: number) => ({
-      churnMRR: Math.round(currentMRR * churnRate),
-      newMRR: Math.round(avgNewMRR * salesMult),
-      expansionMRR: Math.round(currentMRR * BASE_EXPANSION_RATE * expMult),
-    });
-
     const breakdown = {
-      pessimistic: scenarioBreakdown(CHURN.pessimistic, SALES.pessimistic, EXPANSION.pessimistic),
-      realistic: scenarioBreakdown(CHURN.realistic, SALES.realistic, EXPANSION.realistic),
-      optimistic: scenarioBreakdown(CHURN.optimistic, SALES.optimistic, EXPANSION.optimistic),
+      pessimistic: { churnMRR: pessSeries[0].churnM, newMRR: pessSeries[0].newM, expansionMRR: pessSeries[0].expM },
+      realistic:   { churnMRR: realSeries[0].churnM, newMRR: realSeries[0].newM, expansionMRR: realSeries[0].expM },
+      optimistic:  { churnMRR: optSeries[0].churnM, newMRR: optSeries[0].newM, expansionMRR: optSeries[0].expM },
     };
 
     // SaaS health metrics
-    const churnMRR = currentMRR * CHURN.realistic;
-    const netNew = avgNewMRR + currentMRR * BASE_EXPANSION_RATE - churnMRR;
+    const churnMRR = realSeries[0].churnM;
+    const expMRR = realSeries[0].expM;
+    const netNew = avgNewMRR + expMRR - churnMRR;
     const growthRate = currentMRR > 0 ? netNew / currentMRR : 0;
-    // LTV = ticket / churn rate
     const ltv = averageTicket / CHURN.realistic;
-    // CAC payback estimado (simplificado): assume CAC = 1.5x ticket -> payback meses
     const estCAC = averageTicket * 1.5;
     const cacPayback = averageTicket > 0 ? estCAC / averageTicket : 0;
-    // Retenção mensal
     const retention = (1 - CHURN.realistic) * 100;
 
     // Historical chart data
@@ -169,7 +195,7 @@ export default function AdminForecast() {
       metrics: {
         churnMRR: Math.round(churnMRR),
         newMRR: Math.round(avgNewMRR),
-        expansionMRR: Math.round(currentMRR * BASE_EXPANSION_RATE),
+        expansionMRR: Math.round(expMRR),
         netNewMRR: Math.round(netNew),
         growthRate,
         avgNewClients: Math.round(avgNewClients),
@@ -556,46 +582,83 @@ function ScenarioCard({
   color: "red" | "blue" | "green"; highlighted?: boolean;
 }) {
   const palette = {
-    red: { text: "text-red-500", bg: "bg-red-500/10", border: highlighted ? "border-red-500/60" : "border-red-500/25", glow: "shadow-red-500/5" },
-    blue: { text: "text-blue-500", bg: "bg-blue-500/10", border: highlighted ? "border-blue-500/60" : "border-blue-500/25", glow: "shadow-blue-500/10" },
-    green: { text: "text-emerald-500", bg: "bg-emerald-500/10", border: highlighted ? "border-emerald-500/60" : "border-emerald-500/25", glow: "shadow-emerald-500/5" },
+    red: {
+      text: "text-red-500",
+      bg: "bg-red-500/10",
+      ring: highlighted ? "ring-2 ring-red-500/40" : "",
+      gradient: "from-red-500/[0.08] via-transparent to-transparent",
+      bar: "bg-red-500",
+      badgeBg: "bg-red-500",
+    },
+    blue: {
+      text: "text-blue-500",
+      bg: "bg-blue-500/10",
+      ring: highlighted ? "ring-2 ring-blue-500/50" : "",
+      gradient: "from-blue-500/[0.10] via-transparent to-transparent",
+      bar: "bg-blue-500",
+      badgeBg: "bg-blue-500",
+    },
+    green: {
+      text: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+      ring: highlighted ? "ring-2 ring-emerald-500/40" : "",
+      gradient: "from-emerald-500/[0.08] via-transparent to-transparent",
+      bar: "bg-emerald-500",
+      badgeBg: "bg-emerald-500",
+    },
   }[color];
   const Icon = color === "red" ? TrendingDown : color === "green" ? TrendingUp : Target;
-  const deltaPct = value > 0 && (value - delta) > 0 ? ((delta / (value - delta)) * 100).toFixed(1) : "0";
+  const baseValue = value - delta;
+  const deltaPct = baseValue > 0 ? ((delta / baseValue) * 100).toFixed(1) : "0";
+  const isPositive = delta >= 0;
 
   return (
-    <Card className={`relative border ${palette.border} bg-card rounded-2xl ${highlighted ? `shadow-lg ${palette.glow}` : "shadow-sm"} hover:shadow-md transition-all overflow-hidden`}>
+    <Card className={`relative overflow-hidden border border-border/50 bg-card rounded-2xl ${palette.ring} ${highlighted ? "shadow-xl shadow-blue-500/5" : "shadow-sm"} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300`}>
+      {/* Gradient accent */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${palette.gradient} pointer-events-none`} />
+      {/* Side bar accent */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${palette.bar}`} />
+
       {highlighted && (
-        <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-blue-500 text-white text-[8px] font-bold uppercase tracking-wider z-10">
+        <div className={`absolute top-4 right-4 flex items-center gap-1 px-2.5 py-1 rounded-full ${palette.badgeBg} text-white text-[9px] font-bold uppercase tracking-wider z-10 shadow-md`}>
+          <Sparkles size={9} />
           Recomendado
         </div>
       )}
-      <CardContent className="p-5 space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className={`p-2 rounded-xl ${palette.bg}`}>
-              <Icon size={16} className={palette.text} />
-            </div>
-            <div>
-              <p className={`text-xs font-bold uppercase tracking-wider ${palette.text}`}>{label}</p>
-              <p className="text-[9px] text-muted-foreground/70 mt-0.5">{subtitle}</p>
-            </div>
+
+      <CardContent className="relative p-6 space-y-5">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className={`p-2.5 rounded-xl ${palette.bg} ring-1 ring-border/30`}>
+            <Icon size={18} className={palette.text} strokeWidth={2.5} />
+          </div>
+          <div>
+            <p className={`text-[11px] font-bold uppercase tracking-[0.12em] ${palette.text}`}>{label}</p>
+            <p className="text-[10px] text-muted-foreground/70 mt-0.5">{subtitle}</p>
           </div>
         </div>
 
+        {/* Big value */}
         <div>
-          <p className="text-3xl font-extrabold text-foreground tracking-tight">R$ {fmt(value)}</p>
-          <div className="flex items-center gap-2 mt-1.5">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${palette.bg} ${palette.text}`}>
-              {delta >= 0 ? "+" : ""}R$ {fmt(delta)}
-            </span>
-            <span className={`text-[10px] font-medium ${palette.text}`}>
-              ({delta >= 0 ? "+" : ""}{deltaPct}%)
+          <p className="text-[10px] font-medium text-muted-foreground/70 uppercase tracking-wider mb-1">MRR projetado · 30d</p>
+          <p className="text-[34px] font-extrabold text-foreground tracking-tight leading-none">
+            R$ {fmt(value)}
+          </p>
+          <div className="flex items-center gap-2 mt-3">
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${palette.bg}`}>
+              {isPositive ? <ArrowUpRight size={11} className={palette.text} /> : <ArrowDownRight size={11} className={palette.text} />}
+              <span className={`text-[11px] font-bold ${palette.text}`}>
+                {isPositive ? "+" : ""}R$ {fmt(delta)}
+              </span>
+            </div>
+            <span className={`text-[11px] font-semibold ${palette.text}`}>
+              {isPositive ? "+" : ""}{deltaPct}%
             </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border/30">
+        {/* Drivers row */}
+        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/40">
           <DriverMini label="Churn" value={`${churn.toFixed(1)}%`} color={palette.text} />
           <DriverMini label="New MRR" value={`R$ ${fmt(newMRR)}`} color={palette.text} />
           <DriverMini label="Expansão" value={`R$ ${fmt(expansion)}`} color={palette.text} />
