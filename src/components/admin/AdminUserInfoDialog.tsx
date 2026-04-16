@@ -327,26 +327,6 @@ export const AdminUserInfoDialog = ({ userId, open, onOpenChange }: Props) => {
                       </CardContent>
                     </Card>
 
-                    {/* Insights */}
-                    {scoreData.insights?.length > 0 && (
-                      <Card className="border-border/50">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm flex items-center gap-2">
-                            <Lightbulb className="h-4 w-4 text-yellow-400" /> Insights
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <ul className="space-y-1.5">
-                            {scoreData.insights.map((insight: string, i: number) => (
-                              <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                                <span className="text-primary mt-0.5">•</span> {insight}
-                              </li>
-                            ))}
-                          </ul>
-                        </CardContent>
-                      </Card>
-                    )}
-
                     {/* Evolution chart inside Score tab */}
                     <Card className="border-border/50">
                       <CardHeader className="pb-2">
@@ -368,6 +348,26 @@ export const AdminUserInfoDialog = ({ userId, open, onOpenChange }: Props) => {
                         )}
                       </CardContent>
                     </Card>
+
+                    {/* Insights - moved to bottom */}
+                    {scoreData.insights?.length > 0 && (
+                      <Card className="border-border/50">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Lightbulb className="h-4 w-4 text-yellow-400" /> Insights
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ul className="space-y-1.5">
+                            {scoreData.insights.map((insight: string, i: number) => (
+                              <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                                <span className="text-primary mt-0.5">•</span> {insight}
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
                   </>
                 ) : (
                   <p className="text-muted-foreground text-center py-8">Nenhum score encontrado.</p>

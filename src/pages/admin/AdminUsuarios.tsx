@@ -9,12 +9,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserActionsMenu } from "@/components/admin/UserActionsMenu";
+import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
 
 export default function AdminUsuarios() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -95,7 +97,7 @@ export default function AdminUsuarios() {
               </TableHeader>
               <TableBody>
                 {filtered.map(user => (
-                  <TableRow key={user.id}>
+                <TableRow key={user.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedUserId(user.id)}>
                     <TableCell>
                       <div>
                         <p className="font-medium text-sm">{user.name || "—"}</p>
@@ -135,6 +137,14 @@ export default function AdminUsuarios() {
           )}
         </CardContent>
       </Card>
+
+      {selectedUserId && (
+        <AdminUserInfoDialog
+          userId={selectedUserId}
+          open={!!selectedUserId}
+          onOpenChange={(open) => { if (!open) setSelectedUserId(null); }}
+        />
+      )}
     </div>
   );
 }
