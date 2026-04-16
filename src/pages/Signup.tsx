@@ -106,6 +106,13 @@ const Signup = () => {
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
+      return;
+    }
+    // Novo fluxo: força usuário a escolher plano + cartão antes
+    if (!sessionStorage.getItem("trial_plan_chosen")) {
+      navigate("/signup/escolher-plano", { replace: true });
+    } else {
+      navigate("/signup/cartao-trial", { replace: true });
     }
   }, [user, navigate]);
 
