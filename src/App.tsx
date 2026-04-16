@@ -13,6 +13,7 @@ import { ActivationChecklist } from "@/components/dashboard/ActivationChecklist"
 import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { DashboardThemeProvider } from "@/contexts/ThemeContext";
 import { lazyWithRetry } from "@/lib/runtimeRecovery";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 // Eager load critical pages
 import Index from "./pages/Index";
@@ -25,6 +26,7 @@ import Upgrade from "./pages/Upgrade";
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"), "Dashboard");
 const MainDashboard = lazyWithRetry(() => import("./pages/MainDashboard"), "MainDashboard");
 const Admin = lazyWithRetry(() => import("./pages/Admin"), "Admin");
+const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"), "AdminDashboard");
 const AdminLandingPages = lazyWithRetry(() => import("./pages/AdminLandingPages"), "AdminLandingPages");
 const AdminAnnouncements = lazyWithRetry(() => import("./pages/AdminAnnouncements"), "AdminAnnouncements");
 const LandingPage = lazyWithRetry(() => import("./pages/LandingPage"), "LandingPage");
@@ -179,227 +181,31 @@ const App = () => (
                     </ProtectedRoute>
                   } 
                 />
-                <Route 
-                  path="/admin" 
+                {/* New Admin Layout with sidebar */}
+                <Route
+                  path="/admin"
                   element={
                     <ProtectedRoute requireAdmin>
-                      <Admin />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/insights" 
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <UserInsights />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/landing-pages" 
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <AdminLandingPages />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/announcements" 
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <AdminAnnouncements />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route path="/lp/:slug" element={<LightThemeWrapper><LandingPage /></LightThemeWrapper>} />
-                {/* /reports now redirects to /dashboard */}
-                <Route 
-                  path="/whatsapp" 
-                  element={
-                    <ProtectedRoute>
-                      <WhatsAppCampaign />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/meta-campaigns" 
-                  element={
-                    <ProtectedRoute>
-                      <MetaCampaigns />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/meta-api-guide" 
-                  element={
-                    <ProtectedRoute>
-                      <MetaApiGuide />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/whatsapp/reports" 
-                  element={
-                    <ProtectedRoute>
-                      <WhatsAppReports />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/profile" 
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/crm" 
-                  element={
-                    <ProtectedRoute>
-                      <CRM />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/crm/score" 
-                  element={
-                    <ProtectedRoute>
-                      <CRMScore />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/chat" 
-                  element={
-                    <ProtectedRoute>
-                  <Chat />
+                      <AdminLayout />
                     </ProtectedRoute>
                   }
-                />
-                <Route 
-                  path="/fluxos" 
-                  element={
-                    <ProtectedRoute>
-                      <WhatsAppAutomations />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route 
-                  path="/fluxos/criar-ia" 
-                  element={
-                    <ProtectedRoute>
-                      <CreateFlowAI />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route 
-                  path="/fluxos/:id" 
-                  element={
-                    <ProtectedRoute>
-                      <WhatsAppFlowEditor />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route 
-                  path="/warming" 
-                  element={
-                    <ProtectedRoute>
-                      <Warming />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/warming/reports" 
-                  element={
-                    <ProtectedRoute>
-                      <WarmingReports />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/agents" 
-                  element={
-                    <ProtectedRoute>
-                      <AIAgents />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/agents/reports" 
-                  element={
-                    <ProtectedRoute>
-                      <AgentReports />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/consultoria" 
-                  element={
-                    <ProtectedRoute>
-                      <Consultoria />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route path="/shared-report/:reportId" element={<LightThemeWrapper><SharedReport /></LightThemeWrapper>} />
-                <Route path="/obrigado" element={<LightThemeWrapper><ThankYou /></LightThemeWrapper>} />
-                <Route path="/cancelamento" element={<LightThemeWrapper><CancellationFeedback /></LightThemeWrapper>} />
-                <Route 
-                  path="/admin/tests" 
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <ProductionTests />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/email-tests" 
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <AdminEmailTests />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/trial-automation" 
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <AdminTrialAutomation />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/user-scoring" 
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <AdminUserScoring />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/email-flows" 
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <AdminEmailFlows />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/email-flows/:id" 
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <AdminEmailFlowEditor />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/pix-billing" 
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <AdminPixBilling />
-                    </ProtectedRoute>
-                  } 
-                />
+                >
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="legacy" element={<Admin />} />
+                  <Route path="insights" element={<UserInsights />} />
+                  <Route path="landing-pages" element={<AdminLandingPages />} />
+                  <Route path="announcements" element={<AdminAnnouncements />} />
+                  <Route path="tests" element={<ProductionTests />} />
+                  <Route path="email-tests" element={<AdminEmailTests />} />
+                  <Route path="trial-automation" element={<AdminTrialAutomation />} />
+                  <Route path="user-scoring" element={<AdminUserScoring />} />
+                  <Route path="email-flows" element={<AdminEmailFlows />} />
+                  <Route path="email-flows/:id" element={<AdminEmailFlowEditor />} />
+                  <Route path="pix-billing" element={<AdminPixBilling />} />
+                  {/* Placeholder routes for future pages */}
+                  <Route path="usuarios" element={<Admin />} />
+                  <Route path="*" element={<Admin />} />
+                </Route>
                 {/* Explicit 404 route */}
                 <Route path="/404" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
