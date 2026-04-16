@@ -299,7 +299,7 @@ export const ScoreUsersTab = () => {
       </CardContent>
 
       {selectedUserId && (
-        <ScoreUserDetailDialog
+        <AdminUserInfoDialog
           userId={selectedUserId}
           open={!!selectedUserId}
           onOpenChange={(open) => !open && setSelectedUserId(null)}
