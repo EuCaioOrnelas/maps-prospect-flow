@@ -2,11 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import {
   TrendingUp, TrendingDown, Target, DollarSign, BarChart3, AlertTriangle,
   Calendar, Users, ArrowUpRight, ArrowDownRight, Sparkles, ShieldCheck,
-  Activity, Repeat, Heart, Zap, Info,
+  Activity, Repeat, Heart, Zap, Info, HelpCircle, RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 
 const PLAN_PRICES_MONTHLY: Record<string, number> = { start: 296, growth: 696, scale: 897 };
 
