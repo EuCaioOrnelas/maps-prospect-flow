@@ -437,7 +437,6 @@ export default function SignupWithCard() {
                   cardNumber={cardNumber || "•••• •••• •••• ••••"}
                   cardHolder={cardHolder || "NOME NO CARTÃO"}
                   expiryDate={cardExpiry || "MM/AA"}
-                  cvv={cardCvv || "•••"}
                   isFlipped={cardFlipped}
                 />
               </div>

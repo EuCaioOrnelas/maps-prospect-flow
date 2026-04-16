@@ -15,10 +15,11 @@ export const TrialAutoChargeBanner = () => {
   const [dismissed, setDismissed] = useState(false);
 
   const isFreeTrial = !profile?.plan || profile.plan === "free";
-  const willCharge = (profile as Record<string, unknown> | null)?.trial_will_charge_at as string | undefined;
-  const cancelled = (profile as Record<string, unknown> | null)?.trial_auto_charge_cancelled as boolean | undefined;
-  const last4 = (profile as Record<string, unknown> | null)?.trial_card_last4 as string | undefined;
-  const planChosen = (profile as Record<string, unknown> | null)?.trial_plan_chosen as string | undefined;
+  const p = profile as unknown as Record<string, unknown> | null;
+  const willCharge = p?.trial_will_charge_at as string | undefined;
+  const cancelled = p?.trial_auto_charge_cancelled as boolean | undefined;
+  const last4 = p?.trial_card_last4 as string | undefined;
+  const planChosen = p?.trial_plan_chosen as string | undefined;
 
   if (!isFreeTrial || !willCharge || cancelled || dismissed) return null;
 
