@@ -1,25 +1,27 @@
 import { useState, useEffect } from "react";
-import { ClipboardList, Search, Filter } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
 
 export default function AdminAssinaturas() {
   const [subscribers, setSubscribers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, email, name, plan, payment_provider, subscription_current_period_end, created_at")
+        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at")
         .neq("plan", "free")
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(500);
       setSubscribers(data || []);
       setLoading(false);
     };
@@ -41,7 +43,7 @@ export default function AdminAssinaturas() {
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Assinaturas</h1>
-        <p className="text-sm text-muted-foreground mt-1">Gerenciamento de assinaturas ativas</p>
+        <p className="text-sm text-muted-foreground mt-1">Todos os usuários pagantes — Stripe, Asaas e PIX</p>
       </div>
 
       <div className="flex items-center gap-3">
@@ -69,7 +71,11 @@ export default function AdminAssinaturas() {
               </TableHeader>
               <TableBody>
                 {filtered.map(sub => (
-                  <TableRow key={sub.id}>
+                  <TableRow
+                    key={sub.id}
+                    className="cursor-pointer hover:bg-muted/40"
+                    onClick={() => setSelectedUserId(sub.id)}
+                  >
                     <TableCell>
                       <div>
                         <p className="font-medium text-sm">{sub.name || "—"}</p>
@@ -81,7 +87,9 @@ export default function AdminAssinaturas() {
                         {sub.plan}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{sub.payment_provider || "stripe"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {sub.payment_provider === "abacate_pay" ? "PIX" : sub.payment_provider === "asaas" ? "Asaas Cartão" : sub.payment_provider || "Stripe"}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {sub.subscription_current_period_end ? new Date(sub.subscription_current_period_end).toLocaleDateString("pt-BR") : "—"}
                     </TableCell>
@@ -92,6 +100,14 @@ export default function AdminAssinaturas() {
           )}
         </CardContent>
       </Card>
+
+      {selectedUserId && (
+        <AdminUserInfoDialog
+          userId={selectedUserId}
+          open={!!selectedUserId}
+          onOpenChange={(open) => !open && setSelectedUserId(null)}
+        />
+      )}
     </div>
   );
 }

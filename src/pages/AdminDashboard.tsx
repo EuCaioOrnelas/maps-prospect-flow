@@ -502,7 +502,7 @@ export default function AdminDashboard() {
                         <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
                         <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", fontSize: "13px" }} />
                         <Bar dataKey="stripe" name="Stripe" fill="#6366f1" radius={[4, 4, 0, 0]} stackId="card" />
-                        <Bar dataKey="asaasCard" name="Asaas Cartão" fill="#8b5cf6" radius={[4, 4, 0, 0]} stackId="card" />
+                        <Bar dataKey="asaasCard" name="Asaas Cartão" fill="#3b82f6" radius={[4, 4, 0, 0]} stackId="card" />
                         <Bar dataKey="pix" name="PIX" fill={WIIZE_GREEN} radius={[4, 4, 0, 0]} />
                         <Legend />
                       </BarChart>
@@ -587,7 +587,7 @@ export default function AdminDashboard() {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground flex items-center gap-2">
                       Asaas Cartão
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-500">{pctAsaasCard}%</span>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500">{pctAsaasCard}%</span>
                     </span>
                     <span className="font-semibold text-foreground">{formatCurrency(asaasCardMrrVal)}</span>
                   </div>

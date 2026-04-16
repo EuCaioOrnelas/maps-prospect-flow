@@ -53,7 +53,7 @@ const NAV_SECTIONS: NavSection[] = [
     icon: DollarSign,
     items: [
       { title: "Billing PIX", url: "/admin/pix-billing", icon: Receipt },
-      { title: "Stripe", url: "/admin/stripe", icon: CreditCard },
+      
       { title: "Assinaturas", url: "/admin/assinaturas", icon: FileText },
       { title: "Churn", url: "/admin/churn", icon: TrendingUp },
       { title: "Forecast", url: "/admin/forecast", icon: PieChart },
@@ -66,7 +66,7 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Usuários", url: "/admin/usuarios", icon: Users },
       { title: "Ativação", url: "/admin/ativacao", icon: UserCheck },
       { title: "Retenção", url: "/admin/retencao", icon: Activity },
-      { title: "Score Leads", url: "/admin/score-leads", icon: Target },
+      
       { title: "Landing Pages", url: "/admin/landing-pages", icon: Globe },
     ],
   },

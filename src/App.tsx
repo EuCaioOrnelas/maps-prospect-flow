@@ -86,7 +86,7 @@ const ManageSubscription = lazyWithRetry(() => import("./pages/ManageSubscriptio
 const AdminKPIs = lazyWithRetry(() => import("./pages/admin/AdminKPIs"), "AdminKPIs");
 const AdminAlertas = lazyWithRetry(() => import("./pages/admin/AdminAlertas"), "AdminAlertas");
 const AdminRelatorios = lazyWithRetry(() => import("./pages/admin/AdminRelatorios"), "AdminRelatorios");
-const AdminStripe = lazyWithRetry(() => import("./pages/admin/AdminStripe"), "AdminStripe");
+
 const AdminAssinaturas = lazyWithRetry(() => import("./pages/admin/AdminAssinaturas"), "AdminAssinaturas");
 const AdminChurn = lazyWithRetry(() => import("./pages/admin/AdminChurn"), "AdminChurn");
 const AdminForecast = lazyWithRetry(() => import("./pages/admin/AdminForecast"), "AdminForecast");
@@ -177,7 +177,7 @@ const App = () => (
                   <Route path="relatorios" element={<AdminRelatorios />} />
                   {/* Receita */}
                   <Route path="pix-billing" element={<AdminPixBilling />} />
-                  <Route path="stripe" element={<AdminStripe />} />
+                  
                   <Route path="assinaturas" element={<AdminAssinaturas />} />
                   <Route path="churn" element={<AdminChurn />} />
                   <Route path="forecast" element={<AdminForecast />} />
@@ -186,7 +186,7 @@ const App = () => (
                   <Route path="ativacao" element={<AdminAtivacao />} />
                   <Route path="retencao" element={<AdminRetencao />} />
                   <Route path="landing-pages" element={<AdminLandingPages />} />
-                  <Route path="score-leads" element={<CRMScore />} />
+                  
                   {/* IA */}
                   <Route path="ia/agentes" element={<AdminIAAgentes />} />
                   <Route path="ia/performance" element={<AdminIAPerformance />} />
