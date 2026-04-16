@@ -91,34 +91,10 @@ serve(async (req) => {
       throw new Error("Apenas upgrades de plano são permitidos por aqui");
     }
 
-    // Compute remaining opportunities (carry as bonus)
+    // Compute remaining opportunities (carry as bonus — NO financial proration)
+    // The "value" of unused days is preserved as bonus opportunities, not as discount.
     const remaining = Math.max((profile.searches_limit ?? 0) - (profile.searches_used ?? 0), 0);
-    log("Carrying bonus", { remaining });
-
-    // Compute proration credit (in cents) based on unused days of CURRENT subscription
-    let prorationCents = 0;
-    if (
-      profile.subscription_current_period_end &&
-      new Date(profile.subscription_current_period_end) > new Date() &&
-      currentTier > 0
-    ) {
-      const periodEnd = new Date(profile.subscription_current_period_end).getTime();
-      const now = Date.now();
-      const remainingMs = Math.max(periodEnd - now, 0);
-      const remainingDays = remainingMs / (1000 * 60 * 60 * 24);
-
-      const wasAnnual = profile.billing_period === "annual";
-      const totalCycleDays = wasAnnual ? 365 : 30;
-      const oldPrice = wasAnnual
-        ? PLAN_PRICE_ANNUAL[currentPlan]
-        : PLAN_PRICE_MONTHLY[currentPlan];
-
-      if (oldPrice && remainingDays > 0) {
-        const dailyValue = oldPrice / totalCycleDays;
-        prorationCents = Math.round(dailyValue * remainingDays * 100);
-      }
-    }
-    log("Proration credit (cents)", { prorationCents });
+    log("Carrying remaining opportunities as permanent bonus", { remaining });
 
     // Log upgrade attempt
     const { data: upgradeRow } = await supabase
