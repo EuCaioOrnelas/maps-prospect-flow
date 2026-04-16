@@ -35,6 +35,11 @@ interface AsaasCardMRRData {
   asaasCardSubscriptions: number;
 }
 
+interface OtherMRRData {
+  otherMrr: number;
+  otherSubscriptions: number;
+}
+
 interface PayingProfile {
   id: string;
   plan: string;
@@ -56,6 +61,7 @@ export function useAdminDashboard() {
   const [stripeMRR, setStripeMRR] = useState<StripeMRRData | null>(null);
   const [pixMRR, setPixMRR] = useState<PixMRRData | null>(null);
   const [asaasCardMRR, setAsaasCardMRR] = useState<AsaasCardMRRData | null>(null);
+  const [otherMRR, setOtherMRR] = useState<OtherMRRData | null>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [payingProfiles, setPayingProfiles] = useState<PayingProfile[]>([]);
 
@@ -205,9 +211,15 @@ export function useAdminDashboard() {
         asaasCardMrr: asaasCardMrrTotal,
         asaasCardSubscriptions: asaasCardSubs,
       });
+
+      setOtherMRR({
+        otherMrr: otherMrrTotal,
+        otherSubscriptions: otherSubs,
+      });
     } catch {
       setPixMRR(null);
       setAsaasCardMRR(null);
+      setOtherMRR(null);
     }
   }, []);
 
@@ -274,14 +286,14 @@ export function useAdminDashboard() {
     })();
   }, []);
 
-  // Total MRR = Stripe + PIX + Asaas Card
+  // Total MRR = Stripe + PIX + Asaas Card + Other
   const totalMRR = useMemo(() => {
-    return (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0) + (asaasCardMRR?.asaasCardMrr ?? 0);
-  }, [stripeMRR, pixMRR, asaasCardMRR]);
+    return (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0) + (asaasCardMRR?.asaasCardMrr ?? 0) + (otherMRR?.otherMrr ?? 0);
+  }, [stripeMRR, pixMRR, asaasCardMRR, otherMRR]);
 
   const totalSubscribers = useMemo(() => {
-    return (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0) + (asaasCardMRR?.asaasCardSubscriptions ?? 0);
-  }, [stripeMRR, pixMRR, asaasCardMRR]);
+    return (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0) + (asaasCardMRR?.asaasCardSubscriptions ?? 0) + (otherMRR?.otherSubscriptions ?? 0);
+  }, [stripeMRR, pixMRR, asaasCardMRR, otherMRR]);
 
   const churnRate = stripeMRR?.churnRate ?? 0;
 
@@ -317,6 +329,7 @@ export function useAdminDashboard() {
     stripeMRR,
     pixMRR,
     asaasCardMRR,
+    otherMRR,
     totalMRR,
     totalSubscribers,
     churnRate,
