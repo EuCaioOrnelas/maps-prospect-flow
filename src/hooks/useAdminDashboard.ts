@@ -64,6 +64,9 @@ export function useAdminDashboard() {
   const [otherMRR, setOtherMRR] = useState<OtherMRRData | null>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [payingProfiles, setPayingProfiles] = useState<PayingProfile[]>([]);
+  // Churn calculado SOMENTE pelo novo sistema de gerenciamento (exclui Stripe).
+  // Fonte: tabela subscription_cancellations onde provider != 'stripe', últimos 30 dias.
+  const [newSystemChurn, setNewSystemChurn] = useState<{ cancellations30d: number }>({ cancellations30d: 0 });
 
   const loadStats = useCallback(async () => {
     try {
