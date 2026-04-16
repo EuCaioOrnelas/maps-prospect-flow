@@ -91,34 +91,10 @@ serve(async (req) => {
       throw new Error("Apenas upgrades de plano são permitidos por aqui");
     }
 
-    // Compute remaining opportunities (carry as bonus)
+    // Compute remaining opportunities (carry as bonus — NO financial proration)
+    // The "value" of unused days is preserved as bonus opportunities, not as discount.
     const remaining = Math.max((profile.searches_limit ?? 0) - (profile.searches_used ?? 0), 0);
-    log("Carrying bonus", { remaining });
-
-    // Compute proration credit (in cents) based on unused days of CURRENT subscription
-    let prorationCents = 0;
-    if (
-      profile.subscription_current_period_end &&
-      new Date(profile.subscription_current_period_end) > new Date() &&
-      currentTier > 0
-    ) {
-      const periodEnd = new Date(profile.subscription_current_period_end).getTime();
-      const now = Date.now();
-      const remainingMs = Math.max(periodEnd - now, 0);
-      const remainingDays = remainingMs / (1000 * 60 * 60 * 24);
-
-      const wasAnnual = profile.billing_period === "annual";
-      const totalCycleDays = wasAnnual ? 365 : 30;
-      const oldPrice = wasAnnual
-        ? PLAN_PRICE_ANNUAL[currentPlan]
-        : PLAN_PRICE_MONTHLY[currentPlan];
-
-      if (oldPrice && remainingDays > 0) {
-        const dailyValue = oldPrice / totalCycleDays;
-        prorationCents = Math.round(dailyValue * remainingDays * 100);
-      }
-    }
-    log("Proration credit (cents)", { prorationCents });
+    log("Carrying remaining opportunities as permanent bonus", { remaining });
 
     // Log upgrade attempt
     const { data: upgradeRow } = await supabase
@@ -130,7 +106,7 @@ serve(async (req) => {
         from_billing_period: profile.billing_period,
         to_billing_period: newBillingPeriod,
         remaining_searches_carried: remaining,
-        proration_credit_cents: prorationCents,
+        proration_credit_cents: 0,
         old_subscription_id: profile.asaas_subscription_id,
         provider: "asaas",
         status: "pending",
@@ -155,17 +131,15 @@ serve(async (req) => {
       }
     }
 
-    // === Step 2: compute new price minus proration ===
+    // === Step 2: new plan is charged at FULL price (no financial discount).
+    // The "value" of unused days is preserved 100% as bonus opportunities.
     const newPriceFull = newBillingPeriod === "annual"
       ? PLAN_PRICE_ANNUAL[newPlan]
       : PLAN_PRICE_MONTHLY[newPlan];
-    const prorationReais = prorationCents / 100;
-    const firstChargeValue = Math.max(newPriceFull - prorationReais, 1); // never below R$1
-    log("New plan pricing", { newPriceFull, prorationReais, firstChargeValue });
+    log("New plan pricing (full price, no discount)", { newPriceFull });
 
-    // === Step 3: register the new opportunities balance immediately ===
-    // The new subscription will be created by the regular checkout flow.
-    // Here we only carry the bonus + clear searches_used so the user can use the carried opportunities + the new plan limit when activated.
+    // === Step 3: carry remaining opportunities as permanent bonus.
+    // bonus_searches NEVER renews — once consumed, it's gone.
     await supabase
       .from("profiles")
       .update({
@@ -173,7 +147,6 @@ serve(async (req) => {
       })
       .eq("id", user.id);
 
-    // Update upgrade log
     if (upgradeRow) {
       await supabase
         .from("subscription_upgrades")
@@ -186,10 +159,10 @@ serve(async (req) => {
         success: true,
         upgradeId: upgradeRow?.id ?? null,
         carriedBonus: remaining,
-        prorationCents,
-        firstChargeValue,
+        prorationCents: 0,
+        firstChargeValue: newPriceFull,
         newPriceFull,
-        message: `Saldo de ${remaining} oportunidade(s) preservado. Crédito proporcional de R$ ${prorationReais.toFixed(2)} aplicado na próxima fatura.`,
+        message: `${remaining} oportunidade(s) do plano anterior foram convertidas em saldo bônus permanente no seu novo plano.`,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
