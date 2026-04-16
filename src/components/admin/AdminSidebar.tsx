@@ -78,7 +78,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Usuários", href: "/admin/usuarios", icon: Users },
       { label: "Ativação", href: "/admin/ativacao", icon: UserCheck },
       { label: "Retenção", href: "/admin/retencao", icon: Activity },
-      { label: "Health Score", href: "/admin/health-score", icon: Target },
+      { label: "Score Leads", href: "/admin/score-leads", icon: Target },
       { label: "Landing Pages", href: "/admin/landing-pages", icon: Globe },
     ],
   },

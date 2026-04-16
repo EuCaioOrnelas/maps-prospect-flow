@@ -188,7 +188,7 @@ const App = () => (
                   <Route path="ativacao" element={<AdminAtivacao />} />
                   <Route path="retencao" element={<AdminRetencao />} />
                   <Route path="landing-pages" element={<AdminLandingPages />} />
-                  <Route path="health-score" element={<AdminHealthScore />} />
+                  <Route path="score-leads" element={<CRMScore />} />
                   {/* IA */}
                   <Route path="ia/agentes" element={<AdminIAAgentes />} />
                   <Route path="ia/performance" element={<AdminIAPerformance />} />
