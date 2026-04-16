@@ -99,30 +99,6 @@ export default function AdminForecast() {
 
     const avgNewMRR = avgNewClients * averageTicket;
     const currentMRR = totalMRR;
-
-    // === Build 12-month compound projection ===
-    const buildProjection = (churnRate: number, salesMult: number, expMult: number) => {
-      const months: number[] = [];
-      let mrr = currentMRR;
-      for (let i = 0; i < 12; i++) {
-        const churnLoss = mrr * churnRate;
-        const newMRR = avgNewMRR * salesMult;
-        const expMRR = mrr * BASE_EXPANSION_RATE * expMult;
-        mrr = Math.max(currentMRR * 0.25, mrr + newMRR + expMRR - churnLoss); // floor: nunca abaixo de 25% do atual
-        months.push(Math.round(mrr));
-      }
-      return months;
-    };
-
-    const pessMonths = buildProjection(CHURN.pessimistic, SALES.pessimistic, EXPANSION.pessimistic);
-    const realMonths = buildProjection(CHURN.realistic, SALES.realistic, EXPANSION.realistic);
-    const optMonths = buildProjection(CHURN.optimistic, SALES.optimistic, EXPANSION.optimistic);
-
-    // Build projection rows (realistic breakdown)
-    const now = new Date();
-    const projection: ProjMonth[] = [];
-    const avgNewMRR = avgNewClients * averageTicket;
-    const currentMRR = totalMRR;
     const currentClients = Math.max(totalSubscribers, 1);
 
     // === Build 12-month compound projection com ramps ===
