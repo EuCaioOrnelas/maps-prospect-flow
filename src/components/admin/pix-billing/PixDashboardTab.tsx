@@ -5,17 +5,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Loader2, CreditCard, QrCode, Users, AlertTriangle,
-  TrendingUp, Clock, RefreshCw, ArrowUpRight, Percent
+  TrendingUp, Clock, RefreshCw, ArrowUpRight, Percent, Banknote
 } from "lucide-react";
 
 interface DashboardMetrics {
   stripeMrr: number;
   pixMrr: number;
+  asaasCardMrr: number;
   activePixSubscriptions: number;
   overduePixClients: number;
   pixRevenueThisMonth: number;
   renewalsNext7Days: number;
   overdueRenewals: number;
+  totalPaidInvoices: number;
+  totalPendingInvoices: number;
 }
 
 interface StageMetric {
@@ -46,95 +49,89 @@ export function PixDashboardTab() {
       sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
+      // Stripe MRR
       let stripeMrr = 0;
       try {
         const { data: stripeData, error: stripeError } = await supabase.functions.invoke("get-stripe-mrr");
-        if (!stripeError && stripeData) {
-          stripeMrr = stripeData.totalMRR || 0;
-        }
-      } catch {
-        console.debug("Could not fetch Stripe MRR");
-      }
+        if (!stripeError && stripeData) stripeMrr = stripeData.totalMRR || 0;
+      } catch { console.debug("Could not fetch Stripe MRR"); }
 
-      const planPrices: Record<string, number> = { start: 197, growth: 497, scale: 897 };
-
+      // All paying profiles
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, plan, subscription_current_period_end, admin_assigned_plan")
+        .select("id, plan, payment_provider, subscription_current_period_end, admin_assigned_plan, subscription_price_cents, created_at")
         .neq("plan", "free")
         .eq("is_blocked", false);
 
-      const { data: pixInvoiceUsers } = await supabase
-        .from("pix_invoices")
-        .select("user_id");
-
-      const pixUserIds = new Set((pixInvoiceUsers || []).map((p: any) => p.user_id));
-
-      const { data: pixCheckouts } = await supabase
-        .from("checkout_leads")
-        .select("user_id")
-        .eq("checkout_completed", true)
-        .or("stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_%");
-
-      for (const c of pixCheckouts || []) {
-        if (c.user_id) pixUserIds.add(c.user_id);
-      }
-
       let pixMrr = 0;
+      let asaasCardMrr = 0;
       let activePixSubs = 0;
       let overdueCount = 0;
       let renewalNext7 = 0;
       let overdueRenewals = 0;
 
       for (const p of profiles || []) {
-        if (!pixUserIds.has(p.id)) continue;
-        const price = planPrices[p.plan] || 0;
+        const provider = p.payment_provider;
+        const priceCents = p.subscription_price_cents || 0;
+        const priceReais = priceCents / 100;
         const periodEnd = p.subscription_current_period_end ? new Date(p.subscription_current_period_end) : null;
         const isExpired = periodEnd && periodEnd < now;
 
-        pixMrr += price;
-        if (!isExpired) {
-          activePixSubs++;
-        } else {
-          overdueCount++;
-          overdueRenewals++;
+        // Detect annual plans
+        let monthlyValue = priceReais;
+        if (priceCents > 0) {
+          const createdAt = new Date(p.created_at);
+          const daysSpan = periodEnd 
+            ? (periodEnd.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24) 
+            : 0;
+          if (daysSpan > 300) monthlyValue = priceReais / 12;
         }
-        if (periodEnd && periodEnd > now && periodEnd <= sevenDaysFromNow) {
-          renewalNext7++;
+
+        if (provider === "abacate_pay") {
+          pixMrr += monthlyValue;
+          if (!isExpired) activePixSubs++;
+          else { overdueCount++; overdueRenewals++; }
+          if (periodEnd && periodEnd > now && periodEnd <= sevenDaysFromNow) renewalNext7++;
+        } else if (provider === "asaas") {
+          asaasCardMrr += monthlyValue;
         }
+        // stripe is handled by get-stripe-mrr
       }
 
-      const { data: paidInvoices } = await supabase
-        .from("pix_invoices")
-        .select("amount_cents")
-        .eq("status", "paid")
-        .gte("paid_at", monthStart);
+      // PIX invoices stats
+      const [paidInvRes, pendingInvRes] = await Promise.all([
+        supabase.from("pix_invoices").select("amount_cents").eq("status", "paid").gte("paid_at", monthStart),
+        supabase.from("pix_invoices").select("id").eq("status", "pending"),
+      ]);
 
-      const pixInvoiceRevenue = (paidInvoices || []).reduce((sum: number, inv: any) => sum + (inv.amount_cents / 100), 0);
+      const pixInvoiceRevenue = (paidInvRes.data || []).reduce((sum: number, inv: any) => sum + (inv.amount_cents / 100), 0);
 
+      // Checkout revenue this month (PIX/Asaas)
       const { data: paidCheckouts } = await supabase
         .from("checkout_leads")
-        .select("plan_attempted")
+        .select("plan_attempted, stripe_session_id")
         .eq("checkout_completed", true)
-        .or("stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_%")
+        .or("stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_pixauto_%")
         .gte("checkout_completed_at", monthStart);
 
       const checkoutRevenue = (paidCheckouts || []).reduce((sum: number, c: any) => {
-        const plan = c.plan_attempted;
-        if (plan?.includes("Start")) return sum + 197;
-        if (plan?.includes("Growth")) return sum + 497;
-        if (plan?.includes("Scale")) return sum + 897;
+        if (c.plan_attempted?.includes("Start")) return sum + 296;
+        if (c.plan_attempted?.includes("Growth")) return sum + 696;
+        if (c.plan_attempted?.includes("Scale")) return sum + 897;
         return sum;
       }, 0);
 
       setMetrics({
         stripeMrr,
         pixMrr,
+        asaasCardMrr,
         activePixSubscriptions: activePixSubs,
         overduePixClients: overdueCount,
         pixRevenueThisMonth: pixInvoiceRevenue + checkoutRevenue,
         renewalsNext7Days: renewalNext7,
         overdueRenewals,
+        totalPaidInvoices: paidInvRes.data?.length || 0,
+        totalPendingInvoices: pendingInvRes.data?.length || 0,
       });
 
       // Stage metrics
@@ -143,31 +140,15 @@ export function PixDashboardTab() {
         .select("renewal_stage, event_type")
         .not("renewal_stage", "is", null);
 
-      const { data: emailLogs } = await supabase
-        .from("email_logs")
-        .select("subject, opened_count, clicked_count, status")
-        .eq("email_type", "SUBSCRIPTION_RENEWAL" as any);
-
       const stages = ["D-5", "D-3", "D-1", "D0", "D+1"];
       const stageMets: StageMetric[] = stages.map(stage => {
         const stageEvents = (trackingData || []).filter((e: any) => e.renewal_stage === stage);
         const sent = stageEvents.filter((e: any) => e.event_type === "email_sent").length;
+        const opened = stageEvents.filter((e: any) => e.event_type === "email_opened").length;
+        const clicked = stageEvents.filter((e: any) => e.event_type === "email_clicked").length;
         const paid = stageEvents.filter((e: any) => e.event_type === "payment_confirmed").length;
-
-        const stageEmails = (emailLogs || []).filter((l: any) =>
-          l.subject?.includes(stage) || (stage === "D-5" && l.subject?.includes("chegando"))
-        );
-        const opened = stageEvents.filter((e: any) => e.event_type === "email_opened").length ||
-          stageEmails.reduce((s: number, l: any) => s + (l.opened_count || 0), 0);
-        const clicked = stageEvents.filter((e: any) => e.event_type === "email_clicked").length ||
-          stageEmails.reduce((s: number, l: any) => s + (l.clicked_count || 0), 0);
-
         return {
-          stage,
-          sent,
-          opened,
-          clicked,
-          paid,
+          stage, sent, opened, clicked, paid,
           openRate: sent > 0 ? Math.round((opened / sent) * 100) : 0,
           clickRate: sent > 0 ? Math.round((clicked / sent) * 100) : 0,
           payRate: sent > 0 ? Math.round((paid / sent) * 100) : 0,
@@ -194,9 +175,10 @@ export function PixDashboardTab() {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-  const totalMrr = metrics.stripeMrr + metrics.pixMrr;
+  const totalMrr = metrics.stripeMrr + metrics.pixMrr + metrics.asaasCardMrr;
   const stripePercent = totalMrr > 0 ? ((metrics.stripeMrr / totalMrr) * 100).toFixed(1) : "0";
   const pixPercent = totalMrr > 0 ? ((metrics.pixMrr / totalMrr) * 100).toFixed(1) : "0";
+  const asaasPercent = totalMrr > 0 ? ((metrics.asaasCardMrr / totalMrr) * 100).toFixed(1) : "0";
 
   const stageColors: Record<string, string> = {
     "D-5": "text-emerald-400",
@@ -208,30 +190,24 @@ export function PixDashboardTab() {
 
   return (
     <div className="space-y-6">
-      {/* Refresh */}
       <div className="flex justify-end">
         <Button variant="outline" size="sm" onClick={loadMetrics} className="gap-1.5 text-xs">
           <RefreshCw size={14} /> Atualizar dados
         </Button>
       </div>
 
-      {/* MRR Comparison */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* MRR by Provider */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-border/50">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
                 <CreditCard size={15} className="text-blue-400" />
               </div>
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium">
-                <Percent size={10} />
-                {stripePercent}%
-              </div>
+              <span className="text-xs text-blue-400 font-medium">{stripePercent}%</span>
             </div>
-            <p className="text-2xl font-bold text-foreground tabular-nums">
-              {formatCurrency(metrics.stripeMrr)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">MRR Cartão · Stripe</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{formatCurrency(metrics.stripeMrr)}</p>
+            <p className="text-xs text-muted-foreground mt-1">MRR Stripe</p>
           </CardContent>
         </Card>
 
@@ -241,71 +217,81 @@ export function PixDashboardTab() {
               <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                 <QrCode size={15} className="text-emerald-400" />
               </div>
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium">
-                <Percent size={10} />
-                {pixPercent}%
-              </div>
+              <span className="text-xs text-emerald-400 font-medium">{pixPercent}%</span>
             </div>
-            <p className="text-2xl font-bold text-foreground tabular-nums">
-              {formatCurrency(metrics.pixMrr)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">MRR PIX · Asaas</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{formatCurrency(metrics.pixMrr)}</p>
+            <p className="text-xs text-muted-foreground mt-1">MRR PIX</p>
           </CardContent>
         </Card>
+
+        {metrics.asaasCardMrr > 0 && (
+          <Card className="border-border/50">
+            <CardContent className="pt-5 pb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <Banknote size={15} className="text-violet-400" />
+                </div>
+                <span className="text-xs text-violet-400 font-medium">{asaasPercent}%</span>
+              </div>
+              <p className="text-2xl font-bold text-foreground tabular-nums">{formatCurrency(metrics.asaasCardMrr)}</p>
+              <p className="text-xs text-muted-foreground mt-1">MRR Asaas Cartão</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="border-border/50">
           <CardContent className="pt-5 pb-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Users size={15} className="text-primary" />
-              </div>
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+              <Users size={15} className="text-[#34A853]" />
             </div>
-            <p className="text-2xl font-bold text-foreground tabular-nums font-sans">{metrics.activePixSubscriptions}</p>
-            <p className="text-xs text-muted-foreground mt-1">Assinaturas PIX ativas</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{metrics.activePixSubscriptions}</p>
+            <p className="text-xs text-muted-foreground mt-1">PIX ativas</p>
           </CardContent>
         </Card>
 
         <Card className="border-border/50">
           <CardContent className="pt-5 pb-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
-                <AlertTriangle size={15} className="text-destructive" />
-              </div>
+            <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center mb-3">
+              <AlertTriangle size={15} className="text-destructive" />
             </div>
-            <p className="text-2xl font-bold text-destructive tabular-nums font-sans">{metrics.overduePixClients}</p>
-            <p className="text-xs text-muted-foreground mt-1">Inadimplentes PIX</p>
+            <p className="text-2xl font-bold text-destructive tabular-nums">{metrics.overduePixClients}</p>
+            <p className="text-xs text-muted-foreground mt-1">Inadimplentes</p>
           </CardContent>
         </Card>
 
         <Card className="border-border/50">
           <CardContent className="pt-5 pb-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <ArrowUpRight size={15} className="text-emerald-400" />
-              </div>
+            <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-3">
+              <ArrowUpRight size={15} className="text-emerald-400" />
             </div>
-            <p className="text-2xl font-bold text-foreground tabular-nums font-sans">{formatCurrency(metrics.pixRevenueThisMonth)}</p>
-            <p className="text-xs text-muted-foreground mt-1">Receita PIX no mês</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{formatCurrency(metrics.pixRevenueThisMonth)}</p>
+            <p className="text-xs text-muted-foreground mt-1">Receita PIX/mês</p>
           </CardContent>
         </Card>
 
         <Card className="border-border/50">
           <CardContent className="pt-5 pb-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                <Clock size={15} className="text-yellow-400" />
-              </div>
+            <div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center mb-3">
+              <Clock size={15} className="text-yellow-400" />
             </div>
-            <p className="text-2xl font-bold text-foreground tabular-nums font-sans">{metrics.renewalsNext7Days}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Renovações em 7 dias
-              {metrics.overdueRenewals > 0 && (
-                <span className="text-destructive ml-1">· {metrics.overdueRenewals} atrasadas</span>
-              )}
+            <p className="text-2xl font-bold text-foreground tabular-nums">{metrics.renewalsNext7Days}</p>
+            <p className="text-xs text-muted-foreground mt-1">Renovam em 7d</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center mb-3">
+              <TrendingUp size={15} className="text-blue-400" />
+            </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums">
+              {metrics.totalPaidInvoices}
+              <span className="text-sm text-muted-foreground font-normal ml-1">/ {metrics.totalPendingInvoices} pendentes</span>
             </p>
+            <p className="text-xs text-muted-foreground mt-1">Faturas pagas/pendentes</p>
           </CardContent>
         </Card>
       </div>
