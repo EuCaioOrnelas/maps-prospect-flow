@@ -192,13 +192,14 @@ export function useAdminDashboard() {
           asaasCardSubs++;
         } else if (provider === "stripe") {
           // Skip - already counted via get-stripe-mrr
-        } else if (!provider || provider !== "stripe") {
-          // Unknown provider - count as "other" toward total but not in specific buckets
+        } else if (provider && provider !== "stripe") {
+          // Known non-stripe provider - count as "other"
           if (p.subscription_price_cents) {
             otherMrrTotal += monthlyValue;
             otherSubs++;
           }
         }
+        // If provider is null/undefined, skip - no real payment was made
       }
 
       setPixMRR({
