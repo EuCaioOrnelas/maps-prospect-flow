@@ -76,6 +76,8 @@ function useNewSystemMetrics(): NewSystemMetrics {
     usingDefaultChurn: true,
     stripeMRR: 0,
     newSystemMRR: 0,
+    stripeSubscribers: 0,
+    newSystemSubscribers: 0,
     lastRefresh: new Date(),
   });
 
