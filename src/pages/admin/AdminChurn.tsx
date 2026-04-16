@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { TrendingDown, Users, AlertTriangle, Percent, Calendar, UserX, BarChart3, Eye } from "lucide-react";
+import { useEffect, useState } from "react";
+import { TrendingDown, Users, AlertTriangle, Percent, Calendar, UserX, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -18,14 +18,12 @@ interface ChurnRecord {
   active_until: string | null;
   billing_type: string | null;
   notes: string | null;
-  // feedback fields (joined)
   cancellation_reason: string | null;
   usage_level: string | null;
   additional_comments: string | null;
   intends_to_return: string | null;
   details: string | null;
   feedback_provider: string | null;
-  // profile
   plan: string | null;
   name: string | null;
 }
@@ -45,13 +43,21 @@ const reasonLabels: Record<string, string> = {
   "Custo / investimento": "Custo alto",
   "Tive problemas técnicos": "Problemas técnicos",
   "Não era o que eu esperava": "Expectativa",
-  "Outro": "Outro",
+  Outro: "Outro",
 };
 
 const returnLabels: Record<string, string> = {
   yes: "Sim",
   maybe: "Talvez",
   no: "Não",
+};
+
+const getProviderLabel = (provider: string | null, billingType?: string | null) => {
+  if (provider === "stripe") return "Stripe";
+  if (provider === "pix" || provider === "abacate_pay") return "PIX";
+  if (provider === "asaas" && billingType === "PIX") return "PIX";
+  if (provider === "asaas") return "Asaas Cartão";
+  return provider || "—";
 };
 
 export default function AdminChurn() {
@@ -67,150 +73,169 @@ export default function AdminChurn() {
 
   const loadData = async () => {
     setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-get-churn", {
+        body: {},
+      });
 
-    // Get all subscription cancellations
-    const { data: cancellations } = await supabase
-      .from("subscription_cancellations")
-      .select("*")
-      .order("cancelled_at", { ascending: false });
+      if (error) throw error;
 
-    // Get all cancellation feedback
-    const { data: feedbacks } = await supabase
-      .from("cancellation_feedback")
-      .select("*")
-      .order("created_at", { ascending: false });
+      const cancellations = data?.cancellations || [];
+      const feedbacks = data?.feedbacks || [];
+      const subEvents = data?.subEvents || [];
+      const profiles = data?.profiles || [];
+      const expiredProfiles = data?.expiredProfiles || [];
 
-    // Get subscription_events for Stripe cancellations (fallback for historical data)
-    const { data: subEvents } = await supabase
-      .from("subscription_events")
-      .select("*")
-      .in("event_type", ["subscription_canceled", "subscription_deleted", "charge_refunded", "pix_not_renewed"])
-      .order("created_at", { ascending: false });
+      setTotalUsers(profiles.length || 0);
 
-    // Get profiles for names/plans
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, email, name, plan");
+      const profileMap = new Map<string, any>();
+      profiles.forEach((profile: any) => profileMap.set(profile.id, profile));
 
-    setTotalUsers(profiles?.length || 0);
+      const feedbackMap = new Map<string, any>();
+      feedbacks.forEach((feedback: any) => {
+        if (!feedbackMap.has(feedback.user_id)) feedbackMap.set(feedback.user_id, feedback);
+      });
 
-    const profileMap = new Map<string, any>();
-    profiles?.forEach(p => profileMap.set(p.id, p));
+      const addedUserIds = new Set<string>();
+      const merged: ChurnRecord[] = [];
 
-    // Build feedback map by user_id
-    const feedbackMap = new Map<string, any>();
-    feedbacks?.forEach(f => {
-      if (!feedbackMap.has(f.user_id)) feedbackMap.set(f.user_id, f);
-    });
+      cancellations.forEach((cancellation: any) => {
+        const feedback = feedbackMap.get(cancellation.user_id);
+        const profile = profileMap.get(cancellation.user_id);
+        addedUserIds.add(cancellation.user_id);
 
-    // Track user_ids already added to avoid duplicates
-    const addedUserIds = new Set<string>();
-
-    // Merge cancellations with feedback
-    const merged: ChurnRecord[] = (cancellations || []).map(c => {
-      const fb = feedbackMap.get(c.user_id);
-      const profile = profileMap.get(c.user_id);
-      addedUserIds.add(c.user_id);
-      return {
-        id: c.id,
-        user_id: c.user_id,
-        email: profile?.email || null,
-        provider: c.provider,
-        cancelled_at: c.cancelled_at,
-        active_until: c.active_until,
-        billing_type: c.billing_type,
-        notes: c.notes,
-        cancellation_reason: fb?.cancellation_reason || null,
-        usage_level: fb?.usage_level || null,
-        additional_comments: fb?.additional_comments || null,
-        intends_to_return: (fb as any)?.intends_to_return || null,
-        details: (fb as any)?.details || null,
-        feedback_provider: (fb as any)?.provider || null,
-        plan: profile?.plan || null,
-        name: profile?.name || null,
-      };
-    });
-
-    // Add subscription_events that don't have a cancellation record (historical Stripe data)
-    (subEvents || []).forEach(ev => {
-      if (ev.user_id && !addedUserIds.has(ev.user_id)) {
-        addedUserIds.add(ev.user_id);
-        const fb = feedbackMap.get(ev.user_id);
-        const profile = profileMap.get(ev.user_id);
         merged.push({
-          id: ev.id,
-          user_id: ev.user_id,
-          email: ev.email || profile?.email || null,
-          provider: ev.event_source === "stripe-webhook" ? "stripe" : ev.event_source || null,
-          cancelled_at: ev.created_at,
-          active_until: null,
-          billing_type: null,
-          notes: `${ev.event_type} — Plano anterior: ${ev.previous_plan || "—"}`,
-          cancellation_reason: fb?.cancellation_reason || null,
-          usage_level: fb?.usage_level || null,
-          additional_comments: fb?.additional_comments || null,
-          intends_to_return: (fb as any)?.intends_to_return || null,
-          details: (fb as any)?.details || null,
-          feedback_provider: (fb as any)?.provider || null,
-          plan: profile?.plan || null,
-          name: profile?.name || ev.email || null,
-        });
-      }
-    });
-
-    // Also add feedbacks that don't have a cancellation record or event
-    feedbacks?.forEach(f => {
-      if (!addedUserIds.has(f.user_id)) {
-        addedUserIds.add(f.user_id);
-        const profile = profileMap.get(f.user_id);
-        merged.push({
-          id: f.id,
-          user_id: f.user_id,
-          email: f.email || profile?.email || null,
-          provider: (f as any)?.provider || null,
-          cancelled_at: f.created_at,
-          active_until: null,
-          billing_type: null,
-          notes: null,
-          cancellation_reason: f.cancellation_reason,
-          usage_level: f.usage_level,
-          additional_comments: f.additional_comments,
-          intends_to_return: (f as any)?.intends_to_return || null,
-          details: (f as any)?.details || null,
-          feedback_provider: (f as any)?.provider || null,
+          id: cancellation.id,
+          user_id: cancellation.user_id,
+          email: profile?.email || null,
+          provider: cancellation.provider,
+          cancelled_at: cancellation.cancelled_at,
+          active_until: cancellation.active_until,
+          billing_type: cancellation.billing_type,
+          notes: cancellation.notes,
+          cancellation_reason: feedback?.cancellation_reason || null,
+          usage_level: feedback?.usage_level || null,
+          additional_comments: feedback?.additional_comments || null,
+          intends_to_return: feedback?.intends_to_return || null,
+          details: feedback?.details || null,
+          feedback_provider: feedback?.provider || null,
           plan: profile?.plan || null,
           name: profile?.name || null,
         });
-      }
-    });
+      });
 
-    // Sort by date
-    merged.sort((a, b) => new Date(b.cancelled_at).getTime() - new Date(a.cancelled_at).getTime());
+      subEvents.forEach((event: any) => {
+        if (!event.user_id || addedUserIds.has(event.user_id)) return;
 
-    setRecords(merged);
-    setLoading(false);
+        addedUserIds.add(event.user_id);
+        const feedback = feedbackMap.get(event.user_id);
+        const profile = profileMap.get(event.user_id);
+        const isPixChurn = event.event_type === "pix_not_renewed";
+
+        merged.push({
+          id: event.id,
+          user_id: event.user_id,
+          email: event.email || profile?.email || null,
+          provider: isPixChurn ? "pix" : profile?.payment_provider || (event.event_source === "stripe-webhook" ? "stripe" : event.event_source || null),
+          cancelled_at: event.created_at,
+          active_until: profile?.subscription_current_period_end || null,
+          billing_type: isPixChurn ? "PIX" : null,
+          notes: isPixChurn
+            ? `PIX não renovado — Plano anterior: ${event.previous_plan || "—"}`
+            : `${event.event_type} — Plano anterior: ${event.previous_plan || "—"}`,
+          cancellation_reason: feedback?.cancellation_reason || null,
+          usage_level: feedback?.usage_level || null,
+          additional_comments: feedback?.additional_comments || null,
+          intends_to_return: feedback?.intends_to_return || null,
+          details: feedback?.details || null,
+          feedback_provider: feedback?.provider || null,
+          plan: profile?.plan || null,
+          name: profile?.name || event.email || null,
+        });
+      });
+
+      expiredProfiles.forEach((profile: any) => {
+        if (addedUserIds.has(profile.id)) return;
+
+        addedUserIds.add(profile.id);
+        const feedback = feedbackMap.get(profile.id);
+        const isPix = profile.payment_provider === "abacate_pay";
+
+        merged.push({
+          id: `expired-${profile.id}`,
+          user_id: profile.id,
+          email: profile.email || null,
+          provider: isPix ? "pix" : profile.payment_provider || null,
+          cancelled_at: profile.subscription_current_period_end,
+          active_until: profile.subscription_current_period_end,
+          billing_type: isPix ? "PIX" : null,
+          notes: isPix
+            ? "PIX expirado por falta de pagamento — fallback do sistema"
+            : "Assinatura expirada sem log de cancelamento — fallback do sistema",
+          cancellation_reason: feedback?.cancellation_reason || null,
+          usage_level: feedback?.usage_level || null,
+          additional_comments: feedback?.additional_comments || null,
+          intends_to_return: feedback?.intends_to_return || null,
+          details: feedback?.details || null,
+          feedback_provider: feedback?.provider || null,
+          plan: profile.plan || null,
+          name: profile.name || null,
+        });
+      });
+
+      feedbacks.forEach((feedback: any) => {
+        if (addedUserIds.has(feedback.user_id)) return;
+
+        addedUserIds.add(feedback.user_id);
+        const profile = profileMap.get(feedback.user_id);
+
+        merged.push({
+          id: feedback.id,
+          user_id: feedback.user_id,
+          email: feedback.email || profile?.email || null,
+          provider: feedback.provider || null,
+          cancelled_at: feedback.created_at,
+          active_until: null,
+          billing_type: null,
+          notes: null,
+          cancellation_reason: feedback.cancellation_reason,
+          usage_level: feedback.usage_level,
+          additional_comments: feedback.additional_comments,
+          intends_to_return: feedback.intends_to_return || null,
+          details: feedback.details || null,
+          feedback_provider: feedback.provider || null,
+          plan: profile?.plan || null,
+          name: profile?.name || null,
+        });
+      });
+
+      merged.sort((a, b) => new Date(b.cancelled_at).getTime() - new Date(a.cancelled_at).getTime());
+      setRecords(merged);
+    } catch (err) {
+      console.error("Error loading churn data:", err);
+      setRecords([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const now = Date.now();
-  const last30d = records.filter(r => new Date(r.cancelled_at).getTime() > now - 30 * 86400000);
-  const last7d = records.filter(r => new Date(r.cancelled_at).getTime() > now - 7 * 86400000);
+  const last30d = records.filter((record) => new Date(record.cancelled_at).getTime() > now - 30 * 86400000);
+  const last7d = records.filter((record) => new Date(record.cancelled_at).getTime() > now - 7 * 86400000);
   const last30dRate = totalUsers > 0 ? ((last30d.length / totalUsers) * 100).toFixed(1) : "0";
   const last7dRate = totalUsers > 0 ? ((last7d.length / totalUsers) * 100).toFixed(1) : "0";
   const churnRateTotal = totalUsers > 0 ? ((records.length / totalUsers) * 100).toFixed(1) : "0";
 
-  // Top reason
   const reasonCounts: Record<string, number> = {};
-  records.forEach(r => {
-    if (r.cancellation_reason) {
-      const key = reasonLabels[r.cancellation_reason] || r.cancellation_reason;
-      reasonCounts[key] = (reasonCounts[key] || 0) + 1;
-    }
+  records.forEach((record) => {
+    if (!record.cancellation_reason) return;
+    const key = reasonLabels[record.cancellation_reason] || record.cancellation_reason;
+    reasonCounts[key] = (reasonCounts[key] || 0) + 1;
   });
   const topReason = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0];
 
-  // Intends to return
-  const returnYes = records.filter(r => r.intends_to_return === "yes").length;
-  const returnMaybe = records.filter(r => r.intends_to_return === "maybe").length;
+  const returnYes = records.filter((record) => record.intends_to_return === "yes").length;
+  const returnMaybe = records.filter((record) => record.intends_to_return === "maybe").length;
 
   const kpis = [
     { label: "Total Cancelamentos", value: records.length, subtext: `${churnRateTotal}% da base`, icon: UserX, color: "text-red-500" },
@@ -225,12 +250,9 @@ export default function AdminChurn() {
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Churn Intelligence</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Análise de cancelamentos reais — Stripe, Asaas e PIX
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">Análise de cancelamentos reais — Stripe, Asaas e PIX</p>
       </div>
 
-      {/* KPI Cards - Harmonizado */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {kpis.map((kpi) => (
           <Card key={kpi.label} className="border-border/40 bg-card/80">
@@ -240,15 +262,12 @@ export default function AdminChurn() {
                 <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider leading-tight">{kpi.label}</p>
               </div>
               <p className={`${kpi.small ? "text-sm" : "text-xl"} font-bold text-foreground`}>{kpi.value}</p>
-              {kpi.subtext && (
-                <p className="text-[10px] text-muted-foreground mt-0.5">{kpi.subtext}</p>
-              )}
+              {kpi.subtext && <p className="text-[10px] text-muted-foreground mt-0.5">{kpi.subtext}</p>}
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Table */}
       <Card className="border-border/40 bg-card/80">
         <CardHeader>
           <CardTitle className="text-base">Histórico de Cancelamentos</CardTitle>
@@ -256,7 +275,9 @@ export default function AdminChurn() {
         <CardContent className="p-0">
           {loading ? (
             <div className="p-6 space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+              {Array.from({ length: 5 }).map((_, index) => (
+                <Skeleton key={index} className="h-12 w-full" />
+              ))}
             </div>
           ) : records.length === 0 ? (
             <div className="p-12 text-center">
@@ -278,55 +299,51 @@ export default function AdminChurn() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {records.map(r => (
-                    <TableRow
-                      key={r.id}
-                      className="cursor-pointer hover:bg-muted/40"
-                      onClick={() => setSelectedRecord(r)}
-                    >
+                  {records.map((record) => (
+                    <TableRow key={record.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedRecord(record)}>
                       <TableCell>
                         <div>
-                          <p className="text-sm font-medium text-foreground">{r.name || r.email || "—"}</p>
-                          {r.name && r.email && <p className="text-[11px] text-muted-foreground">{r.email}</p>}
+                          <p className="text-sm font-medium text-foreground">{record.name || record.email || "—"}</p>
+                          {record.name && record.email && <p className="text-[11px] text-muted-foreground">{record.email}</p>}
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-[10px]">
-                          {r.provider === "stripe" ? "Stripe" : r.provider === "asaas" ? "Asaas" : r.provider === "pix" ? "PIX" : r.feedback_provider || "—"}
+                          {getProviderLabel(record.provider, record.billing_type)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {r.cancellation_reason ? (
+                        {record.cancellation_reason ? (
                           <Badge variant="secondary" className="text-[10px]">
-                            {reasonLabels[r.cancellation_reason] || r.cancellation_reason}
+                            {reasonLabels[record.cancellation_reason] || record.cancellation_reason}
                           </Badge>
                         ) : (
                           <span className="text-xs text-muted-foreground">Sem feedback</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        {r.intends_to_return ? (
+                        {record.intends_to_return ? (
                           <Badge
                             variant="outline"
                             className={`text-[10px] ${
-                              r.intends_to_return === "yes"
+                              record.intends_to_return === "yes"
                                 ? "text-emerald-600 bg-emerald-500/10 border-emerald-500/25"
-                                : r.intends_to_return === "maybe"
-                                ? "text-amber-600 bg-amber-500/10 border-amber-500/25"
-                                : "text-red-600 bg-red-500/10 border-red-500/25"
+                                : record.intends_to_return === "maybe"
+                                  ? "text-amber-600 bg-amber-500/10 border-amber-500/25"
+                                  : "text-red-600 bg-red-500/10 border-red-500/25"
                             }`}
                           >
-                            {returnLabels[r.intends_to_return] || r.intends_to_return}
+                            {returnLabels[record.intends_to_return] || record.intends_to_return}
                           </Badge>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </TableCell>
                       <TableCell className="max-w-[200px]">
-                        <p className="text-xs text-muted-foreground truncate">{r.details || r.notes || "—"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{record.details || record.notes || "—"}</p>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        {new Date(r.cancelled_at).toLocaleDateString("pt-BR")}
+                        {new Date(record.cancelled_at).toLocaleDateString("pt-BR")}
                       </TableCell>
                       <TableCell>
                         <Eye className="h-3.5 w-3.5 text-muted-foreground" />
@@ -340,9 +357,8 @@ export default function AdminChurn() {
         </CardContent>
       </Card>
 
-      {/* Detail Dialog */}
       {selectedRecord && (
-        <Dialog open={!!selectedRecord} onOpenChange={(o) => !o && setSelectedRecord(null)}>
+        <Dialog open={!!selectedRecord} onOpenChange={(open) => !open && setSelectedRecord(null)}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="text-base">Detalhes do Cancelamento</DialogTitle>
@@ -360,7 +376,7 @@ export default function AdminChurn() {
                 </div>
                 <div className="bg-muted/40 rounded-lg p-3 border border-border/30">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Provedor</p>
-                  <p className="text-sm font-semibold text-foreground mt-0.5 capitalize">{selectedRecord.provider || selectedRecord.feedback_provider || "—"}</p>
+                  <p className="text-sm font-semibold text-foreground mt-0.5">{getProviderLabel(selectedRecord.provider, selectedRecord.billing_type)}</p>
                 </div>
                 <div className="bg-muted/40 rounded-lg p-3 border border-border/30">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Plano</p>
@@ -376,7 +392,7 @@ export default function AdminChurn() {
 
               <div className="border-t border-border/40 pt-4 space-y-3">
                 <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Feedback do Cancelamento</h4>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Motivo</span>
@@ -408,17 +424,19 @@ export default function AdminChurn() {
                 )}
               </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-xs"
-                onClick={() => {
-                  setSelectedRecord(null);
-                  setSelectedUserId(selectedRecord.user_id);
-                }}
-              >
-                Ver perfil completo do usuário
-              </Button>
+              {selectedRecord.user_id && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs"
+                  onClick={() => {
+                    setSelectedRecord(null);
+                    setSelectedUserId(selectedRecord.user_id);
+                  }}
+                >
+                  Ver perfil completo do usuário
+                </Button>
+              )}
             </div>
           </DialogContent>
         </Dialog>
@@ -428,7 +446,9 @@ export default function AdminChurn() {
         <AdminUserInfoDialog
           userId={selectedUserId}
           open={!!selectedUserId}
-          onOpenChange={(open) => { if (!open) setSelectedUserId(null); }}
+          onOpenChange={(open) => {
+            if (!open) setSelectedUserId(null);
+          }}
         />
       )}
     </div>
