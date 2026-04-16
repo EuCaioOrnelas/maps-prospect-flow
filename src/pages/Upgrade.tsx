@@ -116,7 +116,7 @@ const mainPlans: Record<string, PlanDef[]> = {
     {
       name: "Growth",
       key: "growth",
-      price: "496",
+      price: "596",
       anchorPrice: "1.392",
       opportunities: "3.000",
       description: "Para escalar e converter oportunidades com IA",
