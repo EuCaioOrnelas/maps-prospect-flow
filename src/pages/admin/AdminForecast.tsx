@@ -21,10 +21,32 @@ import {
  * Churn nunca > 15% no dashboard principal.
  * ============================================================ */
 
+// Churn mensal por cenário (calibrado SaaS WhatsApp PME Brasil)
 const CHURN = { optimistic: 0.04, realistic: 0.06, pessimistic: 0.09 };
-const SALES = { optimistic: 1.35, realistic: 1.0, pessimistic: 0.75 };
-const EXPANSION = { optimistic: 1.30, realistic: 1.0, pessimistic: 0 };
-const BASE_EXPANSION_RATE = 0.015; // 1.5% base — saudável para SMB
+// Multiplicadores de novas vendas (vs baseline histórico)
+const SALES = { optimistic: 1.35, realistic: 1.0, pessimistic: 0.55 };
+// Expansão real: clientes × upgrade rate × upgrade médio (R$)
+const UPGRADE_RATE = { optimistic: 0.10, realistic: 0.06, pessimistic: 0.0 };
+const UPGRADE_AVG = 90; // R$ médio de upgrade por cliente que faz upsell
+
+/**
+ * Curva de ramp-up por cenário (12 meses) — multiplica as novas vendas mensais.
+ * Pessimista: queda nos primeiros 3 meses (mercado contraído / churn > vendas),
+ *             estabiliza no mês 4 e recupera devagar.
+ * Realista:   crescimento gradual orgânico.
+ * Otimista:   aceleração composta plausível.
+ */
+const SALES_RAMP = {
+  pessimistic: [0.55, 0.45, 0.40, 0.50, 0.60, 0.70, 0.78, 0.85, 0.90, 0.95, 1.00, 1.05],
+  realistic:   [1.00, 1.03, 1.06, 1.10, 1.14, 1.18, 1.22, 1.27, 1.32, 1.37, 1.42, 1.48],
+  optimistic:  [1.10, 1.20, 1.32, 1.45, 1.58, 1.72, 1.86, 2.00, 2.15, 2.30, 2.45, 2.60],
+};
+// Curva de churn (pessimista pico nos meses iniciais, depois normaliza)
+const CHURN_RAMP = {
+  pessimistic: [1.30, 1.40, 1.35, 1.20, 1.10, 1.05, 1.00, 0.98, 0.96, 0.95, 0.95, 0.95],
+  realistic:   [1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00],
+  optimistic:  [0.95, 0.92, 0.90, 0.88, 0.86, 0.84, 0.82, 0.80, 0.78, 0.76, 0.74, 0.72],
+};
 
 const COLORS = {
   realistic: "#3b82f6",   // azul
