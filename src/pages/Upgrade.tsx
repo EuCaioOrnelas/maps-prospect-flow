@@ -275,49 +275,61 @@ const Upgrade = () => {
   const handleUpgrade = async (planKey: string) => {
     trackScoreEvent("clicked_upgrade_button", { plan: planKey });
 
-    // If user already has a paid plan, run upgrade orchestration first
-    // (cancels old subscription, computes proration, carries opportunity balance)
     const isPaidUpgrade = currentPlan !== "free" && getPlanOrder(planKey) > getPlanOrder(currentPlan);
     if (isPaidUpgrade) {
       setLoadingPlan(planKey);
       try {
+        // PREVIEW first — show user the math before charging anything
         const { data, error } = await supabase.functions.invoke("upgrade-subscription", {
-          body: { newPlan: planKey, newBillingPeriod: billingKey },
+          body: { newPlan: planKey, newBillingPeriod: billingKey, mode: "preview" },
         });
         if (error || data?.error) {
           const msg = data?.message || error?.message || "Erro ao iniciar upgrade";
           if (data?.error === "monthly_to_annual_blocked") {
-            toast({
-              title: "Upgrade bloqueado",
-              description: msg,
-              variant: "destructive",
-            });
+            toast({ title: "Upgrade bloqueado", description: msg, variant: "destructive" });
             setLoadingPlan(null);
             return;
           }
           throw new Error(msg);
         }
-        if (data?.carriedBonus > 0) {
-          toast({
-            title: "✨ Upgrade preparado",
-            description: `${data.carriedBonus} oportunidades preservadas como saldo bônus no novo plano.`,
-          });
-        }
-        await refreshProfile();
+        setUpgradePreview({ ...data, planKey });
+        setSelectedPlanKey(planKey);
+        setPreviewOpen(true);
       } catch (err: any) {
-        toast({
-          title: "Erro no upgrade",
-          description: err.message || "Tente novamente",
-          variant: "destructive",
-        });
+        toast({ title: "Erro no upgrade", description: err.message || "Tente novamente", variant: "destructive" });
+      } finally {
         setLoadingPlan(null);
-        return;
       }
-      setLoadingPlan(null);
+      return;
     }
 
+    // Free → paid: skip preview
     setSelectedPlanKey(planKey);
     setPaymentModalOpen(true);
+  };
+
+  const confirmUpgrade = async () => {
+    if (!selectedPlanKey) return;
+    setLoadingPlan(selectedPlanKey);
+    try {
+      const { data, error } = await supabase.functions.invoke("upgrade-subscription", {
+        body: { newPlan: selectedPlanKey, newBillingPeriod: billingKey, mode: "execute" },
+      });
+      if (error || data?.error) throw new Error(data?.message || error?.message || "Erro");
+      if (data?.carriedBonus > 0) {
+        toast({
+          title: "✨ Upgrade preparado",
+          description: `${data.carriedBonus} oportunidades preservadas como saldo bônus no novo plano.`,
+        });
+      }
+      await refreshProfile();
+      setPreviewOpen(false);
+      setPaymentModalOpen(true);
+    } catch (err: any) {
+      toast({ title: "Erro no upgrade", description: err.message || "Tente novamente", variant: "destructive" });
+    } finally {
+      setLoadingPlan(null);
+    }
   };
 
   const handleManageSubscription = async () => {
