@@ -78,6 +78,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Usuários", href: "/admin/usuarios", icon: Users },
       { label: "Ativação", href: "/admin/ativacao", icon: UserCheck },
       { label: "Retenção", href: "/admin/retencao", icon: Activity },
+      { label: "Health Score", href: "/admin/health-score", icon: Target },
       { label: "Landing Pages", href: "/admin/landing-pages", icon: Globe },
     ],
   },
@@ -103,6 +104,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: "Growth",
     icon: Rocket,
     items: [
+      { label: "Growth Intel", href: "/admin/growth-intel", icon: Target },
       { label: "Emails", href: "/admin/email-tests", icon: Mail },
       { label: "Fluxos", href: "/admin/email-flows", icon: Workflow },
       { label: "Score Usuários", href: "/admin/user-scoring", icon: Trophy },
