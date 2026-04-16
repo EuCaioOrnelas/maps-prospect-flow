@@ -173,9 +173,7 @@ const App = () => (
                 >
                   <Route index element={<AdminDashboard />} />
                   <Route path="legacy" element={<Admin />} />
-                  {/* Painel Executivo */}
-                  <Route path="kpis" element={<AdminKPIs />} />
-                  <Route path="alertas" element={<AdminAlertas />} />
+                  {/* Painel Executivo - KPIs e Alertas integrados ao dashboard */}
                   <Route path="relatorios" element={<AdminRelatorios />} />
                   {/* Receita */}
                   <Route path="pix-billing" element={<AdminPixBilling />} />
