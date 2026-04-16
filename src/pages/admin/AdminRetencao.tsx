@@ -262,7 +262,7 @@ export default function AdminRetencao() {
                       <th className="text-center p-2 text-[10px] text-muted-foreground/70 font-semibold uppercase tracking-wider w-20">
                         Tamanho
                       </th>
-                      {Array.from({ length: periodMonths }).map((_, i) => (
+                      {Array.from({ length: monthsCount }).map((_, i) => (
                         <th key={i} className="p-2 text-[10px] text-muted-foreground/70 font-semibold uppercase tracking-wider text-center min-w-[60px]">
                           M{i}
                         </th>
