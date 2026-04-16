@@ -1,10 +1,10 @@
-import { PieChart, TrendingUp, DollarSign } from "lucide-react";
+import { PieChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminForecast() {
-  const { data, loading } = useAdminDashboard();
+  const { loading, totalMRR } = useAdminDashboard();
 
   const scenarios = [
     { label: "Pessimista", multiplier: 0.85, color: "text-red-500", bg: "bg-red-500/10" },
@@ -27,7 +27,7 @@ export default function AdminForecast() {
                 <>
                   <p className={`text-xs font-semibold uppercase tracking-wider ${s.color}`}>{s.label}</p>
                   <p className="text-2xl font-bold text-foreground mt-2">
-                    R$ {data ? (data.mrr * s.multiplier).toLocaleString("pt-BR", { maximumFractionDigits: 0 }) : "—"}
+                    R$ {(totalMRR * s.multiplier).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">MRR previsto próximo mês</p>
                 </>

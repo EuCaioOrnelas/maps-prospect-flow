@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Users, Search, Download, Filter } from "lucide-react";
+import { Users, Search, Download } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -121,9 +121,11 @@ export default function AdminUsuarios() {
                     </TableCell>
                     <TableCell>
                       <UserActionsMenu
-                        user={user}
-                        onRefresh={loadUsers}
-                        isAdmin={true}
+                        userId={user.id}
+                        userEmail={user.email}
+                        userName={user.name}
+                        isBlocked={user.is_blocked || false}
+                        onActionComplete={loadUsers}
                       />
                     </TableCell>
                   </TableRow>

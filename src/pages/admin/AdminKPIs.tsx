@@ -1,20 +1,21 @@
 import { BarChart3, TrendingUp, Users, DollarSign, Activity, Target } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminKPIs() {
-  const { data, loading } = useAdminDashboard();
+  const { loading, totalMRR, totalSubscribers, churnRate, averageTicket, stats } = useAdminDashboard();
+
+  const ltv = churnRate > 0 ? averageTicket / (churnRate / 100) : 0;
 
   const kpis = [
-    { label: "MRR Total", value: data ? `R$ ${data.mrr.toLocaleString("pt-BR")}` : "—", icon: DollarSign, color: "text-emerald-500", change: data?.mrrGrowth },
-    { label: "Assinantes Ativos", value: data?.activeSubscribers ?? "—", icon: Users, color: "text-blue-500" },
-    { label: "Churn Mensal", value: data ? `${data.churnRate.toFixed(1)}%` : "—", icon: TrendingUp, color: data && data.churnRate > 8 ? "text-red-500" : data && data.churnRate > 5 ? "text-yellow-500" : "text-emerald-500" },
-    { label: "Ticket Médio", value: data ? `R$ ${data.avgTicket.toLocaleString("pt-BR")}` : "—", icon: Target, color: "text-violet-500" },
-    { label: "LTV Estimado", value: data ? `R$ ${data.ltv.toLocaleString("pt-BR")}` : "—", icon: BarChart3, color: "text-amber-500" },
-    { label: "Novos 30d", value: data?.newUsers30d ?? "—", icon: Activity, color: "text-cyan-500" },
+    { label: "MRR Total", value: `R$ ${totalMRR.toLocaleString("pt-BR")}`, icon: DollarSign, color: "text-emerald-500" },
+    { label: "Assinantes Ativos", value: totalSubscribers, icon: Users, color: "text-blue-500" },
+    { label: "Churn Mensal", value: `${churnRate.toFixed(1)}%`, icon: TrendingUp, color: churnRate > 8 ? "text-red-500" : churnRate > 5 ? "text-amber-500" : "text-emerald-500" },
+    { label: "Ticket Médio", value: `R$ ${averageTicket.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`, icon: Target, color: "text-violet-500" },
+    { label: "LTV Estimado", value: `R$ ${ltv.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`, icon: BarChart3, color: "text-amber-500" },
+    { label: "Usuários Ativos 7d", value: stats?.activeUsers7d ?? "—", icon: Activity, color: "text-cyan-500" },
   ];
 
   return (
@@ -35,11 +36,6 @@ export default function AdminKPIs() {
                   <div>
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
                     <p className="text-2xl font-bold text-foreground mt-1">{kpi.value}</p>
-                    {kpi.change !== undefined && (
-                      <p className={`text-xs mt-1 ${kpi.change >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                        {kpi.change >= 0 ? "+" : ""}{kpi.change.toFixed(1)}% vs mês anterior
-                      </p>
-                    )}
                   </div>
                   <div className={`p-2 rounded-lg bg-muted/50 ${kpi.color}`}>
                     <kpi.icon size={18} />
@@ -52,10 +48,7 @@ export default function AdminKPIs() {
       </div>
 
       <Card className="border-border/40 bg-card/80 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-base">Evolução de KPIs</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <Tabs defaultValue="mrr">
             <TabsList className="mb-4">
               <TabsTrigger value="mrr">MRR</TabsTrigger>
