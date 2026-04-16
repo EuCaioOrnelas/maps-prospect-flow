@@ -587,7 +587,7 @@ export default function AdminDashboard() {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground flex items-center gap-2">
                       Asaas Cartão
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-500">{pctAsaasCard}%</span>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500">{pctAsaasCard}%</span>
                     </span>
                     <span className="font-semibold text-foreground">{formatCurrency(asaasCardMrrVal)}</span>
                   </div>

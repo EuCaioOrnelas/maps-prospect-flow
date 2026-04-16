@@ -86,7 +86,7 @@ const ManageSubscription = lazyWithRetry(() => import("./pages/ManageSubscriptio
 const AdminKPIs = lazyWithRetry(() => import("./pages/admin/AdminKPIs"), "AdminKPIs");
 const AdminAlertas = lazyWithRetry(() => import("./pages/admin/AdminAlertas"), "AdminAlertas");
 const AdminRelatorios = lazyWithRetry(() => import("./pages/admin/AdminRelatorios"), "AdminRelatorios");
-const AdminStripe = lazyWithRetry(() => import("./pages/admin/AdminStripe"), "AdminStripe");
+
 const AdminAssinaturas = lazyWithRetry(() => import("./pages/admin/AdminAssinaturas"), "AdminAssinaturas");
 const AdminChurn = lazyWithRetry(() => import("./pages/admin/AdminChurn"), "AdminChurn");
 const AdminForecast = lazyWithRetry(() => import("./pages/admin/AdminForecast"), "AdminForecast");
