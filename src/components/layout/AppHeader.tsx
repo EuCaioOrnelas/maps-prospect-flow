@@ -87,7 +87,7 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
             <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-1">
               <div 
                 className="h-full bg-primary rounded-full transition-all"
-                style={{ width: `${Math.min(((profile?.searches_used || 0) / (profile?.searches_limit || 10)) * 100, 100)}%` }}
+                style={{ width: `${Math.min(((profile?.searches_used || 0) / Math.max((profile?.searches_limit || 10) + ((profile as any)?.bonus_searches || 0), 1)) * 100, 100)}%` }}
               />
             </div>
             <span className="text-xs text-muted-foreground ml-1 px-2 py-0.5 bg-secondary rounded">
