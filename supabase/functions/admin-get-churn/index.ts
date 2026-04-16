@@ -60,7 +60,7 @@ serve(async (req) => {
 
     const now = Date.now();
 
-    const [cancellationsRes, feedbacksRes, eventsRes, profilesRes, failedPixCheckoutsRes] = await Promise.all([
+    const [cancellationsRes, feedbacksRes, eventsRes, profilesRes] = await Promise.all([
       adminClient.from("subscription_cancellations").select("*").order("cancelled_at", { ascending: false }),
       adminClient.from("cancellation_feedback").select("*").order("created_at", { ascending: false }),
       adminClient
@@ -72,31 +72,24 @@ serve(async (req) => {
         .from("profiles")
         .select("id, email, name, plan, payment_provider, subscription_current_period_end, admin_assigned_plan")
         .order("created_at", { ascending: false }),
-      adminClient
-        .from("checkout_leads")
-        .select("id, user_id, email, plan_attempted, checkout_started_at, created_at, stripe_session_id")
-        .eq("checkout_completed", false)
-        .or("stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_pixauto_%")
-        .order("created_at", { ascending: false }),
     ]);
 
     if (cancellationsRes.error) throw cancellationsRes.error;
     if (feedbacksRes.error) throw feedbacksRes.error;
     if (eventsRes.error) throw eventsRes.error;
     if (profilesRes.error) throw profilesRes.error;
-    if (failedPixCheckoutsRes.error) throw failedPixCheckoutsRes.error;
 
     const profiles = profilesRes.data || [];
     const expiredProfiles = profiles.filter((profile) => {
       if (profile.admin_assigned_plan) return false;
       if (!profile.subscription_current_period_end) return false;
-      if (!["abacate_pay", "asaas", "stripe"].includes(profile.payment_provider || "")) return false;
+      if (!["abacate_pay", "asaas"].includes(profile.payment_provider || "")) return false;
+      // Only include profiles that had a paid plan (not free) — real churn
+      if (!profile.plan || profile.plan === "free") return false;
 
       const periodEnd = new Date(profile.subscription_current_period_end).getTime();
       return Number.isFinite(periodEnd) && periodEnd < now;
     });
-
-    const failedPixCheckouts = failedPixCheckoutsRes.data || [];
 
     logStep("Churn payload ready", {
       cancellations: cancellationsRes.data?.length || 0,
@@ -104,7 +97,6 @@ serve(async (req) => {
       events: eventsRes.data?.length || 0,
       profiles: profiles.length,
       expiredProfiles: expiredProfiles.length,
-      failedPixCheckouts: failedPixCheckouts.length,
     });
 
     return new Response(
@@ -114,7 +106,6 @@ serve(async (req) => {
         subEvents: eventsRes.data || [],
         profiles,
         expiredProfiles,
-        failedPixCheckouts,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
