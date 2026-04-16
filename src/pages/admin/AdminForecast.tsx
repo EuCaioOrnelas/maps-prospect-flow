@@ -297,10 +297,12 @@ import {
  * ============================================================ */
 
 // Scenario multipliers applied to historical averages
+// Scenario multipliers applied to historical averages.
+// Churn defaults map: 6% base → Pessimistic 9% (×1.5), Realistic 6% (×1.0), Optimistic 4% (×0.667)
 const SCENARIO_MULT = {
-  pessimistic: { churn: 1.4, sales: 0.65, expansion: 0.3 },
-  realistic:   { churn: 1.0, sales: 1.0,  expansion: 1.0 },
-  optimistic:  { churn: 0.75, sales: 1.3,  expansion: 1.4 },
+  pessimistic: { churn: 1.5,   sales: 0.65, expansion: 0.3 },
+  realistic:   { churn: 1.0,   sales: 1.0,  expansion: 1.0 },
+  optimistic:  { churn: 0.667, sales: 1.3,  expansion: 1.4 },
 };
 
 // Non-linear ramps (behavioral curves over 12 months)
