@@ -270,8 +270,50 @@ const Upgrade = () => {
     if (selectedPlanKey) trackCheckoutEvents(selectedPlanKey);
   };
 
-  const handleUpgrade = (planKey: string) => {
+  const handleUpgrade = async (planKey: string) => {
     trackScoreEvent("clicked_upgrade_button", { plan: planKey });
+
+    // If user already has a paid plan, run upgrade orchestration first
+    // (cancels old subscription, computes proration, carries opportunity balance)
+    const isPaidUpgrade = currentPlan !== "free" && getPlanOrder(planKey) > getPlanOrder(currentPlan);
+    if (isPaidUpgrade) {
+      setLoadingPlan(planKey);
+      try {
+        const { data, error } = await supabase.functions.invoke("upgrade-subscription", {
+          body: { newPlan: planKey, newBillingPeriod: billingKey },
+        });
+        if (error || data?.error) {
+          const msg = data?.message || error?.message || "Erro ao iniciar upgrade";
+          if (data?.error === "monthly_to_annual_blocked") {
+            toast({
+              title: "Upgrade bloqueado",
+              description: msg,
+              variant: "destructive",
+            });
+            setLoadingPlan(null);
+            return;
+          }
+          throw new Error(msg);
+        }
+        if (data?.carriedBonus > 0) {
+          toast({
+            title: "✨ Upgrade preparado",
+            description: `${data.carriedBonus} oportunidades preservadas como saldo bônus no novo plano.`,
+          });
+        }
+        await refreshProfile();
+      } catch (err: any) {
+        toast({
+          title: "Erro no upgrade",
+          description: err.message || "Tente novamente",
+          variant: "destructive",
+        });
+        setLoadingPlan(null);
+        return;
+      }
+      setLoadingPlan(null);
+    }
+
     setSelectedPlanKey(planKey);
     setPaymentModalOpen(true);
   };

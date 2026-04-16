@@ -100,7 +100,7 @@ const Dashboard = () => {
   const { showOnboarding, showTrialFeedback, closeOnboarding, closeTrialFeedback } = useOnboardingModals();
   const { trackScoreEvent } = useAutoScoreTracking("dashboard");
 
-  const searchesRemaining = profile ? profile.searches_limit - profile.searches_used : 0;  // opportunities remaining
+  const searchesRemaining = profile ? (profile.searches_limit - profile.searches_used) + (((profile as any).bonus_searches) || 0) : 0;  // opportunities remaining (plan + carried bonus)
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
   const showTrialIndicator = isFreePlan && trialDaysRemaining > 0 && !isTrialExpired;
 

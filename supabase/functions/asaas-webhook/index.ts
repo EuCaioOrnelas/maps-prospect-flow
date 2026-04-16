@@ -109,38 +109,56 @@ async function findProfile(supabaseClient: any, externalReference: string | null
   return null;
 }
 
-async function activatePlan(supabaseClient: any, profile: any, planKey: string, checkoutIdPrefix: string | null, paymentValue?: number) {
+async function activatePlan(
+  supabaseClient: any,
+  profile: any,
+  planKey: string,
+  checkoutIdPrefix: string | null,
+  paymentValue?: number,
+  meta?: { subscriptionId?: string | null; customerId?: string | null; billingPeriod?: string | null },
+) {
   const searchesLimit = getPlanSearchesLimit(planKey);
   const currentPeriodEnd = profile.subscription_current_period_end
     ? new Date(profile.subscription_current_period_end)
     : new Date();
 
+  // Determine billing period (annual vs monthly) from value if not provided
+  const inferredAnnual = paymentValue && paymentValue >= 2000;
+  const billingPeriod = meta?.billingPeriod || (inferredAnnual ? "annual" : "monthly");
+  const cycleDays = billingPeriod === "annual" ? 365 : 30;
+
   let periodEnd: Date;
   if (profile.plan !== "free" && currentPeriodEnd > new Date()) {
     periodEnd = new Date(currentPeriodEnd);
-    periodEnd.setDate(periodEnd.getDate() + 30);
+    periodEnd.setDate(periodEnd.getDate() + cycleDays);
     logStep("Early renewal, extending", { currentEnd: currentPeriodEnd.toISOString(), newEnd: periodEnd.toISOString() });
   } else {
     periodEnd = new Date();
-    periodEnd.setDate(periodEnd.getDate() + 30);
+    periodEnd.setDate(periodEnd.getDate() + cycleDays);
   }
 
   // Calculate price in cents from payment value (grandfathering support)
   const defaultPrices: Record<string, number> = { start: 29600, growth: 69600, scale: 89700 };
   const priceCents = paymentValue ? Math.round(paymentValue * 100) : (defaultPrices[planKey] || 0);
 
+  // Build update payload — preserve bonus_searches (carried from previous plan)
+  const updatePayload: Record<string, any> = {
+    plan: planKey,
+    searches_limit: searchesLimit,
+    searches_used: 0,
+    subscription_current_period_end: periodEnd.toISOString(),
+    last_searches_reset: new Date().toISOString(),
+    payment_provider: "asaas",
+    subscription_price_cents: priceCents,
+    billing_period: billingPeriod,
+    updated_at: new Date().toISOString(),
+  };
+  if (meta?.subscriptionId) updatePayload.asaas_subscription_id = meta.subscriptionId;
+  if (meta?.customerId) updatePayload.asaas_customer_id = meta.customerId;
+
   const { error: updateError } = await supabaseClient
     .from("profiles")
-    .update({
-      plan: planKey,
-      searches_limit: searchesLimit,
-      searches_used: 0,
-      subscription_current_period_end: periodEnd.toISOString(),
-      last_searches_reset: new Date().toISOString(),
-      payment_provider: "asaas",
-      subscription_price_cents: priceCents,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq("id", profile.id);
 
   if (updateError) {
@@ -235,7 +253,11 @@ serve(async (req) => {
       const profile = await findProfile(supabaseClient, null, checkoutIdPrefix);
 
       if (profile && planKey) {
-        await activatePlan(supabaseClient, profile, planKey, checkoutIdPrefix, authorization.value);
+        await activatePlan(supabaseClient, profile, planKey, checkoutIdPrefix, authorization.value, {
+          subscriptionId: authorizationId,
+          customerId: authorization.customer || null,
+          billingPeriod: authorization.frequency === "YEARLY" ? "annual" : "monthly",
+        });
         return new Response(
           JSON.stringify({ received: true, action: "pix_auto_activated", plan: planKey }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -308,7 +330,11 @@ serve(async (req) => {
         });
       }
 
-      await activatePlan(supabaseClient, profile, planKey, checkoutPrefix, value);
+      await activatePlan(supabaseClient, profile, planKey, checkoutPrefix, value, {
+        subscriptionId: subscriptionId || pixAutoAuthId || null,
+        customerId: payment.customer || null,
+        billingPeriod: value >= 2000 ? "annual" : "monthly",
+      });
 
       return new Response(
         JSON.stringify({ received: true, plan: planKey, userId: profile.id, action: "activated" }),
