@@ -16,10 +16,10 @@ export default function AdminAssinaturas() {
     const load = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, email, name, plan, payment_provider, subscription_current_period_end, created_at")
+        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at")
         .neq("plan", "free")
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(500);
       setSubscribers(data || []);
       setLoading(false);
     };
@@ -81,7 +81,9 @@ export default function AdminAssinaturas() {
                         {sub.plan}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{sub.payment_provider || "stripe"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {sub.payment_provider === "abacate_pay" ? "PIX" : sub.payment_provider === "asaas" ? "Asaas Cartão" : sub.payment_provider || "Stripe"}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {sub.subscription_current_period_end ? new Date(sub.subscription_current_period_end).toLocaleDateString("pt-BR") : "—"}
                     </TableCell>
