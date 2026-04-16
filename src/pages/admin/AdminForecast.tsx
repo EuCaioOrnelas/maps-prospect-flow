@@ -32,13 +32,23 @@ const MIN_CANCELLATIONS_FOR_REAL_CHURN = 3;
 /** Default churn for the realistic scenario when there isn't enough internal data. */
 const DEFAULT_REALISTIC_CHURN = 0.06;
 
+// ============================================================
+// SHAPE — same as before, but now totals come from useAdminDashboard
+// (the SAME hook the Cockpit uses) so numbers always match.
+// ============================================================
 interface NewSystemMetrics {
   loading: boolean;
+  /** TOTAL MRR — same as Cockpit: Stripe + PIX + Asaas Card + Other */
   totalMRR: number;
+  /** TOTAL subscribers — same as Cockpit */
   totalSubscribers: number;
+  /** Avg ticket — totalMRR / totalSubscribers (same as Cockpit) */
   averageTicket: number;
+  /** Historical MRR per month (reconstructed from new system events) */
   monthlyMRR: { month: string; mrr: number; activeCount: number }[];
+  /** Sales/cancellations per month (NEW SYSTEM ONLY — Asaas/PIX) */
   monthlySales: { month: string; newSales: number; salesValue: number; cancellations: number }[];
+  /** Churn rate — calculated ONLY from new system cancellations (Stripe ignored) */
   realChurnRate: number;
   avgNewMRR: number;
   avgNewClients: number;
@@ -46,7 +56,7 @@ interface NewSystemMetrics {
   avgCancellations: number;
   /** true when we don't have enough internal data and we're using the default 6% baseline */
   usingDefaultChurn: boolean;
-  /** Breakdown by source for transparency */
+  /** Source breakdown for transparency (same numbers shown in Cockpit) */
   stripeMRR: number;
   newSystemMRR: number;
   stripeSubscribers: number;
@@ -56,292 +66,242 @@ interface NewSystemMetrics {
 }
 
 /**
- * Pulls forecast data ONLY from the new management system:
- * - profiles (excluding stripe and free)
- * - subscription_cancellations (real cancellations registered)
- * - pix_invoices (paid renewals)
+ * Forecast metrics hook.
+ *
+ * STRATEGY:
+ *  - Revenue & subscriber TOTALS come from `useAdminDashboard` (the same
+ *    hook the Cockpit uses). This guarantees the headline KPIs match.
+ *  - Churn / new-sales / expansion historical signals are computed ONLY
+ *    from the new system tables (profiles non-stripe + subscription_cancellations
+ *    non-stripe + pix_invoices). Stripe churn data is too unreliable to forecast.
+ *
+ * WHY:
+ *  - Before this refactor, AdminForecast was reading `profiles` + a separate
+ *    edge-function call, which double-counted some users (14 vs Cockpit's 13).
+ *  - Centralising on useAdminDashboard fixes the divergence.
  */
 function useNewSystemMetrics(): NewSystemMetrics {
-  const [data, setData] = useState<NewSystemMetrics>({
-    loading: true,
-    totalMRR: 0,
-    totalSubscribers: 0,
-    averageTicket: 0,
-    monthlyMRR: [],
-    monthlySales: [],
+  // ---------- 1) Pull headline totals from the SAME hook the Cockpit uses ----------
+  const cockpit = useAdminDashboard();
+
+  // ---------- 2) Pull "new system only" history for churn / new MRR / expansion ----------
+  const [history, setHistory] = useState({
+    monthlyMRR: [] as { month: string; mrr: number; activeCount: number }[],
+    monthlySales: [] as { month: string; newSales: number; salesValue: number; cancellations: number }[],
     realChurnRate: DEFAULT_REALISTIC_CHURN,
     avgNewMRR: 0,
     avgNewClients: 0,
     avgExpansionMRR: 0,
     avgCancellations: 0,
     usingDefaultChurn: true,
-    stripeMRR: 0,
-    newSystemMRR: 0,
-    stripeSubscribers: 0,
-    newSystemSubscribers: 0,
     lastRefresh: new Date(),
   });
 
-  // ----------------------------------------------------------------
-  // FETCH FUNCTION — runs once on mount, then every AUTO_REFRESH_MS
-  // ----------------------------------------------------------------
-  const fetchAll = async () => {
-      const now = new Date();
-      const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+  const fetchHistory = async () => {
+    const now = new Date();
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
 
-      // ============================================================
-      // STEP 1 — Pull active subscribers from `profiles`
-      // We include ALL paid plans (free excluded). Stripe is kept here
-      // because we need its REVENUE; we'll separate sources below.
-      // ============================================================
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_blocked")
-        .neq("plan", "free")
-        .eq("is_blocked", false);
+    // STEP A — Pull ALL paying profiles (filter out stripe below for new-system math)
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_blocked")
+      .neq("plan", "free")
+      .eq("is_blocked", false);
 
-      // ============================================================
-      // STEP 2 — Pull cancellations from new system ONLY
-      // Stripe cancellations are unreliable for forecasting (we don't
-      // have full webhook history), so we ignore them.
-      // ============================================================
-      const { data: cancellations } = await supabase
-        .from("subscription_cancellations")
-        .select("provider, billing_type, cancelled_at, active_until")
-        .gte("cancelled_at", sixMonthsAgo.toISOString());
+    // STEP B — Cancellations (NEW SYSTEM ONLY — we explicitly drop Stripe)
+    const { data: cancellations } = await supabase
+      .from("subscription_cancellations")
+      .select("provider, billing_type, cancelled_at, active_until")
+      .gte("cancelled_at", sixMonthsAgo.toISOString());
 
-      // ============================================================
-      // STEP 3 — Pull paid PIX invoices (renewal + new sales revenue)
-      // ============================================================
-      const { data: pixPaid } = await supabase
-        .from("pix_invoices")
-        .select("amount_cents, paid_at, plan, user_id")
-        .eq("status", "paid")
-        .gte("paid_at", sixMonthsAgo.toISOString());
+    // STEP C — Paid PIX invoices (renewal revenue history)
+    const { data: pixPaid } = await supabase
+      .from("pix_invoices")
+      .select("amount_cents, paid_at, plan, user_id")
+      .eq("status", "paid")
+      .gte("paid_at", sixMonthsAgo.toISOString());
 
-      // ============================================================
-      // STEP 4 — Stripe MRR + active subscriber count (revenue side)
-      // Pulled from existing edge function `get-stripe-mrr`.
-      // We use the COUNT for Clientes Ativos and the MRR for revenue.
-      // We DO NOT use Stripe churn (unreliable history).
-      // ============================================================
-      let stripeMRR = 0;
-      let stripeSubscribers = 0;
-      try {
-        const { data: stripeData } = await supabase.functions.invoke("get-stripe-mrr");
-        stripeMRR = stripeData?.totalMRR || 0;
-        stripeSubscribers = stripeData?.activeSubscriptions || 0;
-      } catch {
-        stripeMRR = 0;
-        stripeSubscribers = 0;
-      }
+    // ----- Filter out Stripe from churn/sales math -----
+    // CHURN intentionally excludes Stripe (we don't have reliable Stripe webhook history).
+    // Sales-history includes only Asaas/PIX/Abacate users, since Stripe new-sales
+    // signal is captured separately by Cockpit's totalSubscribers count.
+    const newSystemProfiles = (profiles || []).filter(
+      (p: any) => p.payment_provider !== "stripe"
+    );
+    const newSystemCancellations = (cancellations || []).filter(
+      (c: any) => c.provider !== "stripe"
+    );
 
-      // ============================================================
-      // STEP 5 — Filter sources
-      // newSystemProfiles: everything EXCEPT stripe (used for churn/ticket math)
-      // newSystemCancellations: only non-stripe cancellations
-      // ============================================================
-      const newSystemProfiles = (profiles || []).filter(
-        (p: any) => p.payment_provider !== "stripe"
-      );
-      const newSystemCancellations = (cancellations || []).filter(
-        (c: any) => c.provider !== "stripe"
-      );
+    // ----- Build last 6 month keys: ["2025-06", ...] -----
+    const monthKeys: string[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
 
-      // ============================================================
-      // STEP 6 — Calculate New System MRR + active count
-      // For each active subscription, derive monthly value:
-      //   - If period > 300 days → annual plan, divide price by 12
-      //   - Else → monthly plan, use price as-is
-      //   - Fallback to PLAN_PRICES_MONTHLY if subscription_price_cents is null
-      // ============================================================
-      let newSystemMRR = 0;
-      let newSystemSubscribers = 0;
-      for (const p of newSystemProfiles as any[]) {
-        const periodEnd = p.subscription_current_period_end;
-        if (periodEnd && new Date(periodEnd) < now) continue; // expired
-        let monthlyValue = PLAN_PRICES_MONTHLY[p.plan] || 0;
-        if (p.subscription_price_cents) {
-          const priceReais = p.subscription_price_cents / 100;
-          if (periodEnd) {
-            const created = new Date(p.created_at);
-            const end = new Date(periodEnd);
-            const daysSpan = (end.getTime() - created.getTime()) / 86400000;
-            monthlyValue = daysSpan > 300 ? priceReais / 12 : priceReais;
-          }
-        }
-        newSystemMRR += monthlyValue;
-        newSystemSubscribers++;
-      }
+    // ----- Aggregate new clients & revenue per month -----
+    const monthlyNewClients: Record<string, number> = {};
+    const monthlyNewRevenue: Record<string, number> = {};
+    for (const p of newSystemProfiles as any[]) {
+      const d = new Date(p.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (!monthKeys.includes(key)) continue;
+      monthlyNewClients[key] = (monthlyNewClients[key] || 0) + 1;
+      monthlyNewRevenue[key] = (monthlyNewRevenue[key] || 0) + (PLAN_PRICES_MONTHLY[p.plan] || 0);
+    }
 
-      // ============================================================
-      // STEP 6.5 — Combine subscribers (Stripe + New System)
-      // Final MRR = both sources · Final subs = both sources
-      // ============================================================
-      const totalSubscribers = stripeSubscribers + newSystemSubscribers;
-      const totalMRR = stripeMRR + newSystemMRR;
-      const averageTicket = totalSubscribers > 0 ? totalMRR / totalSubscribers : 0;
+    // PIX renewal revenue per month (counts as recurring revenue, not new sales)
+    const monthlyPixRevenue: Record<string, number> = {};
+    for (const inv of (pixPaid || []) as any[]) {
+      if (!inv.paid_at) continue;
+      const d = new Date(inv.paid_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (!monthKeys.includes(key)) continue;
+      monthlyPixRevenue[key] = (monthlyPixRevenue[key] || 0) + ((inv.amount_cents || 0) / 100);
+    }
 
-      // ============================================================
-      // STEP 7 — Build month keys for last 6 months: ["2025-06", ...]
-      // ============================================================
-      const monthKeys: string[] = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-      }
+    // Cancellations per month (new system only)
+    const monthlyCancellations: Record<string, number> = {};
+    for (const c of newSystemCancellations as any[]) {
+      if (!c.cancelled_at) continue;
+      const d = new Date(c.cancelled_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (!monthKeys.includes(key)) continue;
+      monthlyCancellations[key] = (monthlyCancellations[key] || 0) + 1;
+    }
 
-      // ============================================================
-      // STEP 8 — Aggregate new clients & revenue per month
-      // ============================================================
-      const monthlyNewClients: Record<string, number> = {};
-      const monthlyNewRevenue: Record<string, number> = {};
-      for (const p of newSystemProfiles as any[]) {
-        const d = new Date(p.created_at);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        if (!monthKeys.includes(key)) continue;
-        monthlyNewClients[key] = (monthlyNewClients[key] || 0) + 1;
-        monthlyNewRevenue[key] = (monthlyNewRevenue[key] || 0) + (PLAN_PRICES_MONTHLY[p.plan] || 0);
-      }
+    // ----- Reconstruct historical MRR per month using TODAY'S total as anchor -----
+    // We start from today's TOTAL (Cockpit number) and walk backwards subtracting
+    // net new clients to estimate past active counts and MRR.
+    const monthlyMRR: { month: string; mrr: number; activeCount: number }[] = [];
+    const monthlySales: { month: string; newSales: number; salesValue: number; cancellations: number }[] = [];
 
-      // PIX renewal revenue per month
-      const monthlyPixRevenue: Record<string, number> = {};
-      for (const inv of (pixPaid || []) as any[]) {
-        if (!inv.paid_at) continue;
-        const d = new Date(inv.paid_at);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        if (!monthKeys.includes(key)) continue;
-        monthlyPixRevenue[key] = (monthlyPixRevenue[key] || 0) + ((inv.amount_cents || 0) / 100);
-      }
+    const reversed = [...monthKeys].reverse();
+    const activeHistory: Record<string, number> = {};
+    let backClients = cockpit.totalSubscribers;
+    for (const key of reversed) {
+      activeHistory[key] = backClients;
+      backClients = backClients - (monthlyNewClients[key] || 0) + (monthlyCancellations[key] || 0);
+    }
 
-      // Cancellations per month
-      const monthlyCancellations: Record<string, number> = {};
-      for (const c of newSystemCancellations as any[]) {
-        if (!c.cancelled_at) continue;
-        const d = new Date(c.cancelled_at);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        if (!monthKeys.includes(key)) continue;
-        monthlyCancellations[key] = (monthlyCancellations[key] || 0) + 1;
-      }
-
-      // ============================================================
-      // STEP 9 — Reconstruct historical MRR per month
-      // We don't have MRR snapshots, so we walk BACKWARDS from today's
-      // total: each month, subtract net new clients to get past active count.
-      // ============================================================
-      const monthlyMRR: { month: string; mrr: number; activeCount: number }[] = [];
-      const monthlySales: { month: string; newSales: number; salesValue: number; cancellations: number }[] = [];
-
-      const reversed = [...monthKeys].reverse();
-      const activeHistory: Record<string, number> = {};
-      let backClients = totalSubscribers;
-      for (const key of reversed) {
-        activeHistory[key] = backClients;
-        backClients = backClients - (monthlyNewClients[key] || 0) + (monthlyCancellations[key] || 0);
-      }
-
-      for (const key of monthKeys) {
-        const active = activeHistory[key] || 0;
-        const mrrEstimate = active * averageTicket;
-        monthlyMRR.push({ month: key, mrr: mrrEstimate, activeCount: active });
-        monthlySales.push({
-          month: key,
-          newSales: monthlyNewClients[key] || 0,
-          salesValue: (monthlyNewRevenue[key] || 0) + (monthlyPixRevenue[key] || 0),
-          cancellations: monthlyCancellations[key] || 0,
-        });
-      }
-
-      // ============================================================
-      // STEP 10 — Compute baseline metrics (last 3 months)
-      // ============================================================
-      const recentSales = monthlySales.slice(-3);
-      const recentMRR = monthlyMRR.slice(-3);
-
-      // -- Churn rate: cancellations / active (avg of last 3 months) --
-      // If we don't have at least MIN_CANCELLATIONS_FOR_REAL_CHURN data
-      // points, fall back to DEFAULT_REALISTIC_CHURN (6%).
-      let totalChurnPct = 0;
-      let churnMonths = 0;
-      let totalCancellations = 0;
-      for (let i = 0; i < recentSales.length; i++) {
-        const active = recentMRR[i]?.activeCount || 0;
-        totalCancellations += recentSales[i].cancellations || 0;
-        if (active > 0) {
-          totalChurnPct += (recentSales[i].cancellations || 0) / active;
-          churnMonths++;
-        }
-      }
-
-      let realChurnRate: number;
-      let usingDefaultChurn: boolean;
-      if (totalCancellations >= MIN_CANCELLATIONS_FOR_REAL_CHURN && churnMonths > 0) {
-        realChurnRate = Math.min(Math.max(totalChurnPct / churnMonths, 0.01), 0.15);
-        usingDefaultChurn = false;
-      } else {
-        realChurnRate = DEFAULT_REALISTIC_CHURN;
-        usingDefaultChurn = true;
-      }
-
-      // -- Weighted avg new clients/MRR (last month counts 2x) --
-      let wSumClients = 0, wSumValue = 0, wTotal = 0;
-      recentSales.forEach((s, i) => {
-        const w = i === recentSales.length - 1 ? 2 : 1;
-        wSumClients += (s.newSales || 0) * w;
-        wSumValue += (s.salesValue || 0) * w;
-        wTotal += w;
+    const tkt = cockpit.averageTicket;
+    for (const key of monthKeys) {
+      const active = activeHistory[key] || 0;
+      monthlyMRR.push({ month: key, mrr: active * tkt, activeCount: active });
+      monthlySales.push({
+        month: key,
+        newSales: monthlyNewClients[key] || 0,
+        salesValue: (monthlyNewRevenue[key] || 0) + (monthlyPixRevenue[key] || 0),
+        cancellations: monthlyCancellations[key] || 0,
       });
-      const avgNewClients = wTotal > 0 ? wSumClients / wTotal : 0;
-      const avgNewMRR = wTotal > 0 ? wSumValue / wTotal : 0;
+    }
 
-      // -- Expansion MRR: portion of monthly MRR delta NOT explained by
-      //    new sales or churn (i.e. upgrades & extra seats). --
-      let totalExpansion = 0;
-      let expMonths = 0;
-      for (let i = 1; i < monthlyMRR.length; i++) {
-        const prev = monthlyMRR[i - 1].mrr;
-        const cur = monthlyMRR[i].mrr;
-        const newRev = monthlySales[i].salesValue;
-        const churnLoss = (monthlySales[i].cancellations || 0) * averageTicket;
-        const exp = (cur - prev) - newRev + churnLoss;
-        if (exp > 0) totalExpansion += exp;
-        expMonths++;
+    // ----- Churn rate: avg(cancellations / active) over last 3 months -----
+    const recentSales = monthlySales.slice(-3);
+    const recentMRR = monthlyMRR.slice(-3);
+    let totalChurnPct = 0;
+    let churnMonths = 0;
+    let totalCancellations = 0;
+    for (let i = 0; i < recentSales.length; i++) {
+      const active = recentMRR[i]?.activeCount || 0;
+      totalCancellations += recentSales[i].cancellations || 0;
+      if (active > 0) {
+        totalChurnPct += (recentSales[i].cancellations || 0) / active;
+        churnMonths++;
       }
-      const avgExpansionMRR = expMonths > 0 ? totalExpansion / expMonths : 0;
+    }
+    let realChurnRate: number;
+    let usingDefaultChurn: boolean;
+    if (totalCancellations >= MIN_CANCELLATIONS_FOR_REAL_CHURN && churnMonths > 0) {
+      realChurnRate = Math.min(Math.max(totalChurnPct / churnMonths, 0.01), 0.15);
+      usingDefaultChurn = false;
+    } else {
+      realChurnRate = DEFAULT_REALISTIC_CHURN;
+      usingDefaultChurn = true;
+    }
 
-      const avgCancellations = recentSales.length > 0
-        ? recentSales.reduce((s, x) => s + (x.cancellations || 0), 0) / recentSales.length
-        : 0;
+    // ----- Weighted avg new clients & new MRR (last month counts 2x) -----
+    let wSumClients = 0, wSumValue = 0, wTotal = 0;
+    recentSales.forEach((s, i) => {
+      const w = i === recentSales.length - 1 ? 2 : 1;
+      wSumClients += (s.newSales || 0) * w;
+      wSumValue += (s.salesValue || 0) * w;
+      wTotal += w;
+    });
+    const avgNewClients = wTotal > 0 ? wSumClients / wTotal : 0;
+    const avgNewMRR = wTotal > 0 ? wSumValue / wTotal : 0;
 
-      setData({
-        loading: false,
-        totalMRR,
-        totalSubscribers,
-        averageTicket,
-        monthlyMRR,
-        monthlySales,
-        realChurnRate,
-        avgNewMRR,
-        avgNewClients,
-        avgExpansionMRR,
-        avgCancellations,
-        usingDefaultChurn,
-        stripeMRR,
-        newSystemMRR,
-        stripeSubscribers,
-        newSystemSubscribers,
-        lastRefresh: new Date(),
-      });
+    // ----- Expansion MRR: month-over-month delta NOT explained by new sales/churn -----
+    let totalExpansion = 0;
+    let expMonths = 0;
+    for (let i = 1; i < monthlyMRR.length; i++) {
+      const prev = monthlyMRR[i - 1].mrr;
+      const cur = monthlyMRR[i].mrr;
+      const newRev = monthlySales[i].salesValue;
+      const churnLoss = (monthlySales[i].cancellations || 0) * tkt;
+      const exp = (cur - prev) - newRev + churnLoss;
+      if (exp > 0) totalExpansion += exp;
+      expMonths++;
+    }
+    const avgExpansionMRR = expMonths > 0 ? totalExpansion / expMonths : 0;
+
+    const avgCancellations = recentSales.length > 0
+      ? recentSales.reduce((s, x) => s + (x.cancellations || 0), 0) / recentSales.length
+      : 0;
+
+    setHistory({
+      monthlyMRR,
+      monthlySales,
+      realChurnRate,
+      avgNewMRR,
+      avgNewClients,
+      avgExpansionMRR,
+      avgCancellations,
+      usingDefaultChurn,
+      lastRefresh: new Date(),
+    });
   };
 
-  // Run once on mount + every AUTO_REFRESH_MS thereafter
+  // Run history fetch once Cockpit data is ready, then refresh every AUTO_REFRESH_MS
   useEffect(() => {
-    fetchAll();
-    const id = setInterval(fetchAll, AUTO_REFRESH_MS);
+    if (cockpit.loading) return;
+    fetchHistory();
+    const id = setInterval(fetchHistory, AUTO_REFRESH_MS);
     return () => clearInterval(id);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cockpit.loading, cockpit.totalSubscribers, cockpit.totalMRR]);
 
-  return data;
+  // Source breakdown (Stripe vs Novo Sistema = PIX + Asaas Card + Other)
+  const stripeMRR = cockpit.stripeMRR?.totalMRR ?? 0;
+  const stripeSubscribers = cockpit.stripeMRR?.activeSubscriptions ?? 0;
+  const newSystemMRR =
+    (cockpit.pixMRR?.pixMrr ?? 0) +
+    (cockpit.asaasCardMRR?.asaasCardMrr ?? 0) +
+    (cockpit.otherMRR?.otherMrr ?? 0);
+  const newSystemSubscribers =
+    (cockpit.pixMRR?.pixActiveSubscriptions ?? 0) +
+    (cockpit.asaasCardMRR?.asaasCardSubscriptions ?? 0) +
+    (cockpit.otherMRR?.otherSubscriptions ?? 0);
+
+  return {
+    loading: cockpit.loading,
+    totalMRR: cockpit.totalMRR,
+    totalSubscribers: cockpit.totalSubscribers,
+    averageTicket: cockpit.averageTicket,
+    monthlyMRR: history.monthlyMRR,
+    monthlySales: history.monthlySales,
+    realChurnRate: history.realChurnRate,
+    avgNewMRR: history.avgNewMRR,
+    avgNewClients: history.avgNewClients,
+    avgExpansionMRR: history.avgExpansionMRR,
+    avgCancellations: history.avgCancellations,
+    usingDefaultChurn: history.usingDefaultChurn,
+    stripeMRR,
+    newSystemMRR,
+    stripeSubscribers,
+    newSystemSubscribers,
+    lastRefresh: history.lastRefresh,
+  };
 }
 import {
   Tooltip as UITooltip,
