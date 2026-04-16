@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { SidebarNavItem } from "@/components/layout/SidebarNavItem";
 import ThemeSwitch from "@/components/ui/theme-switch";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   DollarSign,
@@ -37,12 +38,12 @@ import {
 interface NavItem {
   title: string;
   url: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
 }
 
 interface NavSection {
   title: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   items: NavItem[];
 }
 
