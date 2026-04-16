@@ -309,120 +309,24 @@ interface ProjMonth {
 }
 
 export default function AdminForecast() {
-  const { loading, totalMRR, stripeMRR, totalSubscribers, averageTicket, churnRate, ltvData } = useAdminDashboard();
+  const m = useNewSystemMetrics();
+  const {
+    loading, totalMRR, totalSubscribers, averageTicket,
+    monthlyMRR, monthlySales,
+    realChurnRate, avgNewMRR, avgNewClients, avgExpansionMRR, avgCancellations,
+  } = m;
 
   const forecast = useMemo(() => {
-    const monthlyMRR = stripeMRR?.monthlyMRR || [];
-    const monthlySales = stripeMRR?.monthlySales || [];
-
     if (totalMRR <= 0 && monthlyMRR.length === 0) return null;
 
     const currentMRR = totalMRR;
     const currentClients = Math.max(totalSubscribers, 1);
 
-    // ===================================================================
-    // CALCULATE REAL METRICS FROM HISTORICAL DATA
-    // ===================================================================
-
-    // --- Churn Rate (real) ---
-    // Use Stripe churnRate if available, else calculate from monthlySales
-    let realChurnRate = 0;
-    if (churnRate > 0) {
-      realChurnRate = churnRate / 100; // churnRate comes as percentage
-    } else if (monthlySales.length >= 2) {
-      const recentSales = monthlySales.slice(-3);
-      const recentMRRData = monthlyMRR.slice(-3);
-      let totalChurnPct = 0;
-      let churnMonths = 0;
-      for (let i = 0; i < recentSales.length; i++) {
-        const activeAtStart = recentMRRData[i]?.activeCount || currentClients;
-        if (activeAtStart > 0 && recentSales[i].cancellations > 0) {
-          totalChurnPct += recentSales[i].cancellations / activeAtStart;
-          churnMonths++;
-        }
-      }
-      realChurnRate = churnMonths > 0 ? totalChurnPct / churnMonths : 0.06;
-    } else {
-      // Fallback: SaaS WhatsApp SMB typical
-      realChurnRate = 0.06;
-    }
-    // Cap churn at 15% for display sanity
-    realChurnRate = Math.min(realChurnRate, 0.15);
-    // Minimum floor at 2%
-    realChurnRate = Math.max(realChurnRate, 0.02);
-
-    // --- New MRR (real) ---
-    // Weighted average: last month counts double
-    let avgNewMRR = 0;
-    if (monthlySales.length > 0) {
-      const recent = monthlySales.slice(-3);
-      let weightedSum = 0;
-      let weightTotal = 0;
-      recent.forEach((s, i) => {
-        const weight = i === recent.length - 1 ? 2 : 1; // last month double weight
-        weightedSum += s.salesValue * weight;
-        weightTotal += weight;
-      });
-      avgNewMRR = weightedSum / weightTotal;
-    } else {
-      // Fallback: estimate from current base
-      avgNewMRR = currentClients * averageTicket * 0.08;
-    }
-
-    // --- New Clients (real) ---
-    let avgNewClients = 0;
-    if (monthlySales.length > 0) {
-      const recent = monthlySales.slice(-3);
-      let weightedSum = 0;
-      let weightTotal = 0;
-      recent.forEach((s, i) => {
-        const weight = i === recent.length - 1 ? 2 : 1;
-        weightedSum += s.newSales * weight;
-        weightTotal += weight;
-      });
-      avgNewClients = weightedSum / weightTotal;
-    } else {
-      avgNewClients = Math.max(1, Math.round(currentClients * 0.08));
-    }
-
-    // --- Expansion MRR (real) ---
-    // Calculate from MRR growth that ISN'T from new sales or churn
-    let avgExpansionMRR = 0;
-    if (monthlyMRR.length >= 2 && monthlySales.length >= 1) {
-      const recentMonths = Math.min(monthlyMRR.length - 1, 3);
-      let totalExpansion = 0;
-      let expMonths = 0;
-      for (let i = monthlyMRR.length - recentMonths; i < monthlyMRR.length; i++) {
-        const prevMRR = monthlyMRR[i - 1]?.mrr || 0;
-        const curMRR = monthlyMRR[i]?.mrr || 0;
-        const salesIdx = monthlySales.length - (monthlyMRR.length - i);
-        const newSalesVal = salesIdx >= 0 ? (monthlySales[salesIdx]?.salesValue || 0) : 0;
-        const cancelVal = salesIdx >= 0 ? ((monthlySales[salesIdx]?.cancellations || 0) * averageTicket) : 0;
-        // expansion = actual growth - new sales + churn losses
-        const expansion = (curMRR - prevMRR) - newSalesVal + cancelVal;
-        if (expansion > 0) {
-          totalExpansion += expansion;
-        }
-        expMonths++;
-      }
-      avgExpansionMRR = expMonths > 0 ? totalExpansion / expMonths : 0;
-    }
-    // Fallback minimum: small % of MRR from natural upgrades
-    if (avgExpansionMRR <= 0) {
-      avgExpansionMRR = currentMRR * 0.015; // ~1.5% of MRR
-    }
-
-    // --- Avg Cancellations per month ---
-    let avgCancellations = 0;
-    if (monthlySales.length > 0) {
-      const recent = monthlySales.slice(-3);
-      avgCancellations = recent.reduce((s, x) => s + (x.cancellations || 0), 0) / recent.length;
-    }
-
-    // --- Growth Rate (real) ---
+    // All metrics already calculated from REAL data in useNewSystemMetrics
     const churnMRRCurrent = currentMRR * realChurnRate;
     const netNewMRR = avgNewMRR + avgExpansionMRR - churnMRRCurrent;
     const growthRate = currentMRR > 0 ? netNewMRR / currentMRR : 0;
+
 
     // ===================================================================
     // BUILD 12-MONTH COMPOUND PROJECTIONS
