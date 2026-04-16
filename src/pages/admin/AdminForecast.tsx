@@ -1020,12 +1020,68 @@ function ScenarioCard({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 pt-3 border-t border-border/20">
-          <MiniMetric label="Churn" value={`${churn.toFixed(1)}%`} sub={`−R$ ${fmt(churnMRR)}`} />
-          <MiniMetric label="New MRR" value={`+R$ ${fmt(newMRR)}`} sub="" />
-          <MiniMetric label="Expansão" value={`+R$ ${fmt(expansion)}`} sub="" />
-          <MiniMetric label="Net" value={`${delta >= 0 ? "+" : ""}R$ ${fmt(delta)}`} sub="" highlight={delta >= 0} />
-        </div>
+        {/* Info button — opens popover with full breakdown */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="w-full flex items-center justify-between gap-2 pt-3 mt-1 border-t border-border/20 group/info hover:opacity-80 transition-opacity"
+            >
+              <div className="flex items-center gap-1.5">
+                <Info size={11} className="text-muted-foreground/60 group-hover/info:text-foreground transition-colors" />
+                <span className="text-[10px] font-medium text-muted-foreground/70 group-hover/info:text-foreground transition-colors">
+                  Ver decomposição (Churn · New · Expansão · Net)
+                </span>
+              </div>
+              <ArrowUpRight size={10} className="text-muted-foreground/40 group-hover/info:text-foreground transition-colors" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="bottom"
+            align="end"
+            className="w-72 p-4 rounded-xl border-border/40 bg-popover/95 backdrop-blur-xl shadow-xl"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-border/20">
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${palette.text}`}>{label}</p>
+                <span className="text-[9px] text-muted-foreground/50">Próximos 30 dias</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <BreakdownItem
+                  label="Churn"
+                  primary={`${churn.toFixed(1)}%`}
+                  secondary={`−R$ ${fmt(churnMRR)}`}
+                  tone="red"
+                />
+                <BreakdownItem
+                  label="New MRR"
+                  primary={`+R$ ${fmt(newMRR)}`}
+                  secondary="Novas vendas"
+                  tone="emerald"
+                />
+                <BreakdownItem
+                  label="Expansão"
+                  primary={`+R$ ${fmt(expansion)}`}
+                  secondary="Upgrades"
+                  tone="blue"
+                />
+                <BreakdownItem
+                  label="Net"
+                  primary={`${delta >= 0 ? "+" : ""}R$ ${fmt(delta)}`}
+                  secondary="Saldo final"
+                  tone={delta >= 0 ? "emerald" : "red"}
+                  highlight
+                />
+              </div>
+
+              <div className="pt-2 border-t border-border/20 text-[9px] text-muted-foreground/60 leading-relaxed">
+                <strong className="text-muted-foreground/80">Cálculo:</strong>{" "}
+                Net = New + Expansão − Churn = {fmt(newMRR)} + {fmt(expansion)} − {fmt(churnMRR)} = <strong className={delta >= 0 ? "text-emerald-500" : "text-red-500"}>R$ {fmt(delta)}</strong>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </CardContent>
     </Card>
   );
