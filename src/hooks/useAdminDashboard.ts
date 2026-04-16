@@ -30,8 +30,21 @@ interface PixMRRData {
   pixMonthlyMRR: Array<{ month: string; mrr: number; activeCount: number }>;
 }
 
-const PLAN_PRICES: Record<string, number> = {
-  free: 0,
+interface AsaasCardMRRData {
+  asaasCardMrr: number;
+  asaasCardSubscriptions: number;
+}
+
+interface PayingProfile {
+  id: string;
+  plan: string;
+  payment_provider: string | null;
+  subscription_current_period_end: string | null;
+  subscription_price_cents: number | null;
+  created_at: string;
+}
+
+const PLAN_PRICES_MONTHLY: Record<string, number> = {
   start: 296,
   growth: 696,
   scale: 897,
@@ -42,13 +55,15 @@ export function useAdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [stripeMRR, setStripeMRR] = useState<StripeMRRData | null>(null);
   const [pixMRR, setPixMRR] = useState<PixMRRData | null>(null);
+  const [asaasCardMRR, setAsaasCardMRR] = useState<AsaasCardMRRData | null>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [payingProfiles, setPayingProfiles] = useState<PayingProfile[]>([]);
 
   const loadStats = useCallback(async () => {
     try {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, plan, searches_used, searches_limit, created_at, updated_at, is_blocked")
+        .select("id, plan, searches_used, searches_limit, created_at, updated_at, is_blocked, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used")
         .order("created_at", { ascending: false });
 
       if (!profiles) return;
@@ -60,27 +75,35 @@ export function useAdminDashboard() {
       const totalUsers = profiles.length;
       const payingUsers = profiles.filter((p) => p.plan !== "free").length;
       const freeUsers = profiles.filter((p) => p.plan === "free").length;
+      
+      // Active users: updated in the period AND has any usage
       const activeUsers7d = profiles.filter(
-        (p) => new Date(p.updated_at) >= sevenDaysAgo && p.searches_used > 0
+        (p) => new Date(p.updated_at) >= sevenDaysAgo && (p.searches_used > 0 || (p as any).trial_messages_sent > 0 || (p as any).trial_leads_used > 0 || (p as any).trial_flows_used > 0 || (p as any).trial_campaigns_used > 0)
       ).length;
       const activeUsers30d = profiles.filter(
-        (p) => new Date(p.updated_at) >= thirtyDaysAgo && p.searches_used > 0
+        (p) => new Date(p.updated_at) >= thirtyDaysAgo && (p.searches_used > 0 || (p as any).trial_messages_sent > 0 || (p as any).trial_leads_used > 0 || (p as any).trial_flows_used > 0 || (p as any).trial_campaigns_used > 0)
       ).length;
 
       const mrrLocal = profiles
         .filter((p) => p.plan !== "free")
-        .reduce((acc, p) => acc + (PLAN_PRICES[p.plan] || 0), 0);
+        .reduce((acc, p) => acc + (PLAN_PRICES_MONTHLY[p.plan] || 0), 0);
 
-      const activationRate =
-        totalUsers > 0
-          ? (profiles.filter((p) => p.searches_used > 0).length / totalUsers) * 100
-          : 0;
+      // Activation: users who used any feature
+      const activatedUsers = profiles.filter((p) => 
+        p.searches_used > 0 || 
+        (p as any).trial_messages_sent > 0 || 
+        (p as any).trial_leads_used > 0 || 
+        (p as any).trial_flows_used > 0 || 
+        (p as any).trial_campaigns_used > 0
+      ).length;
+      
+      const activationRate = totalUsers > 0 ? (activatedUsers / totalUsers) * 100 : 0;
 
       const planCounts: Record<string, { count: number; revenue: number }> = {};
       profiles.forEach((p) => {
         if (!planCounts[p.plan]) planCounts[p.plan] = { count: 0, revenue: 0 };
         planCounts[p.plan].count++;
-        planCounts[p.plan].revenue += PLAN_PRICES[p.plan] || 0;
+        planCounts[p.plan].revenue += PLAN_PRICES_MONTHLY[p.plan] || 0;
       });
 
       setStats({
@@ -112,23 +135,60 @@ export function useAdminDashboard() {
     }
   }, []);
 
-  const loadPixMRR = useCallback(async () => {
+  const loadNonStripeMRR = useCallback(async () => {
     try {
-      const planPrices: Record<string, number> = { start: 296, growth: 696, scale: 897 };
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, plan, payment_provider, subscription_current_period_end")
+        .select("id, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at")
         .neq("plan", "free")
         .eq("is_blocked", false);
 
+      if (!profiles) return;
+
+      const now = new Date();
       let pixMrrTotal = 0;
       let pixActiveSubs = 0;
-      const now = new Date();
-      for (const p of profiles || []) {
-        if ((p as any).payment_provider !== "abacate_pay" && (p as any).payment_provider !== "asaas") continue;
-        if (p.subscription_current_period_end && new Date(p.subscription_current_period_end) < now) continue;
-        pixMrrTotal += planPrices[p.plan] || 0;
-        pixActiveSubs++;
+      let asaasCardMrrTotal = 0;
+      let asaasCardSubs = 0;
+
+      const typedProfiles = profiles as PayingProfile[];
+      setPayingProfiles(typedProfiles);
+
+      for (const p of typedProfiles) {
+        const periodEnd = p.subscription_current_period_end;
+        if (periodEnd && new Date(periodEnd) < now) continue;
+
+        // Determine monthly MRR from subscription_price_cents
+        let monthlyValue = PLAN_PRICES_MONTHLY[p.plan] || 0;
+        if (p.subscription_price_cents) {
+          const priceReais = p.subscription_price_cents / 100;
+          // If period is ~1 year, it's annual - divide by 12
+          if (periodEnd) {
+            const created = new Date(p.created_at);
+            const end = new Date(periodEnd);
+            const daysSpan = (end.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+            if (daysSpan > 300) {
+              monthlyValue = priceReais / 12;
+            } else {
+              monthlyValue = priceReais;
+            }
+          }
+        }
+
+        const provider = p.payment_provider;
+        if (provider === "abacate_pay") {
+          pixMrrTotal += monthlyValue;
+          pixActiveSubs++;
+        } else if (provider === "asaas") {
+          asaasCardMrrTotal += monthlyValue;
+          asaasCardSubs++;
+        } else if (!provider) {
+          // No provider set but has subscription_price_cents - could be asaas card
+          if (p.subscription_price_cents) {
+            asaasCardMrrTotal += monthlyValue;
+            asaasCardSubs++;
+          }
+        }
       }
 
       setPixMRR({
@@ -136,8 +196,14 @@ export function useAdminDashboard() {
         pixActiveSubscriptions: pixActiveSubs,
         pixMonthlyMRR: [],
       });
+
+      setAsaasCardMRR({
+        asaasCardMrr: asaasCardMrrTotal,
+        asaasCardSubscriptions: asaasCardSubs,
+      });
     } catch {
       setPixMRR(null);
+      setAsaasCardMRR(null);
     }
   }, []);
 
@@ -145,7 +211,6 @@ export function useAdminDashboard() {
     try {
       const alertsList: any[] = [];
 
-      // Check churn events last 7 days
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data: churnEvents } = await supabase
         .from("subscription_events")
@@ -161,9 +226,8 @@ export function useAdminDashboard() {
         });
       }
 
-      // Check trials near expiry
       const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
-      const { data: expiringTrials, count: trialCount } = await supabase
+      const { count: trialCount } = await supabase
         .from("profiles")
         .select("id", { count: "exact", head: true })
         .eq("plan", "free")
@@ -178,8 +242,7 @@ export function useAdminDashboard() {
         });
       }
 
-      // Free users with high usage
-      const { data: hotFree, count: hotFreeCount } = await supabase
+      const { count: hotFreeCount } = await supabase
         .from("profiles")
         .select("id", { count: "exact", head: true })
         .eq("plan", "free")
@@ -202,34 +265,59 @@ export function useAdminDashboard() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      await Promise.all([loadStats(), loadStripeMRR(), loadPixMRR(), loadAlerts()]);
+      await Promise.all([loadStats(), loadStripeMRR(), loadNonStripeMRR(), loadAlerts()]);
       setLoading(false);
     })();
   }, []);
 
+  // Total MRR = Stripe + PIX + Asaas Card
   const totalMRR = useMemo(() => {
-    return (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0);
-  }, [stripeMRR, pixMRR]);
+    return (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0) + (asaasCardMRR?.asaasCardMrr ?? 0);
+  }, [stripeMRR, pixMRR, asaasCardMRR]);
 
   const totalSubscribers = useMemo(() => {
-    return (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0);
-  }, [stripeMRR, pixMRR]);
+    return (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0) + (asaasCardMRR?.asaasCardSubscriptions ?? 0);
+  }, [stripeMRR, pixMRR, asaasCardMRR]);
 
   const churnRate = stripeMRR?.churnRate ?? 0;
 
+  // Average ticket: uses monthly-equivalent values
   const averageTicket = useMemo(() => {
     return totalSubscribers > 0 ? totalMRR / totalSubscribers : 0;
   }, [totalMRR, totalSubscribers]);
+
+  // LTV: average subscription duration * average ticket
+  const ltvData = useMemo(() => {
+    if (payingProfiles.length === 0) return { avgMonths: 0, ltv: 0 };
+    
+    const now = new Date();
+    let totalMonths = 0;
+    let count = 0;
+    
+    for (const p of payingProfiles) {
+      const created = new Date(p.created_at);
+      const months = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 30);
+      totalMonths += months;
+      count++;
+    }
+    
+    const avgMonths = count > 0 ? totalMonths / count : 0;
+    const ltv = avgMonths * averageTicket;
+    
+    return { avgMonths, ltv };
+  }, [payingProfiles, averageTicket]);
 
   return {
     loading,
     stats,
     stripeMRR,
     pixMRR,
+    asaasCardMRR,
     totalMRR,
     totalSubscribers,
     churnRate,
     averageTicket,
+    ltvData,
     alerts,
   };
 }

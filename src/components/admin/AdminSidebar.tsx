@@ -272,7 +272,7 @@ export function AdminSidebar() {
                   <ThemeSwitch />
                 </div>
               ) : (
-                <ThemeSwitch />
+                <ThemeSwitch className="[&_[role=switch]]:h-6 [&_[role=switch]]:w-10 [&_[role=switch]>span]:h-5 [&_[role=switch]>span]:w-5 [&_[role=switch]]:data-[state=checked]:[&>span]:translate-x-[16px] [&_.absolute]:hidden" />
               )}
             </li>
             <li>
