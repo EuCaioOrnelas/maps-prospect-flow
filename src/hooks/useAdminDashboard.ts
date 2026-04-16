@@ -359,6 +359,7 @@ export function useAdminDashboard() {
     totalMRR,
     totalSubscribers,
     churnRate,
+    churnCancellations30d,
     averageTicket,
     ltvData,
     alerts,
