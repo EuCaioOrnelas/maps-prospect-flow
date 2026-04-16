@@ -22,7 +22,17 @@ interface NewSystemMetrics {
   avgNewClients: number;
   avgExpansionMRR: number;
   avgCancellations: number;
+  /** true when we don't have enough internal data and we're using the default 6% baseline */
+  usingDefaultChurn: boolean;
+  /** Breakdown by source for transparency */
+  stripeMRR: number;
+  newSystemMRR: number;
 }
+
+// Minimum confidence threshold: at least 3 cancellations across last 3 months in NEW system
+const MIN_CANCELLATIONS_FOR_REAL_CHURN = 3;
+// Default fallback churn for the realistic scenario (used to derive 9% pess and 4% opt)
+const DEFAULT_REALISTIC_CHURN = 0.06;
 
 /**
  * Pulls forecast data ONLY from the new management system:
