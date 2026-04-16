@@ -617,12 +617,14 @@ export default function AdminForecast() {
       <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/30 border border-border/20">
         <ShieldCheck size={13} className="text-emerald-500 shrink-0" />
         <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
-          <span className="font-semibold text-muted-foreground">Métricas calculadas automaticamente:</span>{" "}
-          Churn {(forecast.drivers.realChurnRate * 100).toFixed(1)}% (média 3m) · 
-          New MRR R$ {fmt(forecast.drivers.avgNewMRR)}/mês · 
-          Expansão R$ {fmt(forecast.drivers.avgExpansionMRR)}/mês · 
-          ~{forecast.drivers.avgNewClients} novos clientes/mês · 
-          ~{forecast.drivers.avgCancellations} cancelamentos/mês
+          <span className="font-semibold text-muted-foreground">Receita:</span>{" "}
+          Stripe R$ {fmt(m.stripeMRR)} + Novo Sistema R$ {fmt(m.newSystemMRR)} ·{" "}
+          <span className="font-semibold text-muted-foreground">Churn:</span>{" "}
+          {m.usingDefaultChurn
+            ? `${(forecast.drivers.realChurnRate * 100).toFixed(1)}% (baseline · dados insuficientes)`
+            : `${(forecast.drivers.realChurnRate * 100).toFixed(1)}% (real · novo sistema)`} ·{" "}
+          New MRR R$ {fmt(forecast.drivers.avgNewMRR)}/mês ·{" "}
+          ~{forecast.drivers.avgNewClients} novos/mês
         </p>
       </div>
 
