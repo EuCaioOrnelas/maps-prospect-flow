@@ -48,11 +48,14 @@ function useNewSystemMetrics(): NewSystemMetrics {
     averageTicket: 0,
     monthlyMRR: [],
     monthlySales: [],
-    realChurnRate: 0,
+    realChurnRate: DEFAULT_REALISTIC_CHURN,
     avgNewMRR: 0,
     avgNewClients: 0,
     avgExpansionMRR: 0,
     avgCancellations: 0,
+    usingDefaultChurn: true,
+    stripeMRR: 0,
+    newSystemMRR: 0,
   });
 
   useEffect(() => {
