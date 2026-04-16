@@ -82,10 +82,12 @@ export default function AdminForecast() {
     }
 
     // Scenarios for cards
+    const lastProjection = projection[projection.length - 1] as any;
+
     const scenarioData = [
       {
         label: "Pessimista",
-        value: projection[projection.length - 1]?.pessimistic || 0,
+        value: lastProjection?.pessimistic || 0,
         rate: Math.min(avgGrowth - 0.05, -0.02),
         icon: TrendingDown,
         gradient: "from-red-500/10 to-red-500/5",
@@ -95,7 +97,7 @@ export default function AdminForecast() {
       },
       {
         label: "Realista",
-        value: projection[projection.length - 1]?.realistic || 0,
+        value: lastProjection?.realistic || 0,
         rate: avgGrowth,
         icon: Target,
         gradient: "from-primary/10 to-primary/5",
@@ -105,7 +107,7 @@ export default function AdminForecast() {
       },
       {
         label: "Otimista",
-        value: projection[projection.length - 1]?.optimistic || 0,
+        value: lastProjection?.optimistic || 0,
         rate: Math.max(avgGrowth + 0.05, 0.03),
         icon: TrendingUp,
         gradient: "from-emerald-500/10 to-emerald-500/5",
@@ -116,7 +118,7 @@ export default function AdminForecast() {
     ];
 
     // Merge for chart
-    const chartData = [
+    const chartData: any[] = [
       ...historical.map((h) => ({ ...h, pessimistic: undefined, realistic: undefined, optimistic: undefined })),
       ...projection.map((p: any) => ({ ...p, mrr: undefined })),
     ];
