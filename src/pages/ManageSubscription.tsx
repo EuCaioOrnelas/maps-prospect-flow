@@ -713,53 +713,23 @@ export default function ManageSubscription() {
                       </div>
                     </div>
                   </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all"
-                        disabled={cancelling}
-                      >
-                        {cancelling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
-                        Cancelar renovação automática
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar cancelamento da renovação</AlertDialogTitle>
-                        <AlertDialogDescription asChild>
-                          <div className="space-y-3">
-                            <p>
-                              Tem certeza que deseja cancelar a renovação automática? Após o cancelamento:
-                            </p>
-                            <ul className="text-xs space-y-1.5 text-muted-foreground">
-                              <li className="flex items-start gap-2">
-                                <CheckCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                                <span>Seu plano continua ativo até <strong className="text-foreground">{activeSubscriptions[0]?.nextDueDate ? formatDate(activeSubscriptions[0].nextDueDate) : "o fim do período"}</strong></span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <Ban className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />
-                                <span>Não haverá novas cobranças no seu cartão</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <Info className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
-                                <span>Após o período, o plano será rebaixado para Free</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Manter assinatura</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleCancel(activeSubscriptions[0]?.id)}
-                          className="bg-red-600 hover:bg-red-700 text-white"
-                        >
-                          Sim, cancelar renovação
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button
+                      variant="outline"
+                      className="w-full border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all"
+                      disabled={cancelling}
+                      onClick={() => setShowFeedbackDialog(true)}
+                    >
+                      {cancelling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                      Cancelar renovação automática
+                    </Button>
+                    <CancellationFeedbackDialog
+                      open={showFeedbackDialog}
+                      onOpenChange={setShowFeedbackDialog}
+                      onConfirm={() => handleCancel(activeSubscriptions[0]?.id)}
+                      userId={user?.id}
+                      email={user?.email}
+                      provider={provider}
+                    />
                 </div>
               ) : (
                 <div className="text-center py-8">
