@@ -573,7 +573,24 @@ export default function AdminForecast() {
       { label: "Clientes Ativos", value: totalSubscribers.toLocaleString("pt-BR"), sub: "Assinaturas pagantes", icon: Users, accent: "text-blue-500", tooltip: "Total de assinantes com plano ativo" },
       { label: "Ticket Médio", value: `R$ ${fmt(averageTicket)}`, sub: "MRR / clientes", icon: Target, accent: "text-emerald-500", tooltip: "MRR total ÷ número de clientes" },
       { label: "Net New MRR", value: m ? `${m.netNewMRR >= 0 ? "+" : ""}R$ ${fmt(m.netNewMRR)}` : "—", sub: "New + Exp − Churn", icon: m && m.netNewMRR >= 0 ? ArrowUpRight : ArrowDownRight, accent: (m?.netNewMRR ?? 0) >= 0 ? "text-emerald-500" : "text-red-500", tooltip: `Baseado na média: +R$${fmt(m?.newMRR ?? 0)} new, +R$${fmt(m?.expansionMRR ?? 0)} exp, −R$${fmt(m?.churnMRR ?? 0)} churn` },
-      { label: "Churn Rate", value: d ? `${(d.realChurnRate * 100).toFixed(1)}%` : "—", sub: `~${d?.avgCancellations ?? 0} cancel/mês`, icon: AlertTriangle, accent: "text-amber-500", tooltip: "Calculado: cancelamentos ÷ clientes ativos (média 3 meses)" },
+      {
+        label: "Churn Rate",
+        // Mostra o churn REAL (0% se não houver cancelamentos). O baseline de 6% é
+        // usado APENAS no cenário Realista da projeção, não como métrica atual.
+        value: d
+          ? m?.usingDefaultChurn
+            ? `${((d.avgCancellations / Math.max(totalSubscribers, 1)) * 100).toFixed(1)}%`
+            : `${(d.realChurnRate * 100).toFixed(1)}%`
+          : "—",
+        sub: m?.usingDefaultChurn
+          ? `${d?.avgCancellations ?? 0} cancel/mês · baseline 6% no realista`
+          : `~${d?.avgCancellations ?? 0} cancel/mês (real)`,
+        icon: AlertTriangle,
+        accent: "text-amber-500",
+        tooltip: m?.usingDefaultChurn
+          ? "Churn real atual = cancelamentos ÷ clientes ativos. Sem cancelamentos suficientes (mín. 3 em 3 meses), aplicamos um baseline de 6% APENAS no cenário Realista da projeção."
+          : "Calculado: cancelamentos ÷ clientes ativos (média 3 meses)",
+      },
       { label: "Growth Rate", value: m ? `${(m.growthRate * 100).toFixed(1)}%` : "—", sub: "Crescimento líquido/mês", icon: BarChart3, accent: (m?.growthRate ?? 0) >= 0 ? "text-emerald-500" : "text-red-500", tooltip: "Net New MRR ÷ MRR atual" },
     ];
   }, [totalMRR, totalSubscribers, averageTicket, forecast]);
