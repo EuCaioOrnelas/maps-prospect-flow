@@ -37,10 +37,16 @@ import {
 } from "lucide-react";
 import logoIconNew from "@/assets/logo-icon-new.png";
 
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+}
+
 interface NavSection {
   label: string;
   icon: React.ElementType;
-  items: { label: string; href: string; icon: React.ElementType }[];
+  items: NavItem[];
 }
 
 const NAV_SECTIONS: NavSection[] = [
@@ -118,15 +124,14 @@ const NAV_SECTIONS: NavSection[] = [
 export function AdminSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
+
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
-    // Auto-open section containing current route
     const initial: Record<string, boolean> = {};
     NAV_SECTIONS.forEach((section) => {
       if (section.items.some((item) => currentPath === item.href || currentPath.startsWith(item.href + "/"))) {
         initial[section.label] = true;
       }
     });
-    // Always open Painel Executivo by default
     initial["Painel Executivo"] = true;
     return initial;
   });
@@ -135,29 +140,26 @@ export function AdminSidebar() {
     setOpenSections((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
+  const isItemActive = (href: string) => {
+    if (href === "/admin") return currentPath === "/admin";
+    return currentPath === href || currentPath.startsWith(href + "/");
+  };
+
   return (
     <aside className="w-[260px] min-h-screen border-r border-border/40 bg-card/50 flex flex-col shrink-0">
-      {/* Logo */}
       <div className="h-16 flex items-center px-5 border-b border-border/30">
         <Link to="/admin" className="flex items-center gap-2.5">
           <img src={logoIconNew} alt="Wiize" className="h-7 w-7" />
-          <span className="font-semibold text-foreground text-[15px] tracking-tight">
-            Wiize
-          </span>
-          <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-md">
-            Admin
-          </span>
+          <span className="font-semibold text-foreground text-[15px] tracking-tight">Wiize</span>
+          <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-md">Admin</span>
         </Link>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
         {NAV_SECTIONS.map((section) => {
           const isOpen = openSections[section.label] ?? false;
           const SectionIcon = section.icon;
-          const hasActiveChild = section.items.some(
-            (item) => currentPath === item.href || currentPath.startsWith(item.href + "/")
-          );
+          const hasActiveChild = section.items.some((item) => isItemActive(item.href));
 
           return (
             <div key={section.label}>
@@ -174,10 +176,7 @@ export function AdminSidebar() {
                 <span className="flex-1 text-left">{section.label}</span>
                 <ChevronDown
                   size={14}
-                  className={cn(
-                    "transition-transform duration-200",
-                    isOpen && "rotate-180"
-                  )}
+                  className={cn("transition-transform duration-200", isOpen && "rotate-180")}
                 />
               </button>
 
@@ -185,7 +184,7 @@ export function AdminSidebar() {
                 <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border/30 pl-3">
                   {section.items.map((item) => {
                     const ItemIcon = item.icon;
-                    const isActive = currentPath === item.href || currentPath.startsWith(item.href + "/");
+                    const isActive = isItemActive(item.href);
                     return (
                       <Link
                         key={item.href}
@@ -209,7 +208,6 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      {/* Footer */}
       <div className="border-t border-border/30 p-3">
         <Link
           to="/dashboard"

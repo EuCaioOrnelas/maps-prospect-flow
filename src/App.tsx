@@ -82,18 +82,37 @@ const EnterpriseContact = lazyWithRetry(() => import("./pages/EnterpriseContact"
 const TrialExpired = lazyWithRetry(() => import("./pages/TrialExpired"), "TrialExpired");
 const ManageSubscription = lazyWithRetry(() => import("./pages/ManageSubscription"), "ManageSubscription");
 
+// Admin sub-pages (lazy loaded)
+const AdminKPIs = lazyWithRetry(() => import("./pages/admin/AdminKPIs"), "AdminKPIs");
+const AdminAlertas = lazyWithRetry(() => import("./pages/admin/AdminAlertas"), "AdminAlertas");
+const AdminRelatorios = lazyWithRetry(() => import("./pages/admin/AdminRelatorios"), "AdminRelatorios");
+const AdminStripe = lazyWithRetry(() => import("./pages/admin/AdminStripe"), "AdminStripe");
+const AdminAssinaturas = lazyWithRetry(() => import("./pages/admin/AdminAssinaturas"), "AdminAssinaturas");
+const AdminChurn = lazyWithRetry(() => import("./pages/admin/AdminChurn"), "AdminChurn");
+const AdminForecast = lazyWithRetry(() => import("./pages/admin/AdminForecast"), "AdminForecast");
+const AdminUsuarios = lazyWithRetry(() => import("./pages/admin/AdminUsuarios"), "AdminUsuarios");
+const AdminAtivacao = lazyWithRetry(() => import("./pages/admin/AdminAtivacao"), "AdminAtivacao");
+const AdminRetencao = lazyWithRetry(() => import("./pages/admin/AdminRetencao"), "AdminRetencao");
+const AdminIAAgentes = lazyWithRetry(() => import("./pages/admin/AdminIAAgentes"), "AdminIAAgentes");
+const AdminIAPerformance = lazyWithRetry(() => import("./pages/admin/AdminIAPerformance"), "AdminIAPerformance");
+const AdminIACustos = lazyWithRetry(() => import("./pages/admin/AdminIACustos"), "AdminIACustos");
+const AdminAPIs = lazyWithRetry(() => import("./pages/admin/AdminAPIs"), "AdminAPIs");
+const AdminProxies = lazyWithRetry(() => import("./pages/admin/AdminProxies"), "AdminProxies");
+const AdminWebhooks = lazyWithRetry(() => import("./pages/admin/AdminWebhooks"), "AdminWebhooks");
+const AdminTermos = lazyWithRetry(() => import("./pages/admin/AdminTermos"), "AdminTermos");
+const AdminAuditoria = lazyWithRetry(() => import("./pages/admin/AdminAuditoria"), "AdminAuditoria");
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30,
       refetchOnWindowFocus: false,
       retry: 1,
     },
   },
 });
 
-// Loading fallback with white background and spinner
 const PageLoader = () => (
   <div className="min-h-screen bg-white flex items-center justify-center">
     <div className="flex flex-col items-center gap-4 animate-fade-in">
@@ -139,74 +158,56 @@ const App = () => (
                 <Route path="/minha-assinatura" element={<DashboardThemeProvider><Suspense fallback={<PageLoader />}><ManageSubscription /></Suspense></DashboardThemeProvider>} />
                 <Route path="/contato" element={<LightThemeWrapper><Contact /></LightThemeWrapper>} />
                 <Route path="/d7x9k2m4-meta-review" element={<LightThemeWrapper><MetaAppDocumentation /></LightThemeWrapper>} />
-                <Route
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <MainDashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route
-                  path="/reports/prospeccao" 
-                  element={
-                    <ProtectedRoute>
-                      <Reports />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route
-                  path="/prospeccao" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route
-                  path="/oportunidades" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route
-                  path="/oportunidades/gestao" 
-                  element={
-                    <ProtectedRoute>
-                      <Suspense fallback={<PageLoader />}>
-                        <OpportunitiesManagement />
-                      </Suspense>
-                    </ProtectedRoute>
-                  } 
-                />
-                {/* New Admin Layout with sidebar */}
+                <Route path="/dashboard" element={<ProtectedRoute><MainDashboard /></ProtectedRoute>} />
+                <Route path="/reports/prospeccao" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                <Route path="/prospeccao" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/oportunidades" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/oportunidades/gestao" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><OpportunitiesManagement /></Suspense></ProtectedRoute>} />
+
+                {/* Admin Layout with nested routes */}
                 <Route
                   path="/admin"
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }
+                  element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}
                 >
                   <Route index element={<AdminDashboard />} />
                   <Route path="legacy" element={<Admin />} />
-                  <Route path="insights" element={<UserInsights />} />
+                  {/* Painel Executivo */}
+                  <Route path="kpis" element={<AdminKPIs />} />
+                  <Route path="alertas" element={<AdminAlertas />} />
+                  <Route path="relatorios" element={<AdminRelatorios />} />
+                  {/* Receita */}
+                  <Route path="pix-billing" element={<AdminPixBilling />} />
+                  <Route path="stripe" element={<AdminStripe />} />
+                  <Route path="assinaturas" element={<AdminAssinaturas />} />
+                  <Route path="churn" element={<AdminChurn />} />
+                  <Route path="forecast" element={<AdminForecast />} />
+                  {/* Produto */}
+                  <Route path="usuarios" element={<AdminUsuarios />} />
+                  <Route path="ativacao" element={<AdminAtivacao />} />
+                  <Route path="retencao" element={<AdminRetencao />} />
                   <Route path="landing-pages" element={<AdminLandingPages />} />
-                  <Route path="announcements" element={<AdminAnnouncements />} />
-                  <Route path="tests" element={<ProductionTests />} />
+                  {/* IA */}
+                  <Route path="ia/agentes" element={<AdminIAAgentes />} />
+                  <Route path="ia/performance" element={<AdminIAPerformance />} />
+                  <Route path="ia/custos" element={<AdminIACustos />} />
+                  {/* Operações */}
+                  <Route path="operacoes/apis" element={<AdminAPIs />} />
+                  <Route path="operacoes/proxies" element={<AdminProxies />} />
+                  <Route path="operacoes/webhooks" element={<AdminWebhooks />} />
+                  {/* Growth */}
                   <Route path="email-tests" element={<AdminEmailTests />} />
-                  <Route path="trial-automation" element={<AdminTrialAutomation />} />
-                  <Route path="user-scoring" element={<AdminUserScoring />} />
                   <Route path="email-flows" element={<AdminEmailFlows />} />
                   <Route path="email-flows/:id" element={<AdminEmailFlowEditor />} />
-                  <Route path="pix-billing" element={<AdminPixBilling />} />
-                  {/* Placeholder routes for future pages */}
-                  <Route path="usuarios" element={<Admin />} />
-                  <Route path="*" element={<Admin />} />
+                  <Route path="user-scoring" element={<AdminUserScoring />} />
+                  <Route path="trial-automation" element={<AdminTrialAutomation />} />
+                  <Route path="tests" element={<ProductionTests />} />
+                  {/* Admin */}
+                  <Route path="announcements" element={<AdminAnnouncements />} />
+                  <Route path="termos" element={<AdminTermos />} />
+                  <Route path="auditoria" element={<AdminAuditoria />} />
+                  <Route path="insights" element={<UserInsights />} />
                 </Route>
-                {/* Explicit 404 route */}
+
                 <Route path="/404" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />
