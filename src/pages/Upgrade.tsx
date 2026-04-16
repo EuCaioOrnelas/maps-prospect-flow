@@ -680,65 +680,126 @@ const Upgrade = () => {
 
           {upgradePreview?.scenario === "annual_to_annual" && upgradePreview.annualUpgrade && (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-                <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                  <Calendar size={16} className="text-primary" /> Plano anual → você mantém sua assinatura atual
+              {/* Big number — the only thing that matters */}
+              <div className="p-5 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 text-center">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Você paga hoje</p>
+                <p className="font-display text-4xl font-bold text-primary">
+                  R$ {upgradePreview.annualUpgrade.totalDifferenceToCharge.toFixed(2).replace('.', ',')}
                 </p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Sua assinatura atual continua válida até{" "}
-                  <strong className="text-foreground">
-                    {new Date(upgradePreview.annualUpgrade.currentPeriodEnd).toLocaleDateString("pt-BR")}
-                  </strong>
-                  . Você só paga a <strong className="text-foreground">diferença proporcional</strong> entre os planos
-                  pelos <strong className="text-foreground">{upgradePreview.annualUpgrade.daysRemaining} dias restantes</strong>.
+                <p className="text-sm text-muted-foreground mt-2">
+                  ou <strong className="text-foreground">{upgradePreview.annualUpgrade.maxInstallments}x de R$ {upgradePreview.annualUpgrade.installmentValue.toFixed(2).replace('.', ',')}</strong> sem juros
                 </p>
               </div>
 
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Valor diário do plano atual</span><span className="font-mono">R$ {upgradePreview.annualUpgrade.oldDailyPrice.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Valor diário do novo plano</span><span className="font-mono">R$ {upgradePreview.annualUpgrade.newDailyPrice.toFixed(2)}</span></div>
-                <div className="flex justify-between text-primary font-semibold"><span>Diferença por dia</span><span className="font-mono">R$ {upgradePreview.annualUpgrade.dailyDifference.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Dias restantes</span><span className="font-mono">{upgradePreview.annualUpgrade.daysRemaining}</span></div>
-                <div className="border-t border-border pt-2 flex justify-between text-base font-bold"><span>Total a cobrar agora</span><span className="font-mono text-primary">R$ {upgradePreview.annualUpgrade.totalDifferenceToCharge.toFixed(2)}</span></div>
-                <p className="text-xs text-muted-foreground">
-                  Parcelável em até <strong>{upgradePreview.annualUpgrade.maxInstallments}x de R$ {upgradePreview.annualUpgrade.installmentValue.toFixed(2)}</strong> (limitado aos meses restantes da sua assinatura).
-                </p>
-              </div>
-
-              <div className="p-3 rounded-lg bg-muted/40 border border-border/50 text-xs text-muted-foreground">
-                💡 <strong className="text-foreground">Por que o valor muda todo dia?</strong> No plano anual, quanto mais perto do vencimento você fizer o upgrade, menor a diferença a pagar — porque você paga apenas pelos dias que faltam até a renovação.
-              </div>
-
-              {upgradePreview.carriedBonus > 0 && (
-                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-sm flex items-center gap-2">
-                  <Gift size={16} className="text-emerald-600" />
-                  <span><strong>+{upgradePreview.carriedBonus}</strong> oportunidades viram <strong>saldo bônus</strong> permanente no novo plano.</span>
+              {/* 4 things the customer wants to know */}
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                    <Calculator size={15} className="text-primary" />
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium text-foreground">Por que esse valor?</p>
+                    <p className="text-xs text-muted-foreground">
+                      Você já pagou um ano do plano atual. Cobramos só a diferença pelos {upgradePreview.annualUpgrade.daysRemaining} dias que ainda faltam até sua renovação. Nada do que você pagou é perdido.
+                    </p>
+                  </div>
                 </div>
-              )}
+
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                    <CreditCard size={15} className="text-primary" />
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium text-foreground">Como vou pagar?</p>
+                    <p className="text-xs text-muted-foreground">
+                      Em até {upgradePreview.annualUpgrade.maxInstallments}x no cartão, sem juros. Limitamos as parcelas para terminarem antes da sua renovação anual.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                    <Calendar size={15} className="text-primary" />
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium text-foreground">Quando renova?</p>
+                    <p className="text-xs text-muted-foreground">
+                      Sua data de renovação <strong className="text-foreground">não muda</strong>: continua em{" "}
+                      {new Date(upgradePreview.annualUpgrade.currentPeriodEnd).toLocaleDateString("pt-BR")}.
+                    </p>
+                  </div>
+                </div>
+
+                {upgradePreview.carriedBonus > 0 && (
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20 flex-shrink-0">
+                      <Gift size={15} className="text-emerald-600" />
+                    </div>
+                    <div className="text-sm">
+                      <p className="font-medium text-foreground">Você não perde nada</p>
+                      <p className="text-xs text-muted-foreground">
+                        Suas <strong className="text-foreground">{upgradePreview.carriedBonus} oportunidades</strong> que sobraram viram saldo bônus no novo plano. Nunca expiram.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {upgradePreview?.scenario === "monthly_to_monthly" && (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-                <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                  <Calendar size={16} className="text-primary" /> Plano mensal → migração imediata
+              {/* Big number */}
+              <div className="p-5 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 text-center">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Você paga hoje</p>
+                <p className="font-display text-4xl font-bold text-primary">
+                  R$ {upgradePreview.newPriceFull}
+                  <span className="text-lg font-medium text-muted-foreground">/mês</span>
                 </p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Sua assinatura atual será <strong className="text-foreground">cancelada agora</strong> e você passa a pagar o valor cheio do novo plano a partir de hoje. Sem desconto financeiro — em troca, suas oportunidades restantes viram <strong className="text-foreground">saldo bônus</strong>.
+                <p className="text-sm text-muted-foreground mt-2">
+                  Valor cheio do novo plano, cobrado todo mês
                 </p>
               </div>
 
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Valor do novo plano</span><span className="font-mono font-bold text-primary">R$ {upgradePreview.newPriceFull},00/mês</span></div>
-              </div>
-
-              {upgradePreview.carriedBonus > 0 && (
-                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-sm flex items-center gap-2">
-                  <Gift size={16} className="text-emerald-600" />
-                  <span><strong>+{upgradePreview.carriedBonus}</strong> oportunidades viram <strong>saldo bônus</strong> permanente (não renova, mas nunca expira enquanto não consumir).</span>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                    <Calculator size={15} className="text-primary" />
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium text-foreground">Como funciona?</p>
+                    <p className="text-xs text-muted-foreground">
+                      Sua assinatura mensal atual é cancelada agora. A nova começa hoje, no valor cheio. A próxima renovação acontece daqui a 30 dias.
+                    </p>
+                  </div>
                 </div>
-              )}
+
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                    <Calendar size={15} className="text-primary" />
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium text-foreground">Vou pagar duplicado?</p>
+                    <p className="text-xs text-muted-foreground">
+                      Não. Sua mensalidade anterior é cancelada na hora. Você só paga o novo plano.
+                    </p>
+                  </div>
+                </div>
+
+                {upgradePreview.carriedBonus > 0 && (
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20 flex-shrink-0">
+                      <Gift size={15} className="text-emerald-600" />
+                    </div>
+                    <div className="text-sm">
+                      <p className="font-medium text-foreground">Você não perde o que sobrou</p>
+                      <p className="text-xs text-muted-foreground">
+                        Suas <strong className="text-foreground">{upgradePreview.carriedBonus} oportunidades</strong> do plano antigo viram saldo bônus permanente. Nunca expiram.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
