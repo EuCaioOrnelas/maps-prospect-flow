@@ -13,6 +13,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 
 const PLAN_PRICES_MONTHLY: Record<string, number> = { start: 296, growth: 696, scale: 897 };
 
+// ============================================================
+// CONSTANTS — easy to tweak in one place
+// ============================================================
+
+/** Plan monthly prices (R$). Used as fallback when subscription_price_cents is null. */
+const PLAN_PRICES_MONTHLY: Record<string, number> = { start: 296, growth: 696, scale: 897 };
+
+/** Auto-refresh interval (ms). Page reloads data every 5 minutes. */
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+
+/**
+ * Minimum cancellations across the last 3 months in the NEW system
+ * required before we trust the calculated churn rate.
+ * Below this we use the DEFAULT_REALISTIC_CHURN baseline (6%).
+ */
+const MIN_CANCELLATIONS_FOR_REAL_CHURN = 3;
+
+/** Default churn for the realistic scenario when there isn't enough internal data. */
+const DEFAULT_REALISTIC_CHURN = 0.06;
+
 interface NewSystemMetrics {
   loading: boolean;
   totalMRR: number;
@@ -30,12 +50,9 @@ interface NewSystemMetrics {
   /** Breakdown by source for transparency */
   stripeMRR: number;
   newSystemMRR: number;
+  /** Last refresh timestamp */
+  lastRefresh: Date;
 }
-
-// Minimum confidence threshold: at least 3 cancellations across last 3 months in NEW system
-const MIN_CANCELLATIONS_FOR_REAL_CHURN = 3;
-// Default fallback churn for the realistic scenario (used to derive 9% pess and 4% opt)
-const DEFAULT_REALISTIC_CHURN = 0.06;
 
 /**
  * Pulls forecast data ONLY from the new management system:
