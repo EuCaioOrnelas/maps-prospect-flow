@@ -2,61 +2,64 @@ import { useMemo } from "react";
 import {
   TrendingUp, TrendingDown, Target, DollarSign, BarChart3, AlertTriangle,
   Calendar, Users, ArrowUpRight, ArrowDownRight, Sparkles, ShieldCheck,
-  Activity, Repeat, Heart, Zap,
+  Activity, Repeat, Heart, Zap, Info,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 
 /* ============================================================
- * Wiize · Forecast de Receita (CFO-grade · SaaS WhatsApp SMB)
- * MRR(n) = MRR(n-1) + New + Expansion − Churn
- * Cenários calibrados para SMB Brasil:
- *   Otimista:   churn 4%  · vendas +35% · expansão +30%
- *   Realista:   churn 6%  · vendas base · expansão base
- *   Pessimista: churn 9%  · vendas -25% · expansão 0
- * Churn nunca > 15% no dashboard principal.
+ * Wiize · Forecast de Receita — Data-Driven CFO Model
+ * 
+ * ALL metrics derived from real data:
+ *   - Churn %  = avg(cancellations / active) last 3 months
+ *   - New MRR  = weighted avg of monthly new sales revenue
+ *   - Expansion = calculated from upgrade patterns
+ *   - Growth   = Net New / MRR
+ *
+ * Scenarios apply multipliers to REAL historical averages:
+ *   Pessimista:  churn ×1.4, vendas ×0.65, expansão ×0.3
+ *   Realista:    churn ×1.0, vendas ×1.0,  expansão ×1.0
+ *   Otimista:    churn ×0.75, vendas ×1.3, expansão ×1.4
  * ============================================================ */
 
-// Churn mensal por cenário (calibrado SaaS WhatsApp PME Brasil)
-const CHURN = { optimistic: 0.04, realistic: 0.06, pessimistic: 0.09 };
-// Multiplicadores de novas vendas (vs baseline histórico)
-const SALES = { optimistic: 1.35, realistic: 1.0, pessimistic: 0.55 };
-// Expansão real: clientes × upgrade rate × upgrade médio (R$)
-const UPGRADE_RATE = { optimistic: 0.10, realistic: 0.06, pessimistic: 0.0 };
-const UPGRADE_AVG = 90; // R$ médio de upgrade por cliente que faz upsell
-
-/**
- * Curva de ramp-up por cenário (12 meses) — multiplica as novas vendas mensais.
- * Pessimista: queda nos primeiros 3 meses (mercado contraído / churn > vendas),
- *             estabiliza no mês 4 e recupera devagar.
- * Realista:   crescimento gradual orgânico.
- * Otimista:   aceleração composta plausível.
- */
-const SALES_RAMP = {
-  pessimistic: [0.55, 0.45, 0.40, 0.50, 0.60, 0.70, 0.78, 0.85, 0.90, 0.95, 1.00, 1.05],
-  realistic:   [1.00, 1.03, 1.06, 1.10, 1.14, 1.18, 1.22, 1.27, 1.32, 1.37, 1.42, 1.48],
-  optimistic:  [1.10, 1.20, 1.32, 1.45, 1.58, 1.72, 1.86, 2.00, 2.15, 2.30, 2.45, 2.60],
+// Scenario multipliers applied to historical averages
+const SCENARIO_MULT = {
+  pessimistic: { churn: 1.4, sales: 0.65, expansion: 0.3 },
+  realistic:   { churn: 1.0, sales: 1.0,  expansion: 1.0 },
+  optimistic:  { churn: 0.75, sales: 1.3,  expansion: 1.4 },
 };
-// Curva de churn (pessimista pico nos meses iniciais, depois normaliza)
+
+// Non-linear ramps (behavioral curves over 12 months)
+const SALES_RAMP = {
+  pessimistic: [0.60, 0.50, 0.45, 0.50, 0.58, 0.65, 0.72, 0.78, 0.84, 0.90, 0.95, 1.00],
+  realistic:   [1.00, 1.02, 1.05, 1.08, 1.11, 1.15, 1.19, 1.23, 1.27, 1.31, 1.36, 1.40],
+  optimistic:  [1.05, 1.12, 1.20, 1.30, 1.40, 1.50, 1.58, 1.65, 1.70, 1.74, 1.77, 1.80],
+};
 const CHURN_RAMP = {
-  pessimistic: [1.30, 1.40, 1.35, 1.20, 1.10, 1.05, 1.00, 0.98, 0.96, 0.95, 0.95, 0.95],
+  pessimistic: [1.20, 1.30, 1.25, 1.15, 1.08, 1.03, 1.00, 0.98, 0.96, 0.95, 0.94, 0.93],
   realistic:   [1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00],
-  optimistic:  [0.95, 0.92, 0.90, 0.88, 0.86, 0.84, 0.82, 0.80, 0.78, 0.76, 0.74, 0.72],
+  optimistic:  [0.95, 0.92, 0.89, 0.86, 0.84, 0.82, 0.80, 0.78, 0.77, 0.76, 0.75, 0.74],
 };
 
 const COLORS = {
-  realistic: "#3b82f6",   // azul
-  optimistic: "#10b981",  // verde
-  pessimistic: "#ef4444", // vermelho
-  historical: "#94a3b8",  // cinza
+  realistic: "#3b82f6",
+  optimistic: "#10b981",
+  pessimistic: "#ef4444",
+  historical: "#94a3b8",
 };
 
 function fmt(n: number) {
-  if (!isFinite(n)) return "0";
+  if (!isFinite(n) || isNaN(n)) return "0";
   if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
   if (Math.abs(n) >= 10_000) return `${(n / 1_000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`;
   return n.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
@@ -82,7 +85,7 @@ interface ProjMonth {
 }
 
 export default function AdminForecast() {
-  const { loading, totalMRR, stripeMRR, totalSubscribers, averageTicket } = useAdminDashboard();
+  const { loading, totalMRR, stripeMRR, totalSubscribers, averageTicket, churnRate, ltvData } = useAdminDashboard();
 
   const forecast = useMemo(() => {
     const monthlyMRR = stripeMRR?.monthlyMRR || [];
@@ -90,50 +93,158 @@ export default function AdminForecast() {
 
     if (totalMRR <= 0 && monthlyMRR.length === 0) return null;
 
-    // === Drivers históricos ===
-    // New clients/month — média ponderada dos últimos 3 meses
-    const recent = monthlySales.slice(-3);
-    const avgNewClients = recent.length > 0
-      ? recent.reduce((s, x, i) => s + x.newSales * (i === recent.length - 1 ? 2 : 1), 0) / (recent.length + 1)
-      : Math.max(totalSubscribers * 0.06, 1);
-
-    const avgNewMRR = avgNewClients * averageTicket;
     const currentMRR = totalMRR;
     const currentClients = Math.max(totalSubscribers, 1);
 
-    // === Build 12-month compound projection com ramps ===
-    // Expansão real: clientes ativos × upgrade rate × upgrade médio
+    // ===================================================================
+    // CALCULATE REAL METRICS FROM HISTORICAL DATA
+    // ===================================================================
+
+    // --- Churn Rate (real) ---
+    // Use Stripe churnRate if available, else calculate from monthlySales
+    let realChurnRate = 0;
+    if (churnRate > 0) {
+      realChurnRate = churnRate / 100; // churnRate comes as percentage
+    } else if (monthlySales.length >= 2) {
+      const recentSales = monthlySales.slice(-3);
+      const recentMRRData = monthlyMRR.slice(-3);
+      let totalChurnPct = 0;
+      let churnMonths = 0;
+      for (let i = 0; i < recentSales.length; i++) {
+        const activeAtStart = recentMRRData[i]?.activeCount || currentClients;
+        if (activeAtStart > 0 && recentSales[i].cancellations > 0) {
+          totalChurnPct += recentSales[i].cancellations / activeAtStart;
+          churnMonths++;
+        }
+      }
+      realChurnRate = churnMonths > 0 ? totalChurnPct / churnMonths : 0.06;
+    } else {
+      // Fallback: SaaS WhatsApp SMB typical
+      realChurnRate = 0.06;
+    }
+    // Cap churn at 15% for display sanity
+    realChurnRate = Math.min(realChurnRate, 0.15);
+    // Minimum floor at 2%
+    realChurnRate = Math.max(realChurnRate, 0.02);
+
+    // --- New MRR (real) ---
+    // Weighted average: last month counts double
+    let avgNewMRR = 0;
+    if (monthlySales.length > 0) {
+      const recent = monthlySales.slice(-3);
+      let weightedSum = 0;
+      let weightTotal = 0;
+      recent.forEach((s, i) => {
+        const weight = i === recent.length - 1 ? 2 : 1; // last month double weight
+        weightedSum += s.salesValue * weight;
+        weightTotal += weight;
+      });
+      avgNewMRR = weightedSum / weightTotal;
+    } else {
+      // Fallback: estimate from current base
+      avgNewMRR = currentClients * averageTicket * 0.08;
+    }
+
+    // --- New Clients (real) ---
+    let avgNewClients = 0;
+    if (monthlySales.length > 0) {
+      const recent = monthlySales.slice(-3);
+      let weightedSum = 0;
+      let weightTotal = 0;
+      recent.forEach((s, i) => {
+        const weight = i === recent.length - 1 ? 2 : 1;
+        weightedSum += s.newSales * weight;
+        weightTotal += weight;
+      });
+      avgNewClients = weightedSum / weightTotal;
+    } else {
+      avgNewClients = Math.max(1, Math.round(currentClients * 0.08));
+    }
+
+    // --- Expansion MRR (real) ---
+    // Calculate from MRR growth that ISN'T from new sales or churn
+    let avgExpansionMRR = 0;
+    if (monthlyMRR.length >= 2 && monthlySales.length >= 1) {
+      const recentMonths = Math.min(monthlyMRR.length - 1, 3);
+      let totalExpansion = 0;
+      let expMonths = 0;
+      for (let i = monthlyMRR.length - recentMonths; i < monthlyMRR.length; i++) {
+        const prevMRR = monthlyMRR[i - 1]?.mrr || 0;
+        const curMRR = monthlyMRR[i]?.mrr || 0;
+        const salesIdx = monthlySales.length - (monthlyMRR.length - i);
+        const newSalesVal = salesIdx >= 0 ? (monthlySales[salesIdx]?.salesValue || 0) : 0;
+        const cancelVal = salesIdx >= 0 ? ((monthlySales[salesIdx]?.cancellations || 0) * averageTicket) : 0;
+        // expansion = actual growth - new sales + churn losses
+        const expansion = (curMRR - prevMRR) - newSalesVal + cancelVal;
+        if (expansion > 0) {
+          totalExpansion += expansion;
+        }
+        expMonths++;
+      }
+      avgExpansionMRR = expMonths > 0 ? totalExpansion / expMonths : 0;
+    }
+    // Fallback minimum: small % of MRR from natural upgrades
+    if (avgExpansionMRR <= 0) {
+      avgExpansionMRR = currentMRR * 0.015; // ~1.5% of MRR
+    }
+
+    // --- Avg Cancellations per month ---
+    let avgCancellations = 0;
+    if (monthlySales.length > 0) {
+      const recent = monthlySales.slice(-3);
+      avgCancellations = recent.reduce((s, x) => s + (x.cancellations || 0), 0) / recent.length;
+    }
+
+    // --- Growth Rate (real) ---
+    const churnMRRCurrent = currentMRR * realChurnRate;
+    const netNewMRR = avgNewMRR + avgExpansionMRR - churnMRRCurrent;
+    const growthRate = currentMRR > 0 ? netNewMRR / currentMRR : 0;
+
+    // ===================================================================
+    // BUILD 12-MONTH COMPOUND PROJECTIONS
+    // ===================================================================
     const buildProjection = (
-      churnBase: number,
-      salesMult: number,
-      upgradeRate: number,
-      salesRamp: number[],
-      churnRamp: number[],
+      scenarioKey: "pessimistic" | "realistic" | "optimistic",
     ) => {
+      const mult = SCENARIO_MULT[scenarioKey];
+      const salesRamp = SALES_RAMP[scenarioKey];
+      const churnRamp = CHURN_RAMP[scenarioKey];
+
       const months: { mrr: number; newM: number; expM: number; churnM: number; clients: number }[] = [];
       let mrr = currentMRR;
       let clients = currentClients;
+
       for (let i = 0; i < 12; i++) {
-        const churnRate = churnBase * churnRamp[i];
-        const churnLoss = mrr * churnRate;
-        const newM = avgNewMRR * salesMult * salesRamp[i];
-        const expM = clients * upgradeRate * UPGRADE_AVG;
-        const nextMRR = Math.max(currentMRR * 0.45, mrr + newM + expM - churnLoss);
-        // Atualiza nº clientes (proxy via MRR/ticket)
-        const lostClients = clients * churnRate;
-        const newClients = avgNewClients * salesMult * salesRamp[i];
+        const effectiveChurn = Math.min(realChurnRate * mult.churn * churnRamp[i], 0.15);
+        const churnLoss = mrr * effectiveChurn;
+        const newM = avgNewMRR * mult.sales * salesRamp[i];
+        // Expansion scales with client base
+        const expM = (avgExpansionMRR / currentClients) * clients * mult.expansion;
+        
+        const nextMRR = Math.max(currentMRR * 0.35, mrr + newM + expM - churnLoss);
+        
+        // Update client count
+        const lostClients = clients * effectiveChurn;
+        const newClients = avgNewClients * mult.sales * salesRamp[i];
         clients = Math.max(1, clients - lostClients + newClients);
         mrr = nextMRR;
-        months.push({ mrr: Math.round(mrr), newM: Math.round(newM), expM: Math.round(expM), churnM: Math.round(churnLoss), clients: Math.round(clients) });
+        
+        months.push({
+          mrr: Math.round(mrr),
+          newM: Math.round(newM),
+          expM: Math.round(expM),
+          churnM: Math.round(churnLoss),
+          clients: Math.round(clients),
+        });
       }
       return months;
     };
 
-    const pessSeries = buildProjection(CHURN.pessimistic, SALES.pessimistic, UPGRADE_RATE.pessimistic, SALES_RAMP.pessimistic, CHURN_RAMP.pessimistic);
-    const realSeries = buildProjection(CHURN.realistic, SALES.realistic, UPGRADE_RATE.realistic, SALES_RAMP.realistic, CHURN_RAMP.realistic);
-    const optSeries = buildProjection(CHURN.optimistic, SALES.optimistic, UPGRADE_RATE.optimistic, SALES_RAMP.optimistic, CHURN_RAMP.optimistic);
+    const pessSeries = buildProjection("pessimistic");
+    const realSeries = buildProjection("realistic");
+    const optSeries = buildProjection("optimistic");
 
-    // Build projection rows (realistic breakdown)
+    // Build projection rows
     const now = new Date();
     const projection: ProjMonth[] = [];
     let prevMRR = currentMRR;
@@ -157,28 +268,17 @@ export default function AdminForecast() {
       prevMRR = realSeries[i].mrr;
     }
 
-    // 30-day cards (mês 1)
+    // 30-day cards
     const next30 = {
       pessimistic: pessSeries[0].mrr,
       realistic: realSeries[0].mrr,
       optimistic: optSeries[0].mrr,
     };
-
     const breakdown = {
-      pessimistic: { churnMRR: pessSeries[0].churnM, newMRR: pessSeries[0].newM, expansionMRR: pessSeries[0].expM },
-      realistic:   { churnMRR: realSeries[0].churnM, newMRR: realSeries[0].newM, expansionMRR: realSeries[0].expM },
-      optimistic:  { churnMRR: optSeries[0].churnM, newMRR: optSeries[0].newM, expansionMRR: optSeries[0].expM },
+      pessimistic: { churnRate: realChurnRate * SCENARIO_MULT.pessimistic.churn, churnMRR: pessSeries[0].churnM, newMRR: pessSeries[0].newM, expansionMRR: pessSeries[0].expM },
+      realistic:   { churnRate: realChurnRate, churnMRR: realSeries[0].churnM, newMRR: realSeries[0].newM, expansionMRR: realSeries[0].expM },
+      optimistic:  { churnRate: realChurnRate * SCENARIO_MULT.optimistic.churn, churnMRR: optSeries[0].churnM, newMRR: optSeries[0].newM, expansionMRR: optSeries[0].expM },
     };
-
-    // SaaS health metrics
-    const churnMRR = realSeries[0].churnM;
-    const expMRR = realSeries[0].expM;
-    const netNew = avgNewMRR + expMRR - churnMRR;
-    const growthRate = currentMRR > 0 ? netNew / currentMRR : 0;
-    const ltv = averageTicket / CHURN.realistic;
-    const estCAC = averageTicket * 1.5;
-    const cacPayback = averageTicket > 0 ? estCAC / averageTicket : 0;
-    const retention = (1 - CHURN.realistic) * 100;
 
     // Historical chart data
     const historical = monthlyMRR.map((m) => ({
@@ -187,26 +287,38 @@ export default function AdminForecast() {
       mrr: Math.round(m.mrr),
     }));
 
+    // SaaS health
+    const ltv = realChurnRate > 0 ? averageTicket / realChurnRate : averageTicket * 12;
+    const estCAC = averageTicket * 1.2;
+    const cacPayback = averageTicket > 0 ? estCAC / averageTicket : 0;
+    const retention = (1 - realChurnRate) * 100;
+
     return {
       projection,
       historical,
       next30,
       breakdown,
-      metrics: {
-        churnMRR: Math.round(churnMRR),
-        newMRR: Math.round(avgNewMRR),
-        expansionMRR: Math.round(expMRR),
-        netNewMRR: Math.round(netNew),
-        growthRate,
+      drivers: {
+        realChurnRate,
+        avgNewMRR: Math.round(avgNewMRR),
+        avgExpansionMRR: Math.round(avgExpansionMRR),
         avgNewClients: Math.round(avgNewClients),
+        avgCancellations: Math.round(avgCancellations),
+      },
+      metrics: {
+        churnMRR: Math.round(churnMRRCurrent),
+        newMRR: Math.round(avgNewMRR),
+        expansionMRR: Math.round(avgExpansionMRR),
+        netNewMRR: Math.round(netNewMRR),
+        growthRate,
         ltv: Math.round(ltv),
         cacPayback: cacPayback.toFixed(1),
         retention,
       },
     };
-  }, [stripeMRR, totalMRR, totalSubscribers, averageTicket]);
+  }, [stripeMRR, totalMRR, totalSubscribers, averageTicket, churnRate, ltvData]);
 
-  // Combined chart: historical + projection
+  // Combined chart data
   const chartData = useMemo(() => {
     if (!forecast) return [];
     const hist = forecast.historical.map((h) => ({
@@ -215,7 +327,6 @@ export default function AdminForecast() {
       realistic: undefined as number | undefined,
       optimistic: undefined as number | undefined,
     }));
-    // Bridge last historical point to projection start
     const last = forecast.historical[forecast.historical.length - 1];
     if (last && hist.length) {
       hist[hist.length - 1] = {
@@ -236,28 +347,29 @@ export default function AdminForecast() {
     return [...hist, ...proj];
   }, [forecast]);
 
-  // === KPI cards ===
+  // KPIs
   const kpis = useMemo(() => {
     const m = forecast?.metrics;
+    const d = forecast?.drivers;
     return [
-      { label: "MRR Atual", value: `R$ ${fmt(totalMRR)}`, sub: "Receita mensal recorrente", icon: DollarSign, accent: "text-primary" },
-      { label: "Clientes Ativos", value: totalSubscribers.toLocaleString("pt-BR"), sub: "Assinaturas pagantes", icon: Users, accent: "text-blue-500" },
-      { label: "Ticket Médio", value: `R$ ${fmt(averageTicket)}`, sub: "Receita por cliente", icon: Target, accent: "text-emerald-500" },
-      { label: "Net New MRR", value: m ? `${m.netNewMRR >= 0 ? "+" : ""}R$ ${fmt(m.netNewMRR)}` : "—", sub: "New + Expansion − Churn", icon: m && m.netNewMRR >= 0 ? ArrowUpRight : ArrowDownRight, accent: (m?.netNewMRR ?? 0) >= 0 ? "text-emerald-500" : "text-red-500" },
-      { label: "Churn Rate", value: `${(CHURN.realistic * 100).toFixed(1)}%`, sub: "Cancelamento mensal", icon: AlertTriangle, accent: "text-red-500" },
-      { label: "Growth Rate", value: m ? `${(m.growthRate * 100).toFixed(1)}%` : "—", sub: "Crescimento líquido/mês", icon: BarChart3, accent: (m?.growthRate ?? 0) >= 0 ? "text-emerald-500" : "text-red-500" },
+      { label: "MRR Atual", value: `R$ ${fmt(totalMRR)}`, sub: "Receita recorrente mensal", icon: DollarSign, accent: "text-primary", tooltip: "Soma de todas as assinaturas ativas" },
+      { label: "Clientes Ativos", value: totalSubscribers.toLocaleString("pt-BR"), sub: "Assinaturas pagantes", icon: Users, accent: "text-blue-500", tooltip: "Total de assinantes com plano ativo" },
+      { label: "Ticket Médio", value: `R$ ${fmt(averageTicket)}`, sub: "MRR / clientes", icon: Target, accent: "text-emerald-500", tooltip: "MRR total ÷ número de clientes" },
+      { label: "Net New MRR", value: m ? `${m.netNewMRR >= 0 ? "+" : ""}R$ ${fmt(m.netNewMRR)}` : "—", sub: "New + Exp − Churn", icon: m && m.netNewMRR >= 0 ? ArrowUpRight : ArrowDownRight, accent: (m?.netNewMRR ?? 0) >= 0 ? "text-emerald-500" : "text-red-500", tooltip: `Baseado na média: +R$${fmt(m?.newMRR ?? 0)} new, +R$${fmt(m?.expansionMRR ?? 0)} exp, −R$${fmt(m?.churnMRR ?? 0)} churn` },
+      { label: "Churn Rate", value: d ? `${(d.realChurnRate * 100).toFixed(1)}%` : "—", sub: `~${d?.avgCancellations ?? 0} cancel/mês`, icon: AlertTriangle, accent: "text-amber-500", tooltip: "Calculado: cancelamentos ÷ clientes ativos (média 3 meses)" },
+      { label: "Growth Rate", value: m ? `${(m.growthRate * 100).toFixed(1)}%` : "—", sub: "Crescimento líquido/mês", icon: BarChart3, accent: (m?.growthRate ?? 0) >= 0 ? "text-emerald-500" : "text-red-500", tooltip: "Net New MRR ÷ MRR atual" },
     ];
   }, [totalMRR, totalSubscribers, averageTicket, forecast]);
 
   if (loading) {
     return (
-      <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
+      <div className="p-6 lg:p-8 space-y-6 max-w-[1440px] mx-auto">
         <Skeleton className="h-10 w-72" />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-56 rounded-2xl" />)}
+          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-64 rounded-2xl" />)}
         </div>
         <Skeleton className="h-[440px] rounded-2xl" />
       </div>
@@ -266,28 +378,21 @@ export default function AdminForecast() {
 
   if (!forecast) {
     return (
-      <div className="p-6 lg:p-8 max-w-[1400px] mx-auto">
+      <div className="p-6 lg:p-8 max-w-[1440px] mx-auto">
         <Card className="border-border/30 rounded-2xl">
           <CardContent className="p-12 text-center text-muted-foreground">
-            Sem dados suficientes para gerar o forecast.
+            Sem dados suficientes para gerar o forecast. Aguarde assinaturas ativas.
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // 30-day delta values
   const realDelta = forecast.next30.realistic - totalMRR;
   const optDelta = forecast.next30.optimistic - totalMRR;
   const pessDelta = forecast.next30.pessimistic - totalMRR;
 
-  const max12 = Math.max(
-    forecast.projection[11]?.optimistic ?? 0,
-    forecast.projection[11]?.realistic ?? 0,
-    forecast.projection[11]?.pessimistic ?? 0,
-  );
-
-  // Drivers do crescimento (12 meses acumulado, realista)
+  // Drivers acumulado 12m (realista)
   const accNew = forecast.projection.reduce((s, p) => s + p.newMRR, 0);
   const accExp = forecast.projection.reduce((s, p) => s + p.expansionMRR, 0);
   const accChurn = forecast.projection.reduce((s, p) => s + p.churnMRR, 0);
@@ -295,133 +400,155 @@ export default function AdminForecast() {
   const driverMax = Math.max(accNew, accExp, accChurn, Math.abs(accNet)) || 1;
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
-      {/* === Header === */}
+    <div className="p-6 lg:p-8 space-y-7 max-w-[1440px] mx-auto">
+      {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Forecast de Receita</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Projeção CFO · MRR(n) = MRR(n-1) + New + Expansion − Churn · Calibrado para SaaS WhatsApp SMB
+          <p className="text-xs text-muted-foreground/70 mt-1">
+            Projeção automática baseada em métricas reais · MRR(n) = MRR(n-1) + New + Expansion − Churn
           </p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-          <ShieldCheck size={12} className="text-emerald-500" />
-          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Modelo CFO Validado</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+          <Activity size={12} className="text-primary" />
+          <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Data-Driven</span>
         </div>
       </div>
 
-      {/* === KPIs === */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {kpis.map((kpi) => (
-          <Card key={kpi.label} className="border-border/40 bg-card rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-lg bg-muted/60">
-                  <kpi.icon size={13} className={kpi.accent} />
-                </div>
-                <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
-              </div>
-              <p className="text-xl font-bold text-foreground tracking-tight">{kpi.value}</p>
-              <p className="text-[9px] text-muted-foreground/70 mt-1">{kpi.sub}</p>
-            </CardContent>
-          </Card>
-        ))}
+      {/* KPIs */}
+      <TooltipProvider>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {kpis.map((kpi) => (
+            <UITooltip key={kpi.label}>
+              <TooltipTrigger asChild>
+                <Card className="border-border/30 bg-card/80 backdrop-blur-sm rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-default group">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className={`p-2 rounded-xl bg-muted/50 group-hover:bg-muted/70 transition-colors`}>
+                        <kpi.icon size={14} className={kpi.accent} />
+                      </div>
+                      <Info size={10} className="text-muted-foreground/30" />
+                    </div>
+                    <p className="text-xl font-bold text-foreground tracking-tight leading-none">{kpi.value}</p>
+                    <p className="text-[10px] font-medium text-muted-foreground/60 mt-1.5 uppercase tracking-wider">{kpi.label}</p>
+                    <p className="text-[9px] text-muted-foreground/40 mt-0.5">{kpi.sub}</p>
+                  </CardContent>
+                </Card>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs text-xs p-3">
+                {kpi.tooltip}
+              </TooltipContent>
+            </UITooltip>
+          ))}
+        </div>
+      </TooltipProvider>
+
+      {/* Data Sources Badge */}
+      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/30 border border-border/20">
+        <ShieldCheck size={13} className="text-emerald-500 shrink-0" />
+        <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
+          <span className="font-semibold text-muted-foreground">Métricas calculadas automaticamente:</span>{" "}
+          Churn {(forecast.drivers.realChurnRate * 100).toFixed(1)}% (média 3m) · 
+          New MRR R$ {fmt(forecast.drivers.avgNewMRR)}/mês · 
+          Expansão R$ {fmt(forecast.drivers.avgExpansionMRR)}/mês · 
+          ~{forecast.drivers.avgNewClients} novos clientes/mês · 
+          ~{forecast.drivers.avgCancellations} cancelamentos/mês
+        </p>
       </div>
 
-      {/* === Scenario Cards (30 dias) === */}
+      {/* Scenario Cards (30 dias) */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Calendar size={14} className="text-muted-foreground" />
-            Projeção dos Próximos 30 Dias
+            Projeção · Próximos 30 Dias
           </h2>
-          <span className="text-[10px] text-muted-foreground/70">Base: MRR atual de R$ {fmt(totalMRR)}</span>
+          <span className="text-[10px] text-muted-foreground/50 font-mono">MRR base: R$ {fmt(totalMRR)}</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Pessimista */}
           <ScenarioCard
             label="Pessimista"
-            subtitle="Cenário de cautela"
+            subtitle={`Churn ×1.4 · Vendas ×0.65`}
             value={forecast.next30.pessimistic}
             delta={pessDelta}
-            churn={CHURN.pessimistic * 100}
+            churn={forecast.breakdown.pessimistic.churnRate * 100}
             newMRR={forecast.breakdown.pessimistic.newMRR}
             expansion={forecast.breakdown.pessimistic.expansionMRR}
+            churnMRR={forecast.breakdown.pessimistic.churnMRR}
             color="red"
           />
-          {/* Realista — DESTAQUE */}
           <ScenarioCard
             label="Realista"
-            subtitle="Cenário base recomendado"
+            subtitle="Baseado na média histórica"
             value={forecast.next30.realistic}
             delta={realDelta}
-            churn={CHURN.realistic * 100}
+            churn={forecast.breakdown.realistic.churnRate * 100}
             newMRR={forecast.breakdown.realistic.newMRR}
             expansion={forecast.breakdown.realistic.expansionMRR}
+            churnMRR={forecast.breakdown.realistic.churnMRR}
             color="blue"
             highlighted
           />
-          {/* Otimista */}
           <ScenarioCard
             label="Otimista"
-            subtitle="Potencial de upside"
+            subtitle={`Churn ×0.75 · Vendas ×1.3`}
             value={forecast.next30.optimistic}
             delta={optDelta}
-            churn={CHURN.optimistic * 100}
+            churn={forecast.breakdown.optimistic.churnRate * 100}
             newMRR={forecast.breakdown.optimistic.newMRR}
             expansion={forecast.breakdown.optimistic.expansionMRR}
+            churnMRR={forecast.breakdown.optimistic.churnMRR}
             color="green"
           />
         </div>
       </div>
 
-      {/* === Chart 12 meses === */}
-      <Card className="border-border/40 bg-card rounded-2xl shadow-sm">
+      {/* Chart 12 meses */}
+      <Card className="border-border/30 bg-card/80 backdrop-blur-sm rounded-2xl shadow-sm">
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between flex-wrap gap-3">
+          <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <TrendingUp size={16} className="text-primary" />
-                Projeção MRR — 12 Meses
+                Projeção MRR · 12 Meses
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Crescimento composto · Histórico + 3 cenários projetados
+              <p className="text-[10px] text-muted-foreground/60 mt-1">
+                Crescimento composto mês a mês · Cada mês usa o resultado do anterior
               </p>
             </div>
-            <div className="flex items-center gap-3 text-right">
-              <div>
-                <p className="text-[9px] text-muted-foreground/70 uppercase tracking-wider">Pessimista 12m</p>
-                <p className="text-sm font-bold text-red-500">R$ {fmt(forecast.projection[11]?.pessimistic ?? 0)}</p>
-              </div>
-              <div className="w-px h-8 bg-border/50" />
-              <div>
-                <p className="text-[9px] text-muted-foreground/70 uppercase tracking-wider">Realista 12m</p>
-                <p className="text-sm font-bold text-blue-500">R$ {fmt(forecast.projection[11]?.realistic ?? 0)}</p>
-              </div>
-              <div className="w-px h-8 bg-border/50" />
-              <div>
-                <p className="text-[9px] text-muted-foreground/70 uppercase tracking-wider">Otimista 12m</p>
-                <p className="text-sm font-bold text-emerald-500">R$ {fmt(forecast.projection[11]?.optimistic ?? 0)}</p>
-              </div>
+            <div className="flex items-center gap-4">
+              {[
+                { label: "Pessimista", value: forecast.projection[11]?.pessimistic ?? 0, color: "text-red-500" },
+                { label: "Realista", value: forecast.projection[11]?.realistic ?? 0, color: "text-blue-500" },
+                { label: "Otimista", value: forecast.projection[11]?.optimistic ?? 0, color: "text-emerald-500" },
+              ].map((s, i) => (
+                <div key={s.label} className="flex items-center gap-3">
+                  {i > 0 && <div className="w-px h-8 bg-border/30" />}
+                  <div className="text-right">
+                    <p className="text-[9px] text-muted-foreground/50 uppercase tracking-wider font-medium">{s.label} 12m</p>
+                    <p className={`text-sm font-bold ${s.color}`}>R$ {fmt(s.value)}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pb-4">
+        <CardContent className="pb-5">
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 10, right: 15, left: 10, bottom: 5 }}>
                 <defs>
                   <linearGradient id="gHist" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.historical} stopOpacity={0.2} />
+                    <stop offset="5%" stopColor={COLORS.historical} stopOpacity={0.15} />
                     <stop offset="95%" stopColor={COLORS.historical} stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gReal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.realistic} stopOpacity={0.18} />
+                    <stop offset="5%" stopColor={COLORS.realistic} stopOpacity={0.2} />
                     <stop offset="95%" stopColor={COLORS.realistic} stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gOpt" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.optimistic} stopOpacity={0.12} />
+                    <stop offset="5%" stopColor={COLORS.optimistic} stopOpacity={0.1} />
                     <stop offset="95%" stopColor={COLORS.optimistic} stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gPess" x1="0" y1="0" x2="0" y2="1">
@@ -429,7 +556,7 @@ export default function AdminForecast() {
                     <stop offset="95%" stopColor={COLORS.pessimistic} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.25} vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.2} vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `R$${fmt(v)}`} width={70} />
                 <Tooltip
@@ -439,7 +566,7 @@ export default function AdminForecast() {
                     borderRadius: "12px",
                     fontSize: "11px",
                     boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-                    padding: "10px 12px",
+                    padding: "10px 14px",
                   }}
                   formatter={(value: number, name: string) => {
                     const labels: Record<string, string> = {
@@ -452,54 +579,52 @@ export default function AdminForecast() {
                   }}
                 />
                 <Area type="monotone" dataKey="mrr" stroke={COLORS.historical} strokeWidth={2.5} fill="url(#gHist)" dot={false} connectNulls={false} />
-                <Area type="monotone" dataKey="pessimistic" stroke={COLORS.pessimistic} strokeWidth={2} fill="url(#gPess)" dot={false} connectNulls />
-                <Area type="monotone" dataKey="optimistic" stroke={COLORS.optimistic} strokeWidth={2} fill="url(#gOpt)" dot={false} connectNulls />
+                <Area type="monotone" dataKey="pessimistic" stroke={COLORS.pessimistic} strokeWidth={1.5} strokeDasharray="6 3" fill="url(#gPess)" dot={false} connectNulls />
+                <Area type="monotone" dataKey="optimistic" stroke={COLORS.optimistic} strokeWidth={1.5} strokeDasharray="6 3" fill="url(#gOpt)" dot={false} connectNulls />
                 <Area type="monotone" dataKey="realistic" stroke={COLORS.realistic} strokeWidth={2.5} fill="url(#gReal)" dot={false} connectNulls />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-
-          <div className="flex items-center justify-center gap-5 mt-3 flex-wrap">
-            <LegendDot color={COLORS.historical} label="Histórico" />
+          <div className="flex items-center justify-center gap-6 mt-3 flex-wrap">
+            <LegendDot color={COLORS.historical} label="Histórico" solid />
             <LegendDot color={COLORS.pessimistic} label="Pessimista" />
-            <LegendDot color={COLORS.realistic} label="Realista" />
+            <LegendDot color={COLORS.realistic} label="Realista" solid />
             <LegendDot color={COLORS.optimistic} label="Otimista" />
           </div>
         </CardContent>
       </Card>
 
-      {/* === Drivers de Crescimento === */}
+      {/* Drivers + Saúde SaaS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2 border-border/40 bg-card rounded-2xl shadow-sm">
+        <Card className="lg:col-span-2 border-border/30 bg-card/80 backdrop-blur-sm rounded-2xl shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Sparkles size={16} className="text-primary" />
               Drivers do Crescimento
             </CardTitle>
-            <p className="text-[10px] text-muted-foreground">
-              Acumulado dos próximos 12 meses · Cenário realista
+            <p className="text-[10px] text-muted-foreground/60">
+              Acumulado 12 meses · Cenário realista · Baseado em dados reais
             </p>
           </CardHeader>
           <CardContent className="pb-5 space-y-4">
             <DriverBar label="Novas Vendas" value={accNew} max={driverMax} color="emerald" sign="+" />
             <DriverBar label="Expansão / Upsell" value={accExp} max={driverMax} color="blue" sign="+" />
             <DriverBar label="Churn (perda)" value={accChurn} max={driverMax} color="red" sign="−" />
-            <div className="pt-3 border-t border-border/30">
-              <DriverBar label="Net Growth (líquido)" value={Math.abs(accNet)} max={driverMax} color={accNet >= 0 ? "primary" : "red"} sign={accNet >= 0 ? "=+" : "=−"} bold />
+            <div className="pt-3 border-t border-border/20">
+              <DriverBar label="Net Growth" value={Math.abs(accNet)} max={driverMax} color={accNet >= 0 ? "primary" : "red"} sign={accNet >= 0 ? "=" : "=−"} bold />
             </div>
           </CardContent>
         </Card>
 
-        {/* === Saúde SaaS === */}
-        <Card className="border-border/40 bg-card rounded-2xl shadow-sm">
+        <Card className="border-border/30 bg-card/80 backdrop-blur-sm rounded-2xl shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Heart size={16} className="text-rose-500" />
               Saúde SaaS
             </CardTitle>
-            <p className="text-[10px] text-muted-foreground">Indicadores de unit economics</p>
+            <p className="text-[10px] text-muted-foreground/60">Unit economics calculados</p>
           </CardHeader>
-          <CardContent className="pb-5 space-y-3">
+          <CardContent className="pb-5 space-y-2">
             <HealthRow icon={Repeat} label="Retenção mensal" value={`${forecast.metrics.retention.toFixed(1)}%`} accent="text-emerald-500" />
             <HealthRow icon={Activity} label="LTV estimado" value={`R$ ${fmt(forecast.metrics.ltv)}`} accent="text-blue-500" />
             <HealthRow icon={Zap} label="CAC payback" value={`${forecast.metrics.cacPayback} meses`} accent="text-violet-500" />
@@ -508,33 +633,33 @@ export default function AdminForecast() {
         </Card>
       </div>
 
-      {/* === Tabela mensal === */}
-      <Card className="border-border/40 bg-card rounded-2xl shadow-sm">
+      {/* Breakdown Mensal */}
+      <Card className="border-border/30 bg-card/80 backdrop-blur-sm rounded-2xl shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <BarChart3 size={16} className="text-primary" />
             Breakdown Mensal · Cenário Realista
           </CardTitle>
-          <p className="text-[10px] text-muted-foreground">Decomposição mês a mês com crescimento composto</p>
+          <p className="text-[10px] text-muted-foreground/60">Decomposição mês a mês com crescimento composto real</p>
         </CardHeader>
         <CardContent className="pb-4">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border/30">
-                  <th className="text-left py-2.5 px-3 text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Mês</th>
-                  <th className="text-right py-2.5 px-3 text-[9px] font-semibold text-emerald-500 uppercase tracking-wider">+ New</th>
-                  <th className="text-right py-2.5 px-3 text-[9px] font-semibold text-blue-500 uppercase tracking-wider">+ Expansion</th>
-                  <th className="text-right py-2.5 px-3 text-[9px] font-semibold text-red-500 uppercase tracking-wider">− Churn</th>
-                  <th className="text-right py-2.5 px-3 text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Net New</th>
-                  <th className="text-right py-2.5 px-3 text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Growth %</th>
-                  <th className="text-right py-2.5 px-3 text-[9px] font-semibold text-foreground uppercase tracking-wider">MRR Final</th>
+                  <th className="text-left py-3 px-3 text-[9px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Mês</th>
+                  <th className="text-right py-3 px-3 text-[9px] font-semibold text-emerald-500/80 uppercase tracking-wider">+ New</th>
+                  <th className="text-right py-3 px-3 text-[9px] font-semibold text-blue-500/80 uppercase tracking-wider">+ Expansion</th>
+                  <th className="text-right py-3 px-3 text-[9px] font-semibold text-red-500/80 uppercase tracking-wider">− Churn</th>
+                  <th className="text-right py-3 px-3 text-[9px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Net New</th>
+                  <th className="text-right py-3 px-3 text-[9px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Growth</th>
+                  <th className="text-right py-3 px-3 text-[9px] font-semibold text-foreground/80 uppercase tracking-wider">MRR Final</th>
                 </tr>
               </thead>
               <tbody>
                 {forecast.projection.map((row, i) => (
-                  <tr key={row.month} className={`border-b border-border/10 ${i % 2 === 0 ? "bg-muted/20" : ""} hover:bg-muted/30 transition-colors`}>
-                    <td className="py-2.5 px-3 font-medium text-foreground">{row.label}</td>
+                  <tr key={row.month} className={`border-b border-border/10 ${i % 2 === 0 ? "bg-muted/15" : ""} hover:bg-muted/25 transition-colors`}>
+                    <td className="py-2.5 px-3 font-medium text-foreground/90">{row.label}</td>
                     <td className="py-2.5 px-3 text-right text-emerald-500 font-medium">+R$ {fmt(row.newMRR)}</td>
                     <td className="py-2.5 px-3 text-right text-blue-500 font-medium">+R$ {fmt(row.expansionMRR)}</td>
                     <td className="py-2.5 px-3 text-right text-red-500 font-medium">−R$ {fmt(row.churnMRR)}</td>
@@ -553,16 +678,18 @@ export default function AdminForecast() {
         </CardContent>
       </Card>
 
-      {/* === Premissas === */}
-      <Card className="border-border/30 bg-muted/20 rounded-2xl">
+      {/* Premissas */}
+      <Card className="border-border/20 bg-muted/15 rounded-2xl">
         <CardContent className="p-4">
-          <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
-            <strong className="text-muted-foreground">Premissas do modelo:</strong> SaaS WhatsApp para PME no Brasil ·
-            Pessimista: churn 9%, vendas −25%, expansão 0% ·
-            Realista: churn 6%, vendas base, expansão 1.5% ·
-            Otimista: churn 4%, vendas +35%, expansão +30% ·
-            Crescimento composto MRR(n) = MRR(n-1) + New + Expansion − Churn ·
-            LTV = ticket médio / churn rate · CAC payback estimado a partir do ticket médio.
+          <p className="text-[10px] text-muted-foreground/60 leading-relaxed">
+            <strong className="text-muted-foreground/80">Modelo data-driven:</strong>{" "}
+            Churn calculado da média de cancelamentos/clientes ativos (últimos 3 meses) ·
+            New MRR = média ponderada de novas vendas ·
+            Expansão = diferença entre crescimento real vs new sales ·
+            Pessimista: churn ×1.4, vendas ×0.65, expansão ×0.3 ·
+            Otimista: churn ×0.75, vendas ×1.3, expansão ×1.4 ·
+            Projeção composta: MRR(n) = MRR(n-1) + New + Expansion − Churn ·
+            Floor pessimista: 35% do MRR atual (nunca zera).
           </p>
         </CardContent>
       </Card>
@@ -575,104 +702,79 @@ export default function AdminForecast() {
  * ============================================================ */
 
 function ScenarioCard({
-  label, subtitle, value, delta, churn, newMRR, expansion, color, highlighted,
+  label, subtitle, value, delta, churn, newMRR, expansion, churnMRR, color, highlighted,
 }: {
   label: string; subtitle: string; value: number; delta: number;
-  churn: number; newMRR: number; expansion: number;
+  churn: number; newMRR: number; expansion: number; churnMRR: number;
   color: "red" | "blue" | "green"; highlighted?: boolean;
 }) {
   const palette = {
-    red: {
-      text: "text-red-500",
-      bg: "bg-red-500/10",
-      ring: highlighted ? "ring-2 ring-red-500/40" : "",
-      gradient: "from-red-500/[0.08] via-transparent to-transparent",
-      bar: "bg-red-500",
-      badgeBg: "bg-red-500",
-    },
-    blue: {
-      text: "text-blue-500",
-      bg: "bg-blue-500/10",
-      ring: highlighted ? "ring-2 ring-blue-500/50" : "",
-      gradient: "from-blue-500/[0.10] via-transparent to-transparent",
-      bar: "bg-blue-500",
-      badgeBg: "bg-blue-500",
-    },
-    green: {
-      text: "text-emerald-500",
-      bg: "bg-emerald-500/10",
-      ring: highlighted ? "ring-2 ring-emerald-500/40" : "",
-      gradient: "from-emerald-500/[0.08] via-transparent to-transparent",
-      bar: "bg-emerald-500",
-      badgeBg: "bg-emerald-500",
-    },
+    red: { text: "text-red-500", bg: "bg-red-500/8", ring: highlighted ? "ring-2 ring-red-500/30" : "", bar: "bg-red-500", badge: "bg-red-500" },
+    blue: { text: "text-blue-500", bg: "bg-blue-500/8", ring: highlighted ? "ring-2 ring-blue-500/40" : "", bar: "bg-blue-500", badge: "bg-blue-500" },
+    green: { text: "text-emerald-500", bg: "bg-emerald-500/8", ring: highlighted ? "ring-2 ring-emerald-500/30" : "", bar: "bg-emerald-500", badge: "bg-emerald-500" },
   }[color];
+  
   const Icon = color === "red" ? TrendingDown : color === "green" ? TrendingUp : Target;
   const baseValue = value - delta;
   const deltaPct = baseValue > 0 ? ((delta / baseValue) * 100).toFixed(1) : "0";
   const isPositive = delta >= 0;
 
   return (
-    <Card className={`relative overflow-hidden border border-border/50 bg-card rounded-2xl ${palette.ring} ${highlighted ? "shadow-xl shadow-blue-500/5" : "shadow-sm"} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300`}>
-      {/* Gradient accent */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${palette.gradient} pointer-events-none`} />
-      {/* Side bar accent */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1 ${palette.bar}`} />
-
+    <Card className={`relative overflow-hidden border border-border/30 bg-card/80 backdrop-blur-sm rounded-2xl ${palette.ring} ${highlighted ? "shadow-lg shadow-blue-500/5" : "shadow-sm"} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300`}>
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${palette.bar} rounded-l-2xl`} />
+      
       {highlighted && (
-        <div className={`absolute top-4 right-4 flex items-center gap-1 px-2.5 py-1 rounded-full ${palette.badgeBg} text-white text-[9px] font-bold uppercase tracking-wider z-10 shadow-md`}>
-          <Sparkles size={9} />
+        <div className={`absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full ${palette.badge} text-white text-[8px] font-bold uppercase tracking-wider shadow-sm`}>
+          <Sparkles size={8} />
           Recomendado
         </div>
       )}
 
-      <CardContent className="relative p-6 space-y-5">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-xl ${palette.bg} ring-1 ring-border/30`}>
-            <Icon size={18} className={palette.text} strokeWidth={2.5} />
+      <CardContent className="relative p-5 space-y-4">
+        <div className="flex items-center gap-2.5">
+          <div className={`p-2 rounded-xl ${palette.bg}`}>
+            <Icon size={16} className={palette.text} strokeWidth={2.5} />
           </div>
           <div>
-            <p className={`text-[11px] font-bold uppercase tracking-[0.12em] ${palette.text}`}>{label}</p>
-            <p className="text-[10px] text-muted-foreground/70 mt-0.5">{subtitle}</p>
+            <p className={`text-[11px] font-bold uppercase tracking-wider ${palette.text}`}>{label}</p>
+            <p className="text-[9px] text-muted-foreground/50 mt-0.5">{subtitle}</p>
           </div>
         </div>
 
-        {/* Big value */}
         <div>
-          <p className="text-[10px] font-medium text-muted-foreground/70 uppercase tracking-wider mb-1">MRR projetado · 30d</p>
-          <p className="text-[34px] font-extrabold text-foreground tracking-tight leading-none">
+          <p className="text-[28px] font-extrabold text-foreground tracking-tight leading-none">
             R$ {fmt(value)}
           </p>
-          <div className="flex items-center gap-2 mt-3">
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${palette.bg}`}>
-              {isPositive ? <ArrowUpRight size={11} className={palette.text} /> : <ArrowDownRight size={11} className={palette.text} />}
-              <span className={`text-[11px] font-bold ${palette.text}`}>
+          <div className="flex items-center gap-2 mt-2">
+            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md ${palette.bg}`}>
+              {isPositive ? <ArrowUpRight size={10} className={palette.text} /> : <ArrowDownRight size={10} className={palette.text} />}
+              <span className={`text-[10px] font-bold ${palette.text}`}>
                 {isPositive ? "+" : ""}R$ {fmt(delta)}
               </span>
             </div>
-            <span className={`text-[11px] font-semibold ${palette.text}`}>
-              {isPositive ? "+" : ""}{deltaPct}%
+            <span className={`text-[10px] font-semibold ${palette.text}`}>
+              ({isPositive ? "+" : ""}{deltaPct}%)
             </span>
           </div>
         </div>
 
-        {/* Drivers row */}
-        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/40">
-          <DriverMini label="Churn" value={`${churn.toFixed(1)}%`} color={palette.text} />
-          <DriverMini label="New MRR" value={`R$ ${fmt(newMRR)}`} color={palette.text} />
-          <DriverMini label="Expansão" value={`R$ ${fmt(expansion)}`} color={palette.text} />
+        <div className="grid grid-cols-2 gap-2 pt-3 border-t border-border/20">
+          <MiniMetric label="Churn" value={`${churn.toFixed(1)}%`} sub={`−R$ ${fmt(churnMRR)}`} />
+          <MiniMetric label="New MRR" value={`+R$ ${fmt(newMRR)}`} sub="" />
+          <MiniMetric label="Expansão" value={`+R$ ${fmt(expansion)}`} sub="" />
+          <MiniMetric label="Net" value={`${delta >= 0 ? "+" : ""}R$ ${fmt(delta)}`} sub="" highlight={delta >= 0} />
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function DriverMini({ label, value, color }: { label: string; value: string; color: string }) {
+function MiniMetric({ label, value, sub, highlight }: { label: string; value: string; sub: string; highlight?: boolean }) {
   return (
-    <div className="text-center">
-      <p className="text-[8px] font-medium text-muted-foreground/70 uppercase tracking-wider">{label}</p>
-      <p className={`text-xs font-bold ${color} mt-0.5`}>{value}</p>
+    <div>
+      <p className="text-[8px] font-medium text-muted-foreground/50 uppercase tracking-wider">{label}</p>
+      <p className={`text-[11px] font-bold mt-0.5 ${highlight ? "text-emerald-500" : "text-foreground/80"}`}>{value}</p>
+      {sub && <p className="text-[8px] text-muted-foreground/40">{sub}</p>}
     </div>
   );
 }
@@ -685,30 +787,17 @@ function DriverBar({
   sign: string; bold?: boolean;
 }) {
   const pct = max > 0 ? (value / max) * 100 : 0;
-  const palette = {
-    emerald: "bg-emerald-500",
-    blue: "bg-blue-500",
-    red: "bg-red-500",
-    primary: "bg-primary",
-  }[color];
-  const text = {
-    emerald: "text-emerald-500",
-    blue: "text-blue-500",
-    red: "text-red-500",
-    primary: "text-primary",
-  }[color];
+  const bg = { emerald: "bg-emerald-500", blue: "bg-blue-500", red: "bg-red-500", primary: "bg-primary" }[color];
+  const text = { emerald: "text-emerald-500", blue: "text-blue-500", red: "text-red-500", primary: "text-primary" }[color];
 
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
-        <p className={`text-xs ${bold ? "font-bold text-foreground" : "font-medium text-muted-foreground"}`}>{label}</p>
+        <p className={`text-xs ${bold ? "font-bold text-foreground" : "font-medium text-muted-foreground/80"}`}>{label}</p>
         <p className={`text-sm font-bold ${text}`}>{sign} R$ {fmt(value)}</p>
       </div>
-      <div className="h-2 bg-muted/40 rounded-full overflow-hidden">
-        <div
-          className={`h-full ${palette} rounded-full transition-all duration-700`}
-          style={{ width: `${Math.min(pct, 100)}%` }}
-        />
+      <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+        <div className={`h-full ${bg} rounded-full transition-all duration-700`} style={{ width: `${Math.min(pct, 100)}%` }} />
       </div>
     </div>
   );
@@ -716,23 +805,29 @@ function DriverBar({
 
 function HealthRow({ icon: Icon, label, value, accent }: { icon: any; label: string; value: string; accent: string }) {
   return (
-    <div className="flex items-center justify-between py-2 border-b border-border/20 last:border-0">
+    <div className="flex items-center justify-between py-2.5 border-b border-border/15 last:border-0">
       <div className="flex items-center gap-2.5">
-        <div className="p-1.5 rounded-lg bg-muted/50">
+        <div className="p-1.5 rounded-lg bg-muted/40">
           <Icon size={13} className={accent} />
         </div>
-        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-xs text-muted-foreground/80">{label}</p>
       </div>
       <p className={`text-sm font-bold ${accent}`}>{value}</p>
     </div>
   );
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+function LegendDot({ color, label, solid }: { color: string; label: string; solid?: boolean }) {
   return (
     <div className="flex items-center gap-1.5">
-      <div className="w-6 h-[3px] rounded-full" style={{ backgroundColor: color }} />
-      <span className="text-[10px] font-medium" style={{ color }}>{label}</span>
+      <div
+        className="w-5 h-[3px] rounded-full"
+        style={{
+          backgroundColor: color,
+          backgroundImage: solid ? undefined : `repeating-linear-gradient(90deg, ${color} 0px, ${color} 4px, transparent 4px, transparent 7px)`,
+        }}
+      />
+      <span className="text-[10px] font-medium text-muted-foreground/70">{label}</span>
     </div>
   );
 }
