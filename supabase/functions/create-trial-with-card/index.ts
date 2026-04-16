@@ -1,0 +1,186 @@
+// Cria conta de trial com cartão tokenizado e assinatura agendada para D+7 no Asaas.
+// O cartão NÃO é cobrado agora — apenas tokenizado (a Asaas valida o cartão fazendo um auth de R$ 0).
+// A subscription é criada com nextDueDate = trial_end (D+7) e ciclo MONTHLY.
+// Se o user cancelar antes do D+7, a subscription é deletada e nada é cobrado.
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const ASAAS_API = "https://api.asaas.com/v3";
+
+const log = (step: string, details?: unknown) => {
+  console.log(`[TRIAL-WITH-CARD] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
+};
+
+// Trial sempre vira plano MENSAL (independente da escolha) — confirmado pelo product
+const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number; searchesLimit: number }> = {
+  start: { name: "Wiize Start", priceMonthly: 296.0, searchesLimit: 1000 },
+  growth: { name: "Wiize Growth", priceMonthly: 696.0, searchesLimit: 3000 },
+  scale: { name: "Wiize Scale", priceMonthly: 1496.0, searchesLimit: 10000 },
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const apiKey = Deno.env.get("ASAAS_API_KEY");
+    if (!apiKey) throw new Error("ASAAS_API_KEY not configured");
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+
+    const { userId, planKey, customerData, creditCard } = await req.json();
+    if (!userId || !planKey || !customerData || !creditCard) {
+      throw new Error("userId, planKey, customerData and creditCard are required");
+    }
+
+    const plan = PLAN_CONFIG[planKey];
+    if (!plan) throw new Error(`Invalid plan: ${planKey}`);
+
+    log("Request", { userId, planKey, email: customerData.email });
+
+    // Validate
+    const cpfCnpj = (customerData.taxId || "").replace(/\D/g, "");
+    if (!cpfCnpj || cpfCnpj.length < 11) throw new Error("CPF/CNPJ é obrigatório");
+    if (!creditCard.holderName || !creditCard.number || !creditCard.expiryMonth || !creditCard.expiryYear || !creditCard.ccv) {
+      throw new Error("Dados do cartão incompletos");
+    }
+
+    const phone = (customerData.phone || "").replace(/\D/g, "");
+    const postalCode = (customerData.postalCode || "").replace(/\D/g, "");
+
+    // 1. Find or create Asaas customer
+    const findRes = await fetch(`${ASAAS_API}/customers?cpfCnpj=${cpfCnpj}`, {
+      headers: { access_token: apiKey, Accept: "application/json" },
+    });
+    const findJson = await findRes.json();
+
+    let customerId: string;
+    if (findJson.data && findJson.data.length > 0) {
+      customerId = findJson.data[0].id;
+      log("Existing customer", { customerId });
+    } else {
+      const cRes = await fetch(`${ASAAS_API}/customers`, {
+        method: "POST",
+        headers: { access_token: apiKey, "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          name: customerData.name,
+          email: customerData.email,
+          cpfCnpj,
+          mobilePhone: phone,
+          notificationDisabled: false,
+        }),
+      });
+      const cJson = await cRes.json();
+      if (!cRes.ok || cJson.errors) {
+        throw new Error(`Erro criando cliente: ${JSON.stringify(cJson.errors || cJson)}`);
+      }
+      customerId = cJson.id;
+      log("Customer created", { customerId });
+    }
+
+    // 2. Compute trial end date (7 days from now)
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + 7);
+    const nextDueDate = trialEnd.toISOString().split("T")[0];
+
+    // 3. Create subscription with credit card scheduled for D+7
+    // Asaas valida o cartão imediatamente (auth de R$ 0) mas só cobra na nextDueDate.
+    const subBody = {
+      customer: customerId,
+      billingType: "CREDIT_CARD",
+      cycle: "MONTHLY",
+      value: plan.priceMonthly,
+      nextDueDate,
+      description: `${plan.name} Mensal (após trial 7 dias)`,
+      externalReference: userId,
+      creditCard: {
+        holderName: creditCard.holderName,
+        number: creditCard.number.replace(/\s/g, ""),
+        expiryMonth: creditCard.expiryMonth,
+        expiryYear: creditCard.expiryYear,
+        ccv: creditCard.ccv,
+      },
+      creditCardHolderInfo: {
+        name: customerData.name,
+        email: customerData.email,
+        cpfCnpj,
+        postalCode: postalCode || "01310100",
+        addressNumber: customerData.addressNumber || "S/N",
+        address: customerData.address || "",
+        province: customerData.neighborhood || "",
+        phone,
+      },
+    };
+
+    log("Creating subscription scheduled for", { nextDueDate });
+
+    const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
+      method: "POST",
+      headers: { access_token: apiKey, "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(subBody),
+    });
+    const subJson = await subRes.json();
+    if (!subRes.ok || subJson.errors) {
+      log("Subscription failed", subJson);
+      const msg = subJson.errors?.map((e: { description: string }) => e.description).join(", ") || JSON.stringify(subJson);
+      throw new Error(msg);
+    }
+
+    log("Subscription created", { id: subJson.id, status: subJson.status });
+
+    // 4. Extract card details for display
+    const cardLast4 = creditCard.number.replace(/\s/g, "").slice(-4);
+    const cardBrand = subJson.creditCard?.creditCardBrand || "CARD";
+
+    // 5. Save trial info on profile
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        trial_card_last4: cardLast4,
+        trial_card_brand: cardBrand,
+        trial_asaas_subscription_id: subJson.id,
+        trial_asaas_customer_id: customerId,
+        trial_plan_chosen: planKey,
+        trial_billing_period: "monthly",
+        trial_will_charge_at: trialEnd.toISOString(),
+        trial_auto_charge_cancelled: false,
+        cpf: cpfCnpj,
+        phone: customerData.phone || null,
+      })
+      .eq("id", userId);
+
+    if (updateError) {
+      log("Profile update failed", updateError);
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        subscriptionId: subJson.id,
+        customerId,
+        nextDueDate,
+        cardLast4,
+        cardBrand,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    log("ERROR", { message: msg });
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
