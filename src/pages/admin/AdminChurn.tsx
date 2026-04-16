@@ -80,6 +80,13 @@ export default function AdminChurn() {
       .select("*")
       .order("created_at", { ascending: false });
 
+    // Get subscription_events for Stripe cancellations (fallback for historical data)
+    const { data: subEvents } = await supabase
+      .from("subscription_events")
+      .select("*")
+      .in("event_type", ["subscription_canceled", "subscription_deleted", "charge_refunded", "pix_not_renewed"])
+      .order("created_at", { ascending: false });
+
     // Get profiles for names/plans
     const { data: profiles } = await supabase
       .from("profiles")
@@ -96,10 +103,14 @@ export default function AdminChurn() {
       if (!feedbackMap.has(f.user_id)) feedbackMap.set(f.user_id, f);
     });
 
+    // Track user_ids already added to avoid duplicates
+    const addedUserIds = new Set<string>();
+
     // Merge cancellations with feedback
     const merged: ChurnRecord[] = (cancellations || []).map(c => {
       const fb = feedbackMap.get(c.user_id);
       const profile = profileMap.get(c.user_id);
+      addedUserIds.add(c.user_id);
       return {
         id: c.id,
         user_id: c.user_id,
@@ -120,10 +131,37 @@ export default function AdminChurn() {
       };
     });
 
-    // Also add feedbacks that don't have a cancellation record
+    // Add subscription_events that don't have a cancellation record (historical Stripe data)
+    (subEvents || []).forEach(ev => {
+      if (ev.user_id && !addedUserIds.has(ev.user_id)) {
+        addedUserIds.add(ev.user_id);
+        const fb = feedbackMap.get(ev.user_id);
+        const profile = profileMap.get(ev.user_id);
+        merged.push({
+          id: ev.id,
+          user_id: ev.user_id,
+          email: ev.email || profile?.email || null,
+          provider: ev.event_source === "stripe-webhook" ? "stripe" : ev.event_source || null,
+          cancelled_at: ev.created_at,
+          active_until: null,
+          billing_type: null,
+          notes: `${ev.event_type} — Plano anterior: ${ev.previous_plan || "—"}`,
+          cancellation_reason: fb?.cancellation_reason || null,
+          usage_level: fb?.usage_level || null,
+          additional_comments: fb?.additional_comments || null,
+          intends_to_return: (fb as any)?.intends_to_return || null,
+          details: (fb as any)?.details || null,
+          feedback_provider: (fb as any)?.provider || null,
+          plan: profile?.plan || null,
+          name: profile?.name || ev.email || null,
+        });
+      }
+    });
+
+    // Also add feedbacks that don't have a cancellation record or event
     feedbacks?.forEach(f => {
-      const exists = merged.some(m => m.user_id === f.user_id);
-      if (!exists) {
+      if (!addedUserIds.has(f.user_id)) {
+        addedUserIds.add(f.user_id);
         const profile = profileMap.get(f.user_id);
         merged.push({
           id: f.id,

@@ -580,6 +580,26 @@ serve(async (req) => {
                 newLimit: PLAN_LIMITS["free"]
               });
 
+              // Log to subscription_cancellations for churn tracking
+              if (subscription.status === "canceled") {
+                try {
+                  await supabaseClient.from("subscription_cancellations").insert({
+                    user_id: profile.id,
+                    provider: "stripe",
+                    subscription_id: subscription.id,
+                    billing_type: "CREDIT_CARD",
+                    cancelled_at: new Date().toISOString(),
+                    active_until: subscription.current_period_end 
+                      ? new Date(subscription.current_period_end * 1000).toISOString() 
+                      : null,
+                    notes: `Assinatura Stripe status: ${subscription.status}. Plano anterior: ${profile.plan}. Email: ${customer.email}`,
+                  });
+                  logStep("Cancellation logged to subscription_cancellations (status update)");
+                } catch (e) {
+                  logStep("Error logging cancellation", { error: String(e) });
+                }
+              }
+
               // Log downgrade event
               await logSubscriptionEvent(
                 supabaseClient,
@@ -639,6 +659,24 @@ serve(async (req) => {
               previousLimit: profile.searches_limit,
               newLimit: PLAN_LIMITS["free"]
             });
+
+            // Log to subscription_cancellations for churn tracking
+            try {
+              await supabaseClient.from("subscription_cancellations").insert({
+                user_id: profile.id,
+                provider: "stripe",
+                subscription_id: subscription.id,
+                billing_type: "CREDIT_CARD",
+                cancelled_at: new Date().toISOString(),
+                active_until: subscription.current_period_end 
+                  ? new Date(subscription.current_period_end * 1000).toISOString() 
+                  : null,
+                notes: `Assinatura Stripe cancelada. Plano anterior: ${profile.plan}. Email: ${customer.email}`,
+              });
+              logStep("Cancellation logged to subscription_cancellations");
+            } catch (e) {
+              logStep("Error logging cancellation", { error: String(e) });
+            }
 
             // Log deletion event
             await logSubscriptionEvent(
