@@ -14,9 +14,9 @@ const log = (step: string, details?: any) => {
 };
 
 const PLAN_TIER: Record<string, number> = { free: 0, start: 1, growth: 2, scale: 3 };
-const PLAN_LIMIT: Record<string, number> = { start: 1000, growth: 3000, scale: 10000 };
 const PLAN_PRICE_MONTHLY: Record<string, number> = { start: 296, growth: 696, scale: 897 };
-const PLAN_PRICE_ANNUAL: Record<string, number> = { start: 2952, growth: 5952, scale: 897 };
+// Annual TOTAL price (full year, charged up-front for annual subscribers)
+const PLAN_PRICE_ANNUAL: Record<string, number> = { start: 2952, growth: 7152, scale: 897 };
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -37,15 +37,17 @@ serve(async (req) => {
     const user = userData.user;
     if (!user) throw new Error("Invalid user");
 
-    const body = await req.json();
-    const { newPlan, newBillingPeriod } = body as {
+    const body = await req.json().catch(() => ({}));
+    const { newPlan, newBillingPeriod, mode } = body as {
       newPlan: "start" | "growth" | "scale";
       newBillingPeriod: "monthly" | "annual";
+      mode?: "preview" | "execute";
     };
 
     if (!PLAN_TIER[newPlan] || !["monthly", "annual"].includes(newBillingPeriod)) {
       throw new Error("Invalid plan or billing period");
     }
+    const isPreview = mode !== "execute";
 
     // Load current profile
     const { data: profile, error: profErr } = await supabase
@@ -60,17 +62,19 @@ serve(async (req) => {
     const currentPlan = profile.plan ?? "free";
     const currentTier = PLAN_TIER[currentPlan] ?? 0;
     const newTier = PLAN_TIER[newPlan];
+    const currentBilling = profile.billing_period ?? "monthly";
 
     log("Upgrade requested", {
       from: currentPlan,
       to: newPlan,
-      fromBilling: profile.billing_period,
+      fromBilling: currentBilling,
       toBilling: newBillingPeriod,
+      mode: isPreview ? "preview" : "execute",
     });
 
-    // RULE 1: monthly → annual mid-cycle is blocked
+    // RULE: monthly → annual mid-cycle is blocked
     if (
-      profile.billing_period === "monthly" &&
+      currentBilling === "monthly" &&
       newBillingPeriod === "annual" &&
       profile.subscription_current_period_end &&
       new Date(profile.subscription_current_period_end) > new Date()
@@ -86,27 +90,104 @@ serve(async (req) => {
       );
     }
 
-    // RULE 2: must be an upgrade (higher tier OR monthly→same-tier-annual handled above)
-    if (newTier <= currentTier && !(newTier === currentTier && profile.billing_period === newBillingPeriod)) {
+    // Must be an actual upgrade
+    if (newTier <= currentTier) {
       throw new Error("Apenas upgrades de plano são permitidos por aqui");
     }
 
-    // Compute remaining opportunities (carry as bonus — NO financial proration)
-    // The "value" of unused days is preserved as bonus opportunities, not as discount.
+    // Carry remaining opportunities as permanent bonus (never renews)
     const remaining = Math.max((profile.searches_limit ?? 0) - (profile.searches_used ?? 0), 0);
-    log("Carrying remaining opportunities as permanent bonus", { remaining });
 
-    // Log upgrade attempt
+    // ============================================================
+    // BRANCH A: ANNUAL → ANNUAL (proportional difference, keep due date)
+    // ============================================================
+    let annualUpgrade: any = null;
+    if (currentBilling === "annual" && newBillingPeriod === "annual" && profile.subscription_current_period_end) {
+      const periodEnd = new Date(profile.subscription_current_period_end);
+      const now = new Date();
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const daysRemaining = Math.max(Math.ceil((periodEnd.getTime() - now.getTime()) / msPerDay), 1);
+      const yearDays = 365;
+      const oldAnnual = PLAN_PRICE_ANNUAL[currentPlan];
+      const newAnnual = PLAN_PRICE_ANNUAL[newPlan];
+      const oldDaily = oldAnnual / yearDays;
+      const newDaily = newAnnual / yearDays;
+      const dailyDiff = newDaily - oldDaily;
+      const totalDiff = +(dailyDiff * daysRemaining).toFixed(2);
+      const monthsRemaining = Math.max(Math.floor(daysRemaining / 30), 1);
+      const maxInstallments = Math.min(monthsRemaining, 12);
+
+      annualUpgrade = {
+        daysRemaining,
+        monthsRemaining,
+        oldAnnualPrice: oldAnnual,
+        newAnnualPrice: newAnnual,
+        oldDailyPrice: +oldDaily.toFixed(2),
+        newDailyPrice: +newDaily.toFixed(2),
+        dailyDifference: +dailyDiff.toFixed(2),
+        totalDifferenceToCharge: totalDiff,
+        maxInstallments,
+        installmentValue: +(totalDiff / maxInstallments).toFixed(2),
+        currentPeriodEnd: profile.subscription_current_period_end,
+        keepsCurrentSubscription: true,
+      };
+
+      log("Annual→Annual upgrade computed", annualUpgrade);
+
+      if (isPreview) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            preview: true,
+            scenario: "annual_to_annual",
+            annualUpgrade,
+            carriedBonus: remaining,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
+    // ============================================================
+    // BRANCH B: MONTHLY → MONTHLY (cancel + new full price, balance as bonus)
+    // ============================================================
+    const monthlyUpgrade =
+      currentBilling === "monthly" && newBillingPeriod === "monthly"
+        ? {
+            newPriceFull: PLAN_PRICE_MONTHLY[newPlan],
+            keepsCurrentSubscription: false,
+          }
+        : null;
+
+    if (isPreview && !annualUpgrade) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          preview: true,
+          scenario: monthlyUpgrade ? "monthly_to_monthly" : "first_paid",
+          monthlyUpgrade,
+          carriedBonus: remaining,
+          newPriceFull: monthlyUpgrade?.newPriceFull ?? PLAN_PRICE_MONTHLY[newPlan],
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // ============================================================
+    // EXECUTE
+    // ============================================================
     const { data: upgradeRow } = await supabase
       .from("subscription_upgrades")
       .insert({
         user_id: user.id,
         from_plan: currentPlan,
         to_plan: newPlan,
-        from_billing_period: profile.billing_period,
+        from_billing_period: currentBilling,
         to_billing_period: newBillingPeriod,
         remaining_searches_carried: remaining,
-        proration_credit_cents: 0,
+        proration_credit_cents: annualUpgrade
+          ? Math.round(annualUpgrade.totalDifferenceToCharge * 100)
+          : 0,
         old_subscription_id: profile.asaas_subscription_id,
         provider: "asaas",
         status: "pending",
@@ -114,37 +195,26 @@ serve(async (req) => {
       .select()
       .single();
 
-    // === Step 1: cancel old Asaas subscription (if any) ===
-    if (profile.asaas_subscription_id) {
+    // For MONTHLY upgrades: cancel old subscription immediately
+    if (!annualUpgrade && profile.asaas_subscription_id) {
       try {
         const cancelRes = await fetch(
           `${ASAAS_API}/subscriptions/${profile.asaas_subscription_id}`,
-          {
-            method: "DELETE",
-            headers: { access_token: apiKey, Accept: "application/json" },
-          },
+          { method: "DELETE", headers: { access_token: apiKey, Accept: "application/json" } },
         );
         const cancelJson = await cancelRes.json().catch(() => ({}));
-        log("Old subscription cancelled", { id: profile.asaas_subscription_id, response: cancelJson });
+        log("Old subscription cancelled (monthly upgrade)", { id: profile.asaas_subscription_id, response: cancelJson });
       } catch (e) {
         log("Cancel failed (continuing)", { error: String(e) });
       }
     }
+    // For ANNUAL→ANNUAL: keep current subscription. The plan limit is upgraded in the
+    // profile, and the difference is charged as a one-shot installment plan.
 
-    // === Step 2: new plan is charged at FULL price (no financial discount).
-    // The "value" of unused days is preserved 100% as bonus opportunities.
-    const newPriceFull = newBillingPeriod === "annual"
-      ? PLAN_PRICE_ANNUAL[newPlan]
-      : PLAN_PRICE_MONTHLY[newPlan];
-    log("New plan pricing (full price, no discount)", { newPriceFull });
-
-    // === Step 3: carry remaining opportunities as permanent bonus.
-    // bonus_searches NEVER renews — once consumed, it's gone.
+    // Carry remaining opportunities as permanent bonus
     await supabase
       .from("profiles")
-      .update({
-        bonus_searches: (profile.bonus_searches ?? 0) + remaining,
-      })
+      .update({ bonus_searches: (profile.bonus_searches ?? 0) + remaining })
       .eq("id", user.id);
 
     if (upgradeRow) {
@@ -157,12 +227,17 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
+        scenario: annualUpgrade ? "annual_to_annual" : "monthly_to_monthly",
         upgradeId: upgradeRow?.id ?? null,
         carriedBonus: remaining,
-        prorationCents: 0,
-        firstChargeValue: newPriceFull,
-        newPriceFull,
-        message: `${remaining} oportunidade(s) do plano anterior foram convertidas em saldo bônus permanente no seu novo plano.`,
+        annualUpgrade,
+        monthlyUpgrade,
+        newPriceFull: annualUpgrade
+          ? annualUpgrade.totalDifferenceToCharge
+          : PLAN_PRICE_MONTHLY[newPlan],
+        message: annualUpgrade
+          ? `Upgrade aplicado. Diferença de R$ ${annualUpgrade.totalDifferenceToCharge.toFixed(2)} para os ${annualUpgrade.daysRemaining} dias restantes (parcelável em até ${annualUpgrade.maxInstallments}x). ${remaining} oportunidade(s) preservadas como saldo bônus.`
+          : `${remaining} oportunidade(s) do plano anterior foram convertidas em saldo bônus permanente no seu novo plano.`,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );

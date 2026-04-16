@@ -96,7 +96,7 @@ const mainPlans: Record<string, PlanDef[]> = {
       popular: false, icon: Rocket,
     },
     {
-      name: "Growth", key: "growth", price: "496", anchorPrice: "1.392", opportunities: "3.000",
+      name: "Growth", key: "growth", price: "596", anchorPrice: "1.392", opportunities: "3.000",
       description: "Para escalar e converter oportunidades com IA",
       features: [
         { text: "Geração de mensagens com IA" },
