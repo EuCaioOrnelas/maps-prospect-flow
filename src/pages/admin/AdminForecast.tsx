@@ -644,15 +644,34 @@ export default function AdminForecast() {
     <div className="p-6 lg:p-8 space-y-7 max-w-[1440px] mx-auto">
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Forecast de Receita</h1>
-          <p className="text-xs text-muted-foreground/70 mt-1">
-            Projeção automática baseada em métricas reais · MRR(n) = MRR(n-1) + New + Expansion − Churn
-          </p>
+        <div className="flex items-start gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">Forecast de Receita</h1>
+              <ForecastHelpDialog
+                avgNewMRR={forecast.drivers.avgNewMRR}
+                avgExpansionMRR={forecast.drivers.avgExpansionMRR}
+                churnRate={forecast.drivers.realChurnRate}
+                currentMRR={totalMRR}
+                usingDefaultChurn={m.usingDefaultChurn}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              Projeção automática baseada em métricas reais · MRR(n) = MRR(n-1) + New + Expansion − Churn
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
-          <Activity size={12} className="text-primary" />
-          <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Data-Driven</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/40 border border-border/30">
+            <RefreshCw size={10} className="text-muted-foreground/60" />
+            <span className="text-[9px] font-medium text-muted-foreground/70">
+              Atualizado {m.lastRefresh.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} · auto 5min
+            </span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+            <Activity size={12} className="text-primary" />
+            <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Data-Driven</span>
+          </div>
         </div>
       </div>
 
