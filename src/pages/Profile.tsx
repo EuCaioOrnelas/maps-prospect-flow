@@ -951,6 +951,11 @@ const Profile = () => {
                   <p className="text-sm text-muted-foreground">
                     {(profile?.searches_used || 0).toLocaleString('pt-BR')} de {(profile?.searches_limit || 10).toLocaleString('pt-BR')} oportunidades utilizadas
                   </p>
+                  {((profile as any)?.bonus_searches || 0) > 0 && (
+                    <p className="text-xs text-emerald-600 font-medium">
+                      + {((profile as any).bonus_searches).toLocaleString('pt-BR')} oportunidades bônus do plano anterior
+                    </p>
+                  )}
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
