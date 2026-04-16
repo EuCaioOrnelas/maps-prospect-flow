@@ -444,7 +444,7 @@ export default function AdminForecast() {
         retention,
       },
     };
-  }, [stripeMRR, totalMRR, totalSubscribers, averageTicket, churnRate, ltvData]);
+  }, [totalMRR, totalSubscribers, averageTicket, monthlyMRR, monthlySales, realChurnRate, avgNewMRR, avgNewClients, avgExpansionMRR, avgCancellations]);
 
   // Combined chart data
   const chartData = useMemo(() => {
