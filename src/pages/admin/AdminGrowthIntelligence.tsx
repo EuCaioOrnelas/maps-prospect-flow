@@ -84,11 +84,11 @@ export default function AdminGrowthIntelligence() {
       const sixtyDaysAgo = new Date(now - 60 * 86400000).toISOString();
       const { data: inactive } = await supabase
         .from("profiles")
-        .select("id, email, name, plan, last_login_at")
+        .select("id, email, name, plan, updated_at")
         .neq("plan", "free")
-        .lt("last_login_at", fourteenDaysAgo)
-        .gt("last_login_at", sixtyDaysAgo)
-        .order("last_login_at", { ascending: true })
+        .lt("updated_at", fourteenDaysAgo)
+        .gt("updated_at", sixtyDaysAgo)
+        .order("updated_at", { ascending: true })
         .limit(20);
       setInactiveRecoverable(inactive || []);
 
