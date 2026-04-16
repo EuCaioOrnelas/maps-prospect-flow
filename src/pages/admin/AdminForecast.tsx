@@ -723,7 +723,7 @@ export default function AdminForecast() {
         <ShieldCheck size={13} className="text-emerald-500 shrink-0" />
         <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
           <span className="font-semibold text-muted-foreground">Receita:</span>{" "}
-          Stripe R$ {fmt(m.stripeMRR)} + Novo Sistema R$ {fmt(m.newSystemMRR)} ·{" "}
+          Stripe R$ {fmt(m.stripeMRR)} ({m.stripeSubscribers} subs) + Novo Sistema R$ {fmt(m.newSystemMRR)} ({m.newSystemSubscribers} subs) ·{" "}
           <span className="font-semibold text-muted-foreground">Churn:</span>{" "}
           {m.usingDefaultChurn
             ? `${(forecast.drivers.realChurnRate * 100).toFixed(1)}% (baseline · dados insuficientes)`
