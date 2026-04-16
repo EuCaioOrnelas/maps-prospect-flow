@@ -2187,7 +2187,11 @@ export type Database = {
       profiles: {
         Row: {
           admin_assigned_plan: boolean
+          asaas_customer_id: string | null
+          asaas_subscription_id: string | null
           avatar_url: string | null
+          billing_period: string | null
+          bonus_searches: number
           chat_onboarding_seen: boolean
           cpf: string | null
           created_at: string
@@ -2217,7 +2221,11 @@ export type Database = {
         }
         Insert: {
           admin_assigned_plan?: boolean
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           avatar_url?: string | null
+          billing_period?: string | null
+          bonus_searches?: number
           chat_onboarding_seen?: boolean
           cpf?: string | null
           created_at?: string
@@ -2247,7 +2255,11 @@ export type Database = {
         }
         Update: {
           admin_assigned_plan?: boolean
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           avatar_url?: string | null
+          billing_period?: string | null
+          bonus_searches?: number
           chat_onboarding_seen?: boolean
           cpf?: string | null
           created_at?: string
@@ -3152,6 +3164,60 @@ export type Database = {
           stripe_event_id?: string | null
           stripe_subscription_id?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      subscription_upgrades: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          from_billing_period: string | null
+          from_plan: string
+          id: string
+          new_subscription_id: string | null
+          old_subscription_id: string | null
+          proration_credit_cents: number
+          provider: string
+          remaining_searches_carried: number
+          status: string
+          to_billing_period: string
+          to_plan: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          from_billing_period?: string | null
+          from_plan: string
+          id?: string
+          new_subscription_id?: string | null
+          old_subscription_id?: string | null
+          proration_credit_cents?: number
+          provider?: string
+          remaining_searches_carried?: number
+          status?: string
+          to_billing_period: string
+          to_plan: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          from_billing_period?: string | null
+          from_plan?: string
+          id?: string
+          new_subscription_id?: string | null
+          old_subscription_id?: string | null
+          proration_credit_cents?: number
+          provider?: string
+          remaining_searches_carried?: number
+          status?: string
+          to_billing_period?: string
+          to_plan?: string
+          user_id?: string
         }
         Relationships: []
       }
