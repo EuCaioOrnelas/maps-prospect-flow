@@ -216,6 +216,8 @@ export function GuidedTour() {
 
       {isLast ? (
         <FinalStep title={step.title} body={step.body} onFinish={finish} />
+      ) : step.id === "welcome" ? (
+        <WelcomeStep title={step.title} body={step.body} onStart={next} onSkip={finish} />
       ) : (
         <>
           <div
