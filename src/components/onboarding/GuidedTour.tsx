@@ -278,7 +278,7 @@ export function GuidedTour() {
       {/* Spotlight */}
       {spot && (
         <div
-          className="fixed pointer-events-auto rounded-xl"
+          className="fixed pointer-events-auto rounded-[28px]"
           style={{
             top: spot.top,
             left: spot.left,
@@ -304,7 +304,7 @@ export function GuidedTour() {
       ) : (
         <>
           <div
-            className="fixed pointer-events-auto bg-card/95 text-card-foreground border border-border/60 rounded-[28px] px-7 py-6 sm:px-8 sm:py-7 backdrop-blur-md"
+            className="fixed pointer-events-auto bg-card/95 text-card-foreground border border-border/60 rounded-[28px] px-6 py-4 sm:px-7 sm:py-5 backdrop-blur-md"
             style={{
               ...popupStyle,
               zIndex: 2147483647,
