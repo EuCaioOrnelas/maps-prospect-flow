@@ -1209,4 +1209,32 @@ const Profile = () => {
   );
 };
 
+function RestartTourButton() {
+  const { user } = useAuth();
+  const { start } = useGuidedTour();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const handleClick = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      await resetGuidedTour(user.id);
+      start();
+      toast({ title: "Tour reiniciado", description: "Vamos começar do início." });
+    } catch (e) {
+      toast({ title: "Erro ao reiniciar", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button onClick={handleClick} disabled={loading} variant="default" className="gap-2">
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+      Refazer tutorial
+    </Button>
+  );
+}
+
 export default Profile;
