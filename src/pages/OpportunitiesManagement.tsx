@@ -1297,9 +1297,10 @@ export default function OpportunitiesManagement() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      paginatedLeads.map(lead => (
+                      paginatedLeads.map((lead, idx) => (
                         <TableRow
                           key={lead.id}
+                          data-tour={idx === 0 ? "lead-row-first" : undefined}
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => { setSelectedLead(lead); setPopupTab("dados"); setEditingMessage(false); }}
                         >

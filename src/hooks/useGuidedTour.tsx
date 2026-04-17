@@ -119,16 +119,38 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     {
       id: "diagnosis",
       route: "/oportunidades/gestao",
-      title: "Diagnóstico inteligente por lead",
-      body: "Para cada empresa, a IA identifica pontos fortes, pontos fracos, intenção de compra e probabilidade de fechamento. Você abre o lead e decide quem abordar primeiro.",
-      placement: "center",
+      target: '[role="dialog"]',
+      title: "Diagnóstico inteligente do lead",
+      body: "Abrimos um lead real para você. Aqui a IA mostra pontos fortes, pontos fracos, intenção de compra, score e probabilidade de fechamento — tudo automático.",
+      placement: "left",
+      waitMs: 300,
+      onEnter: async () => {
+        for (let i = 0; i < 20; i++) {
+          const row = document.querySelector('[data-tour="lead-row-first"]') as HTMLElement | null;
+          if (row) {
+            row.click();
+            await new Promise((r) => setTimeout(r, 400));
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 150));
+        }
+      },
     },
     {
       id: "approach-message",
       route: "/oportunidades/gestao",
+      target: '[role="dialog"]',
       title: "Mensagem de abordagem com IA",
-      body: "A Wiize gera uma mensagem personalizada para cada lead com base no diagnóstico. Você pode usar como está ou editar antes de enviar.",
-      placement: "center",
+      body: "Dentro do próprio lead, a Wiize gera uma mensagem personalizada com base no diagnóstico. Você pode usar como está ou editar antes de enviar.",
+      placement: "left",
+      onEnter: async () => {
+        const dialog = document.querySelector('[role="dialog"]');
+        if (!dialog) {
+          const row = document.querySelector('[data-tour="lead-row-first"]') as HTMLElement | null;
+          row?.click();
+          await new Promise((r) => setTimeout(r, 300));
+        }
+      },
     },
     {
       id: "sidebar-campanhas",
@@ -195,10 +217,20 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
       if (cancelled) return;
       if (!data?.tour_completed_at) {
+        // Preload pages used in the tour for instant transitions
+        try {
+          await Promise.all([
+            import("@/pages/Dashboard"),
+            import("@/pages/OpportunitiesManagement"),
+          ]);
+        } catch (e) {
+          console.warn("[tour] preload failed", e);
+        }
+        if (cancelled) return;
         setTimeout(() => {
           setCurrentStepIndex(0);
           setIsActive(true);
-        }, 800);
+        }, 400);
       } else {
         localStorage.setItem(LS_KEY, "1");
       }
@@ -225,10 +257,19 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     async (index: number) => {
       const step = steps[index];
       if (!step) return;
+      // Close any open lead dialog if we're moving away from diagnosis steps
+      const isDialogStep = step.id === "diagnosis" || step.id === "approach-message";
+      if (!isDialogStep) {
+        const openDialog = document.querySelector('[role="dialog"]');
+        if (openDialog) {
+          // Press Escape to close dialog cleanly
+          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+          await new Promise((r) => setTimeout(r, 150));
+        }
+      }
       // Navigate first
       if (step.route && location.pathname !== step.route) {
         navigate(step.route);
-        // Wait for route transition
         await new Promise((r) => setTimeout(r, step.waitMs ?? 500));
       } else if (step.waitMs) {
         await new Promise((r) => setTimeout(r, step.waitMs));
@@ -241,7 +282,16 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     [navigate, location.pathname, steps]
   );
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
+    // Preload route chunks so navigation during the tour is instant
+    try {
+      await Promise.all([
+        import("@/pages/Dashboard"),
+        import("@/pages/OpportunitiesManagement"),
+      ]);
+    } catch (e) {
+      console.warn("[tour] preload failed", e);
+    }
     setCurrentStepIndex(0);
     setIsActive(true);
     goToStep(0);
@@ -279,6 +329,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const finish = useCallback(() => {
     setIsActive(false);
     document.body.classList.remove("tour-sidebar-open");
+    // Close any open lead dialog
+    const openDialog = document.querySelector('[role="dialog"]');
+    if (openDialog) {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    }
     persistCompletion();
   }, [persistCompletion]);
 
