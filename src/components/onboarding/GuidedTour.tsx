@@ -52,7 +52,7 @@ export function GuidedTour() {
       return;
     }
 
-    if (step.hideSpotlightWhileTargetLoads) {
+    if (hideOnLoad) {
       setRect(null);
     }
 
