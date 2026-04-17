@@ -257,10 +257,19 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     async (index: number) => {
       const step = steps[index];
       if (!step) return;
+      // Close any open lead dialog if we're moving away from diagnosis steps
+      const isDialogStep = step.id === "diagnosis" || step.id === "approach-message";
+      if (!isDialogStep) {
+        const openDialog = document.querySelector('[role="dialog"]');
+        if (openDialog) {
+          // Press Escape to close dialog cleanly
+          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+          await new Promise((r) => setTimeout(r, 150));
+        }
+      }
       // Navigate first
       if (step.route && location.pathname !== step.route) {
         navigate(step.route);
-        // Wait for route transition
         await new Promise((r) => setTimeout(r, step.waitMs ?? 500));
       } else if (step.waitMs) {
         await new Promise((r) => setTimeout(r, step.waitMs));
