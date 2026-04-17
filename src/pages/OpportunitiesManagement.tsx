@@ -37,6 +37,7 @@ import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { buildTourDemoLead } from "@/lib/tourDemoLead";
 
 interface OpportunityLead {
   id: string;
@@ -429,11 +430,7 @@ export default function OpportunitiesManagement() {
 
   const displayLeads = useMemo(() => {
     if (!tourDemoActive) return filteredLeads;
-    // Avoid duplicating if already present
     if (filteredLeads.some((l) => l.id === "__tour_demo_lead__")) return filteredLeads;
-    // Lazy require to avoid SSR concerns
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { buildTourDemoLead } = require("@/lib/tourDemoLead");
     return [buildTourDemoLead(), ...filteredLeads];
   }, [filteredLeads, tourDemoActive]);
 
