@@ -16,6 +16,9 @@ interface Rect {
 const PADDING = 8;
 const POPUP_W = 400;
 const POPUP_GAP = 16;
+// Reserve space for the expanded app sidebar (w-56 = 224px) so the popup
+// never overlaps it while it animates open during the tour.
+const SIDEBAR_SAFE_LEFT = 240;
 
 export function GuidedTour() {
   const { isActive, currentStepIndex, steps, direction, next, prev, finish } = useGuidedTour();
