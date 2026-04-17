@@ -313,13 +313,26 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   // Toggle body classes for sidebar force-open
   useEffect(() => {
     const step = steps[currentStepIndex];
-    if (isActive && step?.forceSidebar) {
-      document.body.classList.add("tour-sidebar-open");
-    } else {
-      document.body.classList.remove("tour-sidebar-open");
+    const sections = ["oportunidades", "campanhas", "crm", "automacao", "chat", "dashboard"];
+    // Reset all per-section classes
+    sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
+    document.body.classList.remove("tour-sidebar-open");
+    document.body.classList.remove("tour-demo-lead");
+
+    if (isActive && step) {
+      if (step.sidebarSection) {
+        document.body.classList.add(`tour-open-${step.sidebarSection}`);
+      } else if (step.forceSidebar) {
+        document.body.classList.add("tour-sidebar-open");
+      }
+      if (step.injectDemoLead) {
+        document.body.classList.add("tour-demo-lead");
+      }
     }
     return () => {
+      sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
       document.body.classList.remove("tour-sidebar-open");
+      document.body.classList.remove("tour-demo-lead");
     };
   }, [isActive, currentStepIndex]);
 
