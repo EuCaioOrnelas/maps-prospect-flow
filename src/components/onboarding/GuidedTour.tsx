@@ -274,30 +274,36 @@ export function GuidedTour() {
       left: ["left", "right", "bottom", "top"],
     } as const;
 
-    const canFit = (placement: "top" | "bottom" | "left" | "right") => {
+    const getAvailableGap = (placement: "top" | "bottom" | "left" | "right") => {
       if (placement === "top") {
-        return spotBounds.top - POPUP_SPOT_GAP - popupHeight >= viewportMargin;
+        return spotBounds.top - popupHeight - viewportMargin;
       }
       if (placement === "bottom") {
-        return spotBounds.bottom + POPUP_SPOT_GAP + popupHeight <= window.innerHeight - viewportMargin;
+        return window.innerHeight - viewportMargin - spotBounds.bottom - popupHeight;
       }
       if (placement === "right") {
-        return spotBounds.right + POPUP_SPOT_GAP + popupWidth <= window.innerWidth - viewportMargin;
+        return window.innerWidth - viewportMargin - spotBounds.right - popupWidth;
       }
-      return spotBounds.left - POPUP_SPOT_GAP - popupWidth >= viewportMargin;
+      return spotBounds.left - popupWidth - viewportMargin;
+    };
+
+    const canFit = (placement: "top" | "bottom" | "left" | "right") => {
+      return getAvailableGap(placement) >= POPUP_MIN_SPOT_GAP;
     };
 
     const computePlacementStyle = (placement: "top" | "bottom" | "left" | "right") => {
+      const effectiveGap = Math.max(POPUP_MIN_SPOT_GAP, Math.min(POPUP_SPOT_GAP, getAvailableGap(placement)));
+
       if (placement === "top") {
         return {
-          top: spotBounds.top - popupHeight - POPUP_SPOT_GAP,
+          top: spotBounds.top - popupHeight - effectiveGap,
           left: clampX(popupRect.left + popupRect.width / 2 - popupWidth / 2),
           width: popupWidth,
         };
       }
       if (placement === "bottom") {
         return {
-          top: spotBounds.bottom + POPUP_SPOT_GAP,
+          top: spotBounds.bottom + effectiveGap,
           left: clampX(popupRect.left + popupRect.width / 2 - popupWidth / 2),
           width: popupWidth,
         };
@@ -305,13 +311,13 @@ export function GuidedTour() {
       if (placement === "right") {
         return {
           top: clampY(popupRect.top + popupRect.height / 2 - popupHeight / 2),
-          left: spotBounds.right + POPUP_SPOT_GAP,
+          left: spotBounds.right + effectiveGap,
           width: popupWidth,
         };
       }
       return {
         top: clampY(popupRect.top + popupRect.height / 2 - popupHeight / 2),
-        left: spotBounds.left - popupWidth - POPUP_SPOT_GAP,
+        left: spotBounds.left - popupWidth - effectiveGap,
         width: popupWidth,
       };
     };
