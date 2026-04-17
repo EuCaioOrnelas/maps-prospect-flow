@@ -184,12 +184,11 @@ export function GuidedTour() {
       {showFallbackOverlay && (
         <div
           className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300"
-          style={{ background: "rgba(8, 12, 20, 0.72)" }}
+          style={{ background: isLast ? "rgba(6, 10, 16, 0.88)" : "rgba(8, 12, 20, 0.72)" }}
         />
       )}
 
-      {/* Spotlight: a single transparent box whose huge box-shadow paints the dark overlay.
-          Because the box itself animates, the "hole" and the ring animate together — no desync. */}
+      {/* Spotlight */}
       {spot && (
         <div
           className="fixed pointer-events-auto rounded-xl"
@@ -200,11 +199,8 @@ export function GuidedTour() {
             height: spot.height,
             zIndex: 2147483646,
             boxShadow: [
-              // dark overlay covering the rest of the screen
               "0 0 0 9999px rgba(8, 12, 20, 0.72)",
-              // soft inner glow
               "inset 0 0 0 1px hsl(var(--primary) / 0.6)",
-              // outer halo
               "0 0 0 3px hsl(var(--primary) / 0.18)",
               "0 0 40px hsl(var(--primary) / 0.35)",
             ].join(", "),
@@ -214,64 +210,155 @@ export function GuidedTour() {
         />
       )}
 
-      {/* Popup card */}
-      <div
-        key={step.id}
-        className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-5 animate-in fade-in zoom-in-95 duration-300"
-        style={{ ...popupStyle, zIndex: 2147483647, transition: "top 600ms cubic-bezier(0.22, 1, 0.36, 1), left 600ms cubic-bezier(0.22, 1, 0.36, 1)" }}
-      >
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary mb-2">
-          <Sparkles size={12} />
-          Passo {currentStepIndex + 1} de {total}
-        </div>
-        <h3 className="text-lg font-bold text-foreground mb-1.5 leading-snug">
-          {step.title}
-        </h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {step.body}
-        </p>
-      </div>
-
-      {/* Footer navigation */}
-      <div
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto"
-        style={{ zIndex: 2147483647 }}
-      >
-        <div className="flex items-center gap-3 bg-card/95 backdrop-blur-md border border-border rounded-full pl-2 pr-2 py-2 shadow-2xl">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={prev}
-            disabled={isFirst}
-            className="rounded-full gap-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
+      {isLast ? (
+        <FinalStep title={step.title} body={step.body} onFinish={finish} />
+      ) : (
+        <>
+          <div
+            key={step.id}
+            className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-5 animate-in fade-in zoom-in-95 duration-300"
+            style={{ ...popupStyle, zIndex: 2147483647, transition: "top 600ms cubic-bezier(0.22, 1, 0.36, 1), left 600ms cubic-bezier(0.22, 1, 0.36, 1)" }}
           >
-            <ArrowLeft size={14} />
-            Voltar
-          </Button>
-          {/* Progress bar — smooth fill instead of dots */}
-          <div className="relative h-1.5 w-32 rounded-full bg-muted-foreground/15 overflow-hidden">
-            <div
-              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-primary/70 shadow-[0_0_12px_hsl(var(--primary)/0.6)]"
-              style={{
-                width: `${((currentStepIndex + 1) / total) * 100}%`,
-                transition: "width 500ms cubic-bezier(0.65, 0, 0.35, 1)",
-              }}
-            />
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary mb-2">
+              <Sparkles size={12} />
+              Passo {currentStepIndex + 1} de {total}
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-1.5 leading-snug">
+              {step.title}
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {step.body}
+            </p>
           </div>
-          <span className="text-[11px] font-semibold text-muted-foreground tabular-nums px-1 min-w-[36px] text-center">
-            {currentStepIndex + 1}/{total}
-          </span>
-          <Button
-            size="sm"
-            onClick={isLast ? finish : next}
-            className="rounded-full gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
+
+          <div
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto"
+            style={{ zIndex: 2147483647 }}
           >
-            {isLast ? "Concluir" : "Próximo"}
-            {!isLast && <ArrowRight size={14} />}
-          </Button>
-        </div>
-      </div>
+            <div className="flex items-center gap-3 bg-card/95 backdrop-blur-md border border-border rounded-full pl-2 pr-2 py-2 shadow-2xl">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={prev}
+                disabled={isFirst}
+                className="rounded-full gap-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
+              >
+                <ArrowLeft size={14} />
+                Voltar
+              </Button>
+              <div className="relative h-1.5 w-32 rounded-full bg-muted-foreground/15 overflow-hidden">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-primary/70 shadow-[0_0_12px_hsl(var(--primary)/0.6)]"
+                  style={{
+                    width: `${((currentStepIndex + 1) / total) * 100}%`,
+                    transition: "width 500ms cubic-bezier(0.65, 0, 0.35, 1)",
+                  }}
+                />
+              </div>
+              <span className="text-[11px] font-semibold text-muted-foreground tabular-nums px-1 min-w-[36px] text-center">
+                {currentStepIndex + 1}/{total}
+              </span>
+              <Button
+                size="sm"
+                onClick={next}
+                className="rounded-full gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
+              >
+                Próximo
+                <ArrowRight size={14} />
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>,
     document.body
+  );
+}
+
+interface FinalStepProps {
+  title: string;
+  body: string;
+  onFinish: () => void;
+}
+
+function FinalStep({ title, body, onFinish }: FinalStepProps) {
+  const { fireRealistic, fireSides } = useConfetti();
+  const [celebrated, setCelebrated] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => fireSides(), 250);
+    return () => clearTimeout(t);
+  }, [fireSides]);
+
+  const handleFinish = () => {
+    if (celebrated) {
+      onFinish();
+      return;
+    }
+    setCelebrated(true);
+    fireRealistic();
+    setTimeout(() => fireSides(), 200);
+    setTimeout(() => onFinish(), 1600);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
+      style={{ zIndex: 2147483647 }}
+    >
+      <div className="relative w-full max-w-md bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+        <div
+          className="absolute -top-32 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full opacity-40 pointer-events-none blur-3xl"
+          style={{
+            background:
+              "radial-gradient(circle, hsl(var(--primary) / 0.55) 0%, transparent 65%)",
+          }}
+        />
+
+        <div className="relative mx-auto mb-6 flex h-20 w-20 items-center justify-center">
+          <span
+            className="absolute inset-0 rounded-full bg-primary/20 animate-ping"
+            style={{ animationDuration: "1.8s" }}
+          />
+          <span className="absolute inset-2 rounded-full bg-primary/15" />
+          <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 shadow-[0_10px_40px_hsl(var(--primary)/0.55)]">
+            <Check
+              size={40}
+              strokeWidth={3}
+              className="text-primary-foreground animate-in zoom-in-50 duration-500"
+            />
+          </div>
+        </div>
+
+        <div className="relative">
+          <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary mb-3">
+            <Sparkles size={12} />
+            Onboarding concluído
+          </div>
+          <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 leading-tight">
+            {title}
+          </h3>
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-8">
+            {body}
+          </p>
+
+          <Button
+            size="xl"
+            onClick={handleFinish}
+            className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
+          >
+            <Rocket size={20} />
+            Escalar minha operação
+          </Button>
+
+          <button
+            onClick={onFinish}
+            className="mt-4 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
