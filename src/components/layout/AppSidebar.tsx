@@ -205,7 +205,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         className={cn(
           "h-full bg-sidebar border-r border-sidebar-border flex flex-col",
           "transition-[width] duration-300 ease-out overflow-hidden",
-          isHovered ? "w-56" : "w-[72px]"
+          (isHovered || tourForceOpen) ? "w-56" : "w-[72px]"
         )}
       >
         {/* Logo area - aligned with navbar height (58px = 57px + 1px border) */}
