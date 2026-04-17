@@ -455,6 +455,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
     document.body.classList.remove("tour-sidebar-open");
     document.body.classList.remove("tour-demo-lead");
+    document.body.classList.remove("tour-demo-cockpit");
 
     if (isActive && step) {
       if (step.sidebarSection) {
@@ -465,11 +466,15 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       if (step.injectDemoLead) {
         document.body.classList.add("tour-demo-lead");
       }
+      if (step.injectDemoCockpit) {
+        document.body.classList.add("tour-demo-cockpit");
+      }
     }
     return () => {
       sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
       document.body.classList.remove("tour-sidebar-open");
       document.body.classList.remove("tour-demo-lead");
+      document.body.classList.remove("tour-demo-cockpit");
     };
   }, [isActive, currentStepIndex]);
 
