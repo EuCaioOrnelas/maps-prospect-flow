@@ -299,9 +299,10 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
       return;
     }
     setCelebrated(true);
+    // Fire confetti and close the tour immediately so the user sees the full burst
     fireRealistic();
-    setTimeout(() => fireSides(), 200);
-    setTimeout(() => onFinish(), 1600);
+    setTimeout(() => fireSides(), 150);
+    onFinish();
   };
 
   return (
