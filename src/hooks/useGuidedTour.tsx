@@ -87,10 +87,20 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       route: "/dashboard",
       target: '[data-tour="sidebar-oportunidades"]',
       title: "Captação fica aqui",
-      body: "No menu Oportunidades você acessa a Busca de leads e a Gestão de oportunidades. Vamos abrir a Busca agora.",
+      body: "No menu Oportunidades você acessa a Busca de leads e a Gestão de oportunidades. Veja o item Buscar a seguir.",
       placement: "right",
       sidebarSection: "oportunidades",
-      waitMs: 500,
+      waitMs: 700,
+    },
+    {
+      id: "sidebar-oportunidades-buscar",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-oportunidades-buscar"]',
+      title: "Buscar leads reais",
+      body: "Este é o item Buscar — onde você encontra empresas reais do Google Maps prontas para prospectar. Vamos abri-lo agora.",
+      placement: "right",
+      sidebarSection: "oportunidades",
+      waitMs: 700,
     },
     {
       id: "search-empty",
@@ -99,7 +109,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       title: "Captação de leads reais",
       body: "Aqui você define um nicho e uma localização. A Wiize traz empresas reais do Google Maps já organizadas para você.",
       placement: "bottom",
-      waitMs: 500,
+      waitMs: 600,
     },
     {
       id: "search-typing",
@@ -124,7 +134,6 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       body: "Com um clique, a Wiize encontra dezenas de empresas qualificadas. Vamos simular o resultado a seguir — sem disparar a busca real.",
       placement: "top",
       onEnter: async () => {
-        // Visual loading hint on the real button
         const btn = document.querySelector('[data-tour="search-button"]') as HTMLElement | null;
         if (btn) {
           btn.setAttribute("data-tour-loading", "true");
@@ -140,14 +149,14 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
     // ---- Gestão / Diagnóstico ----
     {
-      id: "sidebar-gestao-intro",
+      id: "sidebar-oportunidades-gestao",
       route: "/oportunidades",
-      target: '[data-tour="sidebar-oportunidades"]',
+      target: '[data-tour="sidebar-oportunidades-gestao"]',
       title: "Os leads chegam na Gestão",
-      body: "Toda empresa captada cai em Oportunidades → Gestão. É lá que a IA analisa cada lead. Vamos abrir agora.",
+      body: "Este é o item Gestão — toda empresa captada cai aqui e a IA analisa cada uma. Vamos abrir agora.",
       placement: "right",
       sidebarSection: "oportunidades",
-      waitMs: 300,
+      waitMs: 700,
     },
     {
       id: "management",
@@ -168,7 +177,6 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       injectDemoLead: true,
       waitMs: 400,
       onEnter: async () => {
-        // 1. Open the demo lead row
         for (let i = 0; i < 30; i++) {
           const row = document.querySelector('[data-tour="lead-row-first"]') as HTMLElement | null;
           if (row) {
@@ -177,7 +185,6 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
           }
           await new Promise((r) => setTimeout(r, 120));
         }
-        // 2. Wait for dialog and switch to Score tab
         for (let i = 0; i < 30; i++) {
           const tab = document.querySelector('[data-tour="lead-tab-score"]') as HTMLElement | null;
           if (tab) {
@@ -198,17 +205,14 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       placement: "left",
       injectDemoLead: true,
       onEnter: async () => {
-        // Make sure dialog is open
         if (!document.querySelector('[role="dialog"]')) {
           const row = document.querySelector('[data-tour="lead-row-first"]') as HTMLElement | null;
           row?.click();
           await new Promise((r) => setTimeout(r, 300));
         }
-        // Switch to "Dados" tab where the approach message lives
         const tab = document.querySelector('[data-tour="lead-tab-dados"]') as HTMLElement | null;
         tab?.click();
         await new Promise((r) => setTimeout(r, 250));
-        // Scroll the approach section into view inside the dialog
         const section = document.querySelector('[data-tour="lead-approach-section"]') as HTMLElement | null;
         section?.scrollIntoView({ block: "center", behavior: "smooth" });
       },
@@ -216,11 +220,31 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
     // ---- Prospecção (Campanhas) ----
     {
-      id: "sidebar-campanhas",
+      id: "sidebar-campanhas-intro",
       route: "/dashboard",
       target: '[data-tour="sidebar-campanhas"]',
       title: "Prospecção — Campanhas",
-      body: "Em Campanha você dispara mensagens em escala. Prospecção (Outbound) usa números próprios. Relacionamento usa a API oficial da Meta.",
+      body: "O menu Campanha abriga dois modos de envio em escala. Vamos ver cada subitem.",
+      placement: "right",
+      sidebarSection: "campanhas",
+      waitMs: 700,
+    },
+    {
+      id: "sidebar-campanhas-prospeccao",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-campanhas-prospeccao"]',
+      title: "Prospecção (Outbound)",
+      body: "Use seus próprios números do WhatsApp para envios em massa, com aquecimento e variações de mensagem.",
+      placement: "right",
+      sidebarSection: "campanhas",
+      waitMs: 700,
+    },
+    {
+      id: "sidebar-campanhas-relacionamento",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-campanhas-relacionamento"]',
+      title: "Relacionamento (API Oficial Meta)",
+      body: "Envios oficiais via Meta Cloud API com templates aprovados — ideal para nutrição e remarketing de quem já é seu cliente.",
       placement: "right",
       sidebarSection: "campanhas",
       waitMs: 500,
@@ -228,14 +252,34 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
     // ---- Gestão (CRM) ----
     {
-      id: "sidebar-crm",
+      id: "sidebar-crm-intro",
       route: "/dashboard",
       target: '[data-tour="sidebar-crm"]',
-      title: "Gestão — CRM e Score",
-      body: "Todo lead entra automaticamente no Pipeline. O Score mostra quem está mais quente para comprar com base em engajamento e respostas.",
+      title: "Gestão — CRM",
+      body: "No menu CRM você encontra o pipeline visual e o score de qualificação dos seus leads.",
       placement: "right",
       sidebarSection: "crm",
-      waitMs: 400,
+      waitMs: 700,
+    },
+    {
+      id: "sidebar-crm-pipeline",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-crm-pipeline"]',
+      title: "Pipeline Kanban",
+      body: "Acompanhe cada lead pelas etapas do funil — do primeiro contato ao fechamento — com drag-and-drop.",
+      placement: "right",
+      sidebarSection: "crm",
+      waitMs: 700,
+    },
+    {
+      id: "sidebar-crm-score",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-crm-score"]',
+      title: "Score de Contatos",
+      body: "Identifique os leads mais quentes (0–1.000) baseado em engajamento, intenção de compra e respostas no WhatsApp.",
+      placement: "right",
+      sidebarSection: "crm",
+      waitMs: 500,
     },
 
     // ---- Atendimento ----
@@ -247,19 +291,49 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       body: "Todas as conversas em um único lugar. Responda manualmente ou deixe a IA conduzir o atendimento por você.",
       placement: "right",
       sidebarSection: "chat",
-      waitMs: 400,
+      waitMs: 600,
     },
 
     // ---- Automação ----
     {
-      id: "sidebar-automacao",
+      id: "sidebar-automacao-intro",
       route: "/dashboard",
       target: '[data-tour="sidebar-automacao"]',
-      title: "Automação — Fluxos e Agentes IA",
-      body: "Crie fluxos automáticos ou configure um Agente de IA que conversa, qualifica e marca reuniões 24/7 — sem perder o tom da sua marca.",
+      title: "Automação",
+      body: "Aqui você cria fluxos, configura agentes de IA e aquece números. Vamos passar por cada um.",
       placement: "right",
       sidebarSection: "automacao",
-      waitMs: 400,
+      waitMs: 700,
+    },
+    {
+      id: "sidebar-automacao-fluxos",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-automacao-fluxos"]',
+      title: "Fluxos automáticos",
+      body: "Construa jornadas conversacionais com nós de mensagem, condição, espera, integrações Google e mais.",
+      placement: "right",
+      sidebarSection: "automacao",
+      waitMs: 600,
+    },
+    {
+      id: "sidebar-automacao-agentes",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-automacao-agentes"]',
+      title: "Agentes IA",
+      body: "Configure um agente que conversa, qualifica e marca reuniões 24/7 — sem perder o tom da sua marca.",
+      placement: "right",
+      sidebarSection: "automacao",
+      waitMs: 600,
+    },
+    {
+      id: "sidebar-automacao-aquecimento",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-automacao-aquecimento"]',
+      title: "Aquecimento de números",
+      body: "Aqueça novos chips de WhatsApp com conversas naturais geradas por IA antes de iniciar campanhas em volume.",
+      placement: "right",
+      sidebarSection: "automacao",
+      waitMs: 500,
     },
 
     {
