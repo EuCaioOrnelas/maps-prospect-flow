@@ -36,6 +36,7 @@ interface GuidedTourContextValue {
   isActive: boolean;
   currentStepIndex: number;
   steps: TourStep[];
+  direction: "next" | "prev";
   start: () => void;
   next: () => void;
   prev: () => void;
