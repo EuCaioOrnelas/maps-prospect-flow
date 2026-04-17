@@ -415,8 +415,30 @@ export default function OpportunitiesManagement() {
     return result;
   }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredLeads.length / ITEMS_PER_PAGE));
-  const paginatedLeads = filteredLeads.slice(
+  // Tour demo lead injection (synthetic, never persisted)
+  const [tourDemoActive, setTourDemoActive] = useState(
+    typeof document !== "undefined" && document.body.classList.contains("tour-demo-lead")
+  );
+  useEffect(() => {
+    const update = () => setTourDemoActive(document.body.classList.contains("tour-demo-lead"));
+    update();
+    const obs = new MutationObserver(update);
+    obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+
+  const displayLeads = useMemo(() => {
+    if (!tourDemoActive) return filteredLeads;
+    // Avoid duplicating if already present
+    if (filteredLeads.some((l) => l.id === "__tour_demo_lead__")) return filteredLeads;
+    // Lazy require to avoid SSR concerns
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { buildTourDemoLead } = require("@/lib/tourDemoLead");
+    return [buildTourDemoLead(), ...filteredLeads];
+  }, [filteredLeads, tourDemoActive]);
+
+  const totalPages = Math.max(1, Math.ceil(displayLeads.length / ITEMS_PER_PAGE));
+  const paginatedLeads = displayLeads.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
