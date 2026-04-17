@@ -62,6 +62,18 @@ function getPillarKey(stepId: string) {
   return "gestao";
 }
 
+// Split body text into ~2 short scannable lines on the first sentence break.
+function splitBodyForScan(body: string): string[] {
+  if (!body) return [];
+  const trimmed = body.trim();
+  // Find the first sentence break followed by a space
+  const match = trimmed.match(/^(.+?[.!?])\s+(.+)$/s);
+  if (match) {
+    return [match[1].trim(), match[2].trim()];
+  }
+  return [trimmed];
+}
+
 export function GuidedTour() {
   const { isActive, currentStepIndex, steps, direction, next, prev, finish } = useGuidedTour();
   const step = steps[currentStepIndex];
@@ -275,9 +287,10 @@ export function GuidedTour() {
             zIndex: 2147483646,
             boxShadow: [
               "0 0 0 9999px hsl(var(--foreground) / 0.28)",
-              "inset 0 0 0 1px hsl(var(--primary) / 0.34)",
-              "0 0 0 4px hsl(var(--primary) / 0.1)",
-              "0 0 32px hsl(var(--primary) / 0.22)",
+              "inset 0 0 0 2px hsl(var(--primary) / 0.95)",
+              "0 0 0 6px hsl(var(--primary) / 0.18)",
+              "0 0 48px hsl(var(--primary) / 0.45)",
+              "0 0 80px hsl(var(--primary) / 0.25)",
             ].join(", "),
             transition:
               "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1), width 480ms cubic-bezier(0.2, 0.8, 0.2, 1), height 480ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 480ms cubic-bezier(0.2, 0.8, 0.2, 1)",
@@ -292,7 +305,7 @@ export function GuidedTour() {
       ) : (
         <>
           <div
-            className="fixed pointer-events-auto bg-card/95 text-card-foreground border border-border/60 rounded-[28px] p-7 sm:p-8 backdrop-blur-md"
+            className="fixed pointer-events-auto bg-card/95 text-card-foreground border border-border/60 rounded-[28px] px-7 py-6 sm:px-8 sm:py-7 backdrop-blur-md"
             style={{
               ...popupStyle,
               zIndex: 2147483647,
@@ -300,16 +313,18 @@ export function GuidedTour() {
               transition: "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1)",
             }}
           >
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary mb-3">
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary mb-2.5">
               <Sparkles size={13} />
               Etapa {currentPillar.number} • {currentPillar.label}
             </div>
-            <h3 className="text-2xl font-bold tracking-tight text-foreground mb-3 leading-[1.15]">
+            <h3 className="text-2xl font-bold tracking-tight text-foreground mb-2.5 leading-[1.15]">
               {step.title}
             </h3>
-            <p className="text-[15px] text-muted-foreground leading-7">
-              {step.body}
-            </p>
+            <div className="space-y-2 text-[15px] text-muted-foreground leading-[1.65]">
+              {splitBodyForScan(step.body).map((line, i) => (
+                <p key={i}>{line}</p>
+              ))}
+            </div>
           </div>
 
           <div
