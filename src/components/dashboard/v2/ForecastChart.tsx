@@ -49,7 +49,7 @@ export function ForecastChart({
   const hasData = totalSales > 0;
 
   return (
-    <Card className="border-border/40 rounded-2xl h-full flex flex-col">
+    <Card data-tour="cockpit-forecast-focus" className="border-border/40 rounded-2xl h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <TrendingUp size={16} className="text-primary" />
