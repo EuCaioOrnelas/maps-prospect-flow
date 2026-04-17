@@ -429,6 +429,12 @@ export default function OpportunitiesManagement() {
     return () => obs.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (tourDemoActive) {
+      setCurrentPage(1);
+    }
+  }, [tourDemoActive]);
+
   const displayLeads = useMemo(() => {
     if (!tourDemoActive) return filteredLeads;
     const hasDemo = filteredLeads.some((l) => l.id === "__tour_demo_lead__");
@@ -1329,7 +1335,7 @@ export default function OpportunitiesManagement() {
                       paginatedLeads.map((lead, idx) => (
                         <TableRow
                           key={lead.id}
-                          data-tour={idx === 0 ? "lead-row-first" : undefined}
+                          data-tour={lead.id === "__tour_demo_lead__" ? "lead-row-demo" : idx === 0 ? "lead-row-first" : undefined}
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => { setSelectedLead(lead); setPopupTab("dados"); setEditingMessage(false); }}
                         >
@@ -1483,6 +1489,8 @@ export default function OpportunitiesManagement() {
       {/* Lead Detail Dialog with Tabs */}
       <Dialog open={!!selectedLead} onOpenChange={open => { if (!open) { setSelectedLead(null); setEditingMessage(false); } }}>
         <DialogContent
+          data-tour={selectedLead?.id === "__tour_demo_lead__" ? "lead-dialog-demo" : undefined}
+          data-tour-selected-lead-id={selectedLead?.id}
           className="max-w-2xl max-h-[90vh] p-0 gap-0 bg-background overflow-hidden"
           onWheelCapture={(e) => {
             const scrollArea = document.getElementById("lead-detail-scroll-area");

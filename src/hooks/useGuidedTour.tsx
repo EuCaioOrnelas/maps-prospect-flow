@@ -78,13 +78,19 @@ async function waitForElement<T extends Element = HTMLElement>(selector: string,
 }
 
 async function openDemoLeadDialog() {
-  const dialog = document.querySelector('[role="dialog"]') as HTMLElement | null;
-  if (dialog) return dialog;
+  const demoDialog = document.querySelector('[data-tour="lead-dialog-demo"]') as HTMLElement | null;
+  if (demoDialog) return demoDialog;
 
-  const row = await waitForElement<HTMLElement>('[data-tour="lead-row-first"]', 40, 120);
+  const openDialog = document.querySelector('[role="dialog"]') as HTMLElement | null;
+  if (openDialog) {
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 180));
+  }
+
+  const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 40, 120);
   row?.click();
 
-  return waitForElement<HTMLElement>('[role="dialog"]', 25, 120);
+  return waitForElement<HTMLElement>('[data-tour="lead-dialog-demo"]', 25, 120);
 }
 
 async function activateLeadTab(selector: string) {
