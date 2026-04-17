@@ -183,6 +183,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
   // Reset reports submenu when sidebar closes
   const handleMouseLeave = () => {
+    if (tourForceOpen) return; // don't collapse while tour is driving the sidebar
     setIsHovered(false);
     setIsReportsOpen(false);
     setIsCampaignsOpen(false);
