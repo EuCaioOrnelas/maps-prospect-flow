@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Rocket, Sparkles } from "lucide-react";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
 import { Button } from "@/components/ui/button";
+import { useConfetti } from "@/components/ui/confetti";
 
 interface Rect {
   top: number;
