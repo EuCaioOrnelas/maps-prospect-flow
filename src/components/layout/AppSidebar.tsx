@@ -47,6 +47,7 @@ interface AppSidebarProps {
 export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [tourForceOpen, setTourForceOpen] = useState(false);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
   const [isCampaignsOpen, setIsCampaignsOpen] = useState(false);
   const [isOpportunitiesOpen, setIsOpportunitiesOpen] = useState(false);
@@ -70,15 +71,31 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
   const isOnAutomationPage = currentPath === "/agents" || currentPath.startsWith("/fluxos") || currentPath === "/warming";
 
+  // Watch body class to force expand during guided tour
+  useEffect(() => {
+    const update = () => setTourForceOpen(document.body.classList.contains("tour-sidebar-open"));
+    update();
+    const obs = new MutationObserver(update);
+    obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+
   // Sync expanded state with hover, but with delay to prevent glitches
   useEffect(() => {
+    if (tourForceOpen) {
+      setIsExpanded(true);
+      setIsOpportunitiesOpen(true);
+      setIsCampaignsOpen(true);
+      setIsCrmOpen(true);
+      setIsAutomationOpen(true);
+      setIsReportsOpen(true);
+      return;
+    }
     if (isHovered) {
-      // Expand immediately when hovering
       expandTimeoutRef.current = setTimeout(() => {
         setIsExpanded(true);
       }, 50);
     } else {
-      // Collapse after animation completes
       if (expandTimeoutRef.current) {
         clearTimeout(expandTimeoutRef.current);
       }
@@ -89,7 +106,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         clearTimeout(expandTimeoutRef.current);
       }
     };
-  }, [isHovered]);
+  }, [isHovered, tourForceOpen]);
 
   const getUserInitials = () => {
     if (profile?.name) {
@@ -259,7 +276,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
 
             {/* Oportunidades with submenu */}
-            <li>
+            <li data-tour="sidebar-oportunidades">
               <SidebarNavItem
                 title="Oportunidades"
                 icon={Search}
@@ -315,7 +332,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
 
             {/* Campanhas with submenu */}
-            <li>
+            <li data-tour="sidebar-campanhas">
               <SidebarNavItem
                 title="Campanha"
                 icon={Megaphone}
@@ -371,7 +388,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
 
             {/* CRM with submenu */}
-            <li>
+            <li data-tour="sidebar-crm">
               <SidebarNavItem
                 title="CRM"
                 icon={Users}
@@ -427,7 +444,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
 
             {/* Chat */}
-            <li>
+            <li data-tour="sidebar-chat">
               <SidebarNavItem
                 title="Chat"
                 icon={MessageCircle}
@@ -439,7 +456,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
 
             {/* Automação with submenu */}
-            <li>
+            <li data-tour="sidebar-automacao">
               <SidebarNavItem
                 title="Automação"
                 icon={Workflow}
