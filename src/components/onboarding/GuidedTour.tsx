@@ -284,7 +284,7 @@ export function GuidedTour() {
           >
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary mb-3">
               <Sparkles size={13} />
-              {journeyLabel} • {journeyIndex}/{journeyCount}
+              {journeyLabel}
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-3 leading-tight tracking-[-0.02em]">
               {step.title}
@@ -311,7 +311,7 @@ export function GuidedTour() {
               </Button>
               <div className="flex flex-col items-center gap-1 px-1 min-w-[130px]">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
-                  {journeyLabel} • {journeyIndex}/{journeyCount}
+                  {journeyLabel}
                 </span>
                 <div className="relative h-1.5 w-32 rounded-full bg-muted-foreground/15 overflow-hidden">
                 <div
@@ -323,9 +323,6 @@ export function GuidedTour() {
                 />
                 </div>
               </div>
-              <span className="text-[11px] font-semibold text-muted-foreground tabular-nums px-1 min-w-[36px] text-center">
-                {currentStepIndex + 1}/{total}
-              </span>
               <Button
                 size="sm"
                 onClick={next}
