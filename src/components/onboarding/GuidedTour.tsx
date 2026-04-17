@@ -369,3 +369,97 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
     </div>
   );
 }
+
+interface WelcomeStepProps {
+  title: string;
+  body: string;
+  onStart: () => void;
+  onSkip: () => void;
+}
+
+function WelcomeStep({ title, body, onStart, onSkip }: WelcomeStepProps) {
+  const pillars = [
+    { label: "Captação" },
+    { label: "Prospecção" },
+    { label: "Atendimento" },
+    { label: "Gestão" },
+  ];
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
+      style={{ zIndex: 2147483647 }}
+    >
+      <div className="relative w-full max-w-lg bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+        {/* Decorative gradient halo */}
+        <div
+          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[520px] h-[520px] rounded-full opacity-50 pointer-events-none blur-3xl"
+          style={{
+            background:
+              "radial-gradient(circle, hsl(var(--primary) / 0.45) 0%, transparent 65%)",
+          }}
+        />
+
+        {/* Logo with halo */}
+        <div className="relative mx-auto mb-6 flex h-20 w-20 items-center justify-center">
+          <span
+            className="absolute inset-0 rounded-full bg-primary/15 animate-ping"
+            style={{ animationDuration: "2.4s" }}
+          />
+          <span className="absolute inset-1 rounded-full bg-primary/10" />
+          <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[0_10px_40px_hsl(var(--primary)/0.35)] ring-1 ring-primary/30">
+            <img
+              src={logoIconNew}
+              alt="Wiize"
+              className="h-12 w-12 object-contain animate-in zoom-in-50 duration-500"
+            />
+          </div>
+        </div>
+
+        <div className="relative">
+          <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary mb-3">
+            <Sparkles size={12} />
+            Bem-vindo ao tour guiado
+          </div>
+          <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 leading-tight">
+            {title}
+          </h3>
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6 max-w-md mx-auto">
+            {body}
+          </p>
+
+          {/* Pillars row */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
+            {pillars.map((p, idx) => (
+              <div
+                key={p.label}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-foreground"
+              >
+                <span className="text-[10px] font-bold text-primary tabular-nums">
+                  {String(idx + 1).padStart(2, "0")}
+                </span>
+                {p.label}
+              </div>
+            ))}
+          </div>
+
+          <Button
+            size="xl"
+            onClick={onStart}
+            className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
+          >
+            <Zap size={20} />
+            Começar tour guiado
+          </Button>
+
+          <button
+            onClick={onSkip}
+            className="mt-4 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Pular apresentação
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
