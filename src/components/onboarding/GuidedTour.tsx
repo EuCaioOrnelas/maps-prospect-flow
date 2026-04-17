@@ -16,8 +16,8 @@ interface Rect {
 const PADDING = 8;
 const POPUP_W = 400;
 const POPUP_GAP = 16;
-// Extra breathing room between the spotlight border and the tooltip card
 const POPUP_SPOT_GAP = 20;
+const POPUP_MIN_SPOT_GAP = 4;
 const TOUR_PILLARS = [
   { key: "cockpit", label: "Cockpit", number: "01" },
   { key: "captacao", label: "Captação", number: "02" },
