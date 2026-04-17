@@ -62,6 +62,18 @@ function getPillarKey(stepId: string) {
   return "gestao";
 }
 
+// Split body text into ~2 short scannable lines on the first sentence break.
+function splitBodyForScan(body: string): string[] {
+  if (!body) return [];
+  const trimmed = body.trim();
+  // Find the first sentence break followed by a space
+  const match = trimmed.match(/^(.+?[.!?])\s+(.+)$/s);
+  if (match) {
+    return [match[1].trim(), match[2].trim()];
+  }
+  return [trimmed];
+}
+
 export function GuidedTour() {
   const { isActive, currentStepIndex, steps, direction, next, prev, finish } = useGuidedTour();
   const step = steps[currentStepIndex];
