@@ -10,6 +10,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ActivationChecklist } from "@/components/dashboard/ActivationChecklist";
+import { GuidedTourProvider } from "@/hooks/useGuidedTour";
+import { GuidedTour } from "@/components/onboarding/GuidedTour";
 import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { DashboardThemeProvider } from "@/contexts/ThemeContext";
 import { lazyWithRetry } from "@/lib/runtimeRecovery";
@@ -135,6 +137,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <GuidedTourProvider>
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />
@@ -220,6 +223,8 @@ const App = () => (
               </Routes>
             </Suspense>
             <ActivationChecklist />
+            <GuidedTour />
+            </GuidedTourProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

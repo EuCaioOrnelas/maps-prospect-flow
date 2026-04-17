@@ -62,6 +62,8 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { useGuidedTour, resetGuidedTour } from "@/hooks/useGuidedTour";
+import { PlayCircle } from "lucide-react";
 
 const Profile = () => {
   const { profile, user, refreshProfile, signOut } = useAuth();
@@ -1099,6 +1101,30 @@ const Profile = () => {
           {/* Theme Toggle */}
           <ThemeToggle />
 
+          {/* Tour guiado */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2">
+                <PlayCircle className="h-5 w-5 text-primary" />
+                Tour guiado
+              </CardTitle>
+              <CardDescription>
+                Refaça o passo a passo para entender melhor como a Wiize funciona
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <span className="font-medium">Reiniciar tutorial</span>
+                  <p className="text-sm text-muted-foreground">
+                    Veja novamente os 4 pilares e como usar cada um
+                  </p>
+                </div>
+                <RestartTourButton />
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="border-border/50">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
@@ -1182,5 +1208,33 @@ const Profile = () => {
     </div>
   );
 };
+
+function RestartTourButton() {
+  const { user } = useAuth();
+  const { start } = useGuidedTour();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const handleClick = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      await resetGuidedTour(user.id);
+      start();
+      toast({ title: "Tour reiniciado", description: "Vamos começar do início." });
+    } catch (e) {
+      toast({ title: "Erro ao reiniciar", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button onClick={handleClick} disabled={loading} variant="default" className="gap-2">
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+      Refazer tutorial
+    </Button>
+  );
+}
 
 export default Profile;
