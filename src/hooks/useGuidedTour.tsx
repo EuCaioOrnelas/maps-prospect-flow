@@ -126,6 +126,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [direction, setDirection] = useState<"next" | "prev">("next");
   const startedRef = useRef(false);
 
   const steps: TourStep[] = [
