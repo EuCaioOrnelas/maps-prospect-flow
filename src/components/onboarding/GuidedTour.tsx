@@ -17,25 +17,38 @@ const PADDING = 8;
 const POPUP_W = 400;
 const POPUP_GAP = 16;
 const TOUR_PILLARS = [
-  { key: "captacao", label: "Captação", number: "01" },
-  { key: "prospeccao", label: "Prospecção", number: "02" },
-  { key: "atendimento", label: "Atendimento", number: "03" },
-  { key: "gestao", label: "Gestão", number: "04" },
+  { key: "cockpit", label: "Cockpit", number: "01" },
+  { key: "captacao", label: "Captação", number: "02" },
+  { key: "prospeccao", label: "Prospecção", number: "03" },
+  { key: "atendimento", label: "Atendimento", number: "04" },
+  { key: "gestao", label: "Gestão", number: "05" },
 ] as const;
 
 function getPillarKey(stepId: string) {
+  if (["cockpit-overview", "cockpit-kpis", "cockpit-forecast"].includes(stepId)) {
+    return "cockpit";
+  }
+
   if ([
     "sidebar-oportunidades-intro",
     "sidebar-oportunidades-buscar",
     "search-empty",
     "search-typing",
     "search-button",
+  ].includes(stepId)) {
+    return "captacao";
+  }
+
+  if ([
     "sidebar-oportunidades-gestao",
     "management",
     "diagnosis",
     "approach-message",
+    "sidebar-crm-intro",
+    "sidebar-crm-pipeline",
+    "sidebar-crm-score",
   ].includes(stepId)) {
-    return "captacao";
+    return "gestao";
   }
 
   if (["sidebar-campanhas-intro", "sidebar-campanhas-prospeccao", "sidebar-campanhas-relacionamento"].includes(stepId)) {
@@ -315,12 +328,9 @@ export function GuidedTour() {
                 Voltar
               </Button>
               <div className="flex items-center gap-2 px-2">
-                <div className="flex items-center gap-2 rounded-full border border-primary/35 bg-primary/10 px-3.5 py-1.5 shadow-[0_0_0_1px_hsl(var(--primary)/0.10)]">
-                  <span className="text-[10px] font-bold tracking-[0.18em] text-primary uppercase">
+                <div className="flex items-center rounded-full border border-primary/35 bg-primary/10 px-4 py-1.5 shadow-[0_0_0_1px_hsl(var(--primary)/0.10)]">
+                  <span className="text-sm font-semibold text-foreground">
                     {currentPillar.label}
-                  </span>
-                  <span className="text-[11px] font-semibold text-foreground tabular-nums">
-                    {currentPillarIndex + 1}/{TOUR_PILLARS.length}
                   </span>
                 </div>
               </div>
