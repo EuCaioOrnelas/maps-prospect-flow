@@ -100,7 +100,10 @@ function centerElementInScrollArea(element: HTMLElement, scrollAreaId = "lead-de
     return;
   }
 
-  const targetTop = Math.max(0, element.offsetTop - scrollArea.clientHeight / 3);
+  const elRect = element.getBoundingClientRect();
+  const areaRect = scrollArea.getBoundingClientRect();
+  const offsetWithinArea = elRect.top - areaRect.top + scrollArea.scrollTop;
+  const targetTop = Math.max(0, offsetWithinArea - scrollArea.clientHeight / 3);
   scrollArea.scrollTo({ top: targetTop, behavior: "auto" });
 }
 
