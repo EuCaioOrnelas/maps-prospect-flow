@@ -216,7 +216,7 @@ export function GuidedTour() {
               "0 0 40px hsl(var(--primary) / 0.35)",
             ].join(", "),
             transition:
-              "top 600ms cubic-bezier(0.22, 1, 0.36, 1), left 600ms cubic-bezier(0.22, 1, 0.36, 1), width 600ms cubic-bezier(0.22, 1, 0.36, 1), height 600ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+              "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1), width 480ms cubic-bezier(0.2, 0.8, 0.2, 1), height 480ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 480ms cubic-bezier(0.2, 0.8, 0.2, 1)",
           }}
         />
       )}
@@ -228,9 +228,8 @@ export function GuidedTour() {
       ) : (
         <>
           <div
-            key={step.id}
             className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-300"
-            style={{ ...popupStyle, zIndex: 2147483647, transition: "top 600ms cubic-bezier(0.22, 1, 0.36, 1), left 600ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+            style={{ ...popupStyle, zIndex: 2147483647, transition: "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1)" }}
           >
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary mb-2.5">
               <Sparkles size={13} />
