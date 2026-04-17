@@ -1485,6 +1485,7 @@ export default function OpportunitiesManagement() {
                 {/* Tab Switcher */}
                 <div className="flex gap-1 mt-4 bg-muted/50 rounded-lg p-1">
                   <button
+                    data-tour="lead-tab-dados"
                     onClick={() => setPopupTab("dados")}
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${popupTab === "dados" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                   >
@@ -1492,6 +1493,7 @@ export default function OpportunitiesManagement() {
                     Dados do Lead
                   </button>
                   <button
+                    data-tour="lead-tab-score"
                     onClick={() => setPopupTab("score")}
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${popupTab === "score" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                   >
