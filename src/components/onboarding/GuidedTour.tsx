@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, ArrowRight, Check, Rocket, Sparkles, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronRight, Headphones, Kanban, Rocket, Search, Send, Sparkles, Zap } from "lucide-react";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
 import { Button } from "@/components/ui/button";
 import { useConfetti } from "@/components/ui/confetti";
@@ -217,7 +217,7 @@ export function GuidedTour() {
       {isLast ? (
         <FinalStep title={step.title} body={step.body} onFinish={finish} />
       ) : step.id === "welcome" ? (
-        <WelcomeStep title={step.title} body={step.body} onStart={next} onSkip={finish} />
+        <WelcomeStep title={step.title} body={step.body} onStart={next} />
       ) : (
         <>
           <div
@@ -374,15 +374,14 @@ interface WelcomeStepProps {
   title: string;
   body: string;
   onStart: () => void;
-  onSkip: () => void;
 }
 
-function WelcomeStep({ title, body, onStart, onSkip }: WelcomeStepProps) {
+function WelcomeStep({ title, body, onStart }: WelcomeStepProps) {
   const pillars = [
-    { label: "Captação" },
-    { label: "Prospecção" },
-    { label: "Atendimento" },
-    { label: "Gestão" },
+    { label: "Captação", icon: Search },
+    { label: "Prospecção", icon: Send },
+    { label: "Atendimento", icon: Headphones },
+    { label: "Gestão", icon: Kanban },
   ];
 
   return (
@@ -390,7 +389,7 @@ function WelcomeStep({ title, body, onStart, onSkip }: WelcomeStepProps) {
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
       style={{ zIndex: 2147483647 }}
     >
-      <div className="relative w-full max-w-lg bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+      <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
         {/* Decorative gradient halo */}
         <div
           className="absolute -top-40 left-1/2 -translate-x-1/2 w-[520px] h-[520px] rounded-full opacity-50 pointer-events-none blur-3xl"
@@ -400,20 +399,18 @@ function WelcomeStep({ title, body, onStart, onSkip }: WelcomeStepProps) {
           }}
         />
 
-        {/* Logo with halo */}
-        <div className="relative mx-auto mb-6 flex h-20 w-20 items-center justify-center">
+        {/* Logo with halo — no inner card so PNG background doesn't clash */}
+        <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center">
           <span
             className="absolute inset-0 rounded-full bg-primary/15 animate-ping"
             style={{ animationDuration: "2.4s" }}
           />
-          <span className="absolute inset-1 rounded-full bg-primary/10" />
-          <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[0_10px_40px_hsl(var(--primary)/0.35)] ring-1 ring-primary/30">
-            <img
-              src={logoIconNew}
-              alt="Wiize"
-              className="h-12 w-12 object-contain animate-in zoom-in-50 duration-500"
-            />
-          </div>
+          <span className="absolute inset-2 rounded-full bg-primary/10 blur-md" />
+          <img
+            src={logoIconNew}
+            alt="Wiize"
+            className="relative h-20 w-20 object-contain rounded-2xl drop-shadow-[0_10px_30px_hsl(var(--primary)/0.45)] animate-in zoom-in-50 duration-500"
+          />
         </div>
 
         <div className="relative">
@@ -424,23 +421,42 @@ function WelcomeStep({ title, body, onStart, onSkip }: WelcomeStepProps) {
           <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 leading-tight">
             {title}
           </h3>
-          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6 max-w-md mx-auto">
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-8 max-w-md mx-auto">
             {body}
           </p>
 
-          {/* Pillars row */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
-            {pillars.map((p, idx) => (
-              <div
-                key={p.label}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-foreground"
-              >
-                <span className="text-[10px] font-bold text-primary tabular-nums">
-                  {String(idx + 1).padStart(2, "0")}
-                </span>
-                {p.label}
-              </div>
-            ))}
+          {/* Funnel pillars with arrows */}
+          <div className="flex items-stretch justify-center gap-1.5 mb-8 flex-wrap sm:flex-nowrap">
+            {pillars.map((p, idx) => {
+              const Icon = p.icon;
+              return (
+                <div key={p.label} className="flex items-center gap-1.5">
+                  <div
+                    className="flex flex-col items-center justify-center gap-2 px-3 py-3 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 min-w-[88px] animate-in fade-in slide-in-from-bottom-2 duration-500"
+                    style={{ animationDelay: `${idx * 120}ms`, animationFillMode: "backwards" }}
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                      <Icon size={16} strokeWidth={2.2} />
+                    </div>
+                    <div className="flex flex-col items-center leading-tight">
+                      <span className="text-[9px] font-bold text-primary tabular-nums tracking-wider">
+                        {String(idx + 1).padStart(2, "0")}
+                      </span>
+                      <span className="text-xs font-semibold text-foreground mt-0.5">
+                        {p.label}
+                      </span>
+                    </div>
+                  </div>
+                  {idx < pillars.length - 1 && (
+                    <ChevronRight
+                      size={18}
+                      className="text-primary/50 shrink-0 hidden sm:block animate-in fade-in duration-500"
+                      style={{ animationDelay: `${idx * 120 + 60}ms`, animationFillMode: "backwards" }}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <Button
@@ -451,13 +467,6 @@ function WelcomeStep({ title, body, onStart, onSkip }: WelcomeStepProps) {
             <Zap size={20} />
             Começar tour guiado
           </Button>
-
-          <button
-            onClick={onSkip}
-            className="mt-4 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Pular apresentação
-          </button>
         </div>
       </div>
     </div>
