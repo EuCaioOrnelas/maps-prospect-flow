@@ -49,6 +49,10 @@ export function GuidedTour() {
       return;
     }
 
+    if (step.hideSpotlightWhileTargetLoads) {
+      setRect(null);
+    }
+
     let rafId: number | null = null;
     let pollTimeoutId: number | undefined;
     let stableTimeoutId: number | undefined;
@@ -60,6 +64,9 @@ export function GuidedTour() {
     const measure = () => {
       const el = document.querySelector(step.target!) as HTMLElement | null;
       if (!el) {
+        if (step.hideSpotlightWhileTargetLoads) {
+          setRect(null);
+        }
         attempts += 1;
         if (attempts < 60) {
           // Keep the previous spotlight visible while we wait for the new target
