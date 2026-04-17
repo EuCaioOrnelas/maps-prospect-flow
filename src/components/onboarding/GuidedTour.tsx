@@ -33,7 +33,9 @@ export function GuidedTour() {
     };
   }, [isActive]);
 
-  // Measure target element and re-measure on resize / scroll / step change
+  // Measure target element and re-measure on resize / scroll / step change.
+  // We poll the rect every animation frame for a short window so we capture
+  // the FINAL position after sidebar collapse/expand transitions (300ms).
   useLayoutEffect(() => {
     if (!isActive || !step) return;
     if (!step.target) {
@@ -42,21 +44,22 @@ export function GuidedTour() {
       return;
     }
 
-    let timeoutId: number | undefined;
     let rafId: number | null = null;
+    let pollTimeoutId: number | undefined;
+    let stableTimeoutId: number | undefined;
     let attempts = 0;
-
-    const scheduleMeasure = () => {
-      if (rafId) window.cancelAnimationFrame(rafId);
-      rafId = window.requestAnimationFrame(measure);
-    };
+    let lastSerialized = "";
+    let stableFrames = 0;
+    const startedAt = performance.now();
 
     const measure = () => {
       const el = document.querySelector(step.target!) as HTMLElement | null;
       if (!el) {
         attempts += 1;
-        if (attempts < 30) {
-          timeoutId = window.setTimeout(scheduleMeasure, 100);
+        if (attempts < 40) {
+          pollTimeoutId = window.setTimeout(() => {
+            rafId = window.requestAnimationFrame(measure);
+          }, 80);
         } else {
           setRect(null);
         }
@@ -72,26 +75,40 @@ export function GuidedTour() {
         try {
           el.scrollIntoView({ block: "center", behavior: "auto" });
         } catch {}
-        rafId = window.requestAnimationFrame(() => {
-          const nextRect = el.getBoundingClientRect();
-          setRect({ top: nextRect.top, left: nextRect.left, width: nextRect.width, height: nextRect.height });
-        });
-        return;
-      }
-
-      if (shouldScrollIntoView) {
+      } else if (shouldScrollIntoView) {
         lastScrolledStepRef.current = step.id;
       }
 
-      setRect({ top: currentRect.top, left: currentRect.left, width: currentRect.width, height: currentRect.height });
+      const next = el.getBoundingClientRect();
+      const serialized = `${Math.round(next.top)}|${Math.round(next.left)}|${Math.round(next.width)}|${Math.round(next.height)}`;
+
+      // Always commit the latest rect so it animates smoothly toward the target
+      setRect({ top: next.top, left: next.left, width: next.width, height: next.height });
+
+      if (serialized === lastSerialized) {
+        stableFrames += 1;
+      } else {
+        stableFrames = 0;
+        lastSerialized = serialized;
+      }
+
+      // Keep polling for up to 700ms after step start, OR until we get 6 stable frames
+      const elapsed = performance.now() - startedAt;
+      if (elapsed < 700 && stableFrames < 6) {
+        rafId = window.requestAnimationFrame(measure);
+      }
     };
 
-    scheduleMeasure();
-    const onViewportChange = () => scheduleMeasure();
+    rafId = window.requestAnimationFrame(measure);
+    const onViewportChange = () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      rafId = window.requestAnimationFrame(measure);
+    };
     window.addEventListener("resize", onViewportChange);
     window.addEventListener("scroll", onViewportChange, true);
     return () => {
-      if (timeoutId) window.clearTimeout(timeoutId);
+      if (pollTimeoutId) window.clearTimeout(pollTimeoutId);
+      if (stableTimeoutId) window.clearTimeout(stableTimeoutId);
       if (rafId) window.cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onViewportChange);
       window.removeEventListener("scroll", onViewportChange, true);
