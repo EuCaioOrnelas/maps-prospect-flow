@@ -113,7 +113,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       id: "welcome",
       route: "/dashboard",
       title: "Bem-vindo à Wiize",
-      body: "Sua operação comercial em 4 pilares: Captação, Prospecção, Atendimento e Gestão. Vamos te guiar por dentro da própria ferramenta.",
+      body: "Vamos te apresentar a sua nova operação comercial em quatro pilares: captação, prospecção, atendimento e gestão. Em poucos minutos você entende exatamente como cada parte trabalha por você.",
       placement: "center",
     },
 
