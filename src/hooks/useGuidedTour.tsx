@@ -329,6 +329,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const finish = useCallback(() => {
     setIsActive(false);
     document.body.classList.remove("tour-sidebar-open");
+    // Close any open lead dialog
+    const openDialog = document.querySelector('[role="dialog"]');
+    if (openDialog) {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    }
     persistCompletion();
   }, [persistCompletion]);
 
