@@ -143,7 +143,7 @@ export function GuidedTour() {
   const total = steps.length;
   const isLast = currentStepIndex === total - 1;
   const isFirst = currentStepIndex === 0;
-  const popupRect = rect ?? (step.hideSpotlightWhileTargetLoads ? popupAnchorRect : null);
+  const popupRect = rect ?? (hideOnLoad ? popupAnchorRect : null);
 
   // Compute popup position
   let popupStyle: React.CSSProperties = {};
