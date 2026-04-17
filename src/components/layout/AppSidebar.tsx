@@ -315,7 +315,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
 
             {/* Campanhas with submenu */}
-            <li>
+            <li data-tour="sidebar-campanhas">
               <SidebarNavItem
                 title="Campanha"
                 icon={Megaphone}
