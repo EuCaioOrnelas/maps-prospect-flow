@@ -561,6 +561,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   }, [goToStep]);
 
   const next = useCallback(() => {
+    setDirection("next");
     setCurrentStepIndex((i) => {
       const ni = Math.min(i + 1, steps.length - 1);
       goToStep(ni);
@@ -569,6 +570,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   }, [goToStep, steps.length]);
 
   const prev = useCallback(() => {
+    setDirection("prev");
     setCurrentStepIndex((i) => {
       const ni = Math.max(i - 1, 0);
       goToStep(ni);
