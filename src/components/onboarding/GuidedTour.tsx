@@ -177,7 +177,8 @@ export function GuidedTour() {
   const total = steps.length;
   const isLast = currentStepIndex === total - 1;
   const isFirst = currentStepIndex === 0;
-  const currentPillar = TOUR_PILLARS.find((pillar) => pillar.key === getPillarKey(step.id)) ?? TOUR_PILLARS[0];
+  const currentPillarIndex = Math.max(0, TOUR_PILLARS.findIndex((pillar) => pillar.key === getPillarKey(step.id)));
+  const currentPillar = TOUR_PILLARS[currentPillarIndex] ?? TOUR_PILLARS[0];
 
   // Compute popup position
   let popupStyle: React.CSSProperties = {};
@@ -241,7 +242,11 @@ export function GuidedTour() {
       {showFallbackOverlay && (
         <div
           className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300"
-          style={{ background: isLast ? "hsl(var(--background) / 0.52)" : "hsl(var(--background) / 0.45)" }}
+          style={{
+            background: "hsl(var(--foreground) / 0.28)",
+            backdropFilter: "blur(1.5px)",
+            WebkitBackdropFilter: "blur(1.5px)",
+          }}
         />
       )}
 
@@ -256,7 +261,7 @@ export function GuidedTour() {
             height: spot.height,
             zIndex: 2147483646,
             boxShadow: [
-              "0 0 0 9999px hsl(var(--background) / 0.45)",
+              "0 0 0 9999px hsl(var(--foreground) / 0.28)",
               "inset 0 0 0 1px hsl(var(--primary) / 0.34)",
               "0 0 0 4px hsl(var(--primary) / 0.1)",
               "0 0 32px hsl(var(--primary) / 0.22)",
@@ -309,32 +314,16 @@ export function GuidedTour() {
                 <ArrowLeft size={14} />
                 Voltar
               </Button>
-              <div className="hidden md:flex items-center gap-2 px-2">
-                {TOUR_PILLARS.map((pillar) => {
-                  const isCurrentPillar = pillar.key === currentPillar.key;
-
-                  return (
-                    <div
-                      key={pillar.key}
-                      className={`flex items-center gap-2 rounded-full border px-3 py-1.5 transition-all duration-300 ${
-                        isCurrentPillar
-                          ? "border-primary/35 bg-primary/10 text-foreground shadow-[0_0_0_1px_hsl(var(--primary)/0.10)]"
-                          : "border-border/60 bg-background/70 text-muted-foreground"
-                      }`}
-                    >
-                      <span className={`text-[10px] font-bold tracking-[0.18em] ${isCurrentPillar ? "text-primary" : "text-muted-foreground"}`}>
-                        {pillar.number}
-                      </span>
-                      <span className="text-xs font-semibold">
-                        {pillar.label}
-                      </span>
-                    </div>
-                  );
-                })}
+              <div className="flex items-center gap-2 px-2">
+                <div className="flex items-center gap-2 rounded-full border border-primary/35 bg-primary/10 px-3.5 py-1.5 shadow-[0_0_0_1px_hsl(var(--primary)/0.10)]">
+                  <span className="text-[10px] font-bold tracking-[0.18em] text-primary uppercase">
+                    {currentPillar.label}
+                  </span>
+                  <span className="text-[11px] font-semibold text-foreground tabular-nums">
+                    {currentPillarIndex + 1}/{TOUR_PILLARS.length}
+                  </span>
+                </div>
               </div>
-              <span className="md:hidden text-[11px] font-semibold text-muted-foreground px-1 min-w-[92px] text-center">
-                {currentPillar.number} {currentPillar.label}
-              </span>
               <Button
                 size="sm"
                 onClick={next}
