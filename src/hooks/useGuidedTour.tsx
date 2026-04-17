@@ -119,16 +119,38 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     {
       id: "diagnosis",
       route: "/oportunidades/gestao",
-      title: "Diagnóstico inteligente por lead",
-      body: "Para cada empresa, a IA identifica pontos fortes, pontos fracos, intenção de compra e probabilidade de fechamento. Você abre o lead e decide quem abordar primeiro.",
-      placement: "center",
+      target: '[role="dialog"]',
+      title: "Diagnóstico inteligente do lead",
+      body: "Abrimos um lead real para você. Aqui a IA mostra pontos fortes, pontos fracos, intenção de compra, score e probabilidade de fechamento — tudo automático.",
+      placement: "left",
+      waitMs: 300,
+      onEnter: async () => {
+        for (let i = 0; i < 20; i++) {
+          const row = document.querySelector('[data-tour="lead-row-first"]') as HTMLElement | null;
+          if (row) {
+            row.click();
+            await new Promise((r) => setTimeout(r, 400));
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 150));
+        }
+      },
     },
     {
       id: "approach-message",
       route: "/oportunidades/gestao",
+      target: '[role="dialog"]',
       title: "Mensagem de abordagem com IA",
-      body: "A Wiize gera uma mensagem personalizada para cada lead com base no diagnóstico. Você pode usar como está ou editar antes de enviar.",
-      placement: "center",
+      body: "Dentro do próprio lead, a Wiize gera uma mensagem personalizada com base no diagnóstico. Você pode usar como está ou editar antes de enviar.",
+      placement: "left",
+      onEnter: async () => {
+        const dialog = document.querySelector('[role="dialog"]');
+        if (!dialog) {
+          const row = document.querySelector('[data-tour="lead-row-first"]') as HTMLElement | null;
+          row?.click();
+          await new Promise((r) => setTimeout(r, 300));
+        }
+      },
     },
     {
       id: "sidebar-campanhas",
