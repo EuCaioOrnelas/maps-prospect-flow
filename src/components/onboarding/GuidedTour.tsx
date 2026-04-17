@@ -14,7 +14,7 @@ interface Rect {
 }
 
 const PADDING = 8;
-const POPUP_W = 520;
+const POPUP_W = 460;
 const POPUP_GAP = 16;
 
 export function GuidedTour() {
@@ -229,17 +229,17 @@ export function GuidedTour() {
         <>
           <div
             key={step.id}
-            className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-9 animate-in fade-in zoom-in-95 duration-300"
+            className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-7 animate-in fade-in zoom-in-95 duration-300"
             style={{ ...popupStyle, zIndex: 2147483647, transition: "top 600ms cubic-bezier(0.22, 1, 0.36, 1), left 600ms cubic-bezier(0.22, 1, 0.36, 1)" }}
           >
-            <div className="flex items-center gap-2 text-base font-semibold uppercase tracking-wider text-primary mb-4">
-              <Sparkles size={16} />
+            <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-primary mb-3">
+              <Sparkles size={14} />
               Passo {currentStepIndex + 1} de {total}
             </div>
-            <h3 className="text-3xl font-bold text-foreground mb-3 leading-snug">
+            <h3 className="text-2xl font-bold text-foreground mb-2.5 leading-snug">
               {step.title}
             </h3>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            <p className="text-base text-muted-foreground leading-relaxed">
               {step.body}
             </p>
           </div>
