@@ -75,7 +75,7 @@ export function DashboardHero({
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/[0.04] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         
         <div className="relative p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center gap-6">
-          <div className="flex-1 space-y-4">
+          <div className="flex-1 space-y-4" data-tour="cockpit-hero-focus">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <p className="text-xs font-medium text-primary tracking-wide uppercase">

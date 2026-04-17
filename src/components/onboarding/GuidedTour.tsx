@@ -16,7 +16,7 @@ interface Rect {
 
 const PADDING = 8;
 const POPUP_W = 400;
-const POPUP_MIN_W = 320;
+const POPUP_MIN_W = 220;
 const POPUP_GAP = 16;
 const POPUP_ESTIMATED_H = 232;
 const FOOTER_SAFE_SPACE = 104;
