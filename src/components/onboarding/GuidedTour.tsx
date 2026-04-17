@@ -205,7 +205,7 @@ export function GuidedTour() {
   const currentPillarIndex = Math.max(0, TOUR_PILLARS.findIndex((pillar) => pillar.key === getPillarKey(step.id)));
   const currentPillar = TOUR_PILLARS[currentPillarIndex] ?? TOUR_PILLARS[0];
 
-  // Compute popup position
+  // Compute popup position — account for spotlight padding so the card never overlaps the focus border
   let popupStyle: React.CSSProperties = {};
   if (!popupRect || step.placement === "center") {
     popupStyle = {
@@ -217,28 +217,34 @@ export function GuidedTour() {
   } else {
     const placement = step.placement ?? "bottom";
     const w = POPUP_W;
+    // Spotlight extends PADDING outside the target on each side; add extra breathing room
+    const spotOffset = PADDING + POPUP_GAP;
+    const spotTop = popupRect.top - PADDING;
+    const spotLeft = popupRect.left - PADDING;
+    const spotRight = popupRect.left + popupRect.width + PADDING;
+    const spotBottom = popupRect.top + popupRect.height + PADDING;
     if (placement === "right") {
       popupStyle = {
         top: Math.max(POPUP_GAP, popupRect.top + popupRect.height / 2 - 100),
-        left: Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width + POPUP_GAP),
+        left: Math.min(window.innerWidth - w - POPUP_GAP, spotRight + POPUP_GAP),
         width: w,
       };
     } else if (placement === "left") {
       popupStyle = {
         top: Math.max(POPUP_GAP, popupRect.top + popupRect.height / 2 - 100),
-        left: Math.max(POPUP_GAP, popupRect.left - w - POPUP_GAP),
+        left: Math.max(POPUP_GAP, spotLeft - w - POPUP_GAP),
         width: w,
       };
     } else if (placement === "top") {
       popupStyle = {
-        top: Math.max(POPUP_GAP, popupRect.top - 200 - POPUP_GAP),
+        top: Math.max(POPUP_GAP, spotTop - 200 - POPUP_GAP),
         left: Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width / 2 - w / 2)),
         width: w,
       };
     } else {
       // bottom
       popupStyle = {
-        top: Math.min(window.innerHeight - 240, popupRect.top + popupRect.height + POPUP_GAP),
+        top: Math.min(window.innerHeight - 240, spotBottom + POPUP_GAP),
         left: Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width / 2 - w / 2)),
         width: w,
       };
