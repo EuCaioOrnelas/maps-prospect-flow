@@ -177,7 +177,8 @@ export function GuidedTour() {
   const total = steps.length;
   const isLast = currentStepIndex === total - 1;
   const isFirst = currentStepIndex === 0;
-  const currentPillar = TOUR_PILLARS.find((pillar) => pillar.key === getPillarKey(step.id)) ?? TOUR_PILLARS[0];
+  const currentPillarIndex = Math.max(0, TOUR_PILLARS.findIndex((pillar) => pillar.key === getPillarKey(step.id)));
+  const currentPillar = TOUR_PILLARS[currentPillarIndex] ?? TOUR_PILLARS[0];
 
   // Compute popup position
   let popupStyle: React.CSSProperties = {};
