@@ -48,6 +48,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [tourForceOpen, setTourForceOpen] = useState(false);
+  const [tourSection, setTourSection] = useState<string | null>(null);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
   const [isCampaignsOpen, setIsCampaignsOpen] = useState(false);
   const [isOpportunitiesOpen, setIsOpportunitiesOpen] = useState(false);
@@ -71,9 +72,16 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
   const isOnAutomationPage = currentPath === "/agents" || currentPath.startsWith("/fluxos") || currentPath === "/warming";
 
-  // Watch body class to force expand during guided tour
+  // Watch body class to force expand and select active submenu during guided tour
   useEffect(() => {
-    const update = () => setTourForceOpen(document.body.classList.contains("tour-sidebar-open"));
+    const update = () => {
+      const cls = document.body.classList;
+      const sections = ["oportunidades", "campanhas", "crm", "automacao", "chat", "dashboard"];
+      const active = sections.find((s) => cls.contains(`tour-open-${s}`)) ?? null;
+      const anyOpen = active !== null || cls.contains("tour-sidebar-open");
+      setTourForceOpen(anyOpen);
+      setTourSection(active);
+    };
     update();
     const obs = new MutationObserver(update);
     obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
@@ -84,11 +92,11 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   useEffect(() => {
     if (tourForceOpen) {
       setIsExpanded(true);
-      setIsOpportunitiesOpen(true);
-      setIsCampaignsOpen(true);
-      setIsCrmOpen(true);
-      setIsAutomationOpen(true);
-      setIsReportsOpen(true);
+      setIsOpportunitiesOpen(tourSection === "oportunidades");
+      setIsCampaignsOpen(tourSection === "campanhas");
+      setIsCrmOpen(tourSection === "crm");
+      setIsAutomationOpen(tourSection === "automacao");
+      setIsReportsOpen(tourSection === "dashboard");
       return;
     }
     if (isHovered) {
@@ -106,7 +114,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         clearTimeout(expandTimeoutRef.current);
       }
     };
-  }, [isHovered, tourForceOpen]);
+  }, [isHovered, tourForceOpen, tourSection]);
 
   const getUserInitials = () => {
     if (profile?.name) {
@@ -175,6 +183,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
   // Reset reports submenu when sidebar closes
   const handleMouseLeave = () => {
+    if (tourForceOpen) return; // don't collapse while tour is driving the sidebar
     setIsHovered(false);
     setIsReportsOpen(false);
     setIsCampaignsOpen(false);

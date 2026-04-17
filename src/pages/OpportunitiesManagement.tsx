@@ -37,6 +37,7 @@ import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { buildTourDemoLead } from "@/lib/tourDemoLead";
 
 interface OpportunityLead {
   id: string;
@@ -415,8 +416,26 @@ export default function OpportunitiesManagement() {
     return result;
   }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredLeads.length / ITEMS_PER_PAGE));
-  const paginatedLeads = filteredLeads.slice(
+  // Tour demo lead injection (synthetic, never persisted)
+  const [tourDemoActive, setTourDemoActive] = useState(
+    typeof document !== "undefined" && document.body.classList.contains("tour-demo-lead")
+  );
+  useEffect(() => {
+    const update = () => setTourDemoActive(document.body.classList.contains("tour-demo-lead"));
+    update();
+    const obs = new MutationObserver(update);
+    obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+
+  const displayLeads = useMemo(() => {
+    if (!tourDemoActive) return filteredLeads;
+    if (filteredLeads.some((l) => l.id === "__tour_demo_lead__")) return filteredLeads;
+    return [buildTourDemoLead(), ...filteredLeads];
+  }, [filteredLeads, tourDemoActive]);
+
+  const totalPages = Math.max(1, Math.ceil(displayLeads.length / ITEMS_PER_PAGE));
+  const paginatedLeads = displayLeads.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -547,7 +566,7 @@ export default function OpportunitiesManagement() {
     ];
 
     return (
-      <div className="space-y-4">
+      <div data-tour="lead-score-panel" className="space-y-4">
         {/* Score Principal */}
         <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 text-center">
           <p className="text-5xl font-bold text-primary">{lead.ai_score ?? 0}</p>
@@ -907,7 +926,7 @@ export default function OpportunitiesManagement() {
       )}
 
       {/* Approach Message Card */}
-      <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+      <div data-tour="lead-approach-section" className="bg-card border border-border rounded-xl p-4 space-y-3">
         <h4 className="text-sm font-semibold flex items-center gap-2">
           <MessageSquare size={14} className="text-primary" />
           Mensagem de Abordagem
@@ -1485,6 +1504,7 @@ export default function OpportunitiesManagement() {
                 {/* Tab Switcher */}
                 <div className="flex gap-1 mt-4 bg-muted/50 rounded-lg p-1">
                   <button
+                    data-tour="lead-tab-dados"
                     onClick={() => setPopupTab("dados")}
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${popupTab === "dados" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                   >
@@ -1492,6 +1512,7 @@ export default function OpportunitiesManagement() {
                     Dados do Lead
                   </button>
                   <button
+                    data-tour="lead-tab-score"
                     onClick={() => setPopupTab("score")}
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${popupTab === "score" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                   >
