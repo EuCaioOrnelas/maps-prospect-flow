@@ -290,19 +290,22 @@ export function GuidedTour() {
                 <ArrowLeft size={14} />
                 Voltar
               </Button>
-              <div className="flex flex-col items-center gap-1 px-1 min-w-[130px]">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
-                  {journeyLabel}
+              <div className="flex flex-col items-center gap-1 px-2 min-w-[160px]">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground">
+                  {journeyLabel} <span className="text-muted-foreground/70">• {pillarStepNum}/{pillarStepTotal}</span>
                 </span>
-                <div className="relative h-1.5 w-32 rounded-full bg-muted-foreground/15 overflow-hidden">
+                <div className="relative h-1.5 w-36 rounded-full bg-muted-foreground/15 overflow-hidden">
                 <div
                   className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-primary/70 shadow-[0_0_12px_hsl(var(--primary)/0.6)]"
                   style={{
-                    width: `${((currentStepIndex + 1) / total) * 100}%`,
+                    width: `${(pillarStepNum / pillarStepTotal) * 100}%`,
                     transition: "width 500ms cubic-bezier(0.65, 0, 0.35, 1)",
                   }}
                 />
                 </div>
+                <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60">
+                  Etapa {pillarIndex + 1} de {pillars.length}
+                </span>
               </div>
               <Button
                 size="sm"
