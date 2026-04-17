@@ -314,32 +314,16 @@ export function GuidedTour() {
                 <ArrowLeft size={14} />
                 Voltar
               </Button>
-              <div className="hidden md:flex items-center gap-2 px-2">
-                {TOUR_PILLARS.map((pillar) => {
-                  const isCurrentPillar = pillar.key === currentPillar.key;
-
-                  return (
-                    <div
-                      key={pillar.key}
-                      className={`flex items-center gap-2 rounded-full border px-3 py-1.5 transition-all duration-300 ${
-                        isCurrentPillar
-                          ? "border-primary/35 bg-primary/10 text-foreground shadow-[0_0_0_1px_hsl(var(--primary)/0.10)]"
-                          : "border-border/60 bg-background/70 text-muted-foreground"
-                      }`}
-                    >
-                      <span className={`text-[10px] font-bold tracking-[0.18em] ${isCurrentPillar ? "text-primary" : "text-muted-foreground"}`}>
-                        {pillar.number}
-                      </span>
-                      <span className="text-xs font-semibold">
-                        {pillar.label}
-                      </span>
-                    </div>
-                  );
-                })}
+              <div className="flex items-center gap-2 px-2">
+                <div className="flex items-center gap-2 rounded-full border border-primary/35 bg-primary/10 px-3.5 py-1.5 shadow-[0_0_0_1px_hsl(var(--primary)/0.10)]">
+                  <span className="text-[10px] font-bold tracking-[0.18em] text-primary uppercase">
+                    {currentPillar.label}
+                  </span>
+                  <span className="text-[11px] font-semibold text-foreground tabular-nums">
+                    {currentPillarIndex + 1}/{TOUR_PILLARS.length}
+                  </span>
+                </div>
               </div>
-              <span className="md:hidden text-[11px] font-semibold text-muted-foreground px-1 min-w-[92px] text-center">
-                {currentPillar.number} {currentPillar.label}
-              </span>
               <Button
                 size="sm"
                 onClick={next}
