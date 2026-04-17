@@ -574,8 +574,8 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
-                <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6" data-tour="search-fields">
+                <div className="space-y-2" data-tour="search-keyword">
                   <Label htmlFor="keyword" className="flex items-center gap-2 text-sm font-medium">
                     <Search size={14} className="text-primary" />
                     Palavra-chave
@@ -589,7 +589,7 @@ const Dashboard = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2" data-tour="search-location">
                   <Label htmlFor="location" className="flex items-center gap-2 text-sm font-medium">
                     <MapPin size={14} className="text-primary" />
                     Localização
@@ -617,6 +617,7 @@ const Dashboard = () => {
                 size="lg"
                 className="w-full h-14 text-base font-semibold"
                 disabled={isSearching || searchesRemaining <= 0}
+                data-tour="search-button"
               >
                 {isSearching ? (
                   <>
