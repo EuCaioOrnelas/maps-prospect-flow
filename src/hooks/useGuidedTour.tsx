@@ -20,6 +20,8 @@ export type TourStep = {
   injectDemoLead?: boolean;
   /** Inject aspirational fake data into the cockpit (MainDashboard) */
   injectDemoCockpit?: boolean;
+  /** Keep the viewport pinned to the top for this step */
+  keepViewportTop?: boolean;
   /** Run an action right when this step becomes active (e.g. typing simulation) */
   onEnter?: () => void | Promise<void>;
   /** Wait this many ms before marking the step "ready" (after route transitions) */

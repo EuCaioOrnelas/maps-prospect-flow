@@ -75,7 +75,14 @@ export function GuidedTour() {
       const shouldScrollIntoView = lastScrolledStepRef.current !== step.id;
       const isOffscreen = currentRect.top < POPUP_GAP || currentRect.bottom > window.innerHeight - POPUP_GAP;
 
-      if (shouldScrollIntoView && isOffscreen) {
+      if (step.keepViewportTop) {
+        if (window.scrollY !== 0) {
+          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        }
+        if (shouldScrollIntoView) {
+          lastScrolledStepRef.current = step.id;
+        }
+      } else if (shouldScrollIntoView && isOffscreen) {
         lastScrolledStepRef.current = step.id;
         try {
           el.scrollIntoView({ block: "center", behavior: "auto" });
