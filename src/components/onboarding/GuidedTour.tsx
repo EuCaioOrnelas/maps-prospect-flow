@@ -67,7 +67,7 @@ export function GuidedTour() {
     const measure = () => {
       const el = document.querySelector(step.target!) as HTMLElement | null;
       if (!el) {
-        if (step.hideSpotlightWhileTargetLoads) {
+        if (hideOnLoad) {
           setRect(null);
         }
         attempts += 1;
