@@ -182,6 +182,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       title: "Defina o que você procura",
       body: "Informe o nicho de atuação e a cidade desejada. A Wiize entrega empresas reais do Google Maps já organizadas para a sua abordagem.",
       placement: "bottom",
+      keepViewportTop: true,
       waitMs: 600,
     },
     {
