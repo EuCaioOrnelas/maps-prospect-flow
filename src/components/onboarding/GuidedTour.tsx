@@ -242,7 +242,11 @@ export function GuidedTour() {
       {showFallbackOverlay && (
         <div
           className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300"
-          style={{ background: isLast ? "hsl(var(--background) / 0.52)" : "hsl(var(--background) / 0.45)" }}
+          style={{
+            background: "hsl(var(--foreground) / 0.28)",
+            backdropFilter: "blur(1.5px)",
+            WebkitBackdropFilter: "blur(1.5px)",
+          }}
         />
       )}
 
@@ -257,7 +261,7 @@ export function GuidedTour() {
             height: spot.height,
             zIndex: 2147483646,
             boxShadow: [
-              "0 0 0 9999px hsl(var(--background) / 0.45)",
+              "0 0 0 9999px hsl(var(--foreground) / 0.28)",
               "inset 0 0 0 1px hsl(var(--primary) / 0.34)",
               "0 0 0 4px hsl(var(--primary) / 0.1)",
               "0 0 32px hsl(var(--primary) / 0.22)",
