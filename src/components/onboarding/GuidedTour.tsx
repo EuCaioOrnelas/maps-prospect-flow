@@ -19,8 +19,8 @@ const POPUP_GAP = 16;
 
 export function GuidedTour() {
   const { isActive, currentStepIndex, steps, direction, next, prev, finish } = useGuidedTour();
-  const hideOnLoad = !!step?.hideSpotlightWhileTargetLoads && direction === "next";
   const step = steps[currentStepIndex];
+  const hideOnLoad = !!step?.hideSpotlightWhileTargetLoads && direction === "next";
   const [rect, setRect] = useState<Rect | null>(null);
   const [popupAnchorRect, setPopupAnchorRect] = useState<Rect | null>(null);
   const lastScrolledStepRef = useRef<string | null>(null);
