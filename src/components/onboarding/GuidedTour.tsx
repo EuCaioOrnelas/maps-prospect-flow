@@ -194,15 +194,15 @@ export function GuidedTour() {
       {/* Fallback full overlay when no spotlight */}
       {showFallbackOverlay && (
         <div
-          className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300 backdrop-blur-md"
-          style={{ background: isLast ? "rgba(6, 10, 16, 0.82)" : "rgba(8, 12, 20, 0.62)" }}
+          className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300 backdrop-blur-[2px]"
+          style={{ background: isLast ? "rgba(6, 10, 16, 0.78)" : "rgba(8, 12, 20, 0.55)" }}
         />
       )}
 
       {/* Backdrop blur layer for spotlight mode (blurs everything except the spotlight area via mask) */}
       {spot && (
         <div
-          className="fixed inset-0 pointer-events-none backdrop-blur-md"
+          className="fixed inset-0 pointer-events-none backdrop-blur-[2px]"
           style={{
             zIndex: 2147483645,
             WebkitMaskImage: `radial-gradient(circle at ${spot.left + spot.width / 2}px ${spot.top + spot.height / 2}px, transparent ${Math.max(spot.width, spot.height) / 2}px, black ${Math.max(spot.width, spot.height) / 2 + 20}px)`,
