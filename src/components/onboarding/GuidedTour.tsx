@@ -327,12 +327,13 @@ export function GuidedTour() {
                 <ArrowLeft size={14} />
                 Voltar
               </Button>
-              <div className="flex items-center gap-2 px-2">
-                <div className="flex items-center rounded-full border border-primary/35 bg-primary/10 px-4 py-1.5 shadow-[0_0_0_1px_hsl(var(--primary)/0.10)]">
-                  <span className="text-sm font-semibold text-foreground">
-                    {currentPillar.label}
-                  </span>
-                </div>
+              <div className="flex items-center gap-2 px-3">
+                <span className="text-sm font-semibold text-foreground">
+                  {currentPillar.label}
+                </span>
+                <span className="text-sm font-semibold text-muted-foreground tabular-nums">
+                  {currentPillar.number}/{String(TOUR_PILLARS.length).padStart(2, "0")}
+                </span>
               </div>
               <Button
                 size="sm"
