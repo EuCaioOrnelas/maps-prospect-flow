@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "react-router-dom";
 
 interface GuidedTourContextValue {
   isActive: boolean;
@@ -11,22 +12,23 @@ interface GuidedTourContextValue {
   prev: () => void;
   goTo: (step: number) => void;
   finish: () => void;
-  skip: () => void;
 }
 
-const TOTAL_STEPS = 6;
-const LS_KEY = "wiize_tour_completed_v1";
+const TOTAL_STEPS = 12;
+const LS_KEY = "wiize_tour_completed_v2";
 
 const GuidedTourContext = createContext<GuidedTourContextValue | undefined>(undefined);
 
 export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const location = useLocation();
   const [isActive, setIsActive] = useState(false);
   const [step, setStep] = useState(0);
 
-  // Auto-start on first dashboard visit
+  // Auto-start on first dashboard visit only
   useEffect(() => {
     if (!user) return;
+    if (location.pathname !== "/dashboard") return;
     const completedLocal = localStorage.getItem(LS_KEY);
     if (completedLocal) return;
 
@@ -39,11 +41,10 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
       if (cancelled) return;
       if (!data?.tour_completed_at) {
-        // Slight delay to let the dashboard render
         setTimeout(() => {
           setStep(0);
           setIsActive(true);
-        }, 600);
+        }, 700);
       } else {
         localStorage.setItem(LS_KEY, "1");
       }
@@ -51,7 +52,17 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, location.pathname]);
+
+  // Lock body scroll while tour is active
+  useEffect(() => {
+    if (!isActive) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isActive]);
 
   const start = useCallback(() => {
     setStep(0);
@@ -88,14 +99,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     persistCompletion();
   }, [persistCompletion]);
 
-  const skip = useCallback(() => {
-    setIsActive(false);
-    persistCompletion();
-  }, [persistCompletion]);
-
   return (
     <GuidedTourContext.Provider
-      value={{ isActive, step, totalSteps: TOTAL_STEPS, start, next, prev, goTo, finish, skip }}
+      value={{ isActive, step, totalSteps: TOTAL_STEPS, start, next, prev, goTo, finish }}
     >
       {children}
     </GuidedTourContext.Provider>
