@@ -194,8 +194,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
   const showUpgrade = profile?.plan !== 'scale';
 
-  const isTourActive = typeof document !== "undefined" && document.body.classList.contains("tour-active");
-
   return (
     <div
       className="fixed left-0 top-0 h-screen z-[60] hidden lg:flex"
