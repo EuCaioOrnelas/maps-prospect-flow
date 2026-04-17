@@ -128,11 +128,14 @@ export function GuidedTour() {
     : null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9998] pointer-events-none">
+    <div
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 2147483646 }}
+    >
       {/* Dark overlay with hole using SVG mask */}
       <svg
-        className="absolute inset-0 pointer-events-auto"
-        style={{ width: "100vw", height: "100vh" }}
+        className="fixed inset-0 pointer-events-auto"
+        style={{ width: "100vw", height: "100vh", zIndex: 2147483646 }}
       >
         <defs>
           <mask id="tour-mask">
@@ -161,20 +164,21 @@ export function GuidedTour() {
       {/* Spotlight ring */}
       {spot && (
         <div
-          className="absolute pointer-events-none rounded-xl ring-2 ring-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.18),0_0_60px_hsl(var(--primary)/0.45)]"
+          className="fixed pointer-events-none rounded-xl ring-2 ring-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.18),0_0_60px_hsl(var(--primary)/0.45)]"
           style={{
             top: spot.top,
             left: spot.left,
             width: spot.width,
             height: spot.height,
+            zIndex: 2147483646,
           }}
         />
       )}
 
       {/* Popup card */}
       <div
-        className="absolute pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-5"
-        style={popupStyle}
+        className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-5"
+        style={{ ...popupStyle, zIndex: 2147483647 }}
       >
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary mb-2">
           <Sparkles size={12} />
@@ -189,7 +193,10 @@ export function GuidedTour() {
       </div>
 
       {/* Footer navigation */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto">
+      <div
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto"
+        style={{ zIndex: 2147483647 }}
+      >
         <div className="flex items-center gap-3 bg-card/95 backdrop-blur-md border border-border rounded-full pl-2 pr-2 py-2 shadow-2xl">
           <Button
             size="sm"
