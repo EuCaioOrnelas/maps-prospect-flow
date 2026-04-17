@@ -431,6 +431,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       } else if (step.waitMs) {
         await new Promise((r) => setTimeout(r, step.waitMs));
       }
+      // For sidebar steps, wait extra time so the expand transition (300ms) finishes
+      // before the spotlight measures the element.
+      if (step.sidebarSection) {
+        await new Promise((r) => setTimeout(r, 350));
+      }
       // Run side-effect
       if (step.onEnter) {
         await step.onEnter();
