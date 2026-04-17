@@ -171,6 +171,7 @@ export function GuidedTour() {
             width: spot.width,
             height: spot.height,
             zIndex: 2147483646,
+            transition: "top 350ms cubic-bezier(0.4, 0, 0.2, 1), left 350ms cubic-bezier(0.4, 0, 0.2, 1), width 350ms cubic-bezier(0.4, 0, 0.2, 1), height 350ms cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         />
       )}
