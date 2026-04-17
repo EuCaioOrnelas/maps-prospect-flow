@@ -606,7 +606,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   return (
     <GuidedTourContext.Provider
-      value={{ isActive, currentStepIndex, steps, start, next, prev, finish }}
+      value={{ isActive, currentStepIndex, steps, direction, start, next, prev, finish }}
     >
       {children}
     </GuidedTourContext.Provider>
