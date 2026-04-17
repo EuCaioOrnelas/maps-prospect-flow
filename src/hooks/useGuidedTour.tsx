@@ -442,16 +442,30 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     async (index: number) => {
       const step = steps[index];
       if (!step) return;
+
+      // PRE-APPLY sidebar classes BEFORE navigating/measuring so the sidebar
+      // is already expanded with the CORRECT submenu open by the time the
+      // spotlight measures the target. This prevents the "icon-then-expand"
+      // flicker and the "wrong position" issue when collapsing other submenus.
+      const sections = ["oportunidades", "campanhas", "crm", "automacao", "chat", "dashboard"];
+      sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
+      document.body.classList.remove("tour-sidebar-open");
+      if (step.sidebarSection) {
+        document.body.classList.add(`tour-open-${step.sidebarSection}`);
+      } else if (step.forceSidebar) {
+        document.body.classList.add("tour-sidebar-open");
+      }
+
       // Close any open lead dialog if we're moving away from diagnosis steps
       const isDialogStep = step.id === "diagnosis" || step.id === "approach-message";
       if (!isDialogStep) {
         const openDialog = document.querySelector('[role="dialog"]');
         if (openDialog) {
-          // Press Escape to close dialog cleanly
           document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
           await new Promise((r) => setTimeout(r, 150));
         }
       }
+
       // Navigate first
       if (step.route && location.pathname !== step.route) {
         navigate(step.route);
@@ -459,11 +473,13 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       } else if (step.waitMs) {
         await new Promise((r) => setTimeout(r, step.waitMs));
       }
-      // For sidebar steps, wait extra time so the expand transition (300ms) finishes
-      // before the spotlight measures the element.
+
+      // For sidebar steps, wait for the full sidebar expansion (300ms width)
+      // + submenu expansion (300ms max-height) before measuring.
       if (step.sidebarSection) {
-        await new Promise((r) => setTimeout(r, 350));
+        await new Promise((r) => setTimeout(r, 450));
       }
+
       // Run side-effect
       if (step.onEnter) {
         await step.onEnter();
