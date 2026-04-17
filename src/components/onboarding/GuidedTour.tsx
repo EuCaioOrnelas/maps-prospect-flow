@@ -215,7 +215,7 @@ export function GuidedTour() {
             width: spot.width,
             height: spot.height,
             zIndex: 2147483646,
-            transition: "top 350ms cubic-bezier(0.4, 0, 0.2, 1), left 350ms cubic-bezier(0.4, 0, 0.2, 1), width 350ms cubic-bezier(0.4, 0, 0.2, 1), height 350ms cubic-bezier(0.4, 0, 0.2, 1)",
+            transition: "top 600ms cubic-bezier(0.22, 1, 0.36, 1), left 600ms cubic-bezier(0.22, 1, 0.36, 1), width 600ms cubic-bezier(0.22, 1, 0.36, 1), height 600ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         />
       )}
@@ -224,7 +224,7 @@ export function GuidedTour() {
       <div
         key={step.id}
         className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-5 animate-in fade-in zoom-in-95 duration-300"
-        style={{ ...popupStyle, zIndex: 2147483647, transition: "top 350ms cubic-bezier(0.4, 0, 0.2, 1), left 350ms cubic-bezier(0.4, 0, 0.2, 1)" }}
+        style={{ ...popupStyle, zIndex: 2147483647, transition: "top 600ms cubic-bezier(0.22, 1, 0.36, 1), left 600ms cubic-bezier(0.22, 1, 0.36, 1)" }}
       >
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary mb-2">
           <Sparkles size={12} />
