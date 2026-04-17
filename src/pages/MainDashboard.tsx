@@ -170,34 +170,38 @@ export default function MainDashboard() {
               <ActivationChecklistInline />
 
               {/* 1 — Hero Impact */}
-              <DashboardHero
-                financialImpact={financialImpact}
-                financialChange={financialChange}
-                leadsGerados={kpis.leadsGeradosPeriodo}
-                conversasAtivas={kpis.conversasAtivasPeriodo}
-                oportunidadesQuentes={kpis.oportunidadesQuentesPeriodo}
-                cumulativeByMonth={data.cumulativeByMonth}
-                leadsByDay={data.leadsByDay}
-                estimatedSales={forecast.totalEstimatedSales}
-                averageTicket={forecast.averageTicket}
-                opportunitySales={forecast.opportunitySales}
-                scoreSales={forecast.scoreSales}
-                periodDays={periodDays}
-              />
+              <div data-tour="cockpit-hero">
+                <DashboardHero
+                  financialImpact={financialImpact}
+                  financialChange={financialChange}
+                  leadsGerados={kpis.leadsGeradosPeriodo}
+                  conversasAtivas={kpis.conversasAtivasPeriodo}
+                  oportunidadesQuentes={kpis.oportunidadesQuentesPeriodo}
+                  cumulativeByMonth={data.cumulativeByMonth}
+                  leadsByDay={data.leadsByDay}
+                  estimatedSales={forecast.totalEstimatedSales}
+                  averageTicket={forecast.averageTicket}
+                  opportunitySales={forecast.opportunitySales}
+                  scoreSales={forecast.scoreSales}
+                  periodDays={periodDays}
+                />
+              </div>
 
               {/* 2 — Executive KPIs */}
-              <ExecutiveKPIs
-                receitaPotencial={kpis.receitaPotencial}
-                receitaPotencialGrowth={kpis.receitaPotencialGrowth}
-                leadsQuentesHoje={kpis.leadsQuentesHoje}
-                leadsQuentesOntem={kpis.leadsQuentesOntem}
-                healthStatus={kpis.healthStatus}
-                healthDetail={kpis.healthDetail}
-                aiMinutesSaved={kpis.aiMinutesSaved}
-              />
+              <div data-tour="cockpit-kpis">
+                <ExecutiveKPIs
+                  receitaPotencial={kpis.receitaPotencial}
+                  receitaPotencialGrowth={kpis.receitaPotencialGrowth}
+                  leadsQuentesHoje={kpis.leadsQuentesHoje}
+                  leadsQuentesOntem={kpis.leadsQuentesOntem}
+                  healthStatus={kpis.healthStatus}
+                  healthDetail={kpis.healthDetail}
+                  aiMinutesSaved={kpis.aiMinutesSaved}
+                />
+              </div>
 
               {/* 3 — Forecast + Funnel */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-tour="cockpit-forecast">
                 <ForecastChart
                   leadsProspected={data.leadsProspected}
                   totalResponses={data.totalResponses}
