@@ -117,6 +117,39 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       title: "Bem-vindo à Wiize",
       body: "Vamos te apresentar a sua nova operação comercial em quatro pilares: captação, prospecção, atendimento e gestão. Em poucos minutos você entende exatamente como cada parte trabalha por você.",
       placement: "center",
+      injectDemoCockpit: true,
+    },
+
+    // ---- Cockpit ----
+    {
+      id: "cockpit-overview",
+      route: "/dashboard",
+      target: '[data-tour="cockpit-hero"]',
+      title: "Cockpit de Crescimento",
+      body: "Esta é a sua central de comando. Aqui você acompanha o impacto financeiro gerado, a curva de leads captados e o resultado consolidado da sua operação em tempo real.",
+      placement: "bottom",
+      injectDemoCockpit: true,
+      waitMs: 600,
+    },
+    {
+      id: "cockpit-kpis",
+      route: "/dashboard",
+      target: '[data-tour="cockpit-kpis"]',
+      title: "Indicadores executivos",
+      body: "Receita potencial, leads quentes do dia, saúde da operação e o tempo que a IA economizou para você. Tudo o que precisa saber em quatro cartões.",
+      placement: "top",
+      injectDemoCockpit: true,
+      waitMs: 400,
+    },
+    {
+      id: "cockpit-forecast",
+      route: "/dashboard",
+      target: '[data-tour="cockpit-forecast"]',
+      title: "Projeção e funil",
+      body: "À esquerda, a projeção de receita por nível de score. À direita, o funil operacional completo: do lead captado à oportunidade gerada.",
+      placement: "top",
+      injectDemoCockpit: true,
+      waitMs: 400,
     },
 
     // ---- Captação ----
