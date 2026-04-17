@@ -61,12 +61,12 @@ export function GuidedTour() {
       const el = document.querySelector(step.target!) as HTMLElement | null;
       if (!el) {
         attempts += 1;
-        if (attempts < 40) {
+        if (attempts < 60) {
+          // Keep the previous spotlight visible while we wait for the new target
+          // to appear — prevents the "focus on nothing" flicker between steps.
           pollTimeoutId = window.setTimeout(() => {
             rafId = window.requestAnimationFrame(measure);
           }, 80);
-        } else {
-          setRect(null);
         }
         return;
       }
