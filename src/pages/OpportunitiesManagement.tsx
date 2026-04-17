@@ -566,64 +566,66 @@ export default function OpportunitiesManagement() {
     ];
 
     return (
-      <div data-tour="lead-score-panel" className="space-y-4">
-        {/* Score Principal */}
-        <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 text-center">
-          <p className="text-5xl font-bold text-primary">{lead.ai_score ?? 0}</p>
-          <p className="text-sm text-muted-foreground mt-1">de 100 pontos</p>
-          <div className="w-full bg-muted rounded-full h-3 mt-4">
-            <div className="bg-primary rounded-full h-3 transition-all duration-500" style={{ width: `${lead.ai_score ?? 0}%` }} />
+      <div className="space-y-4">
+        <div data-tour="lead-score-summary" className="space-y-4">
+          {/* Score Principal */}
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 text-center">
+            <p className="text-5xl font-bold text-primary">{lead.ai_score ?? 0}</p>
+            <p className="text-sm text-muted-foreground mt-1">de 100 pontos</p>
+            <div className="w-full bg-muted rounded-full h-3 mt-4">
+              <div className="bg-primary rounded-full h-3 transition-all duration-500" style={{ width: `${lead.ai_score ?? 0}%` }} />
+            </div>
+            <div className="flex items-center justify-between mt-3">
+              <span className="text-xs text-muted-foreground">Intenção: {getIntentionFromScore(lead.ai_score) || lead.opportunity_level || "—"}</span>
+              {lead.closing_probability && <Badge variant="outline" className="text-xs">{lead.closing_probability}</Badge>}
+            </div>
           </div>
-          <div className="flex items-center justify-between mt-3">
-            <span className="text-xs text-muted-foreground">Intenção: {getIntentionFromScore(lead.ai_score) || lead.opportunity_level || "—"}</span>
-            {lead.closing_probability && <Badge variant="outline" className="text-xs">{lead.closing_probability}</Badge>}
-          </div>
+
+          {/* Breakdown por dimensão */}
+          {breakdown && (
+            <div className="bg-card border border-border rounded-xl p-4 space-y-4">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <BarChart3 size={14} className="text-primary" />
+                Detalhamento do Score
+              </h4>
+              {dimensions.map(dim => (
+                <div key={dim.label} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      {dim.icon}
+                      {dim.label}
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="text-muted-foreground/50 hover:text-primary transition-colors">
+                            <Info size={12} />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent side="top" className="text-xs text-muted-foreground max-w-[240px] p-3">
+                          {dim.tooltip}
+                        </PopoverContent>
+                      </Popover>
+                    </span>
+                    <span className="font-semibold">{dim.value}/{dim.max}</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-500 bg-primary" style={{ width: `${(dim.value / dim.max) * 100}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Justificativa */}
+          {justificativa && (
+            <div className="bg-card border border-border rounded-xl p-4">
+              <h4 className="text-sm font-semibold flex items-center gap-2 mb-2">
+                <Info size={14} className="text-primary" />
+                Por que este score?
+              </h4>
+              <p className="text-sm text-muted-foreground">{justificativa}</p>
+            </div>
+          )}
         </div>
-
-        {/* Breakdown por dimensão */}
-        {breakdown && (
-          <div className="bg-card border border-border rounded-xl p-4 space-y-4">
-            <h4 className="text-sm font-semibold flex items-center gap-2">
-              <BarChart3 size={14} className="text-primary" />
-              Detalhamento do Score
-            </h4>
-            {dimensions.map(dim => (
-              <div key={dim.label} className="space-y-1.5">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 text-muted-foreground">
-                    {dim.icon}
-                    {dim.label}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="text-muted-foreground/50 hover:text-primary transition-colors">
-                          <Info size={12} />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent side="top" className="text-xs text-muted-foreground max-w-[240px] p-3">
-                        {dim.tooltip}
-                      </PopoverContent>
-                    </Popover>
-                  </span>
-                  <span className="font-semibold">{dim.value}/{dim.max}</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-500 bg-primary" style={{ width: `${(dim.value / dim.max) * 100}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Justificativa */}
-        {justificativa && (
-          <div className="bg-card border border-border rounded-xl p-4">
-            <h4 className="text-sm font-semibold flex items-center gap-2 mb-2">
-              <Info size={14} className="text-primary" />
-              Por que este score?
-            </h4>
-            <p className="text-sm text-muted-foreground">{justificativa}</p>
-          </div>
-        )}
 
         {/* Edit / View toggle button */}
         <div className="flex justify-end">
@@ -926,7 +928,7 @@ export default function OpportunitiesManagement() {
       )}
 
       {/* Approach Message Card */}
-      <div data-tour="lead-approach-section" className="bg-card border border-border rounded-xl p-4 space-y-3">
+      <div data-tour="lead-approach-card" className="bg-card border border-border rounded-xl p-4 space-y-3">
         <h4 className="text-sm font-semibold flex items-center gap-2">
           <MessageSquare size={14} className="text-primary" />
           Mensagem de Abordagem
