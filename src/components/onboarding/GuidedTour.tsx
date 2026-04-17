@@ -22,14 +22,17 @@ export function GuidedTour() {
   const [rect, setRect] = useState<Rect | null>(null);
   const lastScrolledStepRef = useRef<string | null>(null);
 
-  // Lock body scroll
+  // Lock body + html scroll while tour is active
   useEffect(() => {
     if (!isActive) return;
-    const prevOverflow = document.body.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
     document.body.classList.add("tour-active");
     return () => {
-      document.body.style.overflow = prevOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
       document.body.classList.remove("tour-active");
     };
   }, [isActive]);
@@ -296,9 +299,10 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
       return;
     }
     setCelebrated(true);
+    // Fire confetti and close the tour immediately so the user sees the full burst
     fireRealistic();
-    setTimeout(() => fireSides(), 200);
-    setTimeout(() => onFinish(), 1600);
+    setTimeout(() => fireSides(), 150);
+    onFinish();
   };
 
   return (
