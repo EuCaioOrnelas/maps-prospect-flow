@@ -14,7 +14,7 @@ interface Rect {
 }
 
 const PADDING = 8;
-const POPUP_W = 520;
+const POPUP_W = 460;
 const POPUP_GAP = 16;
 
 export function GuidedTour() {
