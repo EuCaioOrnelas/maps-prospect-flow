@@ -174,15 +174,25 @@ export function GuidedTour() {
     };
   } else {
     const viewportRight = window.innerWidth - POPUP_GAP;
+    const targetCenterX = popupRect.left + popupRect.width / 2;
+    const preferredSide = step.placement === "left" || step.placement === "right"
+      ? step.placement
+      : targetCenterX < window.innerWidth / 2
+        ? "right"
+        : "left";
     const availableLeft = popupRect.left - SIDEBAR_SAFE_LEFT - POPUP_GAP;
     const availableRight = viewportRight - (popupRect.left + popupRect.width) - POPUP_GAP;
     const canFitLeft = availableLeft >= POPUP_MIN_W;
     const canFitRight = availableRight >= POPUP_MIN_W;
 
-    popupSide = canFitRight || (!canFitLeft && availableRight >= availableLeft) ? "right" : "left";
+    if (preferredSide === "right") {
+      popupSide = canFitRight ? "right" : "left";
+    } else {
+      popupSide = canFitLeft ? "left" : "right";
+    }
 
-    const chosenAvailable = popupSide === "right" ? availableRight : availableLeft;
-    const popupWidth = Math.min(POPUP_W, Math.max(POPUP_MIN_W, chosenAvailable));
+    const availableOnSide = popupSide === "right" ? availableRight : availableLeft;
+    const popupWidth = Math.min(POPUP_W, Math.max(POPUP_MIN_W, availableOnSide));
     const popupTop = Math.max(
       POPUP_GAP,
       Math.min(
@@ -191,19 +201,17 @@ export function GuidedTour() {
       )
     );
 
-    if (popupSide === "right") {
-      popupStyle = {
-        top: popupTop,
-        left: Math.min(viewportRight - popupWidth, popupRect.left + popupRect.width + POPUP_GAP),
-        width: popupWidth,
-      };
-    } else {
-      popupStyle = {
-        top: popupTop,
-        left: Math.max(SIDEBAR_SAFE_LEFT, popupRect.left - popupWidth - POPUP_GAP),
-        width: popupWidth,
-      };
-    }
+    popupStyle = popupSide === "right"
+      ? {
+          top: popupTop,
+          left: Math.min(viewportRight - popupWidth, popupRect.left + popupRect.width + POPUP_GAP),
+          width: popupWidth,
+        }
+      : {
+          top: popupTop,
+          left: Math.max(SIDEBAR_SAFE_LEFT, popupRect.left - popupWidth - POPUP_GAP),
+          width: popupWidth,
+        };
   }
 
   const spot = spotlightRect
