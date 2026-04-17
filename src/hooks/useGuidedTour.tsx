@@ -14,6 +14,10 @@ export type TourStep = {
   placement?: "top" | "bottom" | "left" | "right" | "center";
   /** Force the sidebar to stay expanded for this step */
   forceSidebar?: boolean;
+  /** Open ONLY this submenu in the sidebar (oportunidades|campanhas|crm|automacao|chat|dashboard). Implies forceSidebar. */
+  sidebarSection?: "oportunidades" | "campanhas" | "crm" | "automacao" | "chat" | "dashboard";
+  /** Inject the synthetic demo lead at the top of the gestão list */
+  injectDemoLead?: boolean;
   /** Run an action right when this step becomes active (e.g. typing simulation) */
   onEnter?: () => void | Promise<void>;
   /** Wait this many ms before marking the step "ready" (after route transitions) */
