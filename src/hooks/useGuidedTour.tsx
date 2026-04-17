@@ -76,10 +76,8 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     try {
       await supabase
         .from("user_onboarding")
-        .upsert(
-          { user_id: user.id, tour_completed_at: new Date().toISOString() },
-          { onConflict: "user_id" }
-        );
+        .update({ tour_completed_at: new Date().toISOString() })
+        .eq("user_id", user.id);
     } catch (e) {
       console.error("[tour] persist error", e);
     }
@@ -114,5 +112,6 @@ export async function resetGuidedTour(userId: string) {
   localStorage.removeItem(LS_KEY);
   await supabase
     .from("user_onboarding")
-    .upsert({ user_id: userId, tour_completed_at: null }, { onConflict: "user_id" });
+    .update({ tour_completed_at: null })
+    .eq("user_id", userId);
 }
