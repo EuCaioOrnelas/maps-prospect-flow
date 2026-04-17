@@ -16,6 +16,8 @@ interface Rect {
 const PADDING = 8;
 const POPUP_W = 400;
 const POPUP_GAP = 16;
+// Extra breathing room between the spotlight border and the tooltip card
+const POPUP_SPOT_GAP = 20;
 const TOUR_PILLARS = [
   { key: "cockpit", label: "Cockpit", number: "01" },
   { key: "captacao", label: "Captação", number: "02" },
@@ -217,8 +219,7 @@ export function GuidedTour() {
   } else {
     const placement = step.placement ?? "bottom";
     const w = POPUP_W;
-    // Spotlight extends PADDING outside the target on each side; add extra breathing room
-    const spotOffset = PADDING + POPUP_GAP;
+    // Spotlight extends PADDING outside the target on each side; add real breathing room
     const spotTop = popupRect.top - PADDING;
     const spotLeft = popupRect.left - PADDING;
     const spotRight = popupRect.left + popupRect.width + PADDING;
@@ -226,25 +227,25 @@ export function GuidedTour() {
     if (placement === "right") {
       popupStyle = {
         top: Math.max(POPUP_GAP, popupRect.top + popupRect.height / 2 - 100),
-        left: Math.min(window.innerWidth - w - POPUP_GAP, spotRight + POPUP_GAP),
+        left: Math.min(window.innerWidth - w - POPUP_GAP, spotRight + POPUP_SPOT_GAP),
         width: w,
       };
     } else if (placement === "left") {
       popupStyle = {
         top: Math.max(POPUP_GAP, popupRect.top + popupRect.height / 2 - 100),
-        left: Math.max(POPUP_GAP, spotLeft - w - POPUP_GAP),
+        left: Math.max(POPUP_GAP, spotLeft - w - POPUP_SPOT_GAP),
         width: w,
       };
     } else if (placement === "top") {
       popupStyle = {
-        top: Math.max(POPUP_GAP, spotTop - 200 - POPUP_GAP),
+        top: Math.max(POPUP_GAP, spotTop - 200 - POPUP_SPOT_GAP),
         left: Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width / 2 - w / 2)),
         width: w,
       };
     } else {
       // bottom
       popupStyle = {
-        top: Math.min(window.innerHeight - 240, spotBottom + POPUP_GAP),
+        top: Math.min(window.innerHeight - 240, spotBottom + POPUP_SPOT_GAP),
         left: Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width / 2 - w / 2)),
         width: w,
       };
