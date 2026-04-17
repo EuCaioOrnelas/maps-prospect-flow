@@ -4123,6 +4123,7 @@ export type Database = {
           service_types: string[]
           skipped: boolean
           team_size: string
+          tour_completed_at: string | null
           user_id: string
           user_profile: string
         }
@@ -4135,6 +4136,7 @@ export type Database = {
           service_types: string[]
           skipped?: boolean
           team_size: string
+          tour_completed_at?: string | null
           user_id: string
           user_profile: string
         }
@@ -4147,6 +4149,7 @@ export type Database = {
           service_types?: string[]
           skipped?: boolean
           team_size?: string
+          tour_completed_at?: string | null
           user_id?: string
           user_profile?: string
         }
