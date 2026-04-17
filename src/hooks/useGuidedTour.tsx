@@ -78,8 +78,10 @@ async function waitForElement<T extends Element = HTMLElement>(selector: string,
 }
 
 async function openDemoLeadDialog() {
-  const demoDialog = document.querySelector('[data-tour="lead-dialog-demo"]') as HTMLElement | null;
-  if (demoDialog) return demoDialog;
+  const existingLeadDialog = document
+    .querySelector('[role="dialog"] [data-tour="lead-tab-dados"]')
+    ?.closest('[role="dialog"]') as HTMLElement | null;
+  if (existingLeadDialog) return existingLeadDialog;
 
   const openDialog = document.querySelector('[role="dialog"]') as HTMLElement | null;
   if (openDialog) {
@@ -90,13 +92,15 @@ async function openDemoLeadDialog() {
   const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 40, 120);
   row?.click();
 
-  return waitForElement<HTMLElement>('[data-tour="lead-dialog-demo"]', 25, 120);
+  return waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-dados"]', 25, 120).then(
+    (tab) => (tab?.closest('[role="dialog"]') as HTMLElement | null) ?? null
+  );
 }
 
 async function activateLeadTab(selector: string) {
   const tab = await waitForElement<HTMLElement>(selector, 25, 120);
   tab?.click();
-  await new Promise((resolve) => setTimeout(resolve, 180));
+  await new Promise((resolve) => setTimeout(resolve, 120));
 }
 
 function centerElementInScrollArea(element: HTMLElement, scrollAreaId = "lead-detail-scroll-area") {
@@ -459,36 +463,28 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     };
   }, [user, location.pathname]);
 
-  // Toggle body classes for sidebar force-open
   useEffect(() => {
     const step = steps[currentStepIndex];
     const sections = ["oportunidades", "campanhas", "crm", "automacao", "chat", "dashboard"];
-    // Reset all per-section classes
-    sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
-    document.body.classList.remove("tour-sidebar-open");
-    document.body.classList.remove("tour-demo-lead");
-    document.body.classList.remove("tour-demo-cockpit");
 
-    if (isActive && step) {
-      if (step.sidebarSection) {
-        document.body.classList.add(`tour-open-${step.sidebarSection}`);
-      } else if (step.forceSidebar) {
-        document.body.classList.add("tour-sidebar-open");
-      }
-      if (step.injectDemoLead) {
-        document.body.classList.add("tour-demo-lead");
-      }
-      if (step.injectDemoCockpit) {
-        document.body.classList.add("tour-demo-cockpit");
-      }
+    sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
+    document.body.classList.remove("tour-sidebar-open", "tour-demo-lead", "tour-demo-cockpit");
+
+    if (!isActive || !step) return;
+
+    if (step.sidebarSection) {
+      document.body.classList.add(`tour-open-${step.sidebarSection}`);
+    } else if (step.forceSidebar) {
+      document.body.classList.add("tour-sidebar-open");
     }
-    return () => {
-      sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
-      document.body.classList.remove("tour-sidebar-open");
-      document.body.classList.remove("tour-demo-lead");
-      document.body.classList.remove("tour-demo-cockpit");
-    };
-  }, [isActive, currentStepIndex]);
+
+    if (step.injectDemoLead) {
+      document.body.classList.add("tour-demo-lead");
+    }
+    if (step.injectDemoCockpit) {
+      document.body.classList.add("tour-demo-cockpit");
+    }
+  }, [isActive, currentStepIndex, steps]);
 
   const goToStep = useCallback(
     async (index: number) => {
