@@ -128,11 +128,14 @@ export function GuidedTour() {
     : null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9998] pointer-events-none">
+    <div
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 2147483646 }}
+    >
       {/* Dark overlay with hole using SVG mask */}
       <svg
-        className="absolute inset-0 pointer-events-auto"
-        style={{ width: "100vw", height: "100vh" }}
+        className="fixed inset-0 pointer-events-auto"
+        style={{ width: "100vw", height: "100vh", zIndex: 2147483646 }}
       >
         <defs>
           <mask id="tour-mask">
