@@ -77,24 +77,36 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       id: "welcome",
       route: "/dashboard",
       title: "Bem-vindo à Wiize",
-      body: "Sua operação comercial em 4 pilares: Captação, Prospecção, Atendimento e Gestão. Vamos te mostrar cada um deles na prática, dentro da própria ferramenta.",
+      body: "Sua operação comercial em 4 pilares: Captação, Prospecção, Atendimento e Gestão. Vamos te guiar por dentro da própria ferramenta.",
       placement: "center",
+    },
+
+    // ---- Captação ----
+    {
+      id: "sidebar-oportunidades-intro",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-oportunidades"]',
+      title: "Captação fica aqui",
+      body: "No menu Oportunidades você acessa a Busca de leads e a Gestão de oportunidades. Vamos abrir a Busca agora.",
+      placement: "right",
+      sidebarSection: "oportunidades",
+      waitMs: 500,
     },
     {
       id: "search-empty",
       route: "/oportunidades",
       target: '[data-tour="search-fields"]',
       title: "Captação de leads reais",
-      body: "Aqui você encontra empresas reais a partir de um nicho e uma localização. Vamos preencher juntos para você ver como funciona.",
+      body: "Aqui você define um nicho e uma localização. A Wiize traz empresas reais do Google Maps já organizadas para você.",
       placement: "bottom",
-      waitMs: 400,
+      waitMs: 500,
     },
     {
       id: "search-typing",
       route: "/oportunidades",
       target: '[data-tour="search-fields"]',
       title: "Preenchendo nicho e cidade",
-      body: "A Wiize busca empresas no Google Maps a partir do que você define. Estamos preenchendo automaticamente apenas para demonstração.",
+      body: "Estamos preenchendo automaticamente como demonstração — você só precisa escrever o seu nicho e a cidade que quer prospectar.",
       placement: "bottom",
       onEnter: async () => {
         clearInput("#keyword");
@@ -109,73 +121,124 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       route: "/oportunidades",
       target: '[data-tour="search-button"]',
       title: "Prospecção em segundos",
-      body: "Com um clique, a Wiize traz dezenas de empresas qualificadas. Não vamos disparar a busca real agora — isso fica para você.",
+      body: "Com um clique, a Wiize encontra dezenas de empresas qualificadas. Vamos simular o resultado a seguir — sem disparar a busca real.",
       placement: "top",
+      onEnter: async () => {
+        // Visual loading hint on the real button
+        const btn = document.querySelector('[data-tour="search-button"]') as HTMLElement | null;
+        if (btn) {
+          btn.setAttribute("data-tour-loading", "true");
+          btn.style.transition = "box-shadow 600ms ease";
+          btn.style.boxShadow = "0 0 0 4px hsl(var(--primary) / 0.18), 0 0 40px hsl(var(--primary) / 0.45)";
+          setTimeout(() => {
+            btn.removeAttribute("data-tour-loading");
+            btn.style.boxShadow = "";
+          }, 2200);
+        }
+      },
+    },
+
+    // ---- Gestão / Diagnóstico ----
+    {
+      id: "sidebar-gestao-intro",
+      route: "/oportunidades",
+      target: '[data-tour="sidebar-oportunidades"]',
+      title: "Os leads chegam na Gestão",
+      body: "Toda empresa captada cai em Oportunidades → Gestão. É lá que a IA analisa cada lead. Vamos abrir agora.",
+      placement: "right",
+      sidebarSection: "oportunidades",
+      waitMs: 300,
     },
     {
       id: "management",
       route: "/oportunidades/gestao",
       title: "Gestão de oportunidades",
-      body: "Após a busca, todas as empresas chegam aqui. A IA analisa cada uma automaticamente, atribui um score e gera uma mensagem de abordagem personalizada.",
+      body: "Cada empresa recebe um score, um diagnóstico de pontos fortes/fracos e uma probabilidade de fechamento — tudo automático.",
       placement: "center",
-      waitMs: 600,
+      injectDemoLead: true,
+      waitMs: 700,
     },
     {
       id: "diagnosis",
       route: "/oportunidades/gestao",
-      target: '[role="dialog"]',
+      target: '[data-tour="lead-score-panel"]',
       title: "Diagnóstico inteligente do lead",
-      body: "Abrimos um lead real para você. Aqui a IA mostra pontos fortes, pontos fracos, intenção de compra, score e probabilidade de fechamento — tudo automático.",
+      body: "Abrimos um lead de exemplo. Veja o score, a quebra por dimensão (estrutura, reputação, potencial) e a probabilidade de fechamento.",
       placement: "left",
-      waitMs: 300,
+      injectDemoLead: true,
+      waitMs: 400,
       onEnter: async () => {
-        for (let i = 0; i < 20; i++) {
+        // 1. Open the demo lead row
+        for (let i = 0; i < 30; i++) {
           const row = document.querySelector('[data-tour="lead-row-first"]') as HTMLElement | null;
           if (row) {
             row.click();
-            await new Promise((r) => setTimeout(r, 400));
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 120));
+        }
+        // 2. Wait for dialog and switch to Score tab
+        for (let i = 0; i < 30; i++) {
+          const tab = document.querySelector('[data-tour="lead-tab-score"]') as HTMLElement | null;
+          if (tab) {
+            tab.click();
+            await new Promise((r) => setTimeout(r, 250));
             return;
           }
-          await new Promise((r) => setTimeout(r, 150));
+          await new Promise((r) => setTimeout(r, 120));
         }
       },
     },
     {
       id: "approach-message",
       route: "/oportunidades/gestao",
-      target: '[role="dialog"]',
+      target: '[data-tour="lead-approach-section"]',
       title: "Mensagem de abordagem com IA",
-      body: "Dentro do próprio lead, a Wiize gera uma mensagem personalizada com base no diagnóstico. Você pode usar como está ou editar antes de enviar.",
+      body: "Com base no diagnóstico, a Wiize gera uma mensagem personalizada pronta para enviar. Você pode copiar, editar ou disparar direto pelo WhatsApp.",
       placement: "left",
+      injectDemoLead: true,
       onEnter: async () => {
-        const dialog = document.querySelector('[role="dialog"]');
-        if (!dialog) {
+        // Make sure dialog is open
+        if (!document.querySelector('[role="dialog"]')) {
           const row = document.querySelector('[data-tour="lead-row-first"]') as HTMLElement | null;
           row?.click();
           await new Promise((r) => setTimeout(r, 300));
         }
+        // Switch to "Dados" tab where the approach message lives
+        const tab = document.querySelector('[data-tour="lead-tab-dados"]') as HTMLElement | null;
+        tab?.click();
+        await new Promise((r) => setTimeout(r, 250));
+        // Scroll the approach section into view inside the dialog
+        const section = document.querySelector('[data-tour="lead-approach-section"]') as HTMLElement | null;
+        section?.scrollIntoView({ block: "center", behavior: "smooth" });
       },
     },
+
+    // ---- Prospecção (Campanhas) ----
     {
       id: "sidebar-campanhas",
       route: "/dashboard",
       target: '[data-tour="sidebar-campanhas"]',
       title: "Prospecção — Campanhas",
-      body: "Em Campanha você dispara mensagens em escala. Prospecção (Outbound) usa números próprios. Relacionamento usa a API oficial da Meta para clientes que já te conhecem.",
+      body: "Em Campanha você dispara mensagens em escala. Prospecção (Outbound) usa números próprios. Relacionamento usa a API oficial da Meta.",
       placement: "right",
-      forceSidebar: true,
+      sidebarSection: "campanhas",
       waitMs: 500,
     },
+
+    // ---- Gestão (CRM) ----
     {
       id: "sidebar-crm",
       route: "/dashboard",
       target: '[data-tour="sidebar-crm"]',
       title: "Gestão — CRM e Score",
-      body: "Todo lead entra automaticamente no seu Pipeline. O Score mostra quem está mais quente para comprar com base em engajamento e respostas.",
+      body: "Todo lead entra automaticamente no Pipeline. O Score mostra quem está mais quente para comprar com base em engajamento e respostas.",
       placement: "right",
-      forceSidebar: true,
-      waitMs: 300,
+      sidebarSection: "crm",
+      waitMs: 400,
     },
+
+    // ---- Atendimento ----
     {
       id: "sidebar-chat",
       route: "/dashboard",
@@ -183,19 +246,22 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       title: "Atendimento — Chat unificado",
       body: "Todas as conversas em um único lugar. Responda manualmente ou deixe a IA conduzir o atendimento por você.",
       placement: "right",
-      forceSidebar: true,
-      waitMs: 300,
+      sidebarSection: "chat",
+      waitMs: 400,
     },
+
+    // ---- Automação ----
     {
       id: "sidebar-automacao",
       route: "/dashboard",
       target: '[data-tour="sidebar-automacao"]',
       title: "Automação — Fluxos e Agentes IA",
-      body: "Crie fluxos de mensagens automáticos ou configure um Agente de IA que conversa, qualifica e marca reuniões 24/7 — sem perder o tom da sua marca.",
+      body: "Crie fluxos automáticos ou configure um Agente de IA que conversa, qualifica e marca reuniões 24/7 — sem perder o tom da sua marca.",
       placement: "right",
-      forceSidebar: true,
-      waitMs: 300,
+      sidebarSection: "automacao",
+      waitMs: 400,
     },
+
     {
       id: "final",
       route: "/dashboard",
