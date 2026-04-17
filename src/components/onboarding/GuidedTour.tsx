@@ -1,9 +1,8 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface Rect {
   top: number;
@@ -20,7 +19,7 @@ export function GuidedTour() {
   const { isActive, currentStepIndex, steps, next, prev, finish } = useGuidedTour();
   const step = steps[currentStepIndex];
   const [rect, setRect] = useState<Rect | null>(null);
-  const [tick, setTick] = useState(0);
+  const lastScrolledStepRef = useRef<string | null>(null);
 
   // Lock body scroll
   useEffect(() => {
@@ -39,37 +38,65 @@ export function GuidedTour() {
     if (!isActive || !step) return;
     if (!step.target) {
       setRect(null);
+      lastScrolledStepRef.current = step.id;
       return;
     }
+
     let timeoutId: number | undefined;
+    let rafId: number | null = null;
     let attempts = 0;
+
+    const scheduleMeasure = () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      rafId = window.requestAnimationFrame(measure);
+    };
+
     const measure = () => {
       const el = document.querySelector(step.target!) as HTMLElement | null;
       if (!el) {
         attempts += 1;
         if (attempts < 30) {
-          timeoutId = window.setTimeout(measure, 100);
+          timeoutId = window.setTimeout(scheduleMeasure, 100);
         } else {
           setRect(null);
         }
         return;
       }
-      try {
-        el.scrollIntoView({ block: "center", behavior: "smooth" });
-      } catch {}
-      const r = el.getBoundingClientRect();
-      setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+
+      const currentRect = el.getBoundingClientRect();
+      const shouldScrollIntoView = lastScrolledStepRef.current !== step.id;
+      const isOffscreen = currentRect.top < POPUP_GAP || currentRect.bottom > window.innerHeight - POPUP_GAP;
+
+      if (shouldScrollIntoView && isOffscreen) {
+        lastScrolledStepRef.current = step.id;
+        try {
+          el.scrollIntoView({ block: "center", behavior: "auto" });
+        } catch {}
+        rafId = window.requestAnimationFrame(() => {
+          const nextRect = el.getBoundingClientRect();
+          setRect({ top: nextRect.top, left: nextRect.left, width: nextRect.width, height: nextRect.height });
+        });
+        return;
+      }
+
+      if (shouldScrollIntoView) {
+        lastScrolledStepRef.current = step.id;
+      }
+
+      setRect({ top: currentRect.top, left: currentRect.left, width: currentRect.width, height: currentRect.height });
     };
-    measure();
-    const onResize = () => setTick((t) => t + 1);
-    window.addEventListener("resize", onResize);
-    window.addEventListener("scroll", onResize, true);
+
+    scheduleMeasure();
+    const onViewportChange = () => scheduleMeasure();
+    window.addEventListener("resize", onViewportChange);
+    window.addEventListener("scroll", onViewportChange, true);
     return () => {
       if (timeoutId) window.clearTimeout(timeoutId);
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("scroll", onResize, true);
+      if (rafId) window.cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", onViewportChange);
+      window.removeEventListener("scroll", onViewportChange, true);
     };
-  }, [isActive, step, tick, currentStepIndex]);
+  }, [isActive, step]);
 
   if (!isActive || !step) return null;
 

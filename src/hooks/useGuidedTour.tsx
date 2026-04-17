@@ -64,6 +64,42 @@ function clearInput(selector: string) {
   el.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
+async function waitForElement<T extends Element = HTMLElement>(selector: string, attempts = 30, delay = 120) {
+  for (let i = 0; i < attempts; i++) {
+    const element = document.querySelector(selector) as T | null;
+    if (element) return element;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+  }
+  return null;
+}
+
+async function openDemoLeadDialog() {
+  const dialog = document.querySelector('[role="dialog"]') as HTMLElement | null;
+  if (dialog) return dialog;
+
+  const row = await waitForElement<HTMLElement>('[data-tour="lead-row-first"]', 40, 120);
+  row?.click();
+
+  return waitForElement<HTMLElement>('[role="dialog"]', 25, 120);
+}
+
+async function activateLeadTab(selector: string) {
+  const tab = await waitForElement<HTMLElement>(selector, 25, 120);
+  tab?.click();
+  await new Promise((resolve) => setTimeout(resolve, 180));
+}
+
+function centerElementInScrollArea(element: HTMLElement, scrollAreaId = "lead-detail-scroll-area") {
+  const scrollArea = document.getElementById(scrollAreaId);
+  if (!scrollArea) {
+    element.scrollIntoView({ block: "center", behavior: "auto" });
+    return;
+  }
+
+  const targetTop = Math.max(0, element.offsetTop - scrollArea.clientHeight / 3);
+  scrollArea.scrollTo({ top: targetTop, behavior: "auto" });
+}
+
 export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
@@ -170,51 +206,43 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     {
       id: "diagnosis",
       route: "/oportunidades/gestao",
-      target: '[data-tour="lead-score-panel"]',
+      target: '[data-tour="lead-score-summary"]',
       title: "Diagnóstico inteligente do lead",
       body: "Abrimos um lead de exemplo. Veja o score, a quebra por dimensão (estrutura, reputação, potencial) e a probabilidade de fechamento.",
       placement: "left",
       injectDemoLead: true,
-      waitMs: 400,
+      waitMs: 500,
       onEnter: async () => {
-        for (let i = 0; i < 30; i++) {
-          const row = document.querySelector('[data-tour="lead-row-first"]') as HTMLElement | null;
-          if (row) {
-            row.click();
-            break;
-          }
-          await new Promise((r) => setTimeout(r, 120));
-        }
-        for (let i = 0; i < 30; i++) {
-          const tab = document.querySelector('[data-tour="lead-tab-score"]') as HTMLElement | null;
-          if (tab) {
-            tab.click();
-            await new Promise((r) => setTimeout(r, 250));
-            return;
-          }
-          await new Promise((r) => setTimeout(r, 120));
-        }
+        const dialog = await openDemoLeadDialog();
+        if (!dialog) return;
+
+        const scrollArea = document.getElementById("lead-detail-scroll-area");
+        scrollArea?.scrollTo({ top: 0, behavior: "auto" });
+
+        await activateLeadTab('[data-tour="lead-tab-score"]');
+        await waitForElement('[data-tour="lead-score-summary"]', 25, 100);
       },
     },
     {
       id: "approach-message",
       route: "/oportunidades/gestao",
-      target: '[data-tour="lead-approach-section"]',
+      target: '[data-tour="lead-approach-card"]',
       title: "Mensagem de abordagem com IA",
       body: "Com base no diagnóstico, a Wiize gera uma mensagem personalizada pronta para enviar. Você pode copiar, editar ou disparar direto pelo WhatsApp.",
       placement: "left",
       injectDemoLead: true,
+      waitMs: 350,
       onEnter: async () => {
-        if (!document.querySelector('[role="dialog"]')) {
-          const row = document.querySelector('[data-tour="lead-row-first"]') as HTMLElement | null;
-          row?.click();
-          await new Promise((r) => setTimeout(r, 300));
+        const dialog = await openDemoLeadDialog();
+        if (!dialog) return;
+
+        await activateLeadTab('[data-tour="lead-tab-dados"]');
+
+        const section = await waitForElement<HTMLElement>('[data-tour="lead-approach-card"]', 30, 120);
+        if (section) {
+          centerElementInScrollArea(section);
+          await new Promise((resolve) => setTimeout(resolve, 120));
         }
-        const tab = document.querySelector('[data-tour="lead-tab-dados"]') as HTMLElement | null;
-        tab?.click();
-        await new Promise((r) => setTimeout(r, 250));
-        const section = document.querySelector('[data-tour="lead-approach-section"]') as HTMLElement | null;
-        section?.scrollIntoView({ block: "center", behavior: "smooth" });
       },
     },
 
