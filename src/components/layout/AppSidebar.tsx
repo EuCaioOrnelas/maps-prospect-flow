@@ -259,7 +259,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
 
             {/* Oportunidades with submenu */}
-            <li>
+            <li data-tour="sidebar-oportunidades">
               <SidebarNavItem
                 title="Oportunidades"
                 icon={Search}
@@ -371,7 +371,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
 
             {/* CRM with submenu */}
-            <li>
+            <li data-tour="sidebar-crm">
               <SidebarNavItem
                 title="CRM"
                 icon={Users}
@@ -427,7 +427,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
 
             {/* Chat */}
-            <li>
+            <li data-tour="sidebar-chat">
               <SidebarNavItem
                 title="Chat"
                 icon={MessageCircle}
@@ -439,7 +439,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
 
             {/* Automação with submenu */}
-            <li>
+            <li data-tour="sidebar-automacao">
               <SidebarNavItem
                 title="Automação"
                 icon={Workflow}
