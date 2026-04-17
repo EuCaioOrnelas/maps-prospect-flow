@@ -24,6 +24,8 @@ export function GuidedTour() {
   const [rect, setRect] = useState<Rect | null>(null);
   const [popupAnchorRect, setPopupAnchorRect] = useState<Rect | null>(null);
   const lastScrolledStepRef = useRef<string | null>(null);
+  const popupRect = rect ?? popupAnchorRect;
+  const spotlightRect = hideOnLoad ? rect : rect ?? popupAnchorRect;
 
   // Lock body + html scroll while tour is active
   useEffect(() => {
@@ -143,7 +145,6 @@ export function GuidedTour() {
   const total = steps.length;
   const isLast = currentStepIndex === total - 1;
   const isFirst = currentStepIndex === 0;
-  const popupRect = rect ?? (hideOnLoad ? popupAnchorRect : null);
 
   // Compute popup position
   let popupStyle: React.CSSProperties = {};
@@ -186,12 +187,12 @@ export function GuidedTour() {
   }
 
   // Spotlight rect (with padding)
-  const spot = rect
+  const spot = spotlightRect
     ? {
-        top: rect.top - PADDING,
-        left: rect.left - PADDING,
-        width: rect.width + PADDING * 2,
-        height: rect.height + PADDING * 2,
+        top: spotlightRect.top - PADDING,
+        left: spotlightRect.left - PADDING,
+        width: spotlightRect.width + PADDING * 2,
+        height: spotlightRect.height + PADDING * 2,
       }
     : null;
 
