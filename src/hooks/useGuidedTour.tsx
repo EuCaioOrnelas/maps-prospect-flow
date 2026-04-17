@@ -217,10 +217,20 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
       if (cancelled) return;
       if (!data?.tour_completed_at) {
+        // Preload pages used in the tour for instant transitions
+        try {
+          await Promise.all([
+            import("@/pages/Dashboard"),
+            import("@/pages/OpportunitiesManagement"),
+          ]);
+        } catch (e) {
+          console.warn("[tour] preload failed", e);
+        }
+        if (cancelled) return;
         setTimeout(() => {
           setCurrentStepIndex(0);
           setIsActive(true);
-        }, 800);
+        }, 400);
       } else {
         localStorage.setItem(LS_KEY, "1");
       }
