@@ -166,6 +166,7 @@ const App = () => (
                 <Route path="/renewal-success" element={<LightThemeWrapper><RenewalSuccess /></LightThemeWrapper>} />
                 <Route path="/minha-assinatura" element={<DashboardThemeProvider><Suspense fallback={<PageLoader />}><ManageSubscription /></Suspense></DashboardThemeProvider>} />
                 <Route path="/contato" element={<LightThemeWrapper><Contact /></LightThemeWrapper>} />
+                <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Profile /></Suspense></ProtectedRoute>} />
                 <Route path="/d7x9k2m4-meta-review" element={<LightThemeWrapper><MetaAppDocumentation /></LightThemeWrapper>} />
                 <Route path="/dashboard" element={<ProtectedRoute><MainDashboard /></ProtectedRoute>} />
                 <Route path="/reports/prospeccao" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
