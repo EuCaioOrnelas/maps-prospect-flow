@@ -517,6 +517,10 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         await new Promise((r) => setTimeout(r, step.waitMs));
       }
 
+      if (step.keepViewportTop) {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      }
+
       // For sidebar steps, wait for the full sidebar expansion (300ms width)
       // + submenu expansion (300ms max-height) before measuring.
       if (step.sidebarSection) {
