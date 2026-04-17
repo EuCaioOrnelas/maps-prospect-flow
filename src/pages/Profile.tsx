@@ -62,6 +62,8 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { useGuidedTour, resetGuidedTour } from "@/hooks/useGuidedTour";
+import { PlayCircle } from "lucide-react";
 
 const Profile = () => {
   const { profile, user, refreshProfile, signOut } = useAuth();
@@ -1098,6 +1100,30 @@ const Profile = () => {
 
           {/* Theme Toggle */}
           <ThemeToggle />
+
+          {/* Tour guiado */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2">
+                <PlayCircle className="h-5 w-5 text-primary" />
+                Tour guiado
+              </CardTitle>
+              <CardDescription>
+                Refaça o passo a passo para entender melhor como a Wiize funciona
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <span className="font-medium">Reiniciar tutorial</span>
+                  <p className="text-sm text-muted-foreground">
+                    Veja novamente os 4 pilares e como usar cada um
+                  </p>
+                </div>
+                <RestartTourButton />
+              </div>
+            </CardContent>
+          </Card>
 
           <Card className="border-border/50">
             <CardHeader className="pb-4">
