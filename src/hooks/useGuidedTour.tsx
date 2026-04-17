@@ -28,8 +28,10 @@ export type TourStep = {
   waitMs?: number;
   /** If true, body popup overlaps the highlighted area (for sidebar spotlight) */
   popupOffset?: number;
-  /** Hide the current spotlight immediately and only restore it when the new target exists */
-  hideSpotlightWhileTargetLoads?: boolean;
+  /** Hide the current spotlight immediately and only restore it when the new target exists.
+   * `true` applies while advancing; `"always"` also applies on back navigation.
+   */
+  hideSpotlightWhileTargetLoads?: boolean | "always";
 };
 
 interface GuidedTourContextValue {
@@ -267,6 +269,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       placement: "left",
       injectDemoLead: true,
       waitMs: 500,
+      hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
         const dialog = await openDemoLeadDialog();
         if (!dialog) return;
