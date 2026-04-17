@@ -21,6 +21,7 @@ export function GuidedTour() {
   const { isActive, currentStepIndex, steps, next, prev, finish } = useGuidedTour();
   const step = steps[currentStepIndex];
   const [rect, setRect] = useState<Rect | null>(null);
+  const [popupAnchorRect, setPopupAnchorRect] = useState<Rect | null>(null);
   const lastScrolledStepRef = useRef<string | null>(null);
 
   // Lock body + html scroll while tour is active
@@ -45,6 +46,7 @@ export function GuidedTour() {
     if (!isActive || !step) return;
     if (!step.target) {
       setRect(null);
+      setPopupAnchorRect(null);
       lastScrolledStepRef.current = step.id;
       return;
     }
@@ -103,6 +105,7 @@ export function GuidedTour() {
 
       // Always commit the latest rect so it animates smoothly toward the target
       setRect({ top: next.top, left: next.left, width: next.width, height: next.height });
+      setPopupAnchorRect({ top: next.top, left: next.left, width: next.width, height: next.height });
 
       if (serialized === lastSerialized) {
         stableFrames += 1;
@@ -139,10 +142,11 @@ export function GuidedTour() {
   const total = steps.length;
   const isLast = currentStepIndex === total - 1;
   const isFirst = currentStepIndex === 0;
+  const popupRect = rect ?? (step.hideSpotlightWhileTargetLoads ? popupAnchorRect : null);
 
   // Compute popup position
   let popupStyle: React.CSSProperties = {};
-  if (!rect || step.placement === "center") {
+  if (!popupRect || step.placement === "center") {
     popupStyle = {
       top: "50%",
       left: "50%",
@@ -154,27 +158,27 @@ export function GuidedTour() {
     const w = POPUP_W;
     if (placement === "right") {
       popupStyle = {
-        top: Math.max(POPUP_GAP, rect.top + rect.height / 2 - 100),
-        left: Math.min(window.innerWidth - w - POPUP_GAP, rect.left + rect.width + POPUP_GAP),
+        top: Math.max(POPUP_GAP, popupRect.top + popupRect.height / 2 - 100),
+        left: Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width + POPUP_GAP),
         width: w,
       };
     } else if (placement === "left") {
       popupStyle = {
-        top: Math.max(POPUP_GAP, rect.top + rect.height / 2 - 100),
-        left: Math.max(POPUP_GAP, rect.left - w - POPUP_GAP),
+        top: Math.max(POPUP_GAP, popupRect.top + popupRect.height / 2 - 100),
+        left: Math.max(POPUP_GAP, popupRect.left - w - POPUP_GAP),
         width: w,
       };
     } else if (placement === "top") {
       popupStyle = {
-        top: Math.max(POPUP_GAP, rect.top - 200 - POPUP_GAP),
-        left: Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, rect.left + rect.width / 2 - w / 2)),
+        top: Math.max(POPUP_GAP, popupRect.top - 200 - POPUP_GAP),
+        left: Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width / 2 - w / 2)),
         width: w,
       };
     } else {
       // bottom
       popupStyle = {
-        top: Math.min(window.innerHeight - 240, rect.top + rect.height + POPUP_GAP),
-        left: Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, rect.left + rect.width / 2 - w / 2)),
+        top: Math.min(window.innerHeight - 240, popupRect.top + popupRect.height + POPUP_GAP),
+        left: Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width / 2 - w / 2)),
         width: w,
       };
     }
