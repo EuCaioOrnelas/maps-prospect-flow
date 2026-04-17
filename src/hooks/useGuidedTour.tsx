@@ -18,6 +18,8 @@ export type TourStep = {
   sidebarSection?: "oportunidades" | "campanhas" | "crm" | "automacao" | "chat" | "dashboard";
   /** Inject the synthetic demo lead at the top of the gestão list */
   injectDemoLead?: boolean;
+  /** Inject aspirational fake data into the cockpit (MainDashboard) */
+  injectDemoCockpit?: boolean;
   /** Run an action right when this step becomes active (e.g. typing simulation) */
   onEnter?: () => void | Promise<void>;
   /** Wait this many ms before marking the step "ready" (after route transitions) */
@@ -115,6 +117,39 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       title: "Bem-vindo à Wiize",
       body: "Vamos te apresentar a sua nova operação comercial em quatro pilares: captação, prospecção, atendimento e gestão. Em poucos minutos você entende exatamente como cada parte trabalha por você.",
       placement: "center",
+      injectDemoCockpit: true,
+    },
+
+    // ---- Cockpit ----
+    {
+      id: "cockpit-overview",
+      route: "/dashboard",
+      target: '[data-tour="cockpit-hero"]',
+      title: "Cockpit de Crescimento",
+      body: "Esta é a sua central de comando. Aqui você acompanha o impacto financeiro gerado, a curva de leads captados e o resultado consolidado da sua operação em tempo real.",
+      placement: "bottom",
+      injectDemoCockpit: true,
+      waitMs: 600,
+    },
+    {
+      id: "cockpit-kpis",
+      route: "/dashboard",
+      target: '[data-tour="cockpit-kpis"]',
+      title: "Indicadores executivos",
+      body: "Receita potencial, leads quentes do dia, saúde da operação e o tempo que a IA economizou para você. Tudo o que precisa saber em quatro cartões.",
+      placement: "top",
+      injectDemoCockpit: true,
+      waitMs: 400,
+    },
+    {
+      id: "cockpit-forecast",
+      route: "/dashboard",
+      target: '[data-tour="cockpit-forecast"]',
+      title: "Projeção e funil",
+      body: "À esquerda, a projeção de receita por nível de score. À direita, o funil operacional completo: do lead captado à oportunidade gerada.",
+      placement: "top",
+      injectDemoCockpit: true,
+      waitMs: 400,
     },
 
     // ---- Captação ----
@@ -420,6 +455,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
     document.body.classList.remove("tour-sidebar-open");
     document.body.classList.remove("tour-demo-lead");
+    document.body.classList.remove("tour-demo-cockpit");
 
     if (isActive && step) {
       if (step.sidebarSection) {
@@ -430,11 +466,15 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       if (step.injectDemoLead) {
         document.body.classList.add("tour-demo-lead");
       }
+      if (step.injectDemoCockpit) {
+        document.body.classList.add("tour-demo-cockpit");
+      }
     }
     return () => {
       sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
       document.body.classList.remove("tour-sidebar-open");
       document.body.classList.remove("tour-demo-lead");
+      document.body.classList.remove("tour-demo-cockpit");
     };
   }, [isActive, currentStepIndex]);
 

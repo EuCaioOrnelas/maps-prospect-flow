@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMainDashboard } from "@/hooks/useMainDashboard";
 import { useCockpitForecast } from "@/hooks/useCockpitForecast";
@@ -27,6 +27,7 @@ import { ExpiredSubscriptionDialog } from "@/components/ExpiredSubscriptionDialo
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { TrialFeedbackModal } from "@/components/onboarding/TrialFeedbackModal";
 import { useOnboardingModals } from "@/hooks/useOnboardingModals";
+import { buildTourDemoCockpit } from "@/lib/tourDemoCockpit";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
@@ -40,9 +41,53 @@ export default function MainDashboard() {
   const { showOnboarding, showTrialFeedback, closeOnboarding, closeTrialFeedback } = useOnboardingModals();
   const [period, setPeriod] = useState('30');
   const periodDays = parseInt(period);
-  const data = useMainDashboard(periodDays);
-  const forecast = useCockpitForecast(periodDays);
-  const kpis = useDashboardKPIs(periodDays);
+  const realData = useMainDashboard(periodDays);
+  const realForecast = useCockpitForecast(periodDays);
+  const realKpis = useDashboardKPIs(periodDays);
+
+  // Tour mode: when active, replace cockpit with aspirational fake data
+  const [tourCockpitActive, setTourCockpitActive] = useState(
+    typeof document !== "undefined" && document.body.classList.contains("tour-demo-cockpit")
+  );
+  useEffect(() => {
+    const update = () => setTourCockpitActive(document.body.classList.contains("tour-demo-cockpit"));
+    update();
+    const obs = new MutationObserver(update);
+    obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+
+  const demo = tourCockpitActive ? buildTourDemoCockpit() : null;
+
+  // Effective values used by the UI (real or demo)
+  const data = demo ? { ...realData, ...demo, loading: false } : realData;
+  const forecast = demo
+    ? {
+        ...realForecast,
+        totalEstimatedRevenue: demo.financialImpact,
+        prevTotalEstimatedRevenue: demo.financialImpact / (1 + demo.financialChange / 100),
+        totalEstimatedSales: demo.estimatedSales,
+        averageTicket: demo.averageTicket,
+        opportunitySales: demo.opportunitySales,
+        scoreSales: demo.scoreSales,
+        scoreBuckets: demo.scoreBuckets,
+      }
+    : realForecast;
+  const kpis = demo
+    ? {
+        ...realKpis,
+        leadsGeradosPeriodo: demo.leadsGerados,
+        conversasAtivasPeriodo: demo.conversasAtivas,
+        oportunidadesQuentesPeriodo: demo.oportunidadesQuentes,
+        receitaPotencial: demo.receitaPotencial,
+        receitaPotencialGrowth: demo.receitaPotencialGrowth,
+        leadsQuentesHoje: demo.leadsQuentesHoje,
+        leadsQuentesOntem: demo.leadsQuentesOntem,
+        healthStatus: demo.healthStatus,
+        healthDetail: demo.healthDetail,
+        aiMinutesSaved: demo.aiMinutesSaved,
+      }
+    : realKpis;
 
   const financialImpact = forecast.totalEstimatedRevenue;
   const financialChange = forecast.prevTotalEstimatedRevenue > 0
@@ -125,34 +170,38 @@ export default function MainDashboard() {
               <ActivationChecklistInline />
 
               {/* 1 — Hero Impact */}
-              <DashboardHero
-                financialImpact={financialImpact}
-                financialChange={financialChange}
-                leadsGerados={kpis.leadsGeradosPeriodo}
-                conversasAtivas={kpis.conversasAtivasPeriodo}
-                oportunidadesQuentes={kpis.oportunidadesQuentesPeriodo}
-                cumulativeByMonth={data.cumulativeByMonth}
-                leadsByDay={data.leadsByDay}
-                estimatedSales={forecast.totalEstimatedSales}
-                averageTicket={forecast.averageTicket}
-                opportunitySales={forecast.opportunitySales}
-                scoreSales={forecast.scoreSales}
-                periodDays={periodDays}
-              />
+              <div data-tour="cockpit-hero">
+                <DashboardHero
+                  financialImpact={financialImpact}
+                  financialChange={financialChange}
+                  leadsGerados={kpis.leadsGeradosPeriodo}
+                  conversasAtivas={kpis.conversasAtivasPeriodo}
+                  oportunidadesQuentes={kpis.oportunidadesQuentesPeriodo}
+                  cumulativeByMonth={data.cumulativeByMonth}
+                  leadsByDay={data.leadsByDay}
+                  estimatedSales={forecast.totalEstimatedSales}
+                  averageTicket={forecast.averageTicket}
+                  opportunitySales={forecast.opportunitySales}
+                  scoreSales={forecast.scoreSales}
+                  periodDays={periodDays}
+                />
+              </div>
 
               {/* 2 — Executive KPIs */}
-              <ExecutiveKPIs
-                receitaPotencial={kpis.receitaPotencial}
-                receitaPotencialGrowth={kpis.receitaPotencialGrowth}
-                leadsQuentesHoje={kpis.leadsQuentesHoje}
-                leadsQuentesOntem={kpis.leadsQuentesOntem}
-                healthStatus={kpis.healthStatus}
-                healthDetail={kpis.healthDetail}
-                aiMinutesSaved={kpis.aiMinutesSaved}
-              />
+              <div data-tour="cockpit-kpis">
+                <ExecutiveKPIs
+                  receitaPotencial={kpis.receitaPotencial}
+                  receitaPotencialGrowth={kpis.receitaPotencialGrowth}
+                  leadsQuentesHoje={kpis.leadsQuentesHoje}
+                  leadsQuentesOntem={kpis.leadsQuentesOntem}
+                  healthStatus={kpis.healthStatus}
+                  healthDetail={kpis.healthDetail}
+                  aiMinutesSaved={kpis.aiMinutesSaved}
+                />
+              </div>
 
               {/* 3 — Forecast + Funnel */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-tour="cockpit-forecast">
                 <ForecastChart
                   leadsProspected={data.leadsProspected}
                   totalResponses={data.totalResponses}

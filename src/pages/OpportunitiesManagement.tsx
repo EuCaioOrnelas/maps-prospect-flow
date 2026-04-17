@@ -38,6 +38,7 @@ import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { buildTourDemoLead } from "@/lib/tourDemoLead";
+import { buildTourFillerLeads } from "@/lib/tourDemoCockpit";
 
 interface OpportunityLead {
   id: string;
@@ -430,8 +431,15 @@ export default function OpportunitiesManagement() {
 
   const displayLeads = useMemo(() => {
     if (!tourDemoActive) return filteredLeads;
-    if (filteredLeads.some((l) => l.id === "__tour_demo_lead__")) return filteredLeads;
-    return [buildTourDemoLead(), ...filteredLeads];
+    const hasDemo = filteredLeads.some((l) => l.id === "__tour_demo_lead__");
+    const base = hasDemo ? filteredLeads : [buildTourDemoLead() as any, ...filteredLeads];
+    // If the user's real list is empty, also pad with filler leads so the
+    // Gestão page never looks empty during the tour.
+    const realCount = filteredLeads.filter((l) => !String(l.id).startsWith("__tour_")).length;
+    if (realCount === 0) {
+      return [...base, ...buildTourFillerLeads()];
+    }
+    return base;
   }, [filteredLeads, tourDemoActive]);
 
   const totalPages = Math.max(1, Math.ceil(displayLeads.length / ITEMS_PER_PAGE));
