@@ -1354,3 +1354,15 @@ input::placeholder, textarea::placeholder {
 .react-flow .wa-flow-handle.react-flow__handle-right.connectingto {
   transform: translate(50%, -50%) !important;
 }
+
+/* Block sidebar interaction during guided tour */
+body.tour-active [data-sidebar="trigger"],
+body.tour-active [data-sidebar="rail"] {
+  pointer-events: none !important;
+}
+body.tour-active [data-sidebar="sidebar"] {
+  pointer-events: none !important;
+}
+body.tour-active [data-sidebar="sidebar"] * {
+  pointer-events: none !important;
+}
