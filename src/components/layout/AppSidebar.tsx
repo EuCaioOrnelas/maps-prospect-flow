@@ -307,7 +307,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   )}
                 >
                   <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
-                    <li>
+                    <li data-tour="sidebar-oportunidades-buscar">
                       <Link
                         to="/oportunidades"
                         className={cn(
@@ -321,7 +321,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         <span className="whitespace-nowrap truncate">Buscar</span>
                       </Link>
                     </li>
-                    <li>
+                    <li data-tour="sidebar-oportunidades-gestao">
                       <Link
                         to="/oportunidades/gestao"
                         className={cn(
@@ -363,7 +363,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   )}
                 >
                   <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
-                    <li>
+                    <li data-tour="sidebar-campanhas-prospeccao">
                       <Link
                         to="/whatsapp"
                         className={cn(
@@ -377,7 +377,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         <span className="whitespace-nowrap truncate">Prospecção</span>
                       </Link>
                     </li>
-                    <li>
+                    <li data-tour="sidebar-campanhas-relacionamento">
                       <Link
                         to="/meta-campaigns"
                         className={cn(
@@ -419,7 +419,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   )}
                 >
                   <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
-                    <li>
+                    <li data-tour="sidebar-crm-pipeline">
                       <Link
                         to="/crm"
                         className={cn(
@@ -433,7 +433,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         <span className="whitespace-nowrap truncate">Pipeline</span>
                       </Link>
                     </li>
-                    <li>
+                    <li data-tour="sidebar-crm-score">
                       <Link
                         to="/crm/score"
                         className={cn(
@@ -492,7 +492,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   )}
                 >
                   <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
-                    <li>
+                    <li data-tour="sidebar-automacao-fluxos">
                       <Link
                         to="/fluxos"
                         className={cn(
@@ -506,7 +506,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         <span className="whitespace-nowrap truncate">Fluxos</span>
                       </Link>
                     </li>
-                    <li>
+                    <li data-tour="sidebar-automacao-agentes">
                       <Link
                         to="/agents"
                         className={cn(
@@ -520,7 +520,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         <span className="whitespace-nowrap truncate">Agentes IA</span>
                       </Link>
                     </li>
-                    <li>
+                    <li data-tour="sidebar-automacao-aquecimento">
                       <Link
                         to="/warming"
                         className={cn(

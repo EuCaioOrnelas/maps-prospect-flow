@@ -171,14 +171,16 @@ export function GuidedTour() {
             width: spot.width,
             height: spot.height,
             zIndex: 2147483646,
+            transition: "top 350ms cubic-bezier(0.4, 0, 0.2, 1), left 350ms cubic-bezier(0.4, 0, 0.2, 1), width 350ms cubic-bezier(0.4, 0, 0.2, 1), height 350ms cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         />
       )}
 
       {/* Popup card */}
       <div
-        className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-5"
-        style={{ ...popupStyle, zIndex: 2147483647 }}
+        key={step.id}
+        className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-5 animate-in fade-in zoom-in-95 duration-300"
+        style={{ ...popupStyle, zIndex: 2147483647, transition: "top 350ms cubic-bezier(0.4, 0, 0.2, 1), left 350ms cubic-bezier(0.4, 0, 0.2, 1)" }}
       >
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary mb-2">
           <Sparkles size={12} />
@@ -208,21 +210,19 @@ export function GuidedTour() {
             <ArrowLeft size={14} />
             Voltar
           </Button>
-          <div className="flex items-center gap-1.5 px-2">
-            {steps.map((_, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "h-1.5 rounded-full transition-all duration-300",
-                  i === currentStepIndex
-                    ? "bg-primary w-6"
-                    : i < currentStepIndex
-                    ? "bg-primary/50 w-1.5"
-                    : "bg-muted-foreground/25 w-1.5"
-                )}
-              />
-            ))}
+          {/* Progress bar — smooth fill instead of dots */}
+          <div className="relative h-1.5 w-32 rounded-full bg-muted-foreground/15 overflow-hidden">
+            <div
+              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-primary/70 shadow-[0_0_12px_hsl(var(--primary)/0.6)]"
+              style={{
+                width: `${((currentStepIndex + 1) / total) * 100}%`,
+                transition: "width 500ms cubic-bezier(0.65, 0, 0.35, 1)",
+              }}
+            />
           </div>
+          <span className="text-[11px] font-semibold text-muted-foreground tabular-nums px-1 min-w-[36px] text-center">
+            {currentStepIndex + 1}/{total}
+          </span>
           <Button
             size="sm"
             onClick={isLast ? finish : next}
