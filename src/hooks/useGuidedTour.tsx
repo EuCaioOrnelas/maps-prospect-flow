@@ -30,8 +30,6 @@ export type TourStep = {
   popupOffset?: number;
   /** Hide the current spotlight immediately and only restore it when the new target exists */
   hideSpotlightWhileTargetLoads?: boolean;
-  /** Also hide spotlight while loading when navigating backwards into this step */
-  hideSpotlightWhileTargetLoadsOnPrev?: boolean;
 };
 
 interface GuidedTourContextValue {
@@ -269,7 +267,6 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       placement: "left",
       injectDemoLead: true,
       waitMs: 500,
-      hideSpotlightWhileTargetLoadsOnPrev: true,
       onEnter: async () => {
         const dialog = await openDemoLeadDialog();
         if (!dialog) return;

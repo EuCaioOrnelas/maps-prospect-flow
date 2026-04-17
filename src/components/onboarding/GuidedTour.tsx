@@ -20,49 +20,12 @@ const POPUP_GAP = 16;
 export function GuidedTour() {
   const { isActive, currentStepIndex, steps, direction, next, prev, finish } = useGuidedTour();
   const step = steps[currentStepIndex];
-  const hideOnLoad = !!(
-    step && (
-      (step.hideSpotlightWhileTargetLoads && direction === "next") ||
-      (step.hideSpotlightWhileTargetLoadsOnPrev && direction === "prev")
-    )
-  );
+  const hideOnLoad = !!step?.hideSpotlightWhileTargetLoads && direction === "next";
   const [rect, setRect] = useState<Rect | null>(null);
   const [popupAnchorRect, setPopupAnchorRect] = useState<Rect | null>(null);
   const lastScrolledStepRef = useRef<string | null>(null);
   const popupRect = rect ?? popupAnchorRect;
   const spotlightRect = hideOnLoad ? rect : rect ?? popupAnchorRect;
-
-  const journeyLabel = currentStepIndex <= 3
-    ? "Cockpit"
-    : currentStepIndex <= 10
-      ? "Captação"
-      : currentStepIndex <= 14
-        ? "Diagnóstico"
-        : currentStepIndex <= 17
-          ? "Prospecção"
-          : currentStepIndex <= 20
-            ? "CRM"
-            : currentStepIndex <= 21
-              ? "Atendimento"
-              : currentStepIndex <= 24
-                ? "Automação"
-                : "Final";
-  const journeyCount = 7;
-  const journeyIndex = currentStepIndex <= 3
-    ? 1
-    : currentStepIndex <= 10
-      ? 2
-      : currentStepIndex <= 14
-        ? 3
-        : currentStepIndex <= 17
-          ? 4
-          : currentStepIndex <= 20
-            ? 5
-            : currentStepIndex <= 21
-              ? 6
-              : currentStepIndex <= 24
-                ? 7
-                : 7;
 
   // Lock body + html scroll while tour is active
   useEffect(() => {
@@ -245,14 +208,14 @@ export function GuidedTour() {
       {showFallbackOverlay && (
         <div
           className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300"
-          style={{ background: isLast ? "rgba(6, 10, 16, 0.68)" : "rgba(0, 0, 0, 0.45)" }}
+          style={{ background: isLast ? "rgba(6, 10, 16, 0.78)" : "rgba(8, 12, 20, 0.55)" }}
         />
       )}
 
       {/* Spotlight */}
       {spot && (
         <div
-          className="fixed pointer-events-auto rounded-[1.75rem]"
+          className="fixed pointer-events-auto rounded-xl"
           style={{
             top: spot.top,
             left: spot.left,
@@ -260,11 +223,10 @@ export function GuidedTour() {
             height: spot.height,
             zIndex: 2147483646,
             boxShadow: [
-              "0 0 0 9999px rgba(0, 0, 0, 0.45)",
-              "inset 0 0 0 1px hsl(var(--primary) / 0.5)",
-              "0 0 0 4px hsl(var(--background) / 0.82)",
-              "0 0 0 8px hsl(var(--primary) / 0.12)",
-              "0 0 44px hsl(var(--primary) / 0.22)",
+              "0 0 0 9999px rgba(8, 12, 20, 0.78)",
+              "inset 0 0 0 1px hsl(var(--primary) / 0.6)",
+              "0 0 0 3px hsl(var(--primary) / 0.18)",
+              "0 0 40px hsl(var(--primary) / 0.35)",
             ].join(", "),
             transition:
               "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1), width 480ms cubic-bezier(0.2, 0.8, 0.2, 1), height 480ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 480ms cubic-bezier(0.2, 0.8, 0.2, 1)",
@@ -279,17 +241,17 @@ export function GuidedTour() {
       ) : (
         <>
           <div
-            className="fixed pointer-events-auto bg-card/95 backdrop-blur-xl text-card-foreground border border-border/60 rounded-[2rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-300"
+            className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-300"
             style={{ ...popupStyle, zIndex: 2147483647, transition: "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1)" }}
           >
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary mb-3">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary mb-2.5">
               <Sparkles size={13} />
-              {journeyLabel} • {journeyIndex}/{journeyCount}
+              Passo {currentStepIndex + 1} de {total}
             </div>
-            <h3 className="text-2xl font-bold text-foreground mb-3 leading-tight tracking-[-0.02em]">
+            <h3 className="text-xl font-bold text-foreground mb-2 leading-snug">
               {step.title}
             </h3>
-            <p className="text-[15px] text-muted-foreground leading-7">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               {step.body}
             </p>
           </div>
@@ -298,22 +260,18 @@ export function GuidedTour() {
             className="fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto"
             style={{ zIndex: 2147483647 }}
           >
-            <div className="flex items-center gap-3 bg-card/95 backdrop-blur-xl border border-border/60 rounded-full pl-2 pr-2 py-2 shadow-2xl">
+            <div className="flex items-center gap-3 bg-card/95 backdrop-blur-md border border-border rounded-full pl-2 pr-2 py-2 shadow-2xl">
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={prev}
                 disabled={isFirst}
-                className="rounded-full gap-1.5 px-4 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                className="rounded-full gap-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
               >
                 <ArrowLeft size={14} />
                 Voltar
               </Button>
-              <div className="flex flex-col items-center gap-1 px-1 min-w-[130px]">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
-                  {journeyLabel} • {journeyIndex}/{journeyCount}
-                </span>
-                <div className="relative h-1.5 w-32 rounded-full bg-muted-foreground/15 overflow-hidden">
+              <div className="relative h-1.5 w-32 rounded-full bg-muted-foreground/15 overflow-hidden">
                 <div
                   className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-primary/70 shadow-[0_0_12px_hsl(var(--primary)/0.6)]"
                   style={{
@@ -321,7 +279,6 @@ export function GuidedTour() {
                     transition: "width 500ms cubic-bezier(0.65, 0, 0.35, 1)",
                   }}
                 />
-                </div>
               </div>
               <span className="text-[11px] font-semibold text-muted-foreground tabular-nums px-1 min-w-[36px] text-center">
                 {currentStepIndex + 1}/{total}
@@ -329,7 +286,7 @@ export function GuidedTour() {
               <Button
                 size="sm"
                 onClick={next}
-                className="rounded-full gap-1.5 px-6 min-w-[132px] h-11 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30"
+                className="rounded-full gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
               >
                 Próximo
                 <ArrowRight size={14} />
