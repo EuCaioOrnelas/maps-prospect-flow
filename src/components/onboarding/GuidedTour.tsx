@@ -179,29 +179,32 @@ export function GuidedTour() {
   } else {
     const placement = step.placement ?? "bottom";
     const w = POPUP_W;
+    const minLeft = Math.max(POPUP_GAP, SIDEBAR_SAFE_LEFT);
+    const maxLeft = window.innerWidth - w - POPUP_GAP;
+    const clampLeft = (v: number) => Math.max(minLeft, Math.min(maxLeft, v));
     if (placement === "right") {
       popupStyle = {
         top: Math.max(POPUP_GAP, popupRect.top + popupRect.height / 2 - 100),
-        left: Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width + POPUP_GAP),
+        left: clampLeft(popupRect.left + popupRect.width + POPUP_GAP),
         width: w,
       };
     } else if (placement === "left") {
       popupStyle = {
         top: Math.max(POPUP_GAP, popupRect.top + popupRect.height / 2 - 100),
-        left: Math.max(POPUP_GAP, popupRect.left - w - POPUP_GAP),
+        left: clampLeft(popupRect.left - w - POPUP_GAP),
         width: w,
       };
     } else if (placement === "top") {
       popupStyle = {
         top: Math.max(POPUP_GAP, popupRect.top - 200 - POPUP_GAP),
-        left: Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width / 2 - w / 2)),
+        left: clampLeft(popupRect.left + popupRect.width / 2 - w / 2),
         width: w,
       };
     } else {
       // bottom
       popupStyle = {
         top: Math.min(window.innerHeight - 240, popupRect.top + popupRect.height + POPUP_GAP),
-        left: Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width / 2 - w / 2)),
+        left: clampLeft(popupRect.left + popupRect.width / 2 - w / 2),
         width: w,
       };
     }
