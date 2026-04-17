@@ -14,7 +14,7 @@ interface Rect {
 }
 
 const PADDING = 8;
-const POPUP_W = 460;
+const POPUP_W = 400;
 const POPUP_GAP = 16;
 
 export function GuidedTour() {
@@ -194,8 +194,21 @@ export function GuidedTour() {
       {/* Fallback full overlay when no spotlight */}
       {showFallbackOverlay && (
         <div
-          className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300"
-          style={{ background: isLast ? "rgba(6, 10, 16, 0.88)" : "rgba(8, 12, 20, 0.72)" }}
+          className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300 backdrop-blur-md"
+          style={{ background: isLast ? "rgba(6, 10, 16, 0.82)" : "rgba(8, 12, 20, 0.62)" }}
+        />
+      )}
+
+      {/* Backdrop blur layer for spotlight mode (blurs everything except the spotlight area via mask) */}
+      {spot && (
+        <div
+          className="fixed inset-0 pointer-events-none backdrop-blur-md"
+          style={{
+            zIndex: 2147483645,
+            WebkitMaskImage: `radial-gradient(circle at ${spot.left + spot.width / 2}px ${spot.top + spot.height / 2}px, transparent ${Math.max(spot.width, spot.height) / 2}px, black ${Math.max(spot.width, spot.height) / 2 + 20}px)`,
+            maskImage: `radial-gradient(circle at ${spot.left + spot.width / 2}px ${spot.top + spot.height / 2}px, transparent ${Math.max(spot.width, spot.height) / 2}px, black ${Math.max(spot.width, spot.height) / 2 + 20}px)`,
+            transition: "-webkit-mask-image 600ms cubic-bezier(0.22, 1, 0.36, 1), mask-image 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+          }}
         />
       )}
 
@@ -210,7 +223,7 @@ export function GuidedTour() {
             height: spot.height,
             zIndex: 2147483646,
             boxShadow: [
-              "0 0 0 9999px rgba(8, 12, 20, 0.72)",
+              "0 0 0 9999px rgba(8, 12, 20, 0.78)",
               "inset 0 0 0 1px hsl(var(--primary) / 0.6)",
               "0 0 0 3px hsl(var(--primary) / 0.18)",
               "0 0 40px hsl(var(--primary) / 0.35)",
@@ -229,17 +242,17 @@ export function GuidedTour() {
         <>
           <div
             key={step.id}
-            className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-7 animate-in fade-in zoom-in-95 duration-300"
+            className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-300"
             style={{ ...popupStyle, zIndex: 2147483647, transition: "top 600ms cubic-bezier(0.22, 1, 0.36, 1), left 600ms cubic-bezier(0.22, 1, 0.36, 1)" }}
           >
-            <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-primary mb-3">
-              <Sparkles size={14} />
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary mb-2.5">
+              <Sparkles size={13} />
               Passo {currentStepIndex + 1} de {total}
             </div>
-            <h3 className="text-2xl font-bold text-foreground mb-2.5 leading-snug">
+            <h3 className="text-xl font-bold text-foreground mb-2 leading-snug">
               {step.title}
             </h3>
-            <p className="text-base text-muted-foreground leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               {step.body}
             </p>
           </div>
