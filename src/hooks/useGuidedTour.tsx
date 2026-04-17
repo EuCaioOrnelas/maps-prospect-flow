@@ -263,7 +263,16 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     [navigate, location.pathname, steps]
   );
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
+    // Preload route chunks so navigation during the tour is instant
+    try {
+      await Promise.all([
+        import("@/pages/Dashboard"),
+        import("@/pages/OpportunitiesManagement"),
+      ]);
+    } catch (e) {
+      console.warn("[tour] preload failed", e);
+    }
     setCurrentStepIndex(0);
     setIsActive(true);
     goToStep(0);
