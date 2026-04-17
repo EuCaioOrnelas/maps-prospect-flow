@@ -82,6 +82,8 @@ export function GuidedTour() {
   const hideOnLoad = step?.hideSpotlightWhileTargetLoads === "always" || (!!step?.hideSpotlightWhileTargetLoads && direction === "next");
   const [rect, setRect] = useState<Rect | null>(null);
   const [popupAnchorRect, setPopupAnchorRect] = useState<Rect | null>(null);
+  const [popupSize, setPopupSize] = useState({ width: POPUP_W, height: 196 });
+  const popupCardRef = useRef<HTMLDivElement | null>(null);
   const lastScrolledStepRef = useRef<string | null>(null);
   const popupRect = rect ?? popupAnchorRect;
   const spotlightRect = hideOnLoad ? rect : rect ?? popupAnchorRect;
@@ -199,6 +201,30 @@ export function GuidedTour() {
     };
   }, [isActive, step]);
 
+  useLayoutEffect(() => {
+    if (!isActive || !step) return;
+
+    const measurePopup = () => {
+      const node = popupCardRef.current;
+      if (!node) return;
+      const nextWidth = Math.round(node.offsetWidth || POPUP_W);
+      const nextHeight = Math.round(node.offsetHeight || 196);
+      setPopupSize((prev) =>
+        prev.width === nextWidth && prev.height === nextHeight
+          ? prev
+          : { width: nextWidth, height: nextHeight }
+      );
+    };
+
+    const rafId = window.requestAnimationFrame(measurePopup);
+    window.addEventListener("resize", measurePopup);
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", measurePopup);
+    };
+  }, [isActive, step, currentStepIndex]);
+
   if (!isActive || !step) return null;
 
   const total = steps.length;
@@ -206,51 +232,6 @@ export function GuidedTour() {
   const isFirst = currentStepIndex === 0;
   const currentPillarIndex = Math.max(0, TOUR_PILLARS.findIndex((pillar) => pillar.key === getPillarKey(step.id)));
   const currentPillar = TOUR_PILLARS[currentPillarIndex] ?? TOUR_PILLARS[0];
-
-  // Compute popup position — account for spotlight padding so the card never overlaps the focus border
-  let popupStyle: React.CSSProperties = {};
-  if (!popupRect || step.placement === "center") {
-    popupStyle = {
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      width: POPUP_W,
-    };
-  } else {
-    const placement = step.placement ?? "bottom";
-    const w = POPUP_W;
-    // Spotlight extends PADDING outside the target on each side; add real breathing room
-    const spotTop = popupRect.top - PADDING;
-    const spotLeft = popupRect.left - PADDING;
-    const spotRight = popupRect.left + popupRect.width + PADDING;
-    const spotBottom = popupRect.top + popupRect.height + PADDING;
-    if (placement === "right") {
-      popupStyle = {
-        top: Math.max(POPUP_GAP, popupRect.top + popupRect.height / 2 - 100),
-        left: Math.min(window.innerWidth - w - POPUP_GAP, spotRight + POPUP_SPOT_GAP),
-        width: w,
-      };
-    } else if (placement === "left") {
-      popupStyle = {
-        top: Math.max(POPUP_GAP, popupRect.top + popupRect.height / 2 - 100),
-        left: Math.max(POPUP_GAP, spotLeft - w - POPUP_SPOT_GAP),
-        width: w,
-      };
-    } else if (placement === "top") {
-      popupStyle = {
-        top: Math.max(POPUP_GAP, spotTop - 200 - POPUP_SPOT_GAP),
-        left: Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width / 2 - w / 2)),
-        width: w,
-      };
-    } else {
-      // bottom
-      popupStyle = {
-        top: Math.min(window.innerHeight - 240, spotBottom + POPUP_SPOT_GAP),
-        left: Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupRect.left + popupRect.width / 2 - w / 2)),
-        width: w,
-      };
-    }
-  }
 
   // Spotlight rect (with padding)
   const spot = spotlightRect
@@ -261,6 +242,84 @@ export function GuidedTour() {
         height: spotlightRect.height + PADDING * 2,
       }
     : null;
+
+  // Compute popup position — auto-flip so the card never overlaps the spotlight border
+  let popupStyle: React.CSSProperties = {};
+  if (!popupRect || step.placement === "center") {
+    popupStyle = {
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: POPUP_W,
+    };
+  } else {
+    const requestedPlacement = (step.placement ?? "bottom") as "top" | "bottom" | "left" | "right";
+    const popupWidth = popupSize.width || POPUP_W;
+    const popupHeight = popupSize.height || 196;
+    const viewportMargin = POPUP_GAP;
+    const spotBounds = {
+      top: popupRect.top - PADDING,
+      left: popupRect.left - PADDING,
+      right: popupRect.left + popupRect.width + PADDING,
+      bottom: popupRect.top + popupRect.height + PADDING,
+    };
+
+    const clampX = (value: number) => Math.max(viewportMargin, Math.min(window.innerWidth - popupWidth - viewportMargin, value));
+    const clampY = (value: number) => Math.max(viewportMargin, Math.min(window.innerHeight - popupHeight - viewportMargin, value));
+
+    const placementPriorityMap = {
+      top: ["top", "bottom", "right", "left"],
+      bottom: ["bottom", "top", "right", "left"],
+      right: ["right", "left", "bottom", "top"],
+      left: ["left", "right", "bottom", "top"],
+    } as const;
+
+    const canFit = (placement: "top" | "bottom" | "left" | "right") => {
+      if (placement === "top") {
+        return spotBounds.top - POPUP_SPOT_GAP - popupHeight >= viewportMargin;
+      }
+      if (placement === "bottom") {
+        return spotBounds.bottom + POPUP_SPOT_GAP + popupHeight <= window.innerHeight - viewportMargin;
+      }
+      if (placement === "right") {
+        return spotBounds.right + POPUP_SPOT_GAP + popupWidth <= window.innerWidth - viewportMargin;
+      }
+      return spotBounds.left - POPUP_SPOT_GAP - popupWidth >= viewportMargin;
+    };
+
+    const computePlacementStyle = (placement: "top" | "bottom" | "left" | "right") => {
+      if (placement === "top") {
+        return {
+          top: spotBounds.top - popupHeight - POPUP_SPOT_GAP,
+          left: clampX(popupRect.left + popupRect.width / 2 - popupWidth / 2),
+          width: popupWidth,
+        };
+      }
+      if (placement === "bottom") {
+        return {
+          top: spotBounds.bottom + POPUP_SPOT_GAP,
+          left: clampX(popupRect.left + popupRect.width / 2 - popupWidth / 2),
+          width: popupWidth,
+        };
+      }
+      if (placement === "right") {
+        return {
+          top: clampY(popupRect.top + popupRect.height / 2 - popupHeight / 2),
+          left: spotBounds.right + POPUP_SPOT_GAP,
+          width: popupWidth,
+        };
+      }
+      return {
+        top: clampY(popupRect.top + popupRect.height / 2 - popupHeight / 2),
+        left: spotBounds.left - popupWidth - POPUP_SPOT_GAP,
+        width: popupWidth,
+      };
+    };
+
+    const placements = placementPriorityMap[requestedPlacement];
+    const resolvedPlacement = placements.find(canFit) ?? requestedPlacement;
+    popupStyle = computePlacementStyle(resolvedPlacement);
+  }
 
   // Fallback dark overlay (used when there is no spotlight target — e.g. center step)
   const showFallbackOverlay = !spot;
@@ -311,6 +370,7 @@ export function GuidedTour() {
       ) : (
         <>
           <div
+            ref={popupCardRef}
             className="fixed pointer-events-auto bg-card/95 text-card-foreground border border-border/60 rounded-[28px] px-6 py-4 sm:px-7 sm:py-5 backdrop-blur-md"
             style={{
               ...popupStyle,
