@@ -171,51 +171,44 @@ export function GuidedTour() {
       }
     : null;
 
+  // Fallback dark overlay (used when there is no spotlight target — e.g. center step)
+  const showFallbackOverlay = !spot;
+
   return createPortal(
     <div
       className="fixed inset-0 pointer-events-none"
       style={{ zIndex: 2147483646 }}
     >
-      {/* Dark overlay with hole using SVG mask */}
-      <svg
-        className="fixed inset-0 pointer-events-auto"
-        style={{ width: "100vw", height: "100vh", zIndex: 2147483646 }}
-      >
-        <defs>
-          <mask id="tour-mask">
-            <rect width="100%" height="100%" fill="white" />
-            {spot && (
-              <rect
-                x={spot.left}
-                y={spot.top}
-                width={spot.width}
-                height={spot.height}
-                rx={12}
-                ry={12}
-                fill="black"
-              />
-            )}
-          </mask>
-        </defs>
-        <rect
-          width="100%"
-          height="100%"
-          fill="rgba(8, 12, 20, 0.72)"
-          mask="url(#tour-mask)"
+      {/* Fallback full overlay when no spotlight */}
+      {showFallbackOverlay && (
+        <div
+          className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300"
+          style={{ background: "rgba(8, 12, 20, 0.72)" }}
         />
-      </svg>
+      )}
 
-      {/* Spotlight ring */}
+      {/* Spotlight: a single transparent box whose huge box-shadow paints the dark overlay.
+          Because the box itself animates, the "hole" and the ring animate together — no desync. */}
       {spot && (
         <div
-          className="fixed pointer-events-none rounded-xl ring-2 ring-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.18),0_0_60px_hsl(var(--primary)/0.45)]"
+          className="fixed pointer-events-auto rounded-xl"
           style={{
             top: spot.top,
             left: spot.left,
             width: spot.width,
             height: spot.height,
             zIndex: 2147483646,
-            transition: "top 600ms cubic-bezier(0.22, 1, 0.36, 1), left 600ms cubic-bezier(0.22, 1, 0.36, 1), width 600ms cubic-bezier(0.22, 1, 0.36, 1), height 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+            boxShadow: [
+              // dark overlay covering the rest of the screen
+              "0 0 0 9999px rgba(8, 12, 20, 0.72)",
+              // soft inner glow
+              "inset 0 0 0 1px hsl(var(--primary) / 0.6)",
+              // outer halo
+              "0 0 0 3px hsl(var(--primary) / 0.18)",
+              "0 0 40px hsl(var(--primary) / 0.35)",
+            ].join(", "),
+            transition:
+              "top 600ms cubic-bezier(0.22, 1, 0.36, 1), left 600ms cubic-bezier(0.22, 1, 0.36, 1), width 600ms cubic-bezier(0.22, 1, 0.36, 1), height 600ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 600ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         />
       )}
