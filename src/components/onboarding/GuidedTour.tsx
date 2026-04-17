@@ -32,37 +32,18 @@ export function GuidedTour() {
   const popupRect = rect ?? popupAnchorRect;
   const spotlightRect = hideOnLoad ? rect : rect ?? popupAnchorRect;
 
-  const journeyLabel = currentStepIndex <= 3
-    ? "Cockpit"
-    : currentStepIndex <= 10
-      ? "Captação"
-      : currentStepIndex <= 14
-        ? "Diagnóstico"
-        : currentStepIndex <= 17
-          ? "Prospecção"
-          : currentStepIndex <= 20
-            ? "CRM"
-            : currentStepIndex <= 21
-              ? "Atendimento"
-              : currentStepIndex <= 24
-                ? "Automação"
-                : "Final";
-  const journeyCount = 7;
-  const journeyIndex = currentStepIndex <= 3
-    ? 1
-    : currentStepIndex <= 10
-      ? 2
-      : currentStepIndex <= 14
-        ? 3
-        : currentStepIndex <= 17
-          ? 4
-          : currentStepIndex <= 20
-            ? 5
-            : currentStepIndex <= 21
-              ? 6
-              : currentStepIndex <= 24
-                ? 7
-                : 7;
+  // 4 main pillars
+  const pillars = [
+    { label: "Captação", start: 0, end: 10 },
+    { label: "Prospecção", start: 11, end: 17 },
+    { label: "Atendimento", start: 18, end: 21 },
+    { label: "Gestão", start: 22, end: 24 },
+  ];
+  const currentPillar = pillars.find(p => currentStepIndex >= p.start && currentStepIndex <= p.end) ?? pillars[0];
+  const pillarIndex = pillars.indexOf(currentPillar);
+  const pillarStepNum = currentStepIndex - currentPillar.start + 1;
+  const pillarStepTotal = currentPillar.end - currentPillar.start + 1;
+  const journeyLabel = currentPillar.label;
 
   // Lock body + html scroll while tour is active
   useEffect(() => {
