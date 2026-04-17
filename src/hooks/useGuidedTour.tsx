@@ -28,6 +28,8 @@ export type TourStep = {
   waitMs?: number;
   /** If true, body popup overlaps the highlighted area (for sidebar spotlight) */
   popupOffset?: number;
+  /** Hide the current spotlight immediately and only restore it when the new target exists */
+  hideSpotlightWhileTargetLoads?: boolean;
 };
 
 interface GuidedTourContextValue {
@@ -283,6 +285,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       placement: "left",
       injectDemoLead: true,
       waitMs: 350,
+      hideSpotlightWhileTargetLoads: true,
       onEnter: async () => {
         const dialog = await openDemoLeadDialog();
         if (!dialog) return;
