@@ -36,6 +36,7 @@ interface GuidedTourContextValue {
   isActive: boolean;
   currentStepIndex: number;
   steps: TourStep[];
+  direction: "next" | "prev";
   start: () => void;
   next: () => void;
   prev: () => void;
@@ -125,6 +126,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [direction, setDirection] = useState<"next" | "prev">("next");
   const startedRef = useRef(false);
 
   const steps: TourStep[] = [
@@ -559,6 +561,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   }, [goToStep]);
 
   const next = useCallback(() => {
+    setDirection("next");
     setCurrentStepIndex((i) => {
       const ni = Math.min(i + 1, steps.length - 1);
       goToStep(ni);
@@ -567,6 +570,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   }, [goToStep, steps.length]);
 
   const prev = useCallback(() => {
+    setDirection("prev");
     setCurrentStepIndex((i) => {
       const ni = Math.max(i - 1, 0);
       goToStep(ni);
@@ -602,7 +606,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   return (
     <GuidedTourContext.Provider
-      value={{ isActive, currentStepIndex, steps, start, next, prev, finish }}
+      value={{ isActive, currentStepIndex, steps, direction, start, next, prev, finish }}
     >
       {children}
     </GuidedTourContext.Provider>

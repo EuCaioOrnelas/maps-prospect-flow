@@ -18,8 +18,9 @@ const POPUP_W = 400;
 const POPUP_GAP = 16;
 
 export function GuidedTour() {
-  const { isActive, currentStepIndex, steps, next, prev, finish } = useGuidedTour();
+  const { isActive, currentStepIndex, steps, direction, next, prev, finish } = useGuidedTour();
   const step = steps[currentStepIndex];
+  const hideOnLoad = !!step?.hideSpotlightWhileTargetLoads && direction === "next";
   const [rect, setRect] = useState<Rect | null>(null);
   const [popupAnchorRect, setPopupAnchorRect] = useState<Rect | null>(null);
   const lastScrolledStepRef = useRef<string | null>(null);
@@ -51,7 +52,7 @@ export function GuidedTour() {
       return;
     }
 
-    if (step.hideSpotlightWhileTargetLoads) {
+    if (hideOnLoad) {
       setRect(null);
     }
 
@@ -66,7 +67,7 @@ export function GuidedTour() {
     const measure = () => {
       const el = document.querySelector(step.target!) as HTMLElement | null;
       if (!el) {
-        if (step.hideSpotlightWhileTargetLoads) {
+        if (hideOnLoad) {
           setRect(null);
         }
         attempts += 1;
@@ -142,7 +143,7 @@ export function GuidedTour() {
   const total = steps.length;
   const isLast = currentStepIndex === total - 1;
   const isFirst = currentStepIndex === 0;
-  const popupRect = rect ?? (step.hideSpotlightWhileTargetLoads ? popupAnchorRect : null);
+  const popupRect = rect ?? (hideOnLoad ? popupAnchorRect : null);
 
   // Compute popup position
   let popupStyle: React.CSSProperties = {};
