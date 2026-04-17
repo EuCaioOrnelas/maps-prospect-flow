@@ -374,7 +374,6 @@ interface WelcomeStepProps {
   title: string;
   body: string;
   onStart: () => void;
-  onSkip: () => void;
 }
 
 function WelcomeStep({ title, body, onStart }: WelcomeStepProps) {
