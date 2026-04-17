@@ -20,6 +20,8 @@ export type TourStep = {
   injectDemoLead?: boolean;
   /** Inject aspirational fake data into the cockpit (MainDashboard) */
   injectDemoCockpit?: boolean;
+  /** Keep the viewport pinned to the top for this step */
+  keepViewportTop?: boolean;
   /** Run an action right when this step becomes active (e.g. typing simulation) */
   onEnter?: () => void | Promise<void>;
   /** Wait this many ms before marking the step "ready" (after route transitions) */
@@ -180,6 +182,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       title: "Defina o que você procura",
       body: "Informe o nicho de atuação e a cidade desejada. A Wiize entrega empresas reais do Google Maps já organizadas para a sua abordagem.",
       placement: "bottom",
+      keepViewportTop: true,
       waitMs: 600,
     },
     {
@@ -512,6 +515,10 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         await new Promise((r) => setTimeout(r, step.waitMs ?? 500));
       } else if (step.waitMs) {
         await new Promise((r) => setTimeout(r, step.waitMs));
+      }
+
+      if (step.keepViewportTop) {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       }
 
       // For sidebar steps, wait for the full sidebar expansion (300ms width)
