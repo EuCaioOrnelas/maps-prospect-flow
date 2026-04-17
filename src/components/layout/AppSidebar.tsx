@@ -194,11 +194,19 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
   const showUpgrade = profile?.plan !== 'scale';
 
+  const isTourActive = typeof document !== "undefined" && document.body.classList.contains("tour-active");
+
   return (
     <div
       className="fixed left-0 top-0 h-screen z-[60] hidden lg:flex"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => {
+        if (document.body.classList.contains("tour-active")) return;
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        if (document.body.classList.contains("tour-active")) return;
+        handleMouseLeave();
+      }}
     >
       {/* Sidebar */}
       <aside
