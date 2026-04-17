@@ -224,7 +224,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             <span
               className={cn(
                 "text-[1.7rem] tracking-tight text-foreground whitespace-nowrap transition-all duration-200 ease-out flex items-center",
-                isHovered 
+                (isHovered || tourForceOpen)
                   ? "opacity-100 translate-x-0" 
                   : "opacity-0 -translate-x-2 w-0 overflow-hidden"
               )}
