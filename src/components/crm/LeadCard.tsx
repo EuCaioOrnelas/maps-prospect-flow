@@ -156,7 +156,7 @@ const LeadCardComponent = ({
       {/* Phone */}
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2 min-w-0">
         <Phone className="w-3 h-3 shrink-0" />
-        <span className="truncate min-w-0">{formatPhoneShort(lead.phone)}</span>
+        <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
 
       {/* Estimated Value */}
