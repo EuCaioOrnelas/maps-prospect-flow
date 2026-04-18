@@ -325,6 +325,7 @@ export default function CheckoutCard() {
                     cardHolder={cardHolder}
                     expiryDate={cardExpiry}
                     isFlipped={cvvFocused}
+                    maskNumber={!showCardNumber}
                   />
                 </div>
 
