@@ -9,6 +9,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatPhoneShort } from '@/lib/phoneUtils';
 import { useLeadScores } from '@/hooks/useLeadScores';
+import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
 
 interface LeadCardProps {
   lead: Lead;
