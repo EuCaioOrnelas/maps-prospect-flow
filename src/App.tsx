@@ -173,6 +173,25 @@ const App = () => (
                 <Route path="/prospeccao" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/oportunidades" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/oportunidades/gestao" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><OpportunitiesManagement /></Suspense></ProtectedRoute>} />
+                <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppCampaign /></ProtectedRoute>} />
+                <Route path="/whatsapp/reports" element={<ProtectedRoute><WhatsAppReports /></ProtectedRoute>} />
+                <Route path="/meta-campaigns" element={<ProtectedRoute><MetaCampaigns /></ProtectedRoute>} />
+                <Route path="/meta-api-guide" element={<ProtectedRoute><MetaApiGuide /></ProtectedRoute>} />
+                <Route path="/crm" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
+                <Route path="/crm/score" element={<ProtectedRoute><CRMScore /></ProtectedRoute>} />
+                <Route path="/crm-coming-soon" element={<ProtectedRoute><CRMComingSoon /></ProtectedRoute>} />
+                <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+                <Route path="/agents" element={<ProtectedRoute><AIAgents /></ProtectedRoute>} />
+                <Route path="/agents/reports" element={<ProtectedRoute><AgentReports /></ProtectedRoute>} />
+                <Route path="/fluxos" element={<ProtectedRoute><WhatsAppAutomations /></ProtectedRoute>} />
+                <Route path="/fluxos/novo" element={<ProtectedRoute><CreateFlowAI /></ProtectedRoute>} />
+                <Route path="/fluxos/:id" element={<ProtectedRoute><WhatsAppFlowEditor /></ProtectedRoute>} />
+                <Route path="/warming" element={<ProtectedRoute><Warming /></ProtectedRoute>} />
+                <Route path="/warming/reports" element={<ProtectedRoute><WarmingReports /></ProtectedRoute>} />
+                <Route path="/consultoria" element={<ProtectedRoute><Consultoria /></ProtectedRoute>} />
+                <Route path="/cancellation-feedback" element={<ProtectedRoute><CancellationFeedback /></ProtectedRoute>} />
+                <Route path="/thank-you" element={<LightThemeWrapper><ThankYou /></LightThemeWrapper>} />
+                <Route path="/r/:token" element={<LightThemeWrapper><SharedReport /></LightThemeWrapper>} />
 
                 {/* Admin Layout with nested routes */}
                 <Route
