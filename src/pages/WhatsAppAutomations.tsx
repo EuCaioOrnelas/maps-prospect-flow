@@ -142,7 +142,7 @@ export default function WhatsAppAutomations() {
     const template = getFlowTemplate(tpl.id);
     if (!template) {
       // Fallback to AI if no hardcoded template
-      navigate(`/fluxos/criar-ia?prompt=${encodeURIComponent(tpl.prompt)}`);
+      navigate(`/fluxos/novo?prompt=${encodeURIComponent(tpl.prompt)}`);
       return;
     }
 
@@ -258,7 +258,7 @@ export default function WhatsAppAutomations() {
             </button>
 
             <button
-              onClick={() => navigate("/fluxos/criar-ia")}
+              onClick={() => navigate("/fluxos/novo")}
               className="group relative flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
             >
               <Badge className="absolute -top-2 right-3 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 shadow-md">
