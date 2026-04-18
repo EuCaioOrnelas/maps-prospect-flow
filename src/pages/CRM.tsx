@@ -377,6 +377,22 @@ export default function CRM() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        variant={phoneHidden ? "secondary" : "outline"}
+                        size="icon"
+                        onClick={togglePhonePrivacy}
+                        className="h-8 w-8 sm:h-9 sm:w-9"
+                        aria-label={phoneHidden ? "Mostrar finais dos telefones" : "Ocultar finais dos telefones"}
+                      >
+                        {phoneHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {phoneHidden ? "Mostrar finais dos telefones" : "Ocultar finais dos telefones"}
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setManageStagesOpen(true)}
