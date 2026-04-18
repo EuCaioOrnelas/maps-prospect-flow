@@ -341,14 +341,30 @@ export default function CheckoutCard() {
                       <Hash className="h-3 w-3 text-muted-foreground" />
                       Número do cartão
                     </Label>
-                    <Input
-                      id="card-number"
-                      placeholder="0000 0000 0000 0000"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                      maxLength={19}
-                      autoFocus
-                    />
+                    <div className="relative">
+                      <Input
+                        id="card-number"
+                        placeholder="0000 0000 0000 0000"
+                        value={showCardNumber ? cardNumber : cardNumber.replace(/\d(?=\d{4})/g, "•")}
+                        onChange={(e) => {
+                          if (!showCardNumber) return;
+                          setCardNumber(formatCardNumber(e.target.value));
+                        }}
+                        readOnly={!showCardNumber}
+                        maxLength={19}
+                        autoFocus
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCardNumber((v) => !v)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                        aria-label={showCardNumber ? "Ocultar número" : "Mostrar número"}
+                        tabIndex={-1}
+                      >
+                        {showCardNumber ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-1.5">
