@@ -41,6 +41,7 @@ export default function CRM() {
   const isMobile = useIsMobile();
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("crm_beta_warning");
   useAutoScoreTracking("crm");
+  const { hidden: phoneHidden, toggle: togglePhonePrivacy } = usePhonePrivacy();
 
   const {
     stages, 
