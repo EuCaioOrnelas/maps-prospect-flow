@@ -90,6 +90,7 @@ export default function CheckoutCard() {
   const [cepError, setCepError] = useState("");
   const [cvvFocused, setCvvFocused] = useState(false);
   const [installmentDropdownOpen, setInstallmentDropdownOpen] = useState(false);
+  const [showCardNumber, setShowCardNumber] = useState(true);
 
   // Load customer data from sessionStorage
   useEffect(() => {
