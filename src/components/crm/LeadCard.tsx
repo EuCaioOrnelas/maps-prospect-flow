@@ -33,9 +33,12 @@ const LeadCardComponent = ({
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   const { getScoreForPhone } = useLeadScores();
+  const { hidden: phoneHidden } = usePhonePrivacy();
   
   const scoreData = getScoreForPhone(lead.phone);
-  const displayName = lead.contact_name || lead.company_name || formatPhoneShort(lead.phone);
+  const phoneFormatted = formatPhoneShort(lead.phone);
+  const phoneDisplay = phoneHidden ? maskPhoneTail(phoneFormatted) : phoneFormatted;
+  const displayName = lead.contact_name || lead.company_name || phoneDisplay;
   const hasResponse = !!lead.last_response_at;
 
   const handleEditClick = (e: React.MouseEvent) => {
