@@ -7,6 +7,7 @@ interface AnimatedCreditCardProps {
   cardHolder: string
   expiryDate: string
   isFlipped: boolean
+  maskNumber?: boolean
 }
 
 export default function AnimatedCreditCard({
@@ -14,6 +15,7 @@ export default function AnimatedCreditCard({
   cardHolder,
   expiryDate,
   isFlipped,
+  maskNumber = false,
 }: AnimatedCreditCardProps) {
   const rotateX = useSpring(0, { stiffness: 40, damping: 30 })
   const rotateY = useSpring(0, { stiffness: 40, damping: 30 })
