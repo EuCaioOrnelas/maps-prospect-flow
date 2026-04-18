@@ -9,6 +9,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatPhoneShort } from '@/lib/phoneUtils';
 import { useLeadScores } from '@/hooks/useLeadScores';
+import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
 
 interface LeadCardProps {
   lead: Lead;
@@ -32,9 +33,12 @@ const LeadCardComponent = ({
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   const { getScoreForPhone } = useLeadScores();
+  const { hidden: phoneHidden } = usePhonePrivacy();
   
   const scoreData = getScoreForPhone(lead.phone);
-  const displayName = lead.contact_name || lead.company_name || formatPhoneShort(lead.phone);
+  const phoneFormatted = formatPhoneShort(lead.phone);
+  const phoneDisplay = phoneHidden ? maskPhoneTail(phoneFormatted) : phoneFormatted;
+  const displayName = lead.contact_name || lead.company_name || phoneDisplay;
   const hasResponse = !!lead.last_response_at;
 
   const handleEditClick = (e: React.MouseEvent) => {
@@ -152,7 +156,7 @@ const LeadCardComponent = ({
       {/* Phone */}
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2 min-w-0">
         <Phone className="w-3 h-3 shrink-0" />
-        <span className="truncate min-w-0">{formatPhoneShort(lead.phone)}</span>
+        <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
 
       {/* Estimated Value */}

@@ -15,7 +15,8 @@ import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { SEO } from '@/components/SEO';
-import { Users, Plus, Trash2, FlaskConical, MessageCircle, Settings2 } from 'lucide-react';
+import { Users, Plus, Trash2, FlaskConical, MessageCircle, Settings2, Eye, EyeOff } from 'lucide-react';
+import { usePhonePrivacy } from '@/hooks/usePhonePrivacy';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -40,6 +41,7 @@ export default function CRM() {
   const isMobile = useIsMobile();
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("crm_beta_warning");
   useAutoScoreTracking("crm");
+  const { hidden: phoneHidden, toggle: togglePhonePrivacy } = usePhonePrivacy();
 
   const {
     stages, 
@@ -372,6 +374,22 @@ export default function CRM() {
                   />
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={phoneHidden ? "secondary" : "outline"}
+                        size="icon"
+                        onClick={togglePhonePrivacy}
+                        className="h-8 w-8 sm:h-9 sm:w-9"
+                        aria-label={phoneHidden ? "Mostrar finais dos telefones" : "Ocultar finais dos telefones"}
+                      >
+                        {phoneHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {phoneHidden ? "Mostrar finais dos telefones" : "Ocultar finais dos telefones"}
+                    </TooltipContent>
+                  </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
