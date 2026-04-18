@@ -7,6 +7,7 @@ interface AnimatedCreditCardProps {
   cardHolder: string
   expiryDate: string
   isFlipped: boolean
+  maskNumber?: boolean
 }
 
 export default function AnimatedCreditCard({
@@ -14,6 +15,7 @@ export default function AnimatedCreditCard({
   cardHolder,
   expiryDate,
   isFlipped,
+  maskNumber = false,
 }: AnimatedCreditCardProps) {
   const rotateX = useSpring(0, { stiffness: 40, damping: 30 })
   const rotateY = useSpring(0, { stiffness: 40, damping: 30 })
@@ -42,7 +44,14 @@ export default function AnimatedCreditCard({
   const formatDisplay = (num: string) => {
     const clean = num.replace(/\s/g, "")
     const padded = clean.padEnd(16, "•")
-    return `${padded.slice(0, 4)} ${padded.slice(4, 8)} ${padded.slice(8, 12)} ${padded.slice(12, 16)}`
+    const groups = [padded.slice(0, 4), padded.slice(4, 8), padded.slice(8, 12), padded.slice(12, 16)]
+    if (maskNumber && clean.length > 0) {
+      const maskGroup = (g: string) => g.replace(/\d/g, "•")
+      groups[0] = maskGroup(groups[0])
+      groups[1] = maskGroup(groups[1])
+      groups[2] = maskGroup(groups[2])
+    }
+    return groups.join(" ")
   }
 
   return (
