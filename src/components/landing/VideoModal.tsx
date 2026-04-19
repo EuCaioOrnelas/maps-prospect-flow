@@ -13,6 +13,7 @@ interface VideoModalProps {
 
 export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }: VideoModalProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const videoScaleX = 1.055;
 
   useEffect(() => {
     if (!open) {
@@ -41,13 +42,14 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
-  const videoSrc = "https://www.youtube.com/embed/ZRzK42SYNFc?si=LrJuZKLrktuhBMLa&rel=0&modestbranding=1&disablekb=1&autoplay=1&vq=hd1080&hd=1";
+  const videoSrc = "https://www.youtube.com/embed/ZRzK42SYNFc?si=LrJuZKLrktuhBMLa&rel=0&modestbranding=1&disablekb=1&autoplay=1&playsinline=1&vq=hd1080&hd=1";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         id="video-modal-container"
-        className="max-w-[98vw] sm:max-w-[96vw] lg:max-w-[92vw] xl:max-w-[1280px] w-full p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden"
+        className="w-[96vw] max-w-none max-h-[94vh] p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden"
+        style={{ width: "min(96vw, calc((100vh - 10rem) * 16 / 9), 1480px)" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-5 py-2.5 border-b border-border bg-card">
@@ -77,13 +79,10 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
           </div>
         </div>
 
-        {/* Video — container na proporção do conteúdo real (~2.13:1).
-            O iframe mantém 16:9 e é escalado pela largura, então as barras pretas
-            superior/inferior do YouTube ficam fora do container (cortadas), sem cortar conteúdo. */}
-        <div className="relative w-full bg-black overflow-hidden" style={{ aspectRatio: "2.13 / 1" }}>
+        <div className="relative w-full overflow-hidden bg-card" style={{ aspectRatio: "16 / 9" }}>
           <iframe
-            className="absolute left-0 top-1/2 -translate-y-1/2 block"
-            style={{ width: "100%", aspectRatio: "16 / 9" }}
+            className="absolute inset-0 block h-full w-full origin-center"
+            style={{ transform: `scaleX(${videoScaleX})` }}
             src={videoSrc}
             title="Wiize — Demonstração"
             frameBorder="0"
