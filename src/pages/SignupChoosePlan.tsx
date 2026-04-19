@@ -145,14 +145,9 @@ export default function SignupChoosePlan() {
             </p>
 
             <div className="mt-5 inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-0.5 text-amber-500">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={12} fill="currentColor" strokeWidth={0} />
-                ))}
-              </div>
-              <span className="font-medium text-foreground">4,9/5</span>
-              <span>·</span>
-              <span>Avaliação média de empresas B2B no Brasil</span>
+              <TrendingUp size={14} className="text-primary" />
+              <span className="font-semibold text-foreground">+500 empresas</span>
+              <span>já prospectam com a Wiize</span>
             </div>
           </div>
 
