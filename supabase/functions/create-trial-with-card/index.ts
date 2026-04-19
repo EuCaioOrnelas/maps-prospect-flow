@@ -136,6 +136,7 @@ serve(async (req) => {
         address: customerData.address || "Não informado",
         province: customerData.neighborhood || "Centro",
         city: (city || customerData.city || "São Paulo").trim(),
+        cityName: (city || customerData.city || "São Paulo").trim(),
         state: (state || customerData.state || "SP").trim().toUpperCase().slice(0, 2),
         phone,
         mobilePhone: phone,
