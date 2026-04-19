@@ -27,40 +27,39 @@ const PLANS = [
     key: "start",
     name: "Start",
     monthly: 296,
-    desc: "Para times pequenos validando prospecção",
+    desc: "Comece a gerar oportunidades reais sem complicar a operação",
     highlight: false,
     perks: [
-      "Oportunidades com alto potencial de fechamento",
-      "Mensagens geradas por IA para iniciar conversas",
-      "Gestão de contatos em um só lugar (CRM)",
-      "Priorize oportunidades com maior chance de fechamento (Score)",
-      "Disparos via WhatsApp e Meta",
-      "Até 2 números conectados",
-      "Suporte por email",
-      "Operação semi-automática",
+      "Encontre empresas com perfil ideal para o seu negócio",
+      "Inicie conversas no WhatsApp com mensagens prontas pela IA",
+      "Acompanhe cada negociação em um CRM visual e organizado",
+      "Saiba quem tem mais chance de fechar com o Score de leads",
+      "Dispare em massa pelo WhatsApp e Meta com segurança",
+      "Conecte até 2 números de WhatsApp",
+      "Suporte por e-mail em horário comercial",
+      "Operação semi-automática para o time comercial",
     ],
     limitations: [
-      "Sem automação",
-      "Sem follow-up",
-      "Sem agente de IA",
+      "Sem automação de atendimento",
+      "Sem follow-up automático",
+      "Sem agente de IA respondendo por você",
     ],
   },
   {
     key: "growth",
     name: "Growth",
     monthly: 696,
-    desc: "O plano que 8 em cada 10 empresas escolhem",
+    desc: "Coloque sua prospecção no piloto automático e escale com IA",
     highlight: true,
     perks: [
-      "Tudo do Start (leads, CRM e disparos)",
-      "Priorize oportunidades com maior chance de fechamento (Score)",
-      "Automação de atendimento",
-      "Follow-up automático inteligente",
-      "Agente de IA em conversas",
-      "Fluxos de vendas automatizados",
-      "Até 5 números conectados",
-      "Suporte prioritário",
-      "Operação totalmente automatizada",
+      "Tudo do Start (leads, CRM, disparos e Score)",
+      "Atendimento automático 24/7 sem perder o tom humano",
+      "Follow-up inteligente que reaquece quem parou de responder",
+      "Agente de IA conversando e qualificando leads por você",
+      "Fluxos de vendas automatizados ponta a ponta",
+      "Conecte até 5 números de WhatsApp",
+      "Suporte prioritário com resposta no mesmo dia",
+      "Operação 100% automatizada para escalar sem contratar",
     ],
     limitations: [],
   },
@@ -175,14 +174,14 @@ export default function SignupChoosePlan() {
           {/* Plans */}
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-display text-xl font-semibold">
-              Escolha seu plano para testar grátis hoje
+              Escolha como quer crescer nos próximos 7 dias
             </h2>
             <span className="text-xs text-muted-foreground hidden sm:block">
-              Você pode trocar depois
+              Troque de plano quando quiser
             </span>
           </div>
           <p className="text-sm text-muted-foreground mb-5">
-            Todos os recursos ficam liberados durante os 7 dias. O plano só ativa no 8º dia se você continuar.
+            Você usa a Wiize completa por 7 dias, sem pagar nada agora. O plano escolhido só passa a valer no 8º dia, se você decidir continuar.
           </p>
 
           <div className="grid md:grid-cols-2 gap-4 mb-8">
@@ -201,7 +200,7 @@ export default function SignupChoosePlan() {
                 >
                   {plan.highlight && (
                     <span className="absolute -top-2.5 left-6 bg-primary text-primary-foreground text-[10px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 whitespace-nowrap">
-                      🔥 Mais escolhido por empresas em crescimento
+                      ⚡ Escolha de 8 em cada 10 empresas que crescem com a Wiize
                     </span>
                   )}
                   <div className="flex items-start justify-between gap-3 h-[60px]">
@@ -227,14 +226,14 @@ export default function SignupChoosePlan() {
                       <span className="text-sm font-medium text-foreground">hoje</span>
                     </div>
                     <p className="text-sm font-medium text-foreground mt-1.5 inline-flex items-center gap-1.5">
-                      <Sparkles size={13} className="text-primary" /> 7 dias grátis completos
+                      <Sparkles size={13} className="text-primary" /> 7 dias com a plataforma completa liberada
                     </p>
                     <div className="mt-3 rounded-lg bg-muted/40 border border-border/60 px-3 py-2">
                       <p className="text-xs text-foreground">
-                        A partir do 8º dia: <span className="font-semibold">R$ {plan.monthly.toLocaleString("pt-BR")}/mês</span>, cobrado automaticamente no cartão se você continuar.
+                        Depois do trial: <span className="font-semibold">R$ {plan.monthly.toLocaleString("pt-BR")}/mês</span>. Você só é cobrado se decidir continuar.
                       </p>
                       <p className="text-[11px] text-muted-foreground mt-1 inline-flex items-center gap-1">
-                        <ShieldCheck size={11} /> Cancele em 1 clique antes da cobrança, sem custo.
+                        <ShieldCheck size={11} /> Cancele em 1 clique pelo Perfil, sem custo e sem ligação.
                       </p>
                     </div>
                   </div>
@@ -257,7 +256,7 @@ export default function SignupChoosePlan() {
           </div>
 
           <p className="text-center text-xs text-muted-foreground mb-8">
-            Precisa de mais volume?{" "}
+            Mais de 5.000 oportunidades por mês?{" "}
             <Link to="/contato" className="text-primary hover:underline">
               Fale com nosso time sobre o plano Scale
             </Link>
@@ -271,13 +270,13 @@ export default function SignupChoosePlan() {
               onClick={continueToSignup}
               className="w-full max-w-md h-14 text-base"
             >
-              Começar 7 dias grátis →
+              Começar meu teste grátis agora →
             </Button>
             <p className="text-xs text-muted-foreground text-center max-w-md flex items-center gap-1.5 justify-center">
-              <Lock size={11} /> Sem cobrança hoje • Cancele quando quiser
+              <Lock size={11} /> R$ 0,00 hoje • Cancele quando quiser, em 1 clique
             </p>
             <p className="text-[11px] text-muted-foreground/80 text-center max-w-md">
-              No 8º dia, R$ {selectedPlan.monthly.toLocaleString("pt-BR")}/mês apenas se você decidir continuar.
+              Após o trial: R$ {selectedPlan.monthly.toLocaleString("pt-BR")}/mês, apenas se você continuar usando.
             </p>
             <p className="text-xs text-muted-foreground mt-2">
               Já tem conta?{" "}
