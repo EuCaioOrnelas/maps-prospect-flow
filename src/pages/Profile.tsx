@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { SEO } from "@/components/SEO";
+import { TrialCancelCard } from "@/components/profile/TrialCancelCard";
 import {
   Dialog,
   DialogContent,
@@ -1049,6 +1050,9 @@ const Profile = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Trial Cancel Card — só aparece se está em trial com cartão */}
+          <TrialCancelCard />
 
           {/* Email Preferences Card */}
           <Card className="border-border/50">

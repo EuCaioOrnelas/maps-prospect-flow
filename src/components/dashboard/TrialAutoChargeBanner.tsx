@@ -38,19 +38,20 @@ export const TrialAutoChargeBanner = () => {
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm text-foreground">
           {daysLeft === 0
-            ? `Sua cobrança automática acontece hoje (${format(chargeDate, "dd 'de' MMMM", { locale: ptBR })})`
+            ? `Seu plano ${planLabel} ativa hoje (${format(chargeDate, "dd 'de' MMMM", { locale: ptBR })})`
             : daysLeft === 1
-              ? `Sua cobrança automática acontece amanhã (${format(chargeDate, "dd 'de' MMMM", { locale: ptBR })})`
-              : `Sua cobrança automática acontece em ${daysLeft} dias (${format(chargeDate, "dd/MM/yyyy")})`}
+              ? `Seu plano ${planLabel} ativa amanhã (${format(chargeDate, "dd 'de' MMMM", { locale: ptBR })})`
+              : `Seu plano ${planLabel} ativa em ${daysLeft} dias (${format(chargeDate, "dd/MM/yyyy")})`}
         </p>
         <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-          Vamos cobrar automaticamente <strong>{planValue}</strong> no seu cartão final{" "}
-          <strong>**** {last4 || "----"}</strong> e ativar o plano <strong>{planLabel}</strong>. Caso não queira
-          continuar usando o Wiize, é necessário ir em <strong>Perfil → Cancelar ativação da assinatura</strong>{" "}
-          antes da data acima.
+          Seu teste de 7 dias está acabando. Vamos ativar o plano <strong>{planLabel}</strong> ({planValue}/mês)
+          no cartão final <strong>**** {last4 || "----"}</strong> que você cadastrou como garantia de
+          compromisso. Se ainda não decidiu continuar, é só ir em{" "}
+          <strong>Perfil → Cancelar ativação automática</strong> e nada será cobrado.
         </p>
         <div className="flex items-center gap-2 mt-2 text-[11px] text-muted-foreground">
-          <CreditCard size={12} /> Cobrança via Asaas, fatura emitida no seu cartão de crédito.
+          <CreditCard size={12} /> O cartão é apenas uma garantia — só vira cobrança se você decidir
+          continuar.
         </div>
       </div>
       <button

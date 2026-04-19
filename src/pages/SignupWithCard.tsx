@@ -234,7 +234,7 @@ export default function SignupWithCard() {
 
   return (
     <>
-      <SEO title="Crie sua conta — 7 dias grátis" description="Teste o Wiize por 7 dias. Cartão validado, cobrança só após o trial." />
+      <SEO title="Cadastro com compromisso — 7 dias grátis" description="Cartão como garantia de seriedade, não como cobrança. Teste o Wiize por 7 dias e decida se faz sentido." />
       <div className="min-h-screen bg-background overflow-x-hidden">
         <div className="absolute inset-0 bg-gradient-glow opacity-30 pointer-events-none" />
         <div className="container mx-auto max-w-5xl px-4 py-8 relative z-10">
@@ -254,7 +254,7 @@ export default function SignupWithCard() {
             <div className="glass rounded-2xl p-6 sm:p-8">
               <h1 className="font-display text-2xl font-bold mb-1">Crie sua conta</h1>
               <p className="text-sm text-muted-foreground mb-6">
-                Plano: <strong className="text-foreground">{plan.name}</strong> • 7 dias grátis
+                Plano: <strong className="text-foreground">{plan.name}</strong> • 7 dias grátis com cartão como garantia de compromisso
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -287,7 +287,7 @@ export default function SignupWithCard() {
 
                 <section className="space-y-3">
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                    Dados de cobrança
+                    Dados da empresa
                   </h2>
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
@@ -321,7 +321,7 @@ export default function SignupWithCard() {
 
                 <section className="space-y-3">
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                    <Lock size={12} /> Cartão de crédito (não cobrado hoje)
+                    <Lock size={12} /> Cartão como garantia de compromisso (R$ 0,00 hoje)
                   </h2>
                   <div className="space-y-1.5">
                     <Label>Nome impresso no cartão</Label>
@@ -366,8 +366,8 @@ export default function SignupWithCard() {
                     <Link to="/terms" className="text-primary hover:underline" target="_blank">
                       Termos de Uso
                     </Link>{" "}
-                    e autorizo a cobrança de R$ {plan.monthly} no meu cartão em {trialEndDate}, caso eu não cancele
-                    antes pelo perfil.
+                    e entendo que o cartão é uma garantia de compromisso. Caso eu não cancele pelo
+                    Perfil até {trialEndDate}, ativam o plano de R$ {plan.monthly}/mês no meu cartão.
                   </Label>
                 </div>
 
@@ -378,7 +378,7 @@ export default function SignupWithCard() {
                       Criando conta...
                     </>
                   ) : (
-                    "Começar trial grátis de 7 dias"
+                    "Começar 7 dias com compromisso"
                   )}
                 </Button>
                 <p className="text-center text-xs text-muted-foreground">
@@ -394,20 +394,20 @@ export default function SignupWithCard() {
             <aside className="space-y-4">
               <div className="rounded-2xl border border-border bg-card p-5">
                 <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                  <CreditCard size={14} className="text-primary" /> Resumo da cobrança
+                  <CreditCard size={14} className="text-primary" /> Cartão como compromisso
                 </h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Cobrança hoje</span>
+                    <span className="text-muted-foreground">Hoje</span>
                     <span className="font-bold text-primary">R$ 0,00</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Após 7 dias ({trialEndDate})</span>
-                    <span className="font-bold">R$ {plan.monthly},00</span>
+                    <span className="text-muted-foreground">Se continuar (em {trialEndDate})</span>
+                    <span className="font-bold">R$ {plan.monthly},00/mês</span>
                   </div>
                   <div className="flex items-center justify-between text-xs pt-2 border-t border-border">
-                    <span className="text-muted-foreground">Renovação mensal</span>
-                    <span className="text-muted-foreground">Automática</span>
+                    <span className="text-muted-foreground">Se cancelar antes</span>
+                    <span className="text-primary font-semibold">R$ 0,00</span>
                   </div>
                 </div>
               </div>
@@ -416,19 +416,19 @@ export default function SignupWithCard() {
                 <div className="flex items-start gap-2">
                   <Calendar size={14} className="text-primary shrink-0 mt-0.5" />
                   <p>
-                    <strong>7 dias grátis</strong> com acesso completo.
+                    <strong>7 dias completos</strong> com acesso total ao plano escolhido.
                   </p>
                 </div>
                 <div className="flex items-start gap-2">
                   <ShieldCheck size={14} className="text-primary shrink-0 mt-0.5" />
                   <p>
-                    Cancele quando quiser pelo <strong>Perfil → Cancelar ativação</strong>. Sem cobrança se
-                    cancelar antes do 7º dia.
+                    O cartão filtra curiosos de empresas sérias. Cancele em 1 clique no{" "}
+                    <strong>Perfil → Cancelar ativação automática</strong> e nada é cobrado.
                   </p>
                 </div>
                 <div className="flex items-start gap-2">
                   <AlertCircle size={14} className="text-primary shrink-0 mt-0.5" />
-                  <p>Apenas 1 conta por CPF/IP/dispositivo.</p>
+                  <p>1 conta por CPF/IP/dispositivo — pra manter a qualidade do ambiente.</p>
                 </div>
               </div>
 
