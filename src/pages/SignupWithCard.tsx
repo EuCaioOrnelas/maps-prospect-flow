@@ -410,7 +410,7 @@ export default function SignupWithCard() {
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label>CPF ou CNPJ</Label>
-                          <Input value={taxId} onChange={(e) => setTaxId(fmtTaxId(e.target.value))} required placeholder="000.000.000-00 ou 00.000.000/0000-00" />
+                          <Input value={taxId} onChange={(e) => setTaxId(fmtTaxId(e.target.value))} required placeholder="CPF ou CNPJ" inputMode="numeric" />
                         </div>
                         <div className="space-y-1.5">
                           <Label>Telefone</Label>
