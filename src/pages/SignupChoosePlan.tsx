@@ -109,7 +109,7 @@ export default function SignupChoosePlan() {
     <>
       <SEO
         title="Comece grátis por 7 dias | Wiize"
-        description="7 dias completos com acesso total. Sem cobrança hoje. Cancele em 1 clique. Mais de 2.000 empresas já prospectam com a Wiize."
+        description="7 dias completos com acesso total. Sem cobrança hoje. Cancele em 1 clique. Mais de 500 empresas já prospectam com a Wiize."
         url="https://wiize.com.br/signup/escolher-plano"
       />
       <div className="min-h-screen bg-background overflow-x-hidden">
