@@ -204,10 +204,10 @@ export default function SignupChoosePlan() {
                       🔥 Mais escolhido por empresas em crescimento
                     </span>
                   )}
-                  <div className="flex items-start justify-between mb-4 min-h-[52px]">
-                    <div>
-                      <h3 className="font-semibold text-lg">Wiize {plan.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{plan.desc}</p>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1 min-w-0 pr-3">
+                      <h3 className="font-semibold text-lg leading-tight">Wiize {plan.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2 min-h-[2.25rem]">{plan.desc}</p>
                     </div>
                     <div
                       className={cn(
