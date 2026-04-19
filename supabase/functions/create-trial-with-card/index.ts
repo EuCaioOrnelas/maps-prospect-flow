@@ -79,21 +79,27 @@ export const buildCreditCardHolderInfo = ({
   city: string;
   state: string;
   phone: string;
-}) => ({
-  name: customerData.name,
-  email: customerData.email,
-  cpfCnpj,
-  postalCode: postalCode || "01310100",
-  addressNumber: customerData.addressNumber || "S/N",
-  address: customerData.address || "Não informado",
-  province: customerData.neighborhood || "Centro",
-  cityName: city,
-  state: normalizeBrazilianState(state),
-  phone,
-  mobilePhone: phone,
-});
+}) => {
+  const resolvedCity = (city || customerData.city || "São Paulo").trim() || "São Paulo";
+  const resolvedState = normalizeBrazilianState(state || customerData.state || "SP");
 
-const buildDirectSubscriptionHolderInfo = ({
+  return {
+    name: customerData.name,
+    email: customerData.email,
+    cpfCnpj,
+    postalCode: postalCode || "01310100",
+    addressNumber: customerData.addressNumber || "S/N",
+    address: customerData.address || "Não informado",
+    province: customerData.neighborhood || "Centro",
+    city: resolvedCity,
+    cityName: resolvedCity,
+    state: resolvedState,
+    phone,
+    mobilePhone: phone,
+  };
+};
+
+export const buildDirectSubscriptionHolderInfo = ({
   customerData,
   cpfCnpj,
   postalCode,
@@ -107,19 +113,25 @@ const buildDirectSubscriptionHolderInfo = ({
   city: string;
   state: string;
   phone: string;
-}) => ({
-  name: customerData.name,
-  email: customerData.email,
-  cpfCnpj,
-  postalCode: postalCode || "01310100",
-  addressNumber: customerData.addressNumber || "S/N",
-  address: customerData.address || "Não informado",
-  province: customerData.neighborhood || "Centro",
-  cityName: city,
-  state: normalizeBrazilianState(state),
-  phone,
-  mobilePhone: phone,
-});
+}) => {
+  const resolvedCity = (city || customerData.city || "São Paulo").trim() || "São Paulo";
+  const resolvedState = normalizeBrazilianState(state || customerData.state || "SP");
+
+  return {
+    name: customerData.name,
+    email: customerData.email,
+    cpfCnpj,
+    postalCode: postalCode || "01310100",
+    addressNumber: customerData.addressNumber || "S/N",
+    address: customerData.address || "Não informado",
+    province: customerData.neighborhood || "Centro",
+    city: resolvedCity,
+    cityName: resolvedCity,
+    state: resolvedState,
+    phone,
+    mobilePhone: phone,
+  };
+};
 
 const extractAsaasErrorMessage = (payload: any) =>
   payload?.errors?.map((e: { description: string }) => e.description).join(", ") || JSON.stringify(payload);
