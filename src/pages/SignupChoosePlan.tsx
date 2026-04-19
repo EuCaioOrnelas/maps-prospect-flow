@@ -200,7 +200,7 @@ export default function SignupChoosePlan() {
                 >
                   {plan.highlight && (
                     <span className="absolute -top-2.5 left-6 bg-primary text-primary-foreground text-[10px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 whitespace-nowrap">
-                      🔥 Mais escolhido por empresas em crescimento
+                      ⚡ Escolha de 8 em cada 10 empresas que crescem com a Wiize
                     </span>
                   )}
                   <div className="flex items-start justify-between gap-3 h-[60px]">
