@@ -182,7 +182,7 @@ export default function SignupChoosePlan() {
             </span>
           </div>
           <p className="text-sm text-muted-foreground mb-5">
-            Durante o trial, todos os recursos ficam liberados — independente do plano.
+            Durante o trial, todos os recursos ficam liberados, independente do plano.
           </p>
 
           <div className="grid md:grid-cols-2 gap-4 mb-8">
