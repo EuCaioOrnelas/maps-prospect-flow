@@ -29,7 +29,8 @@ Deno.test("buildCreditCardHolderInfo sends cityName and normalized state", () =>
 
   assertEquals(holder.cityName, "Paiçandu");
   assertEquals(holder.city, "Paiçandu");
-  assertEquals(holder.state, "PR");
+  assertEquals(holder.state, "Paraná");
+  assertEquals(holder.stateUf, "PR");
 });
 
 Deno.test("buildDirectSubscriptionHolderInfo sends city and cityName for Asaas compatibility", () => {
@@ -50,5 +51,6 @@ Deno.test("buildDirectSubscriptionHolderInfo sends city and cityName for Asaas c
 
   assertEquals(holder.city, "Paiçandu");
   assertEquals(holder.cityName, "Paiçandu");
-  assertEquals(holder.state, "PR");
+  assertEquals(holder.state, "Paraná");
+  assertEquals(holder.stateUf, "PR");
 });
