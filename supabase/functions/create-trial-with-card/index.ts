@@ -17,6 +17,28 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[TRIAL-WITH-CARD] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
+// Asaas exige sigla UF de 2 letras em `creditCardHolderInfo.state`.
+// O ViaCEP devolve o nome por extenso ("Paraná") em `data.estado`, então
+// normalizamos para a sigla aqui no backend.
+const UF_BY_NAME: Record<string, string> = {
+  "acre": "AC", "alagoas": "AL", "amapa": "AP", "amapá": "AP", "amazonas": "AM",
+  "bahia": "BA", "ceara": "CE", "ceará": "CE", "distrito federal": "DF",
+  "espirito santo": "ES", "espírito santo": "ES", "goias": "GO", "goiás": "GO",
+  "maranhao": "MA", "maranhão": "MA", "mato grosso": "MT", "mato grosso do sul": "MS",
+  "minas gerais": "MG", "para": "PA", "pará": "PA", "paraiba": "PB", "paraíba": "PB",
+  "parana": "PR", "paraná": "PR", "pernambuco": "PE", "piaui": "PI", "piauí": "PI",
+  "rio de janeiro": "RJ", "rio grande do norte": "RN", "rio grande do sul": "RS",
+  "rondonia": "RO", "rondônia": "RO", "roraima": "RR", "santa catarina": "SC",
+  "sao paulo": "SP", "são paulo": "SP", "sergipe": "SE", "tocantins": "TO",
+};
+
+function toUF(input: string | undefined | null): string {
+  const v = (input || "").trim();
+  if (!v) return "";
+  if (v.length === 2) return v.toUpperCase();
+  return UF_BY_NAME[v.toLowerCase()] || v.slice(0, 2).toUpperCase();
+}
+
 // Após o trial a cobrança é sempre mensal — confirmado pelo product
 const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number }> = {
   start: { name: "Wiize Start", priceMonthly: 296.0 },
@@ -82,7 +104,7 @@ serve(async (req) => {
     const addressNum = customerData.addressNumber || "S/N";
     const neighborhood = customerData.neighborhood || "";
     const city = customerData.city || "";
-    const state = customerData.state || "";
+    const state = toUF(customerData.state);
     const addressComplement = customerData.addressComplement || "";
 
     // 1. Create or find customer on Asaas (payload idêntico ao checkout)
