@@ -225,17 +225,10 @@ if (import.meta.main) serve(async (req) => {
     trialEnd.setDate(trialEnd.getDate() + 7);
     const nextDueDate = trialEnd.toISOString().split("T")[0];
 
-    // 3. Create subscription with credit card scheduled for D+7
-    // Asaas valida o cartão imediatamente (auth de R$ 0) mas só cobra na nextDueDate.
-    const subBody = {
+    // 3. Tokenize card first to avoid subscription validation edge cases.
+    const creditCardHolderInfo = buildCreditCardHolderInfo({ customerData, cpfCnpj, postalCode, city, state, phone });
+    const tokenizeBody = {
       customer: customerId,
-      billingType: "CREDIT_CARD",
-      cycle: "MONTHLY",
-      value: plan.priceMonthly,
-      nextDueDate,
-      description: `${plan.name} Mensal (após trial 7 dias)`,
-      externalReference: userId,
-      remoteIp,
       creditCard: {
         holderName: creditCard.holderName,
         number: creditCard.number.replace(/\s/g, ""),
@@ -243,13 +236,45 @@ if (import.meta.main) serve(async (req) => {
         expiryYear: creditCard.expiryYear,
         ccv: creditCard.ccv,
       },
-      creditCardHolderInfo: buildCreditCardHolderInfo({ customerData, cpfCnpj, postalCode, city, state, phone }),
+      creditCardHolderInfo,
+      remoteIp,
+    };
+
+    log("Tokenizing card", {
+      customerId,
+      cityName: creditCardHolderInfo.cityName,
+      state: creditCardHolderInfo.state,
+      remoteIp,
+    });
+
+    const tokenRes = await fetch(`${ASAAS_API}/creditCard/tokenizeCreditCard`, {
+      method: "POST",
+      headers: { access_token: apiKey, "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(tokenizeBody),
+    });
+    const tokenJson = await tokenRes.json();
+    if (!tokenRes.ok || tokenJson.errors || !tokenJson.creditCardToken) {
+      log("Card tokenization failed", tokenJson);
+      const msg = tokenJson.errors?.map((e: { description: string }) => e.description).join(", ") || JSON.stringify(tokenJson);
+      throw new Error(msg);
+    }
+
+    // 4. Create subscription scheduled for D+7 using card token.
+    const subBody = {
+      customer: customerId,
+      billingType: "CREDIT_CARD",
+      cycle: "MONTHLY",
+      value: plan.priceMonthly,
+      nextDueDate,
+      description: `${plan.name} Mensal (após trial 7 dias)`,
+      externalReference: userId || customerData.email,
+      remoteIp,
+      creditCardToken: tokenJson.creditCardToken,
     };
 
     log("Creating subscription scheduled for", {
       nextDueDate,
-      cityName: subBody.creditCardHolderInfo.cityName,
-      state: subBody.creditCardHolderInfo.state,
+      cardToken: tokenJson.creditCardToken,
       remoteIp,
     });
 
@@ -267,17 +292,18 @@ if (import.meta.main) serve(async (req) => {
 
     log("Subscription created", { id: subJson.id, status: subJson.status });
 
-    // 4. Extract card details for display
-    const cardLast4 = creditCard.number.replace(/\s/g, "").slice(-4);
-    const cardBrand = subJson.creditCard?.creditCardBrand || "CARD";
+    // 5. Extract card details for display
+    const cardLast4 = tokenJson.creditCardNumber || creditCard.number.replace(/\s/g, "").slice(-4);
+    const cardBrand = tokenJson.creditCardBrand || subJson.creditCard?.creditCardBrand || "CARD";
 
-    // 5. Save trial info on profile (only if userId is provided — otherwise just validate)
+    // 6. Save trial info on profile (only if userId is provided — otherwise just validate)
     if (userId) {
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
           trial_card_last4: cardLast4,
           trial_card_brand: cardBrand,
+          trial_card_token: tokenJson.creditCardToken,
           trial_asaas_subscription_id: subJson.id,
           trial_asaas_customer_id: customerId,
           trial_plan_chosen: planKey,
