@@ -12,6 +12,8 @@ import {
   TrendingUp,
   ChevronDown,
   X,
+  Star,
+  CalendarClock,
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { cn } from "@/lib/utils";
@@ -133,8 +135,19 @@ export default function SignupChoosePlan() {
               <span className="text-primary">Pague só se valer a pena.</span>
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Mais de 2.000 empresas já prospectam com a Wiize.
+              Plataforma completa liberada. Sem cobrança hoje. Cancele em 1 clique a qualquer momento.
             </p>
+
+            <div className="mt-5 inline-flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-0.5 text-amber-500">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={12} fill="currentColor" strokeWidth={0} />
+                ))}
+              </div>
+              <span className="font-medium text-foreground">4,9/5</span>
+              <span>·</span>
+              <span>+2.000 empresas usando agora</span>
+            </div>
           </div>
 
           {/* Trust strip */}
@@ -146,7 +159,7 @@ export default function SignupChoosePlan() {
               <ShieldCheck size={12} className="text-primary" /> Cancele em 1 clique
             </div>
             <div className="flex items-center gap-1.5">
-              <TrendingUp size={12} className="text-primary" /> +2.000 empresas ativas
+              <CalendarClock size={12} className="text-primary" /> Lembrete 2 dias antes da cobrança
             </div>
           </div>
 
@@ -155,18 +168,18 @@ export default function SignupChoosePlan() {
             <div className="grid sm:grid-cols-3 gap-6 text-sm">
               <Step
                 num="1"
-                title="Cadastre seu cartão"
-                desc="Hoje: R$ 0,00. Apenas validação, nada é debitado agora."
+                title="Hoje · Cadastre seu cartão"
+                desc="R$ 0,00 agora. Apenas validação para liberar acesso imediato."
               />
               <Step
                 num="2"
-                title="Use 7 dias completos"
-                desc="Plataforma inteira liberada: WhatsApp, IA, CRM, Meta Ads."
+                title="Dias 1 a 7 · Use tudo liberado"
+                desc="WhatsApp, IA, CRM, Meta Ads, Score e Agentes — sem limite."
               />
               <Step
                 num="3"
-                title="Continue ou cancele"
-                desc="No 8º dia ativamos o plano. Pra sair, 1 clique no Perfil."
+                title="Dia 8 · Você decide"
+                desc="Continue automaticamente ou cancele em 1 clique antes — sem cobrança."
               />
             </div>
           </div>
@@ -275,9 +288,22 @@ export default function SignupChoosePlan() {
             <p className="text-xs text-muted-foreground text-center max-w-md flex items-center gap-1.5 justify-center">
               <Lock size={11} /> R$ 0,00 hoje • Cancele quando quiser, em 1 clique
             </p>
-            <p className="text-[11px] text-muted-foreground/80 text-center max-w-md">
-              Após o trial: R$ {selectedPlan.monthly.toLocaleString("pt-BR")}/mês, apenas se você continuar usando.
-            </p>
+
+            {/* Reassurance card */}
+            <div className="mt-3 w-full max-w-md rounded-xl border border-border/60 bg-card/40 px-4 py-3">
+              <div className="flex items-start gap-2.5">
+                <ShieldCheck size={16} className="text-primary mt-0.5 shrink-0" />
+                <div className="text-left">
+                  <p className="text-xs font-medium text-foreground">
+                    Sem surpresas. Avisamos antes de qualquer cobrança.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                    Você recebe um e-mail 2 dias antes do fim do trial. Se cancelar antes, nada é debitado e o acesso segue até o 7º dia. Após o trial: <span className="font-medium text-foreground">R$ {selectedPlan.monthly.toLocaleString("pt-BR")}/mês</span>, apenas se continuar.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <p className="text-xs text-muted-foreground mt-2">
               Já tem conta?{" "}
               <Link to="/login" className="text-primary hover:underline font-medium">
