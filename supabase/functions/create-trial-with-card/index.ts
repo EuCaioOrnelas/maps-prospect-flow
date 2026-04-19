@@ -81,6 +81,9 @@ serve(async (req) => {
     const address = customerData.address || "";
     const addressNum = customerData.addressNumber || "S/N";
     const neighborhood = customerData.neighborhood || "";
+    const city = customerData.city || "";
+    const state = customerData.state || "";
+    const addressComplement = customerData.addressComplement || "";
 
     // 1. Create or find customer on Asaas (payload idêntico ao checkout)
     const findRes = await fetch(`${ASAAS_API}/customers?cpfCnpj=${cpfCnpj}`, {
@@ -148,8 +151,12 @@ serve(async (req) => {
         postalCode: postalCode || "01310100",
         addressNumber: addressNum,
         address: address,
+        addressComplement: addressComplement || undefined,
         province: neighborhood,
+        city: city || "São Paulo",
+        state: state || "SP",
         phone: phone,
+        mobilePhone: phone,
       },
     };
 
