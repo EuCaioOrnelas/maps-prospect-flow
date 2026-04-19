@@ -219,7 +219,7 @@ export default function SignupChoosePlan() {
                     </div>
                   </div>
                   {/* Pricing block - foco em gratuidade */}
-                  <div className="my-5 pb-5 border-b border-border/60">
+                  <div className="mt-6 pb-5 border-b border-border/60">
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-4xl font-bold tracking-tight text-primary">
                         R$ 0,00
