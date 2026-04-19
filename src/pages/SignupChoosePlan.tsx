@@ -141,7 +141,7 @@ export default function SignupChoosePlan() {
           {/* Trust strip */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-10 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
-              <Lock size={12} className="text-primary" /> Pagamento seguro Asaas & Stripe
+              <Lock size={12} className="text-primary" /> Pagamento seguro via Asaas
             </div>
             <div className="flex items-center gap-1.5">
               <ShieldCheck size={12} className="text-primary" /> Cancele em 1 clique
