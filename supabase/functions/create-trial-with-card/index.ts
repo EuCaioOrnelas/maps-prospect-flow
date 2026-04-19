@@ -99,7 +99,7 @@ export const buildCreditCardHolderInfo = ({
   };
 };
 
-const buildDirectSubscriptionHolderInfo = ({
+export const buildDirectSubscriptionHolderInfo = ({
   customerData,
   cpfCnpj,
   postalCode,
