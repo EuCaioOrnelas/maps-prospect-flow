@@ -25,7 +25,75 @@ const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number; searches
   scale: { name: "Wiize Scale", priceMonthly: 1496.0, searchesLimit: 10000 },
 };
 
-serve(async (req) => {
+const BRAZIL_STATE_CODES: Record<string, string> = {
+  "acre": "AC",
+  "alagoas": "AL",
+  "amapa": "AP",
+  "amazonas": "AM",
+  "bahia": "BA",
+  "ceara": "CE",
+  "distrito federal": "DF",
+  "espirito santo": "ES",
+  "goias": "GO",
+  "maranhao": "MA",
+  "mato grosso": "MT",
+  "mato grosso do sul": "MS",
+  "minas gerais": "MG",
+  "para": "PA",
+  "paraiba": "PB",
+  "parana": "PR",
+  "pernambuco": "PE",
+  "piaui": "PI",
+  "rio de janeiro": "RJ",
+  "rio grande do norte": "RN",
+  "rio grande do sul": "RS",
+  "rondonia": "RO",
+  "roraima": "RR",
+  "santa catarina": "SC",
+  "sao paulo": "SP",
+  "sergipe": "SE",
+  "tocantins": "TO",
+};
+
+export const normalizeBrazilianState = (value?: string | null) => {
+  const raw = (value || "").trim();
+  if (!raw) return "SP";
+
+  const normalized = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (normalized.length === 2) return normalized.toUpperCase();
+
+  return BRAZIL_STATE_CODES[normalized] || raw.toUpperCase().slice(0, 2) || "SP";
+};
+
+export const buildCreditCardHolderInfo = ({
+  customerData,
+  cpfCnpj,
+  postalCode,
+  city,
+  state,
+  phone,
+}: {
+  customerData: Record<string, string>;
+  cpfCnpj: string;
+  postalCode: string;
+  city: string;
+  state: string;
+  phone: string;
+}) => ({
+  name: customerData.name,
+  email: customerData.email,
+  cpfCnpj,
+  postalCode: postalCode || "01310100",
+  addressNumber: customerData.addressNumber || "S/N",
+  address: customerData.address || "Não informado",
+  province: customerData.neighborhood || "Centro",
+  cityName: city,
+  state: normalizeBrazilianState(state),
+  phone,
+  mobilePhone: phone,
+});
+
+if (import.meta.main) serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -74,6 +142,8 @@ serve(async (req) => {
     }
     if (!city) city = "São Paulo";
     if (!state) state = "SP";
+    city = city.trim() || "São Paulo";
+    state = normalizeBrazilianState(state);
 
     // 1. Find or create Asaas customer
     const findRes = await fetch(`${ASAAS_API}/customers?cpfCnpj=${cpfCnpj}`, {
@@ -127,23 +197,14 @@ serve(async (req) => {
         expiryYear: creditCard.expiryYear,
         ccv: creditCard.ccv,
       },
-      creditCardHolderInfo: {
-        name: customerData.name,
-        email: customerData.email,
-        cpfCnpj,
-        postalCode: postalCode || "01310100",
-        addressNumber: customerData.addressNumber || "S/N",
-        address: customerData.address || "Não informado",
-        province: customerData.neighborhood || "Centro",
-        city: (city || customerData.city || "São Paulo").trim(),
-        cityName: (city || customerData.city || "São Paulo").trim(),
-        state: (state || customerData.state || "SP").trim().toUpperCase().slice(0, 2),
-        phone,
-        mobilePhone: phone,
-      },
+      creditCardHolderInfo: buildCreditCardHolderInfo({ customerData, cpfCnpj, postalCode, city, state, phone }),
     };
 
-    log("Creating subscription scheduled for", { nextDueDate });
+    log("Creating subscription scheduled for", {
+      nextDueDate,
+      cityName: subBody.creditCardHolderInfo.cityName,
+      state: subBody.creditCardHolderInfo.state,
+    });
 
     const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
       method: "POST",
