@@ -134,8 +134,7 @@ export default function SignupChoosePlan() {
               <span className="text-primary">Pague só se valer a pena.</span>
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Acesso total à plataforma. Sem cobrança hoje. Cancele em 1 clique
-              dentro do app — sem ligação, sem burocracia.
+              Mais de 2.000 empresas já prospectam com a Wiize.
             </p>
           </div>
 
