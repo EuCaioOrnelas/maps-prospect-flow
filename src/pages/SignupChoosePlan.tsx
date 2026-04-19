@@ -175,14 +175,14 @@ export default function SignupChoosePlan() {
           {/* Plans */}
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-display text-xl font-semibold">
-              Escolha o plano que ativa no 8º dia
+              Escolha seu plano para testar grátis hoje
             </h2>
             <span className="text-xs text-muted-foreground hidden sm:block">
               Você pode trocar depois
             </span>
           </div>
           <p className="text-sm text-muted-foreground mb-5">
-            Durante o trial, todos os recursos ficam liberados, independente do plano.
+            Todos os recursos ficam liberados durante os 7 dias. O plano só ativa no 8º dia se você continuar.
           </p>
 
           <div className="grid md:grid-cols-2 gap-4 mb-8">
@@ -200,11 +200,11 @@ export default function SignupChoosePlan() {
                   )}
                 >
                   {plan.highlight && (
-                    <span className="absolute -top-2.5 left-6 bg-primary text-primary-foreground text-[10px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1">
-                      <Zap size={10} /> RECOMENDADO
+                    <span className="absolute -top-2.5 left-6 bg-primary text-primary-foreground text-[10px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 whitespace-nowrap">
+                      🔥 Mais escolhido por empresas em crescimento
                     </span>
                   )}
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="font-semibold text-lg">Wiize {plan.name}</h3>
                       <p className="text-xs text-muted-foreground mt-0.5">{plan.desc}</p>
@@ -218,17 +218,26 @@ export default function SignupChoosePlan() {
                       {isSelected && <Check size={12} className="text-primary-foreground" strokeWidth={3} />}
                     </div>
                   </div>
+
+                  {/* Pricing block - foco em gratuidade */}
                   <div className="my-5 pb-5 border-b border-border/60">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-3xl font-bold tracking-tight">
-                        R$ {plan.monthly.toLocaleString("pt-BR")}
+                      <span className="text-4xl font-bold tracking-tight text-primary">
+                        R$ 0,00
                       </span>
-                      <span className="text-xs text-muted-foreground">/mês após o trial</span>
+                      <span className="text-sm font-medium text-foreground">hoje</span>
                     </div>
-                    <p className="text-xs font-medium text-primary mt-1.5 inline-flex items-center gap-1">
-                      <Check size={12} /> Hoje você paga R$ 0,00
+                    <p className="text-sm font-medium text-foreground mt-1.5 inline-flex items-center gap-1.5">
+                      <Sparkles size={13} className="text-primary" /> 7 dias grátis completos
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Depois R$ {plan.monthly.toLocaleString("pt-BR")}/mês se você continuar
+                    </p>
+                    <p className="text-[11px] text-muted-foreground/80 mt-1 inline-flex items-center gap-1">
+                      <ShieldCheck size={11} /> Cancele em 1 clique antes da cobrança
                     </p>
                   </div>
+
                   <ul className="space-y-2">
                     {plan.perks.map((p) => (
                       <li key={p} className="text-sm flex items-start gap-2">
