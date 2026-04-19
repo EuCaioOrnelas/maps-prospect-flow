@@ -79,7 +79,7 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
         <div className="relative w-full bg-black" style={{ paddingBottom: "56.25%" }}>
           <iframe
             className="absolute inset-0 w-full h-full"
-            src={open ? "https://www.youtube.com/embed/b8tqLSoVzqA?si=V_vX3t7FN5_fOifA&rel=0&modestbranding=1&disablekb=1&autoplay=1" : ""}
+            src={open ? "https://www.youtube.com/embed/ZRzK42SYNFc?si=LrJuZKLrktuhBMLa&rel=0&modestbranding=1&disablekb=1&autoplay=1" : ""}
             title="Wiize — Demonstração"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
