@@ -40,8 +40,8 @@ serve(async (req) => {
     );
 
     const { userId, planKey, customerData, creditCard } = await req.json();
-    if (!userId || !planKey || !customerData || !creditCard) {
-      throw new Error("userId, planKey, customerData and creditCard are required");
+    if (!planKey || !customerData || !creditCard) {
+      throw new Error("planKey, customerData and creditCard are required");
     }
 
     const plan = PLAN_CONFIG[planKey];
