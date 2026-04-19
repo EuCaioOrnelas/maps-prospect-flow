@@ -256,7 +256,7 @@ export default function SignupChoosePlan() {
           </div>
 
           <p className="text-center text-xs text-muted-foreground mb-8">
-            Precisa de mais volume?{" "}
+            Mais de 5.000 oportunidades por mês?{" "}
             <Link to="/contato" className="text-primary hover:underline">
               Fale com nosso time sobre o plano Scale
             </Link>
@@ -270,13 +270,13 @@ export default function SignupChoosePlan() {
               onClick={continueToSignup}
               className="w-full max-w-md h-14 text-base"
             >
-              Começar 7 dias grátis →
+              Começar meu teste grátis agora →
             </Button>
             <p className="text-xs text-muted-foreground text-center max-w-md flex items-center gap-1.5 justify-center">
-              <Lock size={11} /> Sem cobrança hoje • Cancele quando quiser
+              <Lock size={11} /> R$ 0,00 hoje • Cancele quando quiser, em 1 clique
             </p>
             <p className="text-[11px] text-muted-foreground/80 text-center max-w-md">
-              No 8º dia, R$ {selectedPlan.monthly.toLocaleString("pt-BR")}/mês apenas se você decidir continuar.
+              Após o trial: R$ {selectedPlan.monthly.toLocaleString("pt-BR")}/mês, apenas se você continuar usando.
             </p>
             <p className="text-xs text-muted-foreground mt-2">
               Já tem conta?{" "}
