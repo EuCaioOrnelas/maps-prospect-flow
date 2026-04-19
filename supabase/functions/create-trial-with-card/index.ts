@@ -101,21 +101,16 @@ export const buildCreditCardHolderInfo = ({
   customerData,
   cpfCnpj,
   postalCode,
-  city,
-  state,
   phone,
 }: {
   customerData: Record<string, string>;
   cpfCnpj: string;
   postalCode: string;
-  city: string;
-  state: string;
   phone: string;
 }) => {
-  const resolvedCity = (city || customerData.city || "São Paulo").trim() || "São Paulo";
-  const resolvedUf = normalizeBrazilianState(state || customerData.state || "SP");
-  const resolvedStateName = expandBrazilianState(resolvedUf);
-
+  // ⚠️ Asaas rejeita `state` no creditCardHolderInfo se não for exatamente o esperado.
+  // O checkout principal (`create-asaas-card-checkout`) não envia city/state/cityName
+  // aqui e funciona. Mantemos apenas os campos mínimos exigidos.
   return {
     name: customerData.name,
     email: customerData.email,
@@ -124,10 +119,6 @@ export const buildCreditCardHolderInfo = ({
     addressNumber: customerData.addressNumber || "S/N",
     address: customerData.address || "Não informado",
     province: customerData.neighborhood || "Centro",
-    city: resolvedCity,
-    cityName: resolvedCity,
-    state: resolvedStateName,
-    stateUf: resolvedUf,
     phone,
     mobilePhone: phone,
   };
@@ -137,21 +128,13 @@ export const buildDirectSubscriptionHolderInfo = ({
   customerData,
   cpfCnpj,
   postalCode,
-  city,
-  state,
   phone,
 }: {
   customerData: Record<string, string>;
   cpfCnpj: string;
   postalCode: string;
-  city: string;
-  state: string;
   phone: string;
 }) => {
-  const resolvedCity = (city || customerData.city || "São Paulo").trim() || "São Paulo";
-  const resolvedUf = normalizeBrazilianState(state || customerData.state || "SP");
-  const resolvedStateName = expandBrazilianState(resolvedUf);
-
   return {
     name: customerData.name,
     email: customerData.email,
@@ -160,10 +143,6 @@ export const buildDirectSubscriptionHolderInfo = ({
     addressNumber: customerData.addressNumber || "S/N",
     address: customerData.address || "Não informado",
     province: customerData.neighborhood || "Centro",
-    city: resolvedCity,
-    cityName: resolvedCity,
-    state: resolvedStateName,
-    stateUf: resolvedUf,
     phone,
     mobilePhone: phone,
   };
