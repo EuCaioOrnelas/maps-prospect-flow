@@ -55,6 +55,38 @@ const BRAZIL_STATE_CODES: Record<string, string> = {
   "tocantins": "TO",
 };
 
+const BRAZIL_UF_TO_NAME: Record<string, string> = {
+  AC: "Acre",
+  AL: "Alagoas",
+  AP: "Amapá",
+  AM: "Amazonas",
+  BA: "Bahia",
+  CE: "Ceará",
+  DF: "Distrito Federal",
+  ES: "Espírito Santo",
+  GO: "Goiás",
+  MA: "Maranhão",
+  MT: "Mato Grosso",
+  MS: "Mato Grosso do Sul",
+  MG: "Minas Gerais",
+  PA: "Pará",
+  PB: "Paraíba",
+  PR: "Paraná",
+  PE: "Pernambuco",
+  PI: "Piauí",
+  RJ: "Rio de Janeiro",
+  RN: "Rio Grande do Norte",
+  RS: "Rio Grande do Sul",
+  RO: "Rondônia",
+  RR: "Roraima",
+  SC: "Santa Catarina",
+  SP: "São Paulo",
+  SE: "Sergipe",
+  TO: "Tocantins",
+};
+
+export const expandBrazilianState = (uf: string) => BRAZIL_UF_TO_NAME[uf] || uf;
+
 export const normalizeBrazilianState = (value?: string | null) => {
   const raw = (value || "").trim();
   if (!raw) return "SP";
@@ -81,7 +113,8 @@ export const buildCreditCardHolderInfo = ({
   phone: string;
 }) => {
   const resolvedCity = (city || customerData.city || "São Paulo").trim() || "São Paulo";
-  const resolvedState = normalizeBrazilianState(state || customerData.state || "SP");
+  const resolvedUf = normalizeBrazilianState(state || customerData.state || "SP");
+  const resolvedStateName = expandBrazilianState(resolvedUf);
 
   return {
     name: customerData.name,
@@ -93,7 +126,8 @@ export const buildCreditCardHolderInfo = ({
     province: customerData.neighborhood || "Centro",
     city: resolvedCity,
     cityName: resolvedCity,
-    state: resolvedState,
+    state: resolvedStateName,
+    stateUf: resolvedUf,
     phone,
     mobilePhone: phone,
   };
@@ -115,7 +149,8 @@ export const buildDirectSubscriptionHolderInfo = ({
   phone: string;
 }) => {
   const resolvedCity = (city || customerData.city || "São Paulo").trim() || "São Paulo";
-  const resolvedState = normalizeBrazilianState(state || customerData.state || "SP");
+  const resolvedUf = normalizeBrazilianState(state || customerData.state || "SP");
+  const resolvedStateName = expandBrazilianState(resolvedUf);
 
   return {
     name: customerData.name,
@@ -127,7 +162,8 @@ export const buildDirectSubscriptionHolderInfo = ({
     province: customerData.neighborhood || "Centro",
     city: resolvedCity,
     cityName: resolvedCity,
-    state: resolvedState,
+    state: resolvedStateName,
+    stateUf: resolvedUf,
     phone,
     mobilePhone: phone,
   };
