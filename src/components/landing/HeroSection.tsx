@@ -727,6 +727,34 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
     return () => obs.disconnect();
   }, []);
 
+  // Pré-aquece o YouTube para abrir o vídeo instantaneamente em qualidade máxima
+  useEffect(() => {
+    const warm = () => {
+      const links: Array<[string, string]> = [
+        ["preconnect", "https://www.youtube.com"],
+        ["preconnect", "https://i.ytimg.com"],
+        ["preconnect", "https://yt3.ggpht.com"],
+        ["dns-prefetch", "https://www.googlevideo.com"],
+        ["prefetch", "https://www.youtube.com/embed/ZRzK42SYNFc?vq=hd1080&hd=1"],
+      ];
+      links.forEach(([rel, href]) => {
+        if (document.querySelector(`link[data-yt-warm="${href}"]`)) return;
+        const l = document.createElement("link");
+        l.rel = rel;
+        l.href = href;
+        if (rel === "preconnect") l.crossOrigin = "";
+        l.setAttribute("data-yt-warm", href);
+        document.head.appendChild(l);
+      });
+    };
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number; cancelIdleCallback?: (id: number) => void };
+    const id = w.requestIdleCallback ? w.requestIdleCallback(warm) : window.setTimeout(warm, 1500);
+    return () => {
+      if (w.cancelIdleCallback) w.cancelIdleCallback(id as number);
+      else clearTimeout(id as number);
+    };
+  }, []);
+
   const handleStageClick = (index: number) => {
     setJumpTarget(index);
   };

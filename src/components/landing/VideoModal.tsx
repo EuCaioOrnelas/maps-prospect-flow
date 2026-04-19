@@ -41,14 +41,16 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
+  const videoSrc = "https://www.youtube.com/embed/ZRzK42SYNFc?si=LrJuZKLrktuhBMLa&rel=0&modestbranding=1&disablekb=1&autoplay=1&vq=hd1080&hd=1";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         id="video-modal-container"
-        className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-5xl xl:max-w-6xl w-full p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden max-h-[95vh] flex flex-col"
+        className="max-w-[98vw] sm:max-w-[96vw] lg:max-w-[92vw] xl:max-w-[1400px] w-full p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden max-h-[96vh] flex flex-col"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border bg-card">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-2.5 border-b border-border bg-card flex-shrink-0">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="relative flex items-center justify-center">
               <div className="w-2 h-2 rounded-full bg-primary" />
@@ -75,32 +77,30 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          {/* Video — horizontal 16:9 */}
-          <div className="relative w-full bg-black" style={{ paddingBottom: "56.25%" }}>
-            <iframe
-              className="absolute inset-0 w-full h-full"
-              src={open ? "https://www.youtube.com/embed/ZRzK42SYNFc?si=LrJuZKLrktuhBMLa&rel=0&modestbranding=1&disablekb=1&autoplay=1" : ""}
-              title="Wiize — Demonstração"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-            />
-          </div>
+        {/* Video — horizontal 16:9, ocupa todo espaço disponível */}
+        <div className="relative w-full bg-black flex-1 min-h-0">
+          <iframe
+            className="absolute inset-0 w-full h-full"
+            src={videoSrc}
+            title="Wiize — Demonstração"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
 
-          {/* CTA */}
-          <div className="px-4 sm:px-6 py-4 sm:py-5 bg-card flex flex-col items-center gap-3 border-t border-border">
-            <p className="text-muted-foreground text-xs sm:text-sm text-center">
-              Teste gratuitamente por 7 dias — sem compromisso
-            </p>
-            <Link to="/signup" onClick={() => { onSignupClick?.(); onOpenChange(false); }}>
-              <Button variant="hero" size="lg" className="group rounded-full text-sm sm:text-base px-8 sm:px-10 h-11 sm:h-12">
-                Testar grátis por 7 dias
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-          </div>
+        {/* CTA */}
+        <div className="px-4 sm:px-6 py-3 sm:py-4 bg-card flex flex-col sm:flex-row items-center justify-center gap-3 border-t border-border flex-shrink-0">
+          <p className="text-muted-foreground text-xs sm:text-sm text-center">
+            Teste gratuitamente por 7 dias — sem compromisso
+          </p>
+          <Link to="/signup" onClick={() => { onSignupClick?.(); onOpenChange(false); }}>
+            <Button variant="hero" size="lg" className="group rounded-full text-sm sm:text-base px-8 sm:px-10 h-10 sm:h-11">
+              Testar grátis por 7 dias
+              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
         </div>
       </DialogContent>
     </Dialog>
