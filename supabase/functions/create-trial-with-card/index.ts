@@ -40,8 +40,8 @@ serve(async (req) => {
     );
 
     const { userId, planKey, customerData, creditCard } = await req.json();
-    if (!userId || !planKey || !customerData || !creditCard) {
-      throw new Error("userId, planKey, customerData and creditCard are required");
+    if (!planKey || !customerData || !creditCard) {
+      throw new Error("planKey, customerData and creditCard are required");
     }
 
     const plan = PLAN_CONFIG[planKey];
@@ -143,25 +143,27 @@ serve(async (req) => {
     const cardLast4 = creditCard.number.replace(/\s/g, "").slice(-4);
     const cardBrand = subJson.creditCard?.creditCardBrand || "CARD";
 
-    // 5. Save trial info on profile
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
-        trial_card_last4: cardLast4,
-        trial_card_brand: cardBrand,
-        trial_asaas_subscription_id: subJson.id,
-        trial_asaas_customer_id: customerId,
-        trial_plan_chosen: planKey,
-        trial_billing_period: "monthly",
-        trial_will_charge_at: trialEnd.toISOString(),
-        trial_auto_charge_cancelled: false,
-        cpf: cpfCnpj,
-        phone: customerData.phone || null,
-      })
-      .eq("id", userId);
+    // 5. Save trial info on profile (only if userId is provided — otherwise just validate)
+    if (userId) {
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          trial_card_last4: cardLast4,
+          trial_card_brand: cardBrand,
+          trial_asaas_subscription_id: subJson.id,
+          trial_asaas_customer_id: customerId,
+          trial_plan_chosen: planKey,
+          trial_billing_period: "monthly",
+          trial_will_charge_at: trialEnd.toISOString(),
+          trial_auto_charge_cancelled: false,
+          cpf: cpfCnpj,
+          phone: customerData.phone || null,
+        })
+        .eq("id", userId);
 
-    if (updateError) {
-      log("Profile update failed", updateError);
+      if (updateError) {
+        log("Profile update failed", updateError);
+      }
     }
 
     return new Response(
