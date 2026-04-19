@@ -103,7 +103,7 @@ export default function SignupChoosePlan() {
 
   const continueToSignup = () => {
     sessionStorage.setItem("trial_plan_chosen", selected);
-    navigate("/signup");
+    navigate("/signup/cartao-trial");
   };
 
   const selectedPlan = PLANS.find((p) => p.key === selected)!;
