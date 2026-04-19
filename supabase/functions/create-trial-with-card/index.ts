@@ -324,8 +324,6 @@ if (import.meta.main) serve(async (req) => {
           customerData,
           cpfCnpj,
           postalCode,
-          city,
-          state,
           phone,
         }),
       };

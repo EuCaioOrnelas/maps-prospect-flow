@@ -11,7 +11,7 @@ Deno.test("normalizeBrazilianState converts state names to UF", () => {
   assertEquals(normalizeBrazilianState("São Paulo"), "SP");
 });
 
-Deno.test("buildCreditCardHolderInfo sends cityName and normalized state", () => {
+Deno.test("buildCreditCardHolderInfo sends only the address fields Asaas accepts", () => {
   const holder = buildCreditCardHolderInfo({
     customerData: {
       name: "Caio Wiize",
@@ -22,18 +22,18 @@ Deno.test("buildCreditCardHolderInfo sends cityName and normalized state", () =>
     },
     cpfCnpj: "15803674966",
     postalCode: "87140190",
-    city: "Paiçandu",
-    state: "Paraná",
     phone: "44988064161",
   });
 
-  assertEquals(holder.cityName, "Paiçandu");
-  assertEquals(holder.city, "Paiçandu");
-  assertEquals(holder.state, "Paraná");
-  assertEquals(holder.stateUf, "PR");
+  assertEquals(holder.postalCode, "87140190");
+  assertEquals(holder.addressNumber, "190");
+  assertEquals(holder.address, "Rua Germano Berloffa");
+  assertEquals(holder.province, "Central");
+  assertEquals((holder as Record<string, unknown>).city, undefined);
+  assertEquals((holder as Record<string, unknown>).state, undefined);
 });
 
-Deno.test("buildDirectSubscriptionHolderInfo sends city and cityName for Asaas compatibility", () => {
+Deno.test("buildDirectSubscriptionHolderInfo omits city/state to satisfy Asaas validation", () => {
   const holder = buildDirectSubscriptionHolderInfo({
     customerData: {
       name: "Caio Wiize",
@@ -44,13 +44,12 @@ Deno.test("buildDirectSubscriptionHolderInfo sends city and cityName for Asaas c
     },
     cpfCnpj: "15803674966",
     postalCode: "87140190",
-    city: "Paiçandu",
-    state: "Paraná",
     phone: "44988064161",
   });
 
-  assertEquals(holder.city, "Paiçandu");
-  assertEquals(holder.cityName, "Paiçandu");
-  assertEquals(holder.state, "Paraná");
-  assertEquals(holder.stateUf, "PR");
+  assertEquals(holder.postalCode, "87140190");
+  assertEquals(holder.address, "Rua Germano Berloffa");
+  assertEquals(holder.province, "Central");
+  assertEquals((holder as Record<string, unknown>).city, undefined);
+  assertEquals((holder as Record<string, unknown>).state, undefined);
 });
