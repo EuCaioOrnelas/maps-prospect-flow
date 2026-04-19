@@ -480,7 +480,7 @@ export default function SignupWithCard() {
                         value={cardHolder}
                         onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
                         required
-                        placeholder="NOME COMO NO CARTÃO"
+                        placeholder="Ex: João M Silva"
                       />
                     </div>
                     <div className="space-y-1.5">
