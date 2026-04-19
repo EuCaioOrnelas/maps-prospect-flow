@@ -97,11 +97,15 @@ const buildDirectSubscriptionHolderInfo = ({
   customerData,
   cpfCnpj,
   postalCode,
+  city,
+  state,
   phone,
 }: {
   customerData: Record<string, string>;
   cpfCnpj: string;
   postalCode: string;
+  city: string;
+  state: string;
   phone: string;
 }) => ({
   name: customerData.name,
@@ -111,8 +115,14 @@ const buildDirectSubscriptionHolderInfo = ({
   addressNumber: customerData.addressNumber || "S/N",
   address: customerData.address || "Não informado",
   province: customerData.neighborhood || "Centro",
+  cityName: city,
+  state: normalizeBrazilianState(state),
   phone,
+  mobilePhone: phone,
 });
+
+const extractAsaasErrorMessage = (payload: any) =>
+  payload?.errors?.map((e: { description: string }) => e.description).join(", ") || JSON.stringify(payload);
 
 const getRemoteIp = (req: Request) => {
   const forwardedFor = req.headers.get("x-forwarded-for");
@@ -246,110 +256,71 @@ if (import.meta.main) serve(async (req) => {
     trialEnd.setDate(trialEnd.getDate() + 7);
     const nextDueDate = trialEnd.toISOString().split("T")[0];
 
-    // 3. Try tokenization first; if the provider account doesn't have permission
-    // for that endpoint, fall back to the direct subscription flow already used
-    // elsewhere in the project.
-    const creditCardHolderInfo = buildCreditCardHolderInfo({ customerData, cpfCnpj, postalCode, city, state, phone });
-    const tokenizeBody = {
-      customer: customerId,
-      creditCard: {
-        holderName: creditCard.holderName,
-        number: creditCard.number.replace(/\s/g, ""),
-        expiryMonth: creditCard.expiryMonth,
-        expiryYear: creditCard.expiryYear,
-        ccv: creditCard.ccv,
-      },
-      creditCardHolderInfo,
-      remoteIp,
-    };
-
-    log("Tokenizing card", {
-      customerId,
-      cityName: creditCardHolderInfo.cityName,
-      state: creditCardHolderInfo.state,
-      remoteIp,
+    // 3. Reaproveita trial já criado para evitar múltiplas assinaturas em retries.
+    let existingSubscription: any = null;
+    const existingSubsRes = await fetch(`${ASAAS_API}/subscriptions?customer=${customerId}&limit=100&offset=0`, {
+      headers: { access_token: apiKey, Accept: "application/json" },
     });
+    const existingSubsJson = await existingSubsRes.json().catch(() => ({}));
+    if (existingSubsRes.ok && Array.isArray(existingSubsJson.data)) {
+      existingSubscription = existingSubsJson.data.find((subscription: any) => {
+        const description = String(subscription?.description || "").toLowerCase();
+        const externalReference = String(subscription?.externalReference || "");
+        return description.includes("após trial 7 dias")
+          && [customerData.email, userId].filter(Boolean).includes(externalReference)
+          && Number(subscription?.value) === Number(plan.priceMonthly);
+      }) || null;
+    }
 
-    const tokenRes = await fetch(`${ASAAS_API}/creditCard/tokenizeCreditCard`, {
-      method: "POST",
-      headers: { access_token: apiKey, "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(tokenizeBody),
-    });
-    const tokenJson = await tokenRes.json();
-
-    const tokenizationError = tokenJson.errors?.map((e: { description: string }) => e.description).join(", ") || JSON.stringify(tokenJson);
-    const permissionDenied = tokenizationError.toLowerCase().includes("não possui permissão")
-      || tokenizationError.toLowerCase().includes("nao possui permissao");
-
-    let cardToken: string | null = null;
     let cardLast4 = creditCard.number.replace(/\s/g, "").slice(-4);
     let cardBrand = "CARD";
+    let subJson = existingSubscription;
 
-    if (!tokenRes.ok || tokenJson.errors || !tokenJson.creditCardToken) {
-      log("Card tokenization failed", tokenJson);
-      if (!permissionDenied) {
-        throw new Error(tokenizationError);
-      }
-
-      log("Tokenization permission denied, falling back to direct subscription flow", { customerId });
-    } else {
-      cardToken = tokenJson.creditCardToken;
-      cardLast4 = tokenJson.creditCardNumber || cardLast4;
-      cardBrand = tokenJson.creditCardBrand || cardBrand;
-    }
-
-    // 4. Create subscription scheduled for D+7.
-    const subBody: Record<string, unknown> = {
-      customer: customerId,
-      billingType: "CREDIT_CARD",
-      cycle: "MONTHLY",
-      value: plan.priceMonthly,
-      nextDueDate,
-      description: `${plan.name} Mensal (após trial 7 dias)`,
-      externalReference: userId || customerData.email,
-      remoteIp,
-    };
-
-    if (cardToken) {
-      subBody.creditCardToken = cardToken;
-    } else {
-      subBody.creditCard = {
-        holderName: creditCard.holderName,
-        number: creditCard.number.replace(/\s/g, ""),
-        expiryMonth: creditCard.expiryMonth,
-        expiryYear: creditCard.expiryYear,
-        ccv: creditCard.ccv,
+    if (!subJson) {
+      const subBody: Record<string, unknown> = {
+        customer: customerId,
+        billingType: "CREDIT_CARD",
+        cycle: "MONTHLY",
+        value: plan.priceMonthly,
+        nextDueDate,
+        description: `${plan.name} Mensal (após trial 7 dias)`,
+        externalReference: userId || customerData.email,
+        remoteIp,
+        creditCard: {
+          holderName: creditCard.holderName,
+          number: creditCard.number.replace(/\s/g, ""),
+          expiryMonth: creditCard.expiryMonth,
+          expiryYear: creditCard.expiryYear,
+          ccv: creditCard.ccv,
+        },
+        creditCardHolderInfo: buildDirectSubscriptionHolderInfo({
+          customerData,
+          cpfCnpj,
+          postalCode,
+          city,
+          state,
+          phone,
+        }),
       };
-      subBody.creditCardHolderInfo = buildDirectSubscriptionHolderInfo({
-        customerData,
-        cpfCnpj,
-        postalCode,
-        phone,
+
+      log("Creating subscription scheduled for", { nextDueDate, remoteIp, customerId, city, state });
+
+      const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
+        method: "POST",
+        headers: { access_token: apiKey, "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(subBody),
       });
+      subJson = await subRes.json();
+      if (!subRes.ok || subJson.errors) {
+        log("Subscription failed", subJson);
+        throw new Error(extractAsaasErrorMessage(subJson));
+      }
+      log("Subscription created", { id: subJson.id, status: subJson.status });
+    } else {
+      log("Reusing existing trial subscription", { id: subJson.id, status: subJson.status });
     }
 
-    log("Creating subscription scheduled for", {
-      nextDueDate,
-      cardToken,
-      fallbackDirectCardFlow: !cardToken,
-      remoteIp,
-    });
-
-    const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
-      method: "POST",
-      headers: { access_token: apiKey, "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(subBody),
-    });
-    const subJson = await subRes.json();
-    if (!subRes.ok || subJson.errors) {
-      log("Subscription failed", subJson);
-      const msg = subJson.errors?.map((e: { description: string }) => e.description).join(", ") || JSON.stringify(subJson);
-      throw new Error(msg);
-    }
-
-    log("Subscription created", { id: subJson.id, status: subJson.status });
-
-    // 5. Extract card details for display
+    // 4. Extract card details for display
     cardBrand = cardBrand || subJson.creditCard?.creditCardBrand || "CARD";
 
     // 6. Save trial info on profile (only if userId is provided — otherwise just validate)
@@ -359,7 +330,7 @@ if (import.meta.main) serve(async (req) => {
         .update({
           trial_card_last4: cardLast4,
           trial_card_brand: cardBrand,
-          trial_card_token: cardToken,
+          trial_card_token: null,
           trial_asaas_subscription_id: subJson.id,
           trial_asaas_customer_id: customerId,
           trial_plan_chosen: planKey,
