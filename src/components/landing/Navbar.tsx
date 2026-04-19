@@ -12,10 +12,22 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const navRef = useRef<HTMLElement>(null);
+  const tickingRef = useRef(false);
+  const lastScrolledRef = useRef(false);
 
   useEffect(() => {
+    const evaluate = () => {
+      const next = window.scrollY > 60;
+      if (next !== lastScrolledRef.current) {
+        lastScrolledRef.current = next;
+        setScrolled(next);
+      }
+      tickingRef.current = false;
+    };
     const handleScroll = () => {
-      setScrolled(window.scrollY > 60);
+      if (tickingRef.current) return;
+      tickingRef.current = true;
+      requestAnimationFrame(evaluate);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -36,25 +48,33 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
     <>
       <nav
         ref={navRef}
-        className="fixed left-0 right-0 z-50 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] top-0"
+        className="fixed left-0 right-0 z-50 top-0"
         style={{
-          padding: scrolled ? '10px 16px 0' : '0',
+          paddingTop: scrolled ? '10px' : '0',
+          paddingLeft: scrolled ? '16px' : '0',
+          paddingRight: scrolled ? '16px' : '0',
+          transition: 'padding 500ms cubic-bezier(0.22,1,0.36,1)',
+          willChange: 'padding',
         }}
       >
         <div
-          className="mx-auto transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          className="mx-auto"
           style={{
-            maxWidth: scrolled ? '720px' : '100%',
-            borderRadius: scrolled ? '9999px' : '0',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            backgroundColor: scrolled ? 'hsl(var(--background) / 0.65)' : 'hsl(var(--background) / 0.8)',
+            maxWidth: scrolled ? '720px' : '1280px',
+            borderRadius: scrolled ? '9999px' : '0px',
+            backgroundColor: scrolled ? 'hsl(var(--background) / 0.85)' : 'hsl(var(--background) / 0.8)',
             border: scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
-            boxShadow: scrolled ? '0 8px 32px hsl(var(--background) / 0.3), 0 0 0 1px hsl(var(--primary) / 0.05)' : 'none',
-            padding: scrolled ? '8px 20px' : '16px 16px',
+            boxShadow: scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
+            paddingTop: scrolled ? '8px' : '16px',
+            paddingBottom: scrolled ? '8px' : '16px',
+            paddingLeft: scrolled ? '20px' : '16px',
+            paddingRight: scrolled ? '20px' : '16px',
+            transition: 'max-width 500ms cubic-bezier(0.22,1,0.36,1), border-radius 300ms ease-out, background-color 300ms ease-out, box-shadow 300ms ease-out, padding 500ms cubic-bezier(0.22,1,0.36,1)',
+            willChange: 'max-width, padding',
+            transform: 'translateZ(0)',
           }}
         >
-          <div className="flex items-center justify-between mx-auto" style={{ maxWidth: scrolled ? '100%' : '1280px' }}>
+          <div className="flex items-center justify-between mx-auto w-full">
             <Logo size="md" mobileSize="md" />
             
             <div className="hidden md:flex items-center gap-6">
