@@ -19,6 +19,8 @@ import {
   Calendar,
   User,
   Sparkles,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,13 +44,20 @@ function fmtExpiry(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 4);
   return d.length >= 3 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
 }
-function fmtCpf(v: string) {
-  return v
-    .replace(/\D/g, "")
-    .slice(0, 11)
+function fmtTaxId(v: string) {
+  const digits = v.replace(/\D/g, "").slice(0, 14);
+  if (digits.length <= 11) {
+    return digits
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  }
+
+  return digits
+    .replace(/(\d{2})(\d)/, "$1.$2")
     .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    .replace(/(\d{3})(\d)/, "$1/$2")
+    .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
 }
 function fmtCep(v: string) {
   return v.replace(/\D/g, "").slice(0, 8).replace(/(\d{5})(\d)/, "$1-$2");
@@ -73,14 +82,19 @@ export default function SignupWithCard() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Customer billing
-  const [cpf, setCpf] = useState("");
+  const [taxId, setTaxId] = useState("");
   const [phone, setPhone] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [address, setAddress] = useState("");
   const [addressNumber, setAddressNumber] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepError, setCepError] = useState("");
 
   // Card
   const [cardHolder, setCardHolder] = useState("");
@@ -102,6 +116,42 @@ export default function SignupWithCard() {
     if (user) navigate("/dashboard", { replace: true });
   }, [user, navigate]);
 
+  useEffect(() => {
+    const cleanCep = postalCode.replace(/\D/g, "");
+
+    if (cleanCep.length !== 8) {
+      setCepError("");
+      setCepLoading(false);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      setCepLoading(true);
+      setCepError("");
+
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const data = await res.json();
+
+        if (data.erro) {
+          setCepError("CEP não encontrado");
+          setAddress("");
+          setNeighborhood("");
+          return;
+        }
+
+        setAddress(data.logradouro || "");
+        setNeighborhood(data.bairro || "");
+      } catch {
+        setCepError("Erro ao buscar o CEP");
+      } finally {
+        setCepLoading(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [postalCode]);
+
   const trialEndDate = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() + 7);
@@ -118,15 +168,19 @@ export default function SignupWithCard() {
       toast({ title: "Senha muito fraca", description: "Use letras, números e símbolos.", variant: "destructive" });
       return;
     }
-    if (cpf.replace(/\D/g, "").length < 11) {
-      toast({ title: "CPF inválido", variant: "destructive" });
+    if (password !== confirmPassword) {
+      toast({ title: "As senhas não coincidem", variant: "destructive" });
+      return;
+    }
+    if (taxId.replace(/\D/g, "").length < 11) {
+      toast({ title: "CPF ou CNPJ inválido", variant: "destructive" });
       return;
     }
     if (phone.replace(/\D/g, "").length < 10) {
       toast({ title: "Telefone inválido", variant: "destructive" });
       return;
     }
-    if (postalCode.replace(/\D/g, "").length < 8 || !address || !addressNumber || !neighborhood) {
+    if (postalCode.replace(/\D/g, "").length < 8 || !address || !addressNumber || !neighborhood || !!cepError) {
       toast({ title: "Complete o endereço", variant: "destructive" });
       return;
     }
@@ -143,7 +197,7 @@ export default function SignupWithCard() {
       return;
     }
 
-    const cleanCpf = cpf.replace(/\D/g, "");
+    const cleanTaxId = taxId.replace(/\D/g, "");
     const cleanCard = cardNumber.replace(/\D/g, "");
     if (cleanCard.length < 13) {
       toast({ title: "Número do cartão inválido", variant: "destructive" });
@@ -166,7 +220,7 @@ export default function SignupWithCard() {
       const { data: fraud, error: fraudErr } = await supabase.rpc("check_signup_fraud_strict", {
         p_fingerprint: fp,
         p_ip: ip,
-        p_cpf: cleanCpf,
+        p_cpf: cleanTaxId,
       });
       if (fraudErr) {
         console.error("[SignupWithCard] fraud check error", fraudErr);
@@ -208,7 +262,7 @@ export default function SignupWithCard() {
           customerData: {
             name,
             email,
-            taxId: cleanCpf,
+            taxId: cleanTaxId,
             phone: phone.replace(/\D/g, ""),
             postalCode: postalCode.replace(/\D/g, ""),
             address,
@@ -302,16 +356,50 @@ export default function SignupWithCard() {
                           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                         </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label>Senha</Label>
-                        <Input
-                          type="password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                          minLength={8}
-                        />
-                        <PasswordStrength password={password} />
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label>Senha</Label>
+                          <div className="relative">
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                              minLength={8}
+                              className="pr-11"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword((prev) => !prev)}
+                              className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-foreground"
+                              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                            >
+                              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
+                          <PasswordStrength password={password} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Confirmar senha</Label>
+                          <div className="relative">
+                            <Input
+                              type={showConfirmPassword ? "text" : "password"}
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              required
+                              minLength={8}
+                              className="pr-11"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword((prev) => !prev)}
+                              className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-foreground"
+                              aria-label={showConfirmPassword ? "Ocultar confirmação" : "Mostrar confirmação"}
+                            >
+                              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </section>
 
@@ -321,8 +409,8 @@ export default function SignupWithCard() {
                       </h2>
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label>CPF</Label>
-                          <Input value={cpf} onChange={(e) => setCpf(fmtCpf(e.target.value))} required placeholder="000.000.000-00" />
+                          <Label>CPF ou CNPJ</Label>
+                          <Input value={taxId} onChange={(e) => setTaxId(fmtTaxId(e.target.value))} required placeholder="000.000.000-00 ou 00.000.000/0000-00" />
                         </div>
                         <div className="space-y-1.5">
                           <Label>Telefone</Label>
@@ -336,7 +424,7 @@ export default function SignupWithCard() {
                         </div>
                         <div className="space-y-1.5">
                           <Label>Endereço</Label>
-                          <Input value={address} onChange={(e) => setAddress(e.target.value)} required />
+                          <Input value={address} onChange={(e) => setAddress(e.target.value)} required disabled={cepLoading} />
                         </div>
                         <div className="space-y-1.5">
                           <Label>Número</Label>
@@ -345,7 +433,12 @@ export default function SignupWithCard() {
                       </div>
                       <div className="space-y-1.5">
                         <Label>Bairro</Label>
-                        <Input value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} required />
+                        <Input value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} required disabled={cepLoading} />
+                        {(cepLoading || cepError) && (
+                          <p className={cn("text-xs", cepError ? "text-destructive" : "text-muted-foreground")}>
+                            {cepLoading ? "Buscando endereço pelo CEP..." : cepError}
+                          </p>
+                        )}
                       </div>
                     </section>
 

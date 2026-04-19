@@ -36,5 +36,8 @@ verify_jwt = false
 [functions.check-asaas-payment]
 verify_jwt = false
 
+[functions.create-trial-with-card]
+verify_jwt = false
+
 [functions.score-opportunity]
 verify_jwt = false
