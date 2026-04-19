@@ -713,6 +713,11 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const animationStartRef = useRef<number>(0);
 
   useEffect(() => {
+    // Parallax desligado em mobile — recomputo do transform a cada frame causava
+    // jank pesado em touch scroll. Desktop mantém efeito.
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+      return;
+    }
     let ticking = false;
     const handleScroll = () => {
       if (!ticking) { requestAnimationFrame(() => { setScrollY(window.scrollY); ticking = false; }); ticking = true; }
@@ -722,6 +727,18 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   }, []);
 
   useEffect(() => {
+    // Em mobile (<768px) ou com prefers-reduced-motion, não animar o demo.
+    // O loop de requestAnimationFrame era o principal causador de jank/travamento na sales.
+    if (typeof window !== "undefined") {
+      const isMobile = window.matchMedia("(max-width: 767px)").matches;
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (isMobile || reducedMotion) {
+        // Mostra um frame estático representativo (estágio "IA conduzindo a conversa")
+        setCurrentStage(4);
+        setStageProgress(0.5);
+        return;
+      }
+    }
     const obs = new IntersectionObserver(([e]) => setIsAnimating(e.isIntersecting), { threshold: 0.2 });
     if (demoRef.current) obs.observe(demoRef.current);
     return () => obs.disconnect();
