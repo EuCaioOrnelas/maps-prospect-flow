@@ -284,9 +284,10 @@ export default function SignupChoosePlan() {
               size="lg"
               variant="hero"
               onClick={continueToSignup}
-              className="w-full max-w-md h-14 text-base"
+              className="w-full max-w-md h-14 text-base group"
             >
-              Começar meu teste grátis agora →
+              Começar meu teste grátis agora
+              <ArrowRight size={18} className="ml-2 transition-transform group-hover:translate-x-1" />
             </Button>
             <p className="text-xs text-muted-foreground text-center max-w-md flex items-center gap-1.5 justify-center">
               <Lock size={11} /> R$ 0,00 hoje • Cancele quando quiser, em 1 clique
