@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import {
   ArrowLeft,
+  ArrowRight,
   Check,
   ShieldCheck,
   Lock,
@@ -14,6 +15,8 @@ import {
   X,
   Star,
   CalendarClock,
+  Flame,
+  Rocket,
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { cn } from "@/lib/utils";
