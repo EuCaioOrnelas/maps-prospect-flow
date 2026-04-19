@@ -81,7 +81,7 @@ const Chat = lazyWithRetry(() => import("./pages/Chat"), "Chat");
 const WhatsAppAutomations = lazyWithRetry(() => import("./pages/WhatsAppAutomations"), "WhatsAppAutomations");
 const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEditor"), "WhatsAppFlowEditor");
 const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "CreateFlowAI");
-const SalesPage = lazyWithRetry(() => import("./pages/SalesPage"), "SalesPage");
+
 const EnterpriseContact = lazyWithRetry(() => import("./pages/EnterpriseContact"), "EnterpriseContact");
 const TrialExpired = lazyWithRetry(() => import("./pages/TrialExpired"), "TrialExpired");
 const ManageSubscription = lazyWithRetry(() => import("./pages/ManageSubscription"), "ManageSubscription");
@@ -141,7 +141,7 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />
-                <Route path="/vendas" element={<LightThemeWrapper><SalesPage /></LightThemeWrapper>} />
+                
                 <Route path="/enterprise" element={<LightThemeWrapper><EnterpriseContact /></LightThemeWrapper>} />
                 <Route path="/login" element={<LightThemeWrapper><Login /></LightThemeWrapper>} />
                 <Route path="/signup" element={<LightThemeWrapper><Signup /></LightThemeWrapper>} />
