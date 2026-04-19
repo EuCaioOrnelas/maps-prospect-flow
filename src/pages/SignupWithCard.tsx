@@ -168,15 +168,19 @@ export default function SignupWithCard() {
       toast({ title: "Senha muito fraca", description: "Use letras, números e símbolos.", variant: "destructive" });
       return;
     }
-    if (cpf.replace(/\D/g, "").length < 11) {
-      toast({ title: "CPF inválido", variant: "destructive" });
+    if (password !== confirmPassword) {
+      toast({ title: "As senhas não coincidem", variant: "destructive" });
+      return;
+    }
+    if (taxId.replace(/\D/g, "").length < 11) {
+      toast({ title: "CPF ou CNPJ inválido", variant: "destructive" });
       return;
     }
     if (phone.replace(/\D/g, "").length < 10) {
       toast({ title: "Telefone inválido", variant: "destructive" });
       return;
     }
-    if (postalCode.replace(/\D/g, "").length < 8 || !address || !addressNumber || !neighborhood) {
+    if (postalCode.replace(/\D/g, "").length < 8 || !address || !addressNumber || !neighborhood || !!cepError) {
       toast({ title: "Complete o endereço", variant: "destructive" });
       return;
     }
@@ -193,7 +197,7 @@ export default function SignupWithCard() {
       return;
     }
 
-    const cleanCpf = cpf.replace(/\D/g, "");
+    const cleanTaxId = taxId.replace(/\D/g, "");
     const cleanCard = cardNumber.replace(/\D/g, "");
     if (cleanCard.length < 13) {
       toast({ title: "Número do cartão inválido", variant: "destructive" });
@@ -216,7 +220,7 @@ export default function SignupWithCard() {
       const { data: fraud, error: fraudErr } = await supabase.rpc("check_signup_fraud_strict", {
         p_fingerprint: fp,
         p_ip: ip,
-        p_cpf: cleanCpf,
+        p_cpf: cleanTaxId,
       });
       if (fraudErr) {
         console.error("[SignupWithCard] fraud check error", fraudErr);
@@ -258,7 +262,7 @@ export default function SignupWithCard() {
           customerData: {
             name,
             email,
-            taxId: cleanCpf,
+            taxId: cleanTaxId,
             phone: phone.replace(/\D/g, ""),
             postalCode: postalCode.replace(/\D/g, ""),
             address,
