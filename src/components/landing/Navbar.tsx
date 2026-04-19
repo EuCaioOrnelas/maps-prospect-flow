@@ -62,7 +62,9 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           style={{
             maxWidth: scrolled ? '720px' : '1280px',
             borderRadius: scrolled ? '9999px' : '0px',
-            backgroundColor: scrolled ? 'hsl(var(--background) / 0.85)' : 'hsl(var(--background) / 0.8)',
+            backgroundColor: scrolled ? 'hsl(var(--background) / 0.55)' : 'hsl(var(--background) / 0.7)',
+            backdropFilter: 'blur(16px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
             border: scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
             boxShadow: scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
             paddingTop: scrolled ? '8px' : '16px',
