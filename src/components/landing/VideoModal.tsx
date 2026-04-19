@@ -77,10 +77,13 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
           </div>
         </div>
 
-        {/* Video — 16:9 nativo, sem bordas pretas */}
-        <div className="relative w-full bg-black" style={{ aspectRatio: "16 / 9" }}>
+        {/* Video — container na proporção do conteúdo real (~2.13:1).
+            O iframe mantém 16:9 e é escalado pela largura, então as barras pretas
+            superior/inferior do YouTube ficam fora do container (cortadas), sem cortar conteúdo. */}
+        <div className="relative w-full bg-black overflow-hidden" style={{ aspectRatio: "2.13 / 1" }}>
           <iframe
-            className="absolute inset-0 w-full h-full block"
+            className="absolute left-0 top-1/2 -translate-y-1/2 block"
+            style={{ width: "100%", aspectRatio: "16 / 9" }}
             src={videoSrc}
             title="Wiize — Demonstração"
             frameBorder="0"
