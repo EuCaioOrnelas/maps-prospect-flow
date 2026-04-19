@@ -193,10 +193,10 @@ export default function SignupChoosePlan() {
                   key={plan.key}
                   onClick={() => setSelected(plan.key)}
                   className={cn(
-                    "text-left rounded-2xl border p-6 transition-all relative group",
+                    "text-left rounded-2xl border p-6 pt-7 transition-colors duration-200 relative flex flex-col",
                     isSelected
                       ? "border-primary bg-primary/5 ring-2 ring-primary/30 shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.4)]"
-                      : "border-border hover:border-primary/40 bg-card hover:-translate-y-0.5",
+                      : "border-border bg-card hover:border-primary/40 hover:bg-primary/[0.02]",
                   )}
                 >
                   {plan.highlight && (
@@ -204,10 +204,10 @@ export default function SignupChoosePlan() {
                       🔥 Mais escolhido por empresas em crescimento
                     </span>
                   )}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1 min-w-0 pr-3">
+                  <div className="flex items-start justify-between gap-3 h-[60px]">
+                    <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-lg leading-tight">Wiize {plan.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2 min-h-[2.25rem]">{plan.desc}</p>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{plan.desc}</p>
                     </div>
                     <div
                       className={cn(
@@ -218,9 +218,8 @@ export default function SignupChoosePlan() {
                       {isSelected && <Check size={12} className="text-primary-foreground" strokeWidth={3} />}
                     </div>
                   </div>
-
                   {/* Pricing block - foco em gratuidade */}
-                  <div className="my-5 pb-5 border-b border-border/60">
+                  <div className="mt-6 pb-5 border-b border-border/60">
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-4xl font-bold tracking-tight text-primary">
                         R$ 0,00
@@ -240,7 +239,7 @@ export default function SignupChoosePlan() {
                     </div>
                   </div>
 
-                  <ul className="space-y-2">
+                  <ul className="space-y-2 mt-5">
                     {plan.perks.map((p) => (
                       <li key={p} className="text-sm flex items-start gap-2">
                         <Check size={14} className="text-primary mt-0.5 shrink-0" /> {p}
