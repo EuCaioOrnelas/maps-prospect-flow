@@ -713,6 +713,11 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const animationStartRef = useRef<number>(0);
 
   useEffect(() => {
+    // Parallax desligado em mobile — recomputo do transform a cada frame causava
+    // jank pesado em touch scroll. Desktop mantém efeito.
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+      return;
+    }
     let ticking = false;
     const handleScroll = () => {
       if (!ticking) { requestAnimationFrame(() => { setScrollY(window.scrollY); ticking = false; }); ticking = true; }
