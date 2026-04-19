@@ -45,7 +45,7 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         id="video-modal-container"
-        className="max-w-[420px] sm:max-w-[460px] w-full p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden max-h-[95vh] flex flex-col"
+        className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-5xl xl:max-w-6xl w-full p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden max-h-[95vh] flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border bg-card">
@@ -76,8 +76,8 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {/* Video — vertical 9:16 */}
-          <div className="relative w-full bg-black overflow-hidden" style={{ paddingBottom: "177.78%" }}>
+          {/* Video — horizontal 16:9 */}
+          <div className="relative w-full bg-black" style={{ paddingBottom: "56.25%" }}>
             <iframe
               className="absolute inset-0 w-full h-full"
               src={open ? "https://www.youtube.com/embed/ZRzK42SYNFc?si=LrJuZKLrktuhBMLa&rel=0&modestbranding=1&disablekb=1&autoplay=1" : ""}
@@ -86,7 +86,6 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
-              style={{ pointerEvents: "auto" }}
             />
           </div>
 
