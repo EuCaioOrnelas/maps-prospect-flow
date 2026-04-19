@@ -235,6 +235,11 @@ export default function SignupChoosePlan() {
                         <Check size={14} className="text-primary mt-0.5 shrink-0" /> {p}
                       </li>
                     ))}
+                    {plan.limitations.map((l) => (
+                      <li key={l} className="text-sm flex items-start gap-2 text-muted-foreground">
+                        <X size={14} className="mt-0.5 shrink-0 opacity-60" /> {l}
+                      </li>
+                    ))}
                   </ul>
                 </button>
               );
