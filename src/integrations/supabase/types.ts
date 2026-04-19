@@ -3104,6 +3104,27 @@ export type Database = {
         }
         Relationships: []
       }
+      signup_fraud_allowlist: {
+        Row: {
+          created_at: string
+          id: string
+          identifier_hash: string
+          note: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          identifier_hash: string
+          note?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          identifier_hash?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       subscription_cancellations: {
         Row: {
           active_until: string | null
