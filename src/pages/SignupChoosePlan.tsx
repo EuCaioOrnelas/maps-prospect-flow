@@ -11,6 +11,7 @@ import {
   Zap,
   TrendingUp,
   ChevronDown,
+  X,
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { cn } from "@/lib/utils";
