@@ -157,7 +157,7 @@ export default function SignupChoosePlan() {
               <Step
                 num="1"
                 title="Cadastre seu cartão"
-                desc="Hoje: R$ 0,00. Apenas validação — nada é debitado agora."
+                desc="Hoje: R$ 0,00. Apenas validação, nada é debitado agora."
               />
               <Step
                 num="2"
