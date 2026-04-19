@@ -11,6 +11,7 @@ import {
   Zap,
   TrendingUp,
   ChevronDown,
+  X,
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { cn } from "@/lib/utils";
@@ -29,9 +30,19 @@ const PLANS = [
     desc: "Para times pequenos validando prospecção",
     highlight: false,
     perks: [
-      "1.000 oportunidades/mês",
-      "WhatsApp + Meta integrados",
-      "CRM com Score IA",
+      "Oportunidades com alto potencial de fechamento",
+      "Mensagens geradas por IA para iniciar conversas",
+      "Gestão de contatos em um só lugar (CRM)",
+      "Priorize oportunidades com maior chance de fechamento (Score)",
+      "Disparos via WhatsApp e Meta",
+      "Até 2 números conectados",
+      "Suporte por email",
+      "Operação semi-automática",
+    ],
+    limitations: [
+      "Sem automação",
+      "Sem follow-up",
+      "Sem agente de IA",
     ],
   },
   {
@@ -41,18 +52,24 @@ const PLANS = [
     desc: "O plano que 8 em cada 10 empresas escolhem",
     highlight: true,
     perks: [
-      "3.000 oportunidades/mês",
-      "Agentes de IA ilimitados",
-      "Aquecimento avançado de números",
-      "Tudo do Start",
+      "Tudo do Start (leads, CRM e disparos)",
+      "Priorize oportunidades com maior chance de fechamento (Score)",
+      "Automação de atendimento",
+      "Follow-up automático inteligente",
+      "Agente de IA em conversas",
+      "Fluxos de vendas automatizados",
+      "Até 5 números conectados",
+      "Suporte prioritário",
+      "Operação totalmente automatizada",
     ],
+    limitations: [],
   },
 ];
 
 const FAQ = [
   {
     q: "Vou ser cobrado agora?",
-    a: "Não. Hoje você paga R$ 0,00. O cartão é registrado apenas para validar que você é uma empresa real. A primeira cobrança só acontece no 8º dia — e somente se você decidir continuar.",
+    a: "Não. Hoje você paga R$ 0,00. O cartão é registrado apenas para validar que você é uma empresa real. A primeira cobrança só acontece no 8º dia, e somente se você decidir continuar.",
   },
   {
     q: "Como cancelo se não gostar?",
@@ -60,7 +77,7 @@ const FAQ = [
   },
   {
     q: "Por que pedem cartão se o trial é grátis?",
-    a: "Para garantir que você tenha acesso imediato e contínuo se decidir continuar — sem precisar reconfigurar nada. E para manter a plataforma livre de bots e curiosos, focando o suporte em quem realmente quer crescer.",
+    a: "Para garantir que você tenha acesso imediato e contínuo se decidir continuar, sem precisar reconfigurar nada. E para manter a plataforma livre de bots e curiosos, focando o suporte em quem realmente quer crescer.",
   },
   {
     q: "Vou ter acesso a todos os recursos no trial?",
@@ -68,7 +85,7 @@ const FAQ = [
   },
   {
     q: "Meus dados de pagamento estão seguros?",
-    a: "Totalmente. Processamos via Asaas e Stripe — os mesmos padrões de segurança usados por bancos digitais. Nunca armazenamos dados completos do cartão em nossos servidores.",
+    a: "Totalmente. Processamos via Asaas, com os mesmos padrões de segurança usados por bancos digitais. Nunca armazenamos dados completos do cartão em nossos servidores.",
   },
 ];
 
@@ -87,7 +104,7 @@ export default function SignupChoosePlan() {
   return (
     <>
       <SEO
-        title="Comece grátis por 7 dias — Wiize"
+        title="Comece grátis por 7 dias | Wiize"
         description="7 dias completos com acesso total. Sem cobrança hoje. Cancele em 1 clique. Mais de 2.000 empresas já prospectam com a Wiize."
         url="https://wiize.com.br/signup/escolher-plano"
       />
@@ -117,15 +134,14 @@ export default function SignupChoosePlan() {
               <span className="text-primary">Pague só se valer a pena.</span>
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Acesso total à plataforma. Sem cobrança hoje. Cancele em 1 clique
-              dentro do app — sem ligação, sem burocracia.
+              Mais de 2.000 empresas já prospectam com a Wiize.
             </p>
           </div>
 
           {/* Trust strip */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-10 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
-              <Lock size={12} className="text-primary" /> Pagamento seguro Asaas & Stripe
+              <Lock size={12} className="text-primary" /> Pagamento seguro via Asaas
             </div>
             <div className="flex items-center gap-1.5">
               <ShieldCheck size={12} className="text-primary" /> Cancele em 1 clique
@@ -141,7 +157,7 @@ export default function SignupChoosePlan() {
               <Step
                 num="1"
                 title="Cadastre seu cartão"
-                desc="Hoje: R$ 0,00. Apenas validação — nada é debitado agora."
+                desc="Hoje: R$ 0,00. Apenas validação, nada é debitado agora."
               />
               <Step
                 num="2"
@@ -166,7 +182,7 @@ export default function SignupChoosePlan() {
             </span>
           </div>
           <p className="text-sm text-muted-foreground mb-5">
-            Durante o trial, todos os recursos ficam liberados — independente do plano.
+            Durante o trial, todos os recursos ficam liberados, independente do plano.
           </p>
 
           <div className="grid md:grid-cols-2 gap-4 mb-8">
@@ -217,6 +233,11 @@ export default function SignupChoosePlan() {
                     {plan.perks.map((p) => (
                       <li key={p} className="text-sm flex items-start gap-2">
                         <Check size={14} className="text-primary mt-0.5 shrink-0" /> {p}
+                      </li>
+                    ))}
+                    {plan.limitations.map((l) => (
+                      <li key={l} className="text-sm flex items-start gap-2 text-muted-foreground">
+                        <X size={14} className="mt-0.5 shrink-0 opacity-60" /> {l}
                       </li>
                     ))}
                   </ul>
