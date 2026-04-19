@@ -213,8 +213,12 @@ export default function SignupWithCard() {
       toast({ title: "As senhas não coincidem", variant: "destructive" });
       return;
     }
-    if (taxId.replace(/\D/g, "").length < 11) {
-      toast({ title: "CPF ou CNPJ inválido", variant: "destructive" });
+    if (!isValidTaxId(taxId)) {
+      toast({
+        title: "CPF ou CNPJ inválido",
+        description: "Confira os dígitos — o número informado não é válido.",
+        variant: "destructive",
+      });
       return;
     }
     if (phone.replace(/\D/g, "").length < 10) {
