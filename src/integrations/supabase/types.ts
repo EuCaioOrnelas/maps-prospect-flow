@@ -2186,6 +2186,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
+          address_complement: string | null
+          address_number: string | null
           admin_assigned_plan: boolean
           asaas_customer_id: string | null
           asaas_subscription_id: string | null
@@ -2193,6 +2196,7 @@ export type Database = {
           billing_period: string | null
           bonus_searches: number
           chat_onboarding_seen: boolean
+          city: string | null
           cpf: string | null
           created_at: string
           device_fingerprint: string | null
@@ -2202,12 +2206,15 @@ export type Database = {
           is_blocked: boolean | null
           last_searches_reset: string | null
           name: string | null
+          neighborhood: string | null
           payment_provider: string | null
           phone: string | null
           plan: string
+          postal_code: string | null
           searches_limit: number
           searches_used: number
           signup_ip: string | null
+          state: string | null
           subscription_current_period_end: string | null
           subscription_price_cents: number | null
           terms_accepted_at: string | null
@@ -2230,6 +2237,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          address_complement?: string | null
+          address_number?: string | null
           admin_assigned_plan?: boolean
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
@@ -2237,6 +2247,7 @@ export type Database = {
           billing_period?: string | null
           bonus_searches?: number
           chat_onboarding_seen?: boolean
+          city?: string | null
           cpf?: string | null
           created_at?: string
           device_fingerprint?: string | null
@@ -2246,12 +2257,15 @@ export type Database = {
           is_blocked?: boolean | null
           last_searches_reset?: string | null
           name?: string | null
+          neighborhood?: string | null
           payment_provider?: string | null
           phone?: string | null
           plan?: string
+          postal_code?: string | null
           searches_limit?: number
           searches_used?: number
           signup_ip?: string | null
+          state?: string | null
           subscription_current_period_end?: string | null
           subscription_price_cents?: number | null
           terms_accepted_at?: string | null
@@ -2274,6 +2288,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          address_complement?: string | null
+          address_number?: string | null
           admin_assigned_plan?: boolean
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
@@ -2281,6 +2298,7 @@ export type Database = {
           billing_period?: string | null
           bonus_searches?: number
           chat_onboarding_seen?: boolean
+          city?: string | null
           cpf?: string | null
           created_at?: string
           device_fingerprint?: string | null
@@ -2290,12 +2308,15 @@ export type Database = {
           is_blocked?: boolean | null
           last_searches_reset?: string | null
           name?: string | null
+          neighborhood?: string | null
           payment_provider?: string | null
           phone?: string | null
           plan?: string
+          postal_code?: string | null
           searches_limit?: number
           searches_used?: number
           signup_ip?: string | null
+          state?: string | null
           subscription_current_period_end?: string | null
           subscription_price_cents?: number | null
           terms_accepted_at?: string | null
