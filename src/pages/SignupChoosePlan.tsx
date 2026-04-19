@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import {
   ArrowLeft,
+  ArrowRight,
   Check,
   ShieldCheck,
   Lock,
@@ -14,6 +15,8 @@ import {
   X,
   Star,
   CalendarClock,
+  Flame,
+  Rocket,
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { cn } from "@/lib/utils";
@@ -142,14 +145,9 @@ export default function SignupChoosePlan() {
             </p>
 
             <div className="mt-5 inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-0.5 text-amber-500">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={12} fill="currentColor" strokeWidth={0} />
-                ))}
-              </div>
-              <span className="font-medium text-foreground">4,9/5</span>
-              <span>·</span>
-              <span>Avaliação média de empresas B2B no Brasil</span>
+              <TrendingUp size={14} className="text-primary" />
+              <span className="font-semibold text-foreground">+500 empresas</span>
+              <span>já prospectam com a Wiize</span>
             </div>
           </div>
 
@@ -216,7 +214,7 @@ export default function SignupChoosePlan() {
                 >
                   {plan.highlight && (
                     <span className="absolute -top-2.5 left-6 bg-primary text-primary-foreground text-[10px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 whitespace-nowrap">
-                      ⚡ Escolha de 8 em cada 10 empresas que crescem com a Wiize
+                      <Flame size={11} className="fill-primary-foreground" /> Mais escolhido
                     </span>
                   )}
                   <div className="flex items-start justify-between gap-3 h-[60px]">
@@ -286,9 +284,10 @@ export default function SignupChoosePlan() {
               size="lg"
               variant="hero"
               onClick={continueToSignup}
-              className="w-full max-w-md h-14 text-base"
+              className="w-full max-w-md h-14 text-base group"
             >
-              Começar meu teste grátis agora →
+              Começar meu teste grátis agora
+              <ArrowRight size={18} className="ml-2 transition-transform group-hover:translate-x-1" />
             </Button>
             <p className="text-xs text-muted-foreground text-center max-w-md flex items-center gap-1.5 justify-center">
               <Lock size={11} /> R$ 0,00 hoje • Cancele quando quiser, em 1 clique
