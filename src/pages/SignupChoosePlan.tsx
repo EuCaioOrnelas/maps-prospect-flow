@@ -239,7 +239,7 @@ export default function SignupChoosePlan() {
                     </div>
                   </div>
 
-                  <ul className="space-y-2">
+                  <ul className="space-y-2 mt-5">
                     {plan.perks.map((p) => (
                       <li key={p} className="text-sm flex items-start gap-2">
                         <Check size={14} className="text-primary mt-0.5 shrink-0" /> {p}
