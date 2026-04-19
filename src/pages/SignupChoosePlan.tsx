@@ -29,39 +29,42 @@ const PLANS = [
     key: "start",
     name: "Start",
     monthly: 296,
-    desc: "Comece a gerar oportunidades reais sem complicar a operação",
+    opportunities: "1.000",
+    desc: "Para gerar e validar oportunidades todos os dias",
     highlight: false,
     perks: [
-      "Encontre empresas com perfil ideal para o seu negócio",
-      "Inicie conversas no WhatsApp com mensagens prontas pela IA",
-      "Acompanhe cada negociação em um CRM visual e organizado",
-      "Saiba quem tem mais chance de fechar com o Score de leads",
-      "Dispare em massa pelo WhatsApp e Meta com segurança",
-      "Conecte até 2 números de WhatsApp",
-      "Suporte por e-mail em horário comercial",
-      "Operação semi-automática para o time comercial",
+      "Oportunidades com alto potencial de fechamento",
+      "Mensagens geradas por IA para iniciar conversas",
+      "Gestão de contatos em um só lugar (CRM)",
+      "Priorize oportunidades com maior chance de fechamento (Score)",
+      "Disparos via WhatsApp e Meta",
+      "Até 2 números conectados",
+      "Suporte por email",
+      "Operação semi-automática",
     ],
     limitations: [
-      "Sem automação de atendimento",
-      "Sem follow-up automático",
-      "Sem agente de IA respondendo por você",
+      "Sem automação",
+      "Sem follow-up",
+      "Sem agente de IA",
     ],
   },
   {
     key: "growth",
     name: "Growth",
     monthly: 696,
-    desc: "Coloque sua prospecção no piloto automático e escale com IA",
+    opportunities: "3.000",
+    desc: "Para automatizar, escalar e converter leads no piloto automático",
     highlight: true,
     perks: [
-      "Tudo do Start (leads, CRM, disparos e Score)",
-      "Atendimento automático 24/7 sem perder o tom humano",
-      "Follow-up inteligente que reaquece quem parou de responder",
-      "Agente de IA conversando e qualificando leads por você",
-      "Fluxos de vendas automatizados ponta a ponta",
-      "Conecte até 5 números de WhatsApp",
-      "Suporte prioritário com resposta no mesmo dia",
-      "Operação 100% automatizada para escalar sem contratar",
+      "Tudo do Start (leads, CRM e disparos)",
+      "Priorize oportunidades com maior chance de fechamento (Score)",
+      "Automação de atendimento",
+      "Follow-up automático inteligente",
+      "Agente de IA em conversas",
+      "Fluxos de vendas automatizados",
+      "Até 5 números conectados",
+      "Suporte prioritário",
+      "Operação totalmente automatizada",
     ],
     limitations: [],
   },
@@ -106,7 +109,7 @@ export default function SignupChoosePlan() {
     <>
       <SEO
         title="Comece grátis por 7 dias | Wiize"
-        description="7 dias completos com acesso total. Sem cobrança hoje. Cancele em 1 clique. Mais de 2.000 empresas já prospectam com a Wiize."
+        description="7 dias completos com acesso total. Sem cobrança hoje. Cancele em 1 clique. Mais de 500 empresas já prospectam com a Wiize."
         url="https://wiize.com.br/signup/escolher-plano"
       />
       <div className="min-h-screen bg-background overflow-x-hidden">
@@ -146,7 +149,7 @@ export default function SignupChoosePlan() {
               </div>
               <span className="font-medium text-foreground">4,9/5</span>
               <span>·</span>
-              <span>+2.000 empresas usando agora</span>
+              <span>Avaliação média de empresas B2B no Brasil</span>
             </div>
           </div>
 
@@ -174,12 +177,12 @@ export default function SignupChoosePlan() {
               <Step
                 num="2"
                 title="Dias 1 a 7 · Use tudo liberado"
-                desc="WhatsApp, IA, CRM, Meta Ads, Score e Agentes — sem limite."
+                desc="WhatsApp, IA, CRM, Meta Ads, Score e Agentes, sem limite."
               />
               <Step
                 num="3"
                 title="Dia 8 · Você decide"
-                desc="Continue automaticamente ou cancele em 1 clique antes — sem cobrança."
+                desc="Continue automaticamente ou cancele em 1 clique antes, sem cobrança."
               />
             </div>
           </div>
@@ -238,8 +241,8 @@ export default function SignupChoosePlan() {
                       </span>
                       <span className="text-sm font-medium text-foreground">hoje</span>
                     </div>
-                    <p className="text-sm font-medium text-foreground mt-1.5 inline-flex items-center gap-1.5">
-                      <Sparkles size={13} className="text-primary" /> 7 dias com a plataforma completa liberada
+                    <p className="text-sm font-medium text-primary mt-1.5">
+                      Até {plan.opportunities} oportunidades/mês
                     </p>
                     <div className="mt-3 rounded-lg bg-muted/40 border border-border/60 px-3 py-2">
                       <p className="text-xs text-foreground">
@@ -251,15 +254,17 @@ export default function SignupChoosePlan() {
                     </div>
                   </div>
 
-                  <ul className="space-y-2 mt-5">
+                  <ul className="space-y-3 mt-5 text-sm">
                     {plan.perks.map((p) => (
-                      <li key={p} className="text-sm flex items-start gap-2">
-                        <Check size={14} className="text-primary mt-0.5 shrink-0" /> {p}
+                      <li key={p} className="flex items-start gap-3">
+                        <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">{p}</span>
                       </li>
                     ))}
                     {plan.limitations.map((l) => (
-                      <li key={l} className="text-sm flex items-start gap-2 text-muted-foreground">
-                        <X size={14} className="mt-0.5 shrink-0 opacity-60" /> {l}
+                      <li key={l} className="flex items-start gap-3 opacity-50">
+                        <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">{l}</span>
                       </li>
                     ))}
                   </ul>
@@ -348,17 +353,24 @@ export default function SignupChoosePlan() {
           </div>
 
           {/* Footer trust */}
-          <div className="text-center text-xs text-muted-foreground pb-8">
+          <div className="text-center text-xs text-muted-foreground pb-8 space-y-2">
             <p>
               Ao continuar você concorda com os{" "}
               <Link to="/termos" className="underline hover:text-foreground">
                 Termos
-              </Link>{" "}
-              e a{" "}
+              </Link>
+              , a{" "}
               <Link to="/privacidade" className="underline hover:text-foreground">
                 Política de Privacidade
+              </Link>{" "}
+              e a{" "}
+              <Link to="/reembolso" className="underline hover:text-foreground">
+                Política de Reembolso
               </Link>
               .
+            </p>
+            <p className="text-[11px] text-muted-foreground/80 max-w-xl mx-auto leading-relaxed">
+              Garantia de 7 dias: cancele a qualquer momento durante o trial e nada será cobrado. Após a primeira cobrança, você tem até 7 dias corridos para solicitar reembolso integral, conforme o Código de Defesa do Consumidor (Art. 49).
             </p>
           </div>
         </div>
