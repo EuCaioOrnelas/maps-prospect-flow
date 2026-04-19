@@ -204,7 +204,7 @@ export default function SignupChoosePlan() {
                       🔥 Mais escolhido por empresas em crescimento
                     </span>
                   )}
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-4 min-h-[52px]">
                     <div>
                       <h3 className="font-semibold text-lg">Wiize {plan.name}</h3>
                       <p className="text-xs text-muted-foreground mt-0.5">{plan.desc}</p>
@@ -230,12 +230,14 @@ export default function SignupChoosePlan() {
                     <p className="text-sm font-medium text-foreground mt-1.5 inline-flex items-center gap-1.5">
                       <Sparkles size={13} className="text-primary" /> 7 dias grátis completos
                     </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Depois R$ {plan.monthly.toLocaleString("pt-BR")}/mês se você continuar
-                    </p>
-                    <p className="text-[11px] text-muted-foreground/80 mt-1 inline-flex items-center gap-1">
-                      <ShieldCheck size={11} /> Cancele em 1 clique antes da cobrança
-                    </p>
+                    <div className="mt-3 rounded-lg bg-muted/40 border border-border/60 px-3 py-2">
+                      <p className="text-xs text-foreground">
+                        A partir do 8º dia: <span className="font-semibold">R$ {plan.monthly.toLocaleString("pt-BR")}/mês</span>, cobrado automaticamente no cartão se você continuar.
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-1 inline-flex items-center gap-1">
+                        <ShieldCheck size={11} /> Cancele em 1 clique antes da cobrança, sem custo.
+                      </p>
+                    </div>
                   </div>
 
                   <ul className="space-y-2">
