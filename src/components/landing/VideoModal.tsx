@@ -76,7 +76,7 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
         </div>
 
         {/* Video */}
-        <div className="relative w-full bg-black" style={{ paddingBottom: "56.25%" }}>
+        <div className="relative w-full bg-black overflow-hidden" style={{ paddingBottom: "56.25%" }}>
           <iframe
             className="absolute inset-0 w-full h-full"
             src={open ? "https://www.youtube.com/embed/ZRzK42SYNFc?si=LrJuZKLrktuhBMLa&rel=0&modestbranding=1&disablekb=1&autoplay=1" : ""}
@@ -85,10 +85,8 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerPolicy="strict-origin-when-cross-origin"
             allowFullScreen
-            style={{ pointerEvents: "auto" }}
+            style={{ pointerEvents: "auto", transform: "scale(1.4)", transformOrigin: "center center" }}
           />
-          {/* Overlay to block seek bar */}
-          <div className="absolute bottom-0 left-0 right-0 h-[30px] bg-gradient-to-t from-black/40 to-transparent pointer-events-auto z-10" />
         </div>
 
         {/* CTA */}
