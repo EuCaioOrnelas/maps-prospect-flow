@@ -72,7 +72,7 @@ function fmtPhone(v: string) {
 export default function SignupWithCard() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, refreshProfile } = useAuth();
+  const { user } = useAuth();
 
   const planKey = useMemo(() => sessionStorage.getItem("trial_plan_chosen") || "growth", []);
   const plan = PLAN_INFO[planKey];
