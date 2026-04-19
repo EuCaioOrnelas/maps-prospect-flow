@@ -68,7 +68,7 @@ const PLANS = [
 const FAQ = [
   {
     q: "Vou ser cobrado agora?",
-    a: "Não. Hoje você paga R$ 0,00. O cartão é registrado apenas para validar que você é uma empresa real. A primeira cobrança só acontece no 8º dia — e somente se você decidir continuar.",
+    a: "Não. Hoje você paga R$ 0,00. O cartão é registrado apenas para validar que você é uma empresa real. A primeira cobrança só acontece no 8º dia, e somente se você decidir continuar.",
   },
   {
     q: "Como cancelo se não gostar?",
@@ -76,7 +76,7 @@ const FAQ = [
   },
   {
     q: "Por que pedem cartão se o trial é grátis?",
-    a: "Para garantir que você tenha acesso imediato e contínuo se decidir continuar — sem precisar reconfigurar nada. E para manter a plataforma livre de bots e curiosos, focando o suporte em quem realmente quer crescer.",
+    a: "Para garantir que você tenha acesso imediato e contínuo se decidir continuar, sem precisar reconfigurar nada. E para manter a plataforma livre de bots e curiosos, focando o suporte em quem realmente quer crescer.",
   },
   {
     q: "Vou ter acesso a todos os recursos no trial?",
@@ -84,7 +84,7 @@ const FAQ = [
   },
   {
     q: "Meus dados de pagamento estão seguros?",
-    a: "Totalmente. Processamos via Asaas e Stripe — os mesmos padrões de segurança usados por bancos digitais. Nunca armazenamos dados completos do cartão em nossos servidores.",
+    a: "Totalmente. Processamos via Asaas, com os mesmos padrões de segurança usados por bancos digitais. Nunca armazenamos dados completos do cartão em nossos servidores.",
   },
 ];
 
