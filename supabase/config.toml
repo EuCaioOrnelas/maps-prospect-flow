@@ -39,5 +39,8 @@ verify_jwt = false
 [functions.create-trial-with-card]
 verify_jwt = false
 
+[functions.simulate-trial-charge]
+verify_jwt = false
+
 [functions.score-opportunity]
 verify_jwt = false
