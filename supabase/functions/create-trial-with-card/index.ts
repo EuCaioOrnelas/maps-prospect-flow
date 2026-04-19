@@ -178,6 +178,12 @@ serve(async (req) => {
           trial_auto_charge_cancelled: false,
           cpf: cpfCnpj,
           phone: customerData.phone || null,
+          postal_code: postalCode || null,
+          address: customerData.address || null,
+          address_number: customerData.addressNumber || null,
+          neighborhood: customerData.neighborhood || null,
+          city: city || null,
+          state: state || null,
         })
         .eq("id", userId);
 
