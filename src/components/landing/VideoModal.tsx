@@ -47,10 +47,10 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         id="video-modal-container"
-        className="max-w-[98vw] sm:max-w-[96vw] lg:max-w-[92vw] xl:max-w-[1400px] w-full p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden max-h-[96vh] flex flex-col"
+        className="max-w-[98vw] sm:max-w-[96vw] lg:max-w-[92vw] xl:max-w-[1280px] w-full p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-5 py-2.5 border-b border-border bg-card flex-shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-2.5 border-b border-border bg-card">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="relative flex items-center justify-center">
               <div className="w-2 h-2 rounded-full bg-primary" />
@@ -77,10 +77,10 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
           </div>
         </div>
 
-        {/* Video — horizontal 16:9, ocupa todo espaço disponível */}
-        <div className="relative w-full bg-black flex-1 min-h-0">
+        {/* Video — 16:9 nativo, sem bordas pretas */}
+        <div className="relative w-full bg-black" style={{ aspectRatio: "16 / 9" }}>
           <iframe
-            className="absolute inset-0 w-full h-full"
+            className="absolute inset-0 w-full h-full block"
             src={videoSrc}
             title="Wiize — Demonstração"
             frameBorder="0"
@@ -91,7 +91,7 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
         </div>
 
         {/* CTA */}
-        <div className="px-4 sm:px-6 py-3 sm:py-4 bg-card flex flex-col sm:flex-row items-center justify-center gap-3 border-t border-border flex-shrink-0">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 bg-card flex flex-col sm:flex-row items-center justify-center gap-3 border-t border-border">
           <p className="text-muted-foreground text-xs sm:text-sm text-center">
             Teste gratuitamente por 7 dias — sem compromisso
           </p>
