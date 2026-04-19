@@ -235,29 +235,10 @@ export default function SignupWithCard() {
         return;
       }
 
-      const redirectUrl = `${window.location.origin}/dashboard`;
-      const { data: signupData, error: signupErr } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            name,
-            signup_ip: ip || "unknown",
-            device_fingerprint: fp || "unknown",
-            terms_accepted: "true",
-            trial_with_card: "true",
-            trial_plan_chosen: planKey,
-          },
-        },
-      });
-      if (signupErr) throw signupErr;
-      const newUserId = signupData.user?.id;
-      if (!newUserId) throw new Error("Conta criada, mas ID do usuário não retornado");
-
+      // 1) Validate card with Asaas BEFORE creating the auth user.
+      //    This prevents orphan accounts when the card is rejected.
       const { data: trialRes, error: trialErr } = await supabase.functions.invoke("create-trial-with-card", {
         body: {
-          userId: newUserId,
           planKey,
           customerData: {
             name,
@@ -284,6 +265,50 @@ export default function SignupWithCard() {
           trialRes?.error || trialErr?.message || "Falha ao validar o cartão. Verifique os dados e tente novamente.",
         );
       }
+
+      // 2) Card is valid — now create the auth user with trial metadata so the
+      //    profile trigger can persist it.
+      const redirectUrl = `${window.location.origin}/dashboard`;
+      const { data: signupData, error: signupErr } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            name,
+            signup_ip: ip || "unknown",
+            device_fingerprint: fp || "unknown",
+            terms_accepted: "true",
+            trial_with_card: "true",
+            trial_plan_chosen: planKey,
+            trial_asaas_subscription_id: trialRes.subscriptionId,
+            trial_asaas_customer_id: trialRes.customerId,
+            trial_card_last4: trialRes.cardLast4,
+            trial_card_brand: trialRes.cardBrand,
+            trial_will_charge_at: trialRes.nextDueDate,
+          },
+        },
+      });
+      if (signupErr) throw signupErr;
+      const newUserId = signupData.user?.id;
+      if (!newUserId) throw new Error("Conta criada, mas ID do usuário não retornado");
+
+      // 3) Persist trial details on the profile (best-effort — webhook also reconciles).
+      await supabase
+        .from("profiles")
+        .update({
+          trial_card_last4: trialRes.cardLast4,
+          trial_card_brand: trialRes.cardBrand,
+          trial_asaas_subscription_id: trialRes.subscriptionId,
+          trial_asaas_customer_id: trialRes.customerId,
+          trial_plan_chosen: planKey,
+          trial_billing_period: "monthly",
+          trial_will_charge_at: new Date(trialRes.nextDueDate).toISOString(),
+          trial_auto_charge_cancelled: false,
+          cpf: cleanTaxId,
+          phone: phone || null,
+        })
+        .eq("id", newUserId);
 
       sessionStorage.removeItem("trial_plan_chosen");
       await refreshProfile();
