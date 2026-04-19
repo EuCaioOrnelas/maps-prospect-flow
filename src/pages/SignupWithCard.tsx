@@ -29,6 +29,7 @@ import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { generateFingerprint, getClientIP } from "@/lib/fingerprint";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
+import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 import { cn } from "@/lib/utils";
 
 const PLAN_INFO: Record<string, { name: string; monthly: number }> = {
