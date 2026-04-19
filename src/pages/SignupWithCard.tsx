@@ -19,6 +19,8 @@ import {
   Calendar,
   User,
   Sparkles,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,13 +44,20 @@ function fmtExpiry(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 4);
   return d.length >= 3 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
 }
-function fmtCpf(v: string) {
-  return v
-    .replace(/\D/g, "")
-    .slice(0, 11)
+function fmtTaxId(v: string) {
+  const digits = v.replace(/\D/g, "").slice(0, 14);
+  if (digits.length <= 11) {
+    return digits
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  }
+
+  return digits
+    .replace(/(\d{2})(\d)/, "$1.$2")
     .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    .replace(/(\d{3})(\d)/, "$1/$2")
+    .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
 }
 function fmtCep(v: string) {
   return v.replace(/\D/g, "").slice(0, 8).replace(/(\d{5})(\d)/, "$1-$2");
@@ -73,14 +82,19 @@ export default function SignupWithCard() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Customer billing
-  const [cpf, setCpf] = useState("");
+  const [taxId, setTaxId] = useState("");
   const [phone, setPhone] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [address, setAddress] = useState("");
   const [addressNumber, setAddressNumber] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepError, setCepError] = useState("");
 
   // Card
   const [cardHolder, setCardHolder] = useState("");
@@ -101,6 +115,42 @@ export default function SignupWithCard() {
   useEffect(() => {
     if (user) navigate("/dashboard", { replace: true });
   }, [user, navigate]);
+
+  useEffect(() => {
+    const cleanCep = postalCode.replace(/\D/g, "");
+
+    if (cleanCep.length !== 8) {
+      setCepError("");
+      setCepLoading(false);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      setCepLoading(true);
+      setCepError("");
+
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const data = await res.json();
+
+        if (data.erro) {
+          setCepError("CEP não encontrado");
+          setAddress("");
+          setNeighborhood("");
+          return;
+        }
+
+        setAddress(data.logradouro || "");
+        setNeighborhood(data.bairro || "");
+      } catch {
+        setCepError("Erro ao buscar o CEP");
+      } finally {
+        setCepLoading(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [postalCode]);
 
   const trialEndDate = useMemo(() => {
     const d = new Date();
