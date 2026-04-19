@@ -177,12 +177,12 @@ export default function SignupChoosePlan() {
               <Step
                 num="2"
                 title="Dias 1 a 7 · Use tudo liberado"
-                desc="WhatsApp, IA, CRM, Meta Ads, Score e Agentes — sem limite."
+                desc="WhatsApp, IA, CRM, Meta Ads, Score e Agentes, sem limite."
               />
               <Step
                 num="3"
                 title="Dia 8 · Você decide"
-                desc="Continue automaticamente ou cancele em 1 clique antes — sem cobrança."
+                desc="Continue automaticamente ou cancele em 1 clique antes, sem cobrança."
               />
             </div>
           </div>
