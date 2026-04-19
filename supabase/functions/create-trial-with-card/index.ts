@@ -117,9 +117,12 @@ serve(async (req) => {
         cpfCnpj,
         postalCode: postalCode || "01310100",
         addressNumber: customerData.addressNumber || "S/N",
-        address: customerData.address || "",
-        province: customerData.neighborhood || "",
+        address: customerData.address || "Não informado",
+        province: customerData.neighborhood || "Centro",
+        city: customerData.city || "São Paulo",
+        state: customerData.state || "SP",
         phone,
+        mobilePhone: phone,
       },
     };
 
