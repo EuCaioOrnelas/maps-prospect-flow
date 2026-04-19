@@ -147,7 +147,7 @@ export default function SignupChoosePlan() {
             <div className="mt-5 inline-flex items-center gap-2 text-xs text-muted-foreground">
               <TrendingUp size={14} className="text-primary" />
               <span className="font-semibold text-foreground">+500 empresas</span>
-              <span>já prospectam com a Wiize</span>
+              <span>vendem mais com a Wiize</span>
             </div>
           </div>
 
