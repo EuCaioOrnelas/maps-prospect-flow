@@ -359,7 +359,6 @@ export default function SignupWithCard() {
           postal_code: postalCode.replace(/\D/g, "") || null,
           address: address || null,
           address_number: addressNumber || null,
-          address_complement: addressComplement.trim() || null,
           neighborhood: neighborhood || null,
           city: city || null,
           state: state || null,
