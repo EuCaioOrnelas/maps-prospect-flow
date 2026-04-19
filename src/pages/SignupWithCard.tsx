@@ -94,6 +94,8 @@ export default function SignupWithCard() {
   const [address, setAddress] = useState("");
   const [addressNumber, setAddressNumber] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
   const [cepLoading, setCepLoading] = useState(false);
   const [cepError, setCepError] = useState("");
 
@@ -138,11 +140,15 @@ export default function SignupWithCard() {
           setCepError("CEP não encontrado");
           setAddress("");
           setNeighborhood("");
+          setCity("");
+          setState("");
           return;
         }
 
         setAddress(data.logradouro || "");
         setNeighborhood(data.bairro || "");
+        setCity(data.localidade || "");
+        setState((data.uf || "").toUpperCase());
       } catch {
         setCepError("Erro ao buscar o CEP");
       } finally {
@@ -181,8 +187,8 @@ export default function SignupWithCard() {
       toast({ title: "Telefone inválido", variant: "destructive" });
       return;
     }
-    if (postalCode.replace(/\D/g, "").length < 8 || !address || !addressNumber || !neighborhood || !!cepError) {
-      toast({ title: "Complete o endereço", variant: "destructive" });
+    if (postalCode.replace(/\D/g, "").length < 8 || !address || !addressNumber || !neighborhood || !city || !state || !!cepError) {
+      toast({ title: "Complete o endereço", description: "Informe CEP, rua, número, bairro, cidade e estado.", variant: "destructive" });
       return;
     }
     setStep(2);
@@ -250,6 +256,8 @@ export default function SignupWithCard() {
             address,
             addressNumber: addressNumber || "S/N",
             neighborhood,
+            city,
+            state,
           },
           creditCard: {
             holderName: cardHolder,
@@ -457,15 +465,25 @@ export default function SignupWithCard() {
                           <Input value={addressNumber} onChange={(e) => setAddressNumber(e.target.value)} required />
                         </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label>Bairro</Label>
-                        <Input value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} required disabled={cepLoading} />
-                        {(cepLoading || cepError) && (
-                          <p className={cn("text-xs", cepError ? "text-destructive" : "text-muted-foreground")}>
-                            {cepLoading ? "Buscando endereço pelo CEP..." : cepError}
-                          </p>
-                        )}
+                      <div className="grid sm:grid-cols-3 gap-3">
+                        <div className="space-y-1.5">
+                          <Label>Bairro</Label>
+                          <Input value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} required disabled={cepLoading} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Cidade</Label>
+                          <Input value={city} onChange={(e) => setCity(e.target.value)} required disabled={cepLoading} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Estado</Label>
+                          <Input value={state} onChange={(e) => setState(e.target.value.toUpperCase().slice(0, 2))} required placeholder="UF" maxLength={2} disabled={cepLoading} />
+                        </div>
                       </div>
+                      {(cepLoading || cepError) && (
+                        <p className={cn("text-xs", cepError ? "text-destructive" : "text-muted-foreground")}>
+                          {cepLoading ? "Buscando endereço pelo CEP..." : cepError}
+                        </p>
+                      )}
                     </section>
 
                     <Button type="submit" variant="hero" size="lg" className="w-full group">
