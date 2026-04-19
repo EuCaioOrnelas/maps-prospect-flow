@@ -353,17 +353,24 @@ export default function SignupChoosePlan() {
           </div>
 
           {/* Footer trust */}
-          <div className="text-center text-xs text-muted-foreground pb-8">
+          <div className="text-center text-xs text-muted-foreground pb-8 space-y-2">
             <p>
               Ao continuar você concorda com os{" "}
               <Link to="/termos" className="underline hover:text-foreground">
                 Termos
-              </Link>{" "}
-              e a{" "}
+              </Link>
+              , a{" "}
               <Link to="/privacidade" className="underline hover:text-foreground">
                 Política de Privacidade
+              </Link>{" "}
+              e a{" "}
+              <Link to="/reembolso" className="underline hover:text-foreground">
+                Política de Reembolso
               </Link>
               .
+            </p>
+            <p className="text-[11px] text-muted-foreground/80 max-w-xl mx-auto leading-relaxed">
+              Garantia de 7 dias: cancele a qualquer momento durante o trial e nada será cobrado. Após a primeira cobrança, você tem até 7 dias corridos para solicitar reembolso integral, conforme o Código de Defesa do Consumidor (Art. 49).
             </p>
           </div>
         </div>
