@@ -45,8 +45,8 @@ export default function SignupChoosePlan() {
   return (
     <>
       <SEO
-        title="Escolha seu plano — 7 dias grátis"
-        description="Teste o Wiize por 7 dias grátis. Cobrança automática só após o período. Cancele quando quiser."
+        title="7 dias grátis com compromisso real — Wiize"
+        description="Teste o Wiize por 7 dias com cartão como garantia de compromisso. Não cobramos nada agora. Cancele em 1 clique antes do 7º dia."
         url="https://wiize.com.br/signup/escolher-plano"
       />
       <div className="min-h-screen bg-background overflow-x-hidden">
@@ -66,11 +66,12 @@ export default function SignupChoosePlan() {
 
           <div className="text-center max-w-2xl mx-auto mb-10">
             <h1 className="font-display text-3xl sm:text-4xl font-bold mb-3">
-              Comece com 7 dias grátis
+              7 dias grátis para empresas com compromisso
             </h1>
             <p className="text-muted-foreground">
-              Escolha o plano que vai começar <strong className="text-foreground">automaticamente após o teste</strong>.
-              Você só será cobrado depois de 7 dias — e pode cancelar a qualquer momento sem custo.
+              O Wiize não é um parquinho de testes. Pedimos seu cartão como{" "}
+              <strong className="text-foreground">garantia de seriedade</strong> — não como cobrança.
+              Assim atendemos quem realmente quer transformar a prospecção, e não curiosos em massa.
             </p>
           </div>
 
@@ -85,8 +86,8 @@ export default function SignupChoosePlan() {
                   <CreditCard size={14} className="text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">1. Cadastro com cartão</p>
-                  <p className="text-xs text-muted-foreground">Cobrança hoje: R$ 0,00. Apenas validamos o cartão.</p>
+                  <p className="font-medium">1. Cartão como compromisso</p>
+                  <p className="text-xs text-muted-foreground">Hoje: R$ 0,00. O cartão é uma garantia, não uma cobrança.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -94,8 +95,8 @@ export default function SignupChoosePlan() {
                   <Calendar size={14} className="text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">2. Use 7 dias grátis</p>
-                  <p className="text-xs text-muted-foreground">Acesso completo ao plano escolhido durante o teste.</p>
+                  <p className="font-medium">2. Use 7 dias completos</p>
+                  <p className="text-xs text-muted-foreground">Acesso total ao plano escolhido para validar o impacto real.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -103,8 +104,8 @@ export default function SignupChoosePlan() {
                   <X size={14} className="text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">3. Cancele quando quiser</p>
-                  <p className="text-xs text-muted-foreground">No perfil, com 1 clique. Sem cobrança se cancelar antes do 7º dia.</p>
+                  <p className="font-medium">3. Continue ou saia em 1 clique</p>
+                  <p className="text-xs text-muted-foreground">Se não for pra você, cancele no Perfil. Sem cobrança, sem ligação.</p>
                 </div>
               </div>
             </div>
@@ -162,11 +163,12 @@ export default function SignupChoosePlan() {
 
           <div className="flex flex-col items-center gap-3">
             <Button size="lg" variant="hero" onClick={continueToSignup} className="w-full max-w-sm">
-              Continuar — testar grátis por 7 dias
+              Quero testar com compromisso — 7 dias grátis
             </Button>
             <p className="text-xs text-muted-foreground text-center max-w-md">
-              Ao continuar, você concorda em ser cobrado de R$ {PLANS.find((p) => p.key === selected)?.monthly} no
-              cartão após 7 dias, caso não cancele antes.
+              Hoje você não paga nada. Caso decida continuar, ativamos o plano de R${" "}
+              {PLANS.find((p) => p.key === selected)?.monthly} no 8º dia. Pra sair antes, é 1
+              clique no Perfil — sem cobrança, sem cancelamento por telefone.
             </p>
             <p className="text-xs text-muted-foreground">
               Já tem conta?{" "}
