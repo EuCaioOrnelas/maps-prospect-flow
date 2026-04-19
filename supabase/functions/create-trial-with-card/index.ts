@@ -93,6 +93,27 @@ export const buildCreditCardHolderInfo = ({
   mobilePhone: phone,
 });
 
+const buildDirectSubscriptionHolderInfo = ({
+  customerData,
+  cpfCnpj,
+  postalCode,
+  phone,
+}: {
+  customerData: Record<string, string>;
+  cpfCnpj: string;
+  postalCode: string;
+  phone: string;
+}) => ({
+  name: customerData.name,
+  email: customerData.email,
+  cpfCnpj,
+  postalCode: postalCode || "01310100",
+  addressNumber: customerData.addressNumber || "S/N",
+  address: customerData.address || "Não informado",
+  province: customerData.neighborhood || "Centro",
+  phone,
+});
+
 const getRemoteIp = (req: Request) => {
   const forwardedFor = req.headers.get("x-forwarded-for");
   if (forwardedFor) return forwardedFor.split(",")[0].trim();
@@ -225,7 +246,9 @@ if (import.meta.main) serve(async (req) => {
     trialEnd.setDate(trialEnd.getDate() + 7);
     const nextDueDate = trialEnd.toISOString().split("T")[0];
 
-    // 3. Tokenize card first to avoid subscription validation edge cases.
+    // 3. Try tokenization first; if the provider account doesn't have permission
+    // for that endpoint, fall back to the direct subscription flow already used
+    // elsewhere in the project.
     const creditCardHolderInfo = buildCreditCardHolderInfo({ customerData, cpfCnpj, postalCode, city, state, phone });
     const tokenizeBody = {
       customer: customerId,
@@ -253,14 +276,30 @@ if (import.meta.main) serve(async (req) => {
       body: JSON.stringify(tokenizeBody),
     });
     const tokenJson = await tokenRes.json();
+
+    const tokenizationError = tokenJson.errors?.map((e: { description: string }) => e.description).join(", ") || JSON.stringify(tokenJson);
+    const permissionDenied = tokenizationError.toLowerCase().includes("não possui permissão")
+      || tokenizationError.toLowerCase().includes("nao possui permissao");
+
+    let cardToken: string | null = null;
+    let cardLast4 = creditCard.number.replace(/\s/g, "").slice(-4);
+    let cardBrand = "CARD";
+
     if (!tokenRes.ok || tokenJson.errors || !tokenJson.creditCardToken) {
       log("Card tokenization failed", tokenJson);
-      const msg = tokenJson.errors?.map((e: { description: string }) => e.description).join(", ") || JSON.stringify(tokenJson);
-      throw new Error(msg);
+      if (!permissionDenied) {
+        throw new Error(tokenizationError);
+      }
+
+      log("Tokenization permission denied, falling back to direct subscription flow", { customerId });
+    } else {
+      cardToken = tokenJson.creditCardToken;
+      cardLast4 = tokenJson.creditCardNumber || cardLast4;
+      cardBrand = tokenJson.creditCardBrand || cardBrand;
     }
 
-    // 4. Create subscription scheduled for D+7 using card token.
-    const subBody = {
+    // 4. Create subscription scheduled for D+7.
+    const subBody: Record<string, unknown> = {
       customer: customerId,
       billingType: "CREDIT_CARD",
       cycle: "MONTHLY",
@@ -269,12 +308,30 @@ if (import.meta.main) serve(async (req) => {
       description: `${plan.name} Mensal (após trial 7 dias)`,
       externalReference: userId || customerData.email,
       remoteIp,
-      creditCardToken: tokenJson.creditCardToken,
     };
+
+    if (cardToken) {
+      subBody.creditCardToken = cardToken;
+    } else {
+      subBody.creditCard = {
+        holderName: creditCard.holderName,
+        number: creditCard.number.replace(/\s/g, ""),
+        expiryMonth: creditCard.expiryMonth,
+        expiryYear: creditCard.expiryYear,
+        ccv: creditCard.ccv,
+      };
+      subBody.creditCardHolderInfo = buildDirectSubscriptionHolderInfo({
+        customerData,
+        cpfCnpj,
+        postalCode,
+        phone,
+      });
+    }
 
     log("Creating subscription scheduled for", {
       nextDueDate,
-      cardToken: tokenJson.creditCardToken,
+      cardToken,
+      fallbackDirectCardFlow: !cardToken,
       remoteIp,
     });
 
@@ -293,8 +350,7 @@ if (import.meta.main) serve(async (req) => {
     log("Subscription created", { id: subJson.id, status: subJson.status });
 
     // 5. Extract card details for display
-    const cardLast4 = tokenJson.creditCardNumber || creditCard.number.replace(/\s/g, "").slice(-4);
-    const cardBrand = tokenJson.creditCardBrand || subJson.creditCard?.creditCardBrand || "CARD";
+    cardBrand = cardBrand || subJson.creditCard?.creditCardBrand || "CARD";
 
     // 6. Save trial info on profile (only if userId is provided — otherwise just validate)
     if (userId) {
@@ -303,7 +359,7 @@ if (import.meta.main) serve(async (req) => {
         .update({
           trial_card_last4: cardLast4,
           trial_card_brand: cardBrand,
-          trial_card_token: tokenJson.creditCardToken,
+          trial_card_token: cardToken,
           trial_asaas_subscription_id: subJson.id,
           trial_asaas_customer_id: customerId,
           trial_plan_chosen: planKey,
