@@ -25,19 +25,17 @@ import { ptBR } from "date-fns/locale";
  * Tratamento da copy: o cartão é uma garantia de compromisso, não uma cobrança.
  */
 export const TrialCancelCard = () => {
-  const { profile, refetchProfile } = useAuth() as {
-    profile: Record<string, unknown> | null;
-    refetchProfile?: () => Promise<void>;
-  };
+  const { profile } = useAuth();
+  const p = profile as unknown as Record<string, unknown> | null;
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  const isFreePlan = !profile?.plan || profile.plan === "free";
-  const willCharge = profile?.trial_will_charge_at as string | undefined;
-  const cancelled = profile?.trial_auto_charge_cancelled as boolean | undefined;
-  const last4 = profile?.trial_card_last4 as string | undefined;
-  const planChosen = profile?.trial_plan_chosen as string | undefined;
-  const subId = profile?.trial_asaas_subscription_id as string | undefined;
+  const isFreePlan = !p?.plan || p.plan === "free";
+  const willCharge = p?.trial_will_charge_at as string | undefined;
+  const cancelled = p?.trial_auto_charge_cancelled as boolean | undefined;
+  const last4 = p?.trial_card_last4 as string | undefined;
+  const planChosen = p?.trial_plan_chosen as string | undefined;
+  const subId = p?.trial_asaas_subscription_id as string | undefined;
 
   // Só exibe se está em trial e tem assinatura agendada
   if (!isFreePlan || !subId) return null;
@@ -60,7 +58,8 @@ export const TrialCancelCard = () => {
         description:
           "Você não será cobrado. Continue usando até o fim do teste de 7 dias sem nenhum compromisso.",
       });
-      await refetchProfile?.();
+      // Recarrega para sincronizar o profile
+      setTimeout(() => window.location.reload(), 1000);
     } catch (e) {
       toast({
         title: "Erro ao cancelar",
@@ -85,8 +84,8 @@ export const TrialCancelCard = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         {cancelled ? (
-          <div className="flex items-start gap-3 p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-            <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0 text-emerald-500" />
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
+            <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0 text-primary" />
             <div className="flex-1 text-sm">
               <p className="font-semibold text-foreground">Ativação automática cancelada</p>
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
