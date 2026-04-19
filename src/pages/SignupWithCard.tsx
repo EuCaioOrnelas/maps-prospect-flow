@@ -316,6 +316,12 @@ export default function SignupWithCard() {
           trial_auto_charge_cancelled: false,
           cpf: cleanTaxId,
           phone: phone || null,
+          postal_code: postalCode.replace(/\D/g, "") || null,
+          address: address || null,
+          address_number: addressNumber || null,
+          neighborhood: neighborhood || null,
+          city: city || null,
+          state: state || null,
         })
         .eq("id", newUserId);
 
