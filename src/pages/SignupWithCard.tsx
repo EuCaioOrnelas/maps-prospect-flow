@@ -108,6 +108,7 @@ export default function SignupWithCard() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
 
   useEffect(() => {
     if (!sessionStorage.getItem("trial_plan_chosen")) {
@@ -326,14 +327,13 @@ export default function SignupWithCard() {
         .eq("id", newUserId);
 
       sessionStorage.removeItem("trial_plan_chosen");
-      await refreshProfile();
 
       toast({
         title: "Conta criada com sucesso!",
         description: `Confirme seu email para ativar o trial. Cobrança automática em ${trialEndDate}.`,
       });
 
-      navigate("/login?trial_setup=ok", { replace: true });
+      setShowEmailVerification(true);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error("[SignupWithCard] error", e);
@@ -670,6 +670,12 @@ export default function SignupWithCard() {
           </div>
         </div>
       </div>
+
+      <EmailVerificationDialog
+        open={showEmailVerification}
+        onOpenChange={setShowEmailVerification}
+        email={email}
+      />
     </>
   );
 }
