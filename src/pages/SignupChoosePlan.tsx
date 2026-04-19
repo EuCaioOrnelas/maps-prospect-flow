@@ -149,7 +149,7 @@ export default function SignupChoosePlan() {
               </div>
               <span className="font-medium text-foreground">4,9/5</span>
               <span>·</span>
-              <span>+2.000 empresas usando agora</span>
+              <span>Avaliação média de empresas B2B no Brasil</span>
             </div>
           </div>
 
