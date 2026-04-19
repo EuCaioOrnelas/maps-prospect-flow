@@ -36,7 +36,7 @@ const BRAZIL_STATE_CODES: Record<string, string> = {
   "espirito santo": "ES",
   goias: "GO",
   maranhao: "MA",
-  mato grosso: "MT",
+  "mato grosso": "MT",
   "mato grosso do sul": "MS",
   minas gerais: "MG",
   "para": "PA",
