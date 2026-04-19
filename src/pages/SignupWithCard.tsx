@@ -60,6 +60,39 @@ function fmtTaxId(v: string) {
     .replace(/(\d{3})(\d)/, "$1/$2")
     .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
 }
+
+function isValidCpf(cpf: string) {
+  const d = cpf.replace(/\D/g, "");
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  let s = 0;
+  for (let i = 0; i < 9; i++) s += parseInt(d[i]) * (10 - i);
+  let r = (s * 10) % 11;
+  if (r === 10) r = 0;
+  if (r !== parseInt(d[9])) return false;
+  s = 0;
+  for (let i = 0; i < 10; i++) s += parseInt(d[i]) * (11 - i);
+  r = (s * 10) % 11;
+  if (r === 10) r = 0;
+  return r === parseInt(d[10]);
+}
+
+function isValidCnpj(cnpj: string) {
+  const d = cnpj.replace(/\D/g, "");
+  if (d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
+  const calc = (len: number) => {
+    const w = len === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2];
+    let s = 0;
+    for (let i = 0; i < len; i++) s += parseInt(d[i]) * w[i];
+    const r = s % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  return calc(12) === parseInt(d[12]) && calc(13) === parseInt(d[13]);
+}
+
+function isValidTaxId(v: string) {
+  const d = v.replace(/\D/g, "");
+  return d.length === 11 ? isValidCpf(d) : d.length === 14 ? isValidCnpj(d) : false;
+}
 function fmtCep(v: string) {
   return v.replace(/\D/g, "").slice(0, 8).replace(/(\d{5})(\d)/, "$1-$2");
 }
@@ -180,8 +213,12 @@ export default function SignupWithCard() {
       toast({ title: "As senhas não coincidem", variant: "destructive" });
       return;
     }
-    if (taxId.replace(/\D/g, "").length < 11) {
-      toast({ title: "CPF ou CNPJ inválido", variant: "destructive" });
+    if (!isValidTaxId(taxId)) {
+      toast({
+        title: "CPF ou CNPJ inválido",
+        description: "Confira os dígitos — o número informado não é válido.",
+        variant: "destructive",
+      });
       return;
     }
     if (phone.replace(/\D/g, "").length < 10) {
