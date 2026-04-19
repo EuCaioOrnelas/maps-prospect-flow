@@ -241,8 +241,8 @@ export default function SignupChoosePlan() {
                       </span>
                       <span className="text-sm font-medium text-foreground">hoje</span>
                     </div>
-                    <p className="text-sm font-medium text-foreground mt-1.5 inline-flex items-center gap-1.5">
-                      <Sparkles size={13} className="text-primary" /> 7 dias com a plataforma completa liberada
+                    <p className="text-sm font-medium text-primary mt-1.5">
+                      Até {plan.opportunities} oportunidades/mês
                     </p>
                     <div className="mt-3 rounded-lg bg-muted/40 border border-border/60 px-3 py-2">
                       <p className="text-xs text-foreground">
@@ -254,15 +254,17 @@ export default function SignupChoosePlan() {
                     </div>
                   </div>
 
-                  <ul className="space-y-2 mt-5">
+                  <ul className="space-y-3 mt-5 text-sm">
                     {plan.perks.map((p) => (
-                      <li key={p} className="text-sm flex items-start gap-2">
-                        <Check size={14} className="text-primary mt-0.5 shrink-0" /> {p}
+                      <li key={p} className="flex items-start gap-3">
+                        <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">{p}</span>
                       </li>
                     ))}
                     {plan.limitations.map((l) => (
-                      <li key={l} className="text-sm flex items-start gap-2 text-muted-foreground">
-                        <X size={14} className="mt-0.5 shrink-0 opacity-60" /> {l}
+                      <li key={l} className="flex items-start gap-3 opacity-50">
+                        <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">{l}</span>
                       </li>
                     ))}
                   </ul>
