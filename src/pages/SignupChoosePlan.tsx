@@ -270,11 +270,13 @@ export default function SignupChoosePlan() {
               onClick={continueToSignup}
               className="w-full max-w-md h-14 text-base"
             >
-              Começar meus 7 dias grátis →
+              Começar 7 dias grátis →
             </Button>
             <p className="text-xs text-muted-foreground text-center max-w-md flex items-center gap-1.5 justify-center">
-              <Lock size={11} /> Cobrança de R$ {selectedPlan.monthly.toLocaleString("pt-BR")} apenas
-              no 8º dia, se você continuar. Cancele a qualquer momento.
+              <Lock size={11} /> Sem cobrança hoje • Cancele quando quiser
+            </p>
+            <p className="text-[11px] text-muted-foreground/80 text-center max-w-md">
+              No 8º dia, R$ {selectedPlan.monthly.toLocaleString("pt-BR")}/mês apenas se você decidir continuar.
             </p>
             <p className="text-xs text-muted-foreground mt-2">
               Já tem conta?{" "}
