@@ -174,14 +174,14 @@ export default function SignupChoosePlan() {
           {/* Plans */}
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-display text-xl font-semibold">
-              Escolha seu plano para testar grátis hoje
+              Escolha como quer crescer nos próximos 7 dias
             </h2>
             <span className="text-xs text-muted-foreground hidden sm:block">
-              Você pode trocar depois
+              Troque de plano quando quiser
             </span>
           </div>
           <p className="text-sm text-muted-foreground mb-5">
-            Todos os recursos ficam liberados durante os 7 dias. O plano só ativa no 8º dia se você continuar.
+            Você usa a Wiize completa por 7 dias, sem pagar nada agora. O plano escolhido só passa a valer no 8º dia, se você decidir continuar.
           </p>
 
           <div className="grid md:grid-cols-2 gap-4 mb-8">
