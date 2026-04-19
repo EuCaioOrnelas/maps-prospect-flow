@@ -101,26 +101,33 @@ export const buildCreditCardHolderInfo = ({
   customerData,
   cpfCnpj,
   postalCode,
+  city,
+  state,
   phone,
 }: {
   customerData: Record<string, string>;
   cpfCnpj: string;
   postalCode: string;
+  city: string;
+  state: string;
   phone: string;
 }) => {
-  // ⚠️ Asaas rejeita `state` no creditCardHolderInfo se não for exatamente o esperado.
-  // O checkout principal (`create-asaas-card-checkout`) não envia city/state/cityName
-  // aqui e funciona. Mantemos apenas os campos mínimos exigidos.
+  const holderCity = (city || customerData.city || "São Paulo").trim() || "São Paulo";
+  const holderState = expandBrazilianState(normalizeBrazilianState(state || customerData.state || "SP"));
+
   return {
     name: customerData.name,
     email: customerData.email,
     cpfCnpj,
     postalCode: postalCode || "01310100",
+    city: holderCity,
+    state: holderState,
     addressNumber: customerData.addressNumber || "S/N",
     address: customerData.address || "Não informado",
     province: customerData.neighborhood || "Centro",
     phone,
     mobilePhone: phone,
+    complement: customerData.addressComplement || undefined,
   };
 };
 
@@ -128,23 +135,33 @@ export const buildDirectSubscriptionHolderInfo = ({
   customerData,
   cpfCnpj,
   postalCode,
+  city,
+  state,
   phone,
 }: {
   customerData: Record<string, string>;
   cpfCnpj: string;
   postalCode: string;
+  city: string;
+  state: string;
   phone: string;
 }) => {
+  const holderCity = (city || customerData.city || "São Paulo").trim() || "São Paulo";
+  const holderState = expandBrazilianState(normalizeBrazilianState(state || customerData.state || "SP"));
+
   return {
     name: customerData.name,
     email: customerData.email,
     cpfCnpj,
     postalCode: postalCode || "01310100",
+    city: holderCity,
+    state: holderState,
     addressNumber: customerData.addressNumber || "S/N",
     address: customerData.address || "Não informado",
     province: customerData.neighborhood || "Centro",
     phone,
     mobilePhone: phone,
+    complement: customerData.addressComplement || undefined,
   };
 };
 
@@ -324,6 +341,8 @@ if (import.meta.main) serve(async (req) => {
           customerData,
           cpfCnpj,
           postalCode,
+          city,
+          state,
           phone,
         }),
       };

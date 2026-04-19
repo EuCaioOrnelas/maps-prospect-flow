@@ -126,6 +126,7 @@ export default function SignupWithCard() {
   const [postalCode, setPostalCode] = useState("");
   const [address, setAddress] = useState("");
   const [addressNumber, setAddressNumber] = useState("");
+  const [addressComplement, setAddressComplement] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -182,7 +183,7 @@ export default function SignupWithCard() {
         setAddress(data.logradouro || "");
         setNeighborhood(data.bairro || "");
         setCity(data.localidade || "");
-        setState((data.uf || "").toUpperCase());
+        setState((data.estado || data.uf || "").trim());
       } catch {
         setCepError("Erro ao buscar o CEP");
       } finally {
@@ -293,9 +294,10 @@ export default function SignupWithCard() {
             postalCode: postalCode.replace(/\D/g, ""),
             address,
             addressNumber: addressNumber || "S/N",
+            addressComplement: addressComplement.trim() || undefined,
             neighborhood,
-            city,
-            state,
+            city: city.trim(),
+            state: state.trim(),
           },
           creditCard: {
             holderName: cardHolder,
@@ -357,6 +359,7 @@ export default function SignupWithCard() {
           postal_code: postalCode.replace(/\D/g, "") || null,
           address: address || null,
           address_number: addressNumber || null,
+          address_complement: addressComplement.trim() || null,
           neighborhood: neighborhood || null,
           city: city || null,
           state: state || null,
@@ -494,7 +497,7 @@ export default function SignupWithCard() {
                           <Input value={phone} onChange={(e) => setPhone(fmtPhone(e.target.value))} required placeholder="(11) 99999-9999" />
                         </div>
                       </div>
-                      <div className="grid sm:grid-cols-[140px_1fr_120px] gap-3">
+                      <div className="grid sm:grid-cols-[140px_1fr_110px_160px] gap-3">
                         <div className="space-y-1.5">
                           <Label>CEP</Label>
                           <Input value={postalCode} onChange={(e) => setPostalCode(fmtCep(e.target.value))} required placeholder="00000-000" />
@@ -506,6 +509,10 @@ export default function SignupWithCard() {
                         <div className="space-y-1.5">
                           <Label>Número</Label>
                           <Input value={addressNumber} onChange={(e) => setAddressNumber(e.target.value)} required />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Complemento</Label>
+                          <Input value={addressComplement} onChange={(e) => setAddressComplement(e.target.value)} placeholder="Apto, sala, bloco" />
                         </div>
                       </div>
                       <div className="grid sm:grid-cols-3 gap-3">
@@ -519,7 +526,7 @@ export default function SignupWithCard() {
                         </div>
                         <div className="space-y-1.5">
                           <Label>Estado</Label>
-                          <Input value={state} onChange={(e) => setState(e.target.value.toUpperCase().slice(0, 2))} required placeholder="UF" maxLength={2} disabled={cepLoading} />
+                          <Input value={state} onChange={(e) => setState(e.target.value)} required placeholder="Paraná" disabled={cepLoading} />
                         </div>
                       </div>
                       {(cepLoading || cepError) && (
