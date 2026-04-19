@@ -226,14 +226,14 @@ export default function SignupChoosePlan() {
                       <span className="text-sm font-medium text-foreground">hoje</span>
                     </div>
                     <p className="text-sm font-medium text-foreground mt-1.5 inline-flex items-center gap-1.5">
-                      <Sparkles size={13} className="text-primary" /> 7 dias grátis completos
+                      <Sparkles size={13} className="text-primary" /> 7 dias com a plataforma completa liberada
                     </p>
                     <div className="mt-3 rounded-lg bg-muted/40 border border-border/60 px-3 py-2">
                       <p className="text-xs text-foreground">
-                        A partir do 8º dia: <span className="font-semibold">R$ {plan.monthly.toLocaleString("pt-BR")}/mês</span>, cobrado automaticamente no cartão se você continuar.
+                        Depois do trial: <span className="font-semibold">R$ {plan.monthly.toLocaleString("pt-BR")}/mês</span>. Você só é cobrado se decidir continuar.
                       </p>
                       <p className="text-[11px] text-muted-foreground mt-1 inline-flex items-center gap-1">
-                        <ShieldCheck size={11} /> Cancele em 1 clique antes da cobrança, sem custo.
+                        <ShieldCheck size={11} /> Cancele em 1 clique pelo Perfil, sem custo e sem ligação.
                       </p>
                     </div>
                   </div>
