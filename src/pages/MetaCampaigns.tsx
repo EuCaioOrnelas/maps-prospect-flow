@@ -6,7 +6,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { MetaDisclaimerModal } from "@/components/meta-campaigns/MetaDisclaimerModal";
-import { MetaAccountSetup } from "@/components/meta-campaigns/MetaAccountSetup";
+import { MetaManualSetup } from "@/components/meta-campaigns/MetaManualSetup";
 import { MetaCampaignFlow } from "@/components/meta-campaigns/MetaCampaignFlow";
 import { MetaCampaignHistory } from "@/components/meta-campaigns/MetaCampaignHistory";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -309,7 +309,7 @@ const MetaCampaigns = () => {
           {!disclaimerAccepted && !showDisclaimer && null}
 
           {disclaimerAccepted && !hasConnections && (
-            <MetaAccountSetup onConnectionSaved={handleConnectionSaved} />
+            <MetaManualSetup onConnectionSaved={handleConnectionSaved} />
           )}
 
           {disclaimerAccepted && hasConnections && (
@@ -626,7 +626,7 @@ const MetaCampaigns = () => {
           <DialogHeader>
             <DialogTitle>Adicionar Número</DialogTitle>
           </DialogHeader>
-          <MetaAccountSetup
+          <MetaManualSetup
             onConnectionSaved={(conn) => {
               if (conn) handleConnectionSaved(conn);
               else setShowAddNumber(false);
