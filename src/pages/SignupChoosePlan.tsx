@@ -12,6 +12,8 @@ import {
   TrendingUp,
   ChevronDown,
   X,
+  Star,
+  CalendarClock,
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { cn } from "@/lib/utils";
