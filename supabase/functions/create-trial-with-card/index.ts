@@ -1,7 +1,6 @@
-// Cria conta de trial com cartão tokenizado e assinatura agendada para D+7 no Asaas.
-// O cartão NÃO é cobrado agora — apenas tokenizado (a Asaas valida o cartão fazendo um auth de R$ 0).
-// A subscription é criada com nextDueDate = trial_end (D+7) e ciclo MONTHLY.
-// Se o user cancelar antes do D+7, a subscription é deletada e nada é cobrado.
+// Cria assinatura no Asaas com cartão e cobrança agendada para D+7 (trial gratuito).
+// Espelha 1:1 o payload validado em `create-asaas-card-checkout`, alterando apenas
+// `nextDueDate` (D+7 em vez de D+1) e o ciclo (sempre MENSAL após o trial).
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -14,197 +13,18 @@ const corsHeaders = {
 
 const ASAAS_API = "https://api.asaas.com/v3";
 
-const log = (step: string, details?: unknown) => {
+const logStep = (step: string, details?: unknown) => {
   console.log(`[TRIAL-WITH-CARD] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
-// Trial sempre vira plano MENSAL (independente da escolha) — confirmado pelo product
-const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number; searchesLimit: number }> = {
-  start: { name: "Wiize Start", priceMonthly: 296.0, searchesLimit: 1000 },
-  growth: { name: "Wiize Growth", priceMonthly: 696.0, searchesLimit: 3000 },
-  scale: { name: "Wiize Scale", priceMonthly: 1496.0, searchesLimit: 10000 },
+// Após o trial a cobrança é sempre mensal — confirmado pelo product
+const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number }> = {
+  start: { name: "Wiize Start", priceMonthly: 296.0 },
+  growth: { name: "Wiize Growth", priceMonthly: 696.0 },
+  scale: { name: "Wiize Scale", priceMonthly: 1496.0 },
 };
 
-const BRAZIL_STATE_CODES: Record<string, string> = {
-  "acre": "AC",
-  "alagoas": "AL",
-  "amapa": "AP",
-  "amazonas": "AM",
-  "bahia": "BA",
-  "ceara": "CE",
-  "distrito federal": "DF",
-  "espirito santo": "ES",
-  "goias": "GO",
-  "maranhao": "MA",
-  "mato grosso": "MT",
-  "mato grosso do sul": "MS",
-  "minas gerais": "MG",
-  "para": "PA",
-  "paraiba": "PB",
-  "parana": "PR",
-  "pernambuco": "PE",
-  "piaui": "PI",
-  "rio de janeiro": "RJ",
-  "rio grande do norte": "RN",
-  "rio grande do sul": "RS",
-  "rondonia": "RO",
-  "roraima": "RR",
-  "santa catarina": "SC",
-  "sao paulo": "SP",
-  "sergipe": "SE",
-  "tocantins": "TO",
-};
-
-const BRAZIL_UF_TO_NAME: Record<string, string> = {
-  AC: "Acre",
-  AL: "Alagoas",
-  AP: "Amapá",
-  AM: "Amazonas",
-  BA: "Bahia",
-  CE: "Ceará",
-  DF: "Distrito Federal",
-  ES: "Espírito Santo",
-  GO: "Goiás",
-  MA: "Maranhão",
-  MT: "Mato Grosso",
-  MS: "Mato Grosso do Sul",
-  MG: "Minas Gerais",
-  PA: "Pará",
-  PB: "Paraíba",
-  PR: "Paraná",
-  PE: "Pernambuco",
-  PI: "Piauí",
-  RJ: "Rio de Janeiro",
-  RN: "Rio Grande do Norte",
-  RS: "Rio Grande do Sul",
-  RO: "Rondônia",
-  RR: "Roraima",
-  SC: "Santa Catarina",
-  SP: "São Paulo",
-  SE: "Sergipe",
-  TO: "Tocantins",
-};
-
-export const expandBrazilianState = (uf: string) => BRAZIL_UF_TO_NAME[uf] || uf;
-
-export const normalizeBrazilianState = (value?: string | null) => {
-  const raw = (value || "").trim();
-  if (!raw) return "SP";
-
-  const normalized = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  if (normalized.length === 2) return normalized.toUpperCase();
-
-  return BRAZIL_STATE_CODES[normalized] || raw.toUpperCase().slice(0, 2) || "SP";
-};
-
-export const buildCreditCardHolderInfo = ({
-  customerData,
-  cpfCnpj,
-  postalCode,
-  city,
-  state,
-  phone,
-}: {
-  customerData: Record<string, string>;
-  cpfCnpj: string;
-  postalCode: string;
-  city: string;
-  state: string;
-  phone: string;
-}) => {
-  const holderCity = (city || customerData.city || "São Paulo").trim() || "São Paulo";
-  const holderState = expandBrazilianState(normalizeBrazilianState(state || customerData.state || "SP"));
-
-  return {
-    name: customerData.name,
-    email: customerData.email,
-    cpfCnpj,
-    postalCode: postalCode || "01310100",
-    city: holderCity,
-    state: holderState,
-    addressNumber: customerData.addressNumber || "S/N",
-    address: customerData.address || "Não informado",
-    province: customerData.neighborhood || "Centro",
-    phone,
-    mobilePhone: phone,
-    complement: customerData.addressComplement || undefined,
-  };
-};
-
-export const buildDirectSubscriptionHolderInfo = ({
-  customerData,
-  cpfCnpj,
-  postalCode,
-  city,
-  state,
-  phone,
-}: {
-  customerData: Record<string, string>;
-  cpfCnpj: string;
-  postalCode: string;
-  city: string;
-  state: string;
-  phone: string;
-}) => {
-  const holderCity = (city || customerData.city || "São Paulo").trim() || "São Paulo";
-  const holderState = expandBrazilianState(normalizeBrazilianState(state || customerData.state || "SP"));
-
-  return {
-    name: customerData.name,
-    email: customerData.email,
-    cpfCnpj,
-    postalCode: postalCode || "01310100",
-    city: holderCity,
-    state: holderState,
-    addressNumber: customerData.addressNumber || "S/N",
-    address: customerData.address || "Não informado",
-    province: customerData.neighborhood || "Centro",
-    phone,
-    mobilePhone: phone,
-    complement: customerData.addressComplement || undefined,
-  };
-};
-
-const extractAsaasErrorMessage = (payload: any) =>
-  payload?.errors?.map((e: { description: string }) => e.description).join(", ") || JSON.stringify(payload);
-
-const getRemoteIp = (req: Request) => {
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  if (forwardedFor) return forwardedFor.split(",")[0].trim();
-
-  return req.headers.get("x-real-ip") || "127.0.0.1";
-};
-
-const buildAsaasCustomerPayload = ({
-  customerData,
-  cpfCnpj,
-  phone,
-  postalCode,
-  city,
-  state,
-}: {
-  customerData: Record<string, string>;
-  cpfCnpj: string;
-  phone: string;
-  postalCode: string;
-  city: string;
-  state: string;
-}) => ({
-  name: customerData.name,
-  email: customerData.email,
-  cpfCnpj,
-  mobilePhone: phone,
-  notificationDisabled: false,
-  postalCode: postalCode || "01310100",
-  address: customerData.address || "Não informado",
-  addressNumber: customerData.addressNumber || "S/N",
-  province: customerData.neighborhood || "Centro",
-  city,
-  state: normalizeBrazilianState(state),
-  complement: customerData.addressComplement || undefined,
-});
-
-if (import.meta.main) serve(async (req) => {
+serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -212,9 +32,8 @@ if (import.meta.main) serve(async (req) => {
   try {
     const apiKey = Deno.env.get("ASAAS_API_KEY");
     if (!apiKey) throw new Error("ASAAS_API_KEY not configured");
-    const remoteIp = getRemoteIp(req);
 
-    const supabase = createClient(
+    const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
@@ -227,154 +46,144 @@ if (import.meta.main) serve(async (req) => {
     const plan = PLAN_CONFIG[planKey];
     if (!plan) throw new Error(`Invalid plan: ${planKey}`);
 
-    log("Request", { userId, planKey, email: customerData.email });
+    logStep("Request received", { planKey, email: customerData.email });
 
-    // Validate
-    const cpfCnpj = (customerData.taxId || "").replace(/\D/g, "");
-    if (!cpfCnpj || cpfCnpj.length < 11) throw new Error("CPF/CNPJ é obrigatório");
+    // Validate credit card data (mesma validação do checkout que funciona)
     if (!creditCard.holderName || !creditCard.number || !creditCard.expiryMonth || !creditCard.expiryYear || !creditCard.ccv) {
       throw new Error("Dados do cartão incompletos");
     }
 
-    const phone = (customerData.phone || "").replace(/\D/g, "");
-    const postalCode = (customerData.postalCode || "").replace(/\D/g, "");
-
-    // Lookup city/state via ViaCEP if not provided
-    let city = customerData.city || "";
-    let state = customerData.state || "";
-    if ((!city || !state) && postalCode.length === 8) {
-      try {
-        const cepRes = await fetch(`https://viacep.com.br/ws/${postalCode}/json/`);
-        const cepJson = await cepRes.json();
-        if (!cepJson.erro) {
-          city = city || cepJson.localidade || "";
-          state = state || cepJson.uf || "";
-        }
-      } catch (_) { /* ignore */ }
+    // Resolve userId via auth header se não foi enviado explicitamente
+    let resolvedUserId: string | null = userId || null;
+    const authHeader = req.headers.get("Authorization");
+    if (!resolvedUserId && authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data } = await supabaseClient.auth.getUser(token);
+      if (data.user) resolvedUserId = data.user.id;
     }
-    if (!city) city = "São Paulo";
-    if (!state) state = "SP";
-    city = city.trim() || "São Paulo";
-    state = normalizeBrazilianState(state);
+    if (!resolvedUserId && customerData.email) {
+      const { data: profileByEmail } = await supabaseClient
+        .from("profiles")
+        .select("id")
+        .eq("email", customerData.email)
+        .maybeSingle();
+      if (profileByEmail) resolvedUserId = profileByEmail.id;
+    }
 
-    // 1. Find or create Asaas customer
+    // Clean CPF/CNPJ
+    const cpfCnpj = customerData.taxId?.replace(/\D/g, "") || "";
+    if (!cpfCnpj || cpfCnpj.length < 11) {
+      throw new Error("CPF/CNPJ é obrigatório");
+    }
+
+    const phone = customerData.phone?.replace(/\D/g, "") || "";
+    const postalCode = customerData.postalCode?.replace(/\D/g, "") || "";
+    const address = customerData.address || "";
+    const addressNum = customerData.addressNumber || "S/N";
+    const neighborhood = customerData.neighborhood || "";
+
+    // 1. Create or find customer on Asaas (payload idêntico ao checkout)
     const findRes = await fetch(`${ASAAS_API}/customers?cpfCnpj=${cpfCnpj}`, {
-      headers: { access_token: apiKey, Accept: "application/json" },
+      headers: { "access_token": apiKey, "Accept": "application/json" },
     });
     const findJson = await findRes.json();
 
-    const customerPayload = buildAsaasCustomerPayload({ customerData, cpfCnpj, phone, postalCode, city, state });
-
     let customerId: string;
+
     if (findJson.data && findJson.data.length > 0) {
       customerId = findJson.data[0].id;
-      log("Existing customer", { customerId });
-
-      const updateRes = await fetch(`${ASAAS_API}/customers/${customerId}`, {
-        method: "POST",
-        headers: { access_token: apiKey, "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(customerPayload),
-      });
-      const updateJson = await updateRes.json();
-      if (!updateRes.ok || updateJson.errors) {
-        log("Customer update failed", updateJson);
-      } else {
-        log("Customer updated", { customerId, city: customerPayload.city, state: customerPayload.state });
-      }
+      logStep("Existing customer found", { customerId });
     } else {
-      const cRes = await fetch(`${ASAAS_API}/customers`, {
+      const customerRes = await fetch(`${ASAAS_API}/customers`, {
         method: "POST",
-        headers: { access_token: apiKey, "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(customerPayload),
+        headers: {
+          "access_token": apiKey,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          name: customerData.name,
+          email: customerData.email,
+          cpfCnpj: cpfCnpj,
+          mobilePhone: phone,
+          notificationDisabled: false,
+        }),
       });
-      const cJson = await cRes.json();
-      if (!cRes.ok || cJson.errors) {
-        throw new Error(`Erro criando cliente: ${JSON.stringify(cJson.errors || cJson)}`);
+
+      const customerJson = await customerRes.json();
+      if (!customerRes.ok || customerJson.errors) {
+        logStep("Customer creation failed", customerJson);
+        throw new Error(`Erro ao criar cliente: ${JSON.stringify(customerJson.errors || customerJson)}`);
       }
-      customerId = cJson.id;
-      log("Customer created", { customerId });
+
+      customerId = customerJson.id;
+      logStep("Customer created", { customerId });
     }
 
-    // 2. Compute trial end date (7 days from now)
+    // 2. Trial de 7 dias — primeira cobrança agendada para D+7
     const trialEnd = new Date();
     trialEnd.setDate(trialEnd.getDate() + 7);
     const nextDueDate = trialEnd.toISOString().split("T")[0];
 
-    // 3. Reaproveita trial já criado para evitar múltiplas assinaturas em retries.
-    let existingSubscription: any = null;
-    const existingSubsRes = await fetch(`${ASAAS_API}/subscriptions?customer=${customerId}&limit=100&offset=0`, {
-      headers: { access_token: apiKey, Accept: "application/json" },
+    // 3. Subscription com cartão — payload IDÊNTICO ao create-asaas-card-checkout
+    const subscriptionBody: Record<string, any> = {
+      customer: customerId,
+      billingType: "CREDIT_CARD",
+      cycle: "MONTHLY",
+      value: plan.priceMonthly,
+      nextDueDate,
+      description: `${plan.name} Mensal (após trial 7 dias)`,
+      externalReference: resolvedUserId || customerData.email,
+      creditCard: {
+        holderName: creditCard.holderName,
+        number: creditCard.number.replace(/\s/g, ""),
+        expiryMonth: creditCard.expiryMonth,
+        expiryYear: creditCard.expiryYear,
+        ccv: creditCard.ccv,
+      },
+      creditCardHolderInfo: {
+        name: customerData.name,
+        email: customerData.email,
+        cpfCnpj: cpfCnpj,
+        postalCode: postalCode || "01310100",
+        addressNumber: addressNum,
+        address: address,
+        province: neighborhood,
+        phone: phone,
+      },
+    };
+
+    logStep("Creating subscription", { customer: customerId, cycle: "MONTHLY", value: plan.priceMonthly, nextDueDate });
+
+    const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
+      method: "POST",
+      headers: {
+        "access_token": apiKey,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: JSON.stringify(subscriptionBody),
     });
-    const existingSubsJson = await existingSubsRes.json().catch(() => ({}));
-    if (existingSubsRes.ok && Array.isArray(existingSubsJson.data)) {
-      existingSubscription = existingSubsJson.data.find((subscription: any) => {
-        const description = String(subscription?.description || "").toLowerCase();
-        const externalReference = String(subscription?.externalReference || "");
-        return description.includes("após trial 7 dias")
-          && [customerData.email, userId].filter(Boolean).includes(externalReference)
-          && Number(subscription?.value) === Number(plan.priceMonthly);
-      }) || null;
+
+    const subJson = await subRes.json();
+    if (!subRes.ok || subJson.errors) {
+      logStep("Subscription creation failed", subJson);
+      const errorMsg = subJson.errors?.map((e: any) => e.description).join(", ") || JSON.stringify(subJson);
+      throw new Error(errorMsg);
     }
 
-    let cardLast4 = creditCard.number.replace(/\s/g, "").slice(-4);
-    let cardBrand = "CARD";
-    let subJson = existingSubscription;
+    logStep("Subscription created", { id: subJson.id, status: subJson.status, nextDueDate });
 
-    if (!subJson) {
-      const subBody: Record<string, unknown> = {
-        customer: customerId,
-        billingType: "CREDIT_CARD",
-        cycle: "MONTHLY",
-        value: plan.priceMonthly,
-        nextDueDate,
-        description: `${plan.name} Mensal (após trial 7 dias)`,
-        externalReference: userId || customerData.email,
-        remoteIp,
-        creditCard: {
-          holderName: creditCard.holderName,
-          number: creditCard.number.replace(/\s/g, ""),
-          expiryMonth: creditCard.expiryMonth,
-          expiryYear: creditCard.expiryYear,
-          ccv: creditCard.ccv,
-        },
-        creditCardHolderInfo: buildDirectSubscriptionHolderInfo({
-          customerData,
-          cpfCnpj,
-          postalCode,
-          city,
-          state,
-          phone,
-        }),
-      };
+    const cardLast4 = creditCard.number.replace(/\s/g, "").slice(-4);
+    const cardBrand = subJson.creditCard?.creditCardBrand || "CARD";
 
-      log("Creating subscription scheduled for", { nextDueDate, remoteIp, customerId, city, state });
-
-      const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
-        method: "POST",
-        headers: { access_token: apiKey, "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(subBody),
-      });
-      subJson = await subRes.json();
-      if (!subRes.ok || subJson.errors) {
-        log("Subscription failed", subJson);
-        throw new Error(extractAsaasErrorMessage(subJson));
-      }
-      log("Subscription created", { id: subJson.id, status: subJson.status });
-    } else {
-      log("Reusing existing trial subscription", { id: subJson.id, status: subJson.status });
-    }
-
-    // 4. Extract card details for display
-    cardBrand = cardBrand || subJson.creditCard?.creditCardBrand || "CARD";
-
-    // 6. Save trial info on profile (only if userId is provided — otherwise just validate)
-    if (userId) {
-      const { error: updateError } = await supabase
+    // 4. Persistir info do trial no profile (best-effort) e tracking
+    if (resolvedUserId) {
+      const { error: updateError } = await supabaseClient
         .from("profiles")
         .update({
           trial_card_last4: cardLast4,
           trial_card_brand: cardBrand,
-          trial_card_token: null,
           trial_asaas_subscription_id: subJson.id,
           trial_asaas_customer_id: customerId,
           trial_plan_chosen: planKey,
@@ -384,17 +193,33 @@ if (import.meta.main) serve(async (req) => {
           cpf: cpfCnpj,
           phone: customerData.phone || null,
           postal_code: postalCode || null,
-          address: customerData.address || null,
-          address_number: customerData.addressNumber || null,
-          neighborhood: customerData.neighborhood || null,
-          city: city || null,
-          state: state || null,
+          address: address || null,
+          address_number: addressNum || null,
+          neighborhood: neighborhood || null,
         })
-        .eq("id", userId);
+        .eq("id", resolvedUserId);
 
-      if (updateError) {
-        log("Profile update failed", updateError);
-      }
+      if (updateError) logStep("Profile update failed", updateError);
+    }
+
+    try {
+      await supabaseClient.from("checkout_leads").insert({
+        user_id: resolvedUserId,
+        email: customerData.email,
+        name: customerData.name,
+        phone: customerData.phone || null,
+        tax_id: customerData.taxId || null,
+        postal_code: postalCode || null,
+        address: address || null,
+        address_number: addressNum || null,
+        neighborhood: neighborhood || null,
+        plan_attempted: plan.name,
+        stripe_session_id: `asaas_trial_${subJson.id}`,
+        checkout_started_at: new Date().toISOString(),
+        checkout_completed: false,
+      });
+    } catch (e) {
+      logStep("Failed to track trial lead", { error: String(e) });
     }
 
     return new Response(
@@ -408,12 +233,12 @@ if (import.meta.main) serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    log("ERROR", { message: msg });
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 },
+    );
   }
 });
