@@ -93,6 +93,42 @@ export const buildCreditCardHolderInfo = ({
   mobilePhone: phone,
 });
 
+const getRemoteIp = (req: Request) => {
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  if (forwardedFor) return forwardedFor.split(",")[0].trim();
+
+  return req.headers.get("x-real-ip") || "127.0.0.1";
+};
+
+const buildAsaasCustomerPayload = ({
+  customerData,
+  cpfCnpj,
+  phone,
+  postalCode,
+  city,
+  state,
+}: {
+  customerData: Record<string, string>;
+  cpfCnpj: string;
+  phone: string;
+  postalCode: string;
+  city: string;
+  state: string;
+}) => ({
+  name: customerData.name,
+  email: customerData.email,
+  cpfCnpj,
+  mobilePhone: phone,
+  notificationDisabled: false,
+  postalCode: postalCode || "01310100",
+  address: customerData.address || "Não informado",
+  addressNumber: customerData.addressNumber || "S/N",
+  province: customerData.neighborhood || "Centro",
+  city,
+  state: normalizeBrazilianState(state),
+  complement: customerData.addressComplement || undefined,
+});
+
 if (import.meta.main) serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -101,6 +137,7 @@ if (import.meta.main) serve(async (req) => {
   try {
     const apiKey = Deno.env.get("ASAAS_API_KEY");
     if (!apiKey) throw new Error("ASAAS_API_KEY not configured");
+    const remoteIp = getRemoteIp(req);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -151,21 +188,29 @@ if (import.meta.main) serve(async (req) => {
     });
     const findJson = await findRes.json();
 
+    const customerPayload = buildAsaasCustomerPayload({ customerData, cpfCnpj, phone, postalCode, city, state });
+
     let customerId: string;
     if (findJson.data && findJson.data.length > 0) {
       customerId = findJson.data[0].id;
       log("Existing customer", { customerId });
+
+      const updateRes = await fetch(`${ASAAS_API}/customers/${customerId}`, {
+        method: "POST",
+        headers: { access_token: apiKey, "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(customerPayload),
+      });
+      const updateJson = await updateRes.json();
+      if (!updateRes.ok || updateJson.errors) {
+        log("Customer update failed", updateJson);
+      } else {
+        log("Customer updated", { customerId, city: customerPayload.city, state: customerPayload.state });
+      }
     } else {
       const cRes = await fetch(`${ASAAS_API}/customers`, {
         method: "POST",
         headers: { access_token: apiKey, "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          name: customerData.name,
-          email: customerData.email,
-          cpfCnpj,
-          mobilePhone: phone,
-          notificationDisabled: false,
-        }),
+        body: JSON.stringify(customerPayload),
       });
       const cJson = await cRes.json();
       if (!cRes.ok || cJson.errors) {
@@ -190,6 +235,7 @@ if (import.meta.main) serve(async (req) => {
       nextDueDate,
       description: `${plan.name} Mensal (após trial 7 dias)`,
       externalReference: userId,
+      remoteIp,
       creditCard: {
         holderName: creditCard.holderName,
         number: creditCard.number.replace(/\s/g, ""),
@@ -204,6 +250,7 @@ if (import.meta.main) serve(async (req) => {
       nextDueDate,
       cityName: subBody.creditCardHolderInfo.cityName,
       state: subBody.creditCardHolderInfo.state,
+      remoteIp,
     });
 
     const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
