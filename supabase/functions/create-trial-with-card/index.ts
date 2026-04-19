@@ -59,6 +59,22 @@ serve(async (req) => {
     const phone = (customerData.phone || "").replace(/\D/g, "");
     const postalCode = (customerData.postalCode || "").replace(/\D/g, "");
 
+    // Lookup city/state via ViaCEP if not provided
+    let city = customerData.city || "";
+    let state = customerData.state || "";
+    if ((!city || !state) && postalCode.length === 8) {
+      try {
+        const cepRes = await fetch(`https://viacep.com.br/ws/${postalCode}/json/`);
+        const cepJson = await cepRes.json();
+        if (!cepJson.erro) {
+          city = city || cepJson.localidade || "";
+          state = state || cepJson.uf || "";
+        }
+      } catch (_) { /* ignore */ }
+    }
+    if (!city) city = "São Paulo";
+    if (!state) state = "SP";
+
     // 1. Find or create Asaas customer
     const findRes = await fetch(`${ASAAS_API}/customers?cpfCnpj=${cpfCnpj}`, {
       headers: { access_token: apiKey, Accept: "application/json" },
