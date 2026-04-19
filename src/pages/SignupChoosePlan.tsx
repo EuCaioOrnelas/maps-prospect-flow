@@ -288,9 +288,22 @@ export default function SignupChoosePlan() {
             <p className="text-xs text-muted-foreground text-center max-w-md flex items-center gap-1.5 justify-center">
               <Lock size={11} /> R$ 0,00 hoje • Cancele quando quiser, em 1 clique
             </p>
-            <p className="text-[11px] text-muted-foreground/80 text-center max-w-md">
-              Após o trial: R$ {selectedPlan.monthly.toLocaleString("pt-BR")}/mês, apenas se você continuar usando.
-            </p>
+
+            {/* Reassurance card */}
+            <div className="mt-3 w-full max-w-md rounded-xl border border-border/60 bg-card/40 px-4 py-3">
+              <div className="flex items-start gap-2.5">
+                <ShieldCheck size={16} className="text-primary mt-0.5 shrink-0" />
+                <div className="text-left">
+                  <p className="text-xs font-medium text-foreground">
+                    Sem surpresas. Avisamos antes de qualquer cobrança.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                    Você recebe um e-mail 2 dias antes do fim do trial. Se cancelar antes, nada é debitado e o acesso segue até o 7º dia. Após o trial: <span className="font-medium text-foreground">R$ {selectedPlan.monthly.toLocaleString("pt-BR")}/mês</span>, apenas se continuar.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <p className="text-xs text-muted-foreground mt-2">
               Já tem conta?{" "}
               <Link to="/login" className="text-primary hover:underline font-medium">
