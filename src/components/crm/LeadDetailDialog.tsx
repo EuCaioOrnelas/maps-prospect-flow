@@ -1592,9 +1592,24 @@ export const LeadDetailDialog = ({
                     )}
                   </div>
                   {driveConnection?.is_active ? (
-                    <p className="text-xs text-muted-foreground">
-                      Arquivos são salvos automaticamente no Google Drive.
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Arquivos vão para a pasta deste lead em <strong>Wiize CRM</strong> no seu Drive.
+                      </p>
+                      {leadDriveFolderUrl && (
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-8 gap-1.5"
+                        >
+                          <a href={leadDriveFolderUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            Abrir pasta no Drive
+                          </a>
+                        </Button>
+                      )}
+                    </div>
                   ) : (
                     <div className="space-y-2">
                       <p className="text-xs text-muted-foreground">
@@ -1619,7 +1634,10 @@ export const LeadDetailDialog = ({
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) handleUploadLeadFile(file);
+                        if (file) {
+                          setPendingDriveFile(file);
+                          setPendingDriveFileName(file.name.replace(/\.[^.]+$/, ''));
+                        }
                         e.target.value = '';
                       }}
                       disabled={isUploadingLeadFile}
