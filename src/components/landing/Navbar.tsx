@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
@@ -14,6 +14,8 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
   const navRef = useRef<HTMLElement>(null);
   const tickingRef = useRef(false);
   const lastScrolledRef = useRef(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const evaluate = () => {
@@ -35,6 +37,23 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
 
   const handleSignupClick = () => {
     onSignupClick?.();
+  };
+
+  const handlePricingClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    onSignupClick?.();
+    if (location.pathname === "/") {
+      const el = document.getElementById("pricing");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+    }
+    navigate("/#pricing");
+    setTimeout(() => {
+      document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 250);
   };
 
   const navLinks = [
@@ -93,7 +112,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                   Entrar
                 </Button>
               </Link>
-              <a href="#pricing" onClick={handleSignupClick}>
+              <a href="/#pricing" onClick={handlePricingClick}>
                 <Button variant="hero" size="sm" className="rounded-full">
                   Gerar vendas
                 </Button>
@@ -129,7 +148,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                       Entrar
                     </Button>
                   </Link>
-                  <a href="#pricing" onClick={() => { setMobileMenuOpen(false); handleSignupClick(); }}>
+                  <a href="/#pricing" onClick={handlePricingClick}>
                     <Button variant="hero" size="sm" className="w-full justify-center">
                       Gerar vendas
                     </Button>

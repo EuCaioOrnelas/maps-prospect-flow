@@ -535,6 +535,12 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         await new Promise((r) => setTimeout(r, step.waitMs));
       }
 
+      // Robust: if the step targets a real selector, wait for it to mount
+      // (handles slower external environments where waitMs isn't enough).
+      if (step.target) {
+        await waitForElement(step.target, 60, 120);
+      }
+
       if (step.keepViewportTop) {
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       }
