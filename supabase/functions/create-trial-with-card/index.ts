@@ -197,8 +197,22 @@ serve(async (req) => {
     const subJson = await subRes.json();
     if (!subRes.ok || subJson.errors) {
       logStep("Subscription creation failed", subJson);
-      const errorMsg = subJson.errors?.map((e: any) => e.description).join(", ") || JSON.stringify(subJson);
-      throw new Error(errorMsg);
+      // Mapeia erros conhecidos do Asaas para mensagens claras
+      const firstErr = subJson.errors?.[0];
+      const code = firstErr?.code || "";
+      const desc = firstErr?.description || "";
+      let friendly = desc || JSON.stringify(subJson);
+      if (code === "invalid_creditCard" || /não autorizada|nao autorizada/i.test(desc)) {
+        friendly =
+          "Cartão não autorizado pelo banco. Confira número, validade e CVV, verifique se há limite disponível e se o cartão está habilitado para compras online. Se o problema persistir, tente outro cartão.";
+      } else if (code === "invalid_creditCard_holderInfo" || /endere[cç]o|cep|state|province/i.test(desc)) {
+        friendly = "Os dados do titular do cartão estão incompletos. Confira CEP, endereço, número e cidade.";
+      } else if (/expir/i.test(desc)) {
+        friendly = "Cartão vencido. Use um cartão com validade futura.";
+      } else if (/cpf|cnpj/i.test(desc)) {
+        friendly = "CPF/CNPJ inválido. Confira o documento informado.";
+      }
+      throw new Error(friendly);
     }
 
     logStep("Subscription created", { id: subJson.id, status: subJson.status, nextDueDate });
