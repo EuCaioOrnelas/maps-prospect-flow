@@ -826,6 +826,15 @@ serve(async (req) => {
           const normalizedText = normalizeText(message_content);
           classificationResult = classifyMessage(normalizedText, rulesMap);
 
+          // Action detection (LINK_CLICK / FORM_SUBMIT / CALL_REQUEST)
+          for (const actionRule of detectActions(normalizedText, message_content)) {
+            addRuleEvent(actionRule, {
+              matched_text: message_content.substring(0, 200),
+              intent_category: "ACTION",
+              intent_subtype: actionRule,
+            });
+          }
+
           if (classificationResult.intent_category !== "NEUTRAL") {
             addRuleEvent(classificationResult.event_type, {
               matched_text: message_content.substring(0, 200),
