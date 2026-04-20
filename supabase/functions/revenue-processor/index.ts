@@ -255,32 +255,183 @@ function scoreToBucket(score: number): string {
   return "COLD";
 }
 
-function isValidRevenuePhone(phone: string): boolean {
+function normalizeRevenuePhone(phone: string): string | null {
   const digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return null;
+  if (digits.startsWith("120363")) return null;
 
-  // Revenue aceita apenas WhatsApp BR em E.164: 55 + DDD + 9 dígitos (13 no total)
-  if (!digits.startsWith("55") || digits.length !== 13) return false;
+  const isPlaceholder = (subscriber: string) => {
+    if (/^(\d)\1{7}$/.test(subscriber)) return true;
+    if (["12345678", "87654321", "01234567"].includes(subscriber)) return true;
+    if (subscriber.startsWith("9999")) return true;
+    if (/(0000|1234|4321)/.test(subscriber)) return true;
+    if (subscriber.endsWith("0000") || subscriber.endsWith("0001") || subscriber.endsWith("0002")) return true;
+    return false;
+  };
 
-  const ddd = digits.slice(2, 4);
-  const local = digits.slice(4); // 9 dígitos
+  const isValidBrazilDdd = (ddd: string) => {
+    const dddNum = Number(ddd);
+    return !Number.isNaN(dddNum) && dddNum >= 11 && dddNum <= 99;
+  };
 
-  // DDD brasileiro válido (11-99)
-  const dddNum = Number(ddd);
-  if (Number.isNaN(dddNum) || dddNum < 11 || dddNum > 99) return false;
+  if (digits.startsWith("55") && digits.length === 13) {
+    const ddd = digits.slice(2, 4);
+    const local = digits.slice(4);
+    if (!isValidBrazilDdd(ddd) || local.length !== 9 || !local.startsWith("9")) return null;
+    if (isPlaceholder(local.slice(1))) return null;
+    return digits;
+  }
 
-  // Celular brasileiro deve iniciar com 9 após DDD
-  if (local.length !== 9 || !local.startsWith("9")) return false;
+  if (digits.startsWith("55") && digits.length === 12) {
+    const ddd = digits.slice(2, 4);
+    const local = digits.slice(4);
+    if (!isValidBrazilDdd(ddd) || !["6", "7", "8", "9"].includes(local[0] || "")) return null;
+    const candidate = `55${ddd}9${local}`;
+    if (isPlaceholder(candidate.slice(-8))) return null;
+    return candidate;
+  }
 
-  const subscriber = local.slice(1); // últimos 8 dígitos
+  if (digits.length === 11) {
+    const ddd = digits.slice(0, 2);
+    const local = digits.slice(2);
+    if (!isValidBrazilDdd(ddd) || !local.startsWith("9")) return null;
+    if (isPlaceholder(local.slice(1))) return null;
+    return `55${digits}`;
+  }
 
-  // Bloqueia placeholders clássicos e sequências artificiais
-  if (/^(\d)\1{7}$/.test(subscriber)) return false;
-  if (["12345678", "87654321", "01234567"].includes(subscriber)) return false;
-  if (subscriber.startsWith("9999")) return false;
-  if (/(0000|1234|4321)/.test(subscriber)) return false;
-  if (subscriber.endsWith("0000") || subscriber.endsWith("0001") || subscriber.endsWith("0002")) return false;
+  if (digits.length === 10) {
+    const ddd = digits.slice(0, 2);
+    const local = digits.slice(2);
+    if (!isValidBrazilDdd(ddd) || !["6", "7", "8", "9"].includes(local[0] || "")) return null;
+    const candidate = `55${ddd}9${local}`;
+    if (isPlaceholder(candidate.slice(-8))) return null;
+    return candidate;
+  }
 
-  return true;
+  if (digits.length >= 10 && !digits.startsWith("55")) {
+    return digits;
+  }
+
+  return null;
+}
+
+function isValidRevenuePhone(phone: string): boolean {
+  return normalizeRevenuePhone(phone) !== null;
+}
+
+const DIRECTION_EVENT_TYPES = new Set(["INBOUND_MESSAGE", "OUTBOUND_MESSAGE"]);
+
+function getDirectionFromEventType(eventType: string): "inbound" | "outbound" | null {
+  if (eventType === "INBOUND_MESSAGE") return "inbound";
+  if (eventType === "OUTBOUND_MESSAGE") return "outbound";
+  return null;
+}
+
+function getDayKey(dateLike: string | Date): string {
+  const date = dateLike instanceof Date ? dateLike : new Date(dateLike);
+  return date.toISOString().slice(0, 10);
+}
+
+function isSameUtcDay(a: string | Date, b: string | Date): boolean {
+  return getDayKey(a) === getDayKey(b);
+}
+
+function diffMinutes(later: Date, earlier: Date): number {
+  return (later.getTime() - earlier.getTime()) / 60000;
+}
+
+function diffHours(later: Date, earlier: Date): number {
+  return (later.getTime() - earlier.getTime()) / (60 * 60 * 1000);
+}
+
+function pickLatestIso(a?: string | null, b?: string | null): string | null {
+  if (!a) return b || null;
+  if (!b) return a || null;
+  return new Date(a).getTime() >= new Date(b).getTime() ? a : b;
+}
+
+function coerceOccurredAt(value: unknown): Date {
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  return new Date();
+}
+
+function applyNumberInstanceFilter(query: any, numberInstanceId?: string | null) {
+  return numberInstanceId ? query.eq("number_instance_id", numberInstanceId) : query.is("number_instance_id", null);
+}
+
+function mergeConversationRows(rows: any[] = []) {
+  return rows.reduce(
+    (acc, row) => ({
+      id: acc.id || row.id,
+      last_inbound_at: pickLatestIso(acc.last_inbound_at, row.last_inbound_at),
+      last_outbound_at: pickLatestIso(acc.last_outbound_at, row.last_outbound_at),
+      inbound_count_7d: acc.inbound_count_7d + Number(row.inbound_count_7d || 0),
+      outbound_count_7d: acc.outbound_count_7d + Number(row.outbound_count_7d || 0),
+      avg_response_time_seconds: Math.max(acc.avg_response_time_seconds, Number(row.avg_response_time_seconds || 0)),
+      unreplied_inbound_count: Math.max(acc.unreplied_inbound_count, Number(row.unreplied_inbound_count || 0)),
+    }),
+    {
+      id: null as string | null,
+      last_inbound_at: null as string | null,
+      last_outbound_at: null as string | null,
+      inbound_count_7d: 0,
+      outbound_count_7d: 0,
+      avg_response_time_seconds: 0,
+      unreplied_inbound_count: 0,
+    }
+  );
+}
+
+function computeConsecutiveDirectionCount(eventsAsc: any[], currentDirection: "inbound" | "outbound") {
+  let count = 1;
+  for (let i = eventsAsc.length - 1; i >= 0; i--) {
+    const direction = getDirectionFromEventType(eventsAsc[i].event_type);
+    if (direction !== currentDirection) break;
+    count += 1;
+  }
+  return count;
+}
+
+function computeAlternatingTurnCount(eventsAsc: any[], currentDirection: "inbound" | "outbound") {
+  let turns = 1;
+  let expected: "inbound" | "outbound" = currentDirection === "inbound" ? "outbound" : "inbound";
+
+  for (let i = eventsAsc.length - 1; i >= 0; i--) {
+    const direction = getDirectionFromEventType(eventsAsc[i].event_type);
+    if (!direction || direction !== expected) break;
+    turns += 1;
+    expected = expected === "inbound" ? "outbound" : "inbound";
+  }
+
+  return turns;
+}
+
+function getTrailingRunStart(eventsAsc: any[], direction: "inbound" | "outbound") {
+  let oldest: any = null;
+  for (let i = eventsAsc.length - 1; i >= 0; i--) {
+    const currentDirection = getDirectionFromEventType(eventsAsc[i].event_type);
+    if (currentDirection !== direction) break;
+    oldest = eventsAsc[i];
+  }
+  return oldest;
+}
+
+function computeActiveDayStreak(eventsAsc: any[], currentAt: Date) {
+  const dayKeys = new Set<string>(eventsAsc.map((event: any) => getDayKey(event.created_at)));
+  dayKeys.add(getDayKey(currentAt));
+
+  let streak = 0;
+  let cursor = new Date(`${getDayKey(currentAt)}T00:00:00.000Z`);
+
+  while (dayKeys.has(getDayKey(cursor))) {
+    streak += 1;
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+
+  return streak;
 }
 
 async function calculateLeadScoreComponents(supabase: any, leadId: string) {
@@ -332,26 +483,30 @@ serve(async (req) => {
       message_content,
       source,
       lead_name,
+      occurred_at,
     } = body;
 
     // === ACTION: process_message ===
     if (action === "process_message") {
-      if (!user_id || !phone_e164 || !direction) {
+      if (!user_id || !phone_e164 || !direction || !["inbound", "outbound"].includes(direction)) {
         return new Response(
           JSON.stringify({ error: "Missing required fields" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      if (!isValidRevenuePhone(phone_e164)) {
+      const normalizedPhone = normalizeRevenuePhone(phone_e164);
+      if (!normalizedPhone) {
         return new Response(
           JSON.stringify({ success: false, skipped: true, reason: "Invalid or placeholder phone" }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      // 0. Check if number is enabled for Revenue analysis
-      // Skip check for Meta API sources (they use waba_connections, not whatsapp_numbers)
+      const occurredAt = coerceOccurredAt(occurred_at);
+      const occurredAtIso = occurredAt.toISOString();
+      const messageExcerpt = typeof message_content === "string" ? message_content.substring(0, 200) : null;
+
       if (number_instance_id && source !== "meta") {
         const { data: numConfig } = await supabase
           .from("revenue_number_config")
@@ -360,8 +515,6 @@ serve(async (req) => {
           .eq("whatsapp_number_id", number_instance_id)
           .maybeSingle();
 
-        // Default seguro: se não houver configuração explícita do número, mantém o Revenue ativo.
-        // Só bloqueia quando o número foi desabilitado manualmente.
         if (numConfig && numConfig.is_enabled === false) {
           return new Response(
             JSON.stringify({ success: false, skipped: true, reason: "Number not enabled for Revenue analysis" }),
@@ -370,30 +523,44 @@ serve(async (req) => {
         }
       }
 
-      // 1. Upsert revenue_lead
-      const { data: existingLead } = await supabase
+      const { data: exactLeadMatches } = await supabase
         .from("revenue_leads")
         .select("*")
         .eq("user_id", user_id)
-        .eq("phone_e164", phone_e164)
-        .maybeSingle();
+        .eq("phone_e164", normalizedPhone)
+        .order("updated_at", { ascending: false })
+        .limit(1);
 
+      const { data: plusLeadMatches } = exactLeadMatches?.length
+        ? { data: [] }
+        : await supabase
+            .from("revenue_leads")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("phone_e164", `+${normalizedPhone}`)
+            .order("updated_at", { ascending: false })
+            .limit(1);
+
+      let existingLead = exactLeadMatches?.[0] || plusLeadMatches?.[0] || null;
       let leadId: string;
       let previousScore = 0;
 
       if (existingLead) {
         leadId = existingLead.id;
-        previousScore = existingLead.score_total;
-        // Update last activity and source number (tracks last number that interacted)
-        await supabase
-          .from("revenue_leads")
-          .update({
-            last_activity_at: new Date().toISOString(),
-            source_number_instance_id: number_instance_id || existingLead.source_number_instance_id,
-          })
-          .eq("id", leadId);
+        previousScore = Number(existingLead.score_total || 0);
+
+        const leadUpdate: any = {
+          last_activity_at: occurredAtIso,
+          source_number_instance_id: number_instance_id || existingLead.source_number_instance_id,
+        };
+
+        if (existingLead.phone_e164 !== normalizedPhone) {
+          leadUpdate.phone_e164 = normalizedPhone;
+          existingLead = { ...existingLead, phone_e164: normalizedPhone };
+        }
+
+        await supabase.from("revenue_leads").update(leadUpdate).eq("id", leadId);
       } else {
-        // Do not create Revenue lead from outbound-only traffic
         if (direction !== "inbound") {
           return new Response(
             JSON.stringify({ success: false, skipped: true, reason: "Outbound message without existing lead" }),
@@ -405,8 +572,11 @@ serve(async (req) => {
           .from("revenue_leads")
           .insert({
             user_id,
-            phone_e164,
+            phone_e164: normalizedPhone,
+            name: lead_name || null,
             source_number_instance_id: number_instance_id || null,
+            first_seen_at: occurredAtIso,
+            last_activity_at: occurredAtIso,
           })
           .select("id")
           .single();
@@ -415,87 +585,213 @@ serve(async (req) => {
         leadId = newLead.id;
       }
 
-      // 2. Upsert revenue_conversation
-      await supabase.from("revenue_conversations").upsert(
-        {
-          user_id,
-          lead_id: leadId,
-          number_instance_id: number_instance_id || null,
-          ...(direction === "inbound"
-            ? { last_inbound_at: new Date().toISOString() }
-            : { last_outbound_at: new Date().toISOString() }),
-        },
-        { onConflict: "user_id,lead_id,number_instance_id" }
-      );
+      let conversationQuery = supabase
+        .from("revenue_conversations")
+        .select("*")
+        .eq("user_id", user_id)
+        .eq("lead_id", leadId)
+        .order("updated_at", { ascending: false })
+        .limit(10);
+      conversationQuery = applyNumberInstanceFilter(conversationQuery, number_instance_id || null);
+      const { data: conversationRows } = await conversationQuery;
+      const conversationState = mergeConversationRows(conversationRows || []);
+      const conversationRowId = conversationRows?.[0]?.id || null;
 
-      // 3. Load score rules
       const { data: rules } = await supabase
         .from("revenue_score_rules")
         .select("*")
         .eq("user_id", user_id)
         .eq("is_enabled", true);
+      const rulesMap = new Map((rules || []).map((rule: any) => [rule.rule_key, rule]));
 
-      const rulesMap = new Map(
-        (rules || []).map((r: any) => [r.rule_key, r])
-      );
+      const { data: recentEvents } = await supabase
+        .from("revenue_events")
+        .select("event_type, created_at, event_value, event_meta")
+        .eq("user_id", user_id)
+        .eq("lead_id", leadId)
+        .order("created_at", { ascending: false })
+        .limit(250);
 
-      // 4. Generate events + score logs
-      const eventsToCreate: any[] = [];
-      const scoreLogsToCreate: any[] = [];
-      let scoreChange = 0;
+      const scoreLogsCutoff = new Date(occurredAt.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: recentScoreLogs } = await supabase
+        .from("revenue_score_logs")
+        .select("event_type, created_at")
+        .eq("user_id", user_id)
+        .eq("lead_id", leadId)
+        .gte("created_at", scoreLogsCutoff)
+        .order("created_at", { ascending: false })
+        .limit(250);
+
+      const scoredEventTimes = new Map<string, Date[]>();
+      for (const log of recentScoreLogs || []) {
+        const eventDate = new Date(log.created_at);
+        const bucket = scoredEventTimes.get(log.event_type) || [];
+        bucket.push(eventDate);
+        scoredEventTimes.set(log.event_type, bucket);
+      }
+
+      const pendingScoreEventTimes = new Map<string, Date[]>();
+      const eventEntries: Array<{ event: any; scoreLog: any | null }> = [];
       let runningScore = previousScore;
 
-      const addEvent = (eventType: string, points: number, meta: any = {}) => {
-        eventsToCreate.push({
-          user_id,
-          lead_id: leadId,
-          number_instance_id,
-          event_type: eventType,
-          event_value: points,
-          event_meta: meta,
-          intent_category: meta.intent_category || null,
-          intent_subtype: meta.intent_subtype || null,
-          intent_confidence_score: meta.confidence_score || 0,
-        });
-        const scoreBefore = runningScore;
-        runningScore = Math.max(0, Math.min(1000, runningScore + points));
-        scoreChange += points;
-        scoreLogsToCreate.push({
-          user_id,
-          lead_id: leadId,
-          event_type: eventType,
-          points_applied: points,
-          score_before: scoreBefore,
-          score_after: runningScore,
-          category: EVENT_CATEGORIES[eventType] || "engagement",
-        });
+      const countTriggeredToday = (ruleKey: string) => {
+        const existing = (scoredEventTimes.get(ruleKey) || []).filter((date) => isSameUtcDay(date, occurredAt)).length;
+        const pending = (pendingScoreEventTimes.get(ruleKey) || []).filter((date) => isSameUtcDay(date, occurredAt)).length;
+        return existing + pending;
       };
+
+      const getLastTriggeredAt = (ruleKey: string) => {
+        const allDates = [
+          ...(scoredEventTimes.get(ruleKey) || []),
+          ...(pendingScoreEventTimes.get(ruleKey) || []),
+        ].sort((a, b) => b.getTime() - a.getTime());
+        return allDates[0] || null;
+      };
+
+      const canTriggerRule = (
+        ruleKey: string,
+        options: { maxPerDayOverride?: number | null; ignoreCooldown?: boolean } = {}
+      ) => {
+        const rule = rulesMap.get(ruleKey);
+        if (!rule) return false;
+
+        const effectiveMaxPerDay = options.maxPerDayOverride ?? rule.max_per_day ?? null;
+        if (effectiveMaxPerDay && countTriggeredToday(ruleKey) >= Number(effectiveMaxPerDay)) {
+          return false;
+        }
+
+        if (!options.ignoreCooldown && rule.cooldown_minutes) {
+          const lastTriggeredAt = getLastTriggeredAt(ruleKey);
+          if (lastTriggeredAt && diffMinutes(occurredAt, lastTriggeredAt) < Number(rule.cooldown_minutes)) {
+            return false;
+          }
+        }
+
+        return true;
+      };
+
+      const recordEvent = (eventType: string, points: number, meta: any = {}, includeScoreLog = points !== 0) => {
+        const safePoints = Math.trunc(Number(points || 0));
+        const scoreBefore = runningScore;
+        const scoreAfter = includeScoreLog
+          ? Math.max(0, Math.min(1000, scoreBefore + safePoints))
+          : scoreBefore;
+
+        eventEntries.push({
+          event: {
+            user_id,
+            lead_id: leadId,
+            number_instance_id: number_instance_id || null,
+            event_type: eventType,
+            event_value: safePoints,
+            event_meta: meta,
+            intent_category: meta.intent_category || null,
+            intent_subtype: meta.intent_subtype || null,
+            intent_confidence_score: meta.confidence_score || 0,
+            created_at: occurredAtIso,
+          },
+          scoreLog: includeScoreLog
+            ? {
+                user_id,
+                lead_id: leadId,
+                event_type: eventType,
+                points_applied: safePoints,
+                score_before: scoreBefore,
+                score_after: scoreAfter,
+                category: EVENT_CATEGORIES[eventType] || "engagement",
+                created_at: occurredAtIso,
+              }
+            : null,
+        });
+
+        if (includeScoreLog) {
+          runningScore = scoreAfter;
+          const bucket = pendingScoreEventTimes.get(eventType) || [];
+          bucket.push(new Date(occurredAtIso));
+          pendingScoreEventTimes.set(eventType, bucket);
+        }
+      };
+
+      const addRuleEvent = (
+        ruleKey: string,
+        meta: any = {},
+        options: { maxPerDayOverride?: number | null; ignoreCooldown?: boolean } = {}
+      ) => {
+        const rule = rulesMap.get(ruleKey);
+        if (!rule || !canTriggerRule(ruleKey, options)) return false;
+        recordEvent(ruleKey, Number(rule.points || 0), meta, true);
+        return true;
+      };
+
+      const interactionEventsAsc = (recentEvents || [])
+        .filter((event: any) => DIRECTION_EVENT_TYPES.has(event.event_type))
+        .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+      const lastInteractionEvent = interactionEventsAsc[interactionEventsAsc.length - 1] || null;
+      const lastInteractionDirection = lastInteractionEvent
+        ? getDirectionFromEventType(lastInteractionEvent.event_type)
+        : null;
+
+      const currentDirection = direction as "inbound" | "outbound";
+      const currentMessageEventType = currentDirection === "inbound" ? "INBOUND_MESSAGE" : "OUTBOUND_MESSAGE";
+      const trailingSameDirectionStart = getTrailingRunStart(interactionEventsAsc, currentDirection);
+      const activeDayStreak = computeActiveDayStreak(interactionEventsAsc, occurredAt);
+      const alternatingTurnCount = computeAlternatingTurnCount(interactionEventsAsc, currentDirection);
+
+      recordEvent(
+        currentMessageEventType,
+        currentDirection === "inbound" && canTriggerRule("INBOUND_MESSAGE")
+          ? Number(rulesMap.get("INBOUND_MESSAGE")?.points || 0)
+          : 0,
+        {
+          source: source || null,
+          direction: currentDirection,
+          raw_message: true,
+          message_excerpt: messageExcerpt,
+        },
+        currentDirection === "inbound" && canTriggerRule("INBOUND_MESSAGE")
+      );
 
       let classificationResult: ClassificationResult | null = null;
 
-      if (direction === "inbound") {
-        // Always add base inbound message points
-        const inboundRule = rulesMap.get("INBOUND_MESSAGE");
-        if (inboundRule) {
-          addEvent("INBOUND_MESSAGE", inboundRule.points);
+      if (currentDirection === "inbound") {
+        if (lastInteractionEvent) {
+          const silenceHours = diffHours(occurredAt, new Date(lastInteractionEvent.created_at));
+          if (silenceHours >= 24 * 7) {
+            addRuleEvent("INBOUND_AFTER_7D_SILENCE", { silence_hours: Math.round(silenceHours) });
+          } else if (silenceHours >= 24) {
+            addRuleEvent("INBOUND_AFTER_24H_SILENCE", { silence_hours: Math.round(silenceHours) });
+          }
         }
 
-        // Classify message with contextual engine
-        if (message_content) {
-          const normalized = normalizeText(message_content);
-          classificationResult = classifyMessage(normalized, rulesMap);
+        const pendingOutboundStart = getTrailingRunStart(interactionEventsAsc, "outbound");
+        if (lastInteractionDirection === "outbound" && pendingOutboundStart?.created_at) {
+          const replyMinutes = diffMinutes(occurredAt, new Date(pendingOutboundStart.created_at));
+          if (replyMinutes <= 60) {
+            addRuleEvent("OUTBOUND_REPLY_RECEIVED_WITHIN_1H", {
+              response_time_minutes: Math.round(replyMinutes),
+            });
+          }
+        }
 
-          // Only add intent event if not NEUTRAL (avoid double-counting with INBOUND_MESSAGE)
+        const inboundStreak = computeConsecutiveDirectionCount(interactionEventsAsc, "inbound");
+        if (inboundStreak >= 3 && inboundStreak % 3 === 0) {
+          addRuleEvent("INBOUND_STREAK_3", { streak_count: inboundStreak });
+        }
+
+        if (message_content) {
+          const normalizedText = normalizeText(message_content);
+          classificationResult = classifyMessage(normalizedText, rulesMap);
+
           if (classificationResult.intent_category !== "NEUTRAL") {
-            addEvent(classificationResult.event_type, classificationResult.points, {
+            addRuleEvent(classificationResult.event_type, {
               matched_text: message_content.substring(0, 200),
               intent_category: classificationResult.intent_category,
               intent_subtype: classificationResult.intent_subtype,
               matched_keywords: classificationResult.matched_keywords,
               confidence_score: classificationResult.confidence_score,
-            });
+            }, { ignoreCooldown: true });
 
-            // Handle NEGATIVE_HARD special behavior
             if (classificationResult.intent_category === "INTENT_NEGATIVE_HARD") {
               const updatePayload: any = {
                 risk_state: "AT_RISK",
@@ -512,58 +808,105 @@ serve(async (req) => {
                   : ["do_not_contact"];
               }
 
-              await supabase
-                .from("revenue_leads")
-                .update(updatePayload)
-                .eq("id", leadId);
-            }
-          }
-        }
-
-        // Check SLA
-        if (existingLead) {
-          const { data: conv } = await supabase
-            .from("revenue_conversations")
-            .select("last_outbound_at")
-            .eq("lead_id", leadId)
-            .eq("user_id", user_id)
-            .maybeSingle();
-
-          if (conv?.last_outbound_at) {
-            const outboundTime = new Date(conv.last_outbound_at).getTime();
-            const now = Date.now();
-            const diffMin = (now - outboundTime) / 60000;
-
-            if (diffMin <= 60) {
-              const rule = rulesMap.get("OUTBOUND_REPLY_RECEIVED_WITHIN_1H");
-              if (rule) {
-                addEvent("OUTBOUND_REPLY_RECEIVED_WITHIN_1H", rule.points, { response_time_minutes: Math.round(diffMin) });
-              }
+              await supabase.from("revenue_leads").update(updatePayload).eq("id", leadId);
             }
           }
         }
       }
 
-      // 5. Insert events
-      if (eventsToCreate.length > 0) {
-        const { data: insertedEvents } = await supabase
+      if (currentDirection === "outbound") {
+        const pendingInboundStart = getTrailingRunStart(interactionEventsAsc, "inbound");
+        if (lastInteractionDirection === "inbound" && pendingInboundStart?.created_at) {
+          const responseMinutes = diffMinutes(occurredAt, new Date(pendingInboundStart.created_at));
+
+          if (responseMinutes <= 5) {
+            addRuleEvent("SLA_FIRST_RESPONSE_UNDER_5MIN", { response_time_minutes: Math.round(responseMinutes) });
+          } else if (responseMinutes <= 30) {
+            addRuleEvent("SLA_FIRST_RESPONSE_5_TO_30MIN", { response_time_minutes: Math.round(responseMinutes) });
+          } else {
+            addRuleEvent("SLA_FIRST_RESPONSE_OVER_30MIN", { response_time_minutes: Math.round(responseMinutes) });
+          }
+
+          if (responseMinutes >= 24 * 60) {
+            addRuleEvent("UNREPLIED_INBOUND_OVER_24H", { unreplied_minutes: Math.round(responseMinutes) });
+          } else if (responseMinutes >= 120) {
+            addRuleEvent("UNREPLIED_INBOUND_OVER_2H", { unreplied_minutes: Math.round(responseMinutes) });
+          }
+        }
+      }
+
+      if (alternatingTurnCount >= 5 && alternatingTurnCount % 5 === 0) {
+        addRuleEvent("BACK_AND_FORTH_5_TURNS", { turn_count: alternatingTurnCount });
+      }
+
+      if (activeDayStreak >= 5) {
+        addRuleEvent("CONVERSATION_ACTIVE_5D", { active_day_streak: activeDayStreak }, { maxPerDayOverride: 1 });
+      } else if (activeDayStreak >= 3) {
+        addRuleEvent("CONVERSATION_ACTIVE_3D", { active_day_streak: activeDayStreak }, { maxPerDayOverride: 1 });
+      }
+
+      let avgResponseTimeSeconds = conversationState.avg_response_time_seconds || 0;
+      let unrepliedInboundCount = conversationState.unreplied_inbound_count || 0;
+
+      if (currentDirection === "inbound") {
+        unrepliedInboundCount += 1;
+      } else if (lastInteractionDirection === "inbound" && trailingSameDirectionStart?.created_at) {
+        const responseSeconds = Math.max(0, Math.round((occurredAt.getTime() - new Date(trailingSameDirectionStart.created_at).getTime()) / 1000));
+        avgResponseTimeSeconds = avgResponseTimeSeconds > 0
+          ? Math.round((avgResponseTimeSeconds + responseSeconds) / 2)
+          : responseSeconds;
+        unrepliedInboundCount = 0;
+      }
+
+      const conversationPayload: any = {
+        user_id,
+        lead_id: leadId,
+        number_instance_id: number_instance_id || null,
+        last_inbound_at: currentDirection === "inbound"
+          ? pickLatestIso(conversationState.last_inbound_at, occurredAtIso)
+          : conversationState.last_inbound_at,
+        last_outbound_at: currentDirection === "outbound"
+          ? pickLatestIso(conversationState.last_outbound_at, occurredAtIso)
+          : conversationState.last_outbound_at,
+        inbound_count_7d: conversationState.inbound_count_7d + (currentDirection === "inbound" ? 1 : 0),
+        outbound_count_7d: conversationState.outbound_count_7d + (currentDirection === "outbound" ? 1 : 0),
+        avg_response_time_seconds: avgResponseTimeSeconds,
+        unreplied_inbound_count: unrepliedInboundCount,
+        updated_at: occurredAtIso,
+      };
+
+      if (conversationRowId) {
+        await supabase.from("revenue_conversations").update(conversationPayload).eq("id", conversationRowId);
+      } else {
+        await supabase.from("revenue_conversations").insert({
+          ...conversationPayload,
+          created_at: occurredAtIso,
+        });
+      }
+
+      if (eventEntries.length > 0) {
+        const { data: insertedEvents, error: insertEventsError } = await supabase
           .from("revenue_events")
-          .insert(eventsToCreate)
+          .insert(eventEntries.map((entry) => entry.event))
           .select("id");
 
-        if (insertedEvents && insertedEvents.length === scoreLogsToCreate.length) {
-          for (let i = 0; i < scoreLogsToCreate.length; i++) {
-            scoreLogsToCreate[i].event_id = insertedEvents[i].id;
+        if (insertEventsError) throw insertEventsError;
+
+        insertedEvents?.forEach((insertedEvent: any, index: number) => {
+          if (eventEntries[index]?.scoreLog) {
+            eventEntries[index].scoreLog.event_id = insertedEvent.id;
           }
-        }
+        });
       }
 
-      // 6. Insert score logs
+      const scoreLogsToCreate = eventEntries
+        .map((entry) => entry.scoreLog)
+        .filter(Boolean);
+
       if (scoreLogsToCreate.length > 0) {
         await supabase.from("revenue_score_logs").insert(scoreLogsToCreate);
       }
 
-      // 7. Insert intent audit log
       if (classificationResult && classificationResult.intent_category !== "NEUTRAL" && message_content) {
         await supabase.from("revenue_intent_logs").insert({
           lead_id: leadId,
@@ -575,56 +918,53 @@ serve(async (req) => {
         });
       }
 
-      // 8. Update score
-      const newScore = Math.max(0, Math.min(1000, previousScore + scoreChange));
+      const newScore = runningScore;
       const newBucket = scoreToBucket(newScore);
 
       let riskState = existingLead?.risk_state || "OK";
       let riskReason = existingLead?.risk_reason || null;
 
-      // Don't override AT_RISK set by NEGATIVE_HARD
-      if (direction === "inbound" && riskState !== "AT_RISK") {
+      if (currentDirection === "inbound" && riskState !== "AT_RISK") {
         if (classificationResult?.intent_category !== "INTENT_NEGATIVE_HARD") {
           riskState = "OK";
           riskReason = null;
         }
       }
 
-      // Recalculate multidimensional components from score logs (corrige legados inconsistentes)
       const componentScores = await calculateLeadScoreComponents(supabase, leadId);
-
       const leadUpdate: any = {
         score_total: newScore,
         ...componentScores,
-        score_last_calc_at: new Date().toISOString(),
+        score_last_calc_at: occurredAtIso,
+        last_activity_at: occurredAtIso,
         status_bucket: newBucket,
         risk_state: riskState,
         risk_reason: riskReason,
       };
 
-      // Update last intent on lead for display
       if (classificationResult && classificationResult.intent_category !== "NEUTRAL") {
         leadUpdate.last_intent_category = classificationResult.intent_category;
         leadUpdate.last_intent_subtype = classificationResult.intent_subtype;
       }
 
-      await supabase
-        .from("revenue_leads")
-        .update(leadUpdate)
-        .eq("id", leadId);
+      await supabase.from("revenue_leads").update(leadUpdate).eq("id", leadId);
 
       return new Response(
         JSON.stringify({
           success: true,
           lead_id: leadId,
+          phone_e164: normalizedPhone,
           score: newScore,
           bucket: newBucket,
-          events_created: eventsToCreate.length,
-          classification: classificationResult ? {
-            category: classificationResult.intent_category,
-            subtype: classificationResult.intent_subtype,
-            confidence: classificationResult.confidence_score,
-          } : null,
+          events_created: eventEntries.length,
+          score_logs_created: scoreLogsToCreate.length,
+          classification: classificationResult
+            ? {
+                category: classificationResult.intent_category,
+                subtype: classificationResult.intent_subtype,
+                confidence: classificationResult.confidence_score,
+              }
+            : null,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
