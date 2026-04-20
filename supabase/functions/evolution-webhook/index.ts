@@ -2466,7 +2466,7 @@ REGRAS:
             
             console.log(`Updating message ${messageId} to status: ${status}`);
             
-            // Update message status in database
+            // Update legacy message status in database
             const { error, data: updatedMsg } = await supabase
               .from('messages')
               .update({ status, updated_at: new Date().toISOString() })
@@ -2477,6 +2477,22 @@ REGRAS:
               console.error('Error updating message status:', error);
             } else {
               console.log(`Message ${messageId} status updated to ${status}, rows:`, updatedMsg?.length);
+            }
+
+            const statusTimestamp = new Date().toISOString();
+            const { data: updatedChatMessages, error: chatStatusError } = await supabase
+              .from('chat_messages')
+              .update({
+                status,
+                status_updated_at: statusTimestamp,
+              })
+              .eq('waba_message_id', messageId)
+              .select('id, conversation_id');
+
+            if (chatStatusError) {
+              console.error('Error updating current chat message status:', chatStatusError);
+            } else {
+              console.log(`Current chat message ${messageId} status updated to ${status}, rows:`, updatedChatMessages?.length);
             }
           } else {
             console.log('Could not extract messageId or statusCode from update');
