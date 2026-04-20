@@ -928,7 +928,9 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
       ]);
 
       const evolutionOptions = (evoNumbers || [])
-        .filter((n: any) => n.api_tier !== "paid" && n.api_tier !== "meta")
+        // Only exclude entries that belong to the Meta Cloud API (those come from user_waba_connections).
+        // Both "free" and "paid" Evolution tiers are valid Evolution numbers.
+        .filter((n: any) => n.api_tier !== "meta")
         .map((n: any) => ({
           id: n.id,
           phone_number: n.phone_number,
