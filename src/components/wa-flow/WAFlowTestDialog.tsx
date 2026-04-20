@@ -405,16 +405,32 @@ export function WAFlowTestDialog({
         }
 
         case "condition": {
-          if (conditionNeedsUserInput(config.condition_type) && !runtimeRef.current.hasFreshUserInput) {
+          const needsInput = conditionNeedsUserInput(config.condition_type);
+          if (needsInput && !runtimeRef.current.hasFreshUserInput) {
+            const hint =
+              config.condition_type === "keyword_match"
+                ? `⌨️ Aguardando resposta do lead (palavras-chave: ${config.condition_value || "(não configurado)"})`
+                : config.condition_type === "button_clicked"
+                ? "⌨️ Aguardando o lead clicar em um botão"
+                : config.condition_type === "no_response"
+                ? "⌨️ Aguardando resposta (digite algo ou clique em resetar para simular o timeout)"
+                : "⌨️ Aguardando resposta do lead para avaliar a condição";
+            appendMessage({ direction: "event", content: hint, nodeId: node.id });
             setAwaitingNodeId(node.id);
             currentNodeId = null;
             break;
           }
           const result = evaluateCondition(config, runtimeRef.current);
+          // Consume the fresh input so a single reply doesn't satisfy multiple conditions in a row.
           runtimeRef.current.hasFreshUserInput = false;
+          const branch = result ? "Sim" : "Não";
+          appendMessage({ direction: "event", content: `🔀 Condição avaliada: ${branch}`, nodeId: node.id });
           currentNodeId = getConditionTarget(node.id, result);
           if (!currentNodeId) {
-            appendMessage({ direction: "event", content: `Condição sem saída configurada para ${result ? "SIM" : "NÃO"}.` });
+            appendMessage({
+              direction: "event",
+              content: `⚠️ A saída "${branch}" da condição não está conectada — fluxo encerrado neste ponto.`,
+            });
           }
           break;
         }
