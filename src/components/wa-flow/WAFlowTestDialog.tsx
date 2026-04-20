@@ -79,7 +79,12 @@ const getInteractiveChoices = (node: Node): InteractiveChoice[] => {
 };
 
 const conditionNeedsUserInput = (conditionType?: string) => {
-  return ["responded", "keyword_match", "button_clicked"].includes(conditionType || "responded");
+  // Conditions that require fresh user input before being evaluated.
+  // "no_response" also waits, but is resolved by timeout (here we treat it as needing input too,
+  // so the test simulator pauses and lets the tester decide whether to reply or not).
+  return ["responded", "keyword_match", "button_clicked", "field_equals", "no_response"].includes(
+    conditionType || "responded"
+  );
 };
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
