@@ -101,6 +101,10 @@ export function GuidedTour() {
   const lastScrolledStepRef = useRef<string | null>(null);
   const targetEverFoundRef = useRef<string | null>(null);
   const popupRect = rect ?? popupAnchorRect;
+  // While waiting for the target to appear, we hide the SPOTLIGHT only — the
+  // popup card stays visible (centered as a fallback) so the user always sees
+  // the tour content. This prevents the "tour disappears" flicker on steps
+  // whose target is opened by onEnter (e.g. lead detail modal).
   const isWaitingForTarget = !!step?.target && hideOnLoad && !rect && targetEverFoundRef.current !== step?.id;
   // Once the target was found in this step, keep using a rect so the spotlight
   // never collapses back into the dark fallback overlay (which causes flicker).
