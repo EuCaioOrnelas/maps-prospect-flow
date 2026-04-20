@@ -689,14 +689,6 @@ export default function WhatsAppFlowEditor() {
     return () => window.removeEventListener("keydown", handler);
   }, [undo, redo, saveFlow, selectedNode, drawerOpen, clipboard, nodes, edges, handleDeleteNode, setNodes, pushHistory]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="h-8 w-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
-      </div>
-    );
-  }
-
   const handleBackNavigation = useCallback(() => {
     if (hasChanges) {
       const confirmed = window.confirm(
@@ -717,6 +709,14 @@ export default function WhatsAppFlowEditor() {
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasChanges]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background">
