@@ -13,6 +13,7 @@ import { Loader2, Edit, Eye, Save, Monitor, Smartphone, History } from "lucide-r
 interface EmailTemplate {
   id: string;
   stage: string;
+  payment_method: string;
   subject: string;
   preview_text: string | null;
   title: string;
@@ -33,7 +34,7 @@ const STAGE_LABELS: Record<string, string> = {
   "D-3": "🟢 D-3 — Reforço inteligente",
   "D-1": "🟡 D-1 — Urgência real",
   "D0": "🔴 D0 — Último aviso",
-  "D+1": "⛔ D+1 — Acesso suspenso",
+  "D+1": "⛔ D+1 — Acesso suspenso / cobrança falhou",
 };
 
 const VARIABLES = [
@@ -54,6 +55,7 @@ export function PixEmailTemplatesTab() {
   const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
+  const [methodFilter, setMethodFilter] = useState<"pix" | "card">("pix");
 
   // Edit form state
   const [editSubject, setEditSubject] = useState("");
@@ -72,7 +74,8 @@ export function PixEmailTemplatesTab() {
       const { data, error } = await supabase
         .from("renewal_email_templates" as any)
         .select("*")
-        .order("created_at", { ascending: true });
+        .order("payment_method", { ascending: true })
+        .order("stage", { ascending: true });
       if (error) throw error;
       setTemplates((data || []) as unknown as EmailTemplate[]);
     } catch (err) {
