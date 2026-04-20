@@ -99,8 +99,12 @@ export function GuidedTour() {
   const [popupSize, setPopupSize] = useState({ width: POPUP_W, height: 196 });
   const popupCardRef = useRef<HTMLDivElement | null>(null);
   const lastScrolledStepRef = useRef<string | null>(null);
+  const targetEverFoundRef = useRef<string | null>(null);
   const popupRect = rect ?? popupAnchorRect;
-  const spotlightRect = hideOnLoad ? rect : rect ?? popupAnchorRect;
+  // Once the target was found in this step, keep using a rect so the spotlight
+  // never collapses back into the dark fallback overlay (which causes flicker).
+  const spotlightRect =
+    rect ?? (targetEverFoundRef.current === step?.id ? popupAnchorRect : null);
 
   // Lock body + html scroll while tour is active
   useEffect(() => {
@@ -131,6 +135,9 @@ export function GuidedTour() {
 
     if (hideOnLoad) {
       setRect(null);
+    }
+    if (targetEverFoundRef.current !== step.id) {
+      targetEverFoundRef.current = null;
     }
 
     let rafId: number | null = null;
@@ -181,9 +188,13 @@ export function GuidedTour() {
       const next = el.getBoundingClientRect();
       const serialized = `${Math.round(next.top)}|${Math.round(next.left)}|${Math.round(next.width)}|${Math.round(next.height)}`;
 
-      // Always commit the latest rect so it animates smoothly toward the target
-      setRect({ top: next.top, left: next.left, width: next.width, height: next.height });
-      setPopupAnchorRect({ top: next.top, left: next.left, width: next.width, height: next.height });
+      // Only commit when coordinates actually changed — avoids re-render loops
+      // that cause overlay flicker on scroll/resize/focus events.
+      if (serialized !== lastSerialized) {
+        setRect({ top: next.top, left: next.left, width: next.width, height: next.height });
+        setPopupAnchorRect({ top: next.top, left: next.left, width: next.width, height: next.height });
+      }
+      targetEverFoundRef.current = step.id;
 
       if (serialized === lastSerialized) {
         stableFrames += 1;
