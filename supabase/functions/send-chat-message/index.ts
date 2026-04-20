@@ -97,6 +97,41 @@ serve(async (req) => {
         status_updated_at: new Date().toISOString(),
       }).eq('id', message_id);
 
+      // === CRM LEAD STATUS: mark as 'message_sent' (or 'in_conversation' if already replied) ===
+      try {
+        const tail = String(to || '').replace(/\D/g, '').slice(-8);
+        if (tail.length >= 8) {
+          const { data: leads } = await supabase
+            .from('leads')
+            .select('id, whatsapp_status, first_message_sent')
+            .eq('user_id', userId)
+            .ilike('phone', `%${tail}`)
+            .limit(5);
+
+          const nowIso = new Date().toISOString();
+          for (const lead of leads || []) {
+            const updates: any = {
+              first_message_sent: true,
+              last_message_sent_at: nowIso,
+              updated_at: nowIso,
+            };
+            if (!lead.first_message_sent) updates.first_message_sent_at = nowIso;
+            const current = lead.whatsapp_status || 'never_contacted';
+            if (current === 'never_contacted' || current === 'no_response') {
+              updates.whatsapp_status = 'message_sent';
+            } else if (current === 'replied') {
+              updates.whatsapp_status = 'in_conversation';
+            }
+            await supabase.from('leads').update(updates).eq('id', lead.id);
+          }
+          if ((leads || []).length > 0) {
+            console.log(`[send-chat-message] 🏷️ Updated ${leads!.length} lead(s) status (outbound) for tail ${tail}`);
+          }
+        }
+      } catch (statusErr) {
+        console.error('[send-chat-message] Lead status update error (non-blocking):', statusErr);
+      }
+
       // === REVENUE SCORING: Fire outbound event ===
       try {
         const phoneDigits = String(to || '').replace(/\D/g, '');
@@ -104,10 +139,7 @@ serve(async (req) => {
         let phoneE164 = phoneDigits;
         if (phoneDigits.length === 12 && phoneDigits.startsWith('55')) {
           const ddd = phoneDigits.slice(2, 4);
-          const firstDigit = phoneDigits[4];
-          if (['6', '7', '8', '9'].includes(firstDigit)) {
-            phoneE164 = `55${ddd}9${phoneDigits.slice(4)}`;
-          }
+          phoneE164 = `55${ddd}9${phoneDigits.slice(4)}`;
         }
         if (phoneE164.length >= 12) {
           await supabase.functions.invoke('revenue-processor', {

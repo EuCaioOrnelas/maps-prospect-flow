@@ -37,6 +37,7 @@ serve(async (req) => {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
       // Helper: normalize Brazilian phone to E.164 for revenue scoring
+      // Returns the digits-only normalized phone (no '+') or null when invalid
       function normalizeBrazilianMobileE164(phone: string): string | null {
         const digits = String(phone || '').replace(/\D/g, '');
         if (!digits || digits.length < 10) return null;
@@ -45,15 +46,15 @@ serve(async (req) => {
         // Already 13-digit BR mobile: 55 + DD + 9XXXXXXXX
         if (digits.length === 13 && digits.startsWith('55')) {
           const ddd = Number(digits.slice(2, 4));
-          if (ddd >= 11 && ddd <= 99 && digits[4] === '9') return digits;
+          if (ddd >= 11 && ddd <= 99) return digits;
           return null;
         }
 
-        // 12-digit BR missing 9th digit: 55 + DD + 8-digit
+        // 12-digit BR: 55 + DD + 8-digit (Meta sometimes strips the leading 9)
         if (digits.length === 12 && digits.startsWith('55')) {
           const ddd = Number(digits.slice(2, 4));
-          const firstDigit = digits[4];
-          if (ddd >= 11 && ddd <= 99 && ['6', '7', '8', '9'].includes(firstDigit)) {
+          if (ddd >= 11 && ddd <= 99) {
+            // Add leading 9 to make it a valid 13-digit mobile
             return `55${digits.slice(2, 4)}9${digits.slice(4)}`;
           }
           return null;
@@ -62,21 +63,76 @@ serve(async (req) => {
         // 11-digit local BR: DD + 9 + 8
         if (digits.length === 11) {
           const ddd = Number(digits.slice(0, 2));
-          if (ddd >= 11 && ddd <= 99 && digits[2] === '9') return `55${digits}`;
+          if (ddd >= 11 && ddd <= 99) return `55${digits}`;
         }
 
         // 10-digit local BR missing 9th digit
         if (digits.length === 10) {
           const ddd = Number(digits.slice(0, 2));
-          const firstDigit = digits[2];
-          if (ddd >= 11 && ddd <= 99 && ['6', '7', '8', '9'].includes(firstDigit)) {
+          if (ddd >= 11 && ddd <= 99) {
             return `55${digits.slice(0, 2)}9${digits.slice(2)}`;
           }
         }
 
-        // International numbers
+        // International numbers (non-BR)
         if (digits.length >= 10 && !digits.startsWith('55')) return digits;
         return null;
+      }
+
+      // Helper: get last 8 digits for flexible CRM lead matching
+      function phoneTail8(phone: string): string {
+        return String(phone || '').replace(/\D/g, '').slice(-8);
+      }
+
+      // Helper: update CRM lead whatsapp_status by phone match (last 8 digits)
+      async function updateLeadStatus(params: {
+        user_id: string;
+        phone: string;
+        direction: 'inbound' | 'outbound';
+        timestamp: string;
+      }) {
+        try {
+          const tail = phoneTail8(params.phone);
+          if (!tail || tail.length < 8) return;
+
+          const { data: leads } = await supabase
+            .from('leads')
+            .select('id, whatsapp_status, first_message_sent')
+            .eq('user_id', params.user_id)
+            .ilike('phone', `%${tail}`)
+            .limit(5);
+
+          if (!leads || leads.length === 0) return;
+
+          for (const lead of leads) {
+            const updates: any = { updated_at: new Date().toISOString() };
+
+            if (params.direction === 'inbound') {
+              updates.whatsapp_status = 'replied';
+              updates.has_responded = true;
+              updates.last_response_at = params.timestamp;
+              updates.responded_at = params.timestamp;
+            } else {
+              // outbound: mark as message_sent if not already in a deeper state
+              const current = lead.whatsapp_status || 'never_contacted';
+              if (current === 'never_contacted' || current === 'no_response') {
+                updates.whatsapp_status = 'message_sent';
+              } else if (current === 'replied') {
+                updates.whatsapp_status = 'in_conversation';
+              }
+              updates.first_message_sent = true;
+              if (!lead.first_message_sent) {
+                updates.first_message_sent_at = params.timestamp;
+              }
+              updates.last_message_sent_at = params.timestamp;
+            }
+
+            await supabase.from('leads').update(updates).eq('id', lead.id);
+          }
+          console.log(`[meta-webhook] 🏷️ Updated ${leads.length} lead(s) status (${params.direction}) for tail ${tail}`);
+        } catch (e) {
+          console.error('[meta-webhook] updateLeadStatus error:', e);
+        }
       }
 
       // Helper: fire revenue event for lead scoring
@@ -237,6 +293,14 @@ serve(async (req) => {
                   });
                   console.log(`[meta-webhook] ✅ Chat message saved for conversation ${conversation.id}`);
 
+                  // === CRM LEAD STATUS: mark as 'replied' on inbound ===
+                  await updateLeadStatus({
+                    user_id: userId,
+                    phone: from,
+                    direction: 'inbound',
+                    timestamp: msgTime,
+                  });
+
                   // === REVENUE SCORING: Fire event for inbound messages ===
                   const normalizedPhone = normalizeBrazilianMobileE164(from);
                   if (normalizedPhone) {
@@ -248,6 +312,8 @@ serve(async (req) => {
                       lead_name: contactName || undefined,
                     });
                     console.log(`[meta-webhook] 📊 Revenue event fired for ${normalizedPhone}`);
+                  } else {
+                    console.log(`[meta-webhook] ⚠️ Phone ${from} could not be normalized for scoring`);
                   }
                 }
               }
