@@ -197,21 +197,61 @@ serve(async (req) => {
     const subJson = await subRes.json();
     if (!subRes.ok || subJson.errors) {
       logStep("Subscription creation failed", subJson);
-      // Mapeia erros conhecidos do Asaas para mensagens claras
+      // Mapeia erros conhecidos do Asaas para mensagens detalhadas e acionáveis
       const firstErr = subJson.errors?.[0];
-      const code = firstErr?.code || "";
+      const code = (firstErr?.code || "").toLowerCase();
       const desc = firstErr?.description || "";
+      const descLower = desc.toLowerCase();
       let friendly = desc || JSON.stringify(subJson);
-      if (code === "invalid_creditCard" || /não autorizada|nao autorizada/i.test(desc)) {
+
+      // === Recusas do banco emissor (sem cobrança real, apenas validação) ===
+      if (/saldo insuficiente|sem limite|limite insuficiente|insufficient/i.test(desc)) {
         friendly =
-          "Cartão não autorizado pelo banco. Confira número, validade e CVV, verifique se há limite disponível e se o cartão está habilitado para compras online. Se o problema persistir, tente outro cartão.";
-      } else if (code === "invalid_creditCard_holderInfo" || /endere[cç]o|cep|state|province/i.test(desc)) {
-        friendly = "Os dados do titular do cartão estão incompletos. Confira CEP, endereço, número e cidade.";
-      } else if (/expir/i.test(desc)) {
-        friendly = "Cartão vencido. Use um cartão com validade futura.";
-      } else if (/cpf|cnpj/i.test(desc)) {
-        friendly = "CPF/CNPJ inválido. Confira o documento informado.";
+          "❌ Cartão recusado: SEM LIMITE DISPONÍVEL.\n\nMesmo sem cobrança imediata (cobramos só após os 7 dias), o banco emissor faz uma validação de R$1,00 (estornada na hora) e recusou por falta de limite.\n\n👉 Solução: libere algum limite no app do banco ou use outro cartão.";
+      } else if (/cart[aã]o bloqueado|card.*blocked|blocked.*card/i.test(desc)) {
+        friendly =
+          "❌ Cartão BLOQUEADO pelo banco emissor.\n\n👉 Solução: ligue para o seu banco e desbloqueie o cartão para compras online, ou use outro cartão.";
+      } else if (/n[ãa]o habilitado.*online|online.*n[ãa]o|not.*authorized.*online|e-commerce.*disabled/i.test(desc)) {
+        friendly =
+          "❌ Cartão não habilitado para COMPRAS ONLINE.\n\n👉 Solução: acesse o app do seu banco e habilite a função de compras online/internet, ou use outro cartão.";
+      } else if (/suspeita.*fraude|fraud|suspected/i.test(desc)) {
+        friendly =
+          "❌ Transação recusada por SUSPEITA DE FRAUDE pelo seu banco.\n\n👉 Solução: ligue para a central do seu banco, autorize a transação da Wiize, e tente novamente. Ou use outro cartão.";
+      } else if (/expir|venc/i.test(desc)) {
+        friendly =
+          "❌ Cartão VENCIDO.\n\nA data de validade que você informou já passou.\n\n👉 Solução: use um cartão com validade futura.";
+      } else if (/cvv|cvc|c[oó]digo de seguran[çc]a|security code/i.test(desc)) {
+        friendly =
+          "❌ CVV (código de segurança) INVÁLIDO.\n\nO código de 3 dígitos do verso do cartão está incorreto.\n\n👉 Solução: confira os 3 números no verso do cartão e tente novamente.";
+      } else if (/n[úu]mero.*cart[ãa]o|card.*number|invalid.*number/i.test(desc)) {
+        friendly =
+          "❌ NÚMERO DO CARTÃO INVÁLIDO.\n\nVerifique se digitou todos os 16 dígitos corretamente.\n\n👉 Solução: confira o número impresso no cartão e tente novamente.";
       }
+      // === Erros de dados do titular ===
+      else if (code === "invalid_creditcard_holderinfo" || /endere[cç]o|cep|state|province|address/i.test(desc)) {
+        friendly =
+          "❌ DADOS DO ENDEREÇO INCOMPLETOS ou inválidos.\n\nO Asaas exige endereço completo do titular do cartão.\n\n👉 Solução: confira CEP, rua, número, bairro, cidade e estado. Volte e revise os campos.";
+      } else if (/cpf|cnpj/i.test(desc)) {
+        friendly =
+          "❌ CPF/CNPJ INVÁLIDO.\n\nO documento informado não passou na validação.\n\n👉 Solução: confira se digitou todos os números corretamente, sem letras ou caracteres especiais.";
+      } else if (/email|e-mail/i.test(desc)) {
+        friendly =
+          "❌ EMAIL INVÁLIDO.\n\n👉 Solução: confira se o endereço de email está digitado corretamente.";
+      } else if (/phone|telefone|mobile/i.test(desc)) {
+        friendly =
+          "❌ TELEFONE INVÁLIDO.\n\n👉 Solução: digite seu celular com DDD (11 dígitos no total). Ex: 11987654321.";
+      }
+      // === Erro genérico de cartão ===
+      else if (code === "invalid_creditcard" || /n[ãa]o autorizad|not authorized|declined|recusad/i.test(desc)) {
+        friendly =
+          "❌ Cartão RECUSADO pelo banco emissor.\n\nO Asaas faz uma validação inicial de R$1,00 (estornada em segundos) para confirmar que o cartão é válido. Seu banco recusou essa validação.\n\nPossíveis causas:\n• Cartão sem limite disponível\n• Cartão não habilitado para compras online\n• Bloqueio antifraude do banco\n• Dados incorretos (número, validade, CVV)\n\n👉 Solução: confira os dados, ligue para o banco autorizar, ou tente outro cartão.";
+      }
+      // === Outros ===
+      else if (/timeout|conex[ãa]o|connection/i.test(desc)) {
+        friendly =
+          "❌ Erro de conexão com o gateway de pagamento.\n\n👉 Solução: aguarde 30 segundos e tente novamente.";
+      }
+
       throw new Error(friendly);
     }
 
