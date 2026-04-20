@@ -33,9 +33,9 @@ const PLAN_PRICES: Record<string, string> = {
 };
 
 const PLAN_PRICES_CENTS: Record<string, number> = {
-  start: 29600,
-  growth: 69600,
-  scale: 89700,
+  start: 29700,    // R$ 297/mês — PIX é apenas mensal
+  growth: 69600,   // R$ 696/mês
+  scale: 89700,    // R$ 897/mês
 };
 
 // Helper to format cents to BRL string
