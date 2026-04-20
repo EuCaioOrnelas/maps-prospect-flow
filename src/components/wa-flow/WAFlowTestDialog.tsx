@@ -158,11 +158,13 @@ export function WAFlowTestDialog({
 
   const getConditionTarget = useCallback((nodeId: string, result: boolean) => {
     const handle = result ? "yes" : "no";
+    // IMPORTANT: do NOT fall back to a default/first edge when the matching branch
+    // is not connected. Otherwise a "Não" result could silently jump into the "Sim"
+    // branch (and vice-versa), making the condition appear to "advance" without input.
     return (
-      getOutgoingEdges(nodeId).find((edge) => edge.sourceHandle === handle)?.target ||
-      getDefaultTarget(nodeId)
+      getOutgoingEdges(nodeId).find((edge) => edge.sourceHandle === handle)?.target || null
     );
-  }, [getDefaultTarget, getOutgoingEdges]);
+  }, [getOutgoingEdges]);
 
   const evaluateCondition = useCallback((config: any, runtime: RuntimeContext) => {
     const conditionType = config.condition_type || "responded";
