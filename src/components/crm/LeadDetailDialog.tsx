@@ -2227,6 +2227,63 @@ export const LeadDetailDialog = ({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Modal: Google Drive sem espaço */}
+        <Dialog open={driveQuotaError} onOpenChange={setDriveQuotaError}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-destructive/10 text-destructive">
+                  ⚠️
+                </span>
+                Google Drive sem espaço
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <p className="text-sm text-foreground">
+                Não foi possível enviar o arquivo porque seu <strong>Google Drive está cheio</strong>.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Para continuar enviando arquivos, você pode:
+              </p>
+              <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+                <li>Liberar espaço excluindo arquivos antigos no seu Drive</li>
+                <li>Comprar mais espaço com o Google One</li>
+              </ul>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setDriveQuotaError(false)}
+              >
+                Fechar
+              </Button>
+              <Button
+                variant="outline"
+                asChild
+              >
+                <a
+                  href="https://drive.google.com/drive/quota"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="w-4 h-4 mr-1.5" />
+                  Liberar espaço
+                </a>
+              </Button>
+              <Button asChild>
+                <a
+                  href="https://one.google.com/storage"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="w-4 h-4 mr-1.5" />
+                  Comprar espaço
+                </a>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
