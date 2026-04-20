@@ -17,7 +17,7 @@ import {
   Plus, Sparkles, Workflow, MoreVertical, Play, Pause, Archive,
   Trash2, Copy, FlaskConical, Search, ShoppingCart, HeadphonesIcon,
   Users, FileText, MessageSquare, Megaphone, GraduationCap, Building2,
-  Stethoscope, Dumbbell, Car, Utensils, BarChart3, Zap, Clock,
+  Stethoscope, Dumbbell, Car, Utensils, BarChart3, Zap, Clock, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -72,6 +72,9 @@ export default function WhatsAppAutomations() {
       return data;
     },
     enabled: !!user,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   const filteredTemplates = useMemo(() => {
@@ -137,16 +140,15 @@ export default function WhatsAppAutomations() {
     },
   });
 
-  const handleUseTemplate = useCallback(async (tpl: typeof flowTemplates[0]) => {
-    setShowTemplatesDialog(false);
-    const template = getFlowTemplate(tpl.id);
-    if (!template) {
-      // Fallback to AI if no hardcoded template
-      navigate(`/fluxos/novo?prompt=${encodeURIComponent(tpl.prompt)}`);
-      return;
-    }
+  const createFromTemplate = useMutation({
+    mutationFn: async (tpl: typeof flowTemplates[0]) => {
+      const template = getFlowTemplate(tpl.id);
+      if (!template) {
+        // Fallback to AI if no hardcoded template
+        navigate(`/fluxos/novo?prompt=${encodeURIComponent(tpl.prompt)}`);
+        return null;
+      }
 
-    try {
       // Create the flow
       const { data: flow, error: flowError } = await supabase
         .from("wa_automation_flows")
@@ -186,13 +188,27 @@ export default function WhatsAppAutomations() {
         if (error) throw error;
       }
 
-      toast.success(`Template "${tpl.name}" criado!`);
-      navigate(`/fluxos/${flow.id}`);
-    } catch (err) {
+      return { flow, name: tpl.name };
+    },
+    onSuccess: (result) => {
+      if (!result) return;
+      queryClient.invalidateQueries({ queryKey: ["wa-automation-flows"] });
+      toast.success(`Template "${result.name}" criado!`);
+      navigate(`/fluxos/${result.flow.id}`);
+    },
+    onError: (err) => {
       console.error(err);
       toast.error("Erro ao criar fluxo a partir do template");
-    }
-  }, [user, navigate]);
+    },
+  });
+
+  const handleUseTemplate = useCallback((tpl: typeof flowTemplates[0]) => {
+    setShowTemplatesDialog(false);
+    const loadingToast = toast.loading(`Criando "${tpl.name}"...`);
+    createFromTemplate.mutate(tpl, {
+      onSettled: () => toast.dismiss(loadingToast),
+    });
+  }, [createFromTemplate]);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
@@ -416,13 +432,14 @@ export default function WhatsAppAutomations() {
                 />
               </div>
             </div>
-            <div className="overflow-y-auto flex-1 p-4">
+            <div className="overflow-y-auto flex-1 p-4 relative">
               <div className="grid grid-cols-2 gap-3">
                 {filteredTemplates.map((tpl) => (
                   <button
                     key={tpl.id}
                     onClick={() => handleUseTemplate(tpl)}
-                    className="group flex items-start gap-3 p-3.5 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
+                    disabled={createFromTemplate.isPending}
+                    className="group flex items-start gap-3 p-3.5 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
                       <tpl.icon size={16} className="text-primary" />
@@ -440,6 +457,19 @@ export default function WhatsAppAutomations() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Loading overlay during template creation */}
+        {createFromTemplate.isPending && (
+          <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            </div>
+            <div className="text-center">
+              <p className="text-base font-semibold text-foreground">Criando seu fluxo...</p>
+              <p className="text-sm text-muted-foreground mt-1">Montando nós e conexões do template</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
