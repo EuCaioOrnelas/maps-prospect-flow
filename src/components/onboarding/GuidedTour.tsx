@@ -274,7 +274,7 @@ export function GuidedTour() {
 
   // Compute popup position — auto-flip so the card never overlaps the spotlight border
   let popupStyle: React.CSSProperties = {};
-  if (!popupRect || step.placement === "center") {
+  if (!popupRect || step.placement === "center" || isWaitingForTarget) {
     popupStyle = {
       top: "50%",
       left: "50%",
@@ -374,8 +374,9 @@ export function GuidedTour() {
     popupStyle = computePlacementStyle(resolvedPlacement);
   }
 
-  // Fallback dark overlay (used when there is no spotlight target — e.g. center step)
-  const showFallbackOverlay = !spot && !isWaitingForTarget;
+  // Fallback dark overlay (used when there is no spotlight target — e.g. center step
+  // OR while we're still waiting for a target inside a modal to mount).
+  const showFallbackOverlay = !spot;
 
   return createPortal(
     <div
