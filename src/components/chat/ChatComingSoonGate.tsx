@@ -13,10 +13,11 @@ interface ChatComingSoonGateProps {
 }
 
 export const ChatComingSoonGate = ({ children }: ChatComingSoonGateProps) => {
-  const { profile, loading } = useAuth() as any;
+  const { profile, user, loading } = useAuth() as any;
   const navigate = useNavigate();
 
-  if (loading) {
+  // Aguarda auth E profile (profile é carregado em setTimeout após loading=false)
+  if (loading || (user && !profile)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 size={24} className="animate-spin text-muted-foreground" />
