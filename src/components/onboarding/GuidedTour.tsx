@@ -26,6 +26,20 @@ const TOUR_PILLARS = [
   { key: "gestao", label: "Gestão", number: "05" },
 ] as const;
 
+function queryTourTarget<T extends Element = HTMLElement>(selector: string) {
+  const selectors = selector
+    .split("||")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  for (const candidate of selectors) {
+    const element = document.querySelector(candidate) as T | null;
+    if (element) return element;
+  }
+
+  return null;
+}
+
 function getPillarKey(stepId: string) {
   if (["cockpit-overview", "cockpit-kpis", "cockpit-forecast"].includes(stepId)) {
     return "cockpit";
@@ -128,7 +142,7 @@ export function GuidedTour() {
     const startedAt = performance.now();
 
     const measure = () => {
-      const el = document.querySelector(step.target!) as HTMLElement | null;
+      const el = queryTourTarget(step.target!) as HTMLElement | null;
       if (!el) {
         if (hideOnLoad) {
           setRect(null);
