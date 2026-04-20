@@ -473,6 +473,14 @@ export const LeadDetailDialog = ({
       .eq('user_id', user.id)
       .maybeSingle();
     setDriveConnection(data);
+    if (lead) {
+      const { data: leadData } = await supabase
+        .from('leads')
+        .select('drive_folder_url')
+        .eq('id', lead.id)
+        .maybeSingle();
+      setLeadDriveFolderUrl(leadData?.drive_folder_url || null);
+    }
   };
 
   const uploadDealAttachment = async (dealId: string, file: File, fileType: string) => {
