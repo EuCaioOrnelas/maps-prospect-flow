@@ -857,7 +857,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                   Teste grátis em breve
                 </Button>
               ) : (
-                <Link to="/signup" className="shrink-0" onClick={onSignupClick}>
+                <Link to="/signup/escolher-plano" className="shrink-0" onClick={onSignupClick}>
                   <Button variant="hero" size="lg" className="group rounded-full text-base px-8 h-12">
                     {hasWatchedVideo ? "Testar grátis" : "Gerar vendas"}
                     <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
