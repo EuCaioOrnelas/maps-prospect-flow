@@ -493,31 +493,53 @@ export const LeadDetailDialog = ({
     });
   };
 
-  const handleUploadLeadFile = async (file: File) => {
+  const handleUploadLeadFile = async (file: File, customName?: string) => {
     if (!lead || !user) return;
     setIsUploadingLeadFile(true);
     try {
-      const filePath = `${user.id}/${lead.id}/${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from('deal-attachments')
-        .upload(filePath, file);
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from('deal-attachments').getPublicUrl(filePath);
-      await supabase.from('lead_files').insert({
-        lead_id: lead.id,
-        user_id: user.id,
-        file_name: file.name,
-        file_type: 'other',
-        file_url: urlData.publicUrl,
-        file_size: file.size,
-        source: 'local',
-      });
-      toast.success('Arquivo enviado!');
+      // If Drive is connected, upload to Drive
+      if (driveConnection?.is_active) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('lead_id', lead.id);
+        if (customName) formData.append('custom_name', customName);
+
+        const { data, error } = await supabase.functions.invoke('google-drive-upload-lead-file', {
+          body: formData,
+        });
+        if (error) throw error;
+        if (data?.folder_url) setLeadDriveFolderUrl(data.folder_url);
+        toast.success('Arquivo enviado para o Google Drive!');
+      } else {
+        // Fallback: store in Supabase
+        const finalName = customName
+          ? (customName.includes('.') ? customName : `${customName}${file.name.slice(file.name.lastIndexOf('.'))}`)
+          : file.name;
+        const filePath = `${user.id}/${lead.id}/${Date.now()}_${finalName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('deal-attachments')
+          .upload(filePath, file);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from('deal-attachments').getPublicUrl(filePath);
+        await supabase.from('lead_files').insert({
+          lead_id: lead.id,
+          user_id: user.id,
+          file_name: finalName,
+          file_type: 'other',
+          file_url: urlData.publicUrl,
+          file_size: file.size,
+          source: 'local',
+        });
+        toast.success('Arquivo enviado!');
+      }
       loadLeadFiles();
-    } catch {
-      toast.error('Erro ao enviar arquivo');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || 'Erro ao enviar arquivo');
     } finally {
       setIsUploadingLeadFile(false);
+      setPendingDriveFile(null);
+      setPendingDriveFileName('');
     }
   };
 
