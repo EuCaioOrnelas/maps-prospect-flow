@@ -123,8 +123,8 @@ const Chat = () => {
             )}
 
             {!isLoading && shouldShowDialog ? (
-              <div className="relative flex-1 overflow-auto bg-background">
-                <header className="border-b border-border bg-background">
+              <div className="relative flex-1 overflow-auto bg-gradient-to-b from-background via-background to-muted/20">
+                <header className="border-b border-border/60 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
                   <div className="px-6 sm:px-10 lg:px-14 py-5 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                       <MessageSquare size={20} className="text-primary" />
@@ -136,36 +136,48 @@ const Chat = () => {
                   </div>
                 </header>
 
-                <div className="px-6 sm:px-10 lg:px-14 py-10 lg:py-14 max-w-6xl">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-semibold uppercase tracking-wider mb-5">
-                    <Sparkles size={10} /> Em breve
+                <div className="px-6 sm:px-10 lg:px-14 py-12 lg:py-20 max-w-6xl mx-auto">
+                  {/* Hero card */}
+                  <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm p-8 sm:p-12 lg:p-14 mb-10">
+                    <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+
+                    <div className="relative">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-semibold uppercase tracking-wider mb-6">
+                        <Sparkles size={11} /> Em breve
+                      </div>
+
+                      <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.05] mb-6 max-w-3xl">
+                        Chat integrado <span className="text-primary">em desenvolvimento</span>
+                      </h2>
+
+                      <p className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-10 max-w-2xl">
+                        Estamos finalizando a experiência completa de chat da Wiize para que você responda leads sem sair da plataforma, com histórico unificado, contexto comercial e operação mais profissional.
+                      </p>
+
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Button asChild size="lg" className="gap-2 h-12 px-6 text-sm shadow-md">
+                          <a href="https://business.facebook.com/wa/manage/home" target="_blank" rel="noopener noreferrer">
+                            Acessar Meta Business Suite
+                            <ExternalLink size={14} />
+                          </a>
+                        </Button>
+                        <Button variant="outline" size="lg" className="h-12 px-6 text-sm" onClick={() => navigate("/dashboard")}>
+                          Voltar ao dashboard
+                        </Button>
+                      </div>
+                    </div>
                   </div>
 
-                  <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground leading-[1.1] mb-5 max-w-3xl">
-                    Chat integrado em desenvolvimento
-                  </h2>
-
-                  <p className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-10 max-w-2xl">
-                    Estamos finalizando a experiência completa de chat da Wiize para que você responda leads sem sair da plataforma, com histórico unificado, contexto comercial e operação mais profissional.
-                  </p>
-
-                  <div className="flex flex-col sm:flex-row gap-3 mb-14">
-                    <Button asChild size="lg" className="gap-2 h-12 px-6 text-sm">
-                      <a href="https://business.facebook.com/wa/manage/home" target="_blank" rel="noopener noreferrer">
-                        Acessar Meta Business Suite
-                        <ExternalLink size={14} />
-                      </a>
-                    </Button>
-                    <Button variant="outline" size="lg" className="h-12 px-6 text-sm" onClick={() => navigate("/dashboard")}>
-                      Voltar ao dashboard
-                    </Button>
-                  </div>
-
-                  <div className="border-t border-border pt-10 mb-12">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-6">
-                      O que vem por aí
-                    </p>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {/* Feature cards */}
+                  <div className="mb-10">
+                    <div className="flex items-center gap-3 mb-6">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        O que vem por aí
+                      </p>
+                      <div className="h-px flex-1 bg-border/60" />
+                    </div>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <FeatureCard
                         icon={<Clock3 size={18} className="text-primary" />}
                         title="Respostas em tempo real"
@@ -189,12 +201,18 @@ const Chat = () => {
                     </div>
                   </div>
 
-                  <div className="border-t border-border pt-10 grid lg:grid-cols-2 gap-10 lg:gap-16">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-                        Como usar enquanto liberamos o módulo
-                      </p>
-                      <div className="space-y-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  {/* Info cards */}
+                  <div className="grid lg:grid-cols-2 gap-5">
+                    <div className="rounded-2xl border border-border/60 bg-card p-7 hover:border-border transition-colors">
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Clock3 size={15} className="text-primary" />
+                        </div>
+                        <p className="text-sm font-semibold text-foreground">
+                          Como usar enquanto liberamos
+                        </p>
+                      </div>
+                      <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
                         <p>
                           Por enquanto, o atendimento deve ser feito no sistema oficial da Meta. Assim você continua respondendo seus leads normalmente sem interromper a operação.
                         </p>
@@ -204,15 +222,20 @@ const Chat = () => {
                       </div>
                     </div>
 
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-                        O que vai entrar nesta versão
-                      </p>
-                      <ul className="space-y-3 text-sm sm:text-base text-foreground/90">
-                        <li className="flex items-start gap-3"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Caixa de entrada unificada</li>
-                        <li className="flex items-start gap-3"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Visualização completa da conversa</li>
-                        <li className="flex items-start gap-3"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Ações comerciais conectadas ao CRM</li>
-                        <li className="flex items-start gap-3"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Fluxo operacional mais rápido para o time</li>
+                    <div className="rounded-2xl border border-border/60 bg-card p-7 hover:border-border transition-colors">
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Sparkles size={15} className="text-primary" />
+                        </div>
+                        <p className="text-sm font-semibold text-foreground">
+                          O que vai entrar nesta versão
+                        </p>
+                      </div>
+                      <ul className="space-y-2.5 text-sm text-foreground/90">
+                        <li className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Caixa de entrada unificada</li>
+                        <li className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Visualização completa da conversa</li>
+                        <li className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Ações comerciais conectadas ao CRM</li>
+                        <li className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Fluxo operacional mais rápido para o time</li>
                       </ul>
                     </div>
                   </div>
@@ -268,12 +291,12 @@ const FeatureCard = ({
   title: string;
   description: string;
 }) => (
-  <div className="space-y-3">
-    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+  <div className="group rounded-2xl border border-border/60 bg-card p-5 hover:border-primary/40 hover:shadow-md transition-all duration-200">
+    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 mb-3 group-hover:bg-primary/15 transition-colors">
       {icon}
     </div>
-    <h4 className="text-sm font-semibold text-foreground">{title}</h4>
-    <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+    <h4 className="text-sm font-semibold text-foreground mb-1.5">{title}</h4>
+    <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
   </div>
 );
 
