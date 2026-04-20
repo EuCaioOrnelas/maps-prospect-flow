@@ -39,21 +39,29 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
     onSignupClick?.();
   };
 
-  const handlePricingClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setMobileMenuOpen(false);
-    onSignupClick?.();
-    if (location.pathname === "/") {
+  const scrollToPricing = () => {
+    const start = Date.now();
+    const tryScroll = () => {
       const el = document.getElementById("pricing");
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
+      if (Date.now() - start < 4000) {
+        requestAnimationFrame(tryScroll);
+      }
+    };
+    tryScroll();
+  };
+
+  const handlePricingClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    onSignupClick?.();
+    if (location.pathname !== "/") {
+      navigate("/#pricing");
     }
-    navigate("/#pricing");
-    setTimeout(() => {
-      document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 250);
+    scrollToPricing();
   };
 
   const navLinks = [
