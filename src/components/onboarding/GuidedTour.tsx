@@ -101,6 +101,7 @@ export function GuidedTour() {
   const lastScrolledStepRef = useRef<string | null>(null);
   const targetEverFoundRef = useRef<string | null>(null);
   const popupRect = rect ?? popupAnchorRect;
+  const isWaitingForTarget = !!step?.target && hideOnLoad && !rect && targetEverFoundRef.current !== step?.id;
   // Once the target was found in this step, keep using a rect so the spotlight
   // never collapses back into the dark fallback overlay (which causes flicker).
   const spotlightRect =
@@ -371,7 +372,7 @@ export function GuidedTour() {
   }
 
   // Fallback dark overlay (used when there is no spotlight target — e.g. center step)
-  const showFallbackOverlay = !spot;
+  const showFallbackOverlay = !spot && !isWaitingForTarget;
 
   return createPortal(
     <div
@@ -412,7 +413,7 @@ export function GuidedTour() {
         />
       )}
 
-      {isLast ? (
+      {!isWaitingForTarget && (isLast ? (
         <FinalStep title={step.title} body={step.body} onFinish={finish} />
       ) : step.id === "welcome" ? (
         <WelcomeStep title={step.title} body={step.body} onStart={next} />
@@ -476,7 +477,7 @@ export function GuidedTour() {
             </div>
           </div>
         </>
-      )}
+      ))}
     </div>,
     document.body
   );

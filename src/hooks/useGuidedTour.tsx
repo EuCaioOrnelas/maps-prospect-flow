@@ -24,6 +24,10 @@ export type TourStep = {
   keepViewportTop?: boolean;
   /** Run an action right when this step becomes active (e.g. typing simulation) */
   onEnter?: () => void | Promise<void>;
+  /** If true, run onEnter before waiting for the target to exist.
+   * Useful for steps whose target is created/opened by onEnter itself (dialogs/tabs).
+   */
+  resolveTargetAfterEnter?: boolean;
   /** Wait this many ms before marking the step "ready" (after route transitions) */
   waitMs?: number;
   /** If true, body popup overlaps the highlighted area (for sidebar spotlight) */
@@ -290,6 +294,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       placement: "left",
       injectDemoLead: true,
       waitMs: 120,
+      resolveTargetAfterEnter: true,
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
         const dialog = await openDemoLeadDialog();
@@ -311,6 +316,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       placement: "left",
       injectDemoLead: true,
       waitMs: 150,
+      resolveTargetAfterEnter: true,
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
         const dialog = await openDemoLeadDialog();
@@ -551,6 +557,12 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         await new Promise((r) => setTimeout(r, step.waitMs));
       }
 
+      const shouldResolveTargetAfterEnter = !!step.resolveTargetAfterEnter;
+
+      if (shouldResolveTargetAfterEnter && step.onEnter) {
+        await step.onEnter();
+      }
+
       // Robust: if the step targets a real selector, wait for it to mount
       // (handles slower external environments where waitMs isn't enough).
       if (step.target) {
@@ -567,8 +579,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         await new Promise((r) => setTimeout(r, 450));
       }
 
-      // Run side-effect
-      if (step.onEnter) {
+      if (!shouldResolveTargetAfterEnter && step.onEnter) {
         await step.onEnter();
       }
     },
