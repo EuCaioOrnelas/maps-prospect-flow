@@ -573,14 +573,27 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
               />
 
               {phoneNumbers.trim().length > 0 && (
-                <div className="flex items-center gap-4 text-xs">
-                  <span className="flex items-center gap-1 text-primary">
-                    <CheckCircle2 size={12} /> {validNums.length} número(s) com formato válido
-                  </span>
-                  {invalidNums.length > 0 && (
-                    <span className="flex items-center gap-1 text-destructive">
-                      <XCircle size={12} /> {invalidNums.length} inválido(s), serão ignorados
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4 text-xs">
+                    <span className="flex items-center gap-1 text-primary">
+                      <CheckCircle2 size={12} /> {validNums.length} número(s) com formato válido
                     </span>
+                    {invalidNums.length > 0 && (
+                      <span className="flex items-center gap-1 text-destructive">
+                        <XCircle size={12} /> {invalidNums.length} inválido(s), serão ignorados
+                      </span>
+                    )}
+                  </div>
+                  {invalidNums.length > 0 && (
+                    <div className="flex items-start gap-2 p-2.5 rounded-lg border border-destructive/30 bg-destructive/5 text-xs text-destructive">
+                      <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-medium">Inclua o código do país (DDI) em todos os números</p>
+                        <p className="text-destructive/80 mt-0.5">
+                          Ex: <code className="font-mono">5511999999999</code> (Brasil = 55). Sem o DDI o envio falha na Meta.
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
