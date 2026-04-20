@@ -110,14 +110,13 @@ export function GuidedTour() {
   // Lock body + html scroll while tour is active
   useEffect(() => {
     if (!isActive) return;
-    const prevBodyOverflow = document.body.style.overflow;
-    const prevHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
     document.body.classList.add("tour-active");
     return () => {
-      document.body.style.overflow = prevBodyOverflow;
-      document.documentElement.style.overflow = prevHtmlOverflow;
+      // Always reset to empty so Radix Dialog / other libs can re-apply if needed.
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
       document.body.classList.remove("tour-active");
     };
   }, [isActive]);
