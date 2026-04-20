@@ -247,6 +247,53 @@ export default function WhatsAppAutomations() {
   const activeFlows = flows.filter((f: any) => f.status === "active").length;
   const draftFlows = flows.filter((f: any) => f.status === "draft").length;
 
+  // 🔒 Grandfathering: Start novo NÃO acessa Fluxos. Start antigo (admin_assigned_plan=true), Growth e Scale acessam.
+  const userPlan = (profile?.plan || "free").toLowerCase();
+  const isGrandfathered = (profile as any)?.admin_assigned_plan === true;
+  const hasFlowsAccess =
+    userPlan === "growth" ||
+    userPlan === "scale" ||
+    (userPlan === "start" && isGrandfathered);
+
+  if (!hasFlowsAccess) {
+    return (
+      <div className="min-h-screen bg-background flex w-full">
+        <AppSidebar profile={profile} />
+        <div className="flex-1 flex flex-col lg:ml-[72px]">
+          <AppHeader profile={profile} />
+          <MobileNav profile={profile} />
+          <BackgroundGlow />
+          <main className="flex-1 p-4 md:p-6 max-w-3xl mx-auto w-full flex items-center justify-center">
+            <Card className="w-full">
+              <CardContent className="p-8 md:p-12 text-center space-y-5">
+                <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <Workflow className="w-8 h-8 text-primary" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center gap-2">
+                    <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                      Fluxos de Automação
+                    </h1>
+                    <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 font-semibold gap-1">
+                      <FlaskConical className="h-3 w-3" /> BETA
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+                    Os Fluxos de Automação estão disponíveis a partir do plano <strong>Growth</strong>. Faça upgrade para criar funis de venda, atendimento e qualificação no WhatsApp em poucos cliques.
+                  </p>
+                </div>
+                <Button onClick={() => navigate("/upgrade")} size="lg" className="gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  Fazer upgrade para Growth
+                </Button>
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex w-full">
       <AppSidebar profile={profile} />

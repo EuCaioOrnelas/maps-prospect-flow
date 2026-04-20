@@ -1479,9 +1479,9 @@ ${socialPages.length > 0
 
     Se a resposta for NÃO ou DUVIDOSA (ex: vende cardápio digital e o lead é uma academia; vende software jurídico e o lead é uma padaria; vende uniforme escolar e o lead é uma oficina mecânica):
     a) NÃO INVENTE encaixes forçados ou genéricos (ex: "pode ajudar a melhorar a experiência do cliente"). Isso é PROIBIDO.
-    b) score MÁXIMO = 25 e nivel_oportunidade = "Baixa" e probabilidade_fechamento = "Baixa".
-    c) pontos_fortes = [] e pontos_fracos = [].
-    d) diagnostico DEVE ser EXATAMENTE neste formato (adaptando os nomes):
+    b) PONTUAÇÃO: você PODE preencher normalmente as 5 dimensões (estrutura_digital, reputacao, acessibilidade, engajamento_atividade, potencial_venda) com base nos dados reais do lead — afinal o lead pode ter boa estrutura digital mesmo não sendo persona ideal. O "score" deve ser a soma exata dessas dimensões. Apenas force nivel_oportunidade = "Baixa" e probabilidade_fechamento = "Baixa" (independente do score numérico), pois o lead NÃO é persona ideal para o produto vendido.
+    c) pontos_fortes = [] e pontos_fracos = [] (não liste, pois não há fit comercial real, mesmo que existam qualidades digitais).
+    d) diagnostico DEVE ser EXATAMENTE neste formato (adaptando os nomes), SEM inventar encaixe:
        "Com base nos seus produtos atuais (${companyProfile?.company_products || "—"}), este lead (${categoria || "categoria não informada"}) provavelmente NÃO faz parte da sua persona ideal. Recomendamos: 1) prospectar nichos mais alinhados ao seu público-alvo (${companyProfile?.company_target_audience || "defina em Perfil"}); ou 2) acessar Perfil > Empresa e atualizar seus produtos/serviços e público-alvo para ampliar a precisão dos diagnósticos da IA."
     e) acao_recomendada DEVE ser: "Reavalie a segmentação da prospecção ou enriqueça o perfil da sua empresa em Perfil > Dados da Empresa para que a IA gere diagnósticos mais precisos para nichos adjacentes."
     f) analise_site, analise_redes_sociais, analise_reputacao_detalhada, analise_concorrencia_regional, analise_demanda_regional DEVEM iniciar com: "Não aplicável — lead fora da persona ideal."
