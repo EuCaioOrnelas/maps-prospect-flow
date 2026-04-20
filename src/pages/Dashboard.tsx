@@ -538,7 +538,7 @@ const Dashboard = () => {
             {/* Glow effect behind card */}
             <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full scale-150 -z-10" />
             
-            <form onSubmit={handleSearch} className="bg-card border border-border rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl">
+            <form onSubmit={handleSearch} className="bg-card border border-border rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl" data-tour="search-card">
               {/* Feature badges */}
               <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6 border-b border-border/50">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
