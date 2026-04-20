@@ -144,8 +144,14 @@ Deno.serve(async (req) => {
       }
 
       const planName = PLAN_NAMES[user.plan] || user.plan;
-      const userPriceCents = user.subscription_price_cents || PLAN_PRICES_CENTS[user.plan] || 0;
-      const installments = user.billing_period === "annual"
+      const isAnnual = user.billing_period === "annual";
+      // For annual cards, subscription_price_cents stores the TOTAL annual amount
+      // For monthly, it stores the monthly value
+      const fallbackCents = isAnnual
+        ? (PLAN_ANNUAL_TOTAL_CENTS[user.plan] || 0)
+        : (PLAN_PRICES_CENTS[user.plan] || 0);
+      const userPriceCents = user.subscription_price_cents || fallbackCents;
+      const installments = isAnnual
         ? (await fetchInstallmentsFromAsaas(user.asaas_subscription_id)) || 12
         : null;
       const planPrice = formatPlanPrice(userPriceCents, user.billing_period, installments);
