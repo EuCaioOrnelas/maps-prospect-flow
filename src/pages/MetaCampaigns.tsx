@@ -553,7 +553,7 @@ const MetaCampaigns = () => {
                 <Button
                   variant="destructive"
                   size="icon"
-                  onClick={() => handleDeleteConnection(editingConn.id)}
+                  onClick={() => setPendingDeleteId(editingConn.id)}
                 >
                   <Trash2 size={14} />
                 </Button>
@@ -562,6 +562,35 @@ const MetaCampaigns = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!pendingDeleteId} onOpenChange={(open) => !open && !deleting && setPendingDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle size={18} className="text-destructive" />
+              Excluir este número?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. Todas as conversas, mensagens e campanhas vinculadas a este número serão removidas e não poderão ser recuperadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                if (pendingDeleteId) handleDeleteConnection(pendingDeleteId);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 size={14} className="animate-spin mr-2" /> : <Trash2 size={14} className="mr-2" />}
+              {deleting ? "Excluindo..." : "Excluir definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Expired Token Help Dialog */}
       <Dialog open={showExpiredAlert} onOpenChange={setShowExpiredAlert}>
