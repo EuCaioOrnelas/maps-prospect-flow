@@ -1977,6 +1977,13 @@ REGRAS:
               } else {
                 const normalizedLeadPhone = rawPhone.replace(/\D/g, '');
                 const leadPhoneLast8 = normalizedLeadPhone.slice(-8);
+                const warmingMessageText = String(
+                  data?.message?.conversation ||
+                  data?.message?.extendedTextMessage?.text ||
+                  data?.message?.imageMessage?.caption ||
+                  data?.message?.videoMessage?.caption ||
+                  ''
+                ).trim();
                 
                 console.log(`Checking warming interactions for lead ${normalizedLeadPhone} (last8: ${leadPhoneLast8}) on user ${whatsappNumber.user_id}`);
 
@@ -2006,7 +2013,7 @@ REGRAS:
                   
                   if (matchingInteraction) {
                     console.log('=== WARMING RESPONSE DETECTED ===');
-                    console.log('Lead message:', lastText);
+                    console.log('Lead message:', warmingMessageText);
                     console.log('Interaction status:', matchingInteraction.status);
                     console.log('Messages sent so far:', matchingInteraction.messages_sent);
                     
@@ -2022,8 +2029,8 @@ REGRAS:
                     let responseMessage: string | null = null;
                     let shouldEndConversation = false;
                     
-                    if (shouldRespond && lastText) {
-                      const messageText = lastText.trim();
+                    if (shouldRespond && warmingMessageText) {
+                      const messageText = warmingMessageText;
                       
                       // Safety pattern 1: Stop/block requests (hardcoded for safety)
                       const stopPatterns = [/para\s*(de\s*)?mandar/i, /não\s*mande\s*mais/i, /nao\s*mande\s*mais/i, /me\s*bloqueia/i, /spam/i, /sai\s*fora/i, /chega/i];
