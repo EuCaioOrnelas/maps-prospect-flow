@@ -1366,3 +1366,15 @@ body.tour-active [data-sidebar="sidebar"] {
 body.tour-active [data-sidebar="sidebar"] * {
   pointer-events: none !important;
 }
+
+/* During tour, raise Radix dialogs above the tour overlay so the spotlight
+   can illuminate elements inside them (e.g. lead diagnosis / approach card).
+   Tour overlay sits at z-index 2147483646 — dialog content goes above it,
+   spotlight + popup (2147483647) still float on top. */
+body.tour-active [data-radix-dialog-overlay] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+body.tour-active [role="dialog"][data-state="open"] {
+  z-index: 2147483646 !important;
+}
