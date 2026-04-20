@@ -246,7 +246,32 @@ const EVENT_CATEGORIES: Record<string, string> = {
   CONVERSATION_ACTIVE_3D: "engagement",
   CONVERSATION_ACTIVE_5D: "engagement",
   BACK_AND_FORTH_5_TURNS: "engagement",
+  LINK_CLICK: "action",
+  FORM_SUBMIT: "action",
+  CALL_REQUEST: "action",
 };
+
+// ========== ACTION DETECTION (LINK_CLICK / FORM_SUBMIT / CALL_REQUEST) ==========
+const URL_REGEX = /\b(?:https?:\/\/|www\.)\S+/i;
+const CALL_REQUEST_PATTERNS = [
+  "me liga", "me ligue", "me ligar", "pode ligar", "podem ligar",
+  "ligacao", "ligação", "uma ligada", "uma ligacao", "agendar ligacao",
+  "agendar ligação", "pode me chamar no telefone", "fala comigo por telefone",
+  "ligar pra mim", "liga pra mim", "liga aqui", "telefone agora",
+];
+const FORM_SUBMIT_PATTERNS = [
+  "preenchi o formulario", "preenchi o formulário", "enviei o formulario",
+  "enviei o formulário", "form enviado", "formulario enviado", "formulário enviado",
+  "acabei de enviar o form", "submeti o formulario", "submeti o formulário",
+];
+
+function detectActions(normalized: string, rawText: string): string[] {
+  const events: string[] = [];
+  if (URL_REGEX.test(rawText)) events.push("LINK_CLICK");
+  if (FORM_SUBMIT_PATTERNS.some((p) => normalized.includes(p))) events.push("FORM_SUBMIT");
+  if (CALL_REQUEST_PATTERNS.some((p) => normalized.includes(p))) events.push("CALL_REQUEST");
+  return events;
+}
 
 function scoreToBucket(score: number): string {
   if (score >= 650) return "VERY_HOT";
@@ -800,6 +825,15 @@ serve(async (req) => {
         if (message_content) {
           const normalizedText = normalizeText(message_content);
           classificationResult = classifyMessage(normalizedText, rulesMap);
+
+          // Action detection (LINK_CLICK / FORM_SUBMIT / CALL_REQUEST)
+          for (const actionRule of detectActions(normalizedText, message_content)) {
+            addRuleEvent(actionRule, {
+              matched_text: message_content.substring(0, 200),
+              intent_category: "ACTION",
+              intent_subtype: actionRule,
+            });
+          }
 
           if (classificationResult.intent_category !== "NEUTRAL") {
             addRuleEvent(classificationResult.event_type, {
