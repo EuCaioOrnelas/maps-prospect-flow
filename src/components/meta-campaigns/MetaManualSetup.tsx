@@ -26,9 +26,6 @@ interface MetaManualSetupProps {
   isAddingExtra?: boolean;
 }
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/meta-webhook`;
-const WEBHOOK_VERIFY_TOKEN = "wiize_meta_webhook_2024";
 
 export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra }: MetaManualSetupProps) => {
   const { user } = useAuth();
