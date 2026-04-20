@@ -597,11 +597,29 @@ serve(async (req) => {
       const conversationState = mergeConversationRows(conversationRows || []);
       const conversationRowId = conversationRows?.[0]?.id || null;
 
-      const { data: rules } = await supabase
+      let { data: rules } = await supabase
         .from("revenue_score_rules")
         .select("*")
         .eq("user_id", user_id)
         .eq("is_enabled", true);
+
+      // Auto-seed defensivo: garante que todo usuário tenha as 25 regras padrão.
+      // Sem isso, rulesMap.get(...) retorna undefined e nenhuma regra dispara.
+      if (!rules || rules.length === 0) {
+        console.log(`[revenue-processor] No rules found for user ${user_id}. Seeding defaults...`);
+        const { error: seedErr } = await supabase.rpc("seed_revenue_score_rules", { p_user_id: user_id });
+        if (seedErr) {
+          console.error("[revenue-processor] Failed to seed rules:", seedErr);
+        } else {
+          const { data: reseeded } = await supabase
+            .from("revenue_score_rules")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("is_enabled", true);
+          rules = reseeded || [];
+          console.log(`[revenue-processor] Seeded ${rules.length} rules for user ${user_id}`);
+        }
+      }
       const rulesMap = new Map((rules || []).map((rule: any) => [rule.rule_key, rule]));
 
       const { data: recentEvents } = await supabase
