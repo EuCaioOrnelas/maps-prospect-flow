@@ -790,10 +790,40 @@ export default function WhatsAppFlowEditor() {
             checked={flow?.status === "active"}
             onCheckedChange={async (checked) => {
               const newStatus = checked ? "active" : "draft";
+
+              if (checked) {
+                // Pre-flight checks before activating
+                const entryNode = nodes.find((n) => n.type === "entry");
+                const entryCfg: any = entryNode ? (entryNode.data as any).config || {} : {};
+                const apiType = entryCfg.api_type || "evolution";
+                const numberSelected = apiType === "meta"
+                  ? !!entryCfg.waba_connection_id
+                  : !!entryCfg.whatsapp_number_id;
+
+                if (nodes.length <= 1) {
+                  toast.error("Adicione ao menos um bloco (mensagem, condição, etc) antes de ativar.");
+                  return;
+                }
+                if (!numberSelected) {
+                  toast.error("Selecione um número do WhatsApp no bloco de Entrada antes de ativar.");
+                  return;
+                }
+
+                // Auto-save pending changes before activating to ensure DB matches editor
+                if (hasChanges) {
+                  try {
+                    await saveFlow.mutateAsync();
+                  } catch (e) {
+                    toast.error("Falha ao salvar antes de ativar. Tente salvar manualmente.");
+                    return;
+                  }
+                }
+              }
+
               const { error } = await supabase.from("wa_automation_flows").update({ status: newStatus }).eq("id", id!);
               if (error) { toast.error("Erro ao atualizar status"); return; }
               queryClient.invalidateQueries({ queryKey: ["wa-flow", id] });
-              toast.success(checked ? "Fluxo ativado!" : "Fluxo desativado");
+              toast.success(checked ? "Fluxo ativado em produção!" : "Fluxo desativado");
             }}
           />
         </div>

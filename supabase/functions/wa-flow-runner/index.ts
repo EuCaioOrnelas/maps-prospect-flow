@@ -50,7 +50,7 @@ function normalizeHandle(value: any): string | null {
 
 function interpolate(text: string, vars: Record<string, string>): string {
   if (!text) return text;
-  return text.replace(/\\{(\\w+)\\}/g, (m, name) => vars[name] ?? m);
+  return text.replace(/\{(\w+)\}/g, (m, name) => vars[name] ?? m);
 }
 
 function evaluateCondition(
