@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
-  AlertTriangle,
   RefreshCw,
   WifiOff,
   ExternalLink,
@@ -124,106 +123,97 @@ const Chat = () => {
             )}
 
             {!isLoading && shouldShowDialog ? (
-              <div className="relative flex-1 overflow-auto">
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                  <div className="absolute top-1/4 -left-32 h-[420px] w-[420px] rounded-full bg-primary/5 blur-3xl" />
-                  <div className="absolute right-0 bottom-0 h-[360px] w-[360px] rounded-full bg-primary/5 blur-3xl" />
-                </div>
+              <div className="relative flex-1 overflow-auto bg-background">
+                <header className="border-b border-border bg-background">
+                  <div className="px-6 sm:px-10 lg:px-14 py-5 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <MessageSquare size={20} className="text-primary" />
+                    </div>
+                    <div>
+                      <h1 className="text-lg font-bold tracking-tight text-foreground">Chat</h1>
+                      <p className="text-xs text-muted-foreground">Conversas integradas WhatsApp Business</p>
+                    </div>
+                  </div>
+                </header>
 
-                <div className="relative flex min-h-full flex-col">
-                  <header className="border-b border-border bg-background">
-                    <div className="px-6 sm:px-10 py-5 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <MessageSquare size={20} className="text-primary" />
-                      </div>
-                      <div>
-                        <h1 className="text-lg font-bold tracking-tight text-foreground">Chat</h1>
-                        <p className="text-xs text-muted-foreground">Conversas integradas WhatsApp Business</p>
+                <div className="px-6 sm:px-10 lg:px-14 py-10 lg:py-14 max-w-6xl">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-semibold uppercase tracking-wider mb-5">
+                    <Sparkles size={10} /> Em breve
+                  </div>
+
+                  <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground leading-[1.1] mb-5 max-w-3xl">
+                    Chat integrado em desenvolvimento
+                  </h2>
+
+                  <p className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-10 max-w-2xl">
+                    Estamos finalizando a experiência completa de chat da Wiize para que você responda leads sem sair da plataforma, com histórico unificado, contexto comercial e operação mais profissional.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-3 mb-14">
+                    <Button asChild size="lg" className="gap-2 h-12 px-6 text-sm">
+                      <a href="https://business.facebook.com/wa/manage/home" target="_blank" rel="noopener noreferrer">
+                        Acessar Meta Business Suite
+                        <ExternalLink size={14} />
+                      </a>
+                    </Button>
+                    <Button variant="outline" size="lg" className="h-12 px-6 text-sm" onClick={() => navigate("/dashboard")}>
+                      Voltar ao dashboard
+                    </Button>
+                  </div>
+
+                  <div className="border-t border-border pt-10 mb-12">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-6">
+                      O que vem por aí
+                    </p>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                      <FeatureCard
+                        icon={<Clock3 size={18} className="text-primary" />}
+                        title="Respostas em tempo real"
+                        description="Acompanhe e responda mensagens com atualização contínua dentro da plataforma."
+                      />
+                      <FeatureCard
+                        icon={<MessageSquare size={18} className="text-primary" />}
+                        title="Histórico por contato"
+                        description="Visualize toda a linha do tempo da conversa em um só lugar."
+                      />
+                      <FeatureCard
+                        icon={<Shield size={18} className="text-primary" />}
+                        title="Operação mais segura"
+                        description="Uso via infraestrutura oficial, com mais controle e rastreabilidade."
+                      />
+                      <FeatureCard
+                        icon={<Bell size={18} className="text-primary" />}
+                        title="Integração com CRM"
+                        description="Contexto do lead, tags e acompanhamento comercial na mesma rotina."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border pt-10 grid lg:grid-cols-2 gap-10 lg:gap-16">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+                        Como usar enquanto liberamos o módulo
+                      </p>
+                      <div className="space-y-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
+                        <p>
+                          Por enquanto, o atendimento deve ser feito no sistema oficial da Meta. Assim você continua respondendo seus leads normalmente sem interromper a operação.
+                        </p>
+                        <p>
+                          Quando o módulo estiver concluído, o objetivo é centralizar atendimento, contexto do CRM e histórico de mensagens em uma experiência única dentro da Wiize.
+                        </p>
                       </div>
                     </div>
-                  </header>
 
-                  <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
-                    <div className="w-full max-w-4xl rounded-3xl border border-border bg-card shadow-sm">
-                      <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-0">
-                        <div className="p-7 sm:p-10 border-b lg:border-b-0 lg:border-r border-border">
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-semibold uppercase tracking-wider mb-4">
-                            <Sparkles size={10} /> Em breve
-                          </div>
-
-                          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight mb-4">
-                            Chat integrado em desenvolvimento
-                          </h2>
-
-                          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
-                            Estamos finalizando a experiência completa de chat da Wiize para que você responda leads sem sair da plataforma, com histórico unificado, contexto comercial e operação mais profissional.
-                          </p>
-
-                          <div className="grid sm:grid-cols-2 gap-3 mb-6">
-                            <FeatureCard
-                              icon={<Clock3 size={16} className="text-primary" />}
-                              title="Respostas em tempo real"
-                              description="Acompanhe e responda mensagens com atualização contínua dentro da plataforma."
-                            />
-                            <FeatureCard
-                              icon={<MessageSquare size={16} className="text-primary" />}
-                              title="Histórico por contato"
-                              description="Visualize toda a linha do tempo da conversa em um só lugar."
-                            />
-                            <FeatureCard
-                              icon={<Shield size={16} className="text-primary" />}
-                              title="Operação mais segura"
-                              description="Uso via infraestrutura oficial, com mais controle e rastreabilidade."
-                            />
-                            <FeatureCard
-                              icon={<Bell size={16} className="text-primary" />}
-                              title="Integração com CRM"
-                              description="Contexto do lead, tags e acompanhamento comercial na mesma rotina."
-                            />
-                          </div>
-
-                          <div className="flex flex-col sm:flex-row gap-3">
-                            <Button asChild size="lg" className="gap-2">
-                              <a href="https://business.facebook.com/wa/manage/home" target="_blank" rel="noopener noreferrer">
-                                Acessar Meta Business Suite
-                                <ExternalLink size={14} />
-                              </a>
-                            </Button>
-                            <Button variant="outline" size="lg" onClick={() => navigate("/dashboard")}>
-                              Voltar ao dashboard
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="p-7 sm:p-10 bg-muted/30">
-                          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
-                            <AlertTriangle size={28} className="text-primary" />
-                          </div>
-
-                          <h3 className="text-xl font-semibold text-foreground mb-3">
-                            Como usar enquanto liberamos o módulo
-                          </h3>
-
-                          <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
-                            <p>
-                              Por enquanto, o atendimento deve ser feito no sistema oficial da Meta. Assim você continua respondendo seus leads normalmente sem interromper a operação.
-                            </p>
-                            <p>
-                              Quando o módulo estiver concluído, o objetivo é centralizar atendimento, contexto do CRM e histórico de mensagens em uma experiência única dentro da Wiize.
-                            </p>
-                          </div>
-
-                          <div className="mt-6 rounded-2xl border border-border bg-background p-4">
-                            <p className="text-sm font-medium text-foreground mb-2">O que vai entrar nesta versão</p>
-                            <ul className="space-y-2 text-sm text-muted-foreground">
-                              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Caixa de entrada unificada</li>
-                              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Visualização completa da conversa</li>
-                              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Ações comerciais conectadas ao CRM</li>
-                              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Fluxo operacional mais rápido para o time</li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+                        O que vai entrar nesta versão
+                      </p>
+                      <ul className="space-y-3 text-sm sm:text-base text-foreground/90">
+                        <li className="flex items-start gap-3"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Caixa de entrada unificada</li>
+                        <li className="flex items-start gap-3"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Visualização completa da conversa</li>
+                        <li className="flex items-start gap-3"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Ações comerciais conectadas ao CRM</li>
+                        <li className="flex items-start gap-3"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Fluxo operacional mais rápido para o time</li>
+                      </ul>
                     </div>
                   </div>
                 </div>
@@ -278,12 +268,12 @@ const FeatureCard = ({
   title: string;
   description: string;
 }) => (
-  <div className="rounded-2xl border border-border bg-background p-4">
-    <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+  <div className="space-y-3">
+    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
       {icon}
     </div>
-    <h4 className="text-sm font-semibold text-foreground mb-1">{title}</h4>
-    <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+    <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+    <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
   </div>
 );
 
