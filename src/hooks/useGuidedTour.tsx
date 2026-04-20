@@ -202,7 +202,8 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       body: "Informe o nicho de atuação e a cidade desejada. A Wiize entrega empresas reais do Google Maps já organizadas para a sua abordagem.",
       placement: "bottom",
       keepViewportTop: true,
-      waitMs: 600,
+      waitMs: 1100,
+      hideSpotlightWhileTargetLoads: "always",
     },
     {
       id: "search-typing",
@@ -211,7 +212,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       title: "Exemplo prático",
       body: "Vamos preencher para você ver como funciona. No dia a dia, basta digitar o seu nicho e a cidade que deseja prospectar.",
       placement: "bottom",
+      keepViewportTop: true,
+      waitMs: 500,
+      hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
+        await waitForElement('#keyword', 40, 100);
         clearInput("#keyword");
         clearInput("#location");
         await simulateTyping("#keyword", "Clínicas de estética", 45);
@@ -226,8 +231,10 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       title: "Resultados em segundos",
       body: "Com um único clique a Wiize encontra dezenas de empresas qualificadas. Vamos simular o resultado a seguir, sem disparar uma busca real.",
       placement: "top",
+      waitMs: 500,
+      hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
-        const btn = document.querySelector('[data-tour="search-button"]') as HTMLElement | null;
+        const btn = await waitForElement<HTMLElement>('[data-tour="search-button"]', 40, 100);
         if (btn) {
           btn.setAttribute("data-tour-loading", "true");
           btn.style.transition = "box-shadow 600ms ease";
