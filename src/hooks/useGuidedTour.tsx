@@ -73,9 +73,25 @@ function clearInput(selector: string) {
   el.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
+function resolveTargetSelectors(selector: string) {
+  return selector
+    .split("||")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function queryTargetElement<T extends Element = HTMLElement>(selector: string) {
+  const selectors = resolveTargetSelectors(selector);
+  for (const candidate of selectors) {
+    const element = document.querySelector(candidate) as T | null;
+    if (element) return element;
+  }
+  return null;
+}
+
 async function waitForElement<T extends Element = HTMLElement>(selector: string, attempts = 30, delay = 120) {
   for (let i = 0; i < attempts; i++) {
-    const element = document.querySelector(selector) as T | null;
+    const element = queryTargetElement<T>(selector);
     if (element) return element;
     await new Promise((resolve) => setTimeout(resolve, delay));
   }
@@ -197,7 +213,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     {
       id: "search-empty",
       route: "/oportunidades",
-      target: '[data-tour="search-keyword"]',
+      target: '#keyword || [data-tour="search-keyword"]',
       title: "Defina o nicho",
       body: "Comece pela palavra-chave do nicho que você quer captar. Exemplo: clínicas, contabilidades, restaurantes ou imobiliárias.",
       placement: "top",
@@ -207,7 +223,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     {
       id: "search-typing",
       route: "/oportunidades",
-      target: '[data-tour="search-location"]',
+      target: '#location || [data-tour="search-location"]',
       title: "Escolha a cidade",
       body: "Agora defina a localização que deseja prospectar. A busca pode ser local, nacional ou internacional.",
       placement: "top",
@@ -225,7 +241,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     {
       id: "search-button",
       route: "/oportunidades",
-      target: '[data-tour="search-button"]',
+      target: '[data-tour="search-button"] || button[type="submit"]',
       title: "Prospecte oportunidades",
       body: "Com os campos preenchidos, basta clicar aqui para a Wiize encontrar empresas qualificadas para sua abordagem.",
       placement: "top",
