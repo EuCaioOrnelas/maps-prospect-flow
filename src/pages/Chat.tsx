@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
-  AlertTriangle,
   RefreshCw,
   WifiOff,
   ExternalLink,
@@ -269,12 +268,12 @@ const FeatureCard = ({
   title: string;
   description: string;
 }) => (
-  <div className="rounded-2xl border border-border bg-background p-4">
-    <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+  <div className="space-y-3">
+    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
       {icon}
     </div>
-    <h4 className="text-sm font-semibold text-foreground mb-1">{title}</h4>
-    <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+    <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+    <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
   </div>
 );
 
