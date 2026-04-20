@@ -733,7 +733,7 @@ export default function WhatsAppFlowEditor() {
         />
 
         {hasChanges && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 animate-in fade-in slide-in-from-left-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-destructive/10 border border-destructive/30 text-destructive animate-in fade-in slide-in-from-left-2">
             <AlertCircle size={12} />
             <span className="text-[11px] font-medium">Alterações não salvas</span>
           </div>
