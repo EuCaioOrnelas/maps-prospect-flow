@@ -289,17 +289,17 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       body: "Abrimos um lead de exemplo. Veja a pontuação geral, a quebra por dimensão (estrutura digital, reputação e potencial) e a probabilidade de conversão.",
       placement: "left",
       injectDemoLead: true,
-      waitMs: 500,
+      waitMs: 150,
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
         const dialog = await openDemoLeadDialog();
         if (!dialog) return;
 
-        const scrollArea = document.getElementById("lead-detail-scroll-area");
-        scrollArea?.scrollTo({ top: 0, behavior: "auto" });
-
         await activateLeadTab('[data-tour="lead-tab-score"]');
-        await waitForElement('[data-tour="lead-score-summary"]', 25, 100);
+        const summary = await waitForElement<HTMLElement>('[data-tour="lead-score-summary"]', 25, 80);
+        if (summary) {
+          centerElementInScrollArea(summary);
+        }
       },
     },
     {
@@ -310,18 +310,18 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       body: "Com base no diagnóstico, a Wiize escreve uma mensagem personalizada para o primeiro contato. Você pode copiar, ajustar ou enviar direto pelo WhatsApp.",
       placement: "left",
       injectDemoLead: true,
-      waitMs: 350,
-      hideSpotlightWhileTargetLoads: true,
+      waitMs: 150,
+      hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
         const dialog = await openDemoLeadDialog();
         if (!dialog) return;
 
         await activateLeadTab('[data-tour="lead-tab-dados"]');
 
-        const section = await waitForElement<HTMLElement>('[data-tour="lead-approach-card"]', 30, 120);
+        const section = await waitForElement<HTMLElement>('[data-tour="lead-approach-card"]', 30, 80);
         if (section) {
           centerElementInScrollArea(section);
-          await new Promise((resolve) => setTimeout(resolve, 120));
+          await new Promise((resolve) => setTimeout(resolve, 80));
         }
       },
     },

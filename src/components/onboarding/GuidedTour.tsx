@@ -381,12 +381,12 @@ export function GuidedTour() {
             left: spot.left,
             width: spot.width,
             height: spot.height,
-            zIndex: 2147483646,
+            zIndex: 2147483647,
             boxShadow: [
               "0 0 0 9999px hsl(var(--foreground) / 0.28)",
-              "inset 0 0 0 1px hsl(var(--primary) / 0.45)",
-              "0 0 0 3px hsl(var(--primary) / 0.08)",
-              "0 0 24px hsl(var(--primary) / 0.15)",
+              "inset 0 0 0 2px hsl(var(--primary))",
+              "0 0 0 4px hsl(var(--primary) / 0.18)",
+              "0 0 32px hsl(var(--primary) / 0.35)",
             ].join(", "),
             transition:
               "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1), width 480ms cubic-bezier(0.2, 0.8, 0.2, 1), height 480ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 480ms cubic-bezier(0.2, 0.8, 0.2, 1)",
