@@ -283,10 +283,15 @@ export default function SignupChoosePlan() {
             <Button
               size="lg"
               variant="hero"
-              onClick={continueToSignup}
-              className="w-full max-w-md h-14 text-base group"
+              onClick={() =>
+                toast.info("Teste grátis temporariamente indisponível", {
+                  description:
+                    "Estamos em manutenção para melhorar sua experiência. Tente novamente em breve.",
+                })
+              }
+              className="w-full max-w-md h-14 text-base group opacity-90"
             >
-              Começar meu teste grátis agora
+              Teste grátis indisponível (manutenção)
               <ArrowRight size={18} className="ml-2 transition-transform group-hover:translate-x-1" />
             </Button>
             <p className="text-xs text-muted-foreground text-center max-w-md flex items-center gap-1.5 justify-center">
