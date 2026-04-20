@@ -51,15 +51,15 @@ function getPillarKey(stepId: string) {
     "search-empty",
     "search-typing",
     "search-button",
+    "sidebar-oportunidades-gestao",
+    "management",
+    "diagnosis",
+    "approach-message",
   ].includes(stepId)) {
     return "captacao";
   }
 
   if ([
-    "sidebar-oportunidades-gestao",
-    "management",
-    "diagnosis",
-    "approach-message",
     "sidebar-crm-intro",
     "sidebar-crm-pipeline",
     "sidebar-crm-score",
