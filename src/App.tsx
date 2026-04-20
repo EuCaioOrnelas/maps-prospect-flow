@@ -78,6 +78,7 @@ const MetaAppDocumentation = lazyWithRetry(() => import("./pages/MetaAppDocument
 const MetaApiGuide = lazyWithRetry(() => import("./pages/MetaApiGuide"), "MetaApiGuide");
 const OpportunitiesManagement = lazyWithRetry(() => import("./pages/OpportunitiesManagement"), "OpportunitiesManagement");
 const Chat = lazyWithRetry(() => import("./pages/Chat"), "Chat");
+import { ChatComingSoonGate } from "./components/chat/ChatComingSoonGate";
 const WhatsAppAutomations = lazyWithRetry(() => import("./pages/WhatsAppAutomations"), "WhatsAppAutomations");
 const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEditor"), "WhatsAppFlowEditor");
 const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "CreateFlowAI");
