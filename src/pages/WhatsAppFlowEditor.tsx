@@ -22,6 +22,7 @@ import {
   ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
   HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail, Database, BarChart3,
+  Save, AlertCircle, Loader2,
 } from "lucide-react";
 import gmailIcon from "@/assets/icons/gmail-sm.png";
 import sheetsIcon from "@/assets/icons/google-sheets-sm.png";
@@ -688,6 +689,27 @@ export default function WhatsAppFlowEditor() {
     return () => window.removeEventListener("keydown", handler);
   }, [undo, redo, saveFlow, selectedNode, drawerOpen, clipboard, nodes, edges, handleDeleteNode, setNodes, pushHistory]);
 
+  const handleBackNavigation = useCallback(() => {
+    if (hasChanges) {
+      const confirmed = window.confirm(
+        "Você tem alterações não salvas. Deseja realmente sair sem salvar?"
+      );
+      if (!confirmed) return;
+    }
+    navigate("/fluxos");
+  }, [hasChanges, navigate]);
+
+  // Warn before closing tab/refreshing if there are unsaved changes
+  useEffect(() => {
+    if (!hasChanges) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasChanges]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -700,7 +722,7 @@ export default function WhatsAppFlowEditor() {
     <div className="h-screen flex flex-col bg-background">
       {/* Top bar */}
       <div className="h-14 border-b border-border bg-card flex items-center px-4 gap-2 shrink-0">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/fluxos")} className="h-9 w-9">
+        <Button variant="ghost" size="icon" onClick={handleBackNavigation} className="h-9 w-9">
           <ArrowLeft size={18} />
         </Button>
 
@@ -709,6 +731,13 @@ export default function WhatsAppFlowEditor() {
           onChange={(e) => { setFlowName(e.target.value); setHasChanges(true); }}
           className="max-w-[220px] h-9 text-sm font-medium bg-transparent border-transparent hover:border-border focus:border-border"
         />
+
+        {hasChanges && (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-destructive/10 border border-destructive/30 text-destructive animate-in fade-in slide-in-from-left-2">
+            <AlertCircle size={12} />
+            <span className="text-[11px] font-medium">Alterações não salvas</span>
+          </div>
+        )}
 
         <div className="h-6 w-px bg-border mx-1" />
 
@@ -734,8 +763,26 @@ export default function WhatsAppFlowEditor() {
 
         <div className="flex-1" />
 
+        {/* Save button */}
+        <Button
+          size="sm"
+          onClick={() => saveFlow.mutate()}
+          disabled={saveFlow.isPending || !hasChanges}
+          className={cn(
+            "gap-1.5 rounded-full transition-all",
+            hasChanges && "shadow-md shadow-primary/20"
+          )}
+          title="Salvar fluxo (Ctrl+S)"
+        >
+          {saveFlow.isPending ? (
+            <><Loader2 size={14} className="animate-spin" /> Salvando...</>
+          ) : (
+            <><Save size={14} /> Salvar</>
+          )}
+        </Button>
+
         {/* Activate/Deactivate toggle */}
-        <div className="flex items-center gap-2 mr-2">
+        <div className="flex items-center gap-2 mx-2">
           <span className={cn("text-xs font-medium", flow?.status === "active" ? "text-primary" : "text-muted-foreground")}>
             {flow?.status === "active" ? "Em produção" : "Teste"}
           </span>
