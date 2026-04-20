@@ -209,11 +209,23 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
     setTemplateVariables(initVars);
   };
 
+  // Valida número E.164: exige DDI (código do país) + número.
+  // Mínimo 12 dígitos (ex: DDI 2 + 10), máximo 15. Para BR (DDI 55) aceita 12 ou 13 dígitos.
+  const isValidIntlNumber = (digits: string): boolean => {
+    if (digits.length < 12 || digits.length > 15) return false;
+    // Bloqueia números BR sem DDI (10 ou 11 dígitos começando com DDD comum) — já filtrado por length, mas reforça
+    if (digits.startsWith("55")) {
+      // BR: 55 + DDD(2) + número(8 ou 9) = 12 ou 13 dígitos
+      return digits.length === 12 || digits.length === 13;
+    }
+    return true;
+  };
+
   const parsePhoneNumbers = (): string[] => {
     return phoneNumbers
       .split(/[\n,;]+/)
       .map((p) => p.trim().replace(/\D/g, ""))
-      .filter((p) => p.length >= 10);
+      .filter(isValidIntlNumber);
   };
 
   const parseAllNumbers = () => {
@@ -221,8 +233,8 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
       .split(/[\n,;]+/)
       .map((p) => p.trim())
       .filter((p) => p.length > 0);
-    const valid = all.filter((p) => p.replace(/\D/g, "").length >= 10);
-    const invalid = all.filter((p) => p.replace(/\D/g, "").length < 10);
+    const valid = all.filter((p) => isValidIntlNumber(p.replace(/\D/g, "")));
+    const invalid = all.filter((p) => !isValidIntlNumber(p.replace(/\D/g, "")));
     return { valid, invalid, total: all.length };
   };
 
