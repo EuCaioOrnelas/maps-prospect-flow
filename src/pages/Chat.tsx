@@ -124,14 +124,14 @@ const Chat = () => {
 
             {!isLoading && shouldShowDialog ? (
               <div className="relative flex-1 overflow-auto bg-gradient-to-b from-background via-background to-muted/20">
-                <header className="border-b border-border/60 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-                  <div className="px-6 sm:px-10 lg:px-14 py-5 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <MessageSquare size={20} className="text-primary" />
+                <header className="h-[58px] min-h-[58px] border-b border-border/60 bg-background/80 backdrop-blur-sm sticky top-0 z-10 flex items-center">
+                  <div className="px-6 sm:px-10 lg:px-14 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <MessageSquare size={16} className="text-primary" />
                     </div>
-                    <div>
-                      <h1 className="text-lg font-bold tracking-tight text-foreground">Chat</h1>
-                      <p className="text-xs text-muted-foreground">Conversas integradas WhatsApp Business</p>
+                    <div className="flex items-baseline gap-2">
+                      <h1 className="text-sm font-bold tracking-tight text-foreground">Chat</h1>
+                      <span className="text-xs text-muted-foreground hidden sm:inline">· Conversas integradas WhatsApp Business</span>
                     </div>
                   </div>
                 </header>
