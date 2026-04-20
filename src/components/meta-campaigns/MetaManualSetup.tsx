@@ -17,7 +17,7 @@ import {
   KeyRound,
   Hash,
   Phone,
-  Webhook,
+  Clock,
 } from "lucide-react";
 import type { WabaConnection } from "@/pages/MetaCampaigns";
 
@@ -26,9 +26,6 @@ interface MetaManualSetupProps {
   isAddingExtra?: boolean;
 }
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/meta-webhook`;
-const WEBHOOK_VERIFY_TOKEN = "wiize_meta_webhook_2024";
 
 export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra }: MetaManualSetupProps) => {
   const { user } = useAuth();
@@ -216,28 +213,6 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra }: MetaManual
               </>
             }
           />
-
-          <Step
-            number={4}
-            icon={<Webhook size={14} />}
-            title="Configure o webhook (recomendado)"
-            description={
-              <div className="space-y-2">
-                <p>
-                  No app da Meta, vá em <strong>WhatsApp → Configuração</strong> e em <em>Webhook</em> clique em{" "}
-                  <strong>Editar</strong>. Cole:
-                </p>
-                <div className="space-y-1.5">
-                  <CopyField label="URL de callback" value={WEBHOOK_URL} onCopy={copyToClipboard} />
-                  <CopyField label="Token de verificação" value={WEBHOOK_VERIFY_TOKEN} onCopy={copyToClipboard} />
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Depois clique em <strong>Verificar e salvar</strong> e assine os campos <code>messages</code>,{" "}
-                  <code>message_template_status_update</code>.
-                </p>
-              </div>
-            }
-          />
         </div>
 
         {/* Form */}
@@ -304,6 +279,29 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra }: MetaManual
             <p className="text-sm text-destructive">{error}</p>
           </div>
         )}
+
+        {/* Chat em breve */}
+        <div className="rounded-xl border border-dashed border-border bg-muted/20 p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+              <Clock size={16} className="text-amber-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">Chat em breve</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                O módulo de chat integrado está em desenvolvimento. Por enquanto, você pode usar o sistema oficial da Meta para responder leads.
+              </p>
+              <a
+                href="https://business.facebook.com/wa/manage/home"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-2"
+              >
+                Acessar Meta Business Suite <ExternalLink size={10} />
+              </a>
+            </div>
+          </div>
+        </div>
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
