@@ -360,7 +360,9 @@ serve(async (req) => {
           .eq("whatsapp_number_id", number_instance_id)
           .maybeSingle();
 
-        if (!numConfig || !numConfig.is_enabled) {
+        // Default seguro: se não houver configuração explícita do número, mantém o Revenue ativo.
+        // Só bloqueia quando o número foi desabilitado manualmente.
+        if (numConfig && numConfig.is_enabled === false) {
           return new Response(
             JSON.stringify({ success: false, skipped: true, reason: "Number not enabled for Revenue analysis" }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -714,9 +716,10 @@ serve(async (req) => {
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error("Revenue processor error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

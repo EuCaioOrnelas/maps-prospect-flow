@@ -118,6 +118,228 @@ serve(async (req) => {
       }
     }
 
+    function phoneTail8(phone: string): string {
+      return String(phone || '').replace(/\D/g, '').slice(-8);
+    }
+
+    async function findEvolutionChatConnection(userId: string, numberPhone?: string | null) {
+      const { data: allConnections } = await supabase
+        .from('user_waba_connections')
+        .select('id, display_phone_number, nickname, business_name, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true });
+
+      if (!allConnections || allConnections.length === 0) return null;
+
+      const numberTail = phoneTail8(numberPhone || '');
+      if (numberTail.length === 8) {
+        const matching = allConnections.find((conn: any) => {
+          const connTail = phoneTail8(conn.display_phone_number || conn.nickname || conn.business_name || '');
+          return connTail === numberTail;
+        });
+        if (matching) return matching;
+      }
+
+      return allConnections[0] || null;
+    }
+
+    async function upsertChatConversation(params: {
+      userId: string;
+      connectionId: string;
+      contactPhone: string;
+      contactName?: string | null;
+      lastMessageText: string;
+      lastMessageType: string;
+      direction: 'inbound' | 'outbound';
+      occurredAt: string;
+    }) {
+      let { data: conversation } = await supabase
+        .from('chat_conversations')
+        .select('id, unread_count')
+        .eq('user_id', params.userId)
+        .eq('waba_connection_id', params.connectionId)
+        .eq('contact_phone', params.contactPhone)
+        .maybeSingle();
+
+      if (!conversation) {
+        const payload: any = {
+          user_id: params.userId,
+          waba_connection_id: params.connectionId,
+          contact_phone: params.contactPhone,
+          contact_name: params.contactName || null,
+          last_message_text: params.lastMessageText,
+          last_message_at: params.occurredAt,
+          last_message_type: params.lastMessageType,
+          last_message_direction: params.direction,
+          unread_count: params.direction === 'inbound' ? 1 : 0,
+        };
+
+        const { data: created } = await supabase
+          .from('chat_conversations')
+          .insert(payload)
+          .select('id, unread_count')
+          .single();
+
+        return created;
+      }
+
+      const updates: any = {
+        last_message_text: params.lastMessageText,
+        last_message_at: params.occurredAt,
+        last_message_type: params.lastMessageType,
+        last_message_direction: params.direction,
+      };
+
+      if (params.contactName) updates.contact_name = params.contactName;
+      if (params.direction === 'inbound') {
+        updates.unread_count = (conversation.unread_count || 0) + 1;
+      }
+
+      await supabase.from('chat_conversations').update(updates).eq('id', conversation.id);
+      return conversation;
+    }
+
+    async function insertChatMessage(params: {
+      conversationId: string;
+      userId: string;
+      messageId: string;
+      direction: 'inbound' | 'outbound';
+      messageType: string;
+      content?: string | null;
+      mediaUrl?: string | null;
+      mediaMimeType?: string | null;
+      mediaFilename?: string | null;
+      mediaCaption?: string | null;
+      status: string;
+      occurredAt: string;
+      metadata?: Record<string, unknown> | null;
+    }) {
+      const { data: existing } = await supabase
+        .from('chat_messages')
+        .select('id')
+        .eq('conversation_id', params.conversationId)
+        .eq('waba_message_id', params.messageId)
+        .maybeSingle();
+
+      if (existing) return existing;
+
+      const { data: inserted } = await supabase
+        .from('chat_messages')
+        .insert({
+          conversation_id: params.conversationId,
+          user_id: params.userId,
+          waba_message_id: params.messageId,
+          direction: params.direction,
+          message_type: params.messageType,
+          content: params.content || null,
+          media_url: params.mediaUrl || null,
+          media_mime_type: params.mediaMimeType || null,
+          media_filename: params.mediaFilename || null,
+          media_caption: params.mediaCaption || null,
+          status: params.status,
+          status_updated_at: params.occurredAt,
+          metadata: params.metadata || null,
+          created_at: params.occurredAt,
+        })
+        .select('id')
+        .single();
+
+      return inserted;
+    }
+
+    async function updateLeadStatusByTail(params: {
+      userId: string;
+      phone: string;
+      direction: 'inbound' | 'outbound';
+      timestamp: string;
+      content?: string;
+      conversationId?: string | null;
+    }) {
+      const tail = phoneTail8(params.phone);
+      if (tail.length < 8) return;
+
+      const { data: leads } = await supabase
+        .from('leads')
+        .select('id, whatsapp_status, first_message_sent, pipeline_stage_id')
+        .eq('user_id', params.userId)
+        .ilike('phone', `%${tail}`)
+        .limit(5);
+
+      if (!leads || leads.length === 0) return;
+
+      let repliedStage: any = null;
+      let sentStage: any = null;
+      if (params.direction === 'inbound') {
+        const { data } = await supabase
+          .from('pipeline_stages')
+          .select('id, position')
+          .eq('user_id', params.userId)
+          .eq('name', 'Respondeu Mensagem')
+          .maybeSingle();
+        repliedStage = data;
+      } else {
+        const { data } = await supabase
+          .from('pipeline_stages')
+          .select('id, position')
+          .eq('user_id', params.userId)
+          .eq('name', 'Mensagem Enviada')
+          .maybeSingle();
+        sentStage = data;
+      }
+
+      for (const lead of leads) {
+        const updates: any = { updated_at: params.timestamp };
+
+        if (params.direction === 'inbound') {
+          updates.whatsapp_status = 'replied';
+          updates.has_responded = true;
+          updates.responded_at = params.timestamp;
+          updates.last_response_at = params.timestamp;
+          updates.last_response = params.content || null;
+
+          if (repliedStage?.id && lead.pipeline_stage_id) {
+            const { data: currentStage } = await supabase
+              .from('pipeline_stages')
+              .select('position')
+              .eq('id', lead.pipeline_stage_id)
+              .maybeSingle();
+            if (currentStage && currentStage.position < repliedStage.position) {
+              updates.pipeline_stage_id = repliedStage.id;
+            }
+          } else if (repliedStage?.id && !lead.pipeline_stage_id) {
+            updates.pipeline_stage_id = repliedStage.id;
+          }
+        } else {
+          const current = lead.whatsapp_status || 'never_contacted';
+          if (current === 'never_contacted' || current === 'no_response') {
+            updates.whatsapp_status = 'message_sent';
+          } else if (current === 'replied') {
+            updates.whatsapp_status = 'in_conversation';
+          }
+          updates.first_message_sent = true;
+          if (!lead.first_message_sent) updates.first_message_sent_at = params.timestamp;
+          updates.last_message_sent = params.content || null;
+          updates.last_message_sent_at = params.timestamp;
+          if (params.conversationId) updates.conversation_id = params.conversationId;
+
+          if (sentStage?.id && lead.pipeline_stage_id) {
+            const { data: currentStage } = await supabase
+              .from('pipeline_stages')
+              .select('position')
+              .eq('id', lead.pipeline_stage_id)
+              .maybeSingle();
+            if (currentStage && currentStage.position === 0) {
+              updates.pipeline_stage_id = sentStage.id;
+            }
+          } else if (sentStage?.id && !lead.pipeline_stage_id) {
+            updates.pipeline_stage_id = sentStage.id;
+          }
+        }
+
+        await supabase.from('leads').update(updates).eq('id', lead.id);
+      }
+    }
+
     // Helper function to normalize generic phone strings
     function normalizePhoneNumber(phone: string): string {
       return String(phone || '').replace(/\D/g, '');
@@ -582,6 +804,9 @@ REGRAS:
           const normalizedMessageTimestampMs = Number.isFinite(rawMessageTimestamp) && rawMessageTimestamp > 0
             ? (rawMessageTimestamp < 1_000_000_000_000 ? rawMessageTimestamp * 1000 : rawMessageTimestamp)
             : null;
+          const messageOccurredAt = normalizedMessageTimestampMs
+            ? new Date(normalizedMessageTimestampMs).toISOString()
+            : new Date().toISOString();
           const messageAgeMs = normalizedMessageTimestampMs ? Date.now() - normalizedMessageTimestampMs : null;
           const isHistoricalSyncMessage = messageAgeMs !== null && messageAgeMs > 10 * 60 * 1000;
 
@@ -987,6 +1212,14 @@ REGRAS:
               console.log(`Skipping media download for historical message ${messageId}`);
             }
 
+            const lastText = messageType === 'text' ? (content || '')
+              : messageType === 'image' ? '📷 Imagem'
+              : messageType === 'video' ? '🎥 Vídeo'
+              : messageType === 'audio' ? '🎤 Áudio'
+              : messageType === 'document' ? `📄 ${mediaFilename || 'Documento'}`
+              : messageType === 'sticker' ? '🏷️ Sticker'
+              : content || `[${messageType}]`;
+
             // ===== MESSAGE STORAGE (only if conversations/messages tables exist) =====
             // These operations are wrapped to allow the AI agent flow to continue even if tables don't exist
             if (hasConversationsTable && conversationId) {
@@ -1022,6 +1255,7 @@ REGRAS:
                       sender_jid: isGroup ? senderJidForGroup : null,
                       sender_name: isGroup ? senderName : null,
                       quoted_message_id: quotedMessageId,
+                      created_at: messageOccurredAt,
                     });
 
                   if (msgError) {
@@ -1034,9 +1268,9 @@ REGRAS:
 
                   // Update conversation
                   const updateData: Record<string, unknown> = {
-                    last_message: content || `[${messageType}]`,
-                    last_message_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
+                    last_message: lastText,
+                    last_message_at: messageOccurredAt,
+                    updated_at: messageOccurredAt,
                   };
                   
                   if (data.pushName) {
@@ -1061,6 +1295,49 @@ REGRAS:
                 }
               } catch (msgTableError) {
                 console.log('Message storage operations failed (tables may not exist):', msgTableError);
+              }
+            }
+
+            // ===== CURRENT CHAT SYSTEM SYNC (chat_conversations/chat_messages) =====
+            if (!isGroup) {
+              try {
+                const chatConnection = await findEvolutionChatConnection(whatsappNumber.user_id, whatsappNumber.phone_number);
+                if (chatConnection) {
+                  const chatConversation = await upsertChatConversation({
+                    userId: whatsappNumber.user_id,
+                    connectionId: chatConnection.id,
+                    contactPhone: rawPhone,
+                    contactName: data.pushName || null,
+                    lastMessageText: lastText,
+                    lastMessageType: messageType,
+                    direction: fromMe ? 'outbound' : 'inbound',
+                    occurredAt: messageOccurredAt,
+                  });
+
+                  if (chatConversation?.id) {
+                    await insertChatMessage({
+                      conversationId: chatConversation.id,
+                      userId: whatsappNumber.user_id,
+                      messageId,
+                      direction: fromMe ? 'outbound' : 'inbound',
+                      messageType,
+                      content: content || null,
+                      mediaUrl,
+                      mediaMimeType: mediaMimetype,
+                      mediaFilename,
+                      mediaCaption: messageType !== 'text' ? (content || null) : null,
+                      status: fromMe ? 'sent' : 'delivered',
+                      occurredAt: messageOccurredAt,
+                      metadata: {
+                        provider: 'evolution',
+                        instance_name: instance,
+                        quoted_message_id: quotedMessageId,
+                      },
+                    });
+                  }
+                }
+              } catch (chatSyncError) {
+                console.error('Error syncing current chat tables:', chatSyncError);
               }
             }
             
@@ -1680,91 +1957,14 @@ REGRAS:
                   console.error('Error pausing AI agent:', agentPauseError);
                 }
                 
-                const canonicalSentPhone = normalizeBrazilianMobileE164(rawPhone);
-
-                let leadQuery = supabase
-                  .from('leads')
-                  .select('id, pipeline_stage_id, whatsapp_status')
-                  .eq('user_id', whatsappNumber.user_id);
-
-                if (canonicalSentPhone && conversationId) {
-                  leadQuery = leadQuery.or(`phone.eq.${canonicalSentPhone},conversation_id.eq.${conversationId}`);
-                } else if (canonicalSentPhone) {
-                  leadQuery = leadQuery.eq('phone', canonicalSentPhone);
-                } else if (conversationId) {
-                  leadQuery = leadQuery.eq('conversation_id', conversationId);
-                } else {
-                  leadQuery = leadQuery.eq('id', '00000000-0000-0000-0000-000000000000');
-                }
-
-                const { data: existingLeadSent } = await leadQuery
-                  .limit(1)
-                  .maybeSingle();
-                
-                if (existingLeadSent) {
-                  console.log('Found lead to update on sent message:', existingLeadSent.id);
-                  
-                  // Get the "Mensagem Enviada" stage
-                  const { data: mensagemEnviadaStage } = await supabase
-                    .from('pipeline_stages')
-                    .select('id, position')
-                    .eq('user_id', whatsappNumber.user_id)
-                    .eq('name', 'Mensagem Enviada')
-                    .single();
-                  
-                  // Only move to "Mensagem Enviada" if current stage is "Prospectado" (position 0)
-                  let shouldMoveToMensagemEnviada = false;
-                  if (existingLeadSent.pipeline_stage_id && mensagemEnviadaStage) {
-                    const { data: currentStage } = await supabase
-                      .from('pipeline_stages')
-                      .select('position, name')
-                      .eq('id', existingLeadSent.pipeline_stage_id)
-                      .single();
-                    
-                    // Move only if current stage is "Prospectado" (position 0)
-                    if (currentStage && currentStage.position === 0) {
-                      shouldMoveToMensagemEnviada = true;
-                    }
-                  } else if (mensagemEnviadaStage && !existingLeadSent.pipeline_stage_id) {
-                    // No current stage, move to Mensagem Enviada
-                    shouldMoveToMensagemEnviada = true;
-                  }
-                  
-                  const leadUpdate: Record<string, unknown> = {
-                    whatsapp_status: 'message_sent',
-                    last_message_sent: content || `[${messageType}]`,
-                    last_message_sent_at: new Date().toISOString(),
-                    conversation_id: conversationId,
-                    updated_at: new Date().toISOString(),
-                  };
-                  
-                  if (shouldMoveToMensagemEnviada && mensagemEnviadaStage) {
-                    leadUpdate.pipeline_stage_id = mensagemEnviadaStage.id;
-                    console.log(`Moving lead ${existingLeadSent.id} to Mensagem Enviada stage`);
-                  }
-                  
-                  const { error: leadUpdateError } = await supabase
-                    .from('leads')
-                    .update(leadUpdate)
-                    .eq('id', existingLeadSent.id);
-                  
-                  if (leadUpdateError) {
-                    console.error('Error updating lead on sent message:', leadUpdateError);
-                  } else {
-                    console.log('Lead updated with sent message data');
-                    
-                    // Log activity for the stage change
-                    if (shouldMoveToMensagemEnviada) {
-                      await supabase.from('lead_activities').insert({
-                        lead_id: existingLeadSent.id,
-                        user_id: whatsappNumber.user_id,
-                        activity_type: 'stage_changed',
-                        description: 'Movido automaticamente para Mensagem Enviada (enviou mensagem)',
-                        metadata: { automatic: true, trigger: 'webhook_sent_message' },
-                      });
-                    }
-                  }
-                }
+                await updateLeadStatusByTail({
+                  userId: whatsappNumber.user_id,
+                  phone: rawPhone,
+                  direction: 'outbound',
+                  timestamp: messageOccurredAt,
+                  content: content || lastText,
+                  conversationId: null,
+                });
               }
             }
             
@@ -1777,6 +1977,13 @@ REGRAS:
               } else {
                 const normalizedLeadPhone = rawPhone.replace(/\D/g, '');
                 const leadPhoneLast8 = normalizedLeadPhone.slice(-8);
+                const warmingMessageText = String(
+                  data?.message?.conversation ||
+                  data?.message?.extendedTextMessage?.text ||
+                  data?.message?.imageMessage?.caption ||
+                  data?.message?.videoMessage?.caption ||
+                  ''
+                ).trim();
                 
                 console.log(`Checking warming interactions for lead ${normalizedLeadPhone} (last8: ${leadPhoneLast8}) on user ${whatsappNumber.user_id}`);
 
@@ -1806,7 +2013,7 @@ REGRAS:
                   
                   if (matchingInteraction) {
                     console.log('=== WARMING RESPONSE DETECTED ===');
-                    console.log('Lead message:', content);
+                    console.log('Lead message:', warmingMessageText);
                     console.log('Interaction status:', matchingInteraction.status);
                     console.log('Messages sent so far:', matchingInteraction.messages_sent);
                     
@@ -1822,8 +2029,8 @@ REGRAS:
                     let responseMessage: string | null = null;
                     let shouldEndConversation = false;
                     
-                    if (shouldRespond && content) {
-                      const messageText = content.trim();
+                    if (shouldRespond && warmingMessageText) {
+                      const messageText = warmingMessageText;
                       
                       // Safety pattern 1: Stop/block requests (hardcoded for safety)
                       const stopPatterns = [/para\s*(de\s*)?mandar/i, /não\s*mande\s*mais/i, /nao\s*mande\s*mais/i, /me\s*bloqueia/i, /spam/i, /sai\s*fora/i, /chega/i];
@@ -2266,7 +2473,7 @@ REGRAS:
             
             console.log(`Updating message ${messageId} to status: ${status}`);
             
-            // Update message status in database
+            // Update legacy message status in database
             const { error, data: updatedMsg } = await supabase
               .from('messages')
               .update({ status, updated_at: new Date().toISOString() })
@@ -2277,6 +2484,22 @@ REGRAS:
               console.error('Error updating message status:', error);
             } else {
               console.log(`Message ${messageId} status updated to ${status}, rows:`, updatedMsg?.length);
+            }
+
+            const statusTimestamp = new Date().toISOString();
+            const { data: updatedChatMessages, error: chatStatusError } = await supabase
+              .from('chat_messages')
+              .update({
+                status,
+                status_updated_at: statusTimestamp,
+              })
+              .eq('waba_message_id', messageId)
+              .select('id, conversation_id');
+
+            if (chatStatusError) {
+              console.error('Error updating current chat message status:', chatStatusError);
+            } else {
+              console.log(`Current chat message ${messageId} status updated to ${status}, rows:`, updatedChatMessages?.length);
             }
           } else {
             console.log('Could not extract messageId or statusCode from update');
