@@ -274,7 +274,7 @@ const FeatureCard = ({
   title,
   description,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   description: string;
 }) => (
