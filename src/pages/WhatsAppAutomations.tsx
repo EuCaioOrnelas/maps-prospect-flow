@@ -432,13 +432,14 @@ export default function WhatsAppAutomations() {
                 />
               </div>
             </div>
-            <div className="overflow-y-auto flex-1 p-4">
+            <div className="overflow-y-auto flex-1 p-4 relative">
               <div className="grid grid-cols-2 gap-3">
                 {filteredTemplates.map((tpl) => (
                   <button
                     key={tpl.id}
                     onClick={() => handleUseTemplate(tpl)}
-                    className="group flex items-start gap-3 p-3.5 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
+                    disabled={createFromTemplate.isPending}
+                    className="group flex items-start gap-3 p-3.5 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
                       <tpl.icon size={16} className="text-primary" />
@@ -456,6 +457,19 @@ export default function WhatsAppAutomations() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Loading overlay during template creation */}
+        {createFromTemplate.isPending && (
+          <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            </div>
+            <div className="text-center">
+              <p className="text-base font-semibold text-foreground">Criando seu fluxo...</p>
+              <p className="text-sm text-muted-foreground mt-1">Montando nós e conexões do template</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
