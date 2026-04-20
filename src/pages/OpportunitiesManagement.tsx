@@ -581,9 +581,9 @@ export default function OpportunitiesManagement() {
 
     return (
       <div className="space-y-4">
-        <div data-tour="lead-score-summary" className="space-y-4">
+        <div className="space-y-4">
           {/* Score Principal */}
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 text-center">
+          <div data-tour="lead-score-hero" className="bg-primary/5 border border-primary/20 rounded-xl p-5 text-center">
             <p className="text-5xl font-bold text-primary">{lead.ai_score ?? 0}</p>
             <p className="text-sm text-muted-foreground mt-1">de 100 pontos</p>
             <div className="w-full bg-muted rounded-full h-3 mt-4">
@@ -597,7 +597,7 @@ export default function OpportunitiesManagement() {
 
           {/* Breakdown por dimensão */}
           {breakdown && (
-            <div className="bg-card border border-border rounded-xl p-4 space-y-4">
+            <div data-tour="lead-score-breakdown" className="bg-card border border-border rounded-xl p-4 space-y-4">
               <h4 className="text-sm font-semibold flex items-center gap-2">
                 <BarChart3 size={14} className="text-primary" />
                 Detalhamento do Score
