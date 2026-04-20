@@ -818,6 +818,29 @@ export default function WhatsAppFlowEditor() {
                     return;
                   }
                 }
+
+                // Garantir apenas 1 fluxo ativo por número de WhatsApp
+                const numberFilterCol = apiType === "meta" ? "phone_number_id" : "whatsapp_number_id";
+                const numberFilterVal = apiType === "meta"
+                  ? (entryCfg.phone_number_id || entryCfg.waba_connection_id)
+                  : entryCfg.whatsapp_number_id;
+
+                if (numberFilterVal) {
+                  const { data: existingActive } = await supabase
+                    .from("wa_automation_flows")
+                    .select("id, name")
+                    .eq("status", "active")
+                    .eq(numberFilterCol, numberFilterVal)
+                    .neq("id", id!)
+                    .limit(1);
+
+                  if (existingActive && existingActive.length > 0) {
+                    toast.error(
+                      `Este número já possui um fluxo ativo ("${existingActive[0].name}"). Desative-o antes de ativar este.`
+                    );
+                    return;
+                  }
+                }
               }
 
               const { error } = await supabase.from("wa_automation_flows").update({ status: newStatus }).eq("id", id!);

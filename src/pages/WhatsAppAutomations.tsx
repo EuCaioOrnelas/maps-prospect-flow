@@ -128,6 +128,33 @@ export default function WhatsAppAutomations() {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      if (status === "active") {
+        const { data: target } = await supabase
+          .from("wa_automation_flows")
+          .select("api_type, whatsapp_number_id, phone_number_id")
+          .eq("id", id)
+          .maybeSingle();
+
+        const numberCol = target?.api_type === "meta" ? "phone_number_id" : "whatsapp_number_id";
+        const numberVal = target?.api_type === "meta" ? target?.phone_number_id : target?.whatsapp_number_id;
+
+        if (!numberVal) {
+          throw new Error("Configure um número de WhatsApp no bloco de Entrada antes de ativar.");
+        }
+
+        const { data: existing } = await supabase
+          .from("wa_automation_flows")
+          .select("id, name")
+          .eq("status", "active")
+          .eq(numberCol, numberVal)
+          .neq("id", id)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          throw new Error(`Este número já tem um fluxo ativo ("${existing[0].name}"). Desative-o antes.`);
+        }
+      }
+
       const { error } = await supabase
         .from("wa_automation_flows")
         .update({ status: status as any })
@@ -137,6 +164,9 @@ export default function WhatsAppAutomations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wa-automation-flows"] });
       toast.success("Status atualizado");
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "Erro ao atualizar status");
     },
   });
 
