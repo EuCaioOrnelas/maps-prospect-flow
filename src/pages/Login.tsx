@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { SEO } from "@/components/SEO";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
-import { lovable } from "@/integrations/lovable";
+import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import googleLogo from "@/assets/icons/google-logo.png";
 
@@ -49,26 +49,16 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
     });
-
-    if (result.error) {
+    if (error) {
       setIsGoogleLoading(false);
-      toast({
-        title: "Erro ao entrar com Google",
-        description: result.error.message,
-        variant: "destructive",
-      });
-      return;
+      toast({ title: "Erro ao entrar com Google", description: error.message, variant: "destructive" });
     }
-
-    if (result.redirected) {
-      // Browser está redirecionando para o Google
-      return;
-    }
-
-    // Sessão já foi setada — useEffect vai redirecionar
   };
 
   useEffect(() => {
