@@ -118,6 +118,228 @@ serve(async (req) => {
       }
     }
 
+    function phoneTail8(phone: string): string {
+      return String(phone || '').replace(/\D/g, '').slice(-8);
+    }
+
+    async function findEvolutionChatConnection(userId: string, numberPhone?: string | null) {
+      const { data: allConnections } = await supabase
+        .from('user_waba_connections')
+        .select('id, display_phone_number, nickname, business_name, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true });
+
+      if (!allConnections || allConnections.length === 0) return null;
+
+      const numberTail = phoneTail8(numberPhone || '');
+      if (numberTail.length === 8) {
+        const matching = allConnections.find((conn: any) => {
+          const connTail = phoneTail8(conn.display_phone_number || conn.nickname || conn.business_name || '');
+          return connTail === numberTail;
+        });
+        if (matching) return matching;
+      }
+
+      return allConnections[0] || null;
+    }
+
+    async function upsertChatConversation(params: {
+      userId: string;
+      connectionId: string;
+      contactPhone: string;
+      contactName?: string | null;
+      lastMessageText: string;
+      lastMessageType: string;
+      direction: 'inbound' | 'outbound';
+      occurredAt: string;
+    }) {
+      let { data: conversation } = await supabase
+        .from('chat_conversations')
+        .select('id, unread_count')
+        .eq('user_id', params.userId)
+        .eq('waba_connection_id', params.connectionId)
+        .eq('contact_phone', params.contactPhone)
+        .maybeSingle();
+
+      if (!conversation) {
+        const payload: any = {
+          user_id: params.userId,
+          waba_connection_id: params.connectionId,
+          contact_phone: params.contactPhone,
+          contact_name: params.contactName || null,
+          last_message_text: params.lastMessageText,
+          last_message_at: params.occurredAt,
+          last_message_type: params.lastMessageType,
+          last_message_direction: params.direction,
+          unread_count: params.direction === 'inbound' ? 1 : 0,
+        };
+
+        const { data: created } = await supabase
+          .from('chat_conversations')
+          .insert(payload)
+          .select('id, unread_count')
+          .single();
+
+        return created;
+      }
+
+      const updates: any = {
+        last_message_text: params.lastMessageText,
+        last_message_at: params.occurredAt,
+        last_message_type: params.lastMessageType,
+        last_message_direction: params.direction,
+      };
+
+      if (params.contactName) updates.contact_name = params.contactName;
+      if (params.direction === 'inbound') {
+        updates.unread_count = (conversation.unread_count || 0) + 1;
+      }
+
+      await supabase.from('chat_conversations').update(updates).eq('id', conversation.id);
+      return conversation;
+    }
+
+    async function insertChatMessage(params: {
+      conversationId: string;
+      userId: string;
+      messageId: string;
+      direction: 'inbound' | 'outbound';
+      messageType: string;
+      content?: string | null;
+      mediaUrl?: string | null;
+      mediaMimeType?: string | null;
+      mediaFilename?: string | null;
+      mediaCaption?: string | null;
+      status: string;
+      occurredAt: string;
+      metadata?: Record<string, unknown> | null;
+    }) {
+      const { data: existing } = await supabase
+        .from('chat_messages')
+        .select('id')
+        .eq('conversation_id', params.conversationId)
+        .eq('waba_message_id', params.messageId)
+        .maybeSingle();
+
+      if (existing) return existing;
+
+      const { data: inserted } = await supabase
+        .from('chat_messages')
+        .insert({
+          conversation_id: params.conversationId,
+          user_id: params.userId,
+          waba_message_id: params.messageId,
+          direction: params.direction,
+          message_type: params.messageType,
+          content: params.content || null,
+          media_url: params.mediaUrl || null,
+          media_mime_type: params.mediaMimeType || null,
+          media_filename: params.mediaFilename || null,
+          media_caption: params.mediaCaption || null,
+          status: params.status,
+          status_updated_at: params.occurredAt,
+          metadata: params.metadata || null,
+          created_at: params.occurredAt,
+        })
+        .select('id')
+        .single();
+
+      return inserted;
+    }
+
+    async function updateLeadStatusByTail(params: {
+      userId: string;
+      phone: string;
+      direction: 'inbound' | 'outbound';
+      timestamp: string;
+      content?: string;
+      conversationId?: string | null;
+    }) {
+      const tail = phoneTail8(params.phone);
+      if (tail.length < 8) return;
+
+      const { data: leads } = await supabase
+        .from('leads')
+        .select('id, whatsapp_status, first_message_sent, pipeline_stage_id')
+        .eq('user_id', params.userId)
+        .ilike('phone', `%${tail}`)
+        .limit(5);
+
+      if (!leads || leads.length === 0) return;
+
+      let repliedStage: any = null;
+      let sentStage: any = null;
+      if (params.direction === 'inbound') {
+        const { data } = await supabase
+          .from('pipeline_stages')
+          .select('id, position')
+          .eq('user_id', params.userId)
+          .eq('name', 'Respondeu Mensagem')
+          .maybeSingle();
+        repliedStage = data;
+      } else {
+        const { data } = await supabase
+          .from('pipeline_stages')
+          .select('id, position')
+          .eq('user_id', params.userId)
+          .eq('name', 'Mensagem Enviada')
+          .maybeSingle();
+        sentStage = data;
+      }
+
+      for (const lead of leads) {
+        const updates: any = { updated_at: params.timestamp };
+
+        if (params.direction === 'inbound') {
+          updates.whatsapp_status = 'replied';
+          updates.has_responded = true;
+          updates.responded_at = params.timestamp;
+          updates.last_response_at = params.timestamp;
+          updates.last_response = params.content || null;
+
+          if (repliedStage?.id && lead.pipeline_stage_id) {
+            const { data: currentStage } = await supabase
+              .from('pipeline_stages')
+              .select('position')
+              .eq('id', lead.pipeline_stage_id)
+              .maybeSingle();
+            if (currentStage && currentStage.position < repliedStage.position) {
+              updates.pipeline_stage_id = repliedStage.id;
+            }
+          } else if (repliedStage?.id && !lead.pipeline_stage_id) {
+            updates.pipeline_stage_id = repliedStage.id;
+          }
+        } else {
+          const current = lead.whatsapp_status || 'never_contacted';
+          if (current === 'never_contacted' || current === 'no_response') {
+            updates.whatsapp_status = 'message_sent';
+          } else if (current === 'replied') {
+            updates.whatsapp_status = 'in_conversation';
+          }
+          updates.first_message_sent = true;
+          if (!lead.first_message_sent) updates.first_message_sent_at = params.timestamp;
+          updates.last_message_sent = params.content || null;
+          updates.last_message_sent_at = params.timestamp;
+          if (params.conversationId) updates.conversation_id = params.conversationId;
+
+          if (sentStage?.id && lead.pipeline_stage_id) {
+            const { data: currentStage } = await supabase
+              .from('pipeline_stages')
+              .select('position')
+              .eq('id', lead.pipeline_stage_id)
+              .maybeSingle();
+            if (currentStage && currentStage.position === 0) {
+              updates.pipeline_stage_id = sentStage.id;
+            }
+          } else if (sentStage?.id && !lead.pipeline_stage_id) {
+            updates.pipeline_stage_id = sentStage.id;
+          }
+        }
+
+        await supabase.from('leads').update(updates).eq('id', lead.id);
+      }
+    }
+
     // Helper function to normalize generic phone strings
     function normalizePhoneNumber(phone: string): string {
       return String(phone || '').replace(/\D/g, '');
