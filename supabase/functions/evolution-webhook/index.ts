@@ -1679,6 +1679,30 @@ REGRAS:
               }
               }
               
+              // ===== WA FLOW RUNNER (production flows) =====
+              if (!isGroup && !isHistoricalSyncMessage && effectiveLeadPhone) {
+                try {
+                  await fetch(`${SUPABASE_URL}/functions/v1/wa-flow-runner`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                    },
+                    body: JSON.stringify({
+                      user_id: whatsappNumber.user_id,
+                      lead_phone: effectiveLeadPhone,
+                      lead_name: data.pushName || null,
+                      incoming_text: content || null,
+                      source: 'evolution',
+                      whatsapp_number_id: whatsappNumber.id,
+                      instance_name: instance,
+                    }),
+                  }).catch((e) => console.error('[evolution-webhook] wa-flow-runner invoke failed:', e));
+                } catch (flowErr) {
+                  console.error('[evolution-webhook] wa-flow-runner error:', flowErr);
+                }
+              }
+
               // ===== AI AGENT INTEGRATION =====
               // Ignore group and historical sync messages to avoid replay loops and instability
               if (isGroup) {
