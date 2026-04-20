@@ -1472,6 +1472,23 @@ ${socialPages.length > 0
     - Nichos de infraestrutura (internet, solar, segurança): acessibilidade e potencial_venda são mais importantes, estrutura_digital é menos relevante
     - Nichos de serviço local (mecânica, manutenção, pet): reputação e acessibilidade são mais importantes
 
+11. ⚠️ REGRA CRÍTICA — FIT DE PERSONA (PRIORIDADE MÁXIMA):
+    Antes de qualquer análise, avalie se o LEAD (categoria: "${categoria || "não informada"}") realmente se encaixa no PÚBLICO-ALVO da empresa prospectora ("${companyProfile?.company_target_audience || "não informado"}") considerando seus produtos ("${companyProfile?.company_products || "não informado"}") e nicho ("${companyProfile?.company_niche || "não informado"}").
+
+    Pergunte-se: "Uma empresa que vende ${companyProfile?.company_products || "esse produto"} venderia naturalmente para um(a) ${categoria || "negócio desse tipo"}?"
+
+    Se a resposta for NÃO ou DUVIDOSA (ex: vende cardápio digital e o lead é uma academia; vende software jurídico e o lead é uma padaria; vende uniforme escolar e o lead é uma oficina mecânica):
+    a) NÃO INVENTE encaixes forçados ou genéricos (ex: "pode ajudar a melhorar a experiência do cliente"). Isso é PROIBIDO.
+    b) score MÁXIMO = 25 e nivel_oportunidade = "Baixa" e probabilidade_fechamento = "Baixa".
+    c) pontos_fortes = [] e pontos_fracos = [].
+    d) diagnostico DEVE ser EXATAMENTE neste formato (adaptando os nomes):
+       "Com base nos seus produtos atuais (${companyProfile?.company_products || "—"}), este lead (${categoria || "categoria não informada"}) provavelmente NÃO faz parte da sua persona ideal. Recomendamos: 1) prospectar nichos mais alinhados ao seu público-alvo (${companyProfile?.company_target_audience || "defina em Perfil"}); ou 2) acessar Perfil > Empresa e atualizar seus produtos/serviços e público-alvo para ampliar a precisão dos diagnósticos da IA."
+    e) acao_recomendada DEVE ser: "Reavalie a segmentação da prospecção ou enriqueça o perfil da sua empresa em Perfil > Dados da Empresa para que a IA gere diagnósticos mais precisos para nichos adjacentes."
+    f) analise_site, analise_redes_sociais, analise_reputacao_detalhada, analise_concorrencia_regional, analise_demanda_regional DEVEM iniciar com: "Não aplicável — lead fora da persona ideal."
+    g) justificativa_score: "Lead fora da persona ideal definida no perfil da empresa."
+
+    SOMENTE se houver encaixe REAL e plausível entre o produto vendido e o lead, prossiga com a análise normal acima.
+
 Retorne APENAS um JSON válido:
 {
   "score": <0-100>,
