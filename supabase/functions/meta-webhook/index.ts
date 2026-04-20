@@ -315,6 +315,28 @@ serve(async (req) => {
                   } else {
                     console.log(`[meta-webhook] ⚠️ Phone ${from} could not be normalized for scoring`);
                   }
+
+                  // === WA FLOW RUNNER (production flows) ===
+                  try {
+                    const phoneForFlow = normalizedPhone || from.replace(/\D/g, '');
+                    const SB_URL = Deno.env.get('SUPABASE_URL')!;
+                    const SB_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+                    await fetch(`${SB_URL}/functions/v1/wa-flow-runner`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SB_KEY}` },
+                      body: JSON.stringify({
+                        user_id: userId,
+                        lead_phone: phoneForFlow,
+                        lead_name: contactName || null,
+                        incoming_text: textContent || null,
+                        source: 'meta',
+                        waba_connection_id: connection?.id,
+                        phone_number_id: value.metadata?.phone_number_id,
+                      }),
+                    }).catch((e) => console.error('[meta-webhook] wa-flow-runner failed:', e));
+                  } catch (e) {
+                    console.error('[meta-webhook] wa-flow-runner error:', e);
+                  }
                 }
               }
             }
