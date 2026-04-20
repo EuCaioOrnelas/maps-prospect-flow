@@ -19,10 +19,18 @@ const PLAN_NAMES: Record<string, string> = {
   scale: "Wiize Scale",
 };
 
+// Monthly fallback prices in cents (used only if profile.subscription_price_cents is missing)
 const PLAN_PRICES_CENTS: Record<string, number> = {
-  start: 29600,
-  growth: 69600,
-  scale: 89700,
+  start: 29700,    // R$ 297/mês
+  growth: 69600,   // R$ 696/mês
+  scale: 89700,    // R$ 897/mês
+};
+
+// Annual TOTAL fallback prices in cents (R$ X/mês × 12 with discount)
+const PLAN_ANNUAL_TOTAL_CENTS: Record<string, number> = {
+  start: 295200,   // R$ 246 × 12 = R$ 2.952
+  growth: 715200,  // R$ 596 × 12 = R$ 7.152
+  scale: 920400,   // R$ 767 × 12 (placeholder)
 };
 
 function formatBRL(cents: number): string {
@@ -136,8 +144,14 @@ Deno.serve(async (req) => {
       }
 
       const planName = PLAN_NAMES[user.plan] || user.plan;
-      const userPriceCents = user.subscription_price_cents || PLAN_PRICES_CENTS[user.plan] || 0;
-      const installments = user.billing_period === "annual"
+      const isAnnual = user.billing_period === "annual";
+      // For annual cards, subscription_price_cents stores the TOTAL annual amount
+      // For monthly, it stores the monthly value
+      const fallbackCents = isAnnual
+        ? (PLAN_ANNUAL_TOTAL_CENTS[user.plan] || 0)
+        : (PLAN_PRICES_CENTS[user.plan] || 0);
+      const userPriceCents = user.subscription_price_cents || fallbackCents;
+      const installments = isAnnual
         ? (await fetchInstallmentsFromAsaas(user.asaas_subscription_id)) || 12
         : null;
       const planPrice = formatPlanPrice(userPriceCents, user.billing_period, installments);

@@ -9,9 +9,9 @@ const AdminPixBilling = () => {
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-foreground font-sans">Billing PIX / Renovação</h1>
+        <h1 className="text-2xl font-bold text-foreground font-sans">Billing & Renovação</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Gestão completa de cobranças PIX, renovações e emails
+          Gestão completa de cobranças (PIX e Cartão), renovações e emails
         </p>
       </div>
 

@@ -33,9 +33,9 @@ const PLAN_PRICES: Record<string, string> = {
 };
 
 const PLAN_PRICES_CENTS: Record<string, number> = {
-  start: 29600,
-  growth: 69600,
-  scale: 89700,
+  start: 29700,    // R$ 297/mês — PIX é apenas mensal
+  growth: 69600,   // R$ 696/mês
+  scale: 89700,    // R$ 897/mês
 };
 
 // Helper to format cents to BRL string
@@ -43,11 +43,10 @@ function formatPrice(cents: number): string {
   return `R$ ${(cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`;
 }
 
-// PIX is single payment per cycle: monthly = "R$ X/mês", annual = "R$ X/ano"
-function formatPlanPrice(cents: number, billingPeriod: string | null): string {
+// PIX is always monthly in our model
+function formatPlanPrice(cents: number, _billingPeriod: string | null): string {
   if (!cents) return "—";
-  const suffix = billingPeriod === "annual" ? "/ano" : "/mês";
-  return `${formatPrice(cents)}${suffix}`;
+  return `${formatPrice(cents)}/mês`;
 }
 
 function formatDate(dateStr: string): string {

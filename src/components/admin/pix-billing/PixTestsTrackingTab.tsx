@@ -43,9 +43,12 @@ export function PixTestsTrackingTab() {
 function TestsSection() {
   const { toast } = useToast();
   const [results, setResults] = useState<Record<string, "idle" | "sending" | "success" | "error">>({});
+  const [paymentMethod, setPaymentMethod] = useState<"pix" | "card">("pix");
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
 
   const sendTestEmail = async (stage: string) => {
-    setResults((prev) => ({ ...prev, [stage]: "sending" }));
+    const key = `${paymentMethod}_${billingPeriod}_${stage}`;
+    setResults((prev) => ({ ...prev, [key]: "sending" }));
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
@@ -54,7 +57,20 @@ function TestsSection() {
       const remainingDays = daysMap[stage] ?? 0;
 
       const origin = "https://wiize.com.br";
-      const checkoutUrl = `${origin}/checkout-pix?plan=growth&planName=${encodeURIComponent("Wiize Growth (Teste)")}&email=${encodeURIComponent(user.email || "")}&name=${encodeURIComponent("Admin (Teste)")}&renewal=true`;
+      const checkoutUrl = paymentMethod === "card"
+        ? `${origin}/minha-assinatura`
+        : `${origin}/checkout-pix?plan=growth&planName=${encodeURIComponent("Wiize Growth (Teste)")}&email=${encodeURIComponent(user.email || "")}&name=${encodeURIComponent("Admin (Teste)")}&renewal=true`;
+
+      // Build realistic price label per scenario
+      let planPrice: string;
+      if (paymentMethod === "pix") {
+        planPrice = "R$ 696/mês";
+      } else if (billingPeriod === "annual") {
+        // R$ 596 × 12 = R$ 7.152 total, parcelado em 12×
+        planPrice = "R$ 7.152 em 12× R$ 596";
+      } else {
+        planPrice = "R$ 696/mês";
+      }
 
       const { error } = await supabase.functions.invoke("send-email", {
         body: {
@@ -62,22 +78,23 @@ function TestsSection() {
           email_type: "SUBSCRIPTION_RENEWAL",
           payload: {
             plan_name: "Wiize Growth (Teste)",
-            plan_price: "R$ 497",
+            plan_price: planPrice,
             expiry_date: new Date(Date.now() + remainingDays * 86400000).toLocaleDateString("pt-BR"),
             remaining_days: remainingDays,
             checkout_url: checkoutUrl,
             user_name: "Admin (Teste)",
             stage,
+            payment_method: paymentMethod,
           },
-          idempotency_key: `test_renewal_${stage}_${Date.now()}`,
+          idempotency_key: `test_renewal_${paymentMethod}_${billingPeriod}_${stage}_${Date.now()}`,
         },
       });
 
       if (error) throw error;
-      setResults((prev) => ({ ...prev, [stage]: "success" }));
-      toast({ title: `✅ Email ${stage} enviado para seu email` });
+      setResults((prev) => ({ ...prev, [key]: "success" }));
+      toast({ title: `✅ Email ${stage} (${paymentMethod}) enviado` });
     } catch (err: any) {
-      setResults((prev) => ({ ...prev, [stage]: "error" }));
+      setResults((prev) => ({ ...prev, [key]: "error" }));
       toast({ title: "Erro ao enviar", description: err.message, variant: "destructive" });
     }
   };
@@ -91,18 +108,59 @@ function TestsSection() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Envie emails de teste de cada etapa para <strong>seu email</strong>.
+          Envie emails de teste para <strong>seu email</strong>.
         </p>
-        <Button variant="outline" size="sm" onClick={sendAll} className="gap-2">
-          <FlaskConical size={14} /> Testar Todos
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-lg border border-border bg-card p-0.5">
+            <button
+              onClick={() => setPaymentMethod("pix")}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                paymentMethod === "pix" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              💸 PIX
+            </button>
+            <button
+              onClick={() => setPaymentMethod("card")}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                paymentMethod === "card" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              💳 Cartão
+            </button>
+          </div>
+          {paymentMethod === "card" && (
+            <div className="inline-flex rounded-lg border border-border bg-card p-0.5">
+              <button
+                onClick={() => setBillingPeriod("monthly")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  billingPeriod === "monthly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Mensal
+              </button>
+              <button
+                onClick={() => setBillingPeriod("annual")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  billingPeriod === "annual" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Anual 12×
+              </button>
+            </div>
+          )}
+          <Button variant="outline" size="sm" onClick={sendAll} className="gap-2">
+            <FlaskConical size={14} /> Testar Todos
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {RENEWAL_STAGES.map((s) => {
-          const status = results[s.stage] || "idle";
+          const key = `${paymentMethod}_${billingPeriod}_${s.stage}`;
+          const status = results[key] || "idle";
           return (
             <Card key={s.stage} className="hover:border-primary/20 transition-colors">
               <CardContent className="p-4 flex items-center justify-between">
