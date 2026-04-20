@@ -49,6 +49,8 @@ const MetaCampaigns = () => {
   const [editToken, setEditToken] = useState("");
   const [showTokenField, setShowTokenField] = useState(false);
   const [showAddNumber, setShowAddNumber] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [expiredTokenIds, setExpiredTokenIds] = useState<Set<string>>(new Set());
   const [showExpiredAlert, setShowExpiredAlert] = useState(false);
