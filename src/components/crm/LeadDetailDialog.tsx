@@ -516,6 +516,15 @@ export const LeadDetailDialog = ({
         const { data, error } = await supabase.functions.invoke('google-drive-upload-lead-file', {
           body: formData,
         });
+        // Detect quota error (edge function returns 507 with error: 'drive_storage_full')
+        const quotaHit =
+          (data as any)?.error === 'drive_storage_full' ||
+          /drive_storage_full|storageQuotaExceeded|quota/i.test(error?.message || '') ||
+          /drive_storage_full|storageQuotaExceeded/i.test(JSON.stringify((error as any)?.context || {}));
+        if (quotaHit) {
+          setDriveQuotaError(true);
+          return;
+        }
         if (error) throw error;
         if (data?.folder_url) setLeadDriveFolderUrl(data.folder_url);
         toast.success('Arquivo enviado para o Google Drive!');
@@ -544,7 +553,12 @@ export const LeadDetailDialog = ({
       loadLeadFiles();
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.message || 'Erro ao enviar arquivo');
+      // Final safety net for quota in error message
+      if (/drive_storage_full|storageQuotaExceeded|quota/i.test(err?.message || '')) {
+        setDriveQuotaError(true);
+      } else {
+        toast.error(err?.message || 'Erro ao enviar arquivo');
+      }
     } finally {
       setIsUploadingLeadFile(false);
       setPendingDriveFile(null);
