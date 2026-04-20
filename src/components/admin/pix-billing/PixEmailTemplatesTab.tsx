@@ -211,9 +211,27 @@ export function PixEmailTemplatesTab() {
         </CardContent>
       </Card>
 
+      {/* Payment method filter */}
+      <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg w-fit">
+        <Button
+          variant={methodFilter === "pix" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setMethodFilter("pix")}
+        >
+          💸 PIX ({templates.filter((t) => t.payment_method === "pix").length})
+        </Button>
+        <Button
+          variant={methodFilter === "card" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setMethodFilter("card")}
+        >
+          💳 Cartão ({templates.filter((t) => t.payment_method === "card").length})
+        </Button>
+      </div>
+
       {/* Template Cards */}
       <div className="space-y-3">
-        {templates.map((t) => (
+        {templates.filter((t) => t.payment_method === methodFilter).map((t) => (
           <Card key={t.id} className="hover:border-primary/30 transition-colors">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
@@ -260,7 +278,7 @@ export function PixEmailTemplatesTab() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Edit size={18} />
-              Editar Template — {editingTemplate?.stage}
+              Editar Template — {editingTemplate?.stage} ({editingTemplate?.payment_method === "card" ? "💳 Cartão" : "💸 PIX"})
             </DialogTitle>
           </DialogHeader>
 
