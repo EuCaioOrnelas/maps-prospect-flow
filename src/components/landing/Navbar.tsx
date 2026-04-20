@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Lock } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 
 interface NavbarProps {
   onSignupClick?: () => void;
@@ -120,11 +121,25 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                   Entrar
                 </Button>
               </Link>
-              <a href="/#pricing" onClick={handlePricingClick}>
-                <Button variant="hero" size="sm" className="rounded-full">
-                  Gerar vendas
+              {TRIAL_DISABLED ? (
+                <Button
+                  variant="hero"
+                  size="sm"
+                  className="rounded-full opacity-60 cursor-not-allowed"
+                  disabled
+                  aria-disabled="true"
+                  onClick={(e) => { e.preventDefault(); notifyTrialDisabled(); }}
+                >
+                  <Lock size={14} className="mr-1" />
+                  Indisponível
                 </Button>
-              </a>
+              ) : (
+                <a href="/#pricing" onClick={handlePricingClick}>
+                  <Button variant="hero" size="sm" className="rounded-full">
+                    Gerar vendas
+                  </Button>
+                </a>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -156,11 +171,25 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                       Entrar
                     </Button>
                   </Link>
-                  <a href="/#pricing" onClick={handlePricingClick}>
-                    <Button variant="hero" size="sm" className="w-full justify-center">
-                      Gerar vendas
+                  {TRIAL_DISABLED ? (
+                    <Button
+                      variant="hero"
+                      size="sm"
+                      className="w-full justify-center opacity-60 cursor-not-allowed"
+                      disabled
+                      aria-disabled="true"
+                      onClick={(e) => { e.preventDefault(); notifyTrialDisabled(); }}
+                    >
+                      <Lock size={14} className="mr-1" />
+                      Indisponível
                     </Button>
-                  </a>
+                  ) : (
+                    <a href="/#pricing" onClick={handlePricingClick}>
+                      <Button variant="hero" size="sm" className="w-full justify-center">
+                        Gerar vendas
+                      </Button>
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

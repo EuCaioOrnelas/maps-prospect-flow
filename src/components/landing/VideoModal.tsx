@@ -97,12 +97,26 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
           <p className="text-muted-foreground text-xs sm:text-sm text-center">
             Teste gratuitamente por 7 dias — sem compromisso
           </p>
-          <Link to="/signup" onClick={() => { onSignupClick?.(); onOpenChange(false); }}>
-            <Button variant="hero" size="lg" className="group rounded-full text-sm sm:text-base px-8 sm:px-10 h-10 sm:h-11">
-              Testar grátis por 7 dias
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+          {TRIAL_DISABLED ? (
+            <Button
+              variant="hero"
+              size="lg"
+              className="group rounded-full text-sm sm:text-base px-8 sm:px-10 h-10 sm:h-11 opacity-60 cursor-not-allowed"
+              disabled
+              aria-disabled="true"
+              onClick={(e) => { e.preventDefault(); notifyTrialDisabled(); }}
+            >
+              <Lock size={16} className="mr-1" />
+              Teste grátis em breve
             </Button>
-          </Link>
+          ) : (
+            <Link to="/signup" onClick={() => { onSignupClick?.(); onOpenChange(false); }}>
+              <Button variant="hero" size="lg" className="group rounded-full text-sm sm:text-base px-8 sm:px-10 h-10 sm:h-11">
+                Testar grátis por 7 dias
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          )}
         </div>
       </DialogContent>
     </Dialog>

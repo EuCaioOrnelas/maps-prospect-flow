@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { 
   ArrowRight, ArrowDown, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check, 
   ChevronDown, Bot, Star, CalendarCheck, LayoutGrid, Sparkles, Clock,
-  BadgeCheck, Brain, MousePointer2, Plus, MapPin
+  BadgeCheck, Brain, MousePointer2, Plus, MapPin, Lock
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 
 /* ─── Animated counter ─── */
 const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?: number }) => {
@@ -843,12 +844,26 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               Encontre leads qualificados, analise e classifique oportunidades com IA, gere abordagens personalizadas e automatize todo seu processo de vendas B2B do primeiro contato ao fechamento no WhatsApp.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center xl:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
-              <Link to="/signup" className="shrink-0" onClick={onSignupClick}>
-                <Button variant="hero" size="lg" className="group rounded-full text-base px-8 h-12">
-                  {hasWatchedVideo ? "Testar grátis" : "Gerar vendas"}
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              {TRIAL_DISABLED ? (
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="group rounded-full text-base px-8 h-12 shrink-0 opacity-60 cursor-not-allowed"
+                  disabled
+                  aria-disabled="true"
+                  onClick={(e) => { e.preventDefault(); notifyTrialDisabled(); }}
+                >
+                  <Lock size={16} className="mr-1" />
+                  Teste grátis em breve
                 </Button>
-              </Link>
+              ) : (
+                <Link to="/signup" className="shrink-0" onClick={onSignupClick}>
+                  <Button variant="hero" size="lg" className="group rounded-full text-base px-8 h-12">
+                    {hasWatchedVideo ? "Testar grátis" : "Gerar vendas"}
+                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+              )}
               <button onClick={() => setVideoOpen(true)} className="group shrink-0">
                 <Button variant="ghost" size="lg" className="rounded-full text-base px-8 h-12 border border-transparent hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all">
                   Ver Demonstração
