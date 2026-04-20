@@ -43,11 +43,10 @@ function formatPrice(cents: number): string {
   return `R$ ${(cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`;
 }
 
-// PIX is single payment per cycle: monthly = "R$ X/mês", annual = "R$ X/ano"
-function formatPlanPrice(cents: number, billingPeriod: string | null): string {
+// PIX is always monthly in our model
+function formatPlanPrice(cents: number, _billingPeriod: string | null): string {
   if (!cents) return "—";
-  const suffix = billingPeriod === "annual" ? "/ano" : "/mês";
-  return `${formatPrice(cents)}${suffix}`;
+  return `${formatPrice(cents)}/mês`;
 }
 
 function formatDate(dateStr: string): string {
