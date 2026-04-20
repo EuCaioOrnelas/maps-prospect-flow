@@ -209,11 +209,23 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
     setTemplateVariables(initVars);
   };
 
+  // Valida número E.164: exige DDI (código do país) + número.
+  // Mínimo 12 dígitos (ex: DDI 2 + 10), máximo 15. Para BR (DDI 55) aceita 12 ou 13 dígitos.
+  const isValidIntlNumber = (digits: string): boolean => {
+    if (digits.length < 12 || digits.length > 15) return false;
+    // Bloqueia números BR sem DDI (10 ou 11 dígitos começando com DDD comum) — já filtrado por length, mas reforça
+    if (digits.startsWith("55")) {
+      // BR: 55 + DDD(2) + número(8 ou 9) = 12 ou 13 dígitos
+      return digits.length === 12 || digits.length === 13;
+    }
+    return true;
+  };
+
   const parsePhoneNumbers = (): string[] => {
     return phoneNumbers
       .split(/[\n,;]+/)
       .map((p) => p.trim().replace(/\D/g, ""))
-      .filter((p) => p.length >= 10);
+      .filter(isValidIntlNumber);
   };
 
   const parseAllNumbers = () => {
@@ -221,8 +233,8 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
       .split(/[\n,;]+/)
       .map((p) => p.trim())
       .filter((p) => p.length > 0);
-    const valid = all.filter((p) => p.replace(/\D/g, "").length >= 10);
-    const invalid = all.filter((p) => p.replace(/\D/g, "").length < 10);
+    const valid = all.filter((p) => isValidIntlNumber(p.replace(/\D/g, "")));
+    const invalid = all.filter((p) => !isValidIntlNumber(p.replace(/\D/g, "")));
     return { valid, invalid, total: all.length };
   };
 
@@ -561,14 +573,27 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
               />
 
               {phoneNumbers.trim().length > 0 && (
-                <div className="flex items-center gap-4 text-xs">
-                  <span className="flex items-center gap-1 text-primary">
-                    <CheckCircle2 size={12} /> {validNums.length} número(s) com formato válido
-                  </span>
-                  {invalidNums.length > 0 && (
-                    <span className="flex items-center gap-1 text-destructive">
-                      <XCircle size={12} /> {invalidNums.length} inválido(s), serão ignorados
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4 text-xs">
+                    <span className="flex items-center gap-1 text-primary">
+                      <CheckCircle2 size={12} /> {validNums.length} número(s) com formato válido
                     </span>
+                    {invalidNums.length > 0 && (
+                      <span className="flex items-center gap-1 text-destructive">
+                        <XCircle size={12} /> {invalidNums.length} inválido(s), serão ignorados
+                      </span>
+                    )}
+                  </div>
+                  {invalidNums.length > 0 && (
+                    <div className="flex items-start gap-2 p-2.5 rounded-lg border border-destructive/30 bg-destructive/5 text-xs text-destructive">
+                      <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-medium">Inclua o código do país (DDI) em todos os números</p>
+                        <p className="text-destructive/80 mt-0.5">
+                          Ex: <code className="font-mono">5511999999999</code> (Brasil = 55). Sem o DDI o envio falha na Meta.
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
@@ -586,15 +611,16 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
                 <CollapsibleContent>
                   <div className="p-3 rounded-lg bg-muted/50 border border-border mt-1">
                     <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Inclua o <strong>código do país</strong> (ex: <code>55</code> para Brasil)</li>
-                      <li>Inclua o <strong>DDD</strong> + número completo com 9 dígitos</li>
-                      <li>Formato: <code>5511999999999</code> (13 dígitos para BR)</li>
+                      <li><strong>Obrigatório:</strong> incluir o código do país (DDI). Ex: <code>55</code> para Brasil</li>
+                      <li>Inclua o <strong>DDD</strong> + número completo com 9 dígitos (BR)</li>
+                      <li>Formato BR: <code>5511999999999</code> (12 ou 13 dígitos)</li>
+                      <li>Formato internacional E.164: 12 a 15 dígitos no total</li>
                       <li>Espaços, traços e parênteses são removidos automaticamente</li>
                       <li>Separe por <strong>linha</strong>, <strong>vírgula</strong> ou <strong>ponto-e-vírgula</strong></li>
-                      <li>Números com menos de 10 dígitos serão ignorados</li>
+                      <li>Números sem DDI ou fora do padrão serão ignorados</li>
                     </ul>
                     <p className="text-xs text-muted-foreground mt-2 italic">
-                      ⚠️ A validação verifica apenas o formato do número. O status de opt-in é verificado pela Meta no momento do envio.
+                      ⚠️ A validação verifica apenas o formato. O status de opt-in é verificado pela Meta no momento do envio.
                     </p>
                   </div>
                 </CollapsibleContent>
