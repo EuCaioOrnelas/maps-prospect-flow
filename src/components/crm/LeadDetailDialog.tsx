@@ -336,6 +336,7 @@ export const LeadDetailDialog = ({
   const [pendingDriveFile, setPendingDriveFile] = useState<File | null>(null);
   const [pendingDriveFileName, setPendingDriveFileName] = useState('');
   const [leadDriveFolderUrl, setLeadDriveFolderUrl] = useState<string | null>(null);
+  const [driveQuotaError, setDriveQuotaError] = useState(false);
 
   // Check if value has unsaved changes
   const hasUnsavedValue = dealValue !== savedValue;
@@ -515,6 +516,15 @@ export const LeadDetailDialog = ({
         const { data, error } = await supabase.functions.invoke('google-drive-upload-lead-file', {
           body: formData,
         });
+        // Detect quota error (edge function returns 507 with error: 'drive_storage_full')
+        const quotaHit =
+          (data as any)?.error === 'drive_storage_full' ||
+          /drive_storage_full|storageQuotaExceeded|quota/i.test(error?.message || '') ||
+          /drive_storage_full|storageQuotaExceeded/i.test(JSON.stringify((error as any)?.context || {}));
+        if (quotaHit) {
+          setDriveQuotaError(true);
+          return;
+        }
         if (error) throw error;
         if (data?.folder_url) setLeadDriveFolderUrl(data.folder_url);
         toast.success('Arquivo enviado para o Google Drive!');
@@ -543,7 +553,12 @@ export const LeadDetailDialog = ({
       loadLeadFiles();
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.message || 'Erro ao enviar arquivo');
+      // Final safety net for quota in error message
+      if (/drive_storage_full|storageQuotaExceeded|quota/i.test(err?.message || '')) {
+        setDriveQuotaError(true);
+      } else {
+        toast.error(err?.message || 'Erro ao enviar arquivo');
+      }
     } finally {
       setIsUploadingLeadFile(false);
       setPendingDriveFile(null);
@@ -2208,6 +2223,63 @@ export const LeadDetailDialog = ({
                 disabled={isUploadingLeadFile}
               >
                 {isUploadingLeadFile ? 'Enviando...' : 'Enviar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal: Google Drive sem espaço */}
+        <Dialog open={driveQuotaError} onOpenChange={setDriveQuotaError}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-destructive/10 text-destructive">
+                  ⚠️
+                </span>
+                Google Drive sem espaço
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <p className="text-sm text-foreground">
+                Não foi possível enviar o arquivo porque seu <strong>Google Drive está cheio</strong>.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Para continuar enviando arquivos, você pode:
+              </p>
+              <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+                <li>Liberar espaço excluindo arquivos antigos no seu Drive</li>
+                <li>Comprar mais espaço com o Google One</li>
+              </ul>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setDriveQuotaError(false)}
+              >
+                Fechar
+              </Button>
+              <Button
+                variant="outline"
+                asChild
+              >
+                <a
+                  href="https://drive.google.com/drive/quota"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="w-4 h-4 mr-1.5" />
+                  Liberar espaço
+                </a>
+              </Button>
+              <Button asChild>
+                <a
+                  href="https://one.google.com/storage"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="w-4 h-4 mr-1.5" />
+                  Comprar espaço
+                </a>
               </Button>
             </DialogFooter>
           </DialogContent>
