@@ -2385,6 +2385,7 @@ export type Database = {
           is_published: boolean | null
           last_edited_at: string | null
           last_edited_by: string | null
+          payment_method: string
           preview_text: string | null
           stage: string
           subject: string
@@ -2403,6 +2404,7 @@ export type Database = {
           is_published?: boolean | null
           last_edited_at?: string | null
           last_edited_by?: string | null
+          payment_method?: string
           preview_text?: string | null
           stage: string
           subject: string
@@ -2421,6 +2423,7 @@ export type Database = {
           is_published?: boolean | null
           last_edited_at?: string | null
           last_edited_by?: string | null
+          payment_method?: string
           preview_text?: string | null
           stage?: string
           subject?: string

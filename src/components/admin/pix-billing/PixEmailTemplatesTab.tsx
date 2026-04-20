@@ -13,6 +13,7 @@ import { Loader2, Edit, Eye, Save, Monitor, Smartphone, History } from "lucide-r
 interface EmailTemplate {
   id: string;
   stage: string;
+  payment_method: string;
   subject: string;
   preview_text: string | null;
   title: string;
@@ -33,7 +34,7 @@ const STAGE_LABELS: Record<string, string> = {
   "D-3": "🟢 D-3 — Reforço inteligente",
   "D-1": "🟡 D-1 — Urgência real",
   "D0": "🔴 D0 — Último aviso",
-  "D+1": "⛔ D+1 — Acesso suspenso",
+  "D+1": "⛔ D+1 — Acesso suspenso / cobrança falhou",
 };
 
 const VARIABLES = [
@@ -54,6 +55,7 @@ export function PixEmailTemplatesTab() {
   const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
+  const [methodFilter, setMethodFilter] = useState<"pix" | "card">("pix");
 
   // Edit form state
   const [editSubject, setEditSubject] = useState("");
@@ -72,7 +74,8 @@ export function PixEmailTemplatesTab() {
       const { data, error } = await supabase
         .from("renewal_email_templates" as any)
         .select("*")
-        .order("created_at", { ascending: true });
+        .order("payment_method", { ascending: true })
+        .order("stage", { ascending: true });
       if (error) throw error;
       setTemplates((data || []) as unknown as EmailTemplate[]);
     } catch (err) {
@@ -208,9 +211,27 @@ export function PixEmailTemplatesTab() {
         </CardContent>
       </Card>
 
+      {/* Payment method filter */}
+      <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg w-fit">
+        <Button
+          variant={methodFilter === "pix" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setMethodFilter("pix")}
+        >
+          💸 PIX ({templates.filter((t) => t.payment_method === "pix").length})
+        </Button>
+        <Button
+          variant={methodFilter === "card" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setMethodFilter("card")}
+        >
+          💳 Cartão ({templates.filter((t) => t.payment_method === "card").length})
+        </Button>
+      </div>
+
       {/* Template Cards */}
       <div className="space-y-3">
-        {templates.map((t) => (
+        {templates.filter((t) => t.payment_method === methodFilter).map((t) => (
           <Card key={t.id} className="hover:border-primary/30 transition-colors">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
@@ -257,7 +278,7 @@ export function PixEmailTemplatesTab() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Edit size={18} />
-              Editar Template — {editingTemplate?.stage}
+              Editar Template — {editingTemplate?.stage} ({editingTemplate?.payment_method === "card" ? "💳 Cartão" : "💸 PIX"})
             </DialogTitle>
           </DialogHeader>
 
