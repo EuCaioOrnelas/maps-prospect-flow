@@ -804,6 +804,9 @@ REGRAS:
           const normalizedMessageTimestampMs = Number.isFinite(rawMessageTimestamp) && rawMessageTimestamp > 0
             ? (rawMessageTimestamp < 1_000_000_000_000 ? rawMessageTimestamp * 1000 : rawMessageTimestamp)
             : null;
+          const messageOccurredAt = normalizedMessageTimestampMs
+            ? new Date(normalizedMessageTimestampMs).toISOString()
+            : new Date().toISOString();
           const messageAgeMs = normalizedMessageTimestampMs ? Date.now() - normalizedMessageTimestampMs : null;
           const isHistoricalSyncMessage = messageAgeMs !== null && messageAgeMs > 10 * 60 * 1000;
 
@@ -1209,6 +1212,14 @@ REGRAS:
               console.log(`Skipping media download for historical message ${messageId}`);
             }
 
+            const lastText = messageType === 'text' ? (content || '')
+              : messageType === 'image' ? '📷 Imagem'
+              : messageType === 'video' ? '🎥 Vídeo'
+              : messageType === 'audio' ? '🎤 Áudio'
+              : messageType === 'document' ? `📄 ${mediaFilename || 'Documento'}`
+              : messageType === 'sticker' ? '🏷️ Sticker'
+              : content || `[${messageType}]`;
+
             // ===== MESSAGE STORAGE (only if conversations/messages tables exist) =====
             // These operations are wrapped to allow the AI agent flow to continue even if tables don't exist
             if (hasConversationsTable && conversationId) {
@@ -1244,6 +1255,7 @@ REGRAS:
                       sender_jid: isGroup ? senderJidForGroup : null,
                       sender_name: isGroup ? senderName : null,
                       quoted_message_id: quotedMessageId,
+                      created_at: messageOccurredAt,
                     });
 
                   if (msgError) {
@@ -1256,9 +1268,9 @@ REGRAS:
 
                   // Update conversation
                   const updateData: Record<string, unknown> = {
-                    last_message: content || `[${messageType}]`,
-                    last_message_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
+                    last_message: lastText,
+                    last_message_at: messageOccurredAt,
+                    updated_at: messageOccurredAt,
                   };
                   
                   if (data.pushName) {
@@ -1283,6 +1295,49 @@ REGRAS:
                 }
               } catch (msgTableError) {
                 console.log('Message storage operations failed (tables may not exist):', msgTableError);
+              }
+            }
+
+            // ===== CURRENT CHAT SYSTEM SYNC (chat_conversations/chat_messages) =====
+            if (!isGroup) {
+              try {
+                const chatConnection = await findEvolutionChatConnection(whatsappNumber.user_id, whatsappNumber.phone_number);
+                if (chatConnection) {
+                  const chatConversation = await upsertChatConversation({
+                    userId: whatsappNumber.user_id,
+                    connectionId: chatConnection.id,
+                    contactPhone: rawPhone,
+                    contactName: data.pushName || null,
+                    lastMessageText: lastText,
+                    lastMessageType: messageType,
+                    direction: fromMe ? 'outbound' : 'inbound',
+                    occurredAt: messageOccurredAt,
+                  });
+
+                  if (chatConversation?.id) {
+                    await insertChatMessage({
+                      conversationId: chatConversation.id,
+                      userId: whatsappNumber.user_id,
+                      messageId,
+                      direction: fromMe ? 'outbound' : 'inbound',
+                      messageType,
+                      content: content || null,
+                      mediaUrl,
+                      mediaMimeType: mediaMimetype,
+                      mediaFilename,
+                      mediaCaption: messageType !== 'text' ? (content || null) : null,
+                      status: fromMe ? 'sent' : 'delivered',
+                      occurredAt: messageOccurredAt,
+                      metadata: {
+                        provider: 'evolution',
+                        instance_name: instance,
+                        quoted_message_id: quotedMessageId,
+                      },
+                    });
+                  }
+                }
+              } catch (chatSyncError) {
+                console.error('Error syncing current chat tables:', chatSyncError);
               }
             }
             
@@ -1902,91 +1957,14 @@ REGRAS:
                   console.error('Error pausing AI agent:', agentPauseError);
                 }
                 
-                const canonicalSentPhone = normalizeBrazilianMobileE164(rawPhone);
-
-                let leadQuery = supabase
-                  .from('leads')
-                  .select('id, pipeline_stage_id, whatsapp_status')
-                  .eq('user_id', whatsappNumber.user_id);
-
-                if (canonicalSentPhone && conversationId) {
-                  leadQuery = leadQuery.or(`phone.eq.${canonicalSentPhone},conversation_id.eq.${conversationId}`);
-                } else if (canonicalSentPhone) {
-                  leadQuery = leadQuery.eq('phone', canonicalSentPhone);
-                } else if (conversationId) {
-                  leadQuery = leadQuery.eq('conversation_id', conversationId);
-                } else {
-                  leadQuery = leadQuery.eq('id', '00000000-0000-0000-0000-000000000000');
-                }
-
-                const { data: existingLeadSent } = await leadQuery
-                  .limit(1)
-                  .maybeSingle();
-                
-                if (existingLeadSent) {
-                  console.log('Found lead to update on sent message:', existingLeadSent.id);
-                  
-                  // Get the "Mensagem Enviada" stage
-                  const { data: mensagemEnviadaStage } = await supabase
-                    .from('pipeline_stages')
-                    .select('id, position')
-                    .eq('user_id', whatsappNumber.user_id)
-                    .eq('name', 'Mensagem Enviada')
-                    .single();
-                  
-                  // Only move to "Mensagem Enviada" if current stage is "Prospectado" (position 0)
-                  let shouldMoveToMensagemEnviada = false;
-                  if (existingLeadSent.pipeline_stage_id && mensagemEnviadaStage) {
-                    const { data: currentStage } = await supabase
-                      .from('pipeline_stages')
-                      .select('position, name')
-                      .eq('id', existingLeadSent.pipeline_stage_id)
-                      .single();
-                    
-                    // Move only if current stage is "Prospectado" (position 0)
-                    if (currentStage && currentStage.position === 0) {
-                      shouldMoveToMensagemEnviada = true;
-                    }
-                  } else if (mensagemEnviadaStage && !existingLeadSent.pipeline_stage_id) {
-                    // No current stage, move to Mensagem Enviada
-                    shouldMoveToMensagemEnviada = true;
-                  }
-                  
-                  const leadUpdate: Record<string, unknown> = {
-                    whatsapp_status: 'message_sent',
-                    last_message_sent: content || `[${messageType}]`,
-                    last_message_sent_at: new Date().toISOString(),
-                    conversation_id: conversationId,
-                    updated_at: new Date().toISOString(),
-                  };
-                  
-                  if (shouldMoveToMensagemEnviada && mensagemEnviadaStage) {
-                    leadUpdate.pipeline_stage_id = mensagemEnviadaStage.id;
-                    console.log(`Moving lead ${existingLeadSent.id} to Mensagem Enviada stage`);
-                  }
-                  
-                  const { error: leadUpdateError } = await supabase
-                    .from('leads')
-                    .update(leadUpdate)
-                    .eq('id', existingLeadSent.id);
-                  
-                  if (leadUpdateError) {
-                    console.error('Error updating lead on sent message:', leadUpdateError);
-                  } else {
-                    console.log('Lead updated with sent message data');
-                    
-                    // Log activity for the stage change
-                    if (shouldMoveToMensagemEnviada) {
-                      await supabase.from('lead_activities').insert({
-                        lead_id: existingLeadSent.id,
-                        user_id: whatsappNumber.user_id,
-                        activity_type: 'stage_changed',
-                        description: 'Movido automaticamente para Mensagem Enviada (enviou mensagem)',
-                        metadata: { automatic: true, trigger: 'webhook_sent_message' },
-                      });
-                    }
-                  }
-                }
+                await updateLeadStatusByTail({
+                  userId: whatsappNumber.user_id,
+                  phone: rawPhone,
+                  direction: 'outbound',
+                  timestamp: messageOccurredAt,
+                  content: content || lastText,
+                  conversationId: null,
+                });
               }
             }
             
