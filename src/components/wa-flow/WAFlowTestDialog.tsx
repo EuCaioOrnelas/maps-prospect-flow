@@ -79,7 +79,12 @@ const getInteractiveChoices = (node: Node): InteractiveChoice[] => {
 };
 
 const conditionNeedsUserInput = (conditionType?: string) => {
-  return ["responded", "keyword_match", "button_clicked"].includes(conditionType || "responded");
+  // Conditions that require fresh user input before being evaluated.
+  // "no_response" also waits, but is resolved by timeout (here we treat it as needing input too,
+  // so the test simulator pauses and lets the tester decide whether to reply or not).
+  return ["responded", "keyword_match", "button_clicked", "field_equals", "no_response"].includes(
+    conditionType || "responded"
+  );
 };
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -153,11 +158,13 @@ export function WAFlowTestDialog({
 
   const getConditionTarget = useCallback((nodeId: string, result: boolean) => {
     const handle = result ? "yes" : "no";
+    // IMPORTANT: do NOT fall back to a default/first edge when the matching branch
+    // is not connected. Otherwise a "Não" result could silently jump into the "Sim"
+    // branch (and vice-versa), making the condition appear to "advance" without input.
     return (
-      getOutgoingEdges(nodeId).find((edge) => edge.sourceHandle === handle)?.target ||
-      getDefaultTarget(nodeId)
+      getOutgoingEdges(nodeId).find((edge) => edge.sourceHandle === handle)?.target || null
     );
-  }, [getDefaultTarget, getOutgoingEdges]);
+  }, [getOutgoingEdges]);
 
   const evaluateCondition = useCallback((config: any, runtime: RuntimeContext) => {
     const conditionType = config.condition_type || "responded";
@@ -398,16 +405,32 @@ export function WAFlowTestDialog({
         }
 
         case "condition": {
-          if (conditionNeedsUserInput(config.condition_type) && !runtimeRef.current.hasFreshUserInput) {
+          const needsInput = conditionNeedsUserInput(config.condition_type);
+          if (needsInput && !runtimeRef.current.hasFreshUserInput) {
+            const hint =
+              config.condition_type === "keyword_match"
+                ? `⌨️ Aguardando resposta do lead (palavras-chave: ${config.condition_value || "(não configurado)"})`
+                : config.condition_type === "button_clicked"
+                ? "⌨️ Aguardando o lead clicar em um botão"
+                : config.condition_type === "no_response"
+                ? "⌨️ Aguardando resposta (digite algo ou clique em resetar para simular o timeout)"
+                : "⌨️ Aguardando resposta do lead para avaliar a condição";
+            appendMessage({ direction: "event", content: hint, nodeId: node.id });
             setAwaitingNodeId(node.id);
             currentNodeId = null;
             break;
           }
           const result = evaluateCondition(config, runtimeRef.current);
+          // Consume the fresh input so a single reply doesn't satisfy multiple conditions in a row.
           runtimeRef.current.hasFreshUserInput = false;
+          const branch = result ? "Sim" : "Não";
+          appendMessage({ direction: "event", content: `🔀 Condição avaliada: ${branch}`, nodeId: node.id });
           currentNodeId = getConditionTarget(node.id, result);
           if (!currentNodeId) {
-            appendMessage({ direction: "event", content: `Condição sem saída configurada para ${result ? "SIM" : "NÃO"}.` });
+            appendMessage({
+              direction: "event",
+              content: `⚠️ A saída "${branch}" da condição não está conectada — fluxo encerrado neste ponto.`,
+            });
           }
           break;
         }
