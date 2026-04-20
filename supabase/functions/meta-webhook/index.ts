@@ -334,7 +334,7 @@ serve(async (req) => {
                         button_id: buttonId,
                         button_title: buttonTitle,
                         source: 'meta',
-                        waba_connection_id: connection?.id,
+                        waba_connection_id: connectionId,
                         phone_number_id: value.metadata?.phone_number_id,
                       }),
                     }).catch((e) => console.error('[meta-webhook] wa-flow-runner failed:', e));
