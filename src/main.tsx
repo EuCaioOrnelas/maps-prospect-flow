@@ -4,7 +4,7 @@ import "./index.css";
 import { clearRuntimeCaches, installRuntimeRecovery } from "./lib/runtimeRecovery";
 
 // Cache bust version - increment to force cache clear on all clients
-const CACHE_VERSION = "2026-04-17-v2";
+const CACHE_VERSION = "2026-04-20-v3";
 const STORED_VERSION_KEY = "wiize:cache-version";
 
 installRuntimeRecovery();
