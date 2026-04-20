@@ -175,6 +175,8 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra }: MetaManual
         description: `${displayPhone || cleanPhone} vinculado com sucesso.`,
       });
 
+      clearDraft();
+
       onConnectionSaved({
         id: (connection as any).id,
         waba_id: (connection as any).waba_id,
