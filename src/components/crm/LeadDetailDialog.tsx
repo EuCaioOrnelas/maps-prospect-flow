@@ -333,6 +333,9 @@ export const LeadDetailDialog = ({
   const [leadFiles, setLeadFiles] = useState<Array<{ id: string; file_name: string; file_type: string; file_url: string | null; source: string; created_at: string }>>([]);
   const [driveConnection, setDriveConnection] = useState<{ is_active: boolean; root_folder_id: string | null } | null>(null);
   const [isUploadingLeadFile, setIsUploadingLeadFile] = useState(false);
+  const [pendingDriveFile, setPendingDriveFile] = useState<File | null>(null);
+  const [pendingDriveFileName, setPendingDriveFileName] = useState('');
+  const [leadDriveFolderUrl, setLeadDriveFolderUrl] = useState<string | null>(null);
 
   // Check if value has unsaved changes
   const hasUnsavedValue = dealValue !== savedValue;
