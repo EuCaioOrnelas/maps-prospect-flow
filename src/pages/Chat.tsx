@@ -3,7 +3,7 @@ import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatMessageArea } from "@/components/chat/ChatMessageArea";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useSearchParams, useNavigate } from "react-router-dom";
