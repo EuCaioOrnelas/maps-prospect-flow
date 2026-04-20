@@ -227,12 +227,12 @@ const MetaCampaigns = () => {
   };
 
   const handleDeleteConnection = async (connId: string) => {
+    setDeleting(true);
     try {
       // Clean FK dependencies first: chat_conversations and meta_campaigns reference this connection
       await Promise.allSettled([
         supabase.from("chat_messages").delete().in(
           "conversation_id",
-          // Get all conversation IDs for this connection first
           (await supabase.from("chat_conversations").select("id").eq("waba_connection_id", connId)).data?.map((c: any) => c.id) || []
         ),
       ]);
@@ -250,11 +250,14 @@ const MetaCampaigns = () => {
         next.delete(connId);
         return next;
       });
+      setPendingDeleteId(null);
       setEditingConn(null);
-      toast({ title: "Número removido!" });
+      toast({ title: "Número removido!", description: "A conexão foi excluída permanentemente." });
     } catch (err: any) {
       console.error("[MetaCampaigns] Delete connection error:", err);
       toast({ title: "Erro ao remover", description: err?.message || "Tente novamente", variant: "destructive" });
+    } finally {
+      setDeleting(false);
     }
   };
 
