@@ -1680,7 +1680,14 @@ REGRAS:
               }
               
               // ===== WA FLOW RUNNER (production flows) =====
-              if (!isGroup && !isHistoricalSyncMessage && effectiveLeadPhone) {
+              const buttonId = actualMessageData.buttonResponseMessage?.selectedButtonId ||
+                actualMessageData.listResponseMessage?.singleSelectReply?.selectedRowId ||
+                actualMessageData.templateButtonReplyMessage?.selectedId || null;
+              const buttonTitle = actualMessageData.buttonResponseMessage?.selectedDisplayText ||
+                actualMessageData.listResponseMessage?.title ||
+                actualMessageData.templateButtonReplyMessage?.selectedDisplayText || null;
+
+              if (!fromMe && !isGroup && !isHistoricalSyncMessage && effectiveLeadPhone) {
                 try {
                   await fetch(`${SUPABASE_URL}/functions/v1/wa-flow-runner`, {
                     method: 'POST',
@@ -1693,6 +1700,8 @@ REGRAS:
                       lead_phone: effectiveLeadPhone,
                       lead_name: data.pushName || null,
                       incoming_text: content || null,
+                      button_id: buttonId,
+                      button_title: buttonTitle,
                       source: 'evolution',
                       whatsapp_number_id: whatsappNumber.id,
                       instance_name: instance,

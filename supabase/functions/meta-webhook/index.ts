@@ -319,6 +319,8 @@ serve(async (req) => {
                   // === WA FLOW RUNNER (production flows) ===
                   try {
                     const phoneForFlow = normalizedPhone || from.replace(/\D/g, '');
+                    const buttonId = msg.button?.payload || msg.interactive?.button_reply?.id || msg.interactive?.list_reply?.id || null;
+                    const buttonTitle = msg.button?.text || msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title || null;
                     const SB_URL = Deno.env.get('SUPABASE_URL')!;
                     const SB_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
                     await fetch(`${SB_URL}/functions/v1/wa-flow-runner`, {
@@ -329,8 +331,10 @@ serve(async (req) => {
                         lead_phone: phoneForFlow,
                         lead_name: contactName || null,
                         incoming_text: textContent || null,
+                        button_id: buttonId,
+                        button_title: buttonTitle,
                         source: 'meta',
-                        waba_connection_id: connection?.id,
+                        waba_connection_id: connectionId,
                         phone_number_id: value.metadata?.phone_number_id,
                       }),
                     }).catch((e) => console.error('[meta-webhook] wa-flow-runner failed:', e));

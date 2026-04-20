@@ -361,6 +361,7 @@ async function runFlow(
   const bySource = buildEdgeIndex(edges);
 
   let currentNodeId: string | null = startNodeId;
+  let pausedNodeId: string | null = null;
   let safety = 0;
   const history: any[] = Array.isArray(execution.node_history) ? execution.node_history : [];
 
@@ -393,6 +394,7 @@ async function runFlow(
             filename: it.filename,
           });
         }
+        ctx.hasFreshUserInput = false;
         currentNodeId = getDefaultTarget(bySource, node.id);
         break;
       }
@@ -410,7 +412,8 @@ async function runFlow(
           type: "text",
           content: `${lines.join("\n\n")}${optionLines ? `\n\n${optionLines}` : ""}`,
         });
-        // Pause — wait for next inbound to resume from this node
+        ctx.hasFreshUserInput = false;
+        pausedNodeId = node.id;
         currentNodeId = null;
         break;
       }
@@ -420,7 +423,7 @@ async function runFlow(
           config.condition_type || "responded",
         );
         if (needsInput && !ctx.hasFreshUserInput) {
-          // Pause until inbound message arrives
+          pausedNodeId = node.id;
           currentNodeId = null;
           break;
         }
@@ -445,9 +448,9 @@ async function runFlow(
           await new Promise((r) => setTimeout(r, ms));
           currentNodeId = getDefaultTarget(bySource, node.id);
         } else {
-          // TODO: schedule resume via cron. For now, exit and skip wait.
-          console.log(`[wa-flow-runner] Long wait (${ms}ms) skipped — continuing immediately.`);
-          currentNodeId = getDefaultTarget(bySource, node.id);
+          console.log(`[wa-flow-runner] Long wait (${ms}ms) paused at wait node.`);
+          pausedNodeId = node.id;
+          currentNodeId = null;
         }
         break;
       }
@@ -473,7 +476,9 @@ async function runFlow(
             ? interpolate(config.prompt_message, ctx.variables)
             : `Por favor, informe ${labels[config.collect_type] || varName}:`;
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: prompt });
-          currentNodeId = null; // wait for inbound
+          ctx.hasFreshUserInput = false;
+          pausedNodeId = node.id;
+          currentNodeId = null;
         }
         break;
       }
@@ -502,6 +507,7 @@ async function runFlow(
             type: "text", content: interpolate(config.handoff_message, ctx.variables),
           });
         }
+        ctx.hasFreshUserInput = false;
         // Move to human support stage if configured
         if (config.handoff_stage) {
           await executeActions(supabase, body.user_id, body.lead_phone, {
@@ -540,9 +546,9 @@ async function runFlow(
 
   // Persist state when paused
   await supabase.from("wa_flow_executions").update({
-    status: currentNodeId ? "active" : "abandoned",
-    current_node_id: currentNodeId,
-    current_node_name: currentNodeId ? (nodeMap.get(currentNodeId)?.name || null) : null,
+    status: currentNodeId || pausedNodeId ? "active" : "abandoned",
+    current_node_id: currentNodeId || pausedNodeId,
+    current_node_name: (currentNodeId || pausedNodeId) ? (nodeMap.get(currentNodeId || pausedNodeId)?.name || null) : null,
     collected_data: ctx.variables,
     node_history: history,
   }).eq("id", execution.id);
