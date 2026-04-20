@@ -293,6 +293,14 @@ serve(async (req) => {
                   });
                   console.log(`[meta-webhook] ✅ Chat message saved for conversation ${conversation.id}`);
 
+                  // === CRM LEAD STATUS: mark as 'replied' on inbound ===
+                  await updateLeadStatus({
+                    user_id: userId,
+                    phone: from,
+                    direction: 'inbound',
+                    timestamp: msgTime,
+                  });
+
                   // === REVENUE SCORING: Fire event for inbound messages ===
                   const normalizedPhone = normalizeBrazilianMobileE164(from);
                   if (normalizedPhone) {
@@ -304,6 +312,8 @@ serve(async (req) => {
                       lead_name: contactName || undefined,
                     });
                     console.log(`[meta-webhook] 📊 Revenue event fired for ${normalizedPhone}`);
+                  } else {
+                    console.log(`[meta-webhook] ⚠️ Phone ${from} could not be normalized for scoring`);
                   }
                 }
               }
