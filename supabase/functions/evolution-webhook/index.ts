@@ -2006,7 +2006,7 @@ REGRAS:
                   
                   if (matchingInteraction) {
                     console.log('=== WARMING RESPONSE DETECTED ===');
-                    console.log('Lead message:', content);
+                    console.log('Lead message:', lastText);
                     console.log('Interaction status:', matchingInteraction.status);
                     console.log('Messages sent so far:', matchingInteraction.messages_sent);
                     
@@ -2022,8 +2022,8 @@ REGRAS:
                     let responseMessage: string | null = null;
                     let shouldEndConversation = false;
                     
-                    if (shouldRespond && content) {
-                      const messageText = content.trim();
+                    if (shouldRespond && lastText) {
+                      const messageText = lastText.trim();
                       
                       // Safety pattern 1: Stop/block requests (hardcoded for safety)
                       const stopPatterns = [/para\s*(de\s*)?mandar/i, /não\s*mande\s*mais/i, /nao\s*mande\s*mais/i, /me\s*bloqueia/i, /spam/i, /sai\s*fora/i, /chega/i];
