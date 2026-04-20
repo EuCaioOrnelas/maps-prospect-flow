@@ -279,9 +279,28 @@ export function GuidedTour() {
     };
   } else {
     const requestedPlacement = (step.placement ?? "bottom") as "top" | "bottom" | "left" | "right";
-    const popupWidth = popupSize.width || POPUP_W;
+    const targetElement = step.target ? (queryTourTarget(step.target) as HTMLElement | null) : null;
+    const targetDialog = targetElement?.closest('[role="dialog"][data-state="open"]') as HTMLElement | null;
+    const dialogRect = targetDialog?.getBoundingClientRect();
+    const popupWidth = dialogRect
+      ? Math.min(popupSize.width || POPUP_W, Math.max(320, Math.round(dialogRect.width - 44)))
+      : popupSize.width || POPUP_W;
     const popupHeight = popupSize.height || 196;
     const viewportMargin = POPUP_GAP;
+    const bounds = dialogRect
+      ? {
+          top: dialogRect.top + viewportMargin,
+          right: dialogRect.right - viewportMargin,
+          bottom: dialogRect.bottom - viewportMargin,
+          left: dialogRect.left + viewportMargin,
+        }
+      : {
+          top: viewportMargin,
+          right: window.innerWidth - viewportMargin,
+          bottom: window.innerHeight - viewportMargin,
+          left: viewportMargin,
+        };
+
     const spotBounds = {
       top: popupRect.top - PADDING,
       left: popupRect.left - PADDING,
@@ -289,32 +308,31 @@ export function GuidedTour() {
       bottom: popupRect.top + popupRect.height + PADDING,
     };
 
-    const clampX = (value: number) => Math.max(viewportMargin, Math.min(window.innerWidth - popupWidth - viewportMargin, value));
-    const clampY = (value: number) => Math.max(viewportMargin, Math.min(window.innerHeight - popupHeight - viewportMargin, value));
+    const clampX = (value: number) => Math.max(bounds.left, Math.min(bounds.right - popupWidth, value));
+    const clampY = (value: number) => Math.max(bounds.top, Math.min(bounds.bottom - popupHeight, value));
 
-    const placementPriorityMap = {
-      top: ["top", "bottom", "right", "left"],
-      bottom: ["bottom", "top", "right", "left"],
-      right: ["right", "left", "bottom", "top"],
-      left: ["left", "right", "bottom", "top"],
-    } as const;
+    const placementPriorityMap = dialogRect
+      ? {
+          top: ["top", "bottom", "right", "left"],
+          bottom: ["bottom", "top", "right", "left"],
+          right: ["top", "bottom", "right", "left"],
+          left: ["top", "bottom", "left", "right"],
+        } as const
+      : {
+          top: ["top", "bottom", "right", "left"],
+          bottom: ["bottom", "top", "right", "left"],
+          right: ["right", "left", "bottom", "top"],
+          left: ["left", "right", "bottom", "top"],
+        } as const;
 
     const getAvailableGap = (placement: "top" | "bottom" | "left" | "right") => {
-      if (placement === "top") {
-        return spotBounds.top - popupHeight - viewportMargin;
-      }
-      if (placement === "bottom") {
-        return window.innerHeight - viewportMargin - spotBounds.bottom - popupHeight;
-      }
-      if (placement === "right") {
-        return window.innerWidth - viewportMargin - spotBounds.right - popupWidth;
-      }
-      return spotBounds.left - popupWidth - viewportMargin;
+      if (placement === "top") return spotBounds.top - popupHeight - bounds.top;
+      if (placement === "bottom") return bounds.bottom - spotBounds.bottom - popupHeight;
+      if (placement === "right") return bounds.right - spotBounds.right - popupWidth;
+      return spotBounds.left - popupWidth - bounds.left;
     };
 
-    const canFit = (placement: "top" | "bottom" | "left" | "right") => {
-      return getAvailableGap(placement) >= POPUP_MIN_SPOT_GAP;
-    };
+    const canFit = (placement: "top" | "bottom" | "left" | "right") => getAvailableGap(placement) >= POPUP_MIN_SPOT_GAP;
 
     const computePlacementStyle = (placement: "top" | "bottom" | "left" | "right") => {
       const effectiveGap = Math.max(POPUP_MIN_SPOT_GAP, Math.min(POPUP_SPOT_GAP, getAvailableGap(placement)));

@@ -284,19 +284,19 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     {
       id: "diagnosis",
       route: "/oportunidades/gestao",
-      target: '[data-tour="lead-score-summary"]',
+      target: '[data-tour="lead-score-breakdown"] || [data-tour="lead-score-hero"]',
       title: "Diagnóstico inteligente",
       body: "Abrimos um lead de exemplo. Veja a pontuação geral, a quebra por dimensão (estrutura digital, reputação e potencial) e a probabilidade de conversão.",
       placement: "left",
       injectDemoLead: true,
-      waitMs: 150,
+      waitMs: 120,
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
         const dialog = await openDemoLeadDialog();
         if (!dialog) return;
 
         await activateLeadTab('[data-tour="lead-tab-score"]');
-        const summary = await waitForElement<HTMLElement>('[data-tour="lead-score-summary"]', 25, 80);
+        const summary = await waitForElement<HTMLElement>('[data-tour="lead-score-breakdown"] || [data-tour="lead-score-hero"]', 25, 70);
         if (summary) {
           centerElementInScrollArea(summary);
         }
