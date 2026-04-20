@@ -72,6 +72,9 @@ export default function WhatsAppAutomations() {
       return data;
     },
     enabled: !!user,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   const filteredTemplates = useMemo(() => {
