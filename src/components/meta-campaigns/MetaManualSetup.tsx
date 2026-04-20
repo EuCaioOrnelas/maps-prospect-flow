@@ -280,6 +280,29 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra }: MetaManual
           </div>
         )}
 
+        {/* Chat em breve */}
+        <div className="rounded-xl border border-dashed border-border bg-muted/20 p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+              <Clock size={16} className="text-amber-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">Chat em breve</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                O módulo de chat integrado está em desenvolvimento. Por enquanto, você pode usar o sistema oficial da Meta para responder leads.
+              </p>
+              <a
+                href="https://business.facebook.com/wa/manage/home"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-2"
+              >
+                Acessar Meta Business Suite <ExternalLink size={10} />
+              </a>
+            </div>
+          </div>
+        </div>
+
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
           <Button onClick={handleSave} disabled={saving} size="lg" className="flex-1 gap-2">
