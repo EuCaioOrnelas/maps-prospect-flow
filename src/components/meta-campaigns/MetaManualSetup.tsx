@@ -213,28 +213,6 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra }: MetaManual
               </>
             }
           />
-
-          <Step
-            number={4}
-            icon={<Webhook size={14} />}
-            title="Configure o webhook (recomendado)"
-            description={
-              <div className="space-y-2">
-                <p>
-                  No app da Meta, vá em <strong>WhatsApp → Configuração</strong> e em <em>Webhook</em> clique em{" "}
-                  <strong>Editar</strong>. Cole:
-                </p>
-                <div className="space-y-1.5">
-                  <CopyField label="URL de callback" value={WEBHOOK_URL} onCopy={copyToClipboard} />
-                  <CopyField label="Token de verificação" value={WEBHOOK_VERIFY_TOKEN} onCopy={copyToClipboard} />
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Depois clique em <strong>Verificar e salvar</strong> e assine os campos <code>messages</code>,{" "}
-                  <code>message_template_status_update</code>.
-                </p>
-              </div>
-            }
-          />
         </div>
 
         {/* Form */}
