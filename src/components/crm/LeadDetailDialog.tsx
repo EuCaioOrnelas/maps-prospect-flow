@@ -333,6 +333,9 @@ export const LeadDetailDialog = ({
   const [leadFiles, setLeadFiles] = useState<Array<{ id: string; file_name: string; file_type: string; file_url: string | null; source: string; created_at: string }>>([]);
   const [driveConnection, setDriveConnection] = useState<{ is_active: boolean; root_folder_id: string | null } | null>(null);
   const [isUploadingLeadFile, setIsUploadingLeadFile] = useState(false);
+  const [pendingDriveFile, setPendingDriveFile] = useState<File | null>(null);
+  const [pendingDriveFileName, setPendingDriveFileName] = useState('');
+  const [leadDriveFolderUrl, setLeadDriveFolderUrl] = useState<string | null>(null);
 
   // Check if value has unsaved changes
   const hasUnsavedValue = dealValue !== savedValue;
@@ -470,6 +473,14 @@ export const LeadDetailDialog = ({
       .eq('user_id', user.id)
       .maybeSingle();
     setDriveConnection(data);
+    if (lead) {
+      const { data: leadData } = await supabase
+        .from('leads')
+        .select('drive_folder_url')
+        .eq('id', lead.id)
+        .maybeSingle();
+      setLeadDriveFolderUrl(leadData?.drive_folder_url || null);
+    }
   };
 
   const uploadDealAttachment = async (dealId: string, file: File, fileType: string) => {
@@ -490,31 +501,53 @@ export const LeadDetailDialog = ({
     });
   };
 
-  const handleUploadLeadFile = async (file: File) => {
+  const handleUploadLeadFile = async (file: File, customName?: string) => {
     if (!lead || !user) return;
     setIsUploadingLeadFile(true);
     try {
-      const filePath = `${user.id}/${lead.id}/${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from('deal-attachments')
-        .upload(filePath, file);
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from('deal-attachments').getPublicUrl(filePath);
-      await supabase.from('lead_files').insert({
-        lead_id: lead.id,
-        user_id: user.id,
-        file_name: file.name,
-        file_type: 'other',
-        file_url: urlData.publicUrl,
-        file_size: file.size,
-        source: 'local',
-      });
-      toast.success('Arquivo enviado!');
+      // If Drive is connected, upload to Drive
+      if (driveConnection?.is_active) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('lead_id', lead.id);
+        if (customName) formData.append('custom_name', customName);
+
+        const { data, error } = await supabase.functions.invoke('google-drive-upload-lead-file', {
+          body: formData,
+        });
+        if (error) throw error;
+        if (data?.folder_url) setLeadDriveFolderUrl(data.folder_url);
+        toast.success('Arquivo enviado para o Google Drive!');
+      } else {
+        // Fallback: store in Supabase
+        const finalName = customName
+          ? (customName.includes('.') ? customName : `${customName}${file.name.slice(file.name.lastIndexOf('.'))}`)
+          : file.name;
+        const filePath = `${user.id}/${lead.id}/${Date.now()}_${finalName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('deal-attachments')
+          .upload(filePath, file);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from('deal-attachments').getPublicUrl(filePath);
+        await supabase.from('lead_files').insert({
+          lead_id: lead.id,
+          user_id: user.id,
+          file_name: finalName,
+          file_type: 'other',
+          file_url: urlData.publicUrl,
+          file_size: file.size,
+          source: 'local',
+        });
+        toast.success('Arquivo enviado!');
+      }
       loadLeadFiles();
-    } catch {
-      toast.error('Erro ao enviar arquivo');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || 'Erro ao enviar arquivo');
     } finally {
       setIsUploadingLeadFile(false);
+      setPendingDriveFile(null);
+      setPendingDriveFileName('');
     }
   };
 
@@ -1567,9 +1600,24 @@ export const LeadDetailDialog = ({
                     )}
                   </div>
                   {driveConnection?.is_active ? (
-                    <p className="text-xs text-muted-foreground">
-                      Arquivos são salvos automaticamente no Google Drive.
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Arquivos vão para a pasta deste lead em <strong>Wiize CRM</strong> no seu Drive.
+                      </p>
+                      {leadDriveFolderUrl && (
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-8 gap-1.5"
+                        >
+                          <a href={leadDriveFolderUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            Abrir pasta no Drive
+                          </a>
+                        </Button>
+                      )}
+                    </div>
                   ) : (
                     <div className="space-y-2">
                       <p className="text-xs text-muted-foreground">
@@ -1594,7 +1642,10 @@ export const LeadDetailDialog = ({
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) handleUploadLeadFile(file);
+                        if (file) {
+                          setPendingDriveFile(file);
+                          setPendingDriveFileName(file.name.replace(/\.[^.]+$/, ''));
+                        }
                         e.target.value = '';
                       }}
                       disabled={isUploadingLeadFile}
@@ -2107,6 +2158,60 @@ export const LeadDetailDialog = ({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Modal: customizar nome do arquivo antes de enviar */}
+        <Dialog
+          open={!!pendingDriveFile}
+          onOpenChange={(open) => {
+            if (!open && !isUploadingLeadFile) {
+              setPendingDriveFile(null);
+              setPendingDriveFileName('');
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Nome do arquivo</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <p className="text-sm text-muted-foreground">
+                Escolha um nome para encontrar este arquivo facilmente depois.
+                {driveConnection?.is_active && ' Será salvo na pasta do lead no Google Drive.'}
+              </p>
+              <Input
+                value={pendingDriveFileName}
+                onChange={(e) => setPendingDriveFileName(e.target.value)}
+                placeholder="Ex: Proposta comercial v2"
+                disabled={isUploadingLeadFile}
+                autoFocus
+              />
+              {pendingDriveFile && (
+                <p className="text-xs text-muted-foreground">
+                  Original: <span className="font-mono">{pendingDriveFile.name}</span>
+                </p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => { setPendingDriveFile(null); setPendingDriveFileName(''); }}
+                disabled={isUploadingLeadFile}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  if (pendingDriveFile) {
+                    handleUploadLeadFile(pendingDriveFile, pendingDriveFileName.trim() || undefined);
+                  }
+                }}
+                disabled={isUploadingLeadFile}
+              >
+                {isUploadingLeadFile ? 'Enviando...' : 'Enviar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );

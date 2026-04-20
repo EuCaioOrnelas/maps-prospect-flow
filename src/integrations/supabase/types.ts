@@ -1810,6 +1810,8 @@ export type Database = {
           contact_id: string | null
           contact_name: string | null
           created_at: string
+          drive_folder_id: string | null
+          drive_folder_url: string | null
           email: string | null
           enrichment_data: Json | null
           estimated_value: number | null
@@ -1853,6 +1855,8 @@ export type Database = {
           contact_id?: string | null
           contact_name?: string | null
           created_at?: string
+          drive_folder_id?: string | null
+          drive_folder_url?: string | null
           email?: string | null
           enrichment_data?: Json | null
           estimated_value?: number | null
@@ -1896,6 +1900,8 @@ export type Database = {
           contact_id?: string | null
           contact_name?: string | null
           created_at?: string
+          drive_folder_id?: string | null
+          drive_folder_url?: string | null
           email?: string | null
           enrichment_data?: Json | null
           estimated_value?: number | null
