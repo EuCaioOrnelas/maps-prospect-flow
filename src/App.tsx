@@ -180,7 +180,7 @@ const App = () => (
                 <Route path="/crm" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
                 <Route path="/crm/score" element={<ProtectedRoute><CRMScore /></ProtectedRoute>} />
                 <Route path="/crm-coming-soon" element={<ProtectedRoute><CRMComingSoon /></ProtectedRoute>} />
-                <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+                <Route path="/chat" element={<ProtectedRoute><ChatComingSoonGate><Chat /></ChatComingSoonGate></ProtectedRoute>} />
                 <Route path="/agents" element={<ProtectedRoute><AIAgents /></ProtectedRoute>} />
                 <Route path="/agents/reports" element={<ProtectedRoute><AgentReports /></ProtectedRoute>} />
                 <Route path="/fluxos" element={<ProtectedRoute><WhatsAppAutomations /></ProtectedRoute>} />
