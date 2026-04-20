@@ -581,7 +581,7 @@ export default function OpportunitiesManagement() {
 
     return (
       <div className="space-y-4">
-        <div className="space-y-4">
+        <div data-tour="lead-score-summary" className="space-y-4">
           {/* Score Principal */}
           <div data-tour="lead-score-hero" className="bg-primary/5 border border-primary/20 rounded-xl p-5 text-center">
             <p className="text-5xl font-bold text-primary">{lead.ai_score ?? 0}</p>

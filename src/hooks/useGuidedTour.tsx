@@ -288,10 +288,10 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     {
       id: "diagnosis",
       route: "/oportunidades/gestao",
-      target: '[data-tour="lead-score-breakdown"] || [data-tour="lead-score-hero"]',
+      target: '[data-tour="lead-score-summary"]',
       title: "Diagnóstico inteligente",
-      body: "Abrimos um lead de exemplo. Veja a pontuação geral, a quebra por dimensão (estrutura digital, reputação e potencial) e a probabilidade de conversão.",
-      placement: "left",
+      body: "Abrimos um lead de exemplo. Veja o score total (0–100), a quebra por dimensão (estrutura digital, reputação e potencial) e a probabilidade de conversão.",
+      placement: "right",
       injectDemoLead: true,
       waitMs: 120,
       resolveTargetAfterEnter: true,
@@ -301,7 +301,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         if (!dialog) return;
 
         await activateLeadTab('[data-tour="lead-tab-score"]');
-        const summary = await waitForElement<HTMLElement>('[data-tour="lead-score-breakdown"] || [data-tour="lead-score-hero"]', 25, 70);
+        const summary = await waitForElement<HTMLElement>('[data-tour="lead-score-summary"]', 25, 70);
         if (summary) {
           centerElementInScrollArea(summary);
         }
@@ -313,7 +313,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       target: '[data-tour="lead-approach-card"]',
       title: "Abordagem gerada por IA",
       body: "Com base no diagnóstico, a Wiize escreve uma mensagem personalizada para o primeiro contato. Você pode copiar, ajustar ou enviar direto pelo WhatsApp.",
-      placement: "left",
+      placement: "right",
       injectDemoLead: true,
       waitMs: 150,
       resolveTargetAfterEnter: true,
