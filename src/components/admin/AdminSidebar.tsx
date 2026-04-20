@@ -52,7 +52,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Receita",
     icon: DollarSign,
     items: [
-      { title: "Billing PIX", url: "/admin/pix-billing", icon: Receipt },
+      { title: "Billing", url: "/admin/pix-billing", icon: Receipt },
       
       { title: "Assinaturas", url: "/admin/assinaturas", icon: FileText },
       { title: "Churn", url: "/admin/churn", icon: TrendingUp },

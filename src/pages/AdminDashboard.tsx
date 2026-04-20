@@ -628,7 +628,7 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
             {[
               { label: "Usuários", href: "/admin/usuarios", icon: Users },
-              { label: "Billing PIX", href: "/admin/pix-billing", icon: DollarSign },
+              { label: "Billing", href: "/admin/pix-billing", icon: DollarSign },
               { label: "Relatórios", href: "/admin/relatorios", icon: BarChart3 },
               { label: "Score", href: "/admin/user-scoring", icon: Target },
               { label: "Fluxos Email", href: "/admin/email-flows", icon: Zap },
