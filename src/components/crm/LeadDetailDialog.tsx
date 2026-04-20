@@ -336,6 +336,7 @@ export const LeadDetailDialog = ({
   const [pendingDriveFile, setPendingDriveFile] = useState<File | null>(null);
   const [pendingDriveFileName, setPendingDriveFileName] = useState('');
   const [leadDriveFolderUrl, setLeadDriveFolderUrl] = useState<string | null>(null);
+  const [driveQuotaError, setDriveQuotaError] = useState(false);
 
   // Check if value has unsaved changes
   const hasUnsavedValue = dealValue !== savedValue;
