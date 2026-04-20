@@ -43,6 +43,13 @@ function formatPrice(cents: number): string {
   return `R$ ${(cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`;
 }
 
+// PIX is single payment per cycle: monthly = "R$ X/mês", annual = "R$ X/ano"
+function formatPlanPrice(cents: number, billingPeriod: string | null): string {
+  if (!cents) return "—";
+  const suffix = billingPeriod === "annual" ? "/ano" : "/mês";
+  return `${formatPrice(cents)}${suffix}`;
+}
+
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -89,7 +96,7 @@ Deno.serve(async (req) => {
 
     const { data: targetUsers, error } = await supabaseClient
       .from("profiles")
-      .select("id, email, name, plan, subscription_current_period_end, is_blocked, subscription_price_cents")
+      .select("id, email, name, plan, billing_period, subscription_current_period_end, is_blocked, subscription_price_cents")
       .neq("plan", "free")
       .not("subscription_current_period_end", "is", null)
       .lt("subscription_current_period_end", sevenDaysFromNow.toISOString())
@@ -160,7 +167,7 @@ Deno.serve(async (req) => {
         const planName = PLAN_NAMES[user.plan] || user.plan;
         // Use user's locked-in price (grandfathering), fallback to current prices
         const userPriceCents = user.subscription_price_cents || PLAN_PRICES_CENTS[user.plan] || 0;
-        const planPrice = formatPrice(userPriceCents);
+        const planPrice = formatPlanPrice(userPriceCents, user.billing_period);
         const priceNumber = String(Math.round(userPriceCents / 100));
 
         // Build checkout URL pointing to our own /checkout-pix page
