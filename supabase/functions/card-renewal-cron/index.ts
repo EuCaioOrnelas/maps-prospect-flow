@@ -25,8 +25,38 @@ const PLAN_PRICES_CENTS: Record<string, number> = {
   scale: 89700,
 };
 
-function formatPrice(cents: number): string {
+function formatBRL(cents: number): string {
   return `R$ ${(cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`;
+}
+
+// Builds amount label based on billing period & installments.
+// Annual on card => "R$ 2.964 em 12× R$ 247"
+// Monthly => "R$ 247/mês"
+// Annual single (rare) => "R$ 2.964/ano"
+function formatPlanPrice(totalCents: number, billingPeriod: string | null, installments?: number | null): string {
+  if (!totalCents) return "—";
+  if (billingPeriod === "annual") {
+    const inst = installments && installments > 1 ? installments : 12;
+    const perInstallment = Math.round(totalCents / inst);
+    return `${formatBRL(totalCents)} em ${inst}× ${formatBRL(perInstallment)}`;
+  }
+  return `${formatBRL(totalCents)}/mês`;
+}
+
+async function fetchInstallmentsFromAsaas(subscriptionId: string): Promise<number | null> {
+  const apiKey = Deno.env.get("ASAAS_API_KEY");
+  if (!apiKey || !subscriptionId) return null;
+  try {
+    const res = await fetch(`https://api.asaas.com/v3/subscriptions/${subscriptionId}`, {
+      headers: { "access_token": apiKey, "Content-Type": "application/json" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    // Asaas returns "maxPayments" or installmentCount on credit card subscriptions
+    return data?.maxPayments || data?.installmentCount || data?.creditCard?.installmentCount || null;
+  } catch {
+    return null;
+  }
 }
 
 function formatDate(dateStr: string): string {
@@ -70,7 +100,7 @@ Deno.serve(async (req) => {
     // Target: paid users on credit card (Asaas) within renewal window
     const { data: targetUsers, error } = await supabase
       .from("profiles")
-      .select("id, email, name, plan, subscription_current_period_end, subscription_price_cents, payment_provider, asaas_subscription_id")
+      .select("id, email, name, plan, billing_period, subscription_current_period_end, subscription_price_cents, payment_provider, asaas_subscription_id")
       .neq("plan", "free")
       .not("subscription_current_period_end", "is", null)
       .lt("subscription_current_period_end", sevenDaysFromNow.toISOString())
@@ -107,7 +137,10 @@ Deno.serve(async (req) => {
 
       const planName = PLAN_NAMES[user.plan] || user.plan;
       const userPriceCents = user.subscription_price_cents || PLAN_PRICES_CENTS[user.plan] || 0;
-      const planPrice = formatPrice(userPriceCents);
+      const installments = user.billing_period === "annual"
+        ? (await fetchInstallmentsFromAsaas(user.asaas_subscription_id)) || 12
+        : null;
+      const planPrice = formatPlanPrice(userPriceCents, user.billing_period, installments);
       const expiryDate = formatDate(user.subscription_current_period_end);
       const checkoutUrl = "https://wiize.com.br/minha-assinatura";
 
