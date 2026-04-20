@@ -101,6 +101,10 @@ export function GuidedTour() {
   const lastScrolledStepRef = useRef<string | null>(null);
   const targetEverFoundRef = useRef<string | null>(null);
   const popupRect = rect ?? popupAnchorRect;
+  // While waiting for the target to appear, we hide the SPOTLIGHT only — the
+  // popup card stays visible (centered as a fallback) so the user always sees
+  // the tour content. This prevents the "tour disappears" flicker on steps
+  // whose target is opened by onEnter (e.g. lead detail modal).
   const isWaitingForTarget = !!step?.target && hideOnLoad && !rect && targetEverFoundRef.current !== step?.id;
   // Once the target was found in this step, keep using a rect so the spotlight
   // never collapses back into the dark fallback overlay (which causes flicker).
@@ -270,7 +274,7 @@ export function GuidedTour() {
 
   // Compute popup position — auto-flip so the card never overlaps the spotlight border
   let popupStyle: React.CSSProperties = {};
-  if (!popupRect || step.placement === "center") {
+  if (!popupRect || step.placement === "center" || isWaitingForTarget) {
     popupStyle = {
       top: "50%",
       left: "50%",
@@ -370,8 +374,9 @@ export function GuidedTour() {
     popupStyle = computePlacementStyle(resolvedPlacement);
   }
 
-  // Fallback dark overlay (used when there is no spotlight target — e.g. center step)
-  const showFallbackOverlay = !spot && !isWaitingForTarget;
+  // Fallback dark overlay (used when there is no spotlight target — e.g. center step
+  // OR while we're still waiting for a target inside a modal to mount).
+  const showFallbackOverlay = !spot;
 
   return createPortal(
     <div
@@ -412,7 +417,7 @@ export function GuidedTour() {
         />
       )}
 
-      {!isWaitingForTarget && (isLast ? (
+      {(isLast ? (
         <FinalStep title={step.title} body={step.body} onFinish={finish} />
       ) : step.id === "welcome" ? (
         <WelcomeStep title={step.title} body={step.body} onStart={next} />
