@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, X, Maximize2, Minimize2, Play } from "lucide-react";
+import { ArrowRight, X, Maximize2, Minimize2, Play, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
+import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 
 interface VideoModalProps {
   open: boolean;
