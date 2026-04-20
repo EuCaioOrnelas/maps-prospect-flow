@@ -611,15 +611,16 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
                 <CollapsibleContent>
                   <div className="p-3 rounded-lg bg-muted/50 border border-border mt-1">
                     <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Inclua o <strong>código do país</strong> (ex: <code>55</code> para Brasil)</li>
-                      <li>Inclua o <strong>DDD</strong> + número completo com 9 dígitos</li>
-                      <li>Formato: <code>5511999999999</code> (13 dígitos para BR)</li>
+                      <li><strong>Obrigatório:</strong> incluir o código do país (DDI). Ex: <code>55</code> para Brasil</li>
+                      <li>Inclua o <strong>DDD</strong> + número completo com 9 dígitos (BR)</li>
+                      <li>Formato BR: <code>5511999999999</code> (12 ou 13 dígitos)</li>
+                      <li>Formato internacional E.164: 12 a 15 dígitos no total</li>
                       <li>Espaços, traços e parênteses são removidos automaticamente</li>
                       <li>Separe por <strong>linha</strong>, <strong>vírgula</strong> ou <strong>ponto-e-vírgula</strong></li>
-                      <li>Números com menos de 10 dígitos serão ignorados</li>
+                      <li>Números sem DDI ou fora do padrão serão ignorados</li>
                     </ul>
                     <p className="text-xs text-muted-foreground mt-2 italic">
-                      ⚠️ A validação verifica apenas o formato do número. O status de opt-in é verificado pela Meta no momento do envio.
+                      ⚠️ A validação verifica apenas o formato. O status de opt-in é verificado pela Meta no momento do envio.
                     </p>
                   </div>
                 </CollapsibleContent>
