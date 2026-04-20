@@ -17,7 +17,7 @@ import {
   KeyRound,
   Hash,
   Phone,
-  Webhook,
+  Clock,
 } from "lucide-react";
 import type { WabaConnection } from "@/pages/MetaCampaigns";
 
