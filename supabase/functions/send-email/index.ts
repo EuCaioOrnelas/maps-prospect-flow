@@ -390,17 +390,19 @@ Deno.serve(async (req) => {
     let html: string;
 
     if (email_type === "SUBSCRIPTION_RENEWAL") {
-      // Fetch template from DB based on stage
+      // Fetch template from DB based on stage + payment method
       const stage = payload.stage as string || "D-5";
+      const paymentMethod = (payload.payment_method as string) || "pix";
       const { data: dbTemplate } = await supabase
         .from("renewal_email_templates")
         .select("subject, title, content, cta_text")
         .eq("stage", stage)
+        .eq("payment_method", paymentMethod)
         .maybeSingle();
 
       if (!dbTemplate) {
         return new Response(
-          JSON.stringify({ error: `No renewal template found for stage: ${stage}` }),
+          JSON.stringify({ error: `No renewal template found for stage: ${stage} (${paymentMethod})` }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }

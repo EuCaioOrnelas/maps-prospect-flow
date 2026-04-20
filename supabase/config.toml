@@ -30,6 +30,9 @@ verify_jwt = false
 [functions.pix-renewal-cron]
 verify_jwt = false
 
+[functions.card-renewal-cron]
+verify_jwt = false
+
 [functions.asaas-webhook]
 verify_jwt = false
 

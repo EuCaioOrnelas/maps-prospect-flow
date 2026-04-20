@@ -230,6 +230,7 @@ Deno.serve(async (req) => {
               checkout_url: checkoutUrl,
               user_name: user.name || "Cliente",
               stage: currentStage,
+              payment_method: "pix",
             },
             idempotency_key: `renewal_${user.id}_${currentStage}_${user.subscription_current_period_end}`,
           },
