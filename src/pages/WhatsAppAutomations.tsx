@@ -140,16 +140,15 @@ export default function WhatsAppAutomations() {
     },
   });
 
-  const handleUseTemplate = useCallback(async (tpl: typeof flowTemplates[0]) => {
-    setShowTemplatesDialog(false);
-    const template = getFlowTemplate(tpl.id);
-    if (!template) {
-      // Fallback to AI if no hardcoded template
-      navigate(`/fluxos/novo?prompt=${encodeURIComponent(tpl.prompt)}`);
-      return;
-    }
+  const createFromTemplate = useMutation({
+    mutationFn: async (tpl: typeof flowTemplates[0]) => {
+      const template = getFlowTemplate(tpl.id);
+      if (!template) {
+        // Fallback to AI if no hardcoded template
+        navigate(`/fluxos/novo?prompt=${encodeURIComponent(tpl.prompt)}`);
+        return null;
+      }
 
-    try {
       // Create the flow
       const { data: flow, error: flowError } = await supabase
         .from("wa_automation_flows")
@@ -189,13 +188,27 @@ export default function WhatsAppAutomations() {
         if (error) throw error;
       }
 
-      toast.success(`Template "${tpl.name}" criado!`);
-      navigate(`/fluxos/${flow.id}`);
-    } catch (err) {
+      return { flow, name: tpl.name };
+    },
+    onSuccess: (result) => {
+      if (!result) return;
+      queryClient.invalidateQueries({ queryKey: ["wa-automation-flows"] });
+      toast.success(`Template "${result.name}" criado!`);
+      navigate(`/fluxos/${result.flow.id}`);
+    },
+    onError: (err) => {
       console.error(err);
       toast.error("Erro ao criar fluxo a partir do template");
-    }
-  }, [user, navigate]);
+    },
+  });
+
+  const handleUseTemplate = useCallback((tpl: typeof flowTemplates[0]) => {
+    setShowTemplatesDialog(false);
+    const loadingToast = toast.loading(`Criando "${tpl.name}"...`);
+    createFromTemplate.mutate(tpl, {
+      onSettled: () => toast.dismiss(loadingToast),
+    });
+  }, [createFromTemplate]);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
