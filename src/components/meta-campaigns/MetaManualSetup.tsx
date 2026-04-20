@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,12 +31,60 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra }: MetaManual
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Draft persistido por usuário para não perder dados ao sair/voltar da página
+  const draftKey = user ? `meta-manual-setup-draft:${user.id}:${isAddingExtra ? "extra" : "primary"}` : null;
+  const hydratedRef = useRef(false);
+
   const [accessToken, setAccessToken] = useState("");
   const [wabaId, setWabaId] = useState("");
   const [phoneNumberId, setPhoneNumberId] = useState("");
   const [nickname, setNickname] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Hidratar do localStorage uma vez quando o user estiver disponível
+  useEffect(() => {
+    if (!draftKey || hydratedRef.current) return;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        if (draft.accessToken) setAccessToken(draft.accessToken);
+        if (draft.wabaId) setWabaId(draft.wabaId);
+        if (draft.phoneNumberId) setPhoneNumberId(draft.phoneNumberId);
+        if (draft.nickname) setNickname(draft.nickname);
+      }
+    } catch {
+      // ignore parse errors
+    }
+    hydratedRef.current = true;
+  }, [draftKey]);
+
+  // Salvar draft a cada alteração (após hidratação)
+  useEffect(() => {
+    if (!draftKey || !hydratedRef.current) return;
+    const payload = { accessToken, wabaId, phoneNumberId, nickname };
+    const isEmpty = !accessToken && !wabaId && !phoneNumberId && !nickname;
+    try {
+      if (isEmpty) {
+        localStorage.removeItem(draftKey);
+      } else {
+        localStorage.setItem(draftKey, JSON.stringify(payload));
+      }
+    } catch {
+      // ignore quota errors
+    }
+  }, [draftKey, accessToken, wabaId, phoneNumberId, nickname]);
+
+  const clearDraft = () => {
+    if (draftKey) {
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {
+        // ignore
+      }
+    }
+  };
 
   const copyToClipboard = (value: string, label: string) => {
     navigator.clipboard.writeText(value);
@@ -126,6 +174,8 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra }: MetaManual
         title: "Número conectado!",
         description: `${displayPhone || cleanPhone} vinculado com sucesso.`,
       });
+
+      clearDraft();
 
       onConnectionSaved({
         id: (connection as any).id,
