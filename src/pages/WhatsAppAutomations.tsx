@@ -17,7 +17,7 @@ import {
   Plus, Sparkles, Workflow, MoreVertical, Play, Pause, Archive,
   Trash2, Copy, FlaskConical, Search, ShoppingCart, HeadphonesIcon,
   Users, FileText, MessageSquare, Megaphone, GraduationCap, Building2,
-  Stethoscope, Dumbbell, Car, Utensils, BarChart3, Zap, Clock,
+  Stethoscope, Dumbbell, Car, Utensils, BarChart3, Zap, Clock, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
