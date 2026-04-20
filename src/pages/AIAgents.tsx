@@ -149,9 +149,14 @@ export default function AIAgents() {
     [numbers]
   );
 
-  // Check if user has access to AI Agents (paid plans only)
+  // Check if user has access to AI Agents
+  // Growth/Scale: full access. Start: only legacy (grandfathered) users.
   const userPlan = profile?.plan?.toLowerCase() || 'free';
-  const hasAccess = ['start', 'growth', 'scale'].includes(userPlan);
+  const isGrandfathered = (profile as any)?.admin_assigned_plan === true;
+  const hasAccess =
+    userPlan === 'growth' ||
+    userPlan === 'scale' ||
+    (userPlan === 'start' && isGrandfathered);
 
   const handleCloseBetaWarning = () => {
     dismissBetaWarning();
