@@ -205,6 +205,25 @@ serve(async (req) => {
     const uploadData = await uploadRes.json();
     if (!uploadRes.ok) {
       console.error("Upload failed:", uploadData);
+
+      // Detect Google Drive storage quota exceeded
+      const reason = uploadData?.error?.errors?.[0]?.reason || "";
+      const message = uploadData?.error?.message || "";
+      const isQuotaError =
+        reason === "storageQuotaExceeded" ||
+        reason === "quotaExceeded" ||
+        /quota|storage.*full|exceeded/i.test(message);
+
+      if (isQuotaError) {
+        return new Response(JSON.stringify({
+          error: "drive_storage_full",
+          message: "Seu Google Drive está sem espaço disponível.",
+          details: message,
+        }), {
+          status: 507, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       return new Response(JSON.stringify({ error: "Falha no upload para o Drive", details: uploadData }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
