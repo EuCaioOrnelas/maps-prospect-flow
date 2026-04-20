@@ -101,6 +101,7 @@ export function GuidedTour() {
   const lastScrolledStepRef = useRef<string | null>(null);
   const targetEverFoundRef = useRef<string | null>(null);
   const popupRect = rect ?? popupAnchorRect;
+  const isWaitingForTarget = !!step?.target && hideOnLoad && !rect && targetEverFoundRef.current !== step?.id;
   // Once the target was found in this step, keep using a rect so the spotlight
   // never collapses back into the dark fallback overlay (which causes flicker).
   const spotlightRect =
