@@ -2158,6 +2158,60 @@ export const LeadDetailDialog = ({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Modal: customizar nome do arquivo antes de enviar */}
+        <Dialog
+          open={!!pendingDriveFile}
+          onOpenChange={(open) => {
+            if (!open && !isUploadingLeadFile) {
+              setPendingDriveFile(null);
+              setPendingDriveFileName('');
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Nome do arquivo</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <p className="text-sm text-muted-foreground">
+                Escolha um nome para encontrar este arquivo facilmente depois.
+                {driveConnection?.is_active && ' Será salvo na pasta do lead no Google Drive.'}
+              </p>
+              <Input
+                value={pendingDriveFileName}
+                onChange={(e) => setPendingDriveFileName(e.target.value)}
+                placeholder="Ex: Proposta comercial v2"
+                disabled={isUploadingLeadFile}
+                autoFocus
+              />
+              {pendingDriveFile && (
+                <p className="text-xs text-muted-foreground">
+                  Original: <span className="font-mono">{pendingDriveFile.name}</span>
+                </p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => { setPendingDriveFile(null); setPendingDriveFileName(''); }}
+                disabled={isUploadingLeadFile}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  if (pendingDriveFile) {
+                    handleUploadLeadFile(pendingDriveFile, pendingDriveFileName.trim() || undefined);
+                  }
+                }}
+                disabled={isUploadingLeadFile}
+              >
+                {isUploadingLeadFile ? 'Enviando...' : 'Enviar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
