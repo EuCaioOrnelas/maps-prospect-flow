@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, History, Settings, Loader2, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, BookOpen, FlaskConical } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +49,8 @@ const MetaCampaigns = () => {
   const [editToken, setEditToken] = useState("");
   const [showTokenField, setShowTokenField] = useState(false);
   const [showAddNumber, setShowAddNumber] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [expiredTokenIds, setExpiredTokenIds] = useState<Set<string>>(new Set());
   const [showExpiredAlert, setShowExpiredAlert] = useState(false);
@@ -224,12 +227,12 @@ const MetaCampaigns = () => {
   };
 
   const handleDeleteConnection = async (connId: string) => {
+    setDeleting(true);
     try {
       // Clean FK dependencies first: chat_conversations and meta_campaigns reference this connection
       await Promise.allSettled([
         supabase.from("chat_messages").delete().in(
           "conversation_id",
-          // Get all conversation IDs for this connection first
           (await supabase.from("chat_conversations").select("id").eq("waba_connection_id", connId)).data?.map((c: any) => c.id) || []
         ),
       ]);
@@ -247,11 +250,14 @@ const MetaCampaigns = () => {
         next.delete(connId);
         return next;
       });
+      setPendingDeleteId(null);
       setEditingConn(null);
-      toast({ title: "Número removido!" });
+      toast({ title: "Número removido!", description: "A conexão foi excluída permanentemente." });
     } catch (err: any) {
       console.error("[MetaCampaigns] Delete connection error:", err);
       toast({ title: "Erro ao remover", description: err?.message || "Tente novamente", variant: "destructive" });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -547,7 +553,7 @@ const MetaCampaigns = () => {
                 <Button
                   variant="destructive"
                   size="icon"
-                  onClick={() => handleDeleteConnection(editingConn.id)}
+                  onClick={() => setPendingDeleteId(editingConn.id)}
                 >
                   <Trash2 size={14} />
                 </Button>
@@ -556,6 +562,35 @@ const MetaCampaigns = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!pendingDeleteId} onOpenChange={(open) => !open && !deleting && setPendingDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle size={18} className="text-destructive" />
+              Excluir este número?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. Todas as conversas, mensagens e campanhas vinculadas a este número serão removidas e não poderão ser recuperadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                if (pendingDeleteId) handleDeleteConnection(pendingDeleteId);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 size={14} className="animate-spin mr-2" /> : <Trash2 size={14} className="mr-2" />}
+              {deleting ? "Excluindo..." : "Excluir definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Expired Token Help Dialog */}
       <Dialog open={showExpiredAlert} onOpenChange={setShowExpiredAlert}>
