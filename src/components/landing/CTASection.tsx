@@ -57,7 +57,7 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
             </>
           ) : (
             <>
-              <Link to="/signup" onClick={onSignupClick}>
+              <Link to="/signup/escolher-plano" onClick={onSignupClick}>
                 <Button variant="hero" size="xl" className="group rounded-full">
                   Testar Grátis por 7 Dias
                   <ArrowRight className="group-hover:translate-x-1 transition-transform" />

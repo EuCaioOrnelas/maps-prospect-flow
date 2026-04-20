@@ -5,7 +5,7 @@ import { toast } from "sonner";
  * da landing page ficam desabilitados e exibem aviso de indisponibilidade.
  * Defina como false para reativar o cadastro de teste.
  */
-export const TRIAL_DISABLED = true;
+export const TRIAL_DISABLED = false;
 
 export const TRIAL_DISABLED_MESSAGE = "Teste grátis indisponível no momento";
 export const TRIAL_DISABLED_DESCRIPTION =

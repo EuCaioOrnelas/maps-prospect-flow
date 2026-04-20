@@ -111,7 +111,7 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
               Teste grátis em breve
             </Button>
           ) : (
-            <Link to="/signup" onClick={() => { onSignupClick?.(); onOpenChange(false); }}>
+            <Link to="/signup/escolher-plano" onClick={() => { onSignupClick?.(); onOpenChange(false); }}>
               <Button variant="hero" size="lg" className="group rounded-full text-sm sm:text-base px-8 sm:px-10 h-10 sm:h-11">
                 Testar grátis por 7 dias
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
