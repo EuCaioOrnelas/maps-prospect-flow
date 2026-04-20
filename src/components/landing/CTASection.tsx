@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap } from "lucide-react";
+import { ArrowRight, Zap, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 
 interface CTASectionProps {
   onSignupClick?: () => void;
@@ -37,15 +38,36 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
             Teste a Wiize gratuitamente por 7 dias com acesso completo.
             Captação, IA, CRM, automações e campanhas — tudo liberado sem cartão.
           </p>
-          <Link to="/signup" onClick={onSignupClick}>
-            <Button variant="hero" size="xl" className="group rounded-full">
-              Testar Grátis por 7 Dias
-              <ArrowRight className="group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
-          <p className="text-sm text-muted-foreground mt-6">
-            Sem cartão de crédito • Acesso completo • Cancele quando quiser
-          </p>
+          {TRIAL_DISABLED ? (
+            <>
+              <Button
+                variant="hero"
+                size="xl"
+                className="group rounded-full opacity-60 cursor-not-allowed"
+                disabled
+                aria-disabled="true"
+                onClick={(e) => { e.preventDefault(); notifyTrialDisabled(); }}
+              >
+                <Lock className="mr-1" size={18} />
+                Teste grátis indisponível
+              </Button>
+              <p className="text-sm text-muted-foreground mt-6 max-w-md mx-auto">
+                Estamos aprimorando a experiência. O teste gratuito será liberado em breve.
+              </p>
+            </>
+          ) : (
+            <>
+              <Link to="/signup" onClick={onSignupClick}>
+                <Button variant="hero" size="xl" className="group rounded-full">
+                  Testar Grátis por 7 Dias
+                  <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <p className="text-sm text-muted-foreground mt-6">
+                Sem cartão de crédito • Acesso completo • Cancele quando quiser
+              </p>
+            </>
+          )}
         </div>
       </div>
     </section>
