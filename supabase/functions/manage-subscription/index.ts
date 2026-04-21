@@ -465,7 +465,9 @@ serve(async (req) => {
         subDetail.nextDueDate || profile.subscription_current_period_end,
       );
 
-
+      return new Response(JSON.stringify({
+        success: true,
+        message: "Assinatura cancelada com sucesso",
         cancellationDetails: {
           cancelledAt: new Date().toISOString(),
           lastChargeDate: lastPaidPayment?.paymentDate || lastPaidPayment?.dueDate || null,
