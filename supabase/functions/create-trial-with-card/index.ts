@@ -229,8 +229,10 @@ serve(async (req) => {
       mobilePhone: phoneInfo.mobilePhone,
       phone: phoneInfo.phone,
       postalCode: formattedPostalCode,
+      address: address || undefined,
       addressNumber: addressMeta.addressNumber,
       complement: addressComplement || undefined,
+      province: neighborhood || undefined,
       notificationDisabled: false,
     };
 
@@ -252,6 +254,30 @@ serve(async (req) => {
       if (!customerUpdateRes.ok || customerUpdateJson.errors) {
         logStep("Customer update failed", customerUpdateJson);
         throw new Error(`Erro ao atualizar cliente: ${JSON.stringify(customerUpdateJson.errors || customerUpdateJson)}`);
+      }
+
+      const customerNeedsReplacement = !findJson.data[0]?.postalCode || findJson.data[0]?.postalCode !== formattedPostalCode;
+      if (customerNeedsReplacement) {
+        const replacementCustomerRes = await fetch(`${ASAAS_API}/customers`, {
+          method: "POST",
+          headers: {
+            "access_token": apiKey,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: JSON.stringify({
+            ...customerPayload,
+            externalReference: `${resolvedUserId || customerData.email}-${Date.now()}`,
+          }),
+        });
+        const replacementCustomerJson = await replacementCustomerRes.json();
+
+        if (!replacementCustomerRes.ok || replacementCustomerJson.errors) {
+          logStep("Replacement customer creation failed", replacementCustomerJson);
+        } else {
+          customerId = replacementCustomerJson.id;
+          logStep("Replacement customer created", { customerId });
+        }
       }
     } else {
       const customerRes = await fetch(`${ASAAS_API}/customers`, {
