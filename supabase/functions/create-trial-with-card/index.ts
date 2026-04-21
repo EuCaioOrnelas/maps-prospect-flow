@@ -176,7 +176,7 @@ serve(async (req) => {
         addressComplement: addressComplement || undefined,
         province: neighborhood,
         city: city || "São Paulo",
-        state: state || "SP",
+        state: normalizeUF(state),
         phone: phone,
         mobilePhone: phone,
       },
