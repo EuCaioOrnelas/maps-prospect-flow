@@ -360,6 +360,8 @@ function SignupWithCardInner() {
           trial_will_charge_at: new Date(trialRes.nextDueDate).toISOString(),
           trial_auto_charge_cancelled: false,
           payment_provider: "stripe",
+          trial_asaas_subscription_id: trialRes.subscriptionId,
+          trial_asaas_customer_id: trialRes.customerId,
           cpf: cleanTaxId,
           phone: phone || null,
           postal_code: postalCode.replace(/\D/g, "") || null,
