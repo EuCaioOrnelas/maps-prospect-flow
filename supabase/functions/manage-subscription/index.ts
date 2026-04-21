@@ -12,6 +12,53 @@ const logStep = (step: string, details?: any) => {
   console.log(`[MANAGE-SUB] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
+async function dispatchCancellationEmails(
+  supabaseClient: any,
+  userId: string,
+  email: string,
+  provider: string,
+  activeUntil: string | null,
+) {
+  try {
+    const { data: feedback } = await supabaseClient
+      .from("cancellation_feedback")
+      .select("cancellation_reason, usage_level, additional_comments")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const { data: prof } = await supabaseClient
+      .from("profiles")
+      .select("name, plan")
+      .eq("id", userId)
+      .maybeSingle();
+
+    await fetch(
+      `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-cancellation-emails`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({
+          userEmail: email,
+          userName: prof?.name || null,
+          plan: prof?.plan || null,
+          activeUntil,
+          provider,
+          reason: feedback?.cancellation_reason || null,
+          usageLevel: feedback?.usage_level || null,
+          comments: feedback?.additional_comments || null,
+        }),
+      },
+    );
+  } catch (e) {
+    console.log("[MANAGE-SUB] Email dispatch failed:", String(e));
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -182,6 +229,8 @@ serve(async (req) => {
           active_until: activeUntil,
           notes: `Cancelamento Stripe via portal. Acesso até ${activeUntil}.`,
         });
+
+        await dispatchCancellationEmails(supabaseClient, userId, email, "stripe", activeUntil);
 
         return new Response(
           JSON.stringify({
@@ -362,9 +411,8 @@ serve(async (req) => {
             notes: `Cancelamento PIX Automático. Valor: R$${pixAuth.value || "N/A"}`,
           });
 
-          return new Response(JSON.stringify({
-            success: true,
-            message: "PIX Automático cancelado. Seu plano permanece ativo até o final do período atual.",
+          await dispatchCancellationEmails(supabaseClient, userId, email, "asaas", profile.subscription_current_period_end);
+
             cancellationDetails: {
               cancelledAt: new Date().toISOString(),
               activeUntil: profile.subscription_current_period_end,
@@ -406,9 +454,15 @@ serve(async (req) => {
         notes: `Cancelamento da assinatura ${subDetail.description || targetSubId}. Ciclo: ${subDetail.cycle || "N/A"}. Valor: ${subDetail.value || "N/A"}`,
       });
 
-      return new Response(JSON.stringify({
-        success: true,
-        message: "Assinatura cancelada. Seu plano permanece ativo até o final do período atual.",
+      await dispatchCancellationEmails(
+        supabaseClient,
+        userId,
+        email,
+        "asaas",
+        subDetail.nextDueDate || profile.subscription_current_period_end,
+      );
+
+
         cancellationDetails: {
           cancelledAt: new Date().toISOString(),
           lastChargeDate: lastPaidPayment?.paymentDate || lastPaidPayment?.dueDate || null,
