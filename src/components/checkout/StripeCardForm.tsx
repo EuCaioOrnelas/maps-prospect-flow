@@ -46,12 +46,27 @@ interface Props {
 }
 
 const elementOptions: StripeCardNumberElementOptions = {
+  placeholder: "",
   style: {
     base: {
       fontSize: "15px",
       color: "hsl(var(--foreground))",
       fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
       "::placeholder": { color: "hsl(var(--muted-foreground))" },
+      iconColor: "hsl(var(--primary))",
+    },
+    invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
+  },
+};
+
+const expiryOptions: StripeCardNumberElementOptions = {
+  placeholder: "MM / AA",
+  style: {
+    base: {
+      fontSize: "15px",
+      color: "hsl(var(--foreground))",
+      fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+      "::placeholder": { color: "hsl(var(--muted-foreground) / 0.4)" },
       iconColor: "hsl(var(--primary))",
     },
     invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
@@ -126,7 +141,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
               <Calendar className="h-3 w-3 text-muted-foreground" /> Validade
             </Label>
             <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
-              <CardExpiryElement options={elementOptions} className="w-full" />
+              <CardExpiryElement options={expiryOptions} className="w-full" />
             </div>
           </div>
           <div className="space-y-1.5">
