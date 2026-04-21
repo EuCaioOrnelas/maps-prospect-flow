@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.score-opportunity]
 verify_jwt = false
+
+[functions.send-cancellation-emails]
+verify_jwt = false

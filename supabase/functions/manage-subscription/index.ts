@@ -183,6 +183,56 @@ serve(async (req) => {
           notes: `Cancelamento Stripe via portal. Acesso até ${activeUntil}.`,
         });
 
+        await supabaseClient.from("subscription_cancellations").insert({
+          user_id: userId,
+          provider: "stripe",
+          subscription_id: targetSub.id,
+          billing_type: "CREDIT_CARD",
+          cancelled_at: new Date().toISOString(),
+          active_until: activeUntil,
+          notes: `Cancelamento Stripe via portal. Acesso até ${activeUntil}.`,
+        });
+
+        // Fire-and-forget cancellation emails (user + admin)
+        try {
+          const { data: feedback } = await supabaseClient
+            .from("cancellation_feedback")
+            .select("cancellation_reason, usage_level, additional_comments")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          const { data: prof } = await supabaseClient
+            .from("profiles")
+            .select("name, plan")
+            .eq("id", userId)
+            .maybeSingle();
+
+          await fetch(
+            `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-cancellation-emails`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({
+                userEmail: email,
+                userName: prof?.name || null,
+                plan: prof?.plan || profile.plan,
+                activeUntil,
+                provider: "stripe",
+                reason: feedback?.cancellation_reason || null,
+                usageLevel: feedback?.usage_level || null,
+                comments: feedback?.additional_comments || null,
+              }),
+            },
+          );
+        } catch (e) {
+          logStep("Email dispatch failed", { error: String(e) });
+        }
+
         return new Response(
           JSON.stringify({
             success: true,
