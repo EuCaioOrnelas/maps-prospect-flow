@@ -1,7 +1,3 @@
-// Cria assinatura no Asaas com cartão e cobrança agendada para D+7 (trial gratuito).
-// Espelha 1:1 o payload validado em `create-asaas-card-checkout`, alterando apenas
-// `nextDueDate` (D+7 em vez de D+1) e o ciclo (sempre MENSAL após o trial).
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -13,13 +9,12 @@ const corsHeaders = {
 
 const ASAAS_API = "https://api.asaas.com/v3";
 
-const logStep = (step: string, details?: unknown) => {
-  console.log(`[TRIAL-WITH-CARD] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
+const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number }> = {
+  start: { name: "Wiize Start", priceMonthly: 296.0 },
+  growth: { name: "Wiize Growth", priceMonthly: 696.0 },
+  scale: { name: "Wiize Scale", priceMonthly: 1496.0 },
 };
 
-// Asaas exige sigla UF de 2 letras em `creditCardHolderInfo.state`.
-// O ViaCEP devolve o nome por extenso ("Paraná") em `data.estado`, então
-// normalizamos para a sigla aqui no backend.
 const UF_BY_NAME: Record<string, string> = {
   "acre": "AC", "alagoas": "AL", "amapa": "AP", "amapá": "AP", "amazonas": "AM",
   "bahia": "BA", "ceara": "CE", "ceará": "CE", "distrito federal": "DF",
@@ -32,19 +27,78 @@ const UF_BY_NAME: Record<string, string> = {
   "sao paulo": "SP", "são paulo": "SP", "sergipe": "SE", "tocantins": "TO",
 };
 
+const logStep = (step: string, details?: unknown) => {
+  console.log(`[TRIAL-WITH-CARD] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
+};
+
 function toUF(input: string | undefined | null): string {
-  const v = (input || "").trim();
-  if (!v) return "";
-  if (v.length === 2) return v.toUpperCase();
-  return UF_BY_NAME[v.toLowerCase()] || v.slice(0, 2).toUpperCase();
+  const value = (input || "").trim();
+  if (!value) return "";
+  if (value.length === 2) return value.toUpperCase();
+  return UF_BY_NAME[value.toLowerCase()] || value.slice(0, 2).toUpperCase();
 }
 
-// Após o trial a cobrança é sempre mensal — confirmado pelo product
-const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number }> = {
-  start: { name: "Wiize Start", priceMonthly: 296.0 },
-  growth: { name: "Wiize Growth", priceMonthly: 696.0 },
-  scale: { name: "Wiize Scale", priceMonthly: 1496.0 },
-};
+function normalizeAddressNumber(input: string | undefined | null) {
+  const value = (input || "").trim();
+  const hasDigits = /\d/.test(value);
+  const isWithoutNumber = /^s\/?n$/i.test(value);
+
+  return {
+    addressNumber: value ? (hasDigits || isWithoutNumber ? value : "S/N") : "S/N",
+    extraComplement: !hasDigits && value && !isWithoutNumber ? value : "",
+  };
+}
+
+function buildFriendlyPaymentError(errorPayload: any) {
+  const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+  const firstErr = errors[0];
+  const code = String(firstErr?.code || "").toLowerCase();
+  const descriptions = errors.map((err: { description?: string }) => err.description || "").join(" | ");
+  let friendly = firstErr?.description || JSON.stringify(errorPayload);
+
+  if (/cidade do titular|estado de resid[êe]ncia do titular|invalid_creditcard_holderinfo|addressnumber|addresscomplement|postalcode|cep|endere[cç]o/i.test(descriptions)) {
+    friendly =
+      "❌ O gateway rejeitou os dados do endereço do titular.\n\nA Asaas exige o holderInfo no formato exato e IP real do cliente.\n\n👉 Solução: confira CEP, número e complemento e tente novamente.";
+  } else if (/saldo insuficiente|sem limite|limite insuficiente|insufficient/i.test(descriptions)) {
+    friendly =
+      "❌ Cartão recusado: SEM LIMITE DISPONÍVEL.\n\nMesmo sem cobrança imediata, o banco pode fazer uma validação inicial e recusar por falta de limite.\n\n👉 Solução: libere limite no app do banco ou use outro cartão.";
+  } else if (/cart[aã]o bloqueado|card.*blocked|blocked.*card/i.test(descriptions)) {
+    friendly =
+      "❌ Cartão BLOQUEADO pelo banco emissor.\n\n👉 Solução: desbloqueie o cartão para compras online ou use outro cartão.";
+  } else if (/n[ãa]o habilitado.*online|online.*n[ãa]o|not.*authorized.*online|e-commerce.*disabled/i.test(descriptions)) {
+    friendly =
+      "❌ Cartão não habilitado para COMPRAS ONLINE.\n\n👉 Solução: habilite compras online no app do banco ou use outro cartão.";
+  } else if (/suspeita.*fraude|fraud|suspected/i.test(descriptions)) {
+    friendly =
+      "❌ Transação recusada por SUSPEITA DE FRAUDE pelo banco.\n\n👉 Solução: autorize a transação com o banco e tente novamente.";
+  } else if (/expir|venc/i.test(descriptions)) {
+    friendly =
+      "❌ Cartão VENCIDO.\n\n👉 Solução: use um cartão com validade futura.";
+  } else if (/cvv|cvc|c[oó]digo de seguran[çc]a|security code/i.test(descriptions)) {
+    friendly =
+      "❌ CVV INVÁLIDO.\n\n👉 Solução: confira o código de segurança do cartão.";
+  } else if (/n[úu]mero.*cart[ãa]o|card.*number|invalid.*number/i.test(descriptions)) {
+    friendly =
+      "❌ NÚMERO DO CARTÃO INVÁLIDO.\n\n👉 Solução: confira os dígitos do cartão e tente novamente.";
+  } else if (/cpf|cnpj/i.test(descriptions)) {
+    friendly =
+      "❌ CPF/CNPJ INVÁLIDO.\n\n👉 Solução: confira o documento informado.";
+  } else if (/email|e-mail/i.test(descriptions)) {
+    friendly =
+      "❌ EMAIL INVÁLIDO.\n\n👉 Solução: confira o email informado.";
+  } else if (/phone|telefone|mobile/i.test(descriptions)) {
+    friendly =
+      "❌ TELEFONE INVÁLIDO.\n\n👉 Solução: informe o telefone com DDD.";
+  } else if (code === "invalid_creditcard" || /n[ãa]o autorizad|not authorized|declined|recusad/i.test(descriptions)) {
+    friendly =
+      "❌ Cartão RECUSADO pelo banco emissor.\n\n👉 Solução: confira os dados, autorize a compra no banco ou tente outro cartão.";
+  } else if (/timeout|conex[ãa]o|connection/i.test(descriptions)) {
+    friendly =
+      "❌ Erro de conexão com o gateway de pagamento.\n\n👉 Solução: aguarde alguns segundos e tente novamente.";
+  }
+
+  return friendly;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -68,14 +122,10 @@ serve(async (req) => {
     const plan = PLAN_CONFIG[planKey];
     if (!plan) throw new Error(`Invalid plan: ${planKey}`);
 
-    logStep("Request received", { planKey, email: customerData.email });
-
-    // Validate credit card data (mesma validação do checkout que funciona)
     if (!creditCard.holderName || !creditCard.number || !creditCard.expiryMonth || !creditCard.expiryYear || !creditCard.ccv) {
       throw new Error("Dados do cartão incompletos");
     }
 
-    // Resolve userId via auth header se não foi enviado explicitamente
     let resolvedUserId: string | null = userId || null;
     const authHeader = req.headers.get("Authorization");
     if (!resolvedUserId && authHeader) {
@@ -92,7 +142,6 @@ serve(async (req) => {
       if (profileByEmail) resolvedUserId = profileByEmail.id;
     }
 
-    // Clean CPF/CNPJ
     const cpfCnpj = customerData.taxId?.replace(/\D/g, "") || "";
     if (!cpfCnpj || cpfCnpj.length < 11) {
       throw new Error("CPF/CNPJ é obrigatório");
@@ -100,42 +149,54 @@ serve(async (req) => {
 
     const phone = customerData.phone?.replace(/\D/g, "") || "";
     const postalCode = customerData.postalCode?.replace(/\D/g, "") || "";
-    const address = customerData.address || "";
-    const addressNum = customerData.addressNumber || "S/N";
-    const neighborhood = customerData.neighborhood || "";
-    const city = customerData.city || "";
+    const address = customerData.address?.trim() || "";
+    const neighborhood = customerData.neighborhood?.trim() || "";
     const state = toUF(customerData.state);
-    const addressComplement = customerData.addressComplement || "";
+    const addressMeta = normalizeAddressNumber(customerData.addressNumber);
+    const extraComplement = customerData.addressComplement?.trim() || "";
+    const addressComplement = [addressMeta.extraComplement, extraComplement].filter(Boolean).join(" - ");
 
-    // 1. Create or find customer on Asaas (payload idêntico ao checkout)
+    const forwardedFor = req.headers.get("x-forwarded-for") || "";
+    const fallbackIp = forwardedFor.split(",")[0]?.trim() || "";
+    const remoteIp = String(customerData.remoteIp || fallbackIp || "").trim();
+    if (!remoteIp || remoteIp === "unknown") {
+      throw new Error("Não foi possível identificar o IP do cliente para validar o cartão.");
+    }
+
+    logStep("Request received", {
+      planKey,
+      email: customerData.email,
+      postalCode,
+      addressNumber: addressMeta.addressNumber,
+      remoteIp,
+    });
+
     const findRes = await fetch(`${ASAAS_API}/customers?cpfCnpj=${cpfCnpj}`, {
       headers: { "access_token": apiKey, "Accept": "application/json" },
     });
     const findJson = await findRes.json();
 
     let customerId: string;
-
     const customerPayload = {
       name: customerData.name,
       email: customerData.email,
-      cpfCnpj: cpfCnpj,
+      cpfCnpj,
       mobilePhone: phone,
-      phone: phone,
-      postalCode: postalCode,
-      address: address,
-      addressNumber: addressNum,
+      phone,
+      postalCode,
+      address: address || undefined,
+      addressNumber: addressMeta.addressNumber,
       complement: addressComplement || undefined,
-      province: neighborhood,
-      city: city,
-      state: state,
+      province: neighborhood || undefined,
+      state: state || undefined,
       notificationDisabled: false,
     };
 
     if (findJson.data && findJson.data.length > 0) {
       customerId = findJson.data[0].id;
-      logStep("Existing customer found, updating address", { customerId });
-      // Atualiza endereço para garantir cidade/estado no cadastro do cliente
-      await fetch(`${ASAAS_API}/customers/${customerId}`, {
+      logStep("Existing customer found, updating address", { customerId, postalCode, state });
+
+      const customerUpdateRes = await fetch(`${ASAAS_API}/customers/${customerId}`, {
         method: "POST",
         headers: {
           "access_token": apiKey,
@@ -144,6 +205,12 @@ serve(async (req) => {
         },
         body: JSON.stringify(customerPayload),
       });
+      const customerUpdateJson = await customerUpdateRes.json();
+
+      if (!customerUpdateRes.ok || customerUpdateJson.errors) {
+        logStep("Customer update failed", customerUpdateJson);
+        throw new Error(`Erro ao atualizar cliente: ${JSON.stringify(customerUpdateJson.errors || customerUpdateJson)}`);
+      }
     } else {
       const customerRes = await fetch(`${ASAAS_API}/customers`, {
         method: "POST",
@@ -154,8 +221,8 @@ serve(async (req) => {
         },
         body: JSON.stringify(customerPayload),
       });
-
       const customerJson = await customerRes.json();
+
       if (!customerRes.ok || customerJson.errors) {
         logStep("Customer creation failed", customerJson);
         throw new Error(`Erro ao criar cliente: ${JSON.stringify(customerJson.errors || customerJson)}`);
@@ -165,12 +232,10 @@ serve(async (req) => {
       logStep("Customer created", { customerId });
     }
 
-    // 2. Trial de 7 dias — primeira cobrança agendada para D+7
     const trialEnd = new Date();
     trialEnd.setDate(trialEnd.getDate() + 7);
     const nextDueDate = trialEnd.toISOString().split("T")[0];
 
-    // 3. Subscription com cartão — alinhado ao checkout de cartão que já funciona
     const subscriptionBody: Record<string, any> = {
       customer: customerId,
       billingType: "CREDIT_CARD",
@@ -179,6 +244,7 @@ serve(async (req) => {
       nextDueDate,
       description: `${plan.name} Mensal (após trial 7 dias)`,
       externalReference: resolvedUserId || customerData.email,
+      remoteIp,
       creditCard: {
         holderName: creditCard.holderName,
         number: creditCard.number.replace(/\s/g, ""),
@@ -189,16 +255,12 @@ serve(async (req) => {
       creditCardHolderInfo: {
         name: customerData.name,
         email: customerData.email,
-        cpfCnpj: cpfCnpj,
+        cpfCnpj,
         postalCode: postalCode || "01310100",
-        addressNumber: addressNum,
-        address: address,
+        addressNumber: addressMeta.addressNumber,
         addressComplement: addressComplement || undefined,
-        province: neighborhood,
-        city: city || undefined,
-        state: state || undefined,
-        phone: phone,
-        mobilePhone: phone,
+        phone,
+        mobilePhone: phone || undefined,
       },
     };
 
@@ -207,9 +269,9 @@ serve(async (req) => {
       cycle: "MONTHLY",
       value: plan.priceMonthly,
       nextDueDate,
-      holderState: state,
-      holderCity: city,
+      remoteIp,
       holderPostalCode: postalCode,
+      holderAddressNumber: addressMeta.addressNumber,
     });
 
     const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
@@ -225,58 +287,7 @@ serve(async (req) => {
     const subJson = await subRes.json();
     if (!subRes.ok || subJson.errors) {
       logStep("Subscription creation failed", { response: subJson, request: subscriptionBody });
-      const errors = Array.isArray(subJson.errors) ? subJson.errors : [];
-      const firstErr = errors[0];
-      const code = (firstErr?.code || "").toLowerCase();
-      const desc = firstErr?.description || "";
-      const combinedDescriptions = errors.map((err: { description?: string }) => err.description || "").join(" | ");
-      let friendly = desc || JSON.stringify(subJson);
-
-      if (/cidade do titular|estado de resid[êe]ncia|state|city/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ O gateway rejeitou os dados do endereço do titular.\n\nO erro real não é recusa do banco: cidade/estado do titular não chegaram corretamente no pagamento.\n\n👉 Solução: revise endereço, cidade e estado e tente novamente.";
-      } else if (/saldo insuficiente|sem limite|limite insuficiente|insufficient/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ Cartão recusado: SEM LIMITE DISPONÍVEL.\n\nMesmo sem cobrança imediata (cobramos só após os 7 dias), o banco emissor faz uma validação de R$1,00 (estornada na hora) e recusou por falta de limite.\n\n👉 Solução: libere algum limite no app do banco ou use outro cartão.";
-      } else if (/cart[aã]o bloqueado|card.*blocked|blocked.*card/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ Cartão BLOQUEADO pelo banco emissor.\n\n👉 Solução: ligue para o seu banco e desbloqueie o cartão para compras online, ou use outro cartão.";
-      } else if (/n[ãa]o habilitado.*online|online.*n[ãa]o|not.*authorized.*online|e-commerce.*disabled/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ Cartão não habilitado para COMPRAS ONLINE.\n\n👉 Solução: acesse o app do seu banco e habilite a função de compras online/internet, ou use outro cartão.";
-      } else if (/suspeita.*fraude|fraud|suspected/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ Transação recusada por SUSPEITA DE FRAUDE pelo seu banco.\n\n👉 Solução: ligue para a central do seu banco, autorize a transação da Wiize, e tente novamente. Ou use outro cartão.";
-      } else if (/expir|venc/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ Cartão VENCIDO.\n\nA data de validade que você informou já passou.\n\n👉 Solução: use um cartão com validade futura.";
-      } else if (/cvv|cvc|c[oó]digo de seguran[çc]a|security code/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ CVV (código de segurança) INVÁLIDO.\n\nO código de 3 dígitos do verso do cartão está incorreto.\n\n👉 Solução: confira os 3 números no verso do cartão e tente novamente.";
-      } else if (/n[úu]mero.*cart[ãa]o|card.*number|invalid.*number/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ NÚMERO DO CARTÃO INVÁLIDO.\n\nVerifique se digitou todos os 16 dígitos corretamente.\n\n👉 Solução: confira o número impresso no cartão e tente novamente.";
-      } else if (code === "invalid_creditcard_holderinfo" || /endere[cç]o|cep|state|province|address/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ DADOS DO ENDEREÇO INCOMPLETOS ou inválidos.\n\nO gateway exige endereço completo do titular do cartão.\n\n👉 Solução: confira CEP, rua, número, bairro, cidade e estado e tente novamente.";
-      } else if (/cpf|cnpj/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ CPF/CNPJ INVÁLIDO.\n\nO documento informado não passou na validação.\n\n👉 Solução: confira se digitou todos os números corretamente, sem letras ou caracteres especiais.";
-      } else if (/email|e-mail/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ EMAIL INVÁLIDO.\n\n👉 Solução: confira se o endereço de email está digitado corretamente.";
-      } else if (/phone|telefone|mobile/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ TELEFONE INVÁLIDO.\n\n👉 Solução: digite seu celular com DDD (11 dígitos no total). Ex: 11987654321.";
-      } else if (code === "invalid_creditcard" || /n[ãa]o autorizad|not authorized|declined|recusad/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ Cartão RECUSADO pelo banco emissor.\n\nO gateway fez a validação inicial do cartão e o banco recusou.\n\n👉 Solução: confira os dados, autorize a compra no banco ou tente outro cartão.";
-      } else if (/timeout|conex[ãa]o|connection/i.test(combinedDescriptions)) {
-        friendly =
-          "❌ Erro de conexão com o gateway de pagamento.\n\n👉 Solução: aguarde 30 segundos e tente novamente.";
-      }
-
-      throw new Error(friendly);
+      throw new Error(buildFriendlyPaymentError(subJson));
     }
 
     logStep("Subscription created", { id: subJson.id, status: subJson.status, nextDueDate });
@@ -284,7 +295,6 @@ serve(async (req) => {
     const cardLast4 = creditCard.number.replace(/\s/g, "").slice(-4);
     const cardBrand = subJson.creditCard?.creditCardBrand || "CARD";
 
-    // 4. Persistir info do trial no profile (best-effort) e tracking
     if (resolvedUserId) {
       const { error: updateError } = await supabaseClient
         .from("profiles")
@@ -301,7 +311,7 @@ serve(async (req) => {
           phone: customerData.phone || null,
           postal_code: postalCode || null,
           address: address || null,
-          address_number: addressNum || null,
+          address_number: addressMeta.addressNumber || null,
           neighborhood: neighborhood || null,
         })
         .eq("id", resolvedUserId);
@@ -318,7 +328,7 @@ serve(async (req) => {
         tax_id: customerData.taxId || null,
         postal_code: postalCode || null,
         address: address || null,
-        address_number: addressNum || null,
+        address_number: addressMeta.addressNumber || null,
         neighborhood: neighborhood || null,
         plan_attempted: plan.name,
         stripe_session_id: `asaas_trial_${subJson.id}`,
