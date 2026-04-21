@@ -115,9 +115,35 @@ serve(async (req) => {
 
     let customerId: string;
 
+    const customerPayload = {
+      name: customerData.name,
+      email: customerData.email,
+      cpfCnpj: cpfCnpj,
+      mobilePhone: phone,
+      phone: phone,
+      postalCode: postalCode,
+      address: address,
+      addressNumber: addressNum,
+      complement: addressComplement || undefined,
+      province: neighborhood,
+      city: city,
+      state: state,
+      notificationDisabled: false,
+    };
+
     if (findJson.data && findJson.data.length > 0) {
       customerId = findJson.data[0].id;
-      logStep("Existing customer found", { customerId });
+      logStep("Existing customer found, updating address", { customerId });
+      // Atualiza endereço para garantir cidade/estado no cadastro do cliente
+      await fetch(`${ASAAS_API}/customers/${customerId}`, {
+        method: "POST",
+        headers: {
+          "access_token": apiKey,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(customerPayload),
+      });
     } else {
       const customerRes = await fetch(`${ASAAS_API}/customers`, {
         method: "POST",
@@ -126,13 +152,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
-        body: JSON.stringify({
-          name: customerData.name,
-          email: customerData.email,
-          cpfCnpj: cpfCnpj,
-          mobilePhone: phone,
-          notificationDisabled: false,
-        }),
+        body: JSON.stringify(customerPayload),
       });
 
       const customerJson = await customerRes.json();
