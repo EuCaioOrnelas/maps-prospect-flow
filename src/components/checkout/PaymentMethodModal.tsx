@@ -281,7 +281,7 @@ export function PaymentMethodModal({
                   {isAnnual ? (
                     <>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        12x de R$ {planKey === "start" ? "246,00" : "596,00"} • Asaas
+                        12x de R$ {planKey === "start" ? "246,00" : "596,00"} • Stripe
                       </p>
                       <p className="text-[10px] text-emerald-600 font-medium mt-1">
                         Parcele no cartão em até 12x

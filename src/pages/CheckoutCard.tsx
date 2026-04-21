@@ -654,7 +654,7 @@ function CheckoutCardInner() {
                 </div>
                 <div className="h-px bg-border/30 my-1" />
                 <p className="text-[10px] text-muted-foreground/70">
-                  Pagamentos processados por <span className="font-semibold">Asaas</span> — intermediadora regulamentada pelo Banco Central
+                  Pagamentos processados por <span className="font-semibold">Stripe</span> — criptografia PCI-DSS de nível bancário
                 </p>
               </div>
             </div>
@@ -691,10 +691,10 @@ function CheckoutCardInner() {
           <div className="flex flex-col items-center gap-2 mt-4">
             <p className="text-[10px] text-muted-foreground/60">
               Pagamentos processados com segurança por{" "}
-              <a href="https://www.asaas.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-muted-foreground/80 hover:text-foreground transition-colors">
-                Asaas
+              <a href="https://stripe.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-muted-foreground/80 hover:text-foreground transition-colors">
+                Stripe
               </a>
-              {" "}• Instituição de pagamento regulamentada pelo Banco Central
+              {" "}• Certificação PCI-DSS Nível 1, padrão internacional de segurança
             </p>
             <p className="text-[10px] text-muted-foreground/60">
               © {new Date().getFullYear()} Wiize. Todos os direitos reservados.
