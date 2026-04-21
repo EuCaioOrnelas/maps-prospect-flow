@@ -411,9 +411,8 @@ serve(async (req) => {
             notes: `Cancelamento PIX Automático. Valor: R$${pixAuth.value || "N/A"}`,
           });
 
-          return new Response(JSON.stringify({
-            success: true,
-            message: "PIX Automático cancelado. Seu plano permanece ativo até o final do período atual.",
+          await dispatchCancellationEmails(supabaseClient, userId, email, "asaas", profile.subscription_current_period_end);
+
             cancellationDetails: {
               cancelledAt: new Date().toISOString(),
               activeUntil: profile.subscription_current_period_end,
@@ -455,9 +454,15 @@ serve(async (req) => {
         notes: `Cancelamento da assinatura ${subDetail.description || targetSubId}. Ciclo: ${subDetail.cycle || "N/A"}. Valor: ${subDetail.value || "N/A"}`,
       });
 
-      return new Response(JSON.stringify({
-        success: true,
-        message: "Assinatura cancelada. Seu plano permanece ativo até o final do período atual.",
+      await dispatchCancellationEmails(
+        supabaseClient,
+        userId,
+        email,
+        "asaas",
+        subDetail.nextDueDate || profile.subscription_current_period_end,
+      );
+
+
         cancellationDetails: {
           cancelledAt: new Date().toISOString(),
           lastChargeDate: lastPaidPayment?.paymentDate || lastPaidPayment?.dueDate || null,
