@@ -73,6 +73,20 @@ const expiryOptions: StripeCardNumberElementOptions = {
   },
 };
 
+const cvcOptions: StripeCardNumberElementOptions = {
+  placeholder: "CVC",
+  style: {
+    base: {
+      fontSize: "15px",
+      color: "hsl(var(--foreground))",
+      fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+      "::placeholder": { color: "hsl(var(--muted-foreground) / 0.4)" },
+      iconColor: "hsl(var(--primary))",
+    },
+    invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
+  },
+};
+
 export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
   ({ cardHolder, onCardHolderChange, onCardChange, onCvcFocus, onCvcBlur, disabled }, ref) => {
     const stripe = useStripe();
@@ -150,7 +164,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
             </Label>
             <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
               <CardCvcElement
-                options={elementOptions}
+                options={cvcOptions}
                 className="w-full"
                 onFocus={onCvcFocus}
                 onBlur={onCvcBlur}
