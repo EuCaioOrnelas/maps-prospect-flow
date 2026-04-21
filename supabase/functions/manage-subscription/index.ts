@@ -105,21 +105,96 @@ serve(async (req) => {
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // For Stripe cancellation, just log it - actual cancel happens on Stripe portal
+      // Cancel Stripe subscription directly via API (cancel_at_period_end)
       if (action === "cancel-subscription") {
+        const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+        if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
+        if (!email) throw new Error("Email não encontrado");
+
+        // 1. Find Stripe customer
+        const custRes = await fetch(
+          `https://api.stripe.com/v1/customers?email=${encodeURIComponent(email)}&limit=1`,
+          { headers: { Authorization: `Bearer ${stripeKey}` } },
+        );
+        const custData = await custRes.json();
+        const stripeCustomerId = custData.data?.[0]?.id;
+        if (!stripeCustomerId) throw new Error("Cliente Stripe não encontrado");
+
+        // 2. List active subscriptions
+        const subsRes = await fetch(
+          `https://api.stripe.com/v1/subscriptions?customer=${stripeCustomerId}&status=active&limit=10`,
+          { headers: { Authorization: `Bearer ${stripeKey}` } },
+        );
+        const subsData = await subsRes.json();
+        const activeSubs = (subsData.data || []).filter(
+          (s: any) => !s.cancel_at_period_end,
+        );
+
+        // Also check trialing
+        const trialRes = await fetch(
+          `https://api.stripe.com/v1/subscriptions?customer=${stripeCustomerId}&status=trialing&limit=10`,
+          { headers: { Authorization: `Bearer ${stripeKey}` } },
+        );
+        const trialData = await trialRes.json();
+        const trialingSubs = (trialData.data || []).filter(
+          (s: any) => !s.cancel_at_period_end,
+        );
+
+        const allSubs = [...activeSubs, ...trialingSubs];
+        if (allSubs.length === 0) {
+          throw new Error("Nenhuma assinatura Stripe ativa encontrada");
+        }
+
+        const targetSub = allSubs[0];
+        logStep("Cancelling Stripe subscription", { id: targetSub.id });
+
+        // 3. Cancel at period end (keeps access until paid period ends)
+        const cancelRes = await fetch(
+          `https://api.stripe.com/v1/subscriptions/${targetSub.id}`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${stripeKey}`,
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: "cancel_at_period_end=true",
+          },
+        );
+        const cancelData = await cancelRes.json();
+        if (cancelData.error) {
+          throw new Error(`Stripe: ${cancelData.error.message}`);
+        }
+        logStep("Stripe subscription scheduled to cancel", {
+          id: cancelData.id,
+          period_end: cancelData.current_period_end,
+        });
+
+        const activeUntil = cancelData.current_period_end
+          ? new Date(cancelData.current_period_end * 1000).toISOString()
+          : profile.subscription_current_period_end;
+
         await supabaseClient.from("subscription_cancellations").insert({
           user_id: userId,
           provider: "stripe",
+          subscription_id: targetSub.id,
           billing_type: "CREDIT_CARD",
           cancelled_at: new Date().toISOString(),
-          active_until: profile.subscription_current_period_end,
-          notes: "Usuário redirecionado ao portal Stripe para cancelamento",
+          active_until: activeUntil,
+          notes: `Cancelamento Stripe via portal. Acesso até ${activeUntil}.`,
         });
 
-        return new Response(JSON.stringify({
-          success: true,
-          message: "Redirecionando para o portal de pagamentos para completar o cancelamento.",
-        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message:
+              "Renovação cancelada com sucesso. Seu plano permanece ativo até o final do período pago.",
+            cancellationDetails: {
+              cancelledAt: new Date().toISOString(),
+              activeUntil,
+            },
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
     }
 
