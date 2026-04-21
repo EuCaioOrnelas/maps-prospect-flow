@@ -1,14 +1,15 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Asaas charges credit cards automatically on renewal date.
-// This cron only sends informational emails so users can verify their card limit.
+// Stripe (provider atual) e Asaas (legado) cobram cartão automaticamente na renovação.
+// Este cron envia apenas e-mails informativos para o usuário verificar o cartão.
 
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[CARD-RENEWAL] ${step}${detailsStr}`);
 };
@@ -19,28 +20,22 @@ const PLAN_NAMES: Record<string, string> = {
   scale: "Wiize Scale",
 };
 
-// Monthly fallback prices in cents (used only if profile.subscription_price_cents is missing)
 const PLAN_PRICES_CENTS: Record<string, number> = {
-  start: 29700,    // R$ 297/mês
-  growth: 69600,   // R$ 696/mês
-  scale: 89700,    // R$ 897/mês
+  start: 29700,
+  growth: 69600,
+  scale: 89700,
 };
 
-// Annual TOTAL fallback prices in cents (R$ X/mês × 12 with discount)
 const PLAN_ANNUAL_TOTAL_CENTS: Record<string, number> = {
-  start: 295200,   // R$ 246 × 12 = R$ 2.952
-  growth: 715200,  // R$ 596 × 12 = R$ 7.152
-  scale: 920400,   // R$ 767 × 12 (placeholder)
+  start: 295200,
+  growth: 715200,
+  scale: 920400,
 };
 
 function formatBRL(cents: number): string {
   return `R$ ${(cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`;
 }
 
-// Builds amount label based on billing period & installments.
-// Annual on card => "R$ 2.964 em 12× R$ 247"
-// Monthly => "R$ 247/mês"
-// Annual single (rare) => "R$ 2.964/ano"
 function formatPlanPrice(totalCents: number, billingPeriod: string | null, installments?: number | null): string {
   if (!totalCents) return "—";
   if (billingPeriod === "annual") {
@@ -56,11 +51,10 @@ async function fetchInstallmentsFromAsaas(subscriptionId: string): Promise<numbe
   if (!apiKey || !subscriptionId) return null;
   try {
     const res = await fetch(`https://api.asaas.com/v3/subscriptions/${subscriptionId}`, {
-      headers: { "access_token": apiKey, "Content-Type": "application/json" },
+      headers: { access_token: apiKey, "Content-Type": "application/json" },
     });
     if (!res.ok) return null;
     const data = await res.json();
-    // Asaas returns "maxPayments" or installmentCount on credit card subscriptions
     return data?.maxPayments || data?.installmentCount || data?.creditCard?.installmentCount || null;
   } catch {
     return null;
@@ -97,25 +91,29 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: "2024-11-20.acacia" }) : null;
 
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
     const twoDaysAgo = new Date();
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-    // Target: paid users on credit card (Asaas) within renewal window
+    // Inclui Stripe (provider atual) E Asaas (legado).
     const { data: targetUsers, error } = await supabase
       .from("profiles")
-      .select("id, email, name, plan, billing_period, subscription_current_period_end, subscription_price_cents, payment_provider, asaas_subscription_id")
+      .select(
+        "id, email, name, plan, billing_period, subscription_current_period_end, subscription_price_cents, payment_provider, asaas_subscription_id",
+      )
       .neq("plan", "free")
       .not("subscription_current_period_end", "is", null)
       .lt("subscription_current_period_end", sevenDaysFromNow.toISOString())
       .gt("subscription_current_period_end", twoDaysAgo.toISOString())
       .eq("admin_assigned_plan", false)
-      .eq("payment_provider", "asaas")
-      .not("asaas_subscription_id", "is", null);
+      .in("payment_provider", ["stripe", "asaas"]);
 
     if (error) throw error;
 
@@ -130,7 +128,6 @@ Deno.serve(async (req) => {
       const stage = getCurrentStage(daysRemaining);
       if (!stage) continue;
 
-      // Idempotency: don't repeat the same stage for the same period
       const idempotencyKey = `card_renewal_${user.id}_${stage}_${user.subscription_current_period_end}`;
       const { data: existingLog } = await supabase
         .from("email_logs")
@@ -145,15 +142,22 @@ Deno.serve(async (req) => {
 
       const planName = PLAN_NAMES[user.plan] || user.plan;
       const isAnnual = user.billing_period === "annual";
-      // For annual cards, subscription_price_cents stores the TOTAL annual amount
-      // For monthly, it stores the monthly value
       const fallbackCents = isAnnual
-        ? (PLAN_ANNUAL_TOTAL_CENTS[user.plan] || 0)
-        : (PLAN_PRICES_CENTS[user.plan] || 0);
+        ? PLAN_ANNUAL_TOTAL_CENTS[user.plan] || 0
+        : PLAN_PRICES_CENTS[user.plan] || 0;
       const userPriceCents = user.subscription_price_cents || fallbackCents;
-      const installments = isAnnual
-        ? (await fetchInstallmentsFromAsaas(user.asaas_subscription_id)) || 12
-        : null;
+
+      // Stripe assinaturas anuais são cobradas em parcela única (1×) por padrão.
+      // Asaas (legado) suporta parcelamento real — buscamos o número de parcelas.
+      let installments: number | null = null;
+      if (isAnnual) {
+        if (user.payment_provider === "asaas" && user.asaas_subscription_id) {
+          installments = (await fetchInstallmentsFromAsaas(user.asaas_subscription_id)) || 1;
+        } else {
+          installments = 1; // Stripe = 1x à vista por padrão
+        }
+      }
+
       const planPrice = formatPlanPrice(userPriceCents, user.billing_period, installments);
       const expiryDate = formatDate(user.subscription_current_period_end);
       const checkoutUrl = "https://wiize.com.br/minha-assinatura";
@@ -172,6 +176,7 @@ Deno.serve(async (req) => {
               user_name: user.name || "Cliente",
               stage,
               payment_method: "card",
+              provider: user.payment_provider,
             },
             idempotency_key: idempotencyKey,
           },
@@ -179,7 +184,7 @@ Deno.serve(async (req) => {
 
         processed++;
         if (!emailError) emailsSent++;
-        logStep("Processed", { userId: user.id, stage, sent: !emailError });
+        logStep("Processed", { userId: user.id, stage, provider: user.payment_provider, sent: !emailError });
 
         if (i < targetUsers!.length - 1) {
           await new Promise((r) => setTimeout(r, 650));
@@ -190,12 +195,8 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({
-        checked: targetUsers?.length || 0,
-        processed,
-        emailsSent,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ checked: targetUsers?.length || 0, processed, emailsSent }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
