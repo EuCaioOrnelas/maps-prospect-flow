@@ -1,8 +1,9 @@
-// Cancela a assinatura agendada do trial no Asaas — usuário não será cobrado no D+7.
-// Marca o profile como trial_auto_charge_cancelled=true. Se o trial ainda está ativo,
-// o user mantém acesso até trial_end_at; depois disso vai pra trial-expired.
+// Cancela a assinatura agendada do trial — usuário não será cobrado no D+7.
+// Suporta Stripe (atual) e Asaas (legado). Marca trial_auto_charge_cancelled=true.
+// Usuário mantém acesso até trial_end_at; depois disso vai pra trial-expired.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -23,9 +24,6 @@ serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get("ASAAS_API_KEY");
-    if (!apiKey) throw new Error("ASAAS_API_KEY not configured");
-
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -42,7 +40,7 @@ serve(async (req) => {
 
     const { data: profile, error: pErr } = await supabase
       .from("profiles")
-      .select("trial_asaas_subscription_id, trial_auto_charge_cancelled, plan")
+      .select("trial_asaas_subscription_id, trial_auto_charge_cancelled, plan, payment_provider")
       .eq("id", userId)
       .maybeSingle();
 
@@ -52,7 +50,8 @@ serve(async (req) => {
       throw new Error("Esta conta não está em trial. Use a opção de gerenciar assinatura.");
     }
 
-    if (!profile.trial_asaas_subscription_id) {
+    const subId = profile.trial_asaas_subscription_id;
+    if (!subId) {
       throw new Error("Nenhuma assinatura agendada encontrada para este trial");
     }
 
@@ -63,19 +62,39 @@ serve(async (req) => {
       );
     }
 
-    // Delete subscription on Asaas
-    const delRes = await fetch(`${ASAAS_API}/subscriptions/${profile.trial_asaas_subscription_id}`, {
-      method: "DELETE",
-      headers: { access_token: apiKey, Accept: "application/json" },
-    });
+    const isStripe = profile.payment_provider === "stripe" || subId.startsWith("sub_");
+    log("Provider detected", { isStripe, subId });
 
-    const delText = await delRes.text();
-    log("Asaas delete response", { status: delRes.status, body: delText.slice(0, 200) });
+    if (isStripe) {
+      // Cancel on Stripe
+      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+      if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
+      const stripe = new Stripe(stripeKey, { apiVersion: "2024-11-20.acacia" });
 
-    // Even if Asaas returns 404 (already gone), we still mark cancelled locally
-    if (!delRes.ok && delRes.status !== 404) {
-      log("Asaas cancel failed", { status: delRes.status });
-      // Continue anyway — better to mark as cancelled and prevent re-charge attempts
+      try {
+        const cancelled = await stripe.subscriptions.cancel(subId);
+        log("Stripe cancel ok", { id: cancelled.id, status: cancelled.status });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        log("Stripe cancel failed (continuing)", { error: msg });
+        // Continue anyway — better to mark as cancelled and prevent re-charge attempts
+      }
+    } else {
+      // Cancel on Asaas (legacy)
+      const apiKey = Deno.env.get("ASAAS_API_KEY");
+      if (!apiKey) throw new Error("ASAAS_API_KEY not configured");
+
+      const delRes = await fetch(`${ASAAS_API}/subscriptions/${subId}`, {
+        method: "DELETE",
+        headers: { access_token: apiKey, Accept: "application/json" },
+      });
+
+      const delText = await delRes.text();
+      log("Asaas delete response", { status: delRes.status, body: delText.slice(0, 200) });
+
+      if (!delRes.ok && delRes.status !== 404) {
+        log("Asaas cancel failed (continuing)", { status: delRes.status });
+      }
     }
 
     await supabase
