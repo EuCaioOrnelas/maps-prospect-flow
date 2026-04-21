@@ -240,7 +240,23 @@ export const AdminUserInfoDialog = ({ userId, open, onOpenChange }: Props) => {
                     <InfoRow label="CPF/CNPJ" value={profile.cpf || checkoutData?.tax_id || "—"} icon={<FileText className="h-3.5 w-3.5" />} />
                     <InfoRow
                       label="Endereço"
-                      value={checkoutData ? [checkoutData.address, checkoutData.address_number, checkoutData.neighborhood, checkoutData.postal_code].filter(Boolean).join(", ") || "—" : "—"}
+                      value={(() => {
+                        const addr = profile?.address || checkoutData?.address;
+                        const num = profile?.address_number || checkoutData?.address_number;
+                        const comp = profile?.address_complement;
+                        const bairro = profile?.neighborhood || checkoutData?.neighborhood;
+                        const cidade = profile?.city;
+                        const uf = profile?.state;
+                        const cep = profile?.postal_code || checkoutData?.postal_code;
+                        const parts = [
+                          [addr, num].filter(Boolean).join(", "),
+                          comp,
+                          bairro,
+                          [cidade, uf].filter(Boolean).join("/"),
+                          cep,
+                        ].filter(Boolean);
+                        return parts.length ? parts.join(" · ") : "—";
+                      })()}
                       icon={<MapPin className="h-3.5 w-3.5" />}
                     />
                   </CardContent>
