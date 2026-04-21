@@ -185,8 +185,6 @@ function CheckoutCardInner() {
         address: {
           postal_code: postalCode.replace(/\D/g, ""),
           line1: `${addressStreet}, ${addressNumber || "S/N"}`,
-          city: customerData.city,
-          state: customerData.state,
           country: "BR",
         },
       });
