@@ -135,7 +135,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           <Label className="text-xs font-medium flex items-center gap-1.5">
             <Hash className="h-3 w-3 text-muted-foreground" /> Número do cartão
           </Label>
-          <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
+          <div className="stripe-field flex h-10 w-full rounded-md border border-input bg-background px-3 items-center cursor-text">
             <CardNumberElement
               options={{ ...elementOptions, showIcon: true }}
               className="w-full"
@@ -154,7 +154,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
             <Label className="text-xs font-medium flex items-center gap-1.5">
               <Calendar className="h-3 w-3 text-muted-foreground" /> Validade
             </Label>
-            <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
+            <div className="stripe-field flex h-10 w-full rounded-md border border-input bg-background px-3 items-center cursor-text">
               <CardExpiryElement options={expiryOptions} className="w-full" />
             </div>
           </div>
@@ -162,7 +162,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
             <Label className="text-xs font-medium flex items-center gap-1.5">
               <Lock className="h-3 w-3 text-muted-foreground" /> CVV
             </Label>
-            <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
+            <div className="stripe-field flex h-10 w-full rounded-md border border-input bg-background px-3 items-center cursor-text">
               <CardCvcElement
                 options={cvcOptions}
                 className="w-full"
