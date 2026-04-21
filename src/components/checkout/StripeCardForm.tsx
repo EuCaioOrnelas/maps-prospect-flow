@@ -3,15 +3,13 @@
 
 import { useState, useImperativeHandle, forwardRef } from "react";
 import {
-  CardNumberElement,
-  CardExpiryElement,
-  CardCvcElement,
+  CardElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import type { StripeCardNumberElementOptions } from "@stripe/stripe-js";
+import type { StripeCardElementOptions } from "@stripe/stripe-js";
 import { Label } from "@/components/ui/label";
-import { CreditCard, Calendar, Lock, User, Hash } from "lucide-react";
+import { Lock, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export interface StripeCardFormHandle {
