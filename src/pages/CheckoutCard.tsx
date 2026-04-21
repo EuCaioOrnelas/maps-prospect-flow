@@ -162,10 +162,8 @@ function CheckoutCardInner() {
   }, [postalCode]);
 
   const isCardValid =
-    cardNumber.replace(/\s/g, "").length >= 13 &&
+    cardComplete &&
     cardHolder.trim().length >= 3 &&
-    cardExpiry.length >= 4 &&
-    cardCvv.length >= 3 &&
     cepValid === true &&
     addressStreet.trim().length >= 2 &&
     addressNeighborhood.trim().length >= 1 &&
