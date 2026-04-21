@@ -1,5 +1,4 @@
-// Reusable Stripe Elements card form — handles tokenization on submit.
-// Parent passes onPaymentMethod(pmId) which is then sent to a backend edge function.
+// Reusable Stripe Elements card form — uses unified CardElement (Stripe native layout).
 
 import { useState, useImperativeHandle, forwardRef } from "react";
 import {
@@ -13,7 +12,6 @@ import { Lock, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export interface StripeCardFormHandle {
-  /** Tokenize card → return paymentMethodId. Throws on invalid. */
   createPaymentMethod: (billingDetails: {
     name: string;
     email: string;
@@ -29,10 +27,8 @@ export interface StripeCardFormHandle {
 }
 
 interface Props {
-  /** Cardholder name shown on the animated card */
   cardHolder: string;
   onCardHolderChange: (v: string) => void;
-  /** Notifies parent about card field state for animated card preview */
   onCardChange?: (data: {
     last4Digits?: string;
     brand?: string;
@@ -43,13 +39,14 @@ interface Props {
   disabled?: boolean;
 }
 
-const elementOptions: StripeCardNumberElementOptions = {
+const elementOptions: StripeCardElementOptions = {
+  hidePostalCode: true,
   style: {
     base: {
       fontSize: "15px",
       color: "hsl(var(--foreground))",
       fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
-      "::placeholder": { color: "hsl(var(--foreground) / 0.55)" },
+      "::placeholder": { color: "hsl(var(--muted-foreground) / 0.4)" },
       iconColor: "hsl(var(--primary))",
     },
     invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
@@ -67,7 +64,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
         setError(null);
         if (!stripe || !elements) throw new Error("Stripe ainda está carregando, aguarde...");
 
-        const cardEl = elements.getElement(CardNumberElement);
+        const cardEl = elements.getElement(CardElement);
         if (!cardEl) throw new Error("Formulário de cartão não está pronto.");
 
         const { error: pmErr, paymentMethod } = await stripe.createPaymentMethod({
@@ -101,12 +98,14 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium flex items-center gap-1.5">
-            <Hash className="h-3 w-3 text-muted-foreground" /> Número do cartão
-          </Label>
-          <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
-            <CardNumberElement
-              options={{ ...elementOptions, showIcon: true }}
+          <Label className="text-xs font-medium">Dados do cartão</Label>
+          <div
+            className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 items-center transition-colors focus-within:border-primary"
+            onFocus={onCvcFocus}
+            onBlur={onCvcBlur}
+          >
+            <CardElement
+              options={elementOptions}
               className="w-full"
               onChange={(e) =>
                 onCardChange?.({
@@ -115,30 +114,6 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
                 })
               }
             />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium flex items-center gap-1.5">
-              <Calendar className="h-3 w-3 text-muted-foreground" /> Validade
-            </Label>
-            <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
-              <CardExpiryElement options={elementOptions} className="w-full" />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium flex items-center gap-1.5">
-              <Lock className="h-3 w-3 text-muted-foreground" /> CVV
-            </Label>
-            <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
-              <CardCvcElement
-                options={elementOptions}
-                className="w-full"
-                onFocus={onCvcFocus}
-                onBlur={onCvcBlur}
-              />
-            </div>
           </div>
         </div>
 
