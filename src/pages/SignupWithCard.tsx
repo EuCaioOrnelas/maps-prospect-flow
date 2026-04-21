@@ -31,6 +31,10 @@ import { generateFingerprint, getClientIP } from "@/lib/fingerprint";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 import { cn } from "@/lib/utils";
+import { Elements } from "@stripe/react-stripe-js";
+import { stripePromise } from "@/lib/stripe";
+import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
+import { useRef } from "react";
 
 const PLAN_INFO: Record<string, { name: string; monthly: number }> = {
   start: { name: "Wiize Start", monthly: 296 },
