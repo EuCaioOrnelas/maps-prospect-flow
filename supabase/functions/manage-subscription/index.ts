@@ -413,6 +413,9 @@ serve(async (req) => {
 
           await dispatchCancellationEmails(supabaseClient, userId, email, "asaas", profile.subscription_current_period_end);
 
+          return new Response(JSON.stringify({
+            success: true,
+            message: "Assinatura PIX Automático cancelada com sucesso",
             cancellationDetails: {
               cancelledAt: new Date().toISOString(),
               activeUntil: profile.subscription_current_period_end,
