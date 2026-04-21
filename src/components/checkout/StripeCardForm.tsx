@@ -45,18 +45,32 @@ interface Props {
   disabled?: boolean;
 }
 
-const elementOptions: StripeCardNumberElementOptions = {
-  placeholder: "0000 0000 0000 0000",
+const baseElementStyle = {
   style: {
     base: {
       fontSize: "15px",
       color: "hsl(var(--foreground))",
       fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
-      "::placeholder": { color: "hsl(var(--muted-foreground))" },
+      "::placeholder": { color: "hsl(var(--foreground) / 0.55)" },
       iconColor: "hsl(var(--primary))",
     },
     invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
   },
+};
+
+const cardNumberOptions: StripeCardNumberElementOptions = {
+  ...baseElementStyle,
+  placeholder: "Número do cartão (16 dígitos)",
+};
+
+const expiryOptions = {
+  ...baseElementStyle,
+  placeholder: "Mês / Ano (MM/AA)",
+};
+
+const cvcOptions = {
+  ...baseElementStyle,
+  placeholder: "Código de segurança (3 dígitos)",
 };
 
 export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
@@ -96,7 +110,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           </Label>
           <Input
             id="card-holder"
-            placeholder="NOME IMPRESSO NO CARTÃO"
+            placeholder="Ex: JOÃO DA SILVA"
             value={cardHolder}
             onChange={(e) => onCardHolderChange(e.target.value.toUpperCase())}
             disabled={disabled}
@@ -109,7 +123,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           </Label>
           <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
             <CardNumberElement
-              options={{ ...elementOptions, showIcon: true }}
+              options={{ ...cardNumberOptions, showIcon: true }}
               className="w-full"
               onChange={(e) =>
                 onCardChange?.({
@@ -127,7 +141,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
               <Calendar className="h-3 w-3 text-muted-foreground" /> Validade
             </Label>
             <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
-              <CardExpiryElement options={elementOptions} className="w-full" />
+              <CardExpiryElement options={expiryOptions} className="w-full" />
             </div>
           </div>
           <div className="space-y-1.5">
@@ -136,7 +150,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
             </Label>
             <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
               <CardCvcElement
-                options={elementOptions}
+                options={cvcOptions}
                 className="w-full"
                 onFocus={onCvcFocus}
                 onBlur={onCvcBlur}
