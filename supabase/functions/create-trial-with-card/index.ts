@@ -78,6 +78,15 @@ function normalizePhoneNumbers(input: string | undefined | null) {
   };
 }
 
+function isInvalidPostalCodeError(errorPayload: any) {
+  const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+  return errors.some((err: { description?: string; code?: string }) => {
+    const description = String(err?.description || "").toLowerCase();
+    const code = String(err?.code || "").toLowerCase();
+    return code.includes("postal") || description.includes("cep informado é inválido");
+  });
+}
+
 function buildFriendlyPaymentError(errorPayload: any) {
   const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
   const firstErr = errors[0];
@@ -307,17 +316,41 @@ serve(async (req) => {
       holderAddressNumber: addressMeta.addressNumber,
     });
 
-    const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
-      method: "POST",
-      headers: {
-        "access_token": apiKey,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-      body: JSON.stringify(subscriptionBody),
-    });
+    const createSubscription = async (body: Record<string, any>) => {
+      const response = await fetch(`${ASAAS_API}/subscriptions`, {
+        method: "POST",
+        headers: {
+          "access_token": apiKey,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
 
-    const subJson = await subRes.json();
+      return { response, json: await response.json() };
+    };
+
+    let subAttempt = await createSubscription(subscriptionBody);
+
+    if ((!subAttempt.response.ok || subAttempt.json.errors) && isInvalidPostalCodeError(subAttempt.json)) {
+      const fallbackBody = {
+        ...subscriptionBody,
+        creditCardHolderInfo: {
+          ...subscriptionBody.creditCardHolderInfo,
+          postalCode,
+        },
+      };
+
+      logStep("Retrying subscription with postalCode digits only", {
+        originalPostalCode: formattedPostalCode,
+        retryPostalCode: postalCode,
+      });
+
+      subAttempt = await createSubscription(fallbackBody);
+    }
+
+    const subRes = subAttempt.response;
+    const subJson = subAttempt.json;
     if (!subRes.ok || subJson.errors) {
       logStep("Subscription creation failed", { response: subJson, request: subscriptionBody });
       throw new Error(buildFriendlyPaymentError(subJson));
