@@ -49,6 +49,44 @@ function normalizeAddressNumber(input: string | undefined | null) {
   };
 }
 
+function formatAsaasPostalCode(input: string | undefined | null) {
+  const digits = (input || "").replace(/\D/g, "");
+  if (digits.length !== 8) return "";
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+}
+
+function normalizePhoneNumbers(input: string | undefined | null) {
+  const digits = (input || "").replace(/\D/g, "");
+
+  if (digits.length === 11) {
+    return {
+      phone: undefined,
+      mobilePhone: digits,
+    };
+  }
+
+  if (digits.length === 10) {
+    return {
+      phone: digits,
+      mobilePhone: undefined,
+    };
+  }
+
+  return {
+    phone: undefined,
+    mobilePhone: undefined,
+  };
+}
+
+function isInvalidPostalCodeError(errorPayload: any) {
+  const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+  return errors.some((err: { description?: string; code?: string }) => {
+    const description = String(err?.description || "").toLowerCase();
+    const code = String(err?.code || "").toLowerCase();
+    return code.includes("postal") || description.includes("cep informado é inválido");
+  });
+}
+
 function buildFriendlyPaymentError(errorPayload: any) {
   const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
   const firstErr = errors[0];
@@ -149,15 +187,22 @@ serve(async (req) => {
 
     const phone = customerData.phone?.replace(/\D/g, "") || "";
     const postalCode = customerData.postalCode?.replace(/\D/g, "") || "";
+    const formattedPostalCode = formatAsaasPostalCode(customerData.postalCode);
     const address = customerData.address?.trim() || "";
     const neighborhood = customerData.neighborhood?.trim() || "";
     const state = toUF(customerData.state);
     const addressMeta = normalizeAddressNumber(customerData.addressNumber);
     const extraComplement = customerData.addressComplement?.trim() || "";
     const addressComplement = [addressMeta.extraComplement, extraComplement].filter(Boolean).join(" - ");
+    const phoneInfo = normalizePhoneNumbers(customerData.phone);
 
+    if (!formattedPostalCode) {
+      throw new Error("CEP inválido. Informe um CEP válido no formato 00000-000.");
+    }
+
+    const realIp = req.headers.get("x-real-ip") || "";
     const forwardedFor = req.headers.get("x-forwarded-for") || "";
-    const fallbackIp = forwardedFor.split(",")[0]?.trim() || "";
+    const fallbackIp = realIp || forwardedFor.split(",")[0]?.trim() || "";
     const remoteIp = String(customerData.remoteIp || fallbackIp || "").trim();
     if (!remoteIp || remoteIp === "unknown") {
       throw new Error("Não foi possível identificar o IP do cliente para validar o cartão.");
@@ -166,7 +211,7 @@ serve(async (req) => {
     logStep("Request received", {
       planKey,
       email: customerData.email,
-      postalCode,
+      postalCode: formattedPostalCode,
       addressNumber: addressMeta.addressNumber,
       remoteIp,
     });
@@ -177,18 +222,17 @@ serve(async (req) => {
     const findJson = await findRes.json();
 
     let customerId: string;
-    const customerPayload = {
+    const customerPayload: Record<string, string | boolean | undefined> = {
       name: customerData.name,
       email: customerData.email,
       cpfCnpj,
-      mobilePhone: phone,
-      phone,
-      postalCode,
+      mobilePhone: phoneInfo.mobilePhone,
+      phone: phoneInfo.phone,
+      postalCode: formattedPostalCode,
       address: address || undefined,
       addressNumber: addressMeta.addressNumber,
       complement: addressComplement || undefined,
       province: neighborhood || undefined,
-      state: state || undefined,
       notificationDisabled: false,
     };
 
@@ -210,6 +254,30 @@ serve(async (req) => {
       if (!customerUpdateRes.ok || customerUpdateJson.errors) {
         logStep("Customer update failed", customerUpdateJson);
         throw new Error(`Erro ao atualizar cliente: ${JSON.stringify(customerUpdateJson.errors || customerUpdateJson)}`);
+      }
+
+      const customerNeedsReplacement = !findJson.data[0]?.postalCode || findJson.data[0]?.postalCode !== formattedPostalCode;
+      if (customerNeedsReplacement) {
+        const replacementCustomerRes = await fetch(`${ASAAS_API}/customers`, {
+          method: "POST",
+          headers: {
+            "access_token": apiKey,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: JSON.stringify({
+            ...customerPayload,
+            externalReference: `${resolvedUserId || customerData.email}-${Date.now()}`,
+          }),
+        });
+        const replacementCustomerJson = await replacementCustomerRes.json();
+
+        if (!replacementCustomerRes.ok || replacementCustomerJson.errors) {
+          logStep("Replacement customer creation failed", replacementCustomerJson);
+        } else {
+          customerId = replacementCustomerJson.id;
+          logStep("Replacement customer created", { customerId });
+        }
       }
     } else {
       const customerRes = await fetch(`${ASAAS_API}/customers`, {
@@ -256,11 +324,11 @@ serve(async (req) => {
         name: customerData.name,
         email: customerData.email,
         cpfCnpj,
-        postalCode: postalCode || "01310100",
+        postalCode: formattedPostalCode,
         addressNumber: addressMeta.addressNumber,
         addressComplement: addressComplement || undefined,
-        phone,
-        mobilePhone: phone || undefined,
+        phone: phoneInfo.phone,
+        mobilePhone: phoneInfo.mobilePhone,
       },
     };
 
@@ -270,21 +338,45 @@ serve(async (req) => {
       value: plan.priceMonthly,
       nextDueDate,
       remoteIp,
-      holderPostalCode: postalCode,
+      holderPostalCode: formattedPostalCode,
       holderAddressNumber: addressMeta.addressNumber,
     });
 
-    const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
-      method: "POST",
-      headers: {
-        "access_token": apiKey,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-      body: JSON.stringify(subscriptionBody),
-    });
+    const createSubscription = async (body: Record<string, any>) => {
+      const response = await fetch(`${ASAAS_API}/subscriptions`, {
+        method: "POST",
+        headers: {
+          "access_token": apiKey,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
 
-    const subJson = await subRes.json();
+      return { response, json: await response.json() };
+    };
+
+    let subAttempt = await createSubscription(subscriptionBody);
+
+    if ((!subAttempt.response.ok || subAttempt.json.errors) && isInvalidPostalCodeError(subAttempt.json)) {
+      const fallbackBody = {
+        ...subscriptionBody,
+        creditCardHolderInfo: {
+          ...subscriptionBody.creditCardHolderInfo,
+          postalCode,
+        },
+      };
+
+      logStep("Retrying subscription with postalCode digits only", {
+        originalPostalCode: formattedPostalCode,
+        retryPostalCode: postalCode,
+      });
+
+      subAttempt = await createSubscription(fallbackBody);
+    }
+
+    const subRes = subAttempt.response;
+    const subJson = subAttempt.json;
     if (!subRes.ok || subJson.errors) {
       logStep("Subscription creation failed", { response: subJson, request: subscriptionBody });
       throw new Error(buildFriendlyPaymentError(subJson));
