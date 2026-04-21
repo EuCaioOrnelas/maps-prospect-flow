@@ -46,12 +46,27 @@ interface Props {
 }
 
 const elementOptions: StripeCardNumberElementOptions = {
+  placeholder: "",
   style: {
     base: {
       fontSize: "15px",
       color: "hsl(var(--foreground))",
       fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
       "::placeholder": { color: "hsl(var(--muted-foreground))" },
+      iconColor: "hsl(var(--primary))",
+    },
+    invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
+  },
+};
+
+const expiryOptions: StripeCardNumberElementOptions = {
+  placeholder: "MM / AA",
+  style: {
+    base: {
+      fontSize: "15px",
+      color: "hsl(var(--foreground))",
+      fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+      "::placeholder": { color: "hsl(var(--muted-foreground) / 0.4)" },
       iconColor: "hsl(var(--primary))",
     },
     invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
