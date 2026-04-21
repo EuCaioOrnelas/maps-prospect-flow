@@ -341,7 +341,6 @@ serve(async (req) => {
               const stripePriceCents = priceItem?.unit_amount || 0;
               const plan = PRICE_TO_PLAN[priceId] || "free";
               const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
-              const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
 
               // Calculate new limit based on transition type (upgrade/downgrade/same)
               const { newLimit, carryOver, transitionType } = calculateSearchesForTransition(
@@ -904,6 +903,62 @@ serve(async (req) => {
               previousPlan,
             });
           }
+        }
+        break;
+      }
+
+      case "customer.subscription.created": {
+        const subscription = event.data.object as Stripe.Subscription;
+        logStep("Subscription created", {
+          subscriptionId: subscription.id,
+          status: subscription.status,
+          customerId: subscription.customer,
+        });
+
+        // Only act on trial subscriptions; paid activations are handled by subscription.updated/checkout.session.completed
+        if (subscription.status !== "trialing") break;
+
+        const customer = await stripe.customers.retrieve(subscription.customer as string);
+        if (!customer || customer.deleted || !customer.email) break;
+
+        const { data: profile } = await supabaseClient
+          .from("profiles")
+          .select("id, plan, searches_limit, searches_used")
+          .eq("email", customer.email)
+          .maybeSingle();
+        if (!profile) {
+          logStep("Trial: profile not yet found, skipping", { email: customer.email });
+          break;
+        }
+
+        const priceId = subscription.items.data[0]?.price.id;
+        const plan = PRICE_TO_PLAN[priceId] || "free";
+        const planLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
+        const trialEnd = subscription.trial_end
+          ? new Date(subscription.trial_end * 1000).toISOString()
+          : null;
+
+        const { error: updateError } = await supabaseClient
+          .from("profiles")
+          .update({
+            plan,
+            searches_limit: planLimit,
+            searches_used: 0,
+            payment_provider: "stripe",
+            trial_plan_chosen: plan,
+            trial_billing_period: "monthly",
+            trial_will_charge_at: trialEnd,
+            subscription_current_period_end: trialEnd,
+            trial_asaas_subscription_id: subscription.id,
+            trial_asaas_customer_id: subscription.customer as string,
+            trial_auto_charge_cancelled: false,
+          })
+          .eq("id", profile.id);
+
+        if (updateError) {
+          logStep("Trial activation update failed", { error: updateError.message });
+        } else {
+          logStep("Trial plan activated on profile", { plan, planLimit, trialEnd });
         }
         break;
       }

@@ -20,13 +20,10 @@ import { ExecutiveAlerts } from "@/components/dashboard/v2/ExecutiveAlerts";
 import { ForecastChart } from "@/components/dashboard/v2/ForecastChart";
 import { QuickActions } from "@/components/dashboard/v2/QuickActions";
 
-import { ActivationChecklistInline } from "@/components/dashboard/ActivationChecklist";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { TrialAutoChargeBanner } from "@/components/dashboard/TrialAutoChargeBanner";
 import { ExpiredSubscriptionDialog } from "@/components/ExpiredSubscriptionDialog";
-import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
-import { TrialFeedbackModal } from "@/components/onboarding/TrialFeedbackModal";
-import { useOnboardingModals } from "@/hooks/useOnboardingModals";
+// Checklist e modal de onboarding removidos — somente o tour guiado orienta o usuário.
 import { buildTourDemoCockpit } from "@/lib/tourDemoCockpit";
 
 const PERIOD_OPTIONS = [
@@ -38,7 +35,6 @@ const PERIOD_OPTIONS = [
 export default function MainDashboard() {
   const { profile } = useAuth();
   useAutoScoreTracking("main_dashboard");
-  const { showOnboarding, showTrialFeedback, closeOnboarding, closeTrialFeedback } = useOnboardingModals();
   const [period, setPeriod] = useState('30');
   const periodDays = parseInt(period);
   const realData = useMainDashboard(periodDays);
@@ -139,8 +135,6 @@ export default function MainDashboard() {
           <AppHeader profile={profile} />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
             <ExpiredSubscriptionDialog />
-            <OnboardingModal isOpen={showOnboarding} onClose={closeOnboarding} />
-            <TrialFeedbackModal isOpen={showTrialFeedback} onClose={closeTrialFeedback} />
             
             <div className="max-w-7xl mx-auto space-y-6 relative z-10">
               {/* Header */}
@@ -167,7 +161,6 @@ export default function MainDashboard() {
               </div>
 
               <TrialAutoChargeBanner />
-              <ActivationChecklistInline />
 
               {/* 1 — Hero Impact */}
               <div data-tour="cockpit-hero">

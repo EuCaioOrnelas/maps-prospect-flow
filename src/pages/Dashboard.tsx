@@ -41,9 +41,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useNotifications } from "@/hooks/useNotifications";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 
-import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
-import { TrialFeedbackModal } from "@/components/onboarding/TrialFeedbackModal";
-import { useOnboardingModals } from "@/hooks/useOnboardingModals";
+// Onboarding modal removido — apenas o GuidedTour orienta novos usuários.
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
@@ -97,7 +95,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { profile, signOut, refreshProfile, user, isTrialExpired, trialDaysRemaining } = useAuth();
   const { requestPermission, notifyCreditsExhausted, notifyLowCredits, isSupported, permission } = useNotifications();
-  const { showOnboarding, showTrialFeedback, closeOnboarding, closeTrialFeedback } = useOnboardingModals();
   const { trackScoreEvent } = useAutoScoreTracking("dashboard");
 
   const searchesRemaining = profile ? (profile.searches_limit - profile.searches_used) + (((profile as any).bonus_searches) || 0) : 0;  // opportunities remaining (plan + carried bonus)
@@ -1034,11 +1031,7 @@ const Dashboard = () => {
         onClose={() => setShowWhatsAppUpgradeModal(false)} 
       />
 
-      {/* Onboarding Modal */}
-      <OnboardingModal isOpen={showOnboarding} onClose={closeOnboarding} />
-
-      {/* Trial Feedback Modal */}
-      <TrialFeedbackModal isOpen={showTrialFeedback} onClose={closeTrialFeedback} />
+      {/* Onboarding/Trial-feedback modais removidos — orientação fica a cargo do tour guiado. */}
 
         </div>
       </div>

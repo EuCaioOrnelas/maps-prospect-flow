@@ -270,6 +270,14 @@ const MetaCampaigns = () => {
   const expiredConnections = connections.filter((c) => expiredTokenIds.has(c.id));
   const hasExpired = expiredConnections.length > 0;
 
+  // Limite de conexões Meta por plano (espelha src/hooks/useWhatsAppNumbers.ts)
+  const META_PLAN_LIMITS: Record<string, number> = {
+    free: 1, trial: 1, start: 2, growth: 5, scale: 10,
+  };
+  const userPlan = (profile?.plan || 'free').toLowerCase();
+  const maxMetaConnections = META_PLAN_LIMITS[userPlan] ?? 1;
+  const reachedConnectionLimit = connections.length >= maxMetaConnections;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex">
@@ -446,9 +454,29 @@ const MetaCampaigns = () => {
                     })}
                   </div>
 
-                  <Button variant="outline" className="gap-2" onClick={() => setShowAddNumber(true)}>
-                    <Plus size={14} /> Adicionar número
-                  </Button>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => {
+                        if (reachedConnectionLimit) {
+                          toast({
+                            title: "Limite de números atingido",
+                            description: `Seu plano permite até ${maxMetaConnections} ${maxMetaConnections === 1 ? 'número conectado' : 'números conectados'}. Faça upgrade para adicionar mais.`,
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        setShowAddNumber(true);
+                      }}
+                      disabled={reachedConnectionLimit}
+                    >
+                      <Plus size={14} /> Adicionar número
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      {connections.length}/{maxMetaConnections} números do plano {userPlan}
+                    </span>
+                  </div>
 
                   {/* Footer info */}
                   <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5">
