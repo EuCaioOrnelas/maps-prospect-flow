@@ -12,7 +12,7 @@ const corsHeaders = {
 };
 
 const ADMIN_EMAIL = "wiize.app@gmail.com";
-const FROM = "Wiize <onboarding@resend.dev>";
+const FROM = "Wiize <noreply@wiize.com.br>";
 const GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
 const log = (s: string, d?: unknown) =>
