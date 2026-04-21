@@ -246,25 +246,30 @@ export default function SignupWithCard() {
       return;
     }
 
+    if (!cardHolder.trim()) {
+      toast({ title: "Informe o nome impresso no cartão", variant: "destructive" });
+      return;
+    }
+
     const cleanTaxId = taxId.replace(/\D/g, "");
-    const cleanCard = cardNumber.replace(/\D/g, "");
-    if (cleanCard.length < 13) {
-      toast({ title: "Número do cartão inválido", variant: "destructive" });
-      return;
-    }
-    const [mm, yy] = cardExpiry.split("/");
-    if (!mm || !yy || mm.length !== 2 || yy.length !== 2) {
-      toast({ title: "Validade do cartão inválida (MM/AA)", variant: "destructive" });
-      return;
-    }
-    if (cardCvv.length < 3) {
-      toast({ title: "CVV inválido", variant: "destructive" });
-      return;
-    }
 
     setLoading(true);
 
     try {
+      // 1) Tokenize card via Stripe Elements (no PCI scope for us)
+      const paymentMethodId = await cardFormRef.current!.createPaymentMethod({
+        name: cardHolder,
+        email,
+        phone: phone.replace(/\D/g, ""),
+        address: {
+          postal_code: postalCode.replace(/\D/g, ""),
+          line1: `${address}, ${addressNumber || "S/N"}`,
+          city,
+          state,
+          country: "BR",
+        },
+      });
+
       const [fp, ip] = await Promise.all([generateFingerprint(), getClientIP()]);
       const { data: fraud, error: fraudErr } = await supabase.rpc("check_signup_fraud_strict", {
         p_fingerprint: fp,
@@ -284,11 +289,11 @@ export default function SignupWithCard() {
         return;
       }
 
-      // 1) Validate card with Asaas BEFORE creating the auth user.
-      //    This prevents orphan accounts when the card is rejected.
-      const { data: trialRes, error: trialErr } = await supabase.functions.invoke("create-trial-with-card", {
+      // 2) Create Stripe trial subscription BEFORE creating auth user.
+      const { data: trialRes, error: trialErr } = await supabase.functions.invoke("create-stripe-trial", {
         body: {
           planKey,
+          paymentMethodId,
           customerData: {
             name,
             email,
@@ -301,14 +306,6 @@ export default function SignupWithCard() {
             neighborhood,
             city: city.trim(),
             state: state.trim(),
-            remoteIp: ip || undefined,
-          },
-          creditCard: {
-            holderName: cardHolder,
-            number: cleanCard,
-            expiryMonth: mm,
-            expiryYear: `20${yy}`,
-            ccv: cardCvv,
           },
         },
       });
@@ -318,8 +315,7 @@ export default function SignupWithCard() {
         throw new Error(trialMessage);
       }
 
-      // 2) Card is valid — now create the auth user with trial metadata so the
-      //    profile trigger can persist it.
+      // 3) Create auth user with trial metadata
       const redirectUrl = `${window.location.origin}/dashboard`;
       const { data: signupData, error: signupErr } = await supabase.auth.signUp({
         email,
@@ -333,8 +329,8 @@ export default function SignupWithCard() {
             terms_accepted: "true",
             trial_with_card: "true",
             trial_plan_chosen: planKey,
-            trial_asaas_subscription_id: trialRes.subscriptionId,
-            trial_asaas_customer_id: trialRes.customerId,
+            stripe_subscription_id: trialRes.subscriptionId,
+            stripe_customer_id: trialRes.customerId,
             trial_card_last4: trialRes.cardLast4,
             trial_card_brand: trialRes.cardBrand,
             trial_will_charge_at: trialRes.nextDueDate,
@@ -345,18 +341,17 @@ export default function SignupWithCard() {
       const newUserId = signupData.user?.id;
       if (!newUserId) throw new Error("Conta criada, mas ID do usuário não retornado");
 
-      // 3) Persist trial details on the profile (best-effort — webhook also reconciles).
+      // 4) Persist trial details on the profile (webhook also reconciles).
       await supabase
         .from("profiles")
         .update({
           trial_card_last4: trialRes.cardLast4,
           trial_card_brand: trialRes.cardBrand,
-          trial_asaas_subscription_id: trialRes.subscriptionId,
-          trial_asaas_customer_id: trialRes.customerId,
           trial_plan_chosen: planKey,
           trial_billing_period: "monthly",
           trial_will_charge_at: new Date(trialRes.nextDueDate).toISOString(),
           trial_auto_charge_cancelled: false,
+          payment_provider: "stripe",
           cpf: cleanTaxId,
           phone: phone || null,
           postal_code: postalCode.replace(/\D/g, "") || null,
