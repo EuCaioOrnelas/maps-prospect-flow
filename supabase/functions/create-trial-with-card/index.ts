@@ -150,7 +150,7 @@ serve(async (req) => {
     trialEnd.setDate(trialEnd.getDate() + 7);
     const nextDueDate = trialEnd.toISOString().split("T")[0];
 
-    // 3. Subscription com cartão — payload IDÊNTICO ao create-asaas-card-checkout
+    // 3. Subscription com cartão — alinhado ao checkout de cartão que já funciona
     const subscriptionBody: Record<string, any> = {
       customer: customerId,
       billingType: "CREDIT_CARD",
@@ -173,16 +173,20 @@ serve(async (req) => {
         postalCode: postalCode || "01310100",
         addressNumber: addressNum,
         address: address,
-        addressComplement: addressComplement || undefined,
         province: neighborhood,
-        city: city || "São Paulo",
-        state: toUF(state) || "SP",
         phone: phone,
-        mobilePhone: phone,
       },
     };
 
-    logStep("Creating subscription", { customer: customerId, cycle: "MONTHLY", value: plan.priceMonthly, nextDueDate });
+    logStep("Creating subscription", {
+      customer: customerId,
+      cycle: "MONTHLY",
+      value: plan.priceMonthly,
+      nextDueDate,
+      holderState: state,
+      holderCity: city,
+      holderPostalCode: postalCode,
+    });
 
     const subRes = await fetch(`${ASAAS_API}/subscriptions`, {
       method: "POST",
@@ -196,16 +200,16 @@ serve(async (req) => {
 
     const subJson = await subRes.json();
     if (!subRes.ok || subJson.errors) {
-      logStep("Subscription creation failed", subJson);
-      // Mapeia erros conhecidos do Asaas para mensagens detalhadas e acionáveis
+      logStep("Subscription creation failed", { response: subJson, request: subscriptionBody });
       const firstErr = subJson.errors?.[0];
       const code = (firstErr?.code || "").toLowerCase();
       const desc = firstErr?.description || "";
-      const descLower = desc.toLowerCase();
       let friendly = desc || JSON.stringify(subJson);
 
-      // === Recusas do banco emissor (sem cobrança real, apenas validação) ===
-      if (/saldo insuficiente|sem limite|limite insuficiente|insufficient/i.test(desc)) {
+      if (code === "invalid_creditcard" && /estado de resid[êe]ncia|state/i.test(desc)) {
+        friendly =
+          "❌ O gateway rejeitou os dados do endereço do titular.\n\nO erro real não é recusa do banco: o estado/endereço enviado para o cartão foi considerado inválido.\n\n👉 Solução: revise CEP, rua, número e bairro e tente novamente.";
+      } else if (/saldo insuficiente|sem limite|limite insuficiente|insufficient/i.test(desc)) {
         friendly =
           "❌ Cartão recusado: SEM LIMITE DISPONÍVEL.\n\nMesmo sem cobrança imediata (cobramos só após os 7 dias), o banco emissor faz uma validação de R$1,00 (estornada na hora) e recusou por falta de limite.\n\n👉 Solução: libere algum limite no app do banco ou use outro cartão.";
       } else if (/cart[aã]o bloqueado|card.*blocked|blocked.*card/i.test(desc)) {
@@ -226,11 +230,9 @@ serve(async (req) => {
       } else if (/n[úu]mero.*cart[ãa]o|card.*number|invalid.*number/i.test(desc)) {
         friendly =
           "❌ NÚMERO DO CARTÃO INVÁLIDO.\n\nVerifique se digitou todos os 16 dígitos corretamente.\n\n👉 Solução: confira o número impresso no cartão e tente novamente.";
-      }
-      // === Erros de dados do titular ===
-      else if (code === "invalid_creditcard_holderinfo" || /endere[cç]o|cep|state|province|address/i.test(desc)) {
+      } else if (code === "invalid_creditcard_holderinfo" || /endere[cç]o|cep|state|province|address/i.test(desc)) {
         friendly =
-          "❌ DADOS DO ENDEREÇO INCOMPLETOS ou inválidos.\n\nO Asaas exige endereço completo do titular do cartão.\n\n👉 Solução: confira CEP, rua, número, bairro, cidade e estado. Volte e revise os campos.";
+          "❌ DADOS DO ENDEREÇO INCOMPLETOS ou inválidos.\n\nO gateway exige endereço completo do titular do cartão.\n\n👉 Solução: confira CEP, rua, número e bairro e tente novamente.";
       } else if (/cpf|cnpj/i.test(desc)) {
         friendly =
           "❌ CPF/CNPJ INVÁLIDO.\n\nO documento informado não passou na validação.\n\n👉 Solução: confira se digitou todos os números corretamente, sem letras ou caracteres especiais.";
@@ -240,14 +242,10 @@ serve(async (req) => {
       } else if (/phone|telefone|mobile/i.test(desc)) {
         friendly =
           "❌ TELEFONE INVÁLIDO.\n\n👉 Solução: digite seu celular com DDD (11 dígitos no total). Ex: 11987654321.";
-      }
-      // === Erro genérico de cartão ===
-      else if (code === "invalid_creditcard" || /n[ãa]o autorizad|not authorized|declined|recusad/i.test(desc)) {
+      } else if (code === "invalid_creditcard" || /n[ãa]o autorizad|not authorized|declined|recusad/i.test(desc)) {
         friendly =
-          "❌ Cartão RECUSADO pelo banco emissor.\n\nO Asaas faz uma validação inicial de R$1,00 (estornada em segundos) para confirmar que o cartão é válido. Seu banco recusou essa validação.\n\nPossíveis causas:\n• Cartão sem limite disponível\n• Cartão não habilitado para compras online\n• Bloqueio antifraude do banco\n• Dados incorretos (número, validade, CVV)\n\n👉 Solução: confira os dados, ligue para o banco autorizar, ou tente outro cartão.";
-      }
-      // === Outros ===
-      else if (/timeout|conex[ãa]o|connection/i.test(desc)) {
+          "❌ Cartão RECUSADO pelo banco emissor.\n\nO gateway fez a validação inicial do cartão e o banco recusou.\n\n👉 Solução: confira os dados, autorize a compra no banco ou tente outro cartão.";
+      } else if (/timeout|conex[ãa]o|connection/i.test(desc)) {
         friendly =
           "❌ Erro de conexão com o gateway de pagamento.\n\n👉 Solução: aguarde 30 segundos e tente novamente.";
       }
