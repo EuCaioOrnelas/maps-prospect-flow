@@ -31,6 +31,10 @@ import { generateFingerprint, getClientIP } from "@/lib/fingerprint";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 import { cn } from "@/lib/utils";
+import { Elements } from "@stripe/react-stripe-js";
+import { stripePromise } from "@/lib/stripe";
+import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
+import { useRef } from "react";
 
 const PLAN_INFO: Record<string, { name: string; monthly: number }> = {
   start: { name: "Wiize Start", monthly: 296 },
@@ -102,7 +106,15 @@ function fmtPhone(v: string) {
   return d.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").trim();
 }
 
-export default function SignupWithCard() {
+export default function SignupWithCardPage() {
+  return (
+    <Elements stripe={stripePromise}>
+      <SignupWithCardInner />
+    </Elements>
+  );
+}
+
+function SignupWithCardInner() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -133,13 +145,12 @@ export default function SignupWithCard() {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepError, setCepError] = useState("");
 
-  // Card
+  // Card (Stripe Elements handles number/exp/cvv directly)
   const [cardHolder, setCardHolder] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
   const [cardFlipped, setCardFlipped] = useState(false);
+  const [cardBrand, setCardBrand] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const cardFormRef = useRef<StripeCardFormHandle>(null);
 
   const [loading, setLoading] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
@@ -243,25 +254,30 @@ export default function SignupWithCard() {
       return;
     }
 
+    if (!cardHolder.trim()) {
+      toast({ title: "Informe o nome impresso no cartão", variant: "destructive" });
+      return;
+    }
+
     const cleanTaxId = taxId.replace(/\D/g, "");
-    const cleanCard = cardNumber.replace(/\D/g, "");
-    if (cleanCard.length < 13) {
-      toast({ title: "Número do cartão inválido", variant: "destructive" });
-      return;
-    }
-    const [mm, yy] = cardExpiry.split("/");
-    if (!mm || !yy || mm.length !== 2 || yy.length !== 2) {
-      toast({ title: "Validade do cartão inválida (MM/AA)", variant: "destructive" });
-      return;
-    }
-    if (cardCvv.length < 3) {
-      toast({ title: "CVV inválido", variant: "destructive" });
-      return;
-    }
 
     setLoading(true);
 
     try {
+      // 1) Tokenize card via Stripe Elements (no PCI scope for us)
+      const paymentMethodId = await cardFormRef.current!.createPaymentMethod({
+        name: cardHolder,
+        email,
+        phone: phone.replace(/\D/g, ""),
+        address: {
+          postal_code: postalCode.replace(/\D/g, ""),
+          line1: `${address}, ${addressNumber || "S/N"}`,
+          city,
+          state,
+          country: "BR",
+        },
+      });
+
       const [fp, ip] = await Promise.all([generateFingerprint(), getClientIP()]);
       const { data: fraud, error: fraudErr } = await supabase.rpc("check_signup_fraud_strict", {
         p_fingerprint: fp,
@@ -281,11 +297,11 @@ export default function SignupWithCard() {
         return;
       }
 
-      // 1) Validate card with Asaas BEFORE creating the auth user.
-      //    This prevents orphan accounts when the card is rejected.
-      const { data: trialRes, error: trialErr } = await supabase.functions.invoke("create-trial-with-card", {
+      // 2) Create Stripe trial subscription BEFORE creating auth user.
+      const { data: trialRes, error: trialErr } = await supabase.functions.invoke("create-stripe-trial", {
         body: {
           planKey,
+          paymentMethodId,
           customerData: {
             name,
             email,
@@ -298,14 +314,6 @@ export default function SignupWithCard() {
             neighborhood,
             city: city.trim(),
             state: state.trim(),
-            remoteIp: ip || undefined,
-          },
-          creditCard: {
-            holderName: cardHolder,
-            number: cleanCard,
-            expiryMonth: mm,
-            expiryYear: `20${yy}`,
-            ccv: cardCvv,
           },
         },
       });
@@ -315,8 +323,7 @@ export default function SignupWithCard() {
         throw new Error(trialMessage);
       }
 
-      // 2) Card is valid — now create the auth user with trial metadata so the
-      //    profile trigger can persist it.
+      // 3) Create auth user with trial metadata
       const redirectUrl = `${window.location.origin}/dashboard`;
       const { data: signupData, error: signupErr } = await supabase.auth.signUp({
         email,
@@ -330,8 +337,8 @@ export default function SignupWithCard() {
             terms_accepted: "true",
             trial_with_card: "true",
             trial_plan_chosen: planKey,
-            trial_asaas_subscription_id: trialRes.subscriptionId,
-            trial_asaas_customer_id: trialRes.customerId,
+            stripe_subscription_id: trialRes.subscriptionId,
+            stripe_customer_id: trialRes.customerId,
             trial_card_last4: trialRes.cardLast4,
             trial_card_brand: trialRes.cardBrand,
             trial_will_charge_at: trialRes.nextDueDate,
@@ -342,18 +349,17 @@ export default function SignupWithCard() {
       const newUserId = signupData.user?.id;
       if (!newUserId) throw new Error("Conta criada, mas ID do usuário não retornado");
 
-      // 3) Persist trial details on the profile (best-effort — webhook also reconciles).
+      // 4) Persist trial details on the profile (webhook also reconciles).
       await supabase
         .from("profiles")
         .update({
           trial_card_last4: trialRes.cardLast4,
           trial_card_brand: trialRes.cardBrand,
-          trial_asaas_subscription_id: trialRes.subscriptionId,
-          trial_asaas_customer_id: trialRes.customerId,
           trial_plan_chosen: planKey,
           trial_billing_period: "monthly",
           trial_will_charge_at: new Date(trialRes.nextDueDate).toISOString(),
           trial_auto_charge_cancelled: false,
+          payment_provider: "stripe",
           cpf: cleanTaxId,
           phone: phone || null,
           postal_code: postalCode.replace(/\D/g, "") || null,
@@ -559,62 +565,28 @@ export default function SignupWithCard() {
                   {/* Cartão animado em destaque (mobile-first) */}
                   <div className="lg:hidden mb-6 flex justify-center">
                     <AnimatedCreditCard
-                      cardNumber={cardNumber || "•••• •••• •••• ••••"}
+                      cardNumber={"•••• •••• •••• ••••"}
                       cardHolder={cardHolder || "NOME NO CARTÃO"}
-                      expiryDate={cardExpiry || "MM/AA"}
+                      expiryDate={"MM/AA"}
                       isFlipped={cardFlipped}
                     />
                   </div>
 
                   <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="space-y-1.5">
-                      <Label>Nome impresso no cartão</Label>
-                      <Input
-                        value={cardHolder}
-                        onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                        required
-                        placeholder="Ex: João M Silva"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Número do cartão</Label>
-                      <Input
-                        value={cardNumber}
-                        onChange={(e) => setCardNumber(fmtCard(e.target.value))}
-                        required
-                        placeholder="0000 0000 0000 0000"
-                        inputMode="numeric"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label>Validade (MM/AA)</Label>
-                        <Input
-                          value={cardExpiry}
-                          onChange={(e) => setCardExpiry(fmtExpiry(e.target.value))}
-                          required
-                          placeholder="12/30"
-                          inputMode="numeric"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>CVV</Label>
-                        <Input
-                          value={cardCvv}
-                          onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                          onFocus={() => setCardFlipped(true)}
-                          onBlur={() => setCardFlipped(false)}
-                          required
-                          placeholder="123"
-                          inputMode="numeric"
-                        />
-                      </div>
-                    </div>
+                    <StripeCardForm
+                      ref={cardFormRef}
+                      cardHolder={cardHolder}
+                      onCardHolderChange={setCardHolder}
+                      onCardChange={(d) => setCardBrand(d.brand || "")}
+                      onCvcFocus={() => setCardFlipped(true)}
+                      onCvcBlur={() => setCardFlipped(false)}
+                      disabled={loading}
+                    />
 
                     <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-xs text-muted-foreground flex items-start gap-2">
                       <ShieldCheck size={14} className="text-primary shrink-0 mt-0.5" />
                       <p>
-                        Pagamento processado via <strong className="text-foreground">Asaas</strong> com segurança bancária. Não armazenamos dados do cartão.
+                        Pagamento processado via <strong className="text-foreground">Stripe</strong> com criptografia PCI-DSS. Não armazenamos dados do cartão.
                       </p>
                     </div>
 
@@ -660,9 +632,9 @@ export default function SignupWithCard() {
               {step === 2 && (
                 <div className="hidden lg:block">
                   <AnimatedCreditCard
-                    cardNumber={cardNumber || "•••• •••• •••• ••••"}
+                    cardNumber={"•••• •••• •••• ••••"}
                     cardHolder={cardHolder || "NOME NO CARTÃO"}
-                    expiryDate={cardExpiry || "MM/AA"}
+                    expiryDate={"MM/AA"}
                     isFlipped={cardFlipped}
                   />
                 </div>

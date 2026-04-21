@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -29,6 +29,9 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
+import { Elements, useStripe, useElements } from "@stripe/react-stripe-js";
+import { stripePromise } from "@/lib/stripe";
+import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 
 function formatCurrency(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
@@ -58,6 +61,14 @@ const PLAN_PRICES: Record<string, { monthly: number; annual: number; name: strin
 const INSTALLMENT_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 export default function CheckoutCard() {
+  return (
+    <Elements stripe={stripePromise}>
+      <CheckoutCardInner />
+    </Elements>
+  );
+}
+
+function CheckoutCardInner() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -73,11 +84,10 @@ export default function CheckoutCard() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Card form state
-  const [cardNumber, setCardNumber] = useState("");
+  // Card form state — Stripe Elements handles number/exp/cvv internally
   const [cardHolder, setCardHolder] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
+  const cardFormRef = useRef<StripeCardFormHandle>(null);
+  const [cardComplete, setCardComplete] = useState(false);
   const [installments, setInstallments] = useState("12");
   const [postalCode, setPostalCode] = useState("");
   const [addressStreet, setAddressStreet] = useState("");
@@ -152,10 +162,8 @@ export default function CheckoutCard() {
   }, [postalCode]);
 
   const isCardValid =
-    cardNumber.replace(/\s/g, "").length >= 13 &&
+    cardComplete &&
     cardHolder.trim().length >= 3 &&
-    cardExpiry.length >= 4 &&
-    cardCvv.length >= 3 &&
     cepValid === true &&
     addressStreet.trim().length >= 2 &&
     addressNeighborhood.trim().length >= 1 &&
@@ -170,28 +178,30 @@ export default function CheckoutCard() {
     setLoading(true);
 
     try {
-      const expiryParts = cardExpiry.replace(/\s/g, "").split("/");
-      const expiryMonth = expiryParts[0];
-      const expiryYear = expiryParts[1]?.length === 2 ? `20${expiryParts[1]}` : expiryParts[1];
+      const paymentMethodId = await cardFormRef.current!.createPaymentMethod({
+        name: cardHolder,
+        email: customerData.email,
+        phone: customerData.phone,
+        address: {
+          postal_code: postalCode.replace(/\D/g, ""),
+          line1: `${addressStreet}, ${addressNumber || "S/N"}`,
+          city: customerData.city,
+          state: customerData.state,
+          country: "BR",
+        },
+      });
 
-      const { data, error } = await supabase.functions.invoke("create-asaas-card-checkout", {
+      const { data, error } = await supabase.functions.invoke("create-stripe-subscription", {
         body: {
           planKey,
-          installmentCount: isAnnual ? installmentCount : undefined,
           billingPeriod,
+          paymentMethodId,
           customerData: {
             ...customerData,
             postalCode: postalCode.replace(/\D/g, ""),
             address: addressStreet,
             addressNumber: addressNumber || "S/N",
             neighborhood: addressNeighborhood,
-          },
-          creditCard: {
-            holderName: cardHolder,
-            number: cardNumber.replace(/\s/g, ""),
-            expiryMonth: expiryMonth,
-            expiryYear: expiryYear,
-            ccv: cardCvv,
           },
         },
       });
@@ -201,13 +211,9 @@ export default function CheckoutCard() {
 
       setSuccess(true);
       toast({ title: "🎉 Assinatura criada!", description: isAnnual ? "Seu plano anual foi ativado com sucesso." : "Seu plano mensal foi ativado com sucesso." });
-      setTimeout(() => navigate("/checkout-success?provider=asaas"), 2500);
+      setTimeout(() => navigate("/checkout-success?provider=stripe"), 2500);
     } catch (err: any) {
-      toast({
-        title: "Erro no pagamento",
-        description: err.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erro no pagamento", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -318,9 +324,9 @@ export default function CheckoutCard() {
                 {/* Animated 3D Credit Card — overlapping the form card */}
                 <div className="relative z-10 mb-[-40px]">
                   <AnimatedCreditCard
-                    cardNumber={cardNumber}
+                    cardNumber={"•••• •••• •••• ••••"}
                     cardHolder={cardHolder}
-                    expiryDate={cardExpiry}
+                    expiryDate={"MM/AA"}
                     isFlipped={cvvFocused}
                   />
                 </div>
@@ -332,65 +338,15 @@ export default function CheckoutCard() {
                     <p className="text-sm font-semibold text-foreground">Dados do cartão</p>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="card-number" className="text-xs font-medium flex items-center gap-1.5">
-                      <Hash className="h-3 w-3 text-muted-foreground" />
-                      Número do cartão
-                    </Label>
-                    <Input
-                      id="card-number"
-                      placeholder="0000 0000 0000 0000"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                      maxLength={19}
-                      autoFocus
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="card-holder" className="text-xs font-medium flex items-center gap-1.5">
-                      <User className="h-3 w-3 text-muted-foreground" />
-                      Nome no cartão
-                    </Label>
-                    <Input
-                      id="card-holder"
-                      placeholder="NOME IMPRESSO NO CARTÃO"
-                      value={cardHolder}
-                      onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="card-expiry" className="text-xs font-medium flex items-center gap-1.5">
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
-                        Validade
-                      </Label>
-                      <Input
-                        id="card-expiry"
-                        placeholder="MM/AA"
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
-                        maxLength={5}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="card-cvv" className="text-xs font-medium flex items-center gap-1.5">
-                        <Lock className="h-3 w-3 text-muted-foreground" />
-                        CVV
-                      </Label>
-                      <Input
-                        id="card-cvv"
-                        placeholder="000"
-                        value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                        maxLength={4}
-                        type="password"
-                        onFocus={() => setCvvFocused(true)}
-                        onBlur={() => setCvvFocused(false)}
-                      />
-                    </div>
-                  </div>
+                  <StripeCardForm
+                    ref={cardFormRef}
+                    cardHolder={cardHolder}
+                    onCardHolderChange={setCardHolder}
+                    onCardChange={(d) => setCardComplete(!!d.complete)}
+                    onCvcFocus={() => setCvvFocused(true)}
+                    onCvcBlur={() => setCvvFocused(false)}
+                    disabled={loading}
+                  />
 
                   <div className="h-px bg-border/30 my-1" />
 
