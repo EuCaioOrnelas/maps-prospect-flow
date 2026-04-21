@@ -12,6 +12,53 @@ const logStep = (step: string, details?: any) => {
   console.log(`[MANAGE-SUB] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
+async function dispatchCancellationEmails(
+  supabaseClient: any,
+  userId: string,
+  email: string,
+  provider: string,
+  activeUntil: string | null,
+) {
+  try {
+    const { data: feedback } = await supabaseClient
+      .from("cancellation_feedback")
+      .select("cancellation_reason, usage_level, additional_comments")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const { data: prof } = await supabaseClient
+      .from("profiles")
+      .select("name, plan")
+      .eq("id", userId)
+      .maybeSingle();
+
+    await fetch(
+      `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-cancellation-emails`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({
+          userEmail: email,
+          userName: prof?.name || null,
+          plan: prof?.plan || null,
+          activeUntil,
+          provider,
+          reason: feedback?.cancellation_reason || null,
+          usageLevel: feedback?.usage_level || null,
+          comments: feedback?.additional_comments || null,
+        }),
+      },
+    );
+  } catch (e) {
+    console.log("[MANAGE-SUB] Email dispatch failed:", String(e));
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
