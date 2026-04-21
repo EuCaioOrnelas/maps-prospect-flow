@@ -1377,17 +1377,3 @@ body.tour-active [data-radix-dialog-overlay] {
 body.tour-active [role="dialog"][data-state="open"] {
   z-index: 2147483645 !important;
 }
-
-/* Stripe Elements: ensure iframe fills wrapper for clickability */
-.stripe-field .StripeElement {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-}
-.stripe-field .StripeElement > .__PrivateStripeElement {
-  width: 100%;
-}
-.stripe-field iframe {
-  width: 100% !important;
-}

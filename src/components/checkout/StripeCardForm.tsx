@@ -46,41 +46,12 @@ interface Props {
 }
 
 const elementOptions: StripeCardNumberElementOptions = {
-  placeholder: "",
   style: {
     base: {
       fontSize: "15px",
       color: "hsl(var(--foreground))",
       fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
       "::placeholder": { color: "hsl(var(--muted-foreground))" },
-      iconColor: "hsl(var(--primary))",
-    },
-    invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
-  },
-};
-
-const expiryOptions: StripeCardNumberElementOptions = {
-  placeholder: "MM / AA",
-  style: {
-    base: {
-      fontSize: "15px",
-      color: "hsl(var(--foreground))",
-      fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
-      "::placeholder": { color: "hsl(var(--muted-foreground) / 0.4)" },
-      iconColor: "hsl(var(--primary))",
-    },
-    invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
-  },
-};
-
-const cvcOptions: StripeCardNumberElementOptions = {
-  placeholder: "CVC",
-  style: {
-    base: {
-      fontSize: "15px",
-      color: "hsl(var(--foreground))",
-      fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
-      "::placeholder": { color: "hsl(var(--muted-foreground) / 0.4)" },
       iconColor: "hsl(var(--primary))",
     },
     invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
@@ -135,7 +106,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           <Label className="text-xs font-medium flex items-center gap-1.5">
             <Hash className="h-3 w-3 text-muted-foreground" /> Número do cartão
           </Label>
-          <div className="stripe-field flex h-10 w-full rounded-md border border-input bg-background px-3 items-center cursor-text">
+          <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
             <CardNumberElement
               options={{ ...elementOptions, showIcon: true }}
               className="w-full"
@@ -154,17 +125,17 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
             <Label className="text-xs font-medium flex items-center gap-1.5">
               <Calendar className="h-3 w-3 text-muted-foreground" /> Validade
             </Label>
-            <div className="stripe-field flex h-10 w-full rounded-md border border-input bg-background px-3 items-center cursor-text">
-              <CardExpiryElement options={expiryOptions} className="w-full" />
+            <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
+              <CardExpiryElement options={elementOptions} className="w-full" />
             </div>
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs font-medium flex items-center gap-1.5">
               <Lock className="h-3 w-3 text-muted-foreground" /> CVV
             </Label>
-            <div className="stripe-field flex h-10 w-full rounded-md border border-input bg-background px-3 items-center cursor-text">
+            <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
               <CardCvcElement
-                options={cvcOptions}
+                options={elementOptions}
                 className="w-full"
                 onFocus={onCvcFocus}
                 onBlur={onCvcBlur}
