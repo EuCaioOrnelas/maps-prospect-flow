@@ -365,6 +365,7 @@ function SignupWithCardInner() {
           postal_code: postalCode.replace(/\D/g, "") || null,
           address: address || null,
           address_number: addressNumber || null,
+          address_complement: addressComplement.trim() || null,
           neighborhood: neighborhood || null,
           city: city || null,
           state: state || null,
@@ -502,22 +503,24 @@ function SignupWithCardInner() {
                           <Input value={phone} onChange={(e) => setPhone(fmtPhone(e.target.value))} required placeholder="(11) 99999-9999" />
                         </div>
                       </div>
-                      <div className="grid sm:grid-cols-[140px_1fr_110px_160px] gap-3">
+                      <div className="grid sm:grid-cols-[140px_1fr] gap-3">
                         <div className="space-y-1.5">
                           <Label>CEP</Label>
                           <Input value={postalCode} onChange={(e) => setPostalCode(fmtCep(e.target.value))} required placeholder="00000-000" />
                         </div>
                         <div className="space-y-1.5">
                           <Label>Endereço</Label>
-                          <Input value={address} onChange={(e) => setAddress(e.target.value)} required disabled={cepLoading} />
+                          <Input value={address} onChange={(e) => setAddress(e.target.value)} required disabled={cepLoading} placeholder="Rua, Avenida..." />
                         </div>
+                      </div>
+                      <div className="grid sm:grid-cols-[140px_1fr] gap-3">
                         <div className="space-y-1.5">
                           <Label>Número</Label>
-                          <Input value={addressNumber} onChange={(e) => setAddressNumber(e.target.value)} required />
+                          <Input value={addressNumber} onChange={(e) => setAddressNumber(e.target.value)} required placeholder="Nº" />
                         </div>
                         <div className="space-y-1.5">
                           <Label>Complemento</Label>
-                          <Input value={addressComplement} onChange={(e) => setAddressComplement(e.target.value)} placeholder="Apto, sala, bloco" />
+                          <Input value={addressComplement} onChange={(e) => setAddressComplement(e.target.value)} placeholder="Apto, sala, bloco (opcional)" />
                         </div>
                       </div>
                       <div className="grid sm:grid-cols-3 gap-3">
