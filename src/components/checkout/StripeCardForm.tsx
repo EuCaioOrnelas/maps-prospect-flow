@@ -108,7 +108,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           </Label>
           <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
             <CardNumberElement
-              options={{ ...cardNumberOptions, showIcon: true }}
+              options={{ ...elementOptions, showIcon: true }}
               className="w-full"
               onChange={(e) =>
                 onCardChange?.({
