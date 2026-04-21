@@ -173,8 +173,12 @@ serve(async (req) => {
         postalCode: postalCode || "01310100",
         addressNumber: addressNum,
         address: address,
+        addressComplement: addressComplement || undefined,
         province: neighborhood,
+        city: city || undefined,
+        state: state || undefined,
         phone: phone,
+        mobilePhone: phone,
       },
     };
 
