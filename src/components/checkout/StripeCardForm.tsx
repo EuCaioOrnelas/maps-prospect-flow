@@ -46,6 +46,7 @@ interface Props {
 }
 
 const elementOptions: StripeCardNumberElementOptions = {
+  placeholder: "0000 0000 0000 0000",
   style: {
     base: {
       fontSize: "15px",
