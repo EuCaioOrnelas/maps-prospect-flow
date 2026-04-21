@@ -298,6 +298,7 @@ export default function SignupWithCard() {
             neighborhood,
             city: city.trim(),
             state: state.trim(),
+            remoteIp: ip || undefined,
           },
           creditCard: {
             holderName: cardHolder,
