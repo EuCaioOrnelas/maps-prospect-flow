@@ -309,10 +309,9 @@ export default function SignupWithCard() {
         },
       });
       if (trialErr || trialRes?.error) {
+        const trialMessage = trialRes?.error || trialErr?.message || "Falha ao validar o cartão. Verifique os dados e tente novamente.";
         console.error("[SignupWithCard] trial setup failed", trialErr || trialRes?.error);
-        throw new Error(
-          trialRes?.error || trialErr?.message || "Falha ao validar o cartão. Verifique os dados e tente novamente.",
-        );
+        throw new Error(trialMessage);
       }
 
       // 2) Card is valid — now create the auth user with trial metadata so the

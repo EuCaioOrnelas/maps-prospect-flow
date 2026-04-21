@@ -317,9 +317,13 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
+    const isHandledPaymentError = errorMessage.includes("❌");
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 },
+      JSON.stringify({ error: errorMessage, handled: isHandledPaymentError }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: isHandledPaymentError ? 400 : 500,
+      },
     );
   }
 });
