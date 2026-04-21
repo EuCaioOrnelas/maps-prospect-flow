@@ -1,6 +1,5 @@
-// Cancela a assinatura agendada do trial — usuário não será cobrado no D+7.
-// Suporta Stripe (atual) e Asaas (legado). Marca trial_auto_charge_cancelled=true.
-// Usuário mantém acesso até trial_end_at; depois disso vai pra trial-expired.
+// Cancela a assinatura agendada do trial no Stripe — usuário não será cobrado no D+7.
+// Marca trial_auto_charge_cancelled=true. Mantém acesso até trial_end_at.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
@@ -11,8 +10,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-const ASAAS_API = "https://api.asaas.com/v3";
 
 const log = (step: string, details?: unknown) => {
   console.log(`[CANCEL-TRIAL] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
@@ -38,9 +35,10 @@ serve(async (req) => {
     const userId = userData.user.id;
     log("Cancel request", { userId });
 
+    // trial_asaas_subscription_id é reaproveitado como storage genérico do subscription Stripe (sub_...)
     const { data: profile, error: pErr } = await supabase
       .from("profiles")
-      .select("trial_asaas_subscription_id, trial_auto_charge_cancelled, plan, payment_provider")
+      .select("trial_asaas_subscription_id, trial_auto_charge_cancelled, plan")
       .eq("id", userId)
       .maybeSingle();
 
@@ -62,39 +60,17 @@ serve(async (req) => {
       );
     }
 
-    const isStripe = profile.payment_provider === "stripe" || subId.startsWith("sub_");
-    log("Provider detected", { isStripe, subId });
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
+    const stripe = new Stripe(stripeKey, { apiVersion: "2024-11-20.acacia" });
 
-    if (isStripe) {
-      // Cancel on Stripe
-      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-      if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
-      const stripe = new Stripe(stripeKey, { apiVersion: "2024-11-20.acacia" });
-
-      try {
-        const cancelled = await stripe.subscriptions.cancel(subId);
-        log("Stripe cancel ok", { id: cancelled.id, status: cancelled.status });
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        log("Stripe cancel failed (continuing)", { error: msg });
-        // Continue anyway — better to mark as cancelled and prevent re-charge attempts
-      }
-    } else {
-      // Cancel on Asaas (legacy)
-      const apiKey = Deno.env.get("ASAAS_API_KEY");
-      if (!apiKey) throw new Error("ASAAS_API_KEY not configured");
-
-      const delRes = await fetch(`${ASAAS_API}/subscriptions/${subId}`, {
-        method: "DELETE",
-        headers: { access_token: apiKey, Accept: "application/json" },
-      });
-
-      const delText = await delRes.text();
-      log("Asaas delete response", { status: delRes.status, body: delText.slice(0, 200) });
-
-      if (!delRes.ok && delRes.status !== 404) {
-        log("Asaas cancel failed (continuing)", { status: delRes.status });
-      }
+    try {
+      const cancelled = await stripe.subscriptions.cancel(subId);
+      log("Stripe cancel ok", { id: cancelled.id, status: cancelled.status });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      log("Stripe cancel failed (continuing to mark cancelled)", { error: msg });
+      // Continua mesmo assim — melhor marcar como cancelado e impedir nova tentativa
     }
 
     await supabase
