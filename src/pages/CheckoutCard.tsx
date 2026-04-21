@@ -84,11 +84,10 @@ function CheckoutCardInner() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Card form state
-  const [cardNumber, setCardNumber] = useState("");
+  // Card form state — Stripe Elements handles number/exp/cvv internally
   const [cardHolder, setCardHolder] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
+  const cardFormRef = useRef<StripeCardFormHandle>(null);
+  const [cardComplete, setCardComplete] = useState(false);
   const [installments, setInstallments] = useState("12");
   const [postalCode, setPostalCode] = useState("");
   const [addressStreet, setAddressStreet] = useState("");
