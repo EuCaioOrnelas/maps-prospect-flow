@@ -13,7 +13,7 @@ const corsHeaders = {
 
 const ADMIN_EMAIL = "wiize.app@gmail.com";
 const FROM = "Wiize <noreply@wiize.com.br>";
-const GATEWAY = "https://connector-gateway.lovable.dev/resend";
+const RESEND_API = "https://api.resend.com";
 
 const log = (s: string, d?: unknown) =>
   console.log(`[CANCEL-EMAIL] ${s}${d ? ` - ${JSON.stringify(d)}` : ""}`);
@@ -95,16 +95,14 @@ const adminTemplate = (p: Payload) => `
 `;
 
 const sendEmail = async (to: string, subject: string, html: string) => {
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
   const resendKey = Deno.env.get("RESEND_API_KEY");
-  if (!apiKey || !resendKey) throw new Error("Missing email credentials");
+  if (!resendKey) throw new Error("Missing RESEND_API_KEY");
 
-  const res = await fetch(`${GATEWAY}/emails`, {
+  const res = await fetch(`${RESEND_API}/emails`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-      "X-Connection-Api-Key": resendKey,
+      Authorization: `Bearer ${resendKey}`,
     },
     body: JSON.stringify({ from: FROM, to: [to], subject, html }),
   });
