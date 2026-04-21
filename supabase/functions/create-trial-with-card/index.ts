@@ -289,11 +289,11 @@ serve(async (req) => {
         name: customerData.name,
         email: customerData.email,
         cpfCnpj,
-        postalCode: postalCode || "01310100",
+        postalCode: formattedPostalCode,
         addressNumber: addressMeta.addressNumber,
         addressComplement: addressComplement || undefined,
-        phone,
-        mobilePhone: phone || undefined,
+        phone: phoneInfo.phone,
+        mobilePhone: phoneInfo.mobilePhone,
       },
     };
 
@@ -303,7 +303,7 @@ serve(async (req) => {
       value: plan.priceMonthly,
       nextDueDate,
       remoteIp,
-      holderPostalCode: postalCode,
+      holderPostalCode: formattedPostalCode,
       holderAddressNumber: addressMeta.addressNumber,
     });
 
