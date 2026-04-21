@@ -135,7 +135,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           <Label className="text-xs font-medium flex items-center gap-1.5">
             <Hash className="h-3 w-3 text-muted-foreground" /> Número do cartão
           </Label>
-          <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
+          <div className="stripe-field flex h-10 w-full rounded-md border border-input bg-background px-3 items-center cursor-text">
             <CardNumberElement
               options={{ ...elementOptions, showIcon: true }}
               className="w-full"
