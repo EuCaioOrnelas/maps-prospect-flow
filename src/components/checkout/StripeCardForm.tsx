@@ -45,18 +45,32 @@ interface Props {
   disabled?: boolean;
 }
 
-const elementOptions: StripeCardNumberElementOptions = {
-  placeholder: "0000 0000 0000 0000",
+const baseElementStyle = {
   style: {
     base: {
       fontSize: "15px",
       color: "hsl(var(--foreground))",
       fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
-      "::placeholder": { color: "hsl(var(--muted-foreground))" },
+      "::placeholder": { color: "hsl(var(--foreground) / 0.55)" },
       iconColor: "hsl(var(--primary))",
     },
     invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
   },
+};
+
+const cardNumberOptions: StripeCardNumberElementOptions = {
+  ...baseElementStyle,
+  placeholder: "Número do cartão (16 dígitos)",
+};
+
+const expiryOptions = {
+  ...baseElementStyle,
+  placeholder: "Mês / Ano (MM/AA)",
+};
+
+const cvcOptions = {
+  ...baseElementStyle,
+  placeholder: "Código de segurança (3 dígitos)",
 };
 
 export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
