@@ -106,7 +106,15 @@ function fmtPhone(v: string) {
   return d.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").trim();
 }
 
-export default function SignupWithCard() {
+export default function SignupWithCardPage() {
+  return (
+    <Elements stripe={stripePromise}>
+      <SignupWithCardInner />
+    </Elements>
+  );
+}
+
+function SignupWithCardInner() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
