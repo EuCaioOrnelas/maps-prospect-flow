@@ -110,7 +110,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           </Label>
           <Input
             id="card-holder"
-            placeholder="NOME IMPRESSO NO CARTÃO"
+            placeholder="Ex: JOÃO DA SILVA"
             value={cardHolder}
             onChange={(e) => onCardHolderChange(e.target.value.toUpperCase())}
             disabled={disabled}
