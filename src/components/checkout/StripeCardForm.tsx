@@ -141,7 +141,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
               <Calendar className="h-3 w-3 text-muted-foreground" /> Validade
             </Label>
             <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
-              <CardExpiryElement options={elementOptions} className="w-full" />
+              <CardExpiryElement options={expiryOptions} className="w-full" />
             </div>
           </div>
           <div className="space-y-1.5">
