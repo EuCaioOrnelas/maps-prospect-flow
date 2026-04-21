@@ -135,7 +135,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
             </Label>
             <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
               <CardCvcElement
-                options={cvcOptions}
+                options={elementOptions}
                 className="w-full"
                 onFocus={onCvcFocus}
                 onBlur={onCvcBlur}
