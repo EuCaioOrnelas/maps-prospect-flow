@@ -137,13 +137,12 @@ export default function SignupWithCard() {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepError, setCepError] = useState("");
 
-  // Card
+  // Card (Stripe Elements handles number/exp/cvv directly)
   const [cardHolder, setCardHolder] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
   const [cardFlipped, setCardFlipped] = useState(false);
+  const [cardBrand, setCardBrand] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const cardFormRef = useRef<StripeCardFormHandle>(null);
 
   const [loading, setLoading] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
