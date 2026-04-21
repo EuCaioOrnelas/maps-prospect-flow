@@ -173,8 +173,12 @@ serve(async (req) => {
         postalCode: postalCode || "01310100",
         addressNumber: addressNum,
         address: address,
+        addressComplement: addressComplement || undefined,
         province: neighborhood,
+        city: city || undefined,
+        state: state || undefined,
         phone: phone,
+        mobilePhone: phone,
       },
     };
 
@@ -201,51 +205,53 @@ serve(async (req) => {
     const subJson = await subRes.json();
     if (!subRes.ok || subJson.errors) {
       logStep("Subscription creation failed", { response: subJson, request: subscriptionBody });
-      const firstErr = subJson.errors?.[0];
+      const errors = Array.isArray(subJson.errors) ? subJson.errors : [];
+      const firstErr = errors[0];
       const code = (firstErr?.code || "").toLowerCase();
       const desc = firstErr?.description || "";
+      const combinedDescriptions = errors.map((err: { description?: string }) => err.description || "").join(" | ");
       let friendly = desc || JSON.stringify(subJson);
 
-      if (code === "invalid_creditcard" && /estado de resid[êe]ncia|state/i.test(desc)) {
+      if (/cidade do titular|estado de resid[êe]ncia|state|city/i.test(combinedDescriptions)) {
         friendly =
-          "❌ O gateway rejeitou os dados do endereço do titular.\n\nO erro real não é recusa do banco: o estado/endereço enviado para o cartão foi considerado inválido.\n\n👉 Solução: revise CEP, rua, número e bairro e tente novamente.";
-      } else if (/saldo insuficiente|sem limite|limite insuficiente|insufficient/i.test(desc)) {
+          "❌ O gateway rejeitou os dados do endereço do titular.\n\nO erro real não é recusa do banco: cidade/estado do titular não chegaram corretamente no pagamento.\n\n👉 Solução: revise endereço, cidade e estado e tente novamente.";
+      } else if (/saldo insuficiente|sem limite|limite insuficiente|insufficient/i.test(combinedDescriptions)) {
         friendly =
           "❌ Cartão recusado: SEM LIMITE DISPONÍVEL.\n\nMesmo sem cobrança imediata (cobramos só após os 7 dias), o banco emissor faz uma validação de R$1,00 (estornada na hora) e recusou por falta de limite.\n\n👉 Solução: libere algum limite no app do banco ou use outro cartão.";
-      } else if (/cart[aã]o bloqueado|card.*blocked|blocked.*card/i.test(desc)) {
+      } else if (/cart[aã]o bloqueado|card.*blocked|blocked.*card/i.test(combinedDescriptions)) {
         friendly =
           "❌ Cartão BLOQUEADO pelo banco emissor.\n\n👉 Solução: ligue para o seu banco e desbloqueie o cartão para compras online, ou use outro cartão.";
-      } else if (/n[ãa]o habilitado.*online|online.*n[ãa]o|not.*authorized.*online|e-commerce.*disabled/i.test(desc)) {
+      } else if (/n[ãa]o habilitado.*online|online.*n[ãa]o|not.*authorized.*online|e-commerce.*disabled/i.test(combinedDescriptions)) {
         friendly =
           "❌ Cartão não habilitado para COMPRAS ONLINE.\n\n👉 Solução: acesse o app do seu banco e habilite a função de compras online/internet, ou use outro cartão.";
-      } else if (/suspeita.*fraude|fraud|suspected/i.test(desc)) {
+      } else if (/suspeita.*fraude|fraud|suspected/i.test(combinedDescriptions)) {
         friendly =
           "❌ Transação recusada por SUSPEITA DE FRAUDE pelo seu banco.\n\n👉 Solução: ligue para a central do seu banco, autorize a transação da Wiize, e tente novamente. Ou use outro cartão.";
-      } else if (/expir|venc/i.test(desc)) {
+      } else if (/expir|venc/i.test(combinedDescriptions)) {
         friendly =
           "❌ Cartão VENCIDO.\n\nA data de validade que você informou já passou.\n\n👉 Solução: use um cartão com validade futura.";
-      } else if (/cvv|cvc|c[oó]digo de seguran[çc]a|security code/i.test(desc)) {
+      } else if (/cvv|cvc|c[oó]digo de seguran[çc]a|security code/i.test(combinedDescriptions)) {
         friendly =
           "❌ CVV (código de segurança) INVÁLIDO.\n\nO código de 3 dígitos do verso do cartão está incorreto.\n\n👉 Solução: confira os 3 números no verso do cartão e tente novamente.";
-      } else if (/n[úu]mero.*cart[ãa]o|card.*number|invalid.*number/i.test(desc)) {
+      } else if (/n[úu]mero.*cart[ãa]o|card.*number|invalid.*number/i.test(combinedDescriptions)) {
         friendly =
           "❌ NÚMERO DO CARTÃO INVÁLIDO.\n\nVerifique se digitou todos os 16 dígitos corretamente.\n\n👉 Solução: confira o número impresso no cartão e tente novamente.";
-      } else if (code === "invalid_creditcard_holderinfo" || /endere[cç]o|cep|state|province|address/i.test(desc)) {
+      } else if (code === "invalid_creditcard_holderinfo" || /endere[cç]o|cep|state|province|address/i.test(combinedDescriptions)) {
         friendly =
-          "❌ DADOS DO ENDEREÇO INCOMPLETOS ou inválidos.\n\nO gateway exige endereço completo do titular do cartão.\n\n👉 Solução: confira CEP, rua, número e bairro e tente novamente.";
-      } else if (/cpf|cnpj/i.test(desc)) {
+          "❌ DADOS DO ENDEREÇO INCOMPLETOS ou inválidos.\n\nO gateway exige endereço completo do titular do cartão.\n\n👉 Solução: confira CEP, rua, número, bairro, cidade e estado e tente novamente.";
+      } else if (/cpf|cnpj/i.test(combinedDescriptions)) {
         friendly =
           "❌ CPF/CNPJ INVÁLIDO.\n\nO documento informado não passou na validação.\n\n👉 Solução: confira se digitou todos os números corretamente, sem letras ou caracteres especiais.";
-      } else if (/email|e-mail/i.test(desc)) {
+      } else if (/email|e-mail/i.test(combinedDescriptions)) {
         friendly =
           "❌ EMAIL INVÁLIDO.\n\n👉 Solução: confira se o endereço de email está digitado corretamente.";
-      } else if (/phone|telefone|mobile/i.test(desc)) {
+      } else if (/phone|telefone|mobile/i.test(combinedDescriptions)) {
         friendly =
           "❌ TELEFONE INVÁLIDO.\n\n👉 Solução: digite seu celular com DDD (11 dígitos no total). Ex: 11987654321.";
-      } else if (code === "invalid_creditcard" || /n[ãa]o autorizad|not authorized|declined|recusad/i.test(desc)) {
+      } else if (code === "invalid_creditcard" || /n[ãa]o autorizad|not authorized|declined|recusad/i.test(combinedDescriptions)) {
         friendly =
           "❌ Cartão RECUSADO pelo banco emissor.\n\nO gateway fez a validação inicial do cartão e o banco recusou.\n\n👉 Solução: confira os dados, autorize a compra no banco ou tente outro cartão.";
-      } else if (/timeout|conex[ãa]o|connection/i.test(desc)) {
+      } else if (/timeout|conex[ãa]o|connection/i.test(combinedDescriptions)) {
         friendly =
           "❌ Erro de conexão com o gateway de pagamento.\n\n👉 Solução: aguarde 30 segundos e tente novamente.";
       }
