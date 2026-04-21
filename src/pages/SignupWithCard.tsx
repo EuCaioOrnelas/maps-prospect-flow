@@ -557,62 +557,28 @@ export default function SignupWithCard() {
                   {/* Cartão animado em destaque (mobile-first) */}
                   <div className="lg:hidden mb-6 flex justify-center">
                     <AnimatedCreditCard
-                      cardNumber={cardNumber || "•••• •••• •••• ••••"}
+                      cardNumber={"•••• •••• •••• ••••"}
                       cardHolder={cardHolder || "NOME NO CARTÃO"}
-                      expiryDate={cardExpiry || "MM/AA"}
+                      expiryDate={"MM/AA"}
                       isFlipped={cardFlipped}
                     />
                   </div>
 
                   <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="space-y-1.5">
-                      <Label>Nome impresso no cartão</Label>
-                      <Input
-                        value={cardHolder}
-                        onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                        required
-                        placeholder="Ex: João M Silva"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Número do cartão</Label>
-                      <Input
-                        value={cardNumber}
-                        onChange={(e) => setCardNumber(fmtCard(e.target.value))}
-                        required
-                        placeholder="0000 0000 0000 0000"
-                        inputMode="numeric"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label>Validade (MM/AA)</Label>
-                        <Input
-                          value={cardExpiry}
-                          onChange={(e) => setCardExpiry(fmtExpiry(e.target.value))}
-                          required
-                          placeholder="12/30"
-                          inputMode="numeric"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>CVV</Label>
-                        <Input
-                          value={cardCvv}
-                          onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                          onFocus={() => setCardFlipped(true)}
-                          onBlur={() => setCardFlipped(false)}
-                          required
-                          placeholder="123"
-                          inputMode="numeric"
-                        />
-                      </div>
-                    </div>
+                    <StripeCardForm
+                      ref={cardFormRef}
+                      cardHolder={cardHolder}
+                      onCardHolderChange={setCardHolder}
+                      onCardChange={(d) => setCardBrand(d.brand || "")}
+                      onCvcFocus={() => setCardFlipped(true)}
+                      onCvcBlur={() => setCardFlipped(false)}
+                      disabled={loading}
+                    />
 
                     <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-xs text-muted-foreground flex items-start gap-2">
                       <ShieldCheck size={14} className="text-primary shrink-0 mt-0.5" />
                       <p>
-                        Pagamento processado via <strong className="text-foreground">Asaas</strong> com segurança bancária. Não armazenamos dados do cartão.
+                        Pagamento processado via <strong className="text-foreground">Stripe</strong> com criptografia PCI-DSS. Não armazenamos dados do cartão.
                       </p>
                     </div>
 
@@ -658,9 +624,9 @@ export default function SignupWithCard() {
               {step === 2 && (
                 <div className="hidden lg:block">
                   <AnimatedCreditCard
-                    cardNumber={cardNumber || "•••• •••• •••• ••••"}
+                    cardNumber={"•••• •••• •••• ••••"}
                     cardHolder={cardHolder || "NOME NO CARTÃO"}
-                    expiryDate={cardExpiry || "MM/AA"}
+                    expiryDate={"MM/AA"}
                     isFlipped={cardFlipped}
                   />
                 </div>
