@@ -1,0 +1,1 @@
+DELETE FROM public.user_onboarding WHERE user_id = '62ba5c53-a297-49cd-9ca3-b44302fc59f4';

@@ -25,7 +25,6 @@ import {
   PhoneCall,
   Share2,
   Megaphone as Ads,
-  Layers,
   Wallet,
   Coins,
   Banknote,
@@ -46,6 +45,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
+import { Logo } from "@/components/Logo";
 
 type OptionDef = { id: string; label: string; icon: React.ComponentType<any> };
 type StepDef = {
@@ -107,7 +107,7 @@ const STEPS: StepDef[] = [
   {
     key: "sales_method",
     title: "Como vocês vendem hoje?",
-    subtitle: "Conta a real — vamos te mostrar onde dá pra evoluir.",
+    subtitle: "Conta a real, vamos te mostrar onde dá pra evoluir.",
     options: [
       { id: "whatsapp", label: "WhatsApp", icon: MessageCircle },
       { id: "crm", label: "CRM tradicional", icon: Database },
@@ -120,12 +120,12 @@ const STEPS: StepDef[] = [
   {
     key: "monthly_revenue",
     title: "Quanto faturam por mês?",
-    subtitle: "Opcional — usado apenas para personalizar recomendações.",
+    subtitle: "Opcional, usado apenas para personalizar recomendações.",
     optional: true,
     options: [
       { id: "ate-20k", label: "Até R$ 20k", icon: Wallet },
-      { id: "20k-100k", label: "R$ 20k – R$ 100k", icon: Coins },
-      { id: "100k-500k", label: "R$ 100k – R$ 500k", icon: Banknote },
+      { id: "20k-100k", label: "R$ 20k a R$ 100k", icon: Coins },
+      { id: "100k-500k", label: "R$ 100k a R$ 500k", icon: Banknote },
       { id: "500k+", label: "R$ 500k+", icon: Gem },
       { id: "nao-dizer", label: "Prefiro não dizer", icon: EyeOff },
     ],
@@ -137,7 +137,7 @@ const STEPS: StepDef[] = [
     options: [
       { id: "dobrar-leads", label: "Dobrar leads", icon: Rocket },
       { id: "organizar", label: "Organizar vendas", icon: ClipboardList },
-      { id: "fechar-mais", label: "Fechar mais", icon: Trophy },
+      { id: "fechar-mais", label: "Fechar mais negócios", icon: Trophy },
       { id: "escalar-time", label: "Escalar time", icon: Scale },
       { id: "automatizar", label: "Automatizar operação", icon: Workflow },
     ],
@@ -256,12 +256,7 @@ export default function Onboarding() {
     <div className="min-h-screen bg-[hsl(40,30%,97%)] text-[hsl(220,15%,15%)] flex flex-col">
       {/* Header */}
       <header className="px-6 sm:px-10 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-[hsl(158,72%,38%)] flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-white" />
-          </div>
-          <span className="text-base font-semibold tracking-tight">Wiize</span>
-        </div>
+        <Logo size="sm" asLink={false} />
         {stage === "questions" && (
           <div className="hidden sm:flex items-center gap-3 text-xs text-[hsl(220,12%,46%)]">
             <span>
@@ -305,7 +300,7 @@ export default function Onboarding() {
               <Button
                 size="lg"
                 onClick={() => setStage("questions")}
-                className="bg-[hsl(220,18%,12%)] hover:bg-[hsl(220,18%,18%)] text-white px-8 h-12 rounded-lg shadow-sm"
+                className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] text-white px-8 h-12 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
               >
                 Começar
                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -370,7 +365,7 @@ export default function Onboarding() {
                       >
                         <Icon className="h-6 w-6" />
                       </div>
-                      <span className="text-sm font-medium text-center text-[hsl(220,18%,15%)]">
+                      <span className="text-sm font-medium text-center text-[hsl(220,18%,15%)] leading-snug px-1 break-words">
                         {opt.label}
                       </span>
                     </button>
@@ -390,7 +385,7 @@ export default function Onboarding() {
                 <Button
                   onClick={handleNext}
                   disabled={!canContinue || submitting}
-                  className="bg-[hsl(220,18%,12%)] hover:bg-[hsl(220,18%,18%)] disabled:bg-[hsl(220,15%,80%)] disabled:text-white text-white px-8 h-11 rounded-lg"
+                  className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] disabled:bg-[hsl(220,15%,80%)] disabled:text-white text-white px-8 h-11 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
                 >
                   {submitting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
