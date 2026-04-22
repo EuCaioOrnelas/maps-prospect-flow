@@ -29,6 +29,33 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   const { isAdmin, loading: isAdminLoading } = useAdminCheck();
   const location = useLocation();
   const trackedPaths = useRef<Set<string>>(new Set());
+  // null = ainda checando, true = precisa fazer onboarding, false = ok
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+
+  // Verifica se o usuário já completou (ou pulou) o onboarding inicial
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id) {
+      setNeedsOnboarding(null);
+      return;
+    }
+    (async () => {
+      const { data, error } = await supabase
+        .from('user_onboarding')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error) {
+        setNeedsOnboarding(false);
+        return;
+      }
+      setNeedsOnboarding(!data);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   // Capture email attribution UTM params from CTA clicks
   useEffect(() => {
