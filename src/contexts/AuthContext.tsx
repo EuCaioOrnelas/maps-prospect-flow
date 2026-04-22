@@ -56,32 +56,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   // Calculate trial status
+  // Trial pode rodar tanto em plano "free" quanto nos planos pagos (start/growth/scale)
+  // durante a janela de 7 dias com cobrança agendada via trial_will_charge_at.
   const calculateTrialStatus = (profile?: Profile | null) => {
-    if (!profile) return { isExpired: false, daysRemaining: 0 };
-    if (profile.plan && profile.plan !== 'free') {
-      return { isExpired: false, daysRemaining: 0 };
+    if (!profile) return { isExpired: false, daysRemaining: 0, isTrialing: false };
+    const p = profile as unknown as Record<string, unknown>;
+    const willCharge = p.trial_will_charge_at as string | undefined;
+    const cancelled = p.trial_auto_charge_cancelled as boolean | undefined;
+
+    // Caso 1: trial pago com cartão (Stripe) — usa trial_will_charge_at como fonte da verdade
+    if (willCharge) {
+      const endDate = new Date(willCharge);
+      const now = new Date();
+      const msRemaining = endDate.getTime() - now.getTime();
+      const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+      const isExpired = msRemaining <= 0;
+      // Considera "em trial" enquanto não venceu E não foi cancelado pelo usuário
+      const isTrialing = !isExpired && !cancelled;
+      return { isExpired, daysRemaining, isTrialing };
     }
-    
-    // Use trial_end_at if available (new system), fallback to trial_start_at
+
+    // Caso 2: plano pago já efetivado (sem trial pendente) — não está em trial
+    if (profile.plan && profile.plan !== 'free') {
+      return { isExpired: false, daysRemaining: 0, isTrialing: false };
+    }
+
+    // Caso 3: trial legado via trial_end_at (free)
     if (profile.trial_end_at) {
       const endDate = new Date(profile.trial_end_at);
       const now = new Date();
       const msRemaining = endDate.getTime() - now.getTime();
       const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
-      return { isExpired: msRemaining <= 0, daysRemaining };
+      return { isExpired: msRemaining <= 0, daysRemaining, isTrialing: msRemaining > 0 };
     }
-    
+
+    // Caso 4: free sem trial registrado — assume 7 dias
     if (!profile.trial_start_at) {
-      return { isExpired: false, daysRemaining: 7 };
+      return { isExpired: false, daysRemaining: 7, isTrialing: true };
     }
-    
+
     const trialStart = new Date(profile.trial_start_at);
     const now = new Date();
     const daysPassed = Math.floor((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24));
     const daysRemaining = Math.max(0, 7 - daysPassed);
     const isExpired = daysPassed >= 7;
-    
-    return { isExpired, daysRemaining };
+    return { isExpired, daysRemaining, isTrialing: !isExpired };
   };
 
   const trialStatus = calculateTrialStatus(profile);
