@@ -121,15 +121,13 @@ function useNewSystemMetrics(): NewSystemMetrics {
       .eq("status", "paid")
       .gte("paid_at", sixMonthsAgo.toISOString());
 
-    // ----- Filter out Stripe from churn/sales math -----
-    // CHURN intentionally excludes Stripe (we don't have reliable Stripe webhook history).
-    // Sales-history includes only Asaas/PIX/Abacate users, since Stripe new-sales
-    // signal is captured separately by Cockpit's totalSubscribers count.
+    // ----- Filter: novo sistema = APENAS Asaas (PIX). Stripe entra no Cockpit pelo
+    // get-stripe-mrr; Abacate Pay e providers nulos NÃO contam mais. -----
     const newSystemProfiles = (profiles || []).filter(
-      (p: any) => p.payment_provider !== "stripe"
+      (p: any) => p.payment_provider === "asaas"
     );
     const newSystemCancellations = (cancellations || []).filter(
-      (c: any) => c.provider !== "stripe"
+      (c: any) => c.provider === "asaas"
     );
 
     // ----- Build last 6 month keys: ["2025-06", ...] -----

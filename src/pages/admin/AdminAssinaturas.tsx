@@ -21,6 +21,7 @@ export default function AdminAssinaturas() {
         .from("profiles")
         .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at")
         .neq("plan", "free")
+        .in("payment_provider", ["stripe", "asaas"])
         .order("created_at", { ascending: false })
         .limit(500);
       setSubscribers(data || []);
