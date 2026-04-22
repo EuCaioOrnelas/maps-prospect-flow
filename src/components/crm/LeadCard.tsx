@@ -11,6 +11,7 @@ import { formatPhoneShort } from '@/lib/phoneUtils';
 import { useLeadScores } from '@/hooks/useLeadScores';
 import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
 import { LeadEngagementScore } from './LeadEngagementScore';
+import { LeadPotentialValueCompact } from './LeadPotentialValueCompact';
 
 interface LeadCardProps {
   lead: Lead;
@@ -150,13 +151,10 @@ const LeadCardComponent = ({
         <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
 
-      {/* Estimated Value */}
+      {/* Valor potencial — compacto */}
       {Number(lead.estimated_value) > 0 && (
-        <div className="mb-2.5 py-1.5 px-2.5 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-between gap-1">
-          <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Valor</span>
-          <span className="text-sm font-semibold text-primary tabular-nums">
-            R$ {lead.estimated_value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
+        <div className="mb-2.5">
+          <LeadPotentialValueCompact value={Number(lead.estimated_value)} />
         </div>
       )}
 
