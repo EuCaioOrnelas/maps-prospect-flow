@@ -6,11 +6,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// WiizeProspect price IDs (only count these for MRR)
+// WiizeProspect price IDs válidos para MRR (atuais + legados)
 const WIIZE_PRICE_IDS = [
-  "price_1SlykAK8CM0R6xMMOCM684rz", // Start - R$197
-  "price_1SlykkK8CM0R6xMMZu7WJesV", // Growth - R$497
+  "price_1TLZi1K8CM0R6xMMDOg3MSTp", // Start - R$296/mês
+  "price_1TLZkSK8CM0R6xMMwr1Ke1IX", // Start - anual (equiv. mensal R$246)
+  "price_1TLZlSK8CM0R6xMMFtvROCby", // Growth - R$696/mês
+  "price_1TLZn8K8CM0R6xMMaEz5JuVW", // Growth - anual (equiv. mensal R$596)
   "price_1SlylcK8CM0R6xMMyHRWAd8G", // Scale - R$897
+  "price_1SlykAK8CM0R6xMMOCM684rz", // Start - legado
+  "price_1SlykkK8CM0R6xMMZu7WJesV", // Growth - legado
+  "price_1SXrv7K8CM0R6xMMo4FlSVIk", // Start anual - legado
+  "price_1SXruNK8CM0R6xMMVD8Gksi4", // Start mensal - legado
+  "price_1SZj5bK8CM0R6xMMFocrHWkj", // Start mensal - legado
+  "price_1Sc1ehK8CM0R6xMMg1Z0kqCk", // Start mensal - legado
+  "price_1SZj4hK8CM0R6xMMSZjjoEkN", // Growth anual - legado
+  "price_1SkEsEK8CM0R6xMM9Y1ip21w", // Start mensal - legado
+  "price_1SkEsoK8CM0R6xMMF72J3hAi", // Growth mensal - legado
 ];
 
 // Admin emails to exclude from MRR calculations
@@ -251,8 +262,10 @@ Deno.serve(async (req) => {
     let activeMRR = 0;
     let activeCount = 0;
     let canceledCount = 0;
+    let cancellationsLast30d = 0;
     const planDistribution: { [plan: string]: number } = {};
     const monthlySales: { [month: string]: { newSales: number; salesValue: number; cancellations: number } } = {};
+    const thirtyDaysAgoUnix = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
 
     for (const sub of wiizeSubs) {
       const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
@@ -303,6 +316,9 @@ Deno.serve(async (req) => {
 
       if (sub.status === "canceled" && hadAnyPayment) {
         canceledCount++;
+        if (sub.canceled_at && sub.canceled_at >= thirtyDaysAgoUnix) {
+          cancellationsLast30d++;
+        }
         
         if (sub.canceled_at) {
           const cancelDate = new Date(sub.canceled_at * 1000);
@@ -359,9 +375,20 @@ Deno.serve(async (req) => {
     // --- Compute real monthly MRR by tracking subscription lifecycles ---
     // For each month, calculate which subs were active and sum their monthly value
     const PLAN_MRR: { [priceId: string]: number } = {
+      "price_1TLZi1K8CM0R6xMMDOg3MSTp": 296,
+      "price_1TLZkSK8CM0R6xMMwr1Ke1IX": 246,
+      "price_1TLZlSK8CM0R6xMMFtvROCby": 696,
+      "price_1TLZn8K8CM0R6xMMaEz5JuVW": 596,
+      "price_1SlylcK8CM0R6xMMyHRWAd8G": 897,
       "price_1SlykAK8CM0R6xMMOCM684rz": 197,
       "price_1SlykkK8CM0R6xMMZu7WJesV": 497,
-      "price_1SlylcK8CM0R6xMMyHRWAd8G": 897,
+      "price_1SXrv7K8CM0R6xMMo4FlSVIk": 67,
+      "price_1SXruNK8CM0R6xMMVD8Gksi4": 9.9,
+      "price_1SZj5bK8CM0R6xMMFocrHWkj": 29.9,
+      "price_1Sc1ehK8CM0R6xMMg1Z0kqCk": 39.9,
+      "price_1SZj4hK8CM0R6xMMSZjjoEkN": 249.9 / 12,
+      "price_1SkEsEK8CM0R6xMM9Y1ip21w": 97,
+      "price_1SkEsoK8CM0R6xMMF72J3hAi": 497,
     };
 
     const monthlyMRR: { [month: string]: { mrr: number; activeCount: number } } = {};
@@ -456,6 +483,7 @@ Deno.serve(async (req) => {
         totalRefunded: wiizeRefundedAmount,
         refundCount: wiizeRefundCount,
         canceledSubscriptions: canceledCount,
+        cancellationsLast30d,
         churnRate: parseFloat(churnRate.toFixed(1)),
         totalSalesValue,
         totalSalesCount,

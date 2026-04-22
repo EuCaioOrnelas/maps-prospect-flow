@@ -16,6 +16,7 @@ interface StripeMRRData {
   totalMRR: number;
   activeSubscriptions: number;
   churnRate: number;
+  cancellationsLast30d?: number;
   monthlyMRR: Array<{ month: string; mrr: number; activeCount?: number }>;
   monthlySales?: Array<{ month: string; newSales: number; salesValue: number; cancellations: number }>;
   monthlyRefunds?: Array<{ month: string; amount: number; count: number }>;
@@ -158,66 +159,94 @@ export function useAdminDashboard() {
       const now = new Date();
       let pixMrrTotal = 0;
       let pixActiveSubs = 0;
-      let asaasCardMrrTotal = 0;
-      let asaasCardSubs = 0;
-      let otherMrrTotal = 0;
-      let otherSubs = 0;
 
       const typedProfiles = profiles as PayingProfile[];
-      setPayingProfiles(typedProfiles);
+      const recognizedProfiles = typedProfiles.filter((p) => p.payment_provider === "stripe" || p.payment_provider === "asaas");
+      setPayingProfiles(
+        recognizedProfiles.filter((p) => !p.subscription_current_period_end || new Date(p.subscription_current_period_end) >= now)
+      );
 
-      for (const p of typedProfiles) {
+      const getMonthlyValue = (profile: PayingProfile) => {
+        let monthlyValue = PLAN_PRICES_MONTHLY[profile.plan] || 0;
+        if (profile.subscription_price_cents) {
+          const priceReais = profile.subscription_price_cents / 100;
+          if (profile.subscription_current_period_end) {
+            const created = new Date(profile.created_at);
+            const end = new Date(profile.subscription_current_period_end);
+            const daysSpan = (end.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+            monthlyValue = daysSpan > 300 ? priceReais / 12 : priceReais;
+          } else {
+            monthlyValue = priceReais;
+          }
+        }
+        return monthlyValue;
+      };
+
+      for (const p of recognizedProfiles) {
         const periodEnd = p.subscription_current_period_end;
         if (periodEnd && new Date(periodEnd) < now) continue;
 
-        // Determine monthly MRR from subscription_price_cents
-        let monthlyValue = PLAN_PRICES_MONTHLY[p.plan] || 0;
-        if (p.subscription_price_cents) {
-          const priceReais = p.subscription_price_cents / 100;
-          // If period is ~1 year, it's annual - divide by 12
-          if (periodEnd) {
-            const created = new Date(p.created_at);
-            const end = new Date(periodEnd);
-            const daysSpan = (end.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
-            if (daysSpan > 300) {
-              monthlyValue = priceReais / 12;
-            } else {
-              monthlyValue = priceReais;
-            }
-          }
-        }
+        const monthlyValue = getMonthlyValue(p);
 
         const provider = p.payment_provider;
-        // PIX = Asaas (novo) + abacate_pay (legado). Ambos somam no bucket PIX.
-        if (provider === "abacate_pay" || provider === "asaas") {
+        if (provider === "asaas") {
           pixMrrTotal += monthlyValue;
           pixActiveSubs++;
         } else if (provider === "stripe") {
           // Skip - já contabilizado via get-stripe-mrr (cartão)
-        } else if (provider) {
-          // Provedor desconhecido - contabilizar como "outro" se tiver preço real
-          if (p.subscription_price_cents) {
-            otherMrrTotal += monthlyValue;
-            otherSubs++;
-          }
         }
-        // provider null/undefined => sem pagamento real, ignora
+      }
+
+      const asaasProfiles = recognizedProfiles.filter((p) => p.payment_provider === "asaas");
+      const pixMonthlyMRRMap = new Map<string, { mrr: number; activeCount: number }>();
+
+      if (asaasProfiles.length > 0) {
+        let earliestStart = new Date(asaasProfiles[0].created_at);
+        for (const profile of asaasProfiles) {
+          const created = new Date(profile.created_at);
+          if (created < earliestStart) earliestStart = created;
+        }
+
+        const cursor = new Date(earliestStart.getFullYear(), earliestStart.getMonth(), 1);
+        while (cursor <= now) {
+          const monthKey = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
+          const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0, 23, 59, 59);
+          const snapshotDate = monthKey === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}` ? now : monthEnd;
+
+          let mrr = 0;
+          let activeCount = 0;
+
+          for (const profile of asaasProfiles) {
+            const created = new Date(profile.created_at);
+            const periodEnd = profile.subscription_current_period_end ? new Date(profile.subscription_current_period_end) : null;
+            if (created > snapshotDate) continue;
+            if (periodEnd && periodEnd <= snapshotDate) continue;
+
+            mrr += getMonthlyValue(profile);
+            activeCount++;
+          }
+
+          pixMonthlyMRRMap.set(monthKey, { mrr, activeCount });
+          cursor.setMonth(cursor.getMonth() + 1);
+        }
       }
 
       setPixMRR({
         pixMrr: pixMrrTotal,
         pixActiveSubscriptions: pixActiveSubs,
-        pixMonthlyMRR: [],
+        pixMonthlyMRR: Array.from(pixMonthlyMRRMap.entries())
+          .map(([month, data]) => ({ month, mrr: data.mrr, activeCount: data.activeCount }))
+          .sort((a, b) => a.month.localeCompare(b.month)),
       });
 
       setAsaasCardMRR({
-        asaasCardMrr: asaasCardMrrTotal,
-        asaasCardSubscriptions: asaasCardSubs,
+        asaasCardMrr: 0,
+        asaasCardSubscriptions: 0,
       });
 
       setOtherMRR({
-        otherMrr: otherMrrTotal,
-        otherSubscriptions: otherSubs,
+        otherMrr: 0,
+        otherSubscriptions: 0,
       });
     } catch {
       setPixMRR(null);
@@ -281,17 +310,37 @@ export function useAdminDashboard() {
     }
   }, []);
 
-  // Carrega cancelamentos do NOVO SISTEMA (Asaas/PIX/abacate_pay) - exclui Stripe.
+  // Carrega cancelamentos Asaas/PIX dos últimos 30 dias.
   const loadNewSystemChurn = useCallback(async () => {
     try {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await supabase
-        .from("subscription_cancellations")
-        .select("id, provider, cancelled_at")
-        .neq("provider", "stripe")
-        .gte("cancelled_at", thirtyDaysAgo);
-      if (error) throw error;
-      setNewSystemChurn({ cancellations30d: data?.length ?? 0 });
+
+      const [cancellationsRes, eventsRes] = await Promise.all([
+        supabase
+          .from("subscription_cancellations")
+          .select("user_id, provider, cancelled_at")
+          .eq("provider", "asaas")
+          .gte("cancelled_at", thirtyDaysAgo),
+        supabase
+          .from("subscription_events")
+          .select("user_id, event_type, event_source, created_at")
+          .eq("event_type", "pix_not_renewed")
+          .eq("event_source", "asaas")
+          .gte("created_at", thirtyDaysAgo),
+      ]);
+
+      if (cancellationsRes.error) throw cancellationsRes.error;
+      if (eventsRes.error) throw eventsRes.error;
+
+      const asaasUsers = new Set<string>();
+      (cancellationsRes.data || []).forEach((item: any) => {
+        if (item.user_id) asaasUsers.add(item.user_id);
+      });
+      (eventsRes.data || []).forEach((item: any) => {
+        if (item.user_id) asaasUsers.add(item.user_id);
+      });
+
+      setNewSystemChurn({ cancellations30d: asaasUsers.size });
     } catch {
       setNewSystemChurn({ cancellations30d: 0 });
     }
@@ -305,22 +354,22 @@ export function useAdminDashboard() {
     })();
   }, []);
 
-  // Total MRR = Stripe + PIX + Asaas Card + Other
+  // Total MRR = Stripe (cartão) + Asaas (PIX)
   const totalMRR = useMemo(() => {
-    return (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0) + (asaasCardMRR?.asaasCardMrr ?? 0) + (otherMRR?.otherMrr ?? 0);
-  }, [stripeMRR, pixMRR, asaasCardMRR, otherMRR]);
+    return (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0);
+  }, [stripeMRR, pixMRR]);
 
   const totalSubscribers = useMemo(() => {
-    return (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0) + (asaasCardMRR?.asaasCardSubscriptions ?? 0) + (otherMRR?.otherSubscriptions ?? 0);
-  }, [stripeMRR, pixMRR, asaasCardMRR, otherMRR]);
+    return (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0);
+  }, [stripeMRR, pixMRR]);
 
-  // Churn = cancelamentos (novo sistema) ÷ base ativa total nos últimos 30 dias.
-  // IGNORA Stripe (não temos webhooks confiáveis dele); 0 se não houver cancelamentos.
+  // Churn = cancelamentos Stripe + Asaas nos últimos 30 dias ÷ base ativa total.
   const churnRate = useMemo(() => {
     if (totalSubscribers <= 0) return 0;
-    return (newSystemChurn.cancellations30d / totalSubscribers) * 100;
-  }, [newSystemChurn, totalSubscribers]);
-  const churnCancellations30d = newSystemChurn.cancellations30d;
+    const stripeCancellations30d = stripeMRR?.cancellationsLast30d ?? 0;
+    return ((stripeCancellations30d + newSystemChurn.cancellations30d) / totalSubscribers) * 100;
+  }, [newSystemChurn, stripeMRR, totalSubscribers]);
+  const churnCancellations30d = (stripeMRR?.cancellationsLast30d ?? 0) + newSystemChurn.cancellations30d;
 
   // Average ticket: uses monthly-equivalent values
   const averageTicket = useMemo(() => {
