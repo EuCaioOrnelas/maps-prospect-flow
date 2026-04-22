@@ -338,7 +338,6 @@ export const LeadDetailDialog = ({
   const [pendingDriveFileName, setPendingDriveFileName] = useState('');
   const [leadDriveFolderUrl, setLeadDriveFolderUrl] = useState<string | null>(null);
   const [driveQuotaError, setDriveQuotaError] = useState(false);
-...
   const loadDriveConnection = async () => {
     if (!user) return null;
     setIsLoadingDriveConnection(true);
@@ -366,7 +365,6 @@ export const LeadDetailDialog = ({
       setIsLoadingDriveConnection(false);
     }
   };
-...
   const handleUploadLeadFile = async (file: File, customName?: string) => {
     if (!lead || !user) return;
     setIsUploadingLeadFile(true);
