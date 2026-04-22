@@ -58,7 +58,7 @@ const PLAN_PRICES: Record<string, { monthly: number; annual: number; name: strin
   growth: { monthly: 69600, annual: 715200, name: "Wiize Growth" },
 };
 
-const INSTALLMENT_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+// Stripe Subscriptions cobra o anual em parcela única (1x à vista). Não há parcelamento real via API.
 
 export default function CheckoutCard() {
   return (
@@ -88,7 +88,7 @@ function CheckoutCardInner() {
   const [cardHolder, setCardHolder] = useState("");
   const cardFormRef = useRef<StripeCardFormHandle>(null);
   const [cardComplete, setCardComplete] = useState(false);
-  const [installments, setInstallments] = useState("12");
+  const [installments] = useState("1");
   const [postalCode, setPostalCode] = useState("");
   const [addressStreet, setAddressStreet] = useState("");
   const [addressNeighborhood, setAddressNeighborhood] = useState("");
@@ -169,9 +169,9 @@ function CheckoutCardInner() {
     addressNeighborhood.trim().length >= 1 &&
     addressNumber.trim().length >= 1;
 
-  const installmentCount = isAnnual ? parseInt(installments) : 1;
+  const installmentCount = 1;
   const totalPrice = planConfig ? (isAnnual ? planConfig.annual : planConfig.monthly) : 0;
-  const installmentValue = planConfig ? (isAnnual ? Math.round(planConfig.annual / installmentCount) : planConfig.monthly) : 0;
+  const installmentValue = totalPrice;
 
   const handleSubmit = async () => {
     if (!customerData || !planKey || !isCardValid) return;
@@ -415,60 +415,13 @@ function CheckoutCardInner() {
                   {isAnnual && (
                     <>
                       <div className="h-px bg-border/30 my-2" />
-
-                      {/* Installment selector — custom dropdown */}
-                      <div className="space-y-1.5 relative">
-                        <Label className="text-xs font-medium">Parcelas</Label>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setInstallmentDropdownOpen(!installmentDropdownOpen);
-                          }}
-                          className="flex h-10 w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        >
-                          <span>
-                            {installmentCount}x de {formatCurrency(installmentValue)}
-                            {installmentCount === 1 ? " (à vista)" : ""}
-                          </span>
-                          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", installmentDropdownOpen && "rotate-180")} />
-                        </button>
-
-                        <AnimatePresence>
-                          {installmentDropdownOpen && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -4, scale: 0.98 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                              transition={{ duration: 0.15 }}
-                              className="absolute bottom-full left-0 right-0 mb-1 z-50 rounded-xl border border-border bg-card shadow-xl shadow-black/10 overflow-hidden max-h-[280px] overflow-y-auto"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {INSTALLMENT_OPTIONS.map((n) => {
-                                const val = Math.round(planConfig.annual / n);
-                                const isSelected = installments === String(n);
-                                return (
-                                  <button
-                                    key={n}
-                                    type="button"
-                                    onClick={() => {
-                                      setInstallments(String(n));
-                                      setInstallmentDropdownOpen(false);
-                                    }}
-                                    className={cn(
-                                      "flex w-full items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-muted/60",
-                                      isSelected && "bg-emerald-500/10 text-emerald-700 font-medium"
-                                    )}
-                                  >
-                                    <span>{n}x de {formatCurrency(val)}</span>
-                                    {n === 1 && <span className="text-xs text-muted-foreground">à vista</span>}
-                                    {isSelected && <Check className="h-3.5 w-3.5 text-emerald-600" />}
-                                  </button>
-                                );
-                              })}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5">
+                        <p className="text-xs text-foreground font-medium">
+                          Cobrança única de <strong>{formatCurrency(planConfig.annual)}</strong> à vista no cartão
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Renovação automática anual pelo mesmo valor.
+                        </p>
                       </div>
                     </>
                   )}
@@ -498,7 +451,7 @@ function CheckoutCardInner() {
                 <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
                   <p className="text-[11px] text-muted-foreground">
                     {isAnnual
-                      ? <>Ao confirmar, você autoriza a cobrança de <strong>{formatCurrency(planConfig.annual)}</strong> em {installmentCount}x de {formatCurrency(installmentValue)} no cartão de crédito, com <strong>renovação automática anual</strong>. Cancele a qualquer momento pelo seu perfil.</>
+                      ? <>Ao confirmar, você autoriza a cobrança única de <strong>{formatCurrency(planConfig.annual)}</strong> à vista no cartão de crédito, com <strong>renovação automática anual</strong>. Cancele a qualquer momento pelo seu perfil.</>
                       : <>Ao confirmar, você autoriza a cobrança mensal de <strong>{formatCurrency(planConfig.monthly)}</strong> no cartão de crédito, com <strong>renovação automática todo mês</strong>. Cancele a qualquer momento pelo seu perfil.</>
                     }
                   </p>
@@ -531,8 +484,8 @@ function CheckoutCardInner() {
                 </div>
                 {isAnnual && (
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Parcelas</span>
-                    <span className="font-semibold text-foreground">{installmentCount}x de {formatCurrency(installmentValue)}</span>
+                    <span className="text-muted-foreground">Pagamento</span>
+                    <span className="font-semibold text-foreground">1x à vista</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center">
@@ -554,7 +507,7 @@ function CheckoutCardInner() {
                     </span>
                     {isAnnual ? (
                       <span className="text-xs text-muted-foreground">
-                        {installmentCount}x de {formatCurrency(installmentValue)}
+                        cobrado 1x à vista
                       </span>
                     ) : (
                       <span className="text-xs text-muted-foreground">
@@ -630,8 +583,8 @@ function CheckoutCardInner() {
                     <CreditCard className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-foreground">Parcelamento flexível</p>
-                    <p className="text-xs text-muted-foreground">Escolha de 1x a 12x sem juros</p>
+                    <p className="text-xs font-semibold text-foreground">Cobrança única no cartão</p>
+                    <p className="text-xs text-muted-foreground">Plano anual cobrado 1x à vista, mensal todo mês</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
