@@ -327,8 +327,17 @@ export default function AdminChurn() {
       </div>
 
       <Card className="border-border/40 bg-card/80">
-        <CardHeader>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-base">Histórico de Cancelamentos</CardTitle>
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nome, email, provedor, motivo..."
+              className="h-9 pl-8 text-xs"
+            />
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -337,10 +346,12 @@ export default function AdminChurn() {
                 <Skeleton key={index} className="h-12 w-full" />
               ))}
             </div>
-          ) : records.length === 0 ? (
+          ) : filteredRecords.length === 0 ? (
             <div className="p-12 text-center">
               <Users className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">Nenhum cancelamento registrado</p>
+              <p className="text-sm text-muted-foreground">
+                {search.trim() ? "Nenhum cancelamento encontrado para a busca" : "Nenhum cancelamento registrado"}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
