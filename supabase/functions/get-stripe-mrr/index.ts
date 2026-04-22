@@ -319,7 +319,6 @@ Deno.serve(async (req) => {
 
       if (sub.status === "canceled" && hadAnyPayment && sub.canceled_at && sub.canceled_at >= CHURN_CUTOFF_UNIX) {
         canceledCount++;
-        console.log(`[GET-STRIPE-MRR] CANCELED COUNTED: ${sub.id} | email=${customerEmail} | canceled_at=${new Date(sub.canceled_at * 1000).toISOString()} | plan=${planName}`);
         if (sub.canceled_at >= thirtyDaysAgoUnix) {
           cancellationsLast30d++;
         }
