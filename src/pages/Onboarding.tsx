@@ -300,7 +300,7 @@ export default function Onboarding() {
               <Button
                 size="lg"
                 onClick={() => setStage("questions")}
-                className="bg-[hsl(220,18%,12%)] hover:bg-[hsl(220,18%,18%)] text-white px-8 h-12 rounded-lg shadow-sm"
+                className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] text-white px-8 h-12 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
               >
                 Começar
                 <ArrowRight className="h-4 w-4 ml-2" />
