@@ -319,23 +319,18 @@ function CheckoutCardInner() {
                   </p>
                 </div>
 
-                {/* Animated 3D Credit Card — overlapping the form card */}
-                <div className="relative z-10 mb-[-40px]">
+                {/* Cartão animado em destaque */}
+                <div className="mb-6 flex justify-center">
                   <AnimatedCreditCard
                     cardNumber={"•••• •••• •••• ••••"}
-                    cardHolder={cardHolder}
+                    cardHolder={cardHolder || "NOME NO CARTÃO"}
                     expiryDate={"MM/AA"}
                     isFlipped={cvvFocused}
                   />
                 </div>
 
-                {/* Card form */}
-                <div className="space-y-4 rounded-2xl border border-border/40 bg-card pt-14 pb-5 px-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CreditCard className="h-5 w-5 text-primary" />
-                    <p className="text-sm font-semibold text-foreground">Dados do cartão</p>
-                  </div>
-
+                {/* Card form — clean layout (igual ao Trial) */}
+                <div className="space-y-5">
                   <StripeCardForm
                     ref={cardFormRef}
                     cardHolder={cardHolder}
@@ -346,9 +341,14 @@ function CheckoutCardInner() {
                     disabled={loading}
                   />
 
-                  <div className="h-px bg-border/30 my-1" />
+                  <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-xs text-muted-foreground flex items-start gap-2">
+                    <ShieldCheck size={14} className="text-primary shrink-0 mt-0.5" />
+                    <p>
+                      Pagamento processado via <strong className="text-foreground">Stripe</strong> com criptografia PCI-DSS. Não armazenamos dados do cartão.
+                    </p>
+                  </div>
 
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 pt-1">
                     <MapPin className="h-5 w-5 text-primary" />
                     <p className="text-sm font-semibold text-foreground">Endereço de cobrança</p>
                   </div>
@@ -413,17 +413,14 @@ function CheckoutCardInner() {
                   </div>
 
                   {isAnnual && (
-                    <>
-                      <div className="h-px bg-border/30 my-2" />
-                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5">
-                        <p className="text-xs text-foreground font-medium">
-                          Cobrança única de <strong>{formatCurrency(planConfig.annual)}</strong> à vista no cartão
-                        </p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Renovação automática anual pelo mesmo valor.
-                        </p>
-                      </div>
-                    </>
+                    <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5">
+                      <p className="text-xs text-foreground font-medium">
+                        Cobrança única de <strong>{formatCurrency(planConfig.annual)}</strong> à vista no cartão
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Renovação automática anual pelo mesmo valor.
+                      </p>
+                    </div>
                   )}
                 </div>
 
