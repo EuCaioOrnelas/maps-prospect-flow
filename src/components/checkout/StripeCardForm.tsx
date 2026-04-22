@@ -46,12 +46,13 @@ interface Props {
 }
 
 const elementOptions: StripeCardNumberElementOptions = {
+  placeholder: "",
   style: {
     base: {
       fontSize: "15px",
       color: "hsl(var(--foreground))",
       fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
-      "::placeholder": { color: "hsl(var(--muted-foreground))" },
+      "::placeholder": { color: "transparent" },
       iconColor: "hsl(var(--primary))",
     },
     invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
@@ -108,7 +109,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           </Label>
           <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 items-center">
             <CardNumberElement
-              options={{ ...elementOptions, showIcon: true }}
+              options={{ ...elementOptions, showIcon: false }}
               className="w-full"
               onChange={(e) =>
                 onCardChange?.({
@@ -145,10 +146,6 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
         </div>
 
         {error && <p className="text-xs text-destructive">{error}</p>}
-
-        <p className="text-[10px] text-muted-foreground/70 flex items-center gap-1.5">
-          <Lock className="h-3 w-3" /> Pagamento processado com segurança via Stripe (PCI-DSS).
-        </p>
       </div>
     );
   },
