@@ -38,19 +38,18 @@ serve(async (req) => {
     // trial_asaas_subscription_id é reaproveitado como storage genérico do subscription Stripe (sub_...)
     const { data: profile, error: pErr } = await supabase
       .from("profiles")
-      .select("trial_asaas_subscription_id, trial_auto_charge_cancelled, plan")
+      .select("trial_asaas_subscription_id, trial_auto_charge_cancelled, trial_will_charge_at, plan")
       .eq("id", userId)
       .maybeSingle();
 
     if (pErr || !profile) throw new Error("Profile not found");
 
-    if (profile.plan && profile.plan !== "free") {
-      throw new Error("Esta conta não está em trial. Use a opção de gerenciar assinatura.");
-    }
-
     const subId = profile.trial_asaas_subscription_id;
-    if (!subId) {
-      throw new Error("Nenhuma assinatura agendada encontrada para este trial");
+    const willCharge = profile.trial_will_charge_at ? new Date(profile.trial_will_charge_at) : null;
+    const isStillInTrial = willCharge && willCharge.getTime() > Date.now();
+
+    if (!subId || !isStillInTrial) {
+      throw new Error("Esta conta não está em trial. Use a opção de gerenciar assinatura.");
     }
 
     if (profile.trial_auto_charge_cancelled) {
