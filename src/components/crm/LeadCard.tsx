@@ -2,7 +2,7 @@ import { useState, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
-import { Phone, MessageCircle, Pencil, Check, X, Trophy } from 'lucide-react';
+import { Phone, MessageCircle, Pencil, Check, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
@@ -10,6 +10,7 @@ import { ptBR } from 'date-fns/locale';
 import { formatPhoneShort } from '@/lib/phoneUtils';
 import { useLeadScores } from '@/hooks/useLeadScores';
 import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
+import { LeadEngagementScore } from './LeadEngagementScore';
 
 interface LeadCardProps {
   lead: Lead;
@@ -73,8 +74,8 @@ const LeadCardComponent = ({
   return (
     <div
       className={cn(
-        "w-full max-w-full overflow-hidden bg-card border border-border rounded-lg p-3 cursor-pointer transition-all duration-200 relative",
-        "hover:shadow-md hover:border-primary/30",
+        "w-full max-w-full overflow-hidden bg-card border border-border/60 rounded-[18px] p-3.5 cursor-pointer transition-all duration-200 relative",
+        "shadow-sm hover:shadow-lg hover:border-primary/30 hover:-translate-y-px",
         isSelected && "ring-2 ring-inset ring-primary border-primary"
       )}
       onClick={onClick}
@@ -138,63 +139,34 @@ const LeadCardComponent = ({
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
               )}
-              {lead.ai_score > 0 && (
-                <span className={cn(
-                  "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
-                  lead.ai_score >= 80 ? "bg-green-500/20 text-green-400" :
-                  lead.ai_score >= 50 ? "bg-yellow-500/20 text-yellow-400" :
-                  "bg-red-500/20 text-red-400"
-                )}>
-                  {lead.ai_score}
-                </span>
-              )}
             </div>
           </>
         )}
       </div>
 
       {/* Phone */}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2 min-w-0">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2.5 min-w-0">
         <Phone className="w-3 h-3 shrink-0" />
         <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
 
       {/* Estimated Value */}
       {Number(lead.estimated_value) > 0 && (
-        <div className="mb-2 py-1.5 px-2 rounded-md bg-primary/5 border border-primary/10 flex items-center justify-center gap-1">
-          <span className="text-[10px] text-muted-foreground">Valor:</span>
-          <span className="text-xs font-semibold text-primary">
+        <div className="mb-2.5 py-1.5 px-2.5 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-between gap-1">
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Valor</span>
+          <span className="text-sm font-semibold text-primary tabular-nums">
             R$ {lead.estimated_value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>
       )}
 
-      {/* WhatsApp Score */}
+      {/* Score Inteligente — barra premium */}
       {scoreData && scoreData.score_total > 0 && (
-        <div
-          className="mb-2 py-1.5 px-2 rounded-md bg-muted/30 border border-border/30 flex items-center justify-between gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
-          onClick={(e) => { e.stopPropagation(); navigate(`/crm/score?phone=${encodeURIComponent(lead.phone)}`); }}
-        >
-          <div className="flex items-center gap-1.5">
-            <Trophy className={cn("w-3 h-3", 
-              scoreData.score_total >= 801 ? "text-emerald-400" :
-              scoreData.score_total >= 601 ? "text-purple-400" :
-              scoreData.score_total >= 401 ? "text-blue-400" :
-              scoreData.score_total >= 201 ? "text-yellow-400" :
-              "text-red-400"
-            )} />
-            <span className={cn("text-xs font-bold tabular-nums",
-              scoreData.score_total >= 801 ? "text-emerald-400" :
-              scoreData.score_total >= 601 ? "text-purple-400" :
-              scoreData.score_total >= 401 ? "text-blue-400" :
-              scoreData.score_total >= 201 ? "text-yellow-400" :
-              "text-red-400"
-            )}>
-              {scoreData.score_total.toLocaleString('pt-BR')}
-            </span>
-            <span className="text-[10px] text-muted-foreground">/1.000</span>
-          </div>
-          <span className="text-[9px] text-primary hover:underline">Ver score →</span>
+        <div className="mb-2.5">
+          <LeadEngagementScore
+            score={scoreData.score_total}
+            onClick={(e) => { e.stopPropagation(); navigate(`/crm/score?phone=${encodeURIComponent(lead.phone)}`); }}
+          />
         </div>
       )}
 
