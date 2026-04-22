@@ -475,6 +475,19 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
       if (cancelled) return;
       if (!data?.tour_completed_at) {
+        // Mark as completed IMMEDIATELY so the tour never auto-starts again,
+        // even if the user closes/refreshes mid-tour. Users can replay it
+        // anytime via the "Rever tour" button in /profile.
+        localStorage.setItem(LS_KEY, "1");
+        try {
+          await supabase
+            .from("user_onboarding")
+            .update({ tour_completed_at: new Date().toISOString() })
+            .eq("user_id", user.id);
+        } catch (e) {
+          console.error("[tour] mark-shown error", e);
+        }
+
         // Preload pages used in the tour for instant transitions
         try {
           await Promise.all([
