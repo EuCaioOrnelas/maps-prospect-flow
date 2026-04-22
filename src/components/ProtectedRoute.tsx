@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -29,6 +29,33 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   const { isAdmin, loading: isAdminLoading } = useAdminCheck();
   const location = useLocation();
   const trackedPaths = useRef<Set<string>>(new Set());
+  // null = ainda checando, true = precisa fazer onboarding, false = ok
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+
+  // Verifica se o usuário já completou (ou pulou) o onboarding inicial
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id) {
+      setNeedsOnboarding(null);
+      return;
+    }
+    (async () => {
+      const { data, error } = await supabase
+        .from('user_onboarding')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error) {
+        setNeedsOnboarding(false);
+        return;
+      }
+      setNeedsOnboarding(!data);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   // Capture email attribution UTM params from CTA clicks
   useEffect(() => {
@@ -87,6 +114,23 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Aguarda a checagem do onboarding antes de decidir o roteamento
+  if (needsOnboarding === null) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 size={40} className="text-primary animate-spin" />
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Primeiro login: redireciona para o onboarding inicial (não-admins)
+  if (needsOnboarding && !requireAdmin && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
   }
 
   // Block access for blocked users - show modal

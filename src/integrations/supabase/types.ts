@@ -4166,43 +4166,64 @@ export type Database = {
       }
       user_onboarding: {
         Row: {
+          biggest_challenge: string | null
+          completed_at: string | null
           created_at: string
+          goal_90d: string | null
           id: string
-          main_objective: string
+          main_objective: string | null
+          monthly_revenue: string | null
           previous_experience: string | null
           previous_tool: string | null
-          service_types: string[]
+          role: string | null
+          sales_method: string | null
+          sales_team_size: string | null
+          service_types: string[] | null
           skipped: boolean
-          team_size: string
+          team_size: string | null
           tour_completed_at: string | null
           user_id: string
-          user_profile: string
+          user_profile: string | null
         }
         Insert: {
+          biggest_challenge?: string | null
+          completed_at?: string | null
           created_at?: string
+          goal_90d?: string | null
           id?: string
-          main_objective: string
+          main_objective?: string | null
+          monthly_revenue?: string | null
           previous_experience?: string | null
           previous_tool?: string | null
-          service_types: string[]
+          role?: string | null
+          sales_method?: string | null
+          sales_team_size?: string | null
+          service_types?: string[] | null
           skipped?: boolean
-          team_size: string
+          team_size?: string | null
           tour_completed_at?: string | null
           user_id: string
-          user_profile: string
+          user_profile?: string | null
         }
         Update: {
+          biggest_challenge?: string | null
+          completed_at?: string | null
           created_at?: string
+          goal_90d?: string | null
           id?: string
-          main_objective?: string
+          main_objective?: string | null
+          monthly_revenue?: string | null
           previous_experience?: string | null
           previous_tool?: string | null
-          service_types?: string[]
+          role?: string | null
+          sales_method?: string | null
+          sales_team_size?: string | null
+          service_types?: string[] | null
           skipped?: boolean
-          team_size?: string
+          team_size?: string | null
           tour_completed_at?: string | null
           user_id?: string
-          user_profile?: string
+          user_profile?: string | null
         }
         Relationships: []
       }
