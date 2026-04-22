@@ -86,6 +86,7 @@ const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "Create
 const EnterpriseContact = lazyWithRetry(() => import("./pages/EnterpriseContact"), "EnterpriseContact");
 const TrialExpired = lazyWithRetry(() => import("./pages/TrialExpired"), "TrialExpired");
 const ManageSubscription = lazyWithRetry(() => import("./pages/ManageSubscription"), "ManageSubscription");
+const Onboarding = lazyWithRetry(() => import("./pages/Onboarding"), "Onboarding");
 
 // Admin sub-pages (lazy loaded)
 const AdminKPIs = lazyWithRetry(() => import("./pages/admin/AdminKPIs"), "AdminKPIs");
@@ -169,6 +170,7 @@ const App = () => (
                 <Route path="/contato" element={<LightThemeWrapper><Contact /></LightThemeWrapper>} />
                 <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Profile /></Suspense></ProtectedRoute>} />
                 <Route path="/d7x9k2m4-meta-review" element={<LightThemeWrapper><MetaAppDocumentation /></LightThemeWrapper>} />
+                <Route path="/onboarding" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><Onboarding /></Suspense></LightThemeWrapper>} />
                 <Route path="/dashboard" element={<ProtectedRoute><MainDashboard /></ProtectedRoute>} />
                 <Route path="/reports/prospeccao" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
                 <Route path="/prospeccao" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
