@@ -151,13 +151,6 @@ const LeadCardComponent = ({
         <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
 
-      {/* Valor potencial — compacto */}
-      {Number(lead.estimated_value) > 0 && (
-        <div className="mb-2.5">
-          <LeadPotentialValueCompact value={Number(lead.estimated_value)} />
-        </div>
-      )}
-
       {/* Score Inteligente — barra premium */}
       {scoreData && scoreData.score_total > 0 && (
         <div className="mb-2.5">
@@ -165,6 +158,13 @@ const LeadCardComponent = ({
             score={scoreData.score_total}
             onClick={(e) => { e.stopPropagation(); navigate(`/crm/score?phone=${encodeURIComponent(lead.phone)}`); }}
           />
+        </div>
+      )}
+
+      {/* Valor potencial — pill verde compacto */}
+      {Number(lead.estimated_value) > 0 && (
+        <div className="mb-2.5">
+          <LeadPotentialValueCompact value={Number(lead.estimated_value)} />
         </div>
       )}
 
