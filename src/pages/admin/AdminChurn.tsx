@@ -68,6 +68,27 @@ export default function AdminChurn() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [selectedRecord, setSelectedRecord] = useState<ChurnRecord | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const filteredRecords = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return records;
+    return records.filter((record) => {
+      const reasonLabel = record.cancellation_reason
+        ? (reasonLabels[record.cancellation_reason] || record.cancellation_reason).toLowerCase()
+        : "";
+      return (
+        (record.name || "").toLowerCase().includes(term) ||
+        (record.email || "").toLowerCase().includes(term) ||
+        (record.provider || "").toLowerCase().includes(term) ||
+        (record.plan || "").toLowerCase().includes(term) ||
+        (record.notes || "").toLowerCase().includes(term) ||
+        (record.details || "").toLowerCase().includes(term) ||
+        (record.additional_comments || "").toLowerCase().includes(term) ||
+        reasonLabel.includes(term)
+      );
+    });
+  }, [records, search]);
 
   useEffect(() => {
     loadData();
