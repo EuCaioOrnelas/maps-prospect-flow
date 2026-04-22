@@ -68,6 +68,13 @@ async function getFolderUrl(accessToken: string, folderId: string): Promise<stri
   return data.webViewLink || `https://drive.google.com/drive/folders/${folderId}`;
 }
 
+function jsonResp(ok: boolean, payload: Record<string, unknown>, httpStatus = 200) {
+  return new Response(JSON.stringify({ ok, ...payload }), {
+    status: httpStatus,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -78,9 +85,7 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Não autenticado" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(false, { error: "Não autenticado" });
     }
 
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -88,20 +93,21 @@ serve(async (req) => {
     });
     const { data: { user }, error: userErr } = await userClient.auth.getUser();
     if (userErr || !user) {
-      return new Response(JSON.stringify({ error: "Sessão inválida" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(false, { error: "Sessão inválida" });
     }
 
-    const formData = await req.formData();
+    let formData: FormData;
+    try {
+      formData = await req.formData();
+    } catch (e) {
+      return jsonResp(false, { error: "Falha ao ler o arquivo enviado (form data inválido)" });
+    }
     const file = formData.get("file") as File | null;
     const leadId = formData.get("lead_id") as string | null;
     const customName = (formData.get("custom_name") as string | null)?.trim() || null;
 
     if (!file || !leadId) {
-      return new Response(JSON.stringify({ error: "Arquivo e lead_id obrigatórios" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(false, { error: "Arquivo e lead_id obrigatórios" });
     }
 
     const admin = createClient(supabaseUrl, serviceRoleKey);
@@ -114,9 +120,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (!conn?.is_active || !conn.access_token) {
-      return new Response(JSON.stringify({ error: "Google Drive não conectado" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(false, { error: "Google Drive não conectado" });
     }
 
     let accessToken = conn.access_token;
@@ -142,9 +146,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (!lead) {
-      return new Response(JSON.stringify({ error: "Lead não encontrado" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(false, { error: "Lead não encontrado" });
     }
 
     // 3) Ensure root + lead folder
@@ -206,7 +208,6 @@ serve(async (req) => {
     if (!uploadRes.ok) {
       console.error("Upload failed:", uploadData);
 
-      // Detect Google Drive storage quota exceeded
       const reason = uploadData?.error?.errors?.[0]?.reason || "";
       const message = uploadData?.error?.message || "";
       const isQuotaError =
@@ -215,17 +216,16 @@ serve(async (req) => {
         /quota|storage.*full|exceeded/i.test(message);
 
       if (isQuotaError) {
-        return new Response(JSON.stringify({
+        return jsonResp(false, {
           error: "drive_storage_full",
           message: "Seu Google Drive está sem espaço disponível.",
           details: message,
-        }), {
-          status: 507, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      return new Response(JSON.stringify({ error: "Falha no upload para o Drive", details: uploadData }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return jsonResp(false, {
+        error: "Falha no upload para o Drive",
+        details: message || uploadData,
       });
     }
 
@@ -243,7 +243,7 @@ serve(async (req) => {
     });
     if (insertErr) console.error("Insert lead_files failed:", insertErr);
 
-    return new Response(JSON.stringify({
+    return jsonResp(true, {
       success: true,
       file: {
         id: uploadData.id,
@@ -251,12 +251,10 @@ serve(async (req) => {
         url: uploadData.webViewLink,
       },
       folder_url: leadFolderUrl,
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResp(false, { error: (err as Error).message || "Erro inesperado" });
   }
 });
 
