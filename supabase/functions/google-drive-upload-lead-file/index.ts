@@ -146,9 +146,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (!lead) {
-      return new Response(JSON.stringify({ error: "Lead não encontrado" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(false, { error: "Lead não encontrado" });
     }
 
     // 3) Ensure root + lead folder
@@ -210,7 +208,6 @@ serve(async (req) => {
     if (!uploadRes.ok) {
       console.error("Upload failed:", uploadData);
 
-      // Detect Google Drive storage quota exceeded
       const reason = uploadData?.error?.errors?.[0]?.reason || "";
       const message = uploadData?.error?.message || "";
       const isQuotaError =
@@ -219,17 +216,16 @@ serve(async (req) => {
         /quota|storage.*full|exceeded/i.test(message);
 
       if (isQuotaError) {
-        return new Response(JSON.stringify({
+        return jsonResp(false, {
           error: "drive_storage_full",
           message: "Seu Google Drive está sem espaço disponível.",
           details: message,
-        }), {
-          status: 507, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      return new Response(JSON.stringify({ error: "Falha no upload para o Drive", details: uploadData }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return jsonResp(false, {
+        error: "Falha no upload para o Drive",
+        details: message || uploadData,
       });
     }
 
@@ -247,7 +243,7 @@ serve(async (req) => {
     });
     if (insertErr) console.error("Insert lead_files failed:", insertErr);
 
-    return new Response(JSON.stringify({
+    return jsonResp(true, {
       success: true,
       file: {
         id: uploadData.id,
@@ -255,12 +251,10 @@ serve(async (req) => {
         url: uploadData.webViewLink,
       },
       folder_url: leadFolderUrl,
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResp(false, { error: (err as Error).message || "Erro inesperado" });
   }
 });
 
