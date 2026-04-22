@@ -93,20 +93,21 @@ serve(async (req) => {
     });
     const { data: { user }, error: userErr } = await userClient.auth.getUser();
     if (userErr || !user) {
-      return new Response(JSON.stringify({ error: "Sessão inválida" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(false, { error: "Sessão inválida" });
     }
 
-    const formData = await req.formData();
+    let formData: FormData;
+    try {
+      formData = await req.formData();
+    } catch (e) {
+      return jsonResp(false, { error: "Falha ao ler o arquivo enviado (form data inválido)" });
+    }
     const file = formData.get("file") as File | null;
     const leadId = formData.get("lead_id") as string | null;
     const customName = (formData.get("custom_name") as string | null)?.trim() || null;
 
     if (!file || !leadId) {
-      return new Response(JSON.stringify({ error: "Arquivo e lead_id obrigatórios" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(false, { error: "Arquivo e lead_id obrigatórios" });
     }
 
     const admin = createClient(supabaseUrl, serviceRoleKey);
@@ -119,9 +120,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (!conn?.is_active || !conn.access_token) {
-      return new Response(JSON.stringify({ error: "Google Drive não conectado" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(false, { error: "Google Drive não conectado" });
     }
 
     let accessToken = conn.access_token;
