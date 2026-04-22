@@ -332,182 +332,50 @@ export const LeadDetailDialog = ({
   // Lead files state
   const [leadFiles, setLeadFiles] = useState<Array<{ id: string; file_name: string; file_type: string; file_url: string | null; source: string; created_at: string }>>([]);
   const [driveConnection, setDriveConnection] = useState<{ is_active: boolean; root_folder_id: string | null } | null>(null);
+  const [isLoadingDriveConnection, setIsLoadingDriveConnection] = useState(false);
   const [isUploadingLeadFile, setIsUploadingLeadFile] = useState(false);
   const [pendingDriveFile, setPendingDriveFile] = useState<File | null>(null);
   const [pendingDriveFileName, setPendingDriveFileName] = useState('');
   const [leadDriveFolderUrl, setLeadDriveFolderUrl] = useState<string | null>(null);
   const [driveQuotaError, setDriveQuotaError] = useState(false);
-
-  // Check if value has unsaved changes
-  const hasUnsavedValue = dealValue !== savedValue;
-
-  useEffect(() => {
-    if (lead) {
-      setFormData({
-        phone: lead.phone || '',
-        company_name: lead.company_name || '',
-        contact_name: lead.contact_name || '',
-        category: lead.category || '',
-        city: lead.city || '',
-        region: lead.region || '',
-        website: lead.website || '',
-        estimated_value: lead.estimated_value || 0,
-      });
-      const initialValue = lead.estimated_value || 0;
-      setDealValue(initialValue);
-      setSavedValue(initialValue);
-      setHeaderNameValue(lead.contact_name || lead.company_name || '');
-      setIsEditing(false);
-      setIsEditingHeaderName(false);
-      setActiveTab('info');
-      setShowWhatsAppOptions(false);
-      setHistoryPage(1);
-      setShowDealConfirm(false);
-      setNewTag('');
-      setDealAttachmentFiles([]);
-      setLocalTags(lead.tags || []);
-
-      // Load all data in parallel for faster popup
-      Promise.all([
-        loadNotesAndActivities(),
-        loadDeals(),
-        loadDealAttachments(),
-        loadLeadFiles(),
-        loadDriveConnection(),
-        loadAgentPauseStatus(),
-      ]);
-    }
-  }, [lead?.id]);
-
-  useEffect(() => {
-    if (!open || !user) return;
-
-    let cancelled = false;
-
-    const loadDialogSupportData = async () => {
-      try {
-        const [tagsResponse, connectionsResponse] = await Promise.all([
-          supabase
-            .from('crm_tags')
-            .select('name')
-            .eq('user_id', user.id),
-          supabase
-            .from('user_waba_connections')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('status', 'active')
-            .limit(1),
-        ]);
-
-        if (cancelled) return;
-
-        const uniqueTags = new Set<string>();
-        tagsResponse.data?.forEach((item) => {
-          if (item.name?.trim()) uniqueTags.add(item.name.trim());
-        });
-
-        setAvailableTags(Array.from(uniqueTags).sort((a, b) => a.localeCompare(b, 'pt-BR')));
-        setHasWiizeChatConnection((connectionsResponse.data?.length ?? 0) > 0);
-      } catch (error) {
-        console.error('Error loading CRM tag support data:', error);
-
-        if (!cancelled) {
-          setAvailableTags([]);
-          setHasWiizeChatConnection(false);
-        }
-      }
-    };
-
-    void loadDialogSupportData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, user]);
-
-  // showTagComposer is no longer needed — tag creation is inside the status popover
-
-  const loadDeals = async () => {
-    if (!lead) return;
-    const { data, error } = await supabase
-      .from('lead_deals')
-      .select('*')
-      .eq('lead_id', lead.id)
-      .order('closed_at', { ascending: false });
-    if (!error && data) {
-      setDeals(data as LeadDeal[]);
-    }
-  };
-
-  const loadDealAttachments = async () => {
-    if (!lead || !user) return;
-    const { data } = await supabase
-      .from('lead_deal_attachments')
-      .select('id, deal_id, file_name, file_type, file_url')
-      .eq('user_id', user.id);
-    if (data) {
-      const grouped: Record<string, Array<{ id: string; file_name: string; file_type: string; file_url: string }>> = {};
-      data.forEach((att) => {
-        if (!grouped[att.deal_id]) grouped[att.deal_id] = [];
-        grouped[att.deal_id].push(att);
-      });
-      setDealAttachments(grouped);
-    }
-  };
-
-  const loadLeadFiles = async () => {
-    if (!lead || !user) return;
-    const { data } = await supabase
-      .from('lead_files')
-      .select('id, file_name, file_type, file_url, source, created_at')
-      .eq('lead_id', lead.id)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-    if (data) setLeadFiles(data);
-  };
-
+...
   const loadDriveConnection = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from('user_drive_connections')
-      .select('is_active, root_folder_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    setDriveConnection(data);
-    if (lead) {
-      const { data: leadData } = await supabase
-        .from('leads')
-        .select('drive_folder_url')
-        .eq('id', lead.id)
+    if (!user) return null;
+    setIsLoadingDriveConnection(true);
+
+    try {
+      const { data } = await supabase
+        .from('user_drive_connections')
+        .select('is_active, root_folder_id')
+        .eq('user_id', user.id)
         .maybeSingle();
-      setLeadDriveFolderUrl(leadData?.drive_folder_url || null);
+
+      setDriveConnection(data);
+
+      if (lead) {
+        const { data: leadData } = await supabase
+          .from('leads')
+          .select('drive_folder_url')
+          .eq('id', lead.id)
+          .maybeSingle();
+        setLeadDriveFolderUrl(leadData?.drive_folder_url || null);
+      }
+
+      return data;
+    } finally {
+      setIsLoadingDriveConnection(false);
     }
   };
-
-  const uploadDealAttachment = async (dealId: string, file: File, fileType: string) => {
-    if (!user) return;
-    const filePath = `${user.id}/${dealId}/${Date.now()}_${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from('deal-attachments')
-      .upload(filePath, file);
-    if (uploadError) throw uploadError;
-    const { data: urlData } = supabase.storage.from('deal-attachments').getPublicUrl(filePath);
-    await supabase.from('lead_deal_attachments').insert({
-      deal_id: dealId,
-      user_id: user.id,
-      file_name: file.name,
-      file_type: fileType,
-      file_url: urlData.publicUrl,
-      file_size: file.size,
-    });
-  };
-
+...
   const handleUploadLeadFile = async (file: File, customName?: string) => {
     if (!lead || !user) return;
     setIsUploadingLeadFile(true);
+
     try {
-      // If Drive is connected, upload to Drive
-      if (driveConnection?.is_active) {
+      const latestDriveConnection = await loadDriveConnection();
+      const shouldUseDrive = Boolean(latestDriveConnection?.is_active || driveConnection?.is_active);
+
+      if (shouldUseDrive) {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('lead_id', lead.id);
@@ -516,44 +384,56 @@ export const LeadDetailDialog = ({
         const { data, error } = await supabase.functions.invoke('google-drive-upload-lead-file', {
           body: formData,
         });
-        // Detect quota error (edge function returns 507 with error: 'drive_storage_full')
+
         const quotaHit =
           (data as any)?.error === 'drive_storage_full' ||
           /drive_storage_full|storageQuotaExceeded|quota/i.test(error?.message || '') ||
           /drive_storage_full|storageQuotaExceeded/i.test(JSON.stringify((error as any)?.context || {}));
+
         if (quotaHit) {
           setDriveQuotaError(true);
           return;
         }
-        if (error) throw error;
+
+        if (error) {
+          const driveDisconnected = /google drive não conectado|não conectado|sessão inválida/i.test(error.message || '');
+          if (driveDisconnected) {
+            setDriveConnection(latestDriveConnection ?? null);
+            toast.error('O Google Drive parece desconectado. Reconecte para enviar arquivos por lá.');
+            return;
+          }
+
+          throw error;
+        }
+
         if (data?.folder_url) setLeadDriveFolderUrl(data.folder_url);
         toast.success('Arquivo enviado para o Google Drive!');
-      } else {
-        // Fallback: store in Supabase
-        const finalName = customName
-          ? (customName.includes('.') ? customName : `${customName}${file.name.slice(file.name.lastIndexOf('.'))}`)
-          : file.name;
-        const filePath = `${user.id}/${lead.id}/${Date.now()}_${finalName}`;
-        const { error: uploadError } = await supabase.storage
-          .from('deal-attachments')
-          .upload(filePath, file);
-        if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage.from('deal-attachments').getPublicUrl(filePath);
-        await supabase.from('lead_files').insert({
-          lead_id: lead.id,
-          user_id: user.id,
-          file_name: finalName,
-          file_type: 'other',
-          file_url: urlData.publicUrl,
-          file_size: file.size,
-          source: 'local',
-        });
-        toast.success('Arquivo enviado!');
+        await loadLeadFiles();
+        return;
       }
-      loadLeadFiles();
+
+      const finalName = customName
+        ? (customName.includes('.') ? customName : `${customName}${file.name.slice(file.name.lastIndexOf('.'))}`)
+        : file.name;
+      const filePath = `${user.id}/${lead.id}/${Date.now()}_${finalName}`;
+      const { error: uploadError } = await supabase.storage
+        .from('deal-attachments')
+        .upload(filePath, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from('deal-attachments').getPublicUrl(filePath);
+      await supabase.from('lead_files').insert({
+        lead_id: lead.id,
+        user_id: user.id,
+        file_name: finalName,
+        file_type: 'other',
+        file_url: urlData.publicUrl,
+        file_size: file.size,
+        source: 'local',
+      });
+      toast.success('Arquivo enviado!');
+      await loadLeadFiles();
     } catch (err: any) {
       console.error(err);
-      // Final safety net for quota in error message
       if (/drive_storage_full|storageQuotaExceeded|quota/i.test(err?.message || '')) {
         setDriveQuotaError(true);
       } else {
