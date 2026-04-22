@@ -33,6 +33,7 @@ import {
   PieChart,
   Activity,
   FileText,
+  ClipboardList,
 } from "lucide-react";
 
 interface NavItem {
