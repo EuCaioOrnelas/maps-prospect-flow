@@ -262,8 +262,10 @@ Deno.serve(async (req) => {
     let activeMRR = 0;
     let activeCount = 0;
     let canceledCount = 0;
+    let cancellationsLast30d = 0;
     const planDistribution: { [plan: string]: number } = {};
     const monthlySales: { [month: string]: { newSales: number; salesValue: number; cancellations: number } } = {};
+    const thirtyDaysAgoUnix = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
 
     for (const sub of wiizeSubs) {
       const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
@@ -314,6 +316,9 @@ Deno.serve(async (req) => {
 
       if (sub.status === "canceled" && hadAnyPayment) {
         canceledCount++;
+        if (sub.canceled_at && sub.canceled_at >= thirtyDaysAgoUnix) {
+          cancellationsLast30d++;
+        }
         
         if (sub.canceled_at) {
           const cancelDate = new Date(sub.canceled_at * 1000);
@@ -478,6 +483,7 @@ Deno.serve(async (req) => {
         totalRefunded: wiizeRefundedAmount,
         refundCount: wiizeRefundCount,
         canceledSubscriptions: canceledCount,
+        cancellationsLast30d,
         churnRate: parseFloat(churnRate.toFixed(1)),
         totalSalesValue,
         totalSalesCount,
