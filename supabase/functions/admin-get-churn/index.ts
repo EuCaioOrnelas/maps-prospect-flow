@@ -96,12 +96,71 @@ serve(async (req) => {
       return Number.isFinite(periodEnd) && periodEnd < now;
     });
 
+    // Buscar cancelamentos diretos no Stripe (feitos fora do nosso fluxo)
+    // Mescla qualquer subscription canceled pós-15/04 que não esteja já em subscription_cancellations
+    const stripeChurns: any[] = [];
+    try {
+      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+      if (stripeKey) {
+        const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+        const existingStripeIds = new Set(
+          (cancellationsRes.data || [])
+            .filter((c: any) => c.provider === "stripe")
+            .map((c: any) => c.stripe_subscription_id)
+            .filter(Boolean)
+        );
+        const profilesByEmail = new Map(profiles.map((p: any) => [p.email?.toLowerCase(), p]));
+
+        let hasMore = true;
+        let startingAfter: string | undefined;
+        while (hasMore) {
+          const res: any = await stripe.subscriptions.list({
+            status: "canceled",
+            limit: 100,
+            ...(startingAfter ? { starting_after: startingAfter } : {}),
+          });
+          for (const sub of res.data) {
+            if (!sub.canceled_at || sub.canceled_at < CHURN_CUTOFF_UNIX) continue;
+            if (existingStripeIds.has(sub.id)) continue;
+
+            let email: string | null = null;
+            if (sub.customer) {
+              try {
+                const customer: any = await stripe.customers.retrieve(sub.customer as string);
+                email = customer?.email || null;
+              } catch (_) {}
+            }
+            const profile = email ? profilesByEmail.get(email.toLowerCase()) : null;
+
+            stripeChurns.push({
+              id: `stripe-${sub.id}`,
+              user_id: profile?.id || null,
+              stripe_subscription_id: sub.id,
+              email,
+              provider: "stripe",
+              cancelled_at: new Date(sub.canceled_at * 1000).toISOString(),
+              active_until: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+              billing_type: "Cartão",
+              notes: "Cancelamento direto no Stripe (fora do fluxo interno)",
+              cancellation_reason: sub.cancellation_details?.reason || null,
+              additional_comments: sub.cancellation_details?.comment || null,
+            });
+          }
+          hasMore = res.has_more;
+          startingAfter = res.data[res.data.length - 1]?.id;
+        }
+      }
+    } catch (err) {
+      logStep("Stripe lookup error", { message: err instanceof Error ? err.message : String(err) });
+    }
+
     logStep("Churn payload ready", {
       cancellations: cancellationsRes.data?.length || 0,
       feedbacks: feedbacksRes.data?.length || 0,
       events: eventsRes.data?.length || 0,
       profiles: profiles.length,
       expiredProfiles: expiredProfiles.length,
+      stripeChurns: stripeChurns.length,
     });
 
     return new Response(
@@ -111,6 +170,7 @@ serve(async (req) => {
         subEvents: eventsRes.data || [],
         profiles,
         expiredProfiles,
+        stripeChurns,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
