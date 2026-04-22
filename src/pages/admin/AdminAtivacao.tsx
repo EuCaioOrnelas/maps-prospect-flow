@@ -132,6 +132,47 @@ export default function AdminAtivacao() {
           />
         </div>
 
+        {/* Breakdown de pagantes ativados por provedor (Stripe Cartão + Asaas PIX) */}
+        <Card className="border-border/40 bg-card/80 rounded-2xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Pagantes Ativados por Provedor</CardTitle>
+            <p className="text-[11px] text-muted-foreground/70 mt-1">
+              Total de assinantes pagantes que já usaram a plataforma — soma Stripe (Cartão) + Asaas (PIX).
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/20">
+                <p className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wider">Stripe (Cartão)</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16 mt-2" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground mt-1">{stats.activatedStripe.toLocaleString("pt-BR")}</p>
+                )}
+                <p className="text-[10px] text-muted-foreground/60 mt-1">assinantes ativados</p>
+              </div>
+              <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                <p className="text-[10px] font-semibold text-emerald-500 uppercase tracking-wider">Asaas (PIX)</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16 mt-2" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground mt-1">{stats.activatedAsaas.toLocaleString("pt-BR")}</p>
+                )}
+                <p className="text-[10px] text-muted-foreground/60 mt-1">assinantes ativados</p>
+              </div>
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">Total Pagantes</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16 mt-2" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground mt-1">{(stats.activatedStripe + stats.activatedAsaas).toLocaleString("pt-BR")}</p>
+                )}
+                <p className="text-[10px] text-muted-foreground/60 mt-1">Stripe + Asaas somados</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Visual funnel chart */}
         <Card className="border-border/40 bg-card/80 rounded-2xl">
           <CardHeader className="pb-3">
