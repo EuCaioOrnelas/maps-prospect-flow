@@ -314,20 +314,21 @@ Deno.serve(async (req) => {
       const hadAnyPayment = subsWithPayment.has(sub.id) || 
         (latestInvoice?.charge && typeof latestInvoice.charge === "string" && refundedChargeIds.has(latestInvoice.charge));
 
-      if (sub.status === "canceled" && hadAnyPayment) {
+      // Cutoff: ignorar churns anteriores a 15/04/2026 (legado pré-relançamento)
+      const CHURN_CUTOFF_UNIX = Math.floor(new Date("2026-04-15T00:00:00-03:00").getTime() / 1000);
+
+      if (sub.status === "canceled" && hadAnyPayment && sub.canceled_at && sub.canceled_at >= CHURN_CUTOFF_UNIX) {
         canceledCount++;
-        if (sub.canceled_at && sub.canceled_at >= thirtyDaysAgoUnix) {
+        if (sub.canceled_at >= thirtyDaysAgoUnix) {
           cancellationsLast30d++;
         }
-        
-        if (sub.canceled_at) {
-          const cancelDate = new Date(sub.canceled_at * 1000);
-          const monthKey = `${cancelDate.getFullYear()}-${String(cancelDate.getMonth() + 1).padStart(2, "0")}`;
-          if (!monthlySales[monthKey]) {
-            monthlySales[monthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
-          }
-          monthlySales[monthKey].cancellations++;
+
+        const cancelDate = new Date(sub.canceled_at * 1000);
+        const monthKey = `${cancelDate.getFullYear()}-${String(cancelDate.getMonth() + 1).padStart(2, "0")}`;
+        if (!monthlySales[monthKey]) {
+          monthlySales[monthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
         }
+        monthlySales[monthKey].cancellations++;
       }
 
       // For active MRR, skip $0 or refunded subs
