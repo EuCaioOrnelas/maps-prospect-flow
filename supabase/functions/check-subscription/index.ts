@@ -167,13 +167,7 @@ async function reconcileCompletedPixCheckout(
   supabaseClient: ReturnType<typeof createClient>,
   userId: string,
   userEmail: string,
-  currentProfile: {
-    plan?: string;
-    searches_limit?: number;
-    searches_used?: number;
-    admin_assigned_plan?: boolean;
-    subscription_current_period_end?: string | null;
-  },
+  currentProfile: BillingProfileState,
 ) {
   const { data: checkoutLeads } = await supabaseClient
     .from("checkout_leads")
@@ -186,13 +180,21 @@ async function reconcileCompletedPixCheckout(
   const completedPixLead = (checkoutLeads || []).find((lead) => {
     const checkoutId = lead.stripe_session_id || "";
     const isPixCheckout = checkoutId.startsWith("abacate_sub_") || checkoutId.startsWith("abacate_pix_") || checkoutId.startsWith("abacate_renewal_") || checkoutId.startsWith("asaas_sub_");
-    // Only reconcile if user_id is NOT yet set — means this checkout hasn't been applied yet
-    // Once applied, user_id is set and it should never be re-applied
     return isPixCheckout && !lead.user_id;
   });
 
   if (!completedPixLead) {
     return currentProfile;
+  }
+
+  const trialAccess = getActiveTrialAccess(currentProfile);
+  if (trialAccess) {
+    return {
+      ...currentProfile,
+      plan: trialAccess.plan,
+      searches_limit: trialAccess.searchesLimit,
+      subscription_current_period_end: trialAccess.subscriptionEnd,
+    };
   }
 
   const currentPeriodEnd = currentProfile.subscription_current_period_end
@@ -237,11 +239,11 @@ async function reconcileCompletedPixCheckout(
 
   const { data: updatedProfile } = await supabaseClient
     .from("profiles")
-    .select("searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end")
+    .select("searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen")
     .eq("id", userId)
     .maybeSingle();
 
-  return updatedProfile || currentProfile;
+  return (updatedProfile as BillingProfileState | null) || currentProfile;
 }
 
 // Calculate new searches limit considering remaining searches from previous plan
