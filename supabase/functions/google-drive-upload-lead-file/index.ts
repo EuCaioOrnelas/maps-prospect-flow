@@ -68,6 +68,13 @@ async function getFolderUrl(accessToken: string, folderId: string): Promise<stri
   return data.webViewLink || `https://drive.google.com/drive/folders/${folderId}`;
 }
 
+function jsonResp(ok: boolean, payload: Record<string, unknown>, httpStatus = 200) {
+  return new Response(JSON.stringify({ ok, ...payload }), {
+    status: httpStatus,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -78,9 +85,7 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Não autenticado" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp(false, { error: "Não autenticado" });
     }
 
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
