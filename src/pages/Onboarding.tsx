@@ -256,12 +256,7 @@ export default function Onboarding() {
     <div className="min-h-screen bg-[hsl(40,30%,97%)] text-[hsl(220,15%,15%)] flex flex-col">
       {/* Header */}
       <header className="px-6 sm:px-10 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-[hsl(158,72%,38%)] flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-white" />
-          </div>
-          <span className="text-base font-semibold tracking-tight">Wiize</span>
-        </div>
+        <Logo size="sm" asLink={false} />
         {stage === "questions" && (
           <div className="hidden sm:flex items-center gap-3 text-xs text-[hsl(220,12%,46%)]">
             <span>
