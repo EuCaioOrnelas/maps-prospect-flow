@@ -123,6 +123,30 @@ serve(async (req) => {
             if (!sub.canceled_at || sub.canceled_at < CHURN_CUTOFF_UNIX) continue;
             if (existingStripeIds.has(sub.id)) continue;
 
+            // Ignorar cancelamentos durante o trial (nunca houve cobrança real = não é churn)
+            // Detecção: subscription cancelada antes/durante o trial_end, OU sem nenhuma invoice paga
+            const canceledDuringTrial =
+              sub.trial_end && sub.canceled_at <= sub.trial_end;
+            if (canceledDuringTrial) {
+              logStep("Skipping trial cancellation", { id: sub.id, canceled_at: sub.canceled_at, trial_end: sub.trial_end });
+              continue;
+            }
+
+            // Verificação extra: se nunca houve invoice paga, também não conta como churn
+            try {
+              const invoices: any = await stripe.invoices.list({
+                subscription: sub.id,
+                status: "paid",
+                limit: 1,
+              });
+              if (!invoices.data || invoices.data.length === 0) {
+                logStep("Skipping subscription with no paid invoices", { id: sub.id });
+                continue;
+              }
+            } catch (_) {
+              // Se falhar a verificação, segue o fluxo (já passou no filtro de trial)
+            }
+
             let email: string | null = null;
             if (sub.customer) {
               try {
