@@ -384,6 +384,16 @@ export default function AdminOnboarding() {
         {ANSWER_FIELDS.map((field, idx) => {
           const data = distributions[field] || [];
           const usePie = field === "role" || field === "sales_team_size";
+          // Altura dinâmica: barras horizontais precisam de espaço por item
+          const dynamicHeight = usePie
+            ? 300
+            : Math.max(220, data.length * 56 + 60);
+          // Largura do label baseada no maior texto (até 220px)
+          const longestLabel = data.reduce(
+            (m, d) => Math.max(m, d.name.length),
+            0
+          );
+          const yAxisWidth = Math.min(220, Math.max(140, longestLabel * 7 + 16));
           return (
             <Card key={field}>
               <CardHeader>
@@ -393,7 +403,7 @@ export default function AdminOnboarding() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[260px]">
+                <div style={{ height: dynamicHeight }}>
                   <ResponsiveContainer width="100%" height="100%">
                     {usePie ? (
                       <RPieChart>
@@ -410,18 +420,6 @@ export default function AdminOnboarding() {
                             <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
-                      </RPieChart>
-                    ) : (
-                      <BarChart data={data} layout="vertical" margin={{ left: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis type="number" stroke="hsl(var(--muted-foreground))" allowDecimals={false} />
-                        <YAxis
-                          dataKey="name"
-                          type="category"
-                          width={150}
-                          stroke="hsl(var(--muted-foreground))"
-                        />
                         <Tooltip
                           contentStyle={{
                             background: "hsl(var(--background))",
@@ -429,7 +427,47 @@ export default function AdminOnboarding() {
                             borderRadius: 8,
                           }}
                         />
-                        <Bar dataKey="value" fill={CHART_COLORS[idx % CHART_COLORS.length]} radius={[0, 6, 6, 0]} />
+                      </RPieChart>
+                    ) : (
+                      <BarChart
+                        data={data}
+                        layout="vertical"
+                        margin={{ top: 8, right: 32, left: 8, bottom: 8 }}
+                        barCategoryGap={12}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                        <XAxis
+                          type="number"
+                          stroke="hsl(var(--muted-foreground))"
+                          allowDecimals={false}
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis
+                          dataKey="name"
+                          type="category"
+                          width={yAxisWidth}
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fontSize: 12, fill: "hsl(var(--foreground))" }}
+                          interval={0}
+                        />
+                        <Tooltip
+                          cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
+                          contentStyle={{
+                            background: "hsl(var(--background))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: 8,
+                          }}
+                        />
+                        <Bar
+                          dataKey="value"
+                          fill={CHART_COLORS[idx % CHART_COLORS.length]}
+                          radius={[0, 6, 6, 0]}
+                          label={{
+                            position: "right",
+                            fill: "hsl(var(--foreground))",
+                            fontSize: 12,
+                          }}
+                        />
                       </BarChart>
                     )}
                   </ResponsiveContainer>
