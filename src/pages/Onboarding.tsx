@@ -25,7 +25,6 @@ import {
   PhoneCall,
   Share2,
   Megaphone as Ads,
-  Layers,
   Wallet,
   Coins,
   Banknote,
@@ -46,6 +45,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUserScoreTracking } from "@/hooks/useUserScoreTracking";
+import { Logo } from "@/components/Logo";
 
 type OptionDef = { id: string; label: string; icon: React.ComponentType<any> };
 type StepDef = {
