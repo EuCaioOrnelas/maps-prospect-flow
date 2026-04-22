@@ -30,15 +30,17 @@ export const TrialCancelCard = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  const isFreePlan = !p?.plan || p.plan === "free";
   const willCharge = p?.trial_will_charge_at as string | undefined;
   const cancelled = p?.trial_auto_charge_cancelled as boolean | undefined;
   const last4 = p?.trial_card_last4 as string | undefined;
   const planChosen = p?.trial_plan_chosen as string | undefined;
   const subId = p?.trial_asaas_subscription_id as string | undefined;
 
-  // Só exibe se está em trial e tem assinatura agendada
-  if (!isFreePlan || !subId) return null;
+  // Exibe enquanto houver uma assinatura de trial agendada (independente do plan,
+  // pois agora o trial já ativa o plano escolhido — Start/Growth/Scale)
+  if (!subId || !willCharge) return null;
+  // Se a cobrança já passou, não é mais trial
+  if (new Date(willCharge).getTime() < Date.now()) return null;
 
   const planLabel =
     planChosen === "growth" ? "Wiize Growth" : planChosen === "scale" ? "Wiize Scale" : "Wiize Start";
