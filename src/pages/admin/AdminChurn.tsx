@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-import { TrendingDown, Users, AlertTriangle, Percent, Calendar, UserX, Eye } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { TrendingDown, Users, AlertTriangle, Percent, Calendar, UserX, Eye, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,27 @@ export default function AdminChurn() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [selectedRecord, setSelectedRecord] = useState<ChurnRecord | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const filteredRecords = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return records;
+    return records.filter((record) => {
+      const reasonLabel = record.cancellation_reason
+        ? (reasonLabels[record.cancellation_reason] || record.cancellation_reason).toLowerCase()
+        : "";
+      return (
+        (record.name || "").toLowerCase().includes(term) ||
+        (record.email || "").toLowerCase().includes(term) ||
+        (record.provider || "").toLowerCase().includes(term) ||
+        (record.plan || "").toLowerCase().includes(term) ||
+        (record.notes || "").toLowerCase().includes(term) ||
+        (record.details || "").toLowerCase().includes(term) ||
+        (record.additional_comments || "").toLowerCase().includes(term) ||
+        reasonLabel.includes(term)
+      );
+    });
+  }, [records, search]);
 
   useEffect(() => {
     loadData();
@@ -305,8 +327,17 @@ export default function AdminChurn() {
       </div>
 
       <Card className="border-border/40 bg-card/80">
-        <CardHeader>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-base">Histórico de Cancelamentos</CardTitle>
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nome, email, provedor, motivo..."
+              className="h-9 pl-8 text-xs"
+            />
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -315,10 +346,12 @@ export default function AdminChurn() {
                 <Skeleton key={index} className="h-12 w-full" />
               ))}
             </div>
-          ) : records.length === 0 ? (
+          ) : filteredRecords.length === 0 ? (
             <div className="p-12 text-center">
               <Users className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">Nenhum cancelamento registrado</p>
+              <p className="text-sm text-muted-foreground">
+                {search.trim() ? "Nenhum cancelamento encontrado para a busca" : "Nenhum cancelamento registrado"}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -335,7 +368,7 @@ export default function AdminChurn() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {records.map((record) => (
+                  {filteredRecords.map((record) => (
                     <TableRow key={record.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedRecord(record)}>
                       <TableCell>
                         <div>
