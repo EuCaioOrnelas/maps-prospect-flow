@@ -261,7 +261,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
                 user_id: u.id,
                 email_type: "ADMIN_BROADCAST",
                 payload: { subject: subject.trim(), content: htmlContent },
-                idempotency_key: `broadcast_${u.id}_${batchTimestamp}`,
+                idempotency_key: `broadcast_${batchTimestamp}_${u.id}`,
               },
             });
             if (sendErr) { failed++; } else { sent++; }

@@ -10,12 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserActionsMenu } from "@/components/admin/UserActionsMenu";
 import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
+import { getProviderLabel, getProviderBucket } from "@/lib/paymentProviderLabel";
 
 export default function AdminUsuarios() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
+  const [providerFilter, setProviderFilter] = useState("all");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const loadUsers = async () => {
@@ -35,15 +37,27 @@ export default function AdminUsuarios() {
     return users.filter(u => {
       const matchSearch = !search || u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase());
       const matchPlan = planFilter === "all" || u.plan === planFilter;
-      return matchSearch && matchPlan;
+      const bucket = getProviderBucket(u.payment_provider);
+      const matchProvider =
+        providerFilter === "all" ||
+        (providerFilter === "stripe" && bucket === "stripe") ||
+        (providerFilter === "pix" && bucket === "pix") ||
+        (providerFilter === "none" && !u.payment_provider);
+      return matchSearch && matchPlan && matchProvider;
     });
-  }, [users, search, planFilter]);
+  }, [users, search, planFilter, providerFilter]);
 
   const planColors: Record<string, string> = {
     free: "bg-muted text-muted-foreground",
     start: "bg-blue-500/10 text-blue-500",
     growth: "bg-violet-500/10 text-violet-500",
     scale: "bg-amber-500/10 text-amber-500",
+  };
+
+  const providerColors: Record<string, string> = {
+    stripe: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
+    pix: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+    other: "bg-muted text-muted-foreground border-border",
   };
 
   return (
@@ -68,11 +82,22 @@ export default function AdminUsuarios() {
             <SelectValue placeholder="Plano" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="all">Todos planos</SelectItem>
             <SelectItem value="free">Free</SelectItem>
             <SelectItem value="start">Start</SelectItem>
             <SelectItem value="growth">Growth</SelectItem>
             <SelectItem value="scale">Scale</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={providerFilter} onValueChange={setProviderFilter}>
+          <SelectTrigger className="w-[170px]">
+            <SelectValue placeholder="Pagamento" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos pagamentos</SelectItem>
+            <SelectItem value="stripe">Stripe (Cartão)</SelectItem>
+            <SelectItem value="pix">Asaas / PIX</SelectItem>
+            <SelectItem value="none">Sem pagamento</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -89,6 +114,7 @@ export default function AdminUsuarios() {
                 <TableRow>
                   <TableHead>Usuário</TableHead>
                   <TableHead>Plano</TableHead>
+                  <TableHead>Pagamento</TableHead>
                   <TableHead>Uso</TableHead>
                   <TableHead>Último Login</TableHead>
                   <TableHead>Cadastro</TableHead>
@@ -96,8 +122,10 @@ export default function AdminUsuarios() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map(user => (
-                <TableRow key={user.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedUserId(user.id)}>
+                {filtered.map(user => {
+                  const bucket = getProviderBucket(user.payment_provider);
+                  return (
+                  <TableRow key={user.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedUserId(user.id)}>
                     <TableCell>
                       <div>
                         <p className="font-medium text-sm">{user.name || "—"}</p>
@@ -106,6 +134,15 @@ export default function AdminUsuarios() {
                     </TableCell>
                     <TableCell>
                       <Badge className={`${planColors[user.plan] || "bg-muted"} border-0 text-xs`}>{user.plan}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.payment_provider ? (
+                        <Badge variant="outline" className={`${providerColors[bucket]} text-[10px] font-medium`}>
+                          {getProviderLabel(user.payment_provider)}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/60">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
@@ -131,7 +168,8 @@ export default function AdminUsuarios() {
                       />
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           )}

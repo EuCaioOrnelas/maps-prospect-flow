@@ -22,7 +22,13 @@ import {
 type FunnelRow = { label: string; value: number; color: string; tooltip: string };
 
 export default function AdminAtivacao() {
-  const [stats, setStats] = useState({ total: 0, accessed: 0, activated: 0 });
+  const [stats, setStats] = useState({
+    total: 0,
+    accessed: 0,
+    activated: 0,
+    activatedStripe: 0,
+    activatedAsaas: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,7 +36,7 @@ export default function AdminAtivacao() {
       // Pull all profiles with the columns we need
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, created_at, updated_at, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used");
+        .select("id, created_at, updated_at, payment_provider, plan, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used");
 
       if (!profiles) { setLoading(false); return; }
 
@@ -44,15 +50,27 @@ export default function AdminAtivacao() {
       }).length;
 
       // Ativados: usaram qualquer feature
-      const activated = profiles.filter((p: any) =>
+      const activatedProfiles = profiles.filter((p: any) =>
         (p.searches_used ?? 0) > 0 ||
         (p.trial_messages_sent ?? 0) > 0 ||
         (p.trial_leads_used ?? 0) > 0 ||
         (p.trial_flows_used ?? 0) > 0 ||
         (p.trial_campaigns_used ?? 0) > 0
+      );
+      const activated = activatedProfiles.length;
+
+      // Breakdown de pagantes ativados por provedor (Stripe Cartão / Asaas PIX)
+      const activatedStripe = activatedProfiles.filter(
+        (p: any) => p.payment_provider === "stripe" && p.plan && p.plan !== "free"
+      ).length;
+      const activatedAsaas = activatedProfiles.filter(
+        (p: any) =>
+          (p.payment_provider === "asaas" || p.payment_provider === "abacate_pay") &&
+          p.plan &&
+          p.plan !== "free"
       ).length;
 
-      setStats({ total, accessed, activated });
+      setStats({ total, accessed, activated, activatedStripe, activatedAsaas });
       setLoading(false);
     };
     load();
@@ -113,6 +131,47 @@ export default function AdminAtivacao() {
             loading={loading}
           />
         </div>
+
+        {/* Breakdown de pagantes ativados por provedor (Stripe Cartão + Asaas PIX) */}
+        <Card className="border-border/40 bg-card/80 rounded-2xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Pagantes Ativados por Provedor</CardTitle>
+            <p className="text-[11px] text-muted-foreground/70 mt-1">
+              Total de assinantes pagantes que já usaram a plataforma — soma Stripe (Cartão) + Asaas (PIX).
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/20">
+                <p className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wider">Stripe (Cartão)</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16 mt-2" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground mt-1">{stats.activatedStripe.toLocaleString("pt-BR")}</p>
+                )}
+                <p className="text-[10px] text-muted-foreground/60 mt-1">assinantes ativados</p>
+              </div>
+              <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                <p className="text-[10px] font-semibold text-emerald-500 uppercase tracking-wider">Asaas (PIX)</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16 mt-2" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground mt-1">{stats.activatedAsaas.toLocaleString("pt-BR")}</p>
+                )}
+                <p className="text-[10px] text-muted-foreground/60 mt-1">assinantes ativados</p>
+              </div>
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">Total Pagantes</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16 mt-2" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground mt-1">{(stats.activatedStripe + stats.activatedAsaas).toLocaleString("pt-BR")}</p>
+                )}
+                <p className="text-[10px] text-muted-foreground/60 mt-1">Stripe + Asaas somados</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Visual funnel chart */}
         <Card className="border-border/40 bg-card/80 rounded-2xl">
