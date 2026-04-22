@@ -18,6 +18,10 @@ interface Profile {
   avatar_url?: string;
   trial_start_at?: string;
   trial_end_at?: string;
+  trial_will_charge_at?: string;
+  trial_auto_charge_cancelled?: boolean;
+  trial_plan_chosen?: string;
+  trial_asaas_subscription_id?: string;
   trial_messages_sent?: number;
   trial_leads_used?: number;
   trial_flows_used?: number;
@@ -61,9 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // durante a janela de 7 dias com cobrança agendada via trial_will_charge_at.
   const calculateTrialStatus = (profile?: Profile | null) => {
     if (!profile) return { isExpired: false, daysRemaining: 0, isTrialing: false };
-    const p = profile as unknown as Record<string, unknown>;
-    const willCharge = p.trial_will_charge_at as string | undefined;
-    const cancelled = p.trial_auto_charge_cancelled as boolean | undefined;
+    const willCharge = profile.trial_will_charge_at;
 
     // Caso 1: trial pago com cartão (Stripe) — usa trial_will_charge_at como fonte da verdade
     if (willCharge) {
@@ -72,8 +74,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const msRemaining = endDate.getTime() - now.getTime();
       const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
       const isExpired = msRemaining <= 0;
-      // Considera "em trial" enquanto não venceu E não foi cancelado pelo usuário
-      const isTrialing = !isExpired && !cancelled;
+      // Continua exibindo o teste até o fim do período, mesmo se a cobrança automática já foi cancelada.
+      const isTrialing = !isExpired;
       return { isExpired, daysRemaining, isTrialing };
     }
 

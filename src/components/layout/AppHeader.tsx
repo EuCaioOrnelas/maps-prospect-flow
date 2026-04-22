@@ -22,13 +22,20 @@ interface AppHeaderProps {
     searches_used?: number;
     searches_limit?: number;
     trial_start_at?: string | null;
+    trial_auto_charge_cancelled?: boolean | null;
   } | null;
   onWhatsAppClick?: () => void;
 }
 
 export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
   const { signOut, trialDaysRemaining, isTrialing } = useAuth();
+  const trialCancelled = profile?.trial_auto_charge_cancelled === true;
   const isUrgent = isTrialing && trialDaysRemaining <= 2;
+  const trialToneClass = trialCancelled
+    ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25 hover:bg-primary/15 transition-colors cursor-pointer"
+    : isUrgent
+      ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/15 border border-destructive/40 hover:bg-destructive/25 transition-colors cursor-pointer"
+      : "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/15 border border-warning/30 hover:bg-warning/25 transition-colors cursor-pointer";
 
   const getPlanName = (plan: string) => {
     switch (plan) {
@@ -67,25 +74,21 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
           {isTrialing && (
             <Link
               to="/profile"
-              className={
-                isUrgent
-                  ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/15 border border-destructive/40 hover:bg-destructive/25 transition-colors cursor-pointer"
-                  : "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/15 border border-warning/30 hover:bg-warning/25 transition-colors cursor-pointer"
-              }
+              className={trialToneClass}
               title={
-                isUrgent
-                  ? "Seu teste está acabando — clique para cancelar a ativação automática se não quiser continuar"
-                  : "Você está no teste gratuito — clique para gerenciar"
+                trialCancelled
+                  ? "Sua cobrança automática já foi cancelada e o teste segue ativo até o fim do período"
+                  : isUrgent
+                    ? "Seu teste está acabando — clique para cancelar a ativação automática se não quiser continuar"
+                    : "Você está no teste gratuito — clique para gerenciar"
               }
             >
               <Clock
                 size={14}
-                className={isUrgent ? "text-destructive animate-pulse" : "text-warning animate-pulse"}
+                className={trialCancelled ? "text-primary" : isUrgent ? "text-destructive animate-pulse" : "text-warning animate-pulse"}
               />
               <span
-                className={
-                  isUrgent ? "text-xs font-semibold text-destructive" : "text-xs font-semibold text-warning"
-                }
+                className={trialCancelled ? "text-xs font-semibold text-primary" : isUrgent ? "text-xs font-semibold text-destructive" : "text-xs font-semibold text-warning"}
               >
                 {trialDaysRemaining <= 0
                   ? "Teste expirado"
@@ -94,13 +97,9 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
                     : `${trialDaysRemaining}d restantes`}
               </span>
               <span
-                className={
-                  isUrgent
-                    ? "text-[10px] text-destructive/80 hidden sm:inline"
-                    : "text-[10px] text-warning/70 hidden sm:inline"
-                }
+                className={trialCancelled ? "text-[10px] text-primary/80 hidden sm:inline" : isUrgent ? "text-[10px] text-destructive/80 hidden sm:inline" : "text-[10px] text-warning/70 hidden sm:inline"}
               >
-                · {isUrgent ? "cancele se não quiser continuar" : "Teste grátis"}
+                · {trialCancelled ? "Cobrança cancelada" : isUrgent ? "cancele se não quiser continuar" : "Teste grátis"}
               </span>
             </Link>
           )}
