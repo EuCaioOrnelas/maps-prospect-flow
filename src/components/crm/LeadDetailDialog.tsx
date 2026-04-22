@@ -444,28 +444,31 @@ export const LeadDetailDialog = ({
           body: formData,
         });
 
+        // Edge function agora sempre retorna 200 com { ok, error?, ... }
+        const payload: any = data || {};
+        const fnError = error?.message || (payload.ok === false ? payload.error : null);
+
         const quotaHit =
-          (data as any)?.error === 'drive_storage_full' ||
-          /drive_storage_full|storageQuotaExceeded|quota/i.test(error?.message || '') ||
-          /drive_storage_full|storageQuotaExceeded/i.test(JSON.stringify((error as any)?.context || {}));
+          payload?.error === 'drive_storage_full' ||
+          /drive_storage_full|storageQuotaExceeded|quota/i.test(fnError || '');
 
         if (quotaHit) {
           setDriveQuotaError(true);
           return;
         }
 
-        if (error) {
-          const driveDisconnected = /google drive não conectado|não conectado|sessão inválida/i.test(error.message || '');
+        if (fnError) {
+          const driveDisconnected = /google drive não conectado|não conectado|sessão inválida/i.test(fnError);
           if (driveDisconnected) {
             setDriveConnection(latestDriveConnection ?? null);
             toast.error('O Google Drive parece desconectado. Reconecte para enviar arquivos por lá.');
             return;
           }
 
-          throw error;
+          throw new Error(fnError);
         }
 
-        if (data?.folder_url) setLeadDriveFolderUrl(data.folder_url);
+        if (payload?.folder_url) setLeadDriveFolderUrl(payload.folder_url);
         toast.success('Arquivo enviado para o Google Drive!');
         await loadLeadFiles();
         return;
