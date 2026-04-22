@@ -17,9 +17,9 @@ const LeadPotentialValueCompactComponent = ({ value, className }: LeadPotentialV
       )}
     >
       <span className="text-[9px] font-semibold uppercase tracking-wider text-foreground/70">
-        Valor
+        Valor em potencial
       </span>
-      <span className="text-[11px] leading-none font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+      <span className="text-[11px] leading-none font-semibold tabular-nums text-emerald-900 dark:text-emerald-300">
         R$ {value.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </span>
     </div>
