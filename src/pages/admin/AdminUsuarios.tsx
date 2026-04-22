@@ -10,12 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserActionsMenu } from "@/components/admin/UserActionsMenu";
 import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
+import { getProviderLabel, getProviderBucket } from "@/lib/paymentProviderLabel";
 
 export default function AdminUsuarios() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
+  const [providerFilter, setProviderFilter] = useState("all");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const loadUsers = async () => {
