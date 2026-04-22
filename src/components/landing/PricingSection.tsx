@@ -186,7 +186,7 @@ export const PricingSection = () => {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; key: string; price: string } | null>(null);
-  const [isAnnual, setIsAnnual] = useState(true);
+  const [isAnnual, setIsAnnual] = useState(false);
 
   const plans = isAnnual ? mainPlans.annual : mainPlans.monthly;
 
