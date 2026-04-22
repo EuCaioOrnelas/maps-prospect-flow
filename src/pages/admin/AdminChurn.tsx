@@ -137,7 +137,11 @@ export default function AdminChurn() {
           id: event.id,
           user_id: event.user_id,
           email: event.email || profile?.email || null,
-          provider: isPixChurn ? "pix" : profile?.payment_provider || (event.event_source === "stripe-webhook" ? "stripe" : event.event_source || null),
+          provider: isPixChurn
+            ? "pix"
+            : profile?.payment_provider === "asaas" || profile?.payment_provider === "abacate_pay"
+              ? "pix"
+              : profile?.payment_provider || (event.event_source === "stripe-webhook" ? "stripe" : event.event_source || null),
           cancelled_at: event.created_at,
           active_until: profile?.subscription_current_period_end || null,
           billing_type: isPixChurn ? "PIX" : null,
@@ -160,7 +164,7 @@ export default function AdminChurn() {
 
         addedUserIds.add(profile.id);
         const feedback = feedbackMap.get(profile.id);
-        const isPix = profile.payment_provider === "abacate_pay";
+        const isPix = profile.payment_provider === "abacate_pay" || profile.payment_provider === "asaas";
 
         merged.push({
           id: `expired-${profile.id}`,

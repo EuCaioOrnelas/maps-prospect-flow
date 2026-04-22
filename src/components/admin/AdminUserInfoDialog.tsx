@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { getProviderLabel } from "@/lib/paymentProviderLabel";
 
 interface Props {
   userId: string;
@@ -156,7 +157,7 @@ export const AdminUserInfoDialog = ({ userId, open, onOpenChange }: Props) => {
   const paginatedEvents = sortedEvents.slice(eventsPage * EVENTS_PER_PAGE, (eventsPage + 1) * EVENTS_PER_PAGE);
 
   const ltvData = getLTV();
-  const providerLabel = profile?.payment_provider === "abacate_pay" ? "PIX" : profile?.payment_provider === "asaas" ? "Asaas Cartão" : profile?.payment_provider || "Stripe";
+  const providerLabel = getProviderLabel(profile?.payment_provider);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
