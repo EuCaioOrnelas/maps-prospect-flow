@@ -82,11 +82,22 @@ export default function AdminUsuarios() {
             <SelectValue placeholder="Plano" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="all">Todos planos</SelectItem>
             <SelectItem value="free">Free</SelectItem>
             <SelectItem value="start">Start</SelectItem>
             <SelectItem value="growth">Growth</SelectItem>
             <SelectItem value="scale">Scale</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={providerFilter} onValueChange={setProviderFilter}>
+          <SelectTrigger className="w-[170px]">
+            <SelectValue placeholder="Pagamento" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos pagamentos</SelectItem>
+            <SelectItem value="stripe">Stripe (Cartão)</SelectItem>
+            <SelectItem value="pix">Asaas / PIX</SelectItem>
+            <SelectItem value="none">Sem pagamento</SelectItem>
           </SelectContent>
         </Select>
       </div>
