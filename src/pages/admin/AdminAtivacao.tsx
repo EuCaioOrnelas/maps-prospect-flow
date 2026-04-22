@@ -22,7 +22,13 @@ import {
 type FunnelRow = { label: string; value: number; color: string; tooltip: string };
 
 export default function AdminAtivacao() {
-  const [stats, setStats] = useState({ total: 0, accessed: 0, activated: 0 });
+  const [stats, setStats] = useState({
+    total: 0,
+    accessed: 0,
+    activated: 0,
+    activatedStripe: 0,
+    activatedAsaas: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,7 +36,7 @@ export default function AdminAtivacao() {
       // Pull all profiles with the columns we need
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, created_at, updated_at, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used");
+        .select("id, created_at, updated_at, payment_provider, plan, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used");
 
       if (!profiles) { setLoading(false); return; }
 
@@ -44,15 +50,27 @@ export default function AdminAtivacao() {
       }).length;
 
       // Ativados: usaram qualquer feature
-      const activated = profiles.filter((p: any) =>
+      const activatedProfiles = profiles.filter((p: any) =>
         (p.searches_used ?? 0) > 0 ||
         (p.trial_messages_sent ?? 0) > 0 ||
         (p.trial_leads_used ?? 0) > 0 ||
         (p.trial_flows_used ?? 0) > 0 ||
         (p.trial_campaigns_used ?? 0) > 0
+      );
+      const activated = activatedProfiles.length;
+
+      // Breakdown de pagantes ativados por provedor (Stripe Cartão / Asaas PIX)
+      const activatedStripe = activatedProfiles.filter(
+        (p: any) => p.payment_provider === "stripe" && p.plan && p.plan !== "free"
+      ).length;
+      const activatedAsaas = activatedProfiles.filter(
+        (p: any) =>
+          (p.payment_provider === "asaas" || p.payment_provider === "abacate_pay") &&
+          p.plan &&
+          p.plan !== "free"
       ).length;
 
-      setStats({ total, accessed, activated });
+      setStats({ total, accessed, activated, activatedStripe, activatedAsaas });
       setLoading(false);
     };
     load();
