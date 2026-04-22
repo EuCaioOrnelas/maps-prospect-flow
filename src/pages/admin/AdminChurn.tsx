@@ -368,7 +368,7 @@ export default function AdminChurn() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {records.map((record) => (
+                  {filteredRecords.map((record) => (
                     <TableRow key={record.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedRecord(record)}>
                       <TableCell>
                         <div>
