@@ -87,15 +87,14 @@ export function PixDashboardTab() {
           if (daysSpan > 300) monthlyValue = priceReais / 12;
         }
 
-        if (provider === "abacate_pay") {
+        // PIX = Asaas (novo) + abacate_pay (legado)
+        if (provider === "abacate_pay" || provider === "asaas") {
           pixMrr += monthlyValue;
           if (!isExpired) activePixSubs++;
           else { overdueCount++; overdueRenewals++; }
           if (periodEnd && periodEnd > now && periodEnd <= sevenDaysFromNow) renewalNext7++;
-        } else if (provider === "asaas") {
-          asaasCardMrr += monthlyValue;
         }
-        // stripe is handled by get-stripe-mrr
+        // stripe is handled by get-stripe-mrr (cartão)
       }
 
       // PIX invoices stats
@@ -178,7 +177,6 @@ export function PixDashboardTab() {
   const totalMrr = metrics.stripeMrr + metrics.pixMrr + metrics.asaasCardMrr;
   const stripePercent = totalMrr > 0 ? ((metrics.stripeMrr / totalMrr) * 100).toFixed(1) : "0";
   const pixPercent = totalMrr > 0 ? ((metrics.pixMrr / totalMrr) * 100).toFixed(1) : "0";
-  const asaasPercent = totalMrr > 0 ? ((metrics.asaasCardMrr / totalMrr) * 100).toFixed(1) : "0";
 
   const stageColors: Record<string, string> = {
     "D-5": "text-emerald-400",
@@ -196,8 +194,21 @@ export function PixDashboardTab() {
         </Button>
       </div>
 
-      {/* MRR by Provider */}
+      {/* MRR Total + por provedor */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-border/50">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Banknote size={15} className="text-primary" />
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">100%</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{formatCurrency(totalMrr)}</p>
+            <p className="text-xs text-muted-foreground mt-1">MRR Total (Stripe + PIX)</p>
+          </CardContent>
+        </Card>
+
         <Card className="border-border/50">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center justify-between mb-3">
@@ -207,7 +218,7 @@ export function PixDashboardTab() {
               <span className="text-xs text-blue-400 font-medium">{stripePercent}%</span>
             </div>
             <p className="text-2xl font-bold text-foreground tabular-nums">{formatCurrency(metrics.stripeMrr)}</p>
-            <p className="text-xs text-muted-foreground mt-1">MRR Stripe</p>
+            <p className="text-xs text-muted-foreground mt-1">MRR Stripe (Cartão)</p>
           </CardContent>
         </Card>
 
@@ -220,24 +231,9 @@ export function PixDashboardTab() {
               <span className="text-xs text-emerald-400 font-medium">{pixPercent}%</span>
             </div>
             <p className="text-2xl font-bold text-foreground tabular-nums">{formatCurrency(metrics.pixMrr)}</p>
-            <p className="text-xs text-muted-foreground mt-1">MRR PIX</p>
+            <p className="text-xs text-muted-foreground mt-1">MRR Asaas (PIX)</p>
           </CardContent>
         </Card>
-
-        {metrics.asaasCardMrr > 0 && (
-          <Card className="border-border/50">
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                  <Banknote size={15} className="text-violet-400" />
-                </div>
-                <span className="text-xs text-violet-400 font-medium">{asaasPercent}%</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground tabular-nums">{formatCurrency(metrics.asaasCardMrr)}</p>
-              <p className="text-xs text-muted-foreground mt-1">MRR Asaas Cartão</p>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       {/* Key Metrics */}
