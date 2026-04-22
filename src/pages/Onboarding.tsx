@@ -365,7 +365,7 @@ export default function Onboarding() {
                       >
                         <Icon className="h-6 w-6" />
                       </div>
-                      <span className="text-sm font-medium text-center text-[hsl(220,18%,15%)]">
+                      <span className="text-sm font-medium text-center text-[hsl(220,18%,15%)] leading-snug px-1 break-words">
                         {opt.label}
                       </span>
                     </button>
@@ -385,7 +385,7 @@ export default function Onboarding() {
                 <Button
                   onClick={handleNext}
                   disabled={!canContinue || submitting}
-                  className="bg-[hsl(220,18%,12%)] hover:bg-[hsl(220,18%,18%)] disabled:bg-[hsl(220,15%,80%)] disabled:text-white text-white px-8 h-11 rounded-lg"
+                  className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] disabled:bg-[hsl(220,15%,80%)] disabled:text-white text-white px-8 h-11 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
                 >
                   {submitting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
