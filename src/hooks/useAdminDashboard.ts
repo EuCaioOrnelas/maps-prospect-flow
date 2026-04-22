@@ -31,6 +31,7 @@ interface PixMRRData {
 }
 
 interface AsaasCardMRRData {
+  /** Mantido por compatibilidade — hoje sempre 0 (Asaas é só PIX). */
   asaasCardMrr: number;
   asaasCardSubscriptions: number;
 }
@@ -187,22 +188,20 @@ export function useAdminDashboard() {
         }
 
         const provider = p.payment_provider;
-        if (provider === "abacate_pay") {
+        // PIX = Asaas (novo) + abacate_pay (legado). Ambos somam no bucket PIX.
+        if (provider === "abacate_pay" || provider === "asaas") {
           pixMrrTotal += monthlyValue;
           pixActiveSubs++;
-        } else if (provider === "asaas") {
-          asaasCardMrrTotal += monthlyValue;
-          asaasCardSubs++;
         } else if (provider === "stripe") {
-          // Skip - already counted via get-stripe-mrr
-        } else if (provider && provider !== "stripe") {
-          // Known non-stripe provider - count as "other"
+          // Skip - já contabilizado via get-stripe-mrr (cartão)
+        } else if (provider) {
+          // Provedor desconhecido - contabilizar como "outro" se tiver preço real
           if (p.subscription_price_cents) {
             otherMrrTotal += monthlyValue;
             otherSubs++;
           }
         }
-        // If provider is null/undefined, skip - no real payment was made
+        // provider null/undefined => sem pagamento real, ignora
       }
 
       setPixMRR({

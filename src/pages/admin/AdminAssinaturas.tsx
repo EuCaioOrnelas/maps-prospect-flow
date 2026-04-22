@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
+import { getProviderLabel } from "@/lib/paymentProviderLabel";
 
 export default function AdminAssinaturas() {
   const [subscribers, setSubscribers] = useState<any[]>([]);
@@ -43,7 +44,7 @@ export default function AdminAssinaturas() {
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Assinaturas</h1>
-        <p className="text-sm text-muted-foreground mt-1">Todos os usuários pagantes — Stripe, Asaas e PIX</p>
+        <p className="text-sm text-muted-foreground mt-1">Todos os usuários pagantes — Stripe (Cartão) e Asaas (PIX)</p>
       </div>
 
       <div className="flex items-center gap-3">
@@ -88,7 +89,7 @@ export default function AdminAssinaturas() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {sub.payment_provider === "abacate_pay" ? "PIX" : sub.payment_provider === "asaas" ? "Asaas Cartão" : sub.payment_provider || "Stripe"}
+                      {getProviderLabel(sub.payment_provider)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {sub.subscription_current_period_end ? new Date(sub.subscription_current_period_end).toLocaleDateString("pt-BR") : "—"}
