@@ -27,8 +27,8 @@ interface AppHeaderProps {
 }
 
 export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
-  const { signOut, trialDaysRemaining } = useAuth();
-  const isFreeTrial = profile?.plan === 'free';
+  const { signOut, trialDaysRemaining, isTrialing } = useAuth();
+  const isUrgent = isTrialing && trialDaysRemaining <= 2;
 
   const getPlanName = (plan: string) => {
     switch (plan) {
@@ -63,17 +63,45 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
 
         {/* Right side content */}
         <div className="flex items-center gap-4 sm:gap-6 ml-auto">
-          {/* Trial countdown badge */}
-          {isFreeTrial && (
+          {/* Trial countdown badge — aparece em qualquer plano enquanto durar o trial */}
+          {isTrialing && (
             <Link
-              to="/upgrade"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/15 border border-warning/30 hover:bg-warning/25 transition-colors cursor-pointer"
+              to="/profile"
+              className={
+                isUrgent
+                  ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/15 border border-destructive/40 hover:bg-destructive/25 transition-colors cursor-pointer"
+                  : "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/15 border border-warning/30 hover:bg-warning/25 transition-colors cursor-pointer"
+              }
+              title={
+                isUrgent
+                  ? "Seu teste está acabando — clique para cancelar a ativação automática se não quiser continuar"
+                  : "Você está no teste gratuito — clique para gerenciar"
+              }
             >
-              <Clock size={14} className="text-warning animate-pulse" />
-              <span className="text-xs font-semibold text-warning">
-                {trialDaysRemaining <= 0 ? "Trial expirado" : `${trialDaysRemaining}d restante${trialDaysRemaining !== 1 ? 's' : ''}`}
+              <Clock
+                size={14}
+                className={isUrgent ? "text-destructive animate-pulse" : "text-warning animate-pulse"}
+              />
+              <span
+                className={
+                  isUrgent ? "text-xs font-semibold text-destructive" : "text-xs font-semibold text-warning"
+                }
+              >
+                {trialDaysRemaining <= 0
+                  ? "Teste expirado"
+                  : trialDaysRemaining === 1
+                    ? "Vence amanhã"
+                    : `${trialDaysRemaining}d restantes`}
               </span>
-              <span className="text-[10px] text-warning/70 hidden sm:inline">· Teste grátis</span>
+              <span
+                className={
+                  isUrgent
+                    ? "text-[10px] text-destructive/80 hidden sm:inline"
+                    : "text-[10px] text-warning/70 hidden sm:inline"
+                }
+              >
+                · {isUrgent ? "cancele se não quiser continuar" : "Teste grátis"}
+              </span>
             </Link>
           )}
 
