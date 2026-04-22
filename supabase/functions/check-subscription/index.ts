@@ -530,27 +530,47 @@ serve(async (req) => {
           );
           
           if (!hasAnySub) {
-            // No active/trialing/incomplete subs - user should be on free
-            plan = "free";
-            searchesLimit = PLAN_LIMITS["free"];
-            
-            const { error: downgradeError } = await supabaseClient
-              .from('profiles')
-              .update({
-                plan: "free",
-                searches_limit: PLAN_LIMITS["free"],
-                searches_used: 0,
-                subscription_current_period_end: null,
-              })
-              .eq('id', userId);
-            
-            if (downgradeError) {
-              logStep("Error downgrading profile", { error: downgradeError.message });
-            } else {
-              logStep("Profile downgraded to free - no active subscription in Stripe", {
-                previousPlan: currentProfile.plan,
-                previousLimit: currentProfile.searches_limit,
+            // Exceção: trial com auto-cobrança cancelada mas ainda dentro do período de 7 dias
+            // → mantém o plano e acesso até trial_will_charge_at
+            const willCharge = currentProfile.trial_will_charge_at
+              ? new Date(currentProfile.trial_will_charge_at)
+              : null;
+            const trialStillActive =
+              currentProfile.trial_auto_charge_cancelled === true &&
+              willCharge &&
+              willCharge.getTime() > Date.now();
+
+            if (trialStillActive) {
+              plan = currentProfile.plan;
+              searchesLimit = currentProfile.searches_limit;
+              subscriptionEnd = willCharge!.toISOString();
+              logStep("Keeping plan - trial cancelled but still within 7-day period", {
+                plan,
+                willCharge: subscriptionEnd,
               });
+            } else {
+              // No active/trialing/incomplete subs - user should be on free
+              plan = "free";
+              searchesLimit = PLAN_LIMITS["free"];
+
+              const { error: downgradeError } = await supabaseClient
+                .from('profiles')
+                .update({
+                  plan: "free",
+                  searches_limit: PLAN_LIMITS["free"],
+                  searches_used: 0,
+                  subscription_current_period_end: null,
+                })
+                .eq('id', userId);
+
+              if (downgradeError) {
+                logStep("Error downgrading profile", { error: downgradeError.message });
+              } else {
+                logStep("Profile downgraded to free - no active subscription in Stripe", {
+                  previousPlan: currentProfile.plan,
+                  previousLimit: currentProfile.searches_limit,
+                });
+              }
             }
           } else {
             // Has a non-canceled sub (maybe trialing/incomplete) - keep current state
