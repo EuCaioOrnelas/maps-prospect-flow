@@ -103,12 +103,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
 
   if (loading || (requireAdmin && isAdminLoading)) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 size={40} className="text-primary animate-spin" />
-          <p className="text-muted-foreground">Carregando...</p>
+      <DashboardThemeProvider>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 size={40} className="text-primary animate-spin" />
+            <p className="text-muted-foreground">Carregando...</p>
+          </div>
         </div>
-      </div>
+      </DashboardThemeProvider>
     );
   }
 
@@ -119,12 +121,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   // Aguarda a checagem do onboarding antes de decidir o roteamento
   if (needsOnboarding === null) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 size={40} className="text-primary animate-spin" />
-          <p className="text-muted-foreground">Carregando...</p>
+      <DashboardThemeProvider>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 size={40} className="text-primary animate-spin" />
+            <p className="text-muted-foreground">Carregando...</p>
+          </div>
         </div>
-      </div>
+      </DashboardThemeProvider>
     );
   }
 
@@ -135,7 +139,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
 
   // Block access for blocked users - show modal
   if (isBlocked) {
-    return <BlockedUserModal onLogout={signOut} />;
+    return (
+      <DashboardThemeProvider>
+        <BlockedUserModal onLogout={signOut} />
+      </DashboardThemeProvider>
+    );
   }
 
   // Show 404 for non-admin users on admin routes (hide existence of admin pages)
