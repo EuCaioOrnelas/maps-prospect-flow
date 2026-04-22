@@ -86,6 +86,7 @@ export default function AdminChurn() {
       const subEvents = data?.subEvents || [];
       const profiles = data?.profiles || [];
       const expiredProfiles = data?.expiredProfiles || [];
+      const stripeChurns = data?.stripeChurns || [];
 
       setTotalUsers(profiles.length || 0);
 
