@@ -107,7 +107,7 @@ const STEPS: StepDef[] = [
   {
     key: "sales_method",
     title: "Como vocês vendem hoje?",
-    subtitle: "Conta a real — vamos te mostrar onde dá pra evoluir.",
+    subtitle: "Conta a real, vamos te mostrar onde dá pra evoluir.",
     options: [
       { id: "whatsapp", label: "WhatsApp", icon: MessageCircle },
       { id: "crm", label: "CRM tradicional", icon: Database },
@@ -120,12 +120,12 @@ const STEPS: StepDef[] = [
   {
     key: "monthly_revenue",
     title: "Quanto faturam por mês?",
-    subtitle: "Opcional — usado apenas para personalizar recomendações.",
+    subtitle: "Opcional, usado apenas para personalizar recomendações.",
     optional: true,
     options: [
       { id: "ate-20k", label: "Até R$ 20k", icon: Wallet },
-      { id: "20k-100k", label: "R$ 20k – R$ 100k", icon: Coins },
-      { id: "100k-500k", label: "R$ 100k – R$ 500k", icon: Banknote },
+      { id: "20k-100k", label: "R$ 20k a R$ 100k", icon: Coins },
+      { id: "100k-500k", label: "R$ 100k a R$ 500k", icon: Banknote },
       { id: "500k+", label: "R$ 500k+", icon: Gem },
       { id: "nao-dizer", label: "Prefiro não dizer", icon: EyeOff },
     ],
@@ -137,7 +137,7 @@ const STEPS: StepDef[] = [
     options: [
       { id: "dobrar-leads", label: "Dobrar leads", icon: Rocket },
       { id: "organizar", label: "Organizar vendas", icon: ClipboardList },
-      { id: "fechar-mais", label: "Fechar mais", icon: Trophy },
+      { id: "fechar-mais", label: "Fechar mais negócios", icon: Trophy },
       { id: "escalar-time", label: "Escalar time", icon: Scale },
       { id: "automatizar", label: "Automatizar operação", icon: Workflow },
     ],
