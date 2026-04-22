@@ -86,6 +86,7 @@ export default function AdminChurn() {
       const subEvents = data?.subEvents || [];
       const profiles = data?.profiles || [];
       const expiredProfiles = data?.expiredProfiles || [];
+      const stripeChurns = data?.stripeChurns || [];
 
       setTotalUsers(profiles.length || 0);
 
@@ -209,6 +210,32 @@ export default function AdminChurn() {
           feedback_provider: feedback.provider || null,
           plan: profile?.plan || null,
           name: profile?.name || null,
+        });
+      });
+
+      // Mescla cancelamentos do Stripe feitos fora do nosso fluxo
+      stripeChurns.forEach((sc: any) => {
+        const profile = sc.user_id ? profileMap.get(sc.user_id) : null;
+        const feedback = sc.user_id ? feedbackMap.get(sc.user_id) : null;
+        if (sc.user_id) addedUserIds.add(sc.user_id);
+
+        merged.push({
+          id: sc.id,
+          user_id: sc.user_id,
+          email: sc.email || profile?.email || null,
+          provider: sc.provider || "stripe",
+          cancelled_at: sc.cancelled_at,
+          active_until: sc.active_until,
+          billing_type: sc.billing_type || "Cartão",
+          notes: sc.notes,
+          cancellation_reason: feedback?.cancellation_reason || sc.cancellation_reason || null,
+          usage_level: feedback?.usage_level || null,
+          additional_comments: feedback?.additional_comments || sc.additional_comments || null,
+          intends_to_return: feedback?.intends_to_return || null,
+          details: feedback?.details || null,
+          feedback_provider: feedback?.provider || "stripe",
+          plan: profile?.plan || null,
+          name: profile?.name || sc.email || null,
         });
       });
 

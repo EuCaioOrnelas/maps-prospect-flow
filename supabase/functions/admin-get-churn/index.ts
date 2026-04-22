@@ -1,10 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Cutoff: ignorar churns anteriores a 15/04/2026 (legado pré-relançamento)
+const CHURN_CUTOFF_MS = new Date("2026-04-15T00:00:00-03:00").getTime();
+const CHURN_CUTOFF_UNIX = Math.floor(CHURN_CUTOFF_MS / 1000);
 
 const logStep = (step: string, details?: unknown) => {
   const suffix = details ? ` - ${JSON.stringify(details)}` : "";
@@ -91,12 +96,71 @@ serve(async (req) => {
       return Number.isFinite(periodEnd) && periodEnd < now;
     });
 
+    // Buscar cancelamentos diretos no Stripe (feitos fora do nosso fluxo)
+    // Mescla qualquer subscription canceled pós-15/04 que não esteja já em subscription_cancellations
+    const stripeChurns: any[] = [];
+    try {
+      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+      if (stripeKey) {
+        const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+        const existingStripeIds = new Set(
+          (cancellationsRes.data || [])
+            .filter((c: any) => c.provider === "stripe")
+            .map((c: any) => c.stripe_subscription_id)
+            .filter(Boolean)
+        );
+        const profilesByEmail = new Map(profiles.map((p: any) => [p.email?.toLowerCase(), p]));
+
+        let hasMore = true;
+        let startingAfter: string | undefined;
+        while (hasMore) {
+          const res: any = await stripe.subscriptions.list({
+            status: "canceled",
+            limit: 100,
+            ...(startingAfter ? { starting_after: startingAfter } : {}),
+          });
+          for (const sub of res.data) {
+            if (!sub.canceled_at || sub.canceled_at < CHURN_CUTOFF_UNIX) continue;
+            if (existingStripeIds.has(sub.id)) continue;
+
+            let email: string | null = null;
+            if (sub.customer) {
+              try {
+                const customer: any = await stripe.customers.retrieve(sub.customer as string);
+                email = customer?.email || null;
+              } catch (_) {}
+            }
+            const profile = email ? profilesByEmail.get(email.toLowerCase()) : null;
+
+            stripeChurns.push({
+              id: `stripe-${sub.id}`,
+              user_id: profile?.id || null,
+              stripe_subscription_id: sub.id,
+              email,
+              provider: "stripe",
+              cancelled_at: new Date(sub.canceled_at * 1000).toISOString(),
+              active_until: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+              billing_type: "Cartão",
+              notes: "Cancelamento direto no Stripe (fora do fluxo interno)",
+              cancellation_reason: sub.cancellation_details?.reason || null,
+              additional_comments: sub.cancellation_details?.comment || null,
+            });
+          }
+          hasMore = res.has_more;
+          startingAfter = res.data[res.data.length - 1]?.id;
+        }
+      }
+    } catch (err) {
+      logStep("Stripe lookup error", { message: err instanceof Error ? err.message : String(err) });
+    }
+
     logStep("Churn payload ready", {
       cancellations: cancellationsRes.data?.length || 0,
       feedbacks: feedbacksRes.data?.length || 0,
       events: eventsRes.data?.length || 0,
       profiles: profiles.length,
       expiredProfiles: expiredProfiles.length,
+      stripeChurns: stripeChurns.length,
     });
 
     return new Response(
@@ -106,6 +170,7 @@ serve(async (req) => {
         subEvents: eventsRes.data || [],
         profiles,
         expiredProfiles,
+        stripeChurns,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
