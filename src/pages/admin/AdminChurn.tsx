@@ -212,8 +212,14 @@ export default function AdminChurn() {
         });
       });
 
-      merged.sort((a, b) => new Date(b.cancelled_at).getTime() - new Date(a.cancelled_at).getTime());
-      setRecords(merged);
+      // Filtra churns anteriores ao corte de 15/04/2026 (não contar histórico legado)
+      const CHURN_CUTOFF = new Date("2026-04-15T00:00:00-03:00").getTime();
+      const filtered = merged.filter(
+        (record) => new Date(record.cancelled_at).getTime() >= CHURN_CUTOFF
+      );
+
+      filtered.sort((a, b) => new Date(b.cancelled_at).getTime() - new Date(a.cancelled_at).getTime());
+      setRecords(filtered);
     } catch (err) {
       console.error("Error loading churn data:", err);
       setRecords([]);
