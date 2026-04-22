@@ -338,6 +338,67 @@ export const LeadDetailDialog = ({
   const [pendingDriveFileName, setPendingDriveFileName] = useState('');
   const [leadDriveFolderUrl, setLeadDriveFolderUrl] = useState<string | null>(null);
   const [driveQuotaError, setDriveQuotaError] = useState(false);
+
+  // Check if value has unsaved changes
+  const hasUnsavedValue = dealValue !== savedValue;
+
+  const loadDeals = async () => {
+    if (!lead) return;
+    const { data, error } = await supabase
+      .from('lead_deals')
+      .select('*')
+      .eq('lead_id', lead.id)
+      .order('closed_at', { ascending: false });
+    if (!error && data) {
+      setDeals(data as LeadDeal[]);
+    }
+  };
+
+  const loadDealAttachments = async () => {
+    if (!lead || !user) return;
+    const { data } = await supabase
+      .from('lead_deal_attachments')
+      .select('id, deal_id, file_name, file_type, file_url')
+      .eq('user_id', user.id);
+    if (data) {
+      const grouped: Record<string, Array<{ id: string; file_name: string; file_type: string; file_url: string }>> = {};
+      data.forEach((att) => {
+        if (!grouped[att.deal_id]) grouped[att.deal_id] = [];
+        grouped[att.deal_id].push(att);
+      });
+      setDealAttachments(grouped);
+    }
+  };
+
+  const loadLeadFiles = async () => {
+    if (!lead || !user) return;
+    const { data } = await supabase
+      .from('lead_files')
+      .select('id, file_name, file_type, file_url, source, created_at')
+      .eq('lead_id', lead.id)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (data) setLeadFiles(data);
+  };
+
+  const uploadDealAttachment = async (dealId: string, file: File, fileType: string) => {
+    if (!user) return;
+    const filePath = `${user.id}/${dealId}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('deal-attachments')
+      .upload(filePath, file);
+    if (uploadError) throw uploadError;
+    const { data: urlData } = supabase.storage.from('deal-attachments').getPublicUrl(filePath);
+    await supabase.from('lead_deal_attachments').insert({
+      deal_id: dealId,
+      user_id: user.id,
+      file_name: file.name,
+      file_type: fileType,
+      file_url: urlData.publicUrl,
+      file_size: file.size,
+    });
+  };
+
   const loadDriveConnection = async () => {
     if (!user) return null;
     setIsLoadingDriveConnection(true);
