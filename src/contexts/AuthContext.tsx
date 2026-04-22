@@ -32,6 +32,7 @@ interface AuthContextType {
   loading: boolean;
   isTrialExpired: boolean;
   trialDaysRemaining: number;
+  isTrialing: boolean;
   isBlocked: boolean;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -507,6 +508,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         isTrialExpired,
         trialDaysRemaining,
+        isTrialing: trialStatus.isTrialing,
         isBlocked,
         signUp,
         signIn,
