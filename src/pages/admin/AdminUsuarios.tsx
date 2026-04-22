@@ -114,6 +114,7 @@ export default function AdminUsuarios() {
                 <TableRow>
                   <TableHead>Usuário</TableHead>
                   <TableHead>Plano</TableHead>
+                  <TableHead>Pagamento</TableHead>
                   <TableHead>Uso</TableHead>
                   <TableHead>Último Login</TableHead>
                   <TableHead>Cadastro</TableHead>
@@ -121,8 +122,10 @@ export default function AdminUsuarios() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map(user => (
-                <TableRow key={user.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedUserId(user.id)}>
+                {filtered.map(user => {
+                  const bucket = getProviderBucket(user.payment_provider);
+                  return (
+                  <TableRow key={user.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedUserId(user.id)}>
                     <TableCell>
                       <div>
                         <p className="font-medium text-sm">{user.name || "—"}</p>
@@ -131,6 +134,15 @@ export default function AdminUsuarios() {
                     </TableCell>
                     <TableCell>
                       <Badge className={`${planColors[user.plan] || "bg-muted"} border-0 text-xs`}>{user.plan}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.payment_provider ? (
+                        <Badge variant="outline" className={`${providerColors[bucket]} text-[10px] font-medium`}>
+                          {getProviderLabel(user.payment_provider)}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/60">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
@@ -156,7 +168,8 @@ export default function AdminUsuarios() {
                       />
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           )}
