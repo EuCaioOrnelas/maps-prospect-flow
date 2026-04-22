@@ -317,7 +317,18 @@ Deno.serve(async (req) => {
       // Cutoff: ignorar churns anteriores a 15/04/2026 (legado pré-relançamento)
       const CHURN_CUTOFF_UNIX = Math.floor(new Date("2026-04-15T00:00:00-03:00").getTime() / 1000);
 
-      if (sub.status === "canceled" && hadAnyPayment && sub.canceled_at && sub.canceled_at >= CHURN_CUTOFF_UNIX) {
+      // Ignorar cancelamentos durante o trial (sub.trial_end existente e canceled_at <= trial_end).
+      // Não conta como churn quem cancelou a ativação automática antes da primeira cobrança.
+      const canceledDuringTrial =
+        sub.status === "canceled" && sub.trial_end && sub.canceled_at && sub.canceled_at <= sub.trial_end;
+
+      if (
+        sub.status === "canceled" &&
+        hadAnyPayment &&
+        !canceledDuringTrial &&
+        sub.canceled_at &&
+        sub.canceled_at >= CHURN_CUTOFF_UNIX
+      ) {
         canceledCount++;
         if (sub.canceled_at >= thirtyDaysAgoUnix) {
           cancellationsLast30d++;
