@@ -109,6 +109,7 @@ const AdminTermos = lazyWithRetry(() => import("./pages/admin/AdminTermos"), "Ad
 const AdminAuditoria = lazyWithRetry(() => import("./pages/admin/AdminAuditoria"), "AdminAuditoria");
 
 const AdminGrowthIntelligence = lazyWithRetry(() => import("./pages/admin/AdminGrowthIntelligence"), "AdminGrowthIntelligence");
+const AdminOnboarding = lazyWithRetry(() => import("./pages/admin/AdminOnboarding"), "AdminOnboarding");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -238,6 +239,7 @@ const App = () => (
                   <Route path="termos" element={<AdminTermos />} />
                   <Route path="auditoria" element={<AdminAuditoria />} />
                   <Route path="insights" element={<UserInsights />} />
+                  <Route path="onboarding" element={<AdminOnboarding />} />
                 </Route>
 
                 <Route path="/404" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />
