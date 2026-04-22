@@ -37,15 +37,27 @@ export default function AdminUsuarios() {
     return users.filter(u => {
       const matchSearch = !search || u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase());
       const matchPlan = planFilter === "all" || u.plan === planFilter;
-      return matchSearch && matchPlan;
+      const bucket = getProviderBucket(u.payment_provider);
+      const matchProvider =
+        providerFilter === "all" ||
+        (providerFilter === "stripe" && bucket === "stripe") ||
+        (providerFilter === "pix" && bucket === "pix") ||
+        (providerFilter === "none" && !u.payment_provider);
+      return matchSearch && matchPlan && matchProvider;
     });
-  }, [users, search, planFilter]);
+  }, [users, search, planFilter, providerFilter]);
 
   const planColors: Record<string, string> = {
     free: "bg-muted text-muted-foreground",
     start: "bg-blue-500/10 text-blue-500",
     growth: "bg-violet-500/10 text-violet-500",
     scale: "bg-amber-500/10 text-amber-500",
+  };
+
+  const providerColors: Record<string, string> = {
+    stripe: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
+    pix: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+    other: "bg-muted text-muted-foreground border-border",
   };
 
   return (
