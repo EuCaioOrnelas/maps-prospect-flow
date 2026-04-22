@@ -1,10 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Cutoff: ignorar churns anteriores a 15/04/2026 (legado pré-relançamento)
+const CHURN_CUTOFF_MS = new Date("2026-04-15T00:00:00-03:00").getTime();
+const CHURN_CUTOFF_UNIX = Math.floor(CHURN_CUTOFF_MS / 1000);
 
 const logStep = (step: string, details?: unknown) => {
   const suffix = details ? ` - ${JSON.stringify(details)}` : "";
