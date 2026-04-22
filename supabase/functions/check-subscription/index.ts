@@ -46,6 +46,33 @@ const PLAN_NAME_TO_KEY: Record<string, string> = {
   "Wiize Scale": "scale",
 };
 
+interface BillingProfileState {
+  plan?: string;
+  searches_limit?: number;
+  searches_used?: number;
+  admin_assigned_plan?: boolean;
+  subscription_current_period_end?: string | null;
+  trial_will_charge_at?: string | null;
+  trial_auto_charge_cancelled?: boolean | null;
+  trial_plan_chosen?: string | null;
+}
+
+const getActiveTrialAccess = (profile?: BillingProfileState | null) => {
+  if (!profile?.trial_will_charge_at) return null;
+
+  const trialPlan = profile.trial_plan_chosen;
+  if (!trialPlan || !(trialPlan in PLAN_LIMITS) || trialPlan === "free") return null;
+
+  const endsAt = new Date(profile.trial_will_charge_at);
+  if (Number.isNaN(endsAt.getTime()) || endsAt.getTime() <= Date.now()) return null;
+
+  return {
+    plan: trialPlan,
+    searchesLimit: PLAN_LIMITS[trialPlan],
+    subscriptionEnd: endsAt.toISOString(),
+  };
+};
+
 async function ensureProfileAndApplyPendingCheckout(
   supabaseClient: ReturnType<typeof createClient>,
   userId: string,
@@ -53,12 +80,12 @@ async function ensureProfileAndApplyPendingCheckout(
 ) {
   const { data: existingProfile } = await supabaseClient
     .from("profiles")
-    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end")
+    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen")
     .eq("id", userId)
     .maybeSingle();
 
   if (existingProfile) {
-    return existingProfile;
+    return existingProfile as BillingProfileState;
   }
 
   logStep("Profile missing, recreating from auth user", { userId, email: userEmail });
@@ -129,11 +156,11 @@ async function ensureProfileAndApplyPendingCheckout(
 
   const { data: profileAfterRecovery } = await supabaseClient
     .from("profiles")
-    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end")
+    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen")
     .eq("id", userId)
     .maybeSingle();
 
-  return profileAfterRecovery;
+  return (profileAfterRecovery as BillingProfileState | null) ?? null;
 }
 
 async function reconcileCompletedPixCheckout(
