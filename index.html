@@ -55,6 +55,18 @@
     <script>
       (function(){
         try {
+          var path = window.location.pathname || '';
+          // Public/light routes always render in light mode to avoid dark flash
+          var lightRoutes = ['/', '/login', '/signup', '/onboarding', '/checkout', '/checkout-card', '/vendas', '/trial-expired', '/upgrade', '/consultoria'];
+          var isLightRoute = lightRoutes.some(function(r){
+            return r === '/' ? path === '/' : path.indexOf(r) === 0;
+          });
+          if (isLightRoute) {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.backgroundColor = '#f7f5ef';
+            document.body && (document.body.style.backgroundColor = '#f7f5ef');
+            return;
+          }
           var t = localStorage.getItem('theme') || localStorage.getItem('vite-ui-theme');
           if (t === 'dark') document.documentElement.classList.add('dark');
           else if (t === 'light') document.documentElement.classList.remove('dark');
