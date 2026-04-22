@@ -8,29 +8,18 @@ interface MobileNavProps {
   profile?: {
     plan?: string;
     trial_start_at?: string | null;
+    trial_auto_charge_cancelled?: boolean | null;
   } | null;
   onWhatsAppClick?: () => void;
 }
 
 export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { signOut } = useAuth();
+  const { signOut, trialDaysRemaining, isTrialing } = useAuth();
 
   const isFreePlan = !profile?.plan || profile.plan === 'free';
-
-  // Calculate trial days
-  const getTrialDaysRemaining = () => {
-    if (!profile?.trial_start_at || !isFreePlan) return 0;
-    const trialStart = new Date(profile.trial_start_at);
-    const trialEnd = new Date(trialStart);
-    trialEnd.setDate(trialEnd.getDate() + 14);
-    const now = new Date();
-    const daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return Math.max(0, daysRemaining);
-  };
-
-  const trialDaysRemaining = getTrialDaysRemaining();
-  const showTrialIndicator = isFreePlan && profile?.trial_start_at && trialDaysRemaining > 0;
+  const trialCancelled = profile?.trial_auto_charge_cancelled === true;
+  const showTrialIndicator = isTrialing && trialDaysRemaining > 0;
   const isTrialExpired = isFreePlan && profile?.trial_start_at && trialDaysRemaining <= 0;
 
   const getPlanName = (plan: string) => {
