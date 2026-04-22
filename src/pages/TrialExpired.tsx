@@ -122,7 +122,7 @@ const TrialExpired = () => {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
-  const [isAnnual, setIsAnnual] = useState(true);
+  const [isAnnual, setIsAnnual] = useState(false);
 
   const isFromCheckout = searchParams.get("checkout") === "success" || searchParams.get("session_id");
   const couponFromUrl = searchParams.get("coupon");

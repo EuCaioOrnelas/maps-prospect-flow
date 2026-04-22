@@ -166,7 +166,7 @@ const Upgrade = () => {
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
-  const [isAnnual, setIsAnnual] = useState(true);
+  const [isAnnual, setIsAnnual] = useState(false);
   const [upgradePreview, setUpgradePreview] = useState<any>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
