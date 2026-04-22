@@ -189,33 +189,22 @@ export default function AdminDashboard() {
   const mrrChartData = useMemo(() => {
     const stripeData = stripeMRR?.monthlyMRR || [];
     const pixData = pixMRR?.pixMonthlyMRR || [];
-    const months = new Map<string, { stripe: number; pix: number; asaasCard: number; total: number }>();
+    const months = new Map<string, { stripe: number; pix: number; total: number }>();
     
     stripeData.forEach((d) => {
-      const e = months.get(d.month) || { stripe: 0, pix: 0, asaasCard: 0, total: 0 };
+      const e = months.get(d.month) || { stripe: 0, pix: 0, total: 0 };
       e.stripe = d.mrr;
       months.set(d.month, e);
     });
     pixData.forEach((d) => {
-      const e = months.get(d.month) || { stripe: 0, pix: 0, asaasCard: 0, total: 0 };
+      const e = months.get(d.month) || { stripe: 0, pix: 0, total: 0 };
       e.pix = d.mrr;
       months.set(d.month, e);
     });
 
-    // Add current Asaas card MRR to latest month
-    const asaasCardVal = asaasCardMRR?.asaasCardMrr ?? 0;
-    if (asaasCardVal > 0) {
-      const entries = Array.from(months.entries()).sort(([a], [b]) => a.localeCompare(b));
-      if (entries.length > 0) {
-        const lastKey = entries[entries.length - 1][0];
-        const last = months.get(lastKey)!;
-        last.asaasCard = asaasCardVal;
-      }
-    }
-
     // Recalculate totals
     months.forEach((v) => {
-      v.total = v.stripe + v.pix + v.asaasCard;
+      v.total = v.stripe + v.pix;
     });
 
     const { start } = getDateRange();
@@ -238,7 +227,7 @@ export default function AdminDashboard() {
           ...data,
         };
       });
-  }, [stripeMRR, pixMRR, asaasCardMRR, dateFilter, customStart, customEnd]);
+  }, [stripeMRR, pixMRR, dateFilter, customStart, customEnd]);
 
   const salesHistory = useMemo(() => {
     const days = dateFilter === "7d" ? 7 : dateFilter === "30d" ? 30 : dateFilter === "90d" ? 90 : 30;
@@ -266,11 +255,9 @@ export default function AdminDashboard() {
   // Revenue distribution with percentages
   const stripeMrrVal = stripeMRR?.totalMRR ?? 0;
   const pixMrrVal = pixMRR?.pixMrr ?? 0;
-  const asaasCardMrrVal = asaasCardMRR?.asaasCardMrr ?? 0;
   const otherMrrVal = otherMRR?.otherMrr ?? 0;
   const pctStripe = totalMRR > 0 ? ((stripeMrrVal / totalMRR) * 100).toFixed(1) : "0";
   const pctPix = totalMRR > 0 ? ((pixMrrVal / totalMRR) * 100).toFixed(1) : "0";
-  const pctAsaasCard = totalMRR > 0 ? ((asaasCardMrrVal / totalMRR) * 100).toFixed(1) : "0";
   const pctOther = totalMRR > 0 ? ((otherMrrVal / totalMRR) * 100).toFixed(1) : "0";
 
   if (loading) {
@@ -415,7 +402,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-[15px] font-semibold flex items-center gap-2">
                 <TrendingUp size={16} style={{ color: WIIZE_GREEN }} />
-                Evolução MRR
+                Evolução MRR (Stripe + Asaas PIX)
               </CardTitle>
               {/* Date filter */}
               <div className="flex items-center gap-1">
@@ -466,7 +453,7 @@ export default function AdminDashboard() {
             <Tabs defaultValue="total">
               <TabsList className="mb-3">
                 <TabsTrigger value="total">Total</TabsTrigger>
-                <TabsTrigger value="breakdown">Cartão vs PIX</TabsTrigger>
+                <TabsTrigger value="breakdown">Stripe vs PIX</TabsTrigger>
                 <TabsTrigger value="sales">Vendas vs Cancel.</TabsTrigger>
               </TabsList>
               <TabsContent value="total">
@@ -501,9 +488,8 @@ export default function AdminDashboard() {
                         <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
                         <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
                         <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", fontSize: "13px" }} />
-                        <Bar dataKey="stripe" name="Stripe" fill="#6366f1" radius={[4, 4, 0, 0]} stackId="card" />
-                        <Bar dataKey="asaasCard" name="Asaas Cartão" fill="#3b82f6" radius={[4, 4, 0, 0]} stackId="card" />
-                        <Bar dataKey="pix" name="PIX" fill={WIIZE_GREEN} radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="stripe" name="Stripe (Cartão)" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="pix" name="Asaas (PIX)" fill={WIIZE_GREEN} radius={[4, 4, 0, 0]} />
                         <Legend />
                       </BarChart>
                     </ResponsiveContainer>
@@ -583,19 +569,10 @@ export default function AdminDashboard() {
                     <span className="font-semibold text-foreground">{formatCurrency(stripeMrrVal)}</span>
                   </div>
                 )}
-                {asaasCardMrrVal > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      Asaas Cartão
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500">{pctAsaasCard}%</span>
-                    </span>
-                    <span className="font-semibold text-foreground">{formatCurrency(asaasCardMrrVal)}</span>
-                  </div>
-                )}
                 {pixMrrVal > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground flex items-center gap-2">
-                      PIX MRR
+                      Asaas PIX MRR
                       <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500">{pctPix}%</span>
                     </span>
                     <span className="font-semibold text-foreground">{formatCurrency(pixMrrVal)}</span>
