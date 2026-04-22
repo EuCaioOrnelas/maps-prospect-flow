@@ -1,0 +1,1 @@
+UPDATE public.user_onboarding SET tour_completed_at = now() WHERE tour_completed_at IS NULL;
