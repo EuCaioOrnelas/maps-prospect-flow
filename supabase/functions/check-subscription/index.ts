@@ -313,14 +313,13 @@ serve(async (req) => {
       logStep("User authenticated via getClaims", { userId, email: userEmail });
     }
 
-    // Get current profile to check existing searches
     const { data: existingProfile, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end')
+      .select('searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen')
       .eq('id', userId)
       .maybeSingle();
 
-    let currentProfile = existingProfile;
+    let currentProfile = (existingProfile as BillingProfileState | null) ?? null;
 
     if (profileError) {
       logStep("Error loading profile, attempting recovery", { error: profileError.message });
@@ -346,11 +345,56 @@ serve(async (req) => {
       });
     }
 
+    const activeTrialAccess = getActiveTrialAccess(currentProfile);
+
+    if (activeTrialAccess) {
+      const needsTrialRestore =
+        currentProfile.plan !== activeTrialAccess.plan ||
+        currentProfile.searches_limit !== activeTrialAccess.searchesLimit ||
+        currentProfile.subscription_current_period_end !== activeTrialAccess.subscriptionEnd;
+
+      if (needsTrialRestore) {
+        const { error: trialRestoreError } = await supabaseClient
+          .from('profiles')
+          .update({
+            plan: activeTrialAccess.plan,
+            searches_limit: activeTrialAccess.searchesLimit,
+            subscription_current_period_end: activeTrialAccess.subscriptionEnd,
+          })
+          .eq('id', userId);
+
+        if (trialRestoreError) {
+          logStep("Error restoring active trial access", { error: trialRestoreError.message });
+        } else {
+          logStep("Restored active trial access", activeTrialAccess);
+          currentProfile = {
+            ...currentProfile,
+            plan: activeTrialAccess.plan,
+            searches_limit: activeTrialAccess.searchesLimit,
+            subscription_current_period_end: activeTrialAccess.subscriptionEnd,
+          };
+        }
+      }
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     
     if (customers.data.length === 0) {
       logStep("No customer found in Stripe");
+
+      if (activeTrialAccess) {
+        logStep("Keeping active trial without Stripe customer", activeTrialAccess);
+        return new Response(JSON.stringify({ 
+          subscribed: false,
+          plan: activeTrialAccess.plan,
+          searches_limit: activeTrialAccess.searchesLimit,
+          subscription_end: activeTrialAccess.subscriptionEnd,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
       
       // If user has a paid plan but no Stripe customer, check if they're on Asaas/PIX
       if (currentProfile.plan && currentProfile.plan !== "free") {
@@ -369,7 +413,6 @@ serve(async (req) => {
           });
         }
         
-        // Check if subscription is still valid (Asaas/PIX or other provider)
         const subEnd = currentProfile.subscription_current_period_end 
           ? new Date(currentProfile.subscription_current_period_end) 
           : null;
@@ -391,7 +434,6 @@ serve(async (req) => {
           });
         }
         
-        // Subscription expired and no Stripe — downgrade
         logStep("Downgrading user with no Stripe customer and expired subscription", { 
           previousPlan: currentProfile.plan 
         });
@@ -436,7 +478,6 @@ serve(async (req) => {
       return order[planName] ?? 0;
     };
 
-    // Consider only subscriptions that match our known plan prices
     const candidateSubs = subscriptions.data
       .map((sub: Stripe.Subscription) => {
         const priceId = sub.items.data[0]?.price?.id;
@@ -446,12 +487,11 @@ serve(async (req) => {
       .filter((x: { sub: Stripe.Subscription; priceId: string | undefined; mappedPlan: string | undefined }) => !!x.mappedPlan);
 
     const hasActiveSub = candidateSubs.length > 0;
-    let plan = "free";
-    let subscriptionEnd: string | null = null;
-    let searchesLimit = PLAN_LIMITS["free"];
+    let plan = activeTrialAccess?.plan ?? "free";
+    let subscriptionEnd: string | null = activeTrialAccess?.subscriptionEnd ?? null;
+    let searchesLimit = activeTrialAccess?.searchesLimit ?? PLAN_LIMITS["free"];
 
     if (hasActiveSub) {
-      // Pick the best plan (highest tier). If tie, pick the one with latest period end.
       let best = candidateSubs[0];
       for (const c of candidateSubs) {
         const cOrder = getPlanOrder(c.mappedPlan as string);
@@ -474,7 +514,6 @@ serve(async (req) => {
       plan = best.mappedPlan as string;
       const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
 
-      // Safely handle subscription end date
       try {
         if (subscription.current_period_end && typeof subscription.current_period_end === 'number') {
           subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
@@ -493,12 +532,11 @@ serve(async (req) => {
         endDate: subscriptionEnd,
       });
 
-      // Calculate new limit with carry-over if upgrading
       if (currentProfile) {
-        if (currentProfile.plan !== plan || currentProfile.searches_limit < basePlanLimit) {
+        if (currentProfile.plan !== plan || (currentProfile.searches_limit ?? 0) < basePlanLimit) {
           const { newLimit, carryOver } = calculateNewSearchesLimit(
-            currentProfile.searches_used,
-            currentProfile.searches_limit,
+            currentProfile.searches_used ?? 0,
+            currentProfile.searches_limit ?? PLAN_LIMITS["free"],
             basePlanLimit
           );
           searchesLimit = newLimit;
@@ -511,13 +549,12 @@ serve(async (req) => {
             newLimit: searchesLimit,
           });
         } else {
-          searchesLimit = currentProfile.searches_limit;
+          searchesLimit = currentProfile.searches_limit ?? basePlanLimit;
         }
       } else {
         searchesLimit = basePlanLimit;
       }
 
-      // Update user profile with new plan, limits, and subscription end date
       const { error: updateError } = await supabaseClient
         .from('profiles')
         .update({
@@ -535,20 +572,19 @@ serve(async (req) => {
     } else {
       logStep("No active subscription found in Stripe");
       
-      // If user has a paid plan but NO active subscription in Stripe, downgrade them.
-      // To avoid race conditions during upgrades, we check if there are ANY subscriptions
-      // (including incomplete/trialing) before downgrading.
-      if (currentProfile?.plan && currentProfile.plan !== "free") {
-        // Skip downgrade for admin-assigned plans
+      if (activeTrialAccess) {
+        plan = activeTrialAccess.plan;
+        searchesLimit = activeTrialAccess.searchesLimit;
+        subscriptionEnd = activeTrialAccess.subscriptionEnd;
+        logStep("Keeping plan - active trial window still valid", activeTrialAccess);
+      } else if (currentProfile?.plan && currentProfile.plan !== "free") {
         if (currentProfile.admin_assigned_plan) {
           logStep("Skipping downgrade - admin assigned plan", { 
             plan: currentProfile.plan 
           });
           plan = currentProfile.plan;
-          searchesLimit = currentProfile.searches_limit;
+          searchesLimit = currentProfile.searches_limit ?? PLAN_LIMITS[currentProfile.plan] ?? PLAN_LIMITS.free;
         } else {
-          // Check for any non-canceled subscriptions (trialing, incomplete, past_due)
-          // to avoid race conditions during checkout
           const allSubs = await stripe.subscriptions.list({
             customer: customerId,
             limit: 10,
@@ -559,52 +595,31 @@ serve(async (req) => {
           );
           
           if (!hasAnySub) {
-            // Exceção: trial com auto-cobrança cancelada mas ainda dentro do período de 7 dias
-            // → mantém o plano e acesso até trial_will_charge_at
-            const willCharge = currentProfile.trial_will_charge_at
-              ? new Date(currentProfile.trial_will_charge_at)
-              : null;
-            const trialStillActive =
-              currentProfile.trial_auto_charge_cancelled === true &&
-              willCharge &&
-              willCharge.getTime() > Date.now();
+            plan = "free";
+            searchesLimit = PLAN_LIMITS["free"];
 
-            if (trialStillActive) {
-              plan = currentProfile.plan;
-              searchesLimit = currentProfile.searches_limit;
-              subscriptionEnd = willCharge!.toISOString();
-              logStep("Keeping plan - trial cancelled but still within 7-day period", {
-                plan,
-                willCharge: subscriptionEnd,
-              });
+            const { error: downgradeError } = await supabaseClient
+              .from('profiles')
+              .update({
+                plan: "free",
+                searches_limit: PLAN_LIMITS["free"],
+                searches_used: 0,
+                subscription_current_period_end: null,
+              })
+              .eq('id', userId);
+
+            if (downgradeError) {
+              logStep("Error downgrading profile", { error: downgradeError.message });
             } else {
-              // No active/trialing/incomplete subs - user should be on free
-              plan = "free";
-              searchesLimit = PLAN_LIMITS["free"];
-
-              const { error: downgradeError } = await supabaseClient
-                .from('profiles')
-                .update({
-                  plan: "free",
-                  searches_limit: PLAN_LIMITS["free"],
-                  searches_used: 0,
-                  subscription_current_period_end: null,
-                })
-                .eq('id', userId);
-
-              if (downgradeError) {
-                logStep("Error downgrading profile", { error: downgradeError.message });
-              } else {
-                logStep("Profile downgraded to free - no active subscription in Stripe", {
-                  previousPlan: currentProfile.plan,
-                  previousLimit: currentProfile.searches_limit,
-                });
-              }
+              logStep("Profile downgraded to free - no active subscription in Stripe", {
+                previousPlan: currentProfile.plan,
+                previousLimit: currentProfile.searches_limit,
+              });
             }
           } else {
-            // Has a non-canceled sub (maybe trialing/incomplete) - keep current state
             plan = currentProfile.plan;
-            searchesLimit = currentProfile.searches_limit;
+            searchesLimit = currentProfile.searches_limit ?? PLAN_LIMITS[currentProfile.plan] ?? PLAN_LIMITS.free;
+            subscriptionEnd = currentProfile.subscription_current_period_end ?? null;
             logStep("Keeping current plan - found non-canceled subscription", {
               plan,
               statuses: allSubs.data.map((s: Stripe.Subscription) => s.status),
