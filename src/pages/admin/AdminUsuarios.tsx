@@ -24,7 +24,7 @@ export default function AdminUsuarios() {
     setLoading(true);
     const { data } = await supabase
       .from("profiles")
-      .select("*")
+      .select("*, is_custom_subscription, custom_subscription_id")
       .order("created_at", { ascending: false })
       .limit(200);
     setUsers(data || []);
@@ -133,7 +133,14 @@ export default function AdminUsuarios() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={`${planColors[user.plan] || "bg-muted"} border-0 text-xs`}>{user.plan}</Badge>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge className={`${planColors[user.plan] || "bg-muted"} border-0 text-xs`}>{user.plan}</Badge>
+                        {user.is_custom_subscription && (
+                          <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 px-1.5 py-0">
+                            Custom
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {user.payment_provider ? (

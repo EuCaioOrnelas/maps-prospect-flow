@@ -19,9 +19,9 @@ export default function AdminAssinaturas() {
     const load = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at")
+        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_custom_subscription")
         .neq("plan", "free")
-        .in("payment_provider", ["stripe", "asaas"])
+        .in("payment_provider", ["stripe", "asaas", "manual"])
         .order("created_at", { ascending: false })
         .limit(500);
       setSubscribers(data || []);
@@ -45,7 +45,7 @@ export default function AdminAssinaturas() {
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Assinaturas</h1>
-        <p className="text-sm text-muted-foreground mt-1">Todos os usuários pagantes — Stripe (Cartão) e Asaas (PIX)</p>
+        <p className="text-sm text-muted-foreground mt-1">Todos os usuários pagantes — Stripe (Cartão), Asaas (PIX) e contratos customizados</p>
       </div>
 
       <div className="flex items-center gap-3">
@@ -85,12 +85,19 @@ export default function AdminAssinaturas() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={`${planColors[sub.plan] || "bg-muted text-muted-foreground"} border-0 text-xs`}>
-                        {sub.plan}
-                      </Badge>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge className={`${planColors[sub.plan] || "bg-muted text-muted-foreground"} border-0 text-xs`}>
+                          {sub.plan}
+                        </Badge>
+                        {sub.is_custom_subscription && (
+                          <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 px-1.5 py-0">
+                            Custom
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {getProviderLabel(sub.payment_provider)}
+                      {sub.payment_provider === "manual" ? "Manual (Admin)" : getProviderLabel(sub.payment_provider)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {sub.subscription_current_period_end ? new Date(sub.subscription_current_period_end).toLocaleDateString("pt-BR") : "—"}
