@@ -162,6 +162,23 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
         return;
       }
 
+      // Sanity: refresh and verify the user session is still valid before invoking
+      // (fixes "non-2xx" caused by token expiring during the typing simulation)
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.access_token) {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        if (!refreshed?.session?.access_token) {
+          throw new Error("Sessão expirada — recarregue a página e faça login novamente");
+        }
+      }
+
+      console.log("[SendMessageDialog] Invoking evolution-send-message", {
+        instanceName: number.instance_name,
+        numberId: number.id,
+        phoneLen: leadPhone?.length,
+        msgLen: message?.length,
+      });
+
       // Send message via evolution
       const { data, error } = await supabase.functions.invoke("evolution-send-message", {
         body: {
@@ -172,21 +189,33 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
         },
       });
 
+      console.log("[SendMessageDialog] Edge response:", { data, error });
+
       // Extract real error message — supabase-js wraps non-2xx responses into a generic
       // FunctionsHttpError. The real reason from the edge function lives in error.context.
       if (error) {
         let realError: string | null = null;
+        let httpStatus: number | undefined;
         try {
           const ctx: any = (error as any).context;
+          httpStatus = ctx?.status;
           if (ctx && typeof ctx.json === "function") {
             const body = await ctx.json();
-            realError = body?.error || body?.message || null;
+            realError = body?.error || body?.message || JSON.stringify(body);
           } else if (ctx && typeof ctx.text === "function") {
             const txt = await ctx.text();
             try { realError = JSON.parse(txt)?.error || txt; } catch { realError = txt; }
+          } else if (ctx?.body) {
+            realError = typeof ctx.body === "string" ? ctx.body : JSON.stringify(ctx.body);
           }
-        } catch { /* ignore parsing failures */ }
-        throw new Error(realError || (error as any).message || "Erro desconhecido na edge function");
+        } catch (parseErr) {
+          console.warn("[SendMessageDialog] Falha ao extrair body do erro:", parseErr);
+        }
+        const baseMsg = (error as any).message || "Erro desconhecido na edge function";
+        const composed = realError
+          ? `${realError}${httpStatus ? ` (HTTP ${httpStatus})` : ""}`
+          : `${baseMsg}${httpStatus ? ` (HTTP ${httpStatus})` : ""}`;
+        throw new Error(composed);
       }
 
       // Some edge functions return 200 with { success:false, error:"..." }
