@@ -191,8 +191,8 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
 
       console.log("[SendMessageDialog] Edge response:", { data, error });
 
-      // Extract real error message — supabase-js wraps non-2xx responses into a generic
-      // FunctionsHttpError. The real reason from the edge function lives in error.context.
+      // The edge function now ALWAYS returns HTTP 200 with { success, error, stage }.
+      // We still defensively handle the legacy non-2xx case (FunctionsHttpError).
       if (error) {
         let realError: string | null = null;
         let httpStatus: number | undefined;
@@ -200,27 +200,27 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
           const ctx: any = (error as any).context;
           httpStatus = ctx?.status;
           if (ctx && typeof ctx.json === "function") {
-            const body = await ctx.json();
-            realError = body?.error || body?.message || JSON.stringify(body);
+            const b = await ctx.json();
+            realError = b?.error || b?.message || JSON.stringify(b);
           } else if (ctx && typeof ctx.text === "function") {
             const txt = await ctx.text();
             try { realError = JSON.parse(txt)?.error || txt; } catch { realError = txt; }
-          } else if (ctx?.body) {
-            realError = typeof ctx.body === "string" ? ctx.body : JSON.stringify(ctx.body);
           }
         } catch (parseErr) {
           console.warn("[SendMessageDialog] Falha ao extrair body do erro:", parseErr);
         }
         const baseMsg = (error as any).message || "Erro desconhecido na edge function";
-        const composed = realError
-          ? `${realError}${httpStatus ? ` (HTTP ${httpStatus})` : ""}`
-          : `${baseMsg}${httpStatus ? ` (HTTP ${httpStatus})` : ""}`;
-        throw new Error(composed);
+        throw new Error(
+          realError
+            ? `${realError}${httpStatus ? ` (HTTP ${httpStatus})` : ""}`
+            : `${baseMsg}${httpStatus ? ` (HTTP ${httpStatus})` : ""}`
+        );
       }
 
-      // Some edge functions return 200 with { success:false, error:"..." }
+      // Edge function reported a controlled failure (HTTP 200 + success:false)
       if (data && data.success === false) {
-        throw new Error(data.error || "Falha reportada pela API ao enviar");
+        const detail = data.stage ? ` [etapa: ${data.stage}]` : "";
+        throw new Error(`${data.error || "Falha ao enviar"}${detail}`);
       }
 
       // Update lead status - mark as sent
