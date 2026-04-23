@@ -2372,6 +2372,7 @@ export type Database = {
           address_complement: string | null
           address_number: string | null
           admin_assigned_plan: boolean
+          archived_at: string | null
           asaas_customer_id: string | null
           asaas_subscription_id: string | null
           avatar_url: string | null
@@ -2388,6 +2389,7 @@ export type Database = {
           email: string
           fraud_flags: Json | null
           id: string
+          is_archived: boolean
           is_blocked: boolean | null
           is_custom_subscription: boolean
           last_searches_reset: string | null
@@ -2427,6 +2429,7 @@ export type Database = {
           address_complement?: string | null
           address_number?: string | null
           admin_assigned_plan?: boolean
+          archived_at?: string | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
           avatar_url?: string | null
@@ -2443,6 +2446,7 @@ export type Database = {
           email: string
           fraud_flags?: Json | null
           id: string
+          is_archived?: boolean
           is_blocked?: boolean | null
           is_custom_subscription?: boolean
           last_searches_reset?: string | null
@@ -2482,6 +2486,7 @@ export type Database = {
           address_complement?: string | null
           address_number?: string | null
           admin_assigned_plan?: boolean
+          archived_at?: string | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
           avatar_url?: string | null
@@ -2498,6 +2503,7 @@ export type Database = {
           email?: string
           fraud_flags?: Json | null
           id?: string
+          is_archived?: boolean
           is_blocked?: boolean | null
           is_custom_subscription?: boolean
           last_searches_reset?: string | null
