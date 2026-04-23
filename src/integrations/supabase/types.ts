@@ -2223,6 +2223,611 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_bank_accounts: {
+        Row: {
+          account_type: string | null
+          bank_account: string | null
+          bank_branch: string | null
+          bank_name: string | null
+          created_at: string
+          holder_name: string | null
+          holder_tax_id: string | null
+          id: string
+          partner_id: string
+          pix_key: string | null
+          pix_key_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_type?: string | null
+          bank_account?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
+          created_at?: string
+          holder_name?: string | null
+          holder_tax_id?: string | null
+          id?: string
+          partner_id: string
+          pix_key?: string | null
+          pix_key_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_type?: string | null
+          bank_account?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
+          created_at?: string
+          holder_name?: string | null
+          holder_tax_id?: string | null
+          id?: string
+          partner_id?: string
+          pix_key?: string | null
+          pix_key_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_bank_accounts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: true
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_clicks: {
+        Row: {
+          converted_to_lead_at: string | null
+          converted_user_id: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          landing_page: string | null
+          partner_id: string
+          referral_code: string
+          session_id: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          converted_to_lead_at?: string | null
+          converted_user_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          landing_page?: string | null
+          partner_id: string
+          referral_code: string
+          session_id?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          converted_to_lead_at?: string | null
+          converted_user_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          landing_page?: string | null
+          partner_id?: string
+          referral_code?: string
+          session_id?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_clicks_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_commissions: {
+        Row: {
+          available_at: string
+          base_amount_cents: number
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          commission_amount_cents: number
+          commission_percent: number
+          created_at: string
+          id: string
+          internal_notes: string | null
+          paid_at: string | null
+          partner_id: string
+          partner_level: Database["public"]["Enums"]["partner_level"]
+          partner_sale_id: string
+          status: Database["public"]["Enums"]["commission_status"]
+          updated_at: string
+        }
+        Insert: {
+          available_at: string
+          base_amount_cents: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          commission_amount_cents: number
+          commission_percent: number
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          paid_at?: string | null
+          partner_id: string
+          partner_level: Database["public"]["Enums"]["partner_level"]
+          partner_sale_id: string
+          status?: Database["public"]["Enums"]["commission_status"]
+          updated_at?: string
+        }
+        Update: {
+          available_at?: string
+          base_amount_cents?: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          commission_amount_cents?: number
+          commission_percent?: number
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          paid_at?: string | null
+          partner_id?: string
+          partner_level?: Database["public"]["Enums"]["partner_level"]
+          partner_sale_id?: string
+          status?: Database["public"]["Enums"]["commission_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_commissions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_commissions_partner_sale_id_fkey"
+            columns: ["partner_sale_id"]
+            isOneToOne: false
+            referencedRelation: "partner_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_leads: {
+        Row: {
+          attributed_at: string
+          cancelled_at: string | null
+          click_id: string | null
+          created_at: string
+          current_plan: string | null
+          email: string
+          id: string
+          is_cancelled: boolean
+          is_paid: boolean
+          is_trial: boolean
+          last_activity_at: string | null
+          name: string | null
+          paid_at: string | null
+          partner_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attributed_at?: string
+          cancelled_at?: string | null
+          click_id?: string | null
+          created_at?: string
+          current_plan?: string | null
+          email: string
+          id?: string
+          is_cancelled?: boolean
+          is_paid?: boolean
+          is_trial?: boolean
+          last_activity_at?: string | null
+          name?: string | null
+          paid_at?: string | null
+          partner_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attributed_at?: string
+          cancelled_at?: string | null
+          click_id?: string | null
+          created_at?: string
+          current_plan?: string | null
+          email?: string
+          id?: string
+          is_cancelled?: boolean
+          is_paid?: boolean
+          is_trial?: boolean
+          last_activity_at?: string | null
+          name?: string | null
+          paid_at?: string | null
+          partner_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_leads_click_id_fkey"
+            columns: ["click_id"]
+            isOneToOne: false
+            referencedRelation: "partner_clicks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_leads_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_levels_history: {
+        Row: {
+          changed_at: string
+          changed_by_admin_id: string | null
+          from_level: Database["public"]["Enums"]["partner_level"] | null
+          id: string
+          partner_id: string
+          reason: string | null
+          to_level: Database["public"]["Enums"]["partner_level"]
+        }
+        Insert: {
+          changed_at?: string
+          changed_by_admin_id?: string | null
+          from_level?: Database["public"]["Enums"]["partner_level"] | null
+          id?: string
+          partner_id: string
+          reason?: string | null
+          to_level: Database["public"]["Enums"]["partner_level"]
+        }
+        Update: {
+          changed_at?: string
+          changed_by_admin_id?: string | null
+          from_level?: Database["public"]["Enums"]["partner_level"] | null
+          id?: string
+          partner_id?: string
+          reason?: string | null
+          to_level?: Database["public"]["Enums"]["partner_level"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_levels_history_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_payouts: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          internal_notes: string | null
+          paid_at: string
+          partner_id: string
+          payment_method: string
+          payment_reference: string | null
+          receipt_file_name: string | null
+          receipt_file_url: string | null
+          recorded_by_admin_id: string
+          withdrawal_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          paid_at?: string
+          partner_id: string
+          payment_method?: string
+          payment_reference?: string | null
+          receipt_file_name?: string | null
+          receipt_file_url?: string | null
+          recorded_by_admin_id: string
+          withdrawal_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          paid_at?: string
+          partner_id?: string
+          payment_method?: string
+          payment_reference?: string | null
+          receipt_file_name?: string | null
+          receipt_file_url?: string | null
+          recorded_by_admin_id?: string
+          withdrawal_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_payouts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_payouts_withdrawal_id_fkey"
+            columns: ["withdrawal_id"]
+            isOneToOne: false
+            referencedRelation: "partner_withdrawals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_sales: {
+        Row: {
+          amount_cents: number
+          chargeback_at: string | null
+          created_at: string
+          customer_user_id: string
+          external_reference: string | null
+          id: string
+          is_recurring: boolean
+          paid_at: string
+          partner_id: string
+          partner_lead_id: string | null
+          payment_method: string | null
+          payment_provider: string
+          plan: string
+          refunded_at: string | null
+        }
+        Insert: {
+          amount_cents?: number
+          chargeback_at?: string | null
+          created_at?: string
+          customer_user_id: string
+          external_reference?: string | null
+          id?: string
+          is_recurring?: boolean
+          paid_at?: string
+          partner_id: string
+          partner_lead_id?: string | null
+          payment_method?: string | null
+          payment_provider: string
+          plan: string
+          refunded_at?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          chargeback_at?: string | null
+          created_at?: string
+          customer_user_id?: string
+          external_reference?: string | null
+          id?: string
+          is_recurring?: boolean
+          paid_at?: string
+          partner_id?: string
+          partner_lead_id?: string | null
+          payment_method?: string | null
+          payment_provider?: string
+          plan?: string
+          refunded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_sales_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_sales_partner_lead_id_fkey"
+            columns: ["partner_lead_id"]
+            isOneToOne: false
+            referencedRelation: "partner_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_settings: {
+        Row: {
+          admin_notification_emails: string[] | null
+          allow_multiple_pending_withdrawals: boolean
+          bronze_commission_percent: number
+          created_at: string
+          gold_commission_percent: number
+          gold_threshold_clients: number
+          id: number
+          minimum_withdrawal_cents: number
+          partner_portal_domain: string | null
+          platinum_commission_percent: number
+          program_enabled: boolean
+          release_days: number
+          silver_commission_percent: number
+          silver_threshold_clients: number
+          updated_at: string
+        }
+        Insert: {
+          admin_notification_emails?: string[] | null
+          allow_multiple_pending_withdrawals?: boolean
+          bronze_commission_percent?: number
+          created_at?: string
+          gold_commission_percent?: number
+          gold_threshold_clients?: number
+          id?: number
+          minimum_withdrawal_cents?: number
+          partner_portal_domain?: string | null
+          platinum_commission_percent?: number
+          program_enabled?: boolean
+          release_days?: number
+          silver_commission_percent?: number
+          silver_threshold_clients?: number
+          updated_at?: string
+        }
+        Update: {
+          admin_notification_emails?: string[] | null
+          allow_multiple_pending_withdrawals?: boolean
+          bronze_commission_percent?: number
+          created_at?: string
+          gold_commission_percent?: number
+          gold_threshold_clients?: number
+          id?: number
+          minimum_withdrawal_cents?: number
+          partner_portal_domain?: string | null
+          platinum_commission_percent?: number
+          program_enabled?: boolean
+          release_days?: number
+          silver_commission_percent?: number
+          silver_threshold_clients?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      partner_withdrawals: {
+        Row: {
+          amount_cents: number
+          approved_at: string | null
+          bank_snapshot: Json | null
+          created_at: string
+          id: string
+          internal_notes: string | null
+          paid_at: string | null
+          partner_id: string
+          rejected_at: string | null
+          rejection_reason: string | null
+          requested_at: string
+          reviewed_by_admin_id: string | null
+          status: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          approved_at?: string | null
+          bank_snapshot?: Json | null
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          paid_at?: string | null
+          partner_id: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          reviewed_by_admin_id?: string | null
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          approved_at?: string | null
+          bank_snapshot?: Json | null
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          paid_at?: string | null
+          partner_id?: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          reviewed_by_admin_id?: string | null
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_withdrawals_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partners: {
+        Row: {
+          company: string | null
+          country: string | null
+          created_at: string
+          created_by_admin_id: string | null
+          custom_commission_percent: number | null
+          email: string
+          full_name: string
+          id: string
+          internal_notes: string | null
+          level: Database["public"]["Enums"]["partner_level"]
+          lifetime_commission_cents: number
+          lifetime_revenue_cents: number
+          phone: string | null
+          referral_code: string
+          status: Database["public"]["Enums"]["partner_status"]
+          tax_id: string | null
+          total_clicks: number
+          total_leads: number
+          total_paid_clients: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          created_by_admin_id?: string | null
+          custom_commission_percent?: number | null
+          email: string
+          full_name: string
+          id?: string
+          internal_notes?: string | null
+          level?: Database["public"]["Enums"]["partner_level"]
+          lifetime_commission_cents?: number
+          lifetime_revenue_cents?: number
+          phone?: string | null
+          referral_code: string
+          status?: Database["public"]["Enums"]["partner_status"]
+          tax_id?: string | null
+          total_clicks?: number
+          total_leads?: number
+          total_paid_clients?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          created_by_admin_id?: string | null
+          custom_commission_percent?: number | null
+          email?: string
+          full_name?: string
+          id?: string
+          internal_notes?: string | null
+          level?: Database["public"]["Enums"]["partner_level"]
+          lifetime_commission_cents?: number
+          lifetime_revenue_cents?: number
+          phone?: string | null
+          referral_code?: string
+          status?: Database["public"]["Enums"]["partner_status"]
+          tax_id?: string | null
+          total_clicks?: number
+          total_leads?: number
+          total_paid_clients?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pipeline_stages: {
         Row: {
           color: string | null
@@ -5357,6 +5962,10 @@ export type Database = {
         Returns: Json
       }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      generate_partner_referral_code: {
+        Args: { p_full_name: string }
+        Returns: string
+      }
       get_landing_page_stats: {
         Args: never
         Returns: {
@@ -5378,6 +5987,10 @@ export type Database = {
           signup_completed: number
           trial_no_upgrade: number
         }[]
+      }
+      get_partner_commission_percent: {
+        Args: { p_partner_id: string }
+        Returns: number
       }
       get_phone_key: { Args: { phone_input: string }; Returns: string }
       has_role: {
@@ -5406,6 +6019,7 @@ export type Database = {
         Args: { phone_input: string }
         Returns: string
       }
+      release_pending_commissions: { Args: never; Returns: number }
       revenue_score_to_bucket: {
         Args: { p_score: number }
         Returns: Database["public"]["Enums"]["revenue_status_bucket"]
@@ -5414,13 +6028,21 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      unaccent_simple: { Args: { input: string }; Returns: string }
       verify_webhook_signature: {
         Args: { p_payload: string; p_secret_name: string; p_signature: string }
         Returns: boolean
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "partner"
+      commission_status:
+        | "pending"
+        | "review"
+        | "available"
+        | "requested"
+        | "paid"
+        | "cancelled"
       email_status: "queued" | "sent" | "failed"
       email_type:
         | "CAMPAIGN_SCHEDULED_STARTED"
@@ -5432,6 +6054,8 @@ export type Database = {
         | "SUBSCRIPTION_RENEWAL"
         | "AGENT_HUMAN_HANDOFF"
         | "AGENT_OBJECTIVE_COMPLETED"
+      partner_level: "bronze" | "silver" | "gold" | "platinum"
+      partner_status: "active" | "inactive" | "blocked"
       revenue_risk_state: "OK" | "COOLING" | "AT_RISK"
       revenue_status_bucket: "COLD" | "ENGAGED" | "HOT" | "VERY_HOT"
       wa_flow_node_type:
@@ -5446,6 +6070,7 @@ export type Database = {
         | "ai_agent"
         | "data_collect"
       wa_flow_status: "draft" | "active" | "paused" | "archived"
+      withdrawal_status: "pending" | "approved" | "rejected" | "paid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5573,7 +6198,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "partner"],
+      commission_status: [
+        "pending",
+        "review",
+        "available",
+        "requested",
+        "paid",
+        "cancelled",
+      ],
       email_status: ["queued", "sent", "failed"],
       email_type: [
         "CAMPAIGN_SCHEDULED_STARTED",
@@ -5586,6 +6219,8 @@ export const Constants = {
         "AGENT_HUMAN_HANDOFF",
         "AGENT_OBJECTIVE_COMPLETED",
       ],
+      partner_level: ["bronze", "silver", "gold", "platinum"],
+      partner_status: ["active", "inactive", "blocked"],
       revenue_risk_state: ["OK", "COOLING", "AT_RISK"],
       revenue_status_bucket: ["COLD", "ENGAGED", "HOT", "VERY_HOT"],
       wa_flow_node_type: [
@@ -5601,6 +6236,7 @@ export const Constants = {
         "data_collect",
       ],
       wa_flow_status: ["draft", "active", "paused", "archived"],
+      withdrawal_status: ["pending", "approved", "rejected", "paid"],
     },
   },
 } as const
