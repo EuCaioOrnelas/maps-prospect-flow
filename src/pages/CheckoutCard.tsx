@@ -32,6 +32,7 @@ import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { Elements, useStripe, useElements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
+import { CouponInputCard, type AppliedCoupon } from "@/components/checkout/CouponInputCard";
 
 function formatCurrency(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
@@ -98,6 +99,7 @@ function CheckoutCardInner() {
   const [cepError, setCepError] = useState("");
   const [cvvFocused, setCvvFocused] = useState(false);
   const [installmentDropdownOpen, setInstallmentDropdownOpen] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   // Load customer data from sessionStorage
   useEffect(() => {
