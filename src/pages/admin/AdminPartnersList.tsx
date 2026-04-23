@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Search, Copy, Check, Users, UserCheck, DollarSign, Award, Crown, Medal, Gem, HelpCircle } from "lucide-react";
+import { Plus, Search, Copy, Check, Users, UserCheck, DollarSign, Award, Crown, Medal, Gem, HelpCircle, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CreatePartnerDialog } from "@/components/admin/partners/CreatePartnerDialog";
 
@@ -43,6 +44,7 @@ export default function AdminPartnersList() {
   const [createOpen, setCreateOpen] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const load = async () => {
     setLoading(true);
@@ -64,7 +66,8 @@ export default function AdminPartnersList() {
     return p.full_name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q) || p.referral_code.toLowerCase().includes(q);
   });
 
-  const copyLink = async (code: string) => {
+  const copyLink = async (e: React.MouseEvent, code: string) => {
+    e.stopPropagation();
     const url = `${window.location.origin}/?ref=${code}`;
     await navigator.clipboard.writeText(url);
     setCopiedCode(code);
@@ -183,18 +186,19 @@ export default function AdminPartnersList() {
                     <TableHead className="text-xs uppercase tracking-wider font-semibold text-right">Leads</TableHead>
                     <TableHead className="text-xs uppercase tracking-wider font-semibold text-right">Clientes</TableHead>
                     <TableHead className="text-xs uppercase tracking-wider font-semibold text-right">Comissão total</TableHead>
+                    <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                         Carregando...
                       </TableCell>
                     </TableRow>
                   ) : filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-16">
+                      <TableCell colSpan={8} className="text-center py-16">
                         <div className="flex flex-col items-center gap-3 text-muted-foreground">
                           <div className="rounded-2xl bg-muted/50 p-4">
                             <Users size={24} />
@@ -218,14 +222,18 @@ export default function AdminPartnersList() {
                       const LvlIcon = lvl.icon;
                       const st = statusMeta[p.status];
                       return (
-                        <TableRow key={p.id} className="hover:bg-muted/20 transition-colors">
+                        <TableRow
+                          key={p.id}
+                          onClick={() => navigate(`/admin/partners/parceiros/${p.id}`)}
+                          className="hover:bg-muted/30 transition-colors cursor-pointer group/row"
+                        >
                           <TableCell>
-                            <div className="font-medium text-sm">{p.full_name}</div>
+                            <div className="font-medium text-sm group-hover/row:text-primary transition-colors">{p.full_name}</div>
                             <div className="text-xs text-muted-foreground">{p.email}</div>
                           </TableCell>
                           <TableCell>
                             <button
-                              onClick={() => copyLink(p.referral_code)}
+                              onClick={(e) => copyLink(e, p.referral_code)}
                               className="inline-flex items-center gap-2 text-xs font-mono bg-muted/60 hover:bg-muted px-2.5 py-1.5 rounded-lg transition-colors group/copy"
                             >
                               {p.referral_code}
@@ -252,6 +260,9 @@ export default function AdminPartnersList() {
                           <TableCell className="text-right text-sm">{p.total_paid_clients}</TableCell>
                           <TableCell className="text-right font-semibold text-sm">
                             {fmt(p.lifetime_commission_cents)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <ChevronRight size={16} className="text-muted-foreground/60 group-hover/row:text-primary transition-colors" />
                           </TableCell>
                         </TableRow>
                       );

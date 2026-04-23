@@ -121,6 +121,7 @@ const AdminPartnersWithdrawals = lazyWithRetry(() => import("./pages/admin/Admin
 const AdminPartnersPayouts = lazyWithRetry(() => import("./pages/admin/AdminPartnersPayouts"), "AdminPartnersPayouts");
 const AdminPartnersSettings = lazyWithRetry(() => import("./pages/admin/AdminPartnersSettings"), "AdminPartnersSettings");
 const AdminPartnersRankings = lazyWithRetry(() => import("./pages/admin/AdminPartnersRankings"), "AdminPartnersRankings");
+const AdminPartnerDetail = lazyWithRetry(() => import("./pages/admin/AdminPartnerDetail"), "AdminPartnerDetail");
 
 // Partners - Portal do Parceiro
 const PartnerLogin = lazyWithRetry(() => import("./pages/partners/PartnerLogin"), "PartnerLogin");
@@ -269,6 +270,7 @@ const App = () => (
                   {/* Partners */}
                   <Route path="partners" element={<AdminPartnersDashboard />} />
                   <Route path="partners/parceiros" element={<AdminPartnersList />} />
+                  <Route path="partners/parceiros/:id" element={<AdminPartnerDetail />} />
                   <Route path="partners/leads" element={<AdminPartnersLeads />} />
                   <Route path="partners/vendas" element={<AdminPartnersSales />} />
                   <Route path="partners/saques" element={<AdminPartnersWithdrawals />} />
