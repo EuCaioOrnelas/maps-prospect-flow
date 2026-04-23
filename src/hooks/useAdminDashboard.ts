@@ -396,14 +396,14 @@ export function useAdminDashboard() {
     })();
   }, []);
 
-  // Total MRR = Stripe (cartão) + Asaas (PIX)
+  // Total MRR = Stripe (cartão) + Asaas (PIX) + Custom subscriptions (manual: PIX/transferência/cartão/etc.)
   const totalMRR = useMemo(() => {
-    return (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0);
-  }, [stripeMRR, pixMRR]);
+    return (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0) + (otherMRR?.otherMrr ?? 0);
+  }, [stripeMRR, pixMRR, otherMRR]);
 
   const totalSubscribers = useMemo(() => {
-    return (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0);
-  }, [stripeMRR, pixMRR]);
+    return (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0) + (otherMRR?.otherSubscriptions ?? 0);
+  }, [stripeMRR, pixMRR, otherMRR]);
 
   // Churn = cancelamentos Stripe + Asaas nos últimos 30 dias ÷ base ativa total.
   const churnRate = useMemo(() => {
