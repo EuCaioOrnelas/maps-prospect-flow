@@ -43,7 +43,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const { planKey, paymentMethodId, customerData, billingPeriod } = await req.json();
+    const { planKey, paymentMethodId, customerData, billingPeriod, promotionCodeId, couponId } = await req.json();
     if (!planKey || !paymentMethodId || !customerData) {
       throw new Error("planKey, paymentMethodId and customerData are required");
     }
@@ -117,7 +117,7 @@ serve(async (req) => {
     }
 
     // 3. Create Subscription that charges immediately
-    const subscription = await stripe.subscriptions.create({
+    const subscriptionParams: Stripe.SubscriptionCreateParams = {
       customer: customerId,
       items: [{ price: priceId }],
       payment_behavior: "default_incomplete",
@@ -129,9 +129,22 @@ serve(async (req) => {
         plan_key: planKey,
         billing_period: isAnnual ? "annual" : "monthly",
         user_id: userId || "",
+        ...(promotionCodeId ? { promotion_code_id: String(promotionCodeId) } : {}),
+        ...(couponId ? { coupon_id: String(couponId) } : {}),
       },
       expand: ["latest_invoice.payment_intent"],
-    });
+    };
+
+    // Apply discount if a coupon/promotion code was validated client-side
+    if (promotionCodeId) {
+      subscriptionParams.discounts = [{ promotion_code: String(promotionCodeId) }];
+      log("Applying promotion code", { promotionCodeId });
+    } else if (couponId) {
+      subscriptionParams.discounts = [{ coupon: String(couponId) }];
+      log("Applying coupon", { couponId });
+    }
+
+    const subscription = await stripe.subscriptions.create(subscriptionParams);
 
     log("Subscription created", { id: subscription.id, status: subscription.status });
 
