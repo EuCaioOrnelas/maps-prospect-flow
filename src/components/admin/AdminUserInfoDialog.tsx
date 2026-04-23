@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getProviderLabel } from "@/lib/paymentProviderLabel";
+import { CustomSubscriptionTab } from "./customSubscription/CustomSubscriptionTab";
 
 interface Props {
   userId: string;
@@ -221,9 +222,12 @@ export const AdminUserInfoDialog = ({ userId, open, onOpenChange }: Props) => {
             </div>
 
             <Tabs defaultValue="info" className="w-full">
-              <TabsList className="w-full grid grid-cols-4">
+              <TabsList className={`w-full grid ${profile?.is_custom_subscription ? "grid-cols-5" : "grid-cols-4"}`}>
                 <TabsTrigger value="info">Info</TabsTrigger>
                 <TabsTrigger value="receita">Receita</TabsTrigger>
+                {profile?.is_custom_subscription && (
+                  <TabsTrigger value="custom">Contrato</TabsTrigger>
+                )}
                 <TabsTrigger value="score">Score</TabsTrigger>
                 <TabsTrigger value="historico">Histórico</TabsTrigger>
               </TabsList>
