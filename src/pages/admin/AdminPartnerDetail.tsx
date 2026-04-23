@@ -258,9 +258,7 @@ export default function AdminPartnerDetail() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" className="gap-2" onClick={onResetReferral} disabled={saving}>
-              <RefreshCcw size={14} /> Resetar código
-            </Button>
+            {/* Reset rápido continua útil; edição completa fica em Configurações */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
