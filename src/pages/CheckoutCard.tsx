@@ -465,10 +465,39 @@ function CheckoutCardInner() {
 
                 <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
                   <p className="text-[11px] text-muted-foreground">
-                    {isAnnual
-                      ? <>Ao confirmar, você autoriza a cobrança única de <strong>{formatCurrency(planConfig.annual)}</strong> à vista no cartão de crédito, com <strong>renovação automática anual</strong>. Cancele a qualquer momento pelo seu perfil.</>
-                      : <>Ao confirmar, você autoriza a cobrança mensal de <strong>{formatCurrency(planConfig.monthly)}</strong> no cartão de crédito, com <strong>renovação automática todo mês</strong>. Cancele a qualquer momento pelo seu perfil.</>
-                    }
+                    {(() => {
+                      const fullPrice = isAnnual ? planConfig.annual : planConfig.monthly;
+                      const chargedNow = totalAfterDiscount;
+                      const periodLabel = isAnnual ? "anual" : "mensal";
+                      const renewLabel = isAnnual ? "renovação automática anual" : "renovação automática todo mês";
+
+                      // Sem cupom — texto padrão
+                      if (!appliedCoupon) {
+                        return isAnnual ? (
+                          <>Ao confirmar, você autoriza a cobrança única de <strong>{formatCurrency(fullPrice)}</strong> à vista no cartão de crédito, com <strong>{renewLabel}</strong>. Cancele a qualquer momento pelo seu perfil.</>
+                        ) : (
+                          <>Ao confirmar, você autoriza a cobrança mensal de <strong>{formatCurrency(fullPrice)}</strong> no cartão de crédito, com <strong>{renewLabel}</strong>. Cancele a qualquer momento pelo seu perfil.</>
+                        );
+                      }
+
+                      // Cupom vitalício — desconto se aplica em todas as renovações
+                      if (appliedCoupon.duration === "forever") {
+                        return isAnnual ? (
+                          <>Ao confirmar, você autoriza a cobrança única de <strong>{formatCurrency(chargedNow)}</strong> à vista no cartão de crédito (cupom <strong>{appliedCoupon.code}</strong> aplicado), com <strong>{renewLabel} pelo mesmo valor</strong>. Cancele a qualquer momento pelo seu perfil.</>
+                        ) : (
+                          <>Ao confirmar, você autoriza a cobrança mensal de <strong>{formatCurrency(chargedNow)}</strong> no cartão de crédito (cupom <strong>{appliedCoupon.code}</strong> aplicado), com <strong>{renewLabel} pelo mesmo valor</strong>. Cancele a qualquer momento pelo seu perfil.</>
+                        );
+                      }
+
+                      // Cupom temporário (once / repeating) — primeiro mês ou X meses com desconto, depois preço cheio
+                      const months = appliedCoupon.durationInMonths || 1;
+                      const periodWord = months === 1 ? "primeiro mês" : `${months} primeiros meses`;
+                      return isAnnual ? (
+                        <>Ao confirmar, você autoriza a cobrança de <strong>{formatCurrency(chargedNow)}</strong> hoje (cupom <strong>{appliedCoupon.code}</strong> aplicado no {periodWord}). A partir da próxima renovação {periodLabel}, o valor cheio de <strong>{formatCurrency(fullPrice)}</strong> será cobrado automaticamente. Cancele a qualquer momento pelo seu perfil.</>
+                      ) : (
+                        <>Ao confirmar, você autoriza a cobrança de <strong>{formatCurrency(chargedNow)}</strong> hoje (cupom <strong>{appliedCoupon.code}</strong> aplicado no {periodWord}). Após esse período, a {renewLabel} passa a cobrar o valor cheio de <strong>{formatCurrency(fullPrice)}/mês</strong>. Cancele a qualquer momento pelo seu perfil.</>
+                      );
+                    })()}
                   </p>
                 </div>
               </div>
