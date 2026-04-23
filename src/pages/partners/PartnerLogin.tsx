@@ -39,7 +39,7 @@ export default function PartnerLogin() {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side - Branding with soft background image */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-primary">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#31AA62]">
         {/* Soft decorative background */}
         <img
           src={loginBg}
@@ -139,7 +139,7 @@ export default function PartnerLogin() {
                     className="h-11"
                   />
                 </div>
-                <Button type="submit" className="w-full h-11 font-semibold" disabled={loading}>
+                <Button type="submit" className="w-full h-11 font-semibold bg-[#31AA62] hover:bg-[#2a9555] text-white" disabled={loading}>
                   {loading ? (
                     <><Loader2 className="animate-spin mr-2" size={16} />Entrando...</>
                   ) : (
