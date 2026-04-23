@@ -121,17 +121,22 @@ serve(async (req) => {
     }
 
     // Audit log
-    await supabaseAdmin.from("security_audit_log").insert({
-      user_id: callerData.user.id,
-      action: "partner_updated",
-      resource_type: "partners",
-      resource_id: partner.id,
-      metadata: {
-        fields_updated: Object.keys(updates),
-        password_changed: !!body.new_password,
-        referral_reset: !!body.reset_referral_code,
-      },
-    }).catch(() => {});
+    // Audit log (best-effort)
+    try {
+      await supabaseAdmin.from("security_audit_log").insert({
+        user_id: callerData.user.id,
+        action: "partner_updated",
+        resource_type: "partners",
+        resource_id: partner.id,
+        metadata: {
+          fields_updated: Object.keys(updates),
+          password_changed: !!body.new_password,
+          referral_reset: !!body.reset_referral_code,
+        },
+      });
+    } catch (e) {
+      console.warn("[admin-update-partner] audit log failed:", e);
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
