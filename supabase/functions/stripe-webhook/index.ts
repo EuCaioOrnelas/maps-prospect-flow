@@ -798,6 +798,25 @@ serve(async (req) => {
                   subscriptionEnd
                 }
               );
+
+              // Partner program: register recurring sale on renewal
+              try {
+                const partnerResult = await registerPartnerSale(supabaseClient, {
+                  userId: profile.id,
+                  email: customerEmail,
+                  amountCents: typeof invoice.amount_paid === 'number' ? invoice.amount_paid : 0,
+                  plan,
+                  billingPeriod: 'monthly',
+                  paymentMethod: 'stripe',
+                  stripeInvoiceId: invoice.id,
+                  stripeSubscriptionId: subscription.id,
+                  paidAt: new Date().toISOString(),
+                  isRecurring: true,
+                });
+                logStep("Partner sale check (renewal)", partnerResult);
+              } catch (e) {
+                logStep("Partner sale registration failed (renewal)", { error: String(e) });
+              }
             }
           }
         }
