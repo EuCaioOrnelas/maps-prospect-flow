@@ -254,7 +254,7 @@ export function AdminSidebar() {
                     <div
                       className={cn(
                         "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                        isOpen ? "max-h-[400px] opacity-100 mt-1" : "max-h-0 opacity-0"
+                        isOpen ? "max-h-[600px] opacity-100 mt-1" : "max-h-0 opacity-0"
                       )}
                     >
                       <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full">
