@@ -57,6 +57,7 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
   const [numbers, setNumbers] = useState<WhatsAppNumberOption[]>([]);
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
   const [loadingNumbers, setLoadingNumbers] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const applyNumberState = (items: WhatsAppNumberOption[]) => {
