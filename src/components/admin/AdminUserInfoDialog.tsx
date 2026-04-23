@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getProviderLabel } from "@/lib/paymentProviderLabel";
+import { CustomSubscriptionTab } from "./customSubscription/CustomSubscriptionTab";
 
 interface Props {
   userId: string;
@@ -195,6 +196,16 @@ export const AdminUserInfoDialog = ({ userId, open, onOpenChange }: Props) => {
                     <CreditCard className="h-3 w-3 mr-1" />
                     {(profile.plan || "free").toUpperCase()}
                   </Badge>
+                  {profile.is_custom_subscription && (
+                    <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30">
+                      Custom
+                    </Badge>
+                  )}
+                  {profile.is_blocked && (
+                    <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30">
+                      Bloqueado
+                    </Badge>
+                  )}
                   {scoreData?.score?.last_event_at && (
                     <Badge variant="outline" className="text-xs">
                       <Clock className="h-3 w-3 mr-1" />
@@ -221,9 +232,12 @@ export const AdminUserInfoDialog = ({ userId, open, onOpenChange }: Props) => {
             </div>
 
             <Tabs defaultValue="info" className="w-full">
-              <TabsList className="w-full grid grid-cols-4">
+              <TabsList className={`w-full grid ${profile?.is_custom_subscription ? "grid-cols-5" : "grid-cols-4"}`}>
                 <TabsTrigger value="info">Info</TabsTrigger>
                 <TabsTrigger value="receita">Receita</TabsTrigger>
+                {profile?.is_custom_subscription && (
+                  <TabsTrigger value="custom">Contrato</TabsTrigger>
+                )}
                 <TabsTrigger value="score">Score</TabsTrigger>
                 <TabsTrigger value="historico">Histórico</TabsTrigger>
               </TabsList>
@@ -314,6 +328,13 @@ export const AdminUserInfoDialog = ({ userId, open, onOpenChange }: Props) => {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* CUSTOM CONTRACT TAB */}
+              {profile?.is_custom_subscription && (
+                <TabsContent value="custom" className="space-y-4 mt-4">
+                  <CustomSubscriptionTab userId={userId} onChanged={loadAll} />
+                </TabsContent>
+              )}
 
               {/* SCORE TAB */}
               <TabsContent value="score" className="space-y-4 mt-4">
