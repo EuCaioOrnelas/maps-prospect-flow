@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Users, DollarSign, Wallet, Building2, LogOut, Award, Megaphone, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import wiizeLogo from "@/assets/logos/wiize-logo.png";
 
 export default function PartnerLayout() {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ export default function PartnerLayout() {
     <div className="min-h-screen bg-background flex">
       <aside className="w-64 border-r border-border bg-card flex flex-col">
         <div className="px-5 py-5 border-b flex items-center gap-3">
-          <img src="/assets/logo_wiize.png" alt="Wiize" className="h-9 w-9 rounded-lg shrink-0" />
+          <img src={wiizeLogo} alt="Wiize" className="h-9 w-9 object-contain shrink-0" />
           <div className="leading-tight min-w-0">
             <div className="text-base font-bold tracking-tight">Wiize</div>
             <div className="text-[11px] text-muted-foreground -mt-0.5 uppercase tracking-wider">Partners</div>

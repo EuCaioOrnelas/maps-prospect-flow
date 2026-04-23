@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Sparkles, ShieldCheck, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import wiizeLogoWhite from "@/assets/logos/wiize-logo-white.png";
+import wiizeLogo from "@/assets/logos/wiize-logo.png";
+import loginBg from "@/assets/partner-login-bg.jpg";
 
 export default function PartnerLogin() {
   const [email, setEmail] = useState("");
@@ -37,13 +40,13 @@ export default function PartnerLogin() {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/80">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary via-primary to-[hsl(var(--primary)/0.85)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary-foreground)/0.15),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,hsl(var(--primary-foreground)/0.1),transparent_50%)]" />
 
         <div className="relative z-10 flex flex-col justify-between p-12 text-primary-foreground">
           <Link to="/" className="flex items-center gap-3 group">
-            <img src="/assets/logo_wiize_white.png" alt="Wiize" className="h-10 w-10 rounded-xl" />
+            <img src={wiizeLogoWhite} alt="Wiize" className="h-10 w-10 object-contain" />
             <div className="flex flex-col leading-tight">
               <span className="text-xl font-bold tracking-tight">Wiize</span>
               <span className="text-xs opacity-80 -mt-0.5">Partners</span>
@@ -91,19 +94,28 @@ export default function PartnerLogin() {
         </div>
       </div>
 
-      {/* Right side - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-md">
+      {/* Right side - Form with soft background */}
+      <div className="flex-1 relative flex items-center justify-center p-6 lg:p-12 overflow-hidden">
+        {/* Soft background image */}
+        <img
+          src={loginBg}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none select-none"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/60 to-background/90 pointer-events-none" />
+
+        <div className="relative w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <img src="/assets/logo_wiize.png" alt="Wiize" className="h-10 w-10 rounded-xl" />
+            <img src={wiizeLogo} alt="Wiize" className="h-10 w-10 object-contain" />
             <div className="flex flex-col leading-tight">
               <span className="text-xl font-bold tracking-tight">Wiize</span>
               <span className="text-xs text-muted-foreground -mt-0.5">Partners</span>
             </div>
           </div>
 
-          <Card className="border-border/60 shadow-xl shadow-primary/5">
+          <Card className="border-border/60 shadow-2xl shadow-primary/10 backdrop-blur-sm bg-card/95">
             <CardContent className="p-8">
               <div className="mb-7">
                 <h2 className="text-2xl font-bold tracking-tight">Entrar no portal</h2>
