@@ -1,5 +1,48 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { hashPassword } from "../_shared/password-hash.ts";
+
+const ITERATIONS = 100000;
+const KEY_LENGTH = 256;
+const SALT_LENGTH = 16;
+
+function generateSalt(): Uint8Array {
+  return crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+}
+
+function toHex(buffer: Uint8Array): string {
+  return Array.from(buffer)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+async function hashPassword(password: string): Promise<string> {
+  const salt = generateSalt();
+  const encoder = new TextEncoder();
+  const passwordData = encoder.encode(password);
+
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    passwordData,
+    'PBKDF2',
+    false,
+    ['deriveBits']
+  );
+
+  const saltBuffer = new Uint8Array(salt.buffer.slice(salt.byteOffset, salt.byteOffset + salt.byteLength));
+
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: saltBuffer.buffer as ArrayBuffer,
+      iterations: ITERATIONS,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    KEY_LENGTH
+  );
+
+  const hash = new Uint8Array(derivedBits);
+  return `${toHex(salt)}:${toHex(hash)}`;
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
