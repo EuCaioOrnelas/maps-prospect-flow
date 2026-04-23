@@ -130,6 +130,11 @@ const PartnerLeads = lazyWithRetry(() => import("./pages/partners/PartnerLeads")
 const PartnerCommissions = lazyWithRetry(() => import("./pages/partners/PartnerCommissions"), "PartnerCommissions");
 const PartnerWithdrawals = lazyWithRetry(() => import("./pages/partners/PartnerWithdrawals"), "PartnerWithdrawals");
 const PartnerBankAccount = lazyWithRetry(() => import("./pages/partners/PartnerBankAccount"), "PartnerBankAccount");
+const PartnerMaterials = lazyWithRetry(() => import("./pages/partners/PartnerMaterials"), "PartnerMaterials");
+const PartnerRanking = lazyWithRetry(() => import("./pages/partners/PartnerRanking"), "PartnerRanking");
+const PartnersLanding = lazyWithRetry(() => import("./pages/PartnersLanding"), "PartnersLanding");
+const AdminPartnersApplications = lazyWithRetry(() => import("./pages/admin/AdminPartnersApplications"), "AdminPartnersApplications");
+const AdminPartnersMaterials = lazyWithRetry(() => import("./pages/admin/AdminPartnersMaterials"), "AdminPartnersMaterials");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -270,15 +275,20 @@ const App = () => (
                   <Route path="partners/pagamentos" element={<AdminPartnersPayouts />} />
                   <Route path="partners/configuracoes" element={<AdminPartnersSettings />} />
                   <Route path="partners/rankings" element={<AdminPartnersRankings />} />
+                  <Route path="partners/candidaturas" element={<AdminPartnersApplications />} />
+                  <Route path="partners/materiais" element={<AdminPartnersMaterials />} />
                 </Route>
 
                 {/* Portal do Parceiro */}
+                <Route path="/parceiros" element={<LightThemeWrapper><PartnersLanding /></LightThemeWrapper>} />
                 <Route path="/partners/login" element={<LightThemeWrapper><PartnerLogin /></LightThemeWrapper>} />
                 <Route path="/partners" element={<PartnerLayout />}>
                   <Route index element={<PartnerDashboard />} />
                   <Route path="leads" element={<PartnerLeads />} />
                   <Route path="comissoes" element={<PartnerCommissions />} />
                   <Route path="saques" element={<PartnerWithdrawals />} />
+                  <Route path="materiais" element={<PartnerMaterials />} />
+                  <Route path="ranking" element={<PartnerRanking />} />
                   <Route path="banco" element={<PartnerBankAccount />} />
                 </Route>
 
