@@ -37,12 +37,12 @@ const fmt = (cents: number) =>
 type Accent = "primary" | "emerald" | "amber" | "violet" | "sky" | "rose";
 
 const accentMap: Record<Accent, { bg: string; ring: string; glow: string; text: string }> = {
-  primary: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/30", text: "text-primary" },
-  emerald: { bg: "bg-emerald-500/10", ring: "ring-emerald-500/20", glow: "from-emerald-500/30", text: "text-emerald-500" },
-  amber: { bg: "bg-amber-500/10", ring: "ring-amber-500/20", glow: "from-amber-500/30", text: "text-amber-500" },
-  violet: { bg: "bg-violet-500/10", ring: "ring-violet-500/20", glow: "from-violet-500/30", text: "text-violet-500" },
-  sky: { bg: "bg-sky-500/10", ring: "ring-sky-500/20", glow: "from-sky-500/30", text: "text-sky-500" },
-  rose: { bg: "bg-rose-500/10", ring: "ring-rose-500/20", glow: "from-rose-500/30", text: "text-rose-500" },
+  primary: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/25", text: "text-primary" },
+  emerald: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/25", text: "text-primary" },
+  amber: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/25", text: "text-primary" },
+  violet: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/25", text: "text-primary" },
+  sky: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/25", text: "text-primary" },
+  rose: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/25", text: "text-primary" },
 };
 
 function StatCard({
