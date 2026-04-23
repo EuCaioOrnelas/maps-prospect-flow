@@ -51,13 +51,7 @@ export default function PartnerLogin() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,hsl(var(--primary-foreground)/0.12),transparent_55%)]" />
 
         <div className="relative z-10 flex flex-col justify-between p-12 text-primary-foreground w-full">
-          <Link to="/" className="flex items-center gap-1 group">
-            <img src={wiizeLogo} alt="Wiize" className="h-20 w-20 object-contain" />
-            <div className="flex flex-col leading-tight">
-              <span className="text-3xl font-bold tracking-tight">Wiize</span>
-              <span className="text-sm opacity-80 -mt-0.5">Partners</span>
-            </div>
-          </Link>
+          <div />
 
           <div className="space-y-8">
             <div>
