@@ -416,7 +416,7 @@ export default function AdminPartnersSettings() {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Globe size={14} className="text-sky-500" />
+                  <Globe size={14} className="text-muted-foreground" />
                   <Label className="text-sm font-medium">Domínio do portal de parceiros</Label>
                 </div>
                 <HelpHint text="Domínio personalizado opcional. Mesmo sem isso, o portal funciona em /partners/login no domínio principal da Wiize." />
@@ -436,7 +436,7 @@ export default function AdminPartnersSettings() {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Mail size={14} className="text-sky-500" />
+                  <Mail size={14} className="text-muted-foreground" />
                   <Label className="text-sm font-medium">Emails para notificações admin</Label>
                 </div>
                 <HelpHint text="Estes emails recebem aviso quando um parceiro solicita um novo saque ou quando há eventos críticos no programa." />
