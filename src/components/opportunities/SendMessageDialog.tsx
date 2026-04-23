@@ -156,12 +156,13 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
       const number = numbers.find(n => n.id === selectedNumberId);
       if (!number || !number.instance_name) {
         setState("error");
+        setErrorMessage("Número não encontrado");
         toast({ title: "Número não encontrado", variant: "destructive" });
         return;
       }
 
       // Send message via evolution
-      const { error } = await supabase.functions.invoke("evolution-send-message", {
+      const { data, error } = await supabase.functions.invoke("evolution-send-message", {
         body: {
           instanceName: number.instance_name,
           phoneNumber: leadPhone,
@@ -170,7 +171,27 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
         },
       });
 
-      if (error) throw error;
+      // Extract real error message — supabase-js wraps non-2xx responses into a generic
+      // FunctionsHttpError. The real reason from the edge function lives in error.context.
+      if (error) {
+        let realError: string | null = null;
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx && typeof ctx.json === "function") {
+            const body = await ctx.json();
+            realError = body?.error || body?.message || null;
+          } else if (ctx && typeof ctx.text === "function") {
+            const txt = await ctx.text();
+            try { realError = JSON.parse(txt)?.error || txt; } catch { realError = txt; }
+          }
+        } catch { /* ignore parsing failures */ }
+        throw new Error(realError || (error as any).message || "Erro desconhecido na edge function");
+      }
+
+      // Some edge functions return 200 with { success:false, error:"..." }
+      if (data && data.success === false) {
+        throw new Error(data.error || "Falha reportada pela API ao enviar");
+      }
 
       // Update lead status - mark as sent
       await supabase
@@ -195,12 +216,15 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
         .eq("user_id", userId);
 
       setState("sent");
+      setErrorMessage(null);
       toast({ title: "Mensagem enviada!", description: `Mensagem enviada para ${leadName}` });
       onSent();
     } catch (err: any) {
-      console.error("Send error:", err);
+      console.error("[SendMessageDialog] Send error:", err);
+      const description = err?.message || "Tente novamente";
+      setErrorMessage(description);
       setState("error");
-      toast({ title: "Erro ao enviar", description: err.message || "Tente novamente", variant: "destructive" });
+      toast({ title: "Erro ao enviar", description, variant: "destructive" });
     }
   };
 
