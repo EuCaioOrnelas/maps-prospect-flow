@@ -165,6 +165,12 @@ export function useAdminDashboard() {
         .neq("plan", "free")
         .eq("is_blocked", false);
 
+      // Custom subscriptions (manual users) — fonte de verdade para MRR de admin-create
+      const { data: customSubs } = await supabase
+        .from("custom_subscriptions")
+        .select("user_id, monthly_value_cents, payment_method, status, ends_at, is_lifetime")
+        .eq("status", "active");
+
       if (!profiles) return;
 
       const now = new Date();
@@ -172,7 +178,10 @@ export function useAdminDashboard() {
       let pixActiveSubs = 0;
 
       const typedProfiles = profiles as PayingProfile[];
-      const recognizedProfiles = typedProfiles.filter((p) => p.payment_provider === "stripe" || p.payment_provider === "asaas");
+      // 'manual' agora é reconhecido (assinaturas custom criadas pelo admin)
+      const recognizedProfiles = typedProfiles.filter(
+        (p) => p.payment_provider === "stripe" || p.payment_provider === "asaas" || p.payment_provider === "manual"
+      );
       setPayingProfiles(
         recognizedProfiles.filter((p) => !p.subscription_current_period_end || new Date(p.subscription_current_period_end) >= now)
       );
@@ -196,16 +205,12 @@ export function useAdminDashboard() {
       for (const p of recognizedProfiles) {
         const periodEnd = p.subscription_current_period_end;
         if (periodEnd && new Date(periodEnd) < now) continue;
-
-        const monthlyValue = getMonthlyValue(p);
-
-        const provider = p.payment_provider;
-        if (provider === "asaas") {
-          pixMrrTotal += monthlyValue;
+        if (p.payment_provider === "asaas") {
+          pixMrrTotal += getMonthlyValue(p);
           pixActiveSubs++;
-        } else if (provider === "stripe") {
-          // Skip - já contabilizado via get-stripe-mrr (cartão)
         }
+        // stripe → contabilizado em get-stripe-mrr
+        // manual → contabilizado abaixo via custom_subscriptions
       }
 
       const asaasProfiles = recognizedProfiles.filter((p) => p.payment_provider === "asaas");
@@ -255,9 +260,35 @@ export function useAdminDashboard() {
         asaasCardSubscriptions: 0,
       });
 
+      // ===== Custom subscriptions → otherMRR (manual: PIX manual, transferência, etc.) =====
+      let otherMrrTotal = 0;
+      let otherSubsTotal = 0;
+      const byMethodMap = new Map<string, { mrr: number; count: number }>();
+      for (const sub of (customSubs || []) as any[]) {
+        // Ignora assinaturas vencidas (a menos que seja vitalícia)
+        if (!sub.is_lifetime && sub.ends_at && new Date(sub.ends_at) < now) continue;
+        const monthly = (sub.monthly_value_cents || 0) / 100;
+        if (monthly <= 0) continue;
+        otherMrrTotal += monthly;
+        otherSubsTotal += 1;
+        const key = sub.payment_method || "other";
+        const cur = byMethodMap.get(key) || { mrr: 0, count: 0 };
+        cur.mrr += monthly;
+        cur.count += 1;
+        byMethodMap.set(key, cur);
+      }
+
       setOtherMRR({
-        otherMrr: 0,
-        otherSubscriptions: 0,
+        otherMrr: otherMrrTotal,
+        otherSubscriptions: otherSubsTotal,
+        byMethod: Array.from(byMethodMap.entries())
+          .map(([method, d]) => ({
+            method,
+            label: PAYMENT_METHOD_LABELS[method] || method,
+            mrr: d.mrr,
+            count: d.count,
+          }))
+          .sort((a, b) => b.mrr - a.mrr),
       });
     } catch {
       setPixMRR(null);
