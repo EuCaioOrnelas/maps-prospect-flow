@@ -50,3 +50,9 @@ verify_jwt = false
 
 [functions.send-cancellation-emails]
 verify_jwt = false
+
+[functions.release-partner-commissions]
+verify_jwt = false
+
+[functions.send-partner-email]
+verify_jwt = false
