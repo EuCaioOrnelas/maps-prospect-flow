@@ -27,7 +27,7 @@ const levelMeta = {
   bronze: { icon: Medal, classes: "bg-amber-700/10 text-amber-600 border-amber-700/30", label: "Bronze" },
   silver: { icon: Award, classes: "bg-slate-400/10 text-slate-400 border-slate-400/30", label: "Silver" },
   gold: { icon: Crown, classes: "bg-yellow-500/10 text-yellow-500 border-yellow-500/30", label: "Gold" },
-  platinum: { icon: Gem, classes: "bg-purple-500/10 text-purple-400 border-purple-500/30", label: "Platinum" },
+  platinum: { icon: Gem, classes: "bg-sky-400/10 text-sky-400 border-sky-400/30", label: "Platinum" },
 } as const;
 
 const statusMeta: Record<Partner["status"], { dot: string; classes: string; label: string }> = {
