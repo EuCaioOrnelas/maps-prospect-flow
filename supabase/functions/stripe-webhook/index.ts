@@ -343,6 +343,11 @@ serve(async (req) => {
               const plan = PRICE_TO_PLAN[priceId] || "free";
               const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
 
+              // Calculate period end from Stripe subscription (CRITICAL for check-subscription)
+              const subscriptionEndIso = newSubscription.current_period_end
+                ? new Date(newSubscription.current_period_end * 1000).toISOString()
+                : null;
+
               // Calculate new limit based on transition type (upgrade/downgrade/same)
               const { newLimit, carryOver, transitionType } = calculateSearchesForTransition(
                 profile.searches_used,
@@ -374,6 +379,7 @@ serve(async (req) => {
                   searches_used: newSearchesUsed,
                   payment_provider: "stripe",
                   subscription_price_cents: stripePriceCents,
+                  subscription_current_period_end: subscriptionEndIso,
                 })
                 .eq("id", profile.id);
 
@@ -518,6 +524,11 @@ serve(async (req) => {
               const plan = PRICE_TO_PLAN[priceId] || "free";
               const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
 
+              // Calculate period end from Stripe (CRITICAL for check-subscription)
+              const subscriptionEndIso = subscription.current_period_end
+                ? new Date(subscription.current_period_end * 1000).toISOString()
+                : null;
+
               // Calculate new limit based on transition type
               const { newLimit, carryOver, transitionType } = calculateSearchesForTransition(
                 profile.searches_used,
@@ -538,6 +549,7 @@ serve(async (req) => {
                   searches_used: newSearchesUsed,
                   payment_provider: "stripe",
                   subscription_price_cents: subPriceCents,
+                  subscription_current_period_end: subscriptionEndIso,
                 })
                 .eq("id", profile.id);
 
