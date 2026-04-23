@@ -293,7 +293,7 @@ export default function AdminPartnersSettings() {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Award size={14} className="text-slate-400" />
+                  <Award size={14} className="text-muted-foreground" />
                   <Label className="text-sm font-medium">Threshold Silver</Label>
                 </div>
                 <HelpHint text="Quantidade de clientes pagantes ativos que o parceiro precisa ter para ser promovido automaticamente de Bronze para Silver." />
@@ -313,7 +313,7 @@ export default function AdminPartnersSettings() {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Crown size={14} className="text-yellow-500" />
+                  <Crown size={14} className="text-muted-foreground" />
                   <Label className="text-sm font-medium">Threshold Gold</Label>
                 </div>
                 <HelpHint text="Quantidade de clientes pagantes ativos para o parceiro ser promovido de Silver para Gold automaticamente." />
@@ -343,7 +343,7 @@ export default function AdminPartnersSettings() {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-amber-500" />
+                  <Clock size={14} className="text-muted-foreground" />
                   <Label className="text-sm font-medium">Prazo de liberação</Label>
                 </div>
                 <HelpHint text="Janela anti-fraude e anti-chargeback. A comissão fica como 'pendente' por X dias antes de ficar 'disponível para saque'." />
@@ -366,7 +366,7 @@ export default function AdminPartnersSettings() {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <DollarSign size={14} className="text-emerald-500" />
+                  <DollarSign size={14} className="text-muted-foreground" />
                   <Label className="text-sm font-medium">Saque mínimo</Label>
                 </div>
                 <HelpHint text="Valor mínimo acumulado em comissões disponíveis para que o parceiro consiga solicitar um saque." />
