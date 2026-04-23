@@ -16,6 +16,7 @@ import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { DashboardThemeProvider } from "@/contexts/ThemeContext";
 import { lazyWithRetry } from "@/lib/runtimeRecovery";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { PartnerTrackingProvider } from "@/components/partners/PartnerTrackingProvider";
 
 // Eager load critical pages
 import Index from "./pages/Index";
