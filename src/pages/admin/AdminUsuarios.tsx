@@ -19,23 +19,31 @@ export default function AdminUsuarios() {
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
   const [providerFilter, setProviderFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"active" | "archived" | "all">("active");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const loadUsers = async () => {
     setLoading(true);
     const { data } = await supabase
       .from("profiles")
-      .select("*, is_custom_subscription, custom_subscription_id")
+      .select("*, is_custom_subscription, custom_subscription_id, is_archived, archived_at")
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(500);
     setUsers(data || []);
     setLoading(false);
   };
 
   useEffect(() => { loadUsers(); }, []);
 
+  const archivedCount = useMemo(() => users.filter(u => u.is_archived).length, [users]);
+  const activeCount = useMemo(() => users.filter(u => !u.is_archived).length, [users]);
+
   const filtered = useMemo(() => {
     return users.filter(u => {
+      const matchStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && !u.is_archived) ||
+        (statusFilter === "archived" && u.is_archived);
       const matchSearch = !search || u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase());
       const matchPlan = planFilter === "all" || u.plan === planFilter;
       const bucket = getProviderBucket(u.payment_provider);
@@ -44,9 +52,9 @@ export default function AdminUsuarios() {
         (providerFilter === "stripe" && bucket === "stripe") ||
         (providerFilter === "pix" && bucket === "pix") ||
         (providerFilter === "none" && !u.payment_provider);
-      return matchSearch && matchPlan && matchProvider;
+      return matchStatus && matchSearch && matchPlan && matchProvider;
     });
-  }, [users, search, planFilter, providerFilter]);
+  }, [users, statusFilter, search, planFilter, providerFilter]);
 
   const planColors: Record<string, string> = {
     free: "bg-muted text-muted-foreground",
