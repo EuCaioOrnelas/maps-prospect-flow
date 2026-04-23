@@ -149,7 +149,7 @@ export default function AdminPartnersDashboard() {
         {/* Hero Header */}
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-card/60 to-card/20 p-6 lg:p-8 backdrop-blur-sm">
           <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
           <div className="relative flex items-start gap-4">
             <div className="rounded-2xl bg-primary/15 p-3 ring-1 ring-primary/30 shadow-lg shadow-primary/10">
               <LayoutDashboard size={22} className="text-primary" />
@@ -180,10 +180,10 @@ export default function AdminPartnersDashboard() {
 
         {/* Roadmap card */}
         <Card className="relative overflow-hidden border-border/60 bg-card/60 backdrop-blur-sm">
-          <div className="absolute -top-24 right-0 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl" />
+          <div className="absolute -top-24 right-0 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
           <CardHeader className="relative">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-emerald-500/10 p-2 ring-1 ring-emerald-500/20 text-emerald-500">
+              <div className="rounded-xl bg-primary/10 p-2 ring-1 ring-primary/20 text-primary">
                 <CheckCircle2 size={18} />
               </div>
               <div>
@@ -201,9 +201,9 @@ export default function AdminPartnersDashboard() {
             ].map((item) => (
               <div key={item.text} className="flex items-start gap-3 rounded-lg border border-border/40 bg-background/40 p-3">
                 {item.done ? (
-                  <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-500" />
+                  <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-primary" />
                 ) : (
-                  <CircleDashed size={16} className="mt-0.5 shrink-0 text-amber-500" />
+                  <CircleDashed size={16} className="mt-0.5 shrink-0 text-muted-foreground" />
                 )}
                 <span className={`text-sm ${item.done ? "text-foreground" : "text-muted-foreground"}`}>{item.text}</span>
               </div>
