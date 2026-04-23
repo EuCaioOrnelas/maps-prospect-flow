@@ -182,7 +182,7 @@ export default function AdminPartnersSettings() {
         {/* Header */}
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-card/60 to-card/20 p-6 lg:p-8 backdrop-blur-sm">
           <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
           <div className="relative flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-start gap-4">
               <div className="rounded-2xl bg-primary/15 p-3 ring-1 ring-primary/30 shadow-lg shadow-primary/10">
