@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Users, DollarSign, Wallet, Building2, LogOut, Award, Megaphone, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import wiizeLogo from "@/assets/logos/wiize-logo.png";
+import wiizeLogo from "@/assets/logo-icon-new.png";
 
 export default function PartnerLayout() {
   const navigate = useNavigate();
