@@ -112,10 +112,24 @@ const AdminAuditoria = lazyWithRetry(() => import("./pages/admin/AdminAuditoria"
 const AdminGrowthIntelligence = lazyWithRetry(() => import("./pages/admin/AdminGrowthIntelligence"), "AdminGrowthIntelligence");
 const AdminOnboarding = lazyWithRetry(() => import("./pages/admin/AdminOnboarding"), "AdminOnboarding");
 
-// Partners (Programa de Parceiros - Fase 1)
+// Partners - Admin (Programa de Parceiros)
 const AdminPartnersDashboard = lazyWithRetry(() => import("./pages/admin/AdminPartnersDashboard"), "AdminPartnersDashboard");
 const AdminPartnersList = lazyWithRetry(() => import("./pages/admin/AdminPartnersList"), "AdminPartnersList");
-const PartnersStubPage = lazyWithRetry(() => import("./pages/admin/AdminPartnersStub"), "PartnersStubPage");
+const AdminPartnersLeads = lazyWithRetry(() => import("./pages/admin/AdminPartnersLeads"), "AdminPartnersLeads");
+const AdminPartnersSales = lazyWithRetry(() => import("./pages/admin/AdminPartnersSales"), "AdminPartnersSales");
+const AdminPartnersWithdrawals = lazyWithRetry(() => import("./pages/admin/AdminPartnersWithdrawals"), "AdminPartnersWithdrawals");
+const AdminPartnersPayouts = lazyWithRetry(() => import("./pages/admin/AdminPartnersPayouts"), "AdminPartnersPayouts");
+const AdminPartnersSettings = lazyWithRetry(() => import("./pages/admin/AdminPartnersSettings"), "AdminPartnersSettings");
+const AdminPartnersRankings = lazyWithRetry(() => import("./pages/admin/AdminPartnersRankings"), "AdminPartnersRankings");
+
+// Partners - Portal do Parceiro
+const PartnerLogin = lazyWithRetry(() => import("./pages/partners/PartnerLogin"), "PartnerLogin");
+const PartnerLayout = lazyWithRetry(() => import("./pages/partners/PartnerLayout"), "PartnerLayout");
+const PartnerDashboard = lazyWithRetry(() => import("./pages/partners/PartnerDashboard"), "PartnerDashboard");
+const PartnerLeads = lazyWithRetry(() => import("./pages/partners/PartnerLeads"), "PartnerLeads");
+const PartnerCommissions = lazyWithRetry(() => import("./pages/partners/PartnerCommissions"), "PartnerCommissions");
+const PartnerWithdrawals = lazyWithRetry(() => import("./pages/partners/PartnerWithdrawals"), "PartnerWithdrawals");
+const PartnerBankAccount = lazyWithRetry(() => import("./pages/partners/PartnerBankAccount"), "PartnerBankAccount");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -247,15 +261,25 @@ const App = () => (
                   <Route path="auditoria" element={<AdminAuditoria />} />
                   <Route path="insights" element={<UserInsights />} />
                   <Route path="onboarding" element={<AdminOnboarding />} />
-                  {/* Partners - Fase 1 */}
+                  {/* Partners */}
                   <Route path="partners" element={<AdminPartnersDashboard />} />
                   <Route path="partners/parceiros" element={<AdminPartnersList />} />
-                  <Route path="partners/leads" element={<PartnersStubPage title="Leads Indicados" description="Todos os leads vindos de parceiros" />} />
-                  <Route path="partners/vendas" element={<PartnersStubPage title="Vendas / Comissões" description="Vendas geradas e comissões calculadas" />} />
-                  <Route path="partners/saques" element={<PartnersStubPage title="Solicitações de Saque" description="Pedidos de saque dos parceiros" />} />
-                  <Route path="partners/pagamentos" element={<PartnersStubPage title="Pagamentos Realizados" description="Histórico de comissões pagas" />} />
-                  <Route path="partners/configuracoes" element={<PartnersStubPage title="Configurações" description="Comissões, prazos e regras do programa" />} />
-                  <Route path="partners/rankings" element={<PartnersStubPage title="Rankings" description="Top parceiros por período" />} />
+                  <Route path="partners/leads" element={<AdminPartnersLeads />} />
+                  <Route path="partners/vendas" element={<AdminPartnersSales />} />
+                  <Route path="partners/saques" element={<AdminPartnersWithdrawals />} />
+                  <Route path="partners/pagamentos" element={<AdminPartnersPayouts />} />
+                  <Route path="partners/configuracoes" element={<AdminPartnersSettings />} />
+                  <Route path="partners/rankings" element={<AdminPartnersRankings />} />
+                </Route>
+
+                {/* Portal do Parceiro */}
+                <Route path="/partners/login" element={<LightThemeWrapper><PartnerLogin /></LightThemeWrapper>} />
+                <Route path="/partners" element={<PartnerLayout />}>
+                  <Route index element={<PartnerDashboard />} />
+                  <Route path="leads" element={<PartnerLeads />} />
+                  <Route path="comissoes" element={<PartnerCommissions />} />
+                  <Route path="saques" element={<PartnerWithdrawals />} />
+                  <Route path="banco" element={<PartnerBankAccount />} />
                 </Route>
 
                 <Route path="/404" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />

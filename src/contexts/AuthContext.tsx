@@ -4,6 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { generateFingerprint, getClientIP } from '@/lib/fingerprint';
 import { trackSignupCompleted, getLandingPageSlug } from '@/hooks/useLandingPageTracking';
+import { attributePartnerLeadOnSignup } from '@/hooks/usePartnerTracking';
 
 interface Profile {
   id: string;
