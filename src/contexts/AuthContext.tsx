@@ -307,6 +307,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   }).then(({ error }) => {
                     if (error) console.error('[AuthContext] Error tracking trial event:', error);
                   });
+
+                  // Attribute partner referral if exists in localStorage/cookie
+                  try {
+                    await attributePartnerLeadOnSignup(
+                      session.user.id,
+                      session.user.email || '',
+                      (session.user.user_metadata?.name as string) || undefined
+                    );
+                  } catch (e) {
+                    console.error('[AuthContext] Partner attribution failed:', e);
+                  }
                   
                   console.log('[AuthContext] Signup tracked for landing page:', metaSlug || 'index');
                 } else {
