@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserActionsMenu } from "@/components/admin/UserActionsMenu";
 import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
+import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
 import { getProviderLabel, getProviderBucket } from "@/lib/paymentProviderLabel";
 
 export default function AdminUsuarios() {
