@@ -34,6 +34,13 @@ import {
   Activity,
   FileText,
   ClipboardList,
+  Handshake,
+  Users2,
+  TrendingUp as TrendingUpIcon,
+  Wallet as WalletIcon,
+  CheckCircle2,
+  Settings as SettingsIcon,
+  Award,
 } from "lucide-react";
 
 interface NavItem {
@@ -99,6 +106,20 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Score Usuários", url: "/admin/user-scoring", icon: Trophy },
       { title: "Trial Automação", url: "/admin/trial-automation", icon: Zap },
       { title: "Testes", url: "/admin/tests", icon: FlaskConical },
+    ],
+  },
+  {
+    title: "Partners",
+    icon: Handshake,
+    items: [
+      { title: "Dashboard", url: "/admin/partners", icon: LayoutDashboard },
+      { title: "Parceiros", url: "/admin/partners/parceiros", icon: Users2 },
+      { title: "Leads Indicados", url: "/admin/partners/leads", icon: TrendingUpIcon },
+      { title: "Vendas / Comissões", url: "/admin/partners/vendas", icon: DollarSign },
+      { title: "Saques", url: "/admin/partners/saques", icon: WalletIcon },
+      { title: "Pagamentos", url: "/admin/partners/pagamentos", icon: CheckCircle2 },
+      { title: "Rankings", url: "/admin/partners/rankings", icon: Award },
+      { title: "Configurações", url: "/admin/partners/configuracoes", icon: SettingsIcon },
     ],
   },
   {

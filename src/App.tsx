@@ -16,6 +16,7 @@ import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { DashboardThemeProvider } from "@/contexts/ThemeContext";
 import { lazyWithRetry } from "@/lib/runtimeRecovery";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { PartnerTrackingProvider } from "@/components/partners/PartnerTrackingProvider";
 
 // Eager load critical pages
 import Index from "./pages/Index";
@@ -111,6 +112,11 @@ const AdminAuditoria = lazyWithRetry(() => import("./pages/admin/AdminAuditoria"
 const AdminGrowthIntelligence = lazyWithRetry(() => import("./pages/admin/AdminGrowthIntelligence"), "AdminGrowthIntelligence");
 const AdminOnboarding = lazyWithRetry(() => import("./pages/admin/AdminOnboarding"), "AdminOnboarding");
 
+// Partners (Programa de Parceiros - Fase 1)
+const AdminPartnersDashboard = lazyWithRetry(() => import("./pages/admin/AdminPartnersDashboard"), "AdminPartnersDashboard");
+const AdminPartnersList = lazyWithRetry(() => import("./pages/admin/AdminPartnersList"), "AdminPartnersList");
+const PartnersStubPage = lazyWithRetry(() => import("./pages/admin/AdminPartnersStub"), "PartnersStubPage");
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -142,6 +148,7 @@ const App = () => (
           <AuthProvider>
             <GuidedTourProvider>
             <Suspense fallback={<PageLoader />}>
+              <PartnerTrackingProvider>
               <Routes>
                 <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />
                 
@@ -240,12 +247,22 @@ const App = () => (
                   <Route path="auditoria" element={<AdminAuditoria />} />
                   <Route path="insights" element={<UserInsights />} />
                   <Route path="onboarding" element={<AdminOnboarding />} />
+                  {/* Partners - Fase 1 */}
+                  <Route path="partners" element={<AdminPartnersDashboard />} />
+                  <Route path="partners/parceiros" element={<AdminPartnersList />} />
+                  <Route path="partners/leads" element={<PartnersStubPage title="Leads Indicados" description="Todos os leads vindos de parceiros" />} />
+                  <Route path="partners/vendas" element={<PartnersStubPage title="Vendas / Comissões" description="Vendas geradas e comissões calculadas" />} />
+                  <Route path="partners/saques" element={<PartnersStubPage title="Solicitações de Saque" description="Pedidos de saque dos parceiros" />} />
+                  <Route path="partners/pagamentos" element={<PartnersStubPage title="Pagamentos Realizados" description="Histórico de comissões pagas" />} />
+                  <Route path="partners/configuracoes" element={<PartnersStubPage title="Configurações" description="Comissões, prazos e regras do programa" />} />
+                  <Route path="partners/rankings" element={<PartnersStubPage title="Rankings" description="Top parceiros por período" />} />
                 </Route>
 
                 <Route path="/404" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />
               </Routes>
+              </PartnerTrackingProvider>
             </Suspense>
             <ActivationChecklist />
             <GuidedTour />
