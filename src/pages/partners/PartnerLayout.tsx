@@ -41,9 +41,12 @@ export default function PartnerLayout() {
   return (
     <div className="min-h-screen bg-background flex">
       <aside className="w-64 border-r border-border bg-card flex flex-col">
-        <div className="px-5 py-5 border-b">
-          <div className="text-xs text-muted-foreground uppercase tracking-wide">Portal</div>
-          <div className="text-lg font-semibold mt-0.5">Parceiros Wiize</div>
+        <div className="px-5 py-5 border-b flex items-center gap-3">
+          <img src="/assets/logo_wiize.png" alt="Wiize" className="h-9 w-9 rounded-lg shrink-0" />
+          <div className="leading-tight min-w-0">
+            <div className="text-base font-bold tracking-tight">Wiize</div>
+            <div className="text-[11px] text-muted-foreground -mt-0.5 uppercase tracking-wider">Partners</div>
+          </div>
         </div>
         <div className="px-5 py-4 border-b">
           <div className="text-sm font-medium truncate">{partner.full_name}</div>
