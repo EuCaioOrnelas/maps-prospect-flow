@@ -151,8 +151,24 @@ Deno.serve(async (req) => {
     const newUserId = newUser.user.id;
     log("Auth user created", { userId: newUserId });
 
-    // 2) Aguarda trigger handle_new_user popular profile básico
-    await new Promise((r) => setTimeout(r, 600));
+    // 2) Garante que o profile existe (não dependemos do trigger handle_new_user)
+    await new Promise((r) => setTimeout(r, 300));
+    const { error: ensureProfileError } = await supabaseAdmin
+      .from("profiles")
+      .upsert(
+        {
+          id: newUserId,
+          email: body.email,
+          name: body.name,
+          plan: "free",
+          searches_limit: 120,
+          searches_used: 0,
+        },
+        { onConflict: "id", ignoreDuplicates: false }
+      );
+    if (ensureProfileError) {
+      log("Profile upsert error", { error: ensureProfileError });
+    }
 
     // 3) Cria registro de contrato customizado
     const startsAt = body.starts_at ? new Date(body.starts_at) : new Date();
