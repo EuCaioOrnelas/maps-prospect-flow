@@ -206,8 +206,10 @@ serve(async (req) => {
       .single();
 
     if (partnerErr) {
-      // Rollback auth user
-      await supabaseAdmin.auth.admin.deleteUser(newUserId).catch(() => {});
+      // Rollback auth user only if we created it now
+      if (!userAlreadyExisted) {
+        await supabaseAdmin.auth.admin.deleteUser(newUserId).catch(() => {});
+      }
       return new Response(JSON.stringify({ error: partnerErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
