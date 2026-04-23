@@ -111,7 +111,12 @@ serve(async (req) => {
         email_confirm: true,
       });
       if (pwdErr) {
-        return new Response(JSON.stringify({ error: pwdErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const msg = (pwdErr.message || "").toLowerCase();
+        let friendly = pwdErr.message;
+        if (msg.includes("weak") || msg.includes("pwned") || msg.includes("known to be")) {
+          friendly = "Senha muito fraca ou já vazada em incidentes públicos. Use uma senha mais forte (combine letras maiúsculas, minúsculas, números e símbolos, evite sequências e palavras comuns).";
+        }
+        return new Response(JSON.stringify({ error: friendly }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     }
 
