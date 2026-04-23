@@ -279,8 +279,8 @@ export default function AdminPartnersSettings() {
           description="O parceiro sobe de nível automaticamente quando atinge X clientes pagantes ativos."
           accent="violet"
         >
-          <div className="mb-4 flex items-start gap-2 rounded-lg border border-violet-500/20 bg-violet-500/5 p-3">
-            <Layers size={16} className="mt-0.5 shrink-0 text-violet-500" />
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/40 p-3">
+            <Layers size={16} className="mt-0.5 shrink-0 text-primary" />
             <div className="text-xs text-muted-foreground leading-relaxed">
               <strong className="text-foreground">Como funciona:</strong> todo parceiro começa em <em>Bronze</em>. Ao
               atingir o <em>Threshold Silver</em> de clientes pagantes, é promovido para Silver (e passa a ganhar a
