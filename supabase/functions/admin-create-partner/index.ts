@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendPartnerEmail } from "../_shared/partner-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -125,6 +126,9 @@ serve(async (req) => {
       resource_id: partner.id,
       metadata: { email: body.email, level: partner.level },
     }).catch(() => {});
+
+    // Welcome email (best-effort)
+    sendPartnerEmail(supabaseAdmin, partner.id, "partner_welcome").catch(() => {});
 
     return new Response(JSON.stringify({ success: true, partner }), {
       status: 200,

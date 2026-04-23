@@ -91,7 +91,15 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
 
       // Send partner notification email (best-effort)
       supabase.functions.invoke("send-partner-email", {
-        body: { template: "withdrawal-paid", partner_id: withdrawal.partner_id, data: { amount_cents: withdrawal.amount_cents, paid_at: new Date().toISOString() } },
+        body: {
+          type: "partner_withdrawal_paid",
+          to: withdrawal.partner.email,
+          data: {
+            first_name: (withdrawal.partner.full_name || "").split(" ")[0] || "Parceiro",
+            amount_cents: withdrawal.amount_cents,
+            receipt_url: receiptUrl,
+          },
+        },
       }).catch(() => {});
 
       toast({ title: "Pagamento registrado", description: `${fmtBRL(withdrawal.amount_cents)} marcado como pago.` });
@@ -111,6 +119,19 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
     }).eq("id", withdrawal.id);
     setLoading(false);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+
+    // Send approval email (best-effort)
+    supabase.functions.invoke("send-partner-email", {
+      body: {
+        type: "partner_withdrawal_approved",
+        to: withdrawal.partner.email,
+        data: {
+          first_name: (withdrawal.partner.full_name || "").split(" ")[0] || "Parceiro",
+          amount_cents: withdrawal.amount_cents,
+        },
+      },
+    }).catch(() => {});
+
     toast({ title: "Saque aprovado" });
     onUpdated();
     onClose();

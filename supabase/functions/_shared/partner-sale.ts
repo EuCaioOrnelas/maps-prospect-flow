@@ -7,6 +7,9 @@
 //   2. If found and not yet converted, insert into partner_sales (idempotent on stripe_invoice_id when provided).
 //   3. The DB trigger trg_generate_commission_for_sale will create the commission row.
 //   4. Mark the partner_lead as converted on first sale.
+//   5. If this is the FIRST sale for this customer, send partner_first_sale email.
+
+import { sendPartnerEmail } from "./partner-email.ts";
 
 // deno-lint-ignore no-explicit-any
 type SBClient = any;
@@ -91,14 +94,32 @@ export async function registerPartnerSale(
     }
 
     // Mark lead as converted on first sale
-    await supabase
+    const { data: leadUpdate } = await supabase
       .from('partner_leads')
       .update({
         first_paid_at: new Date().toISOString(),
         is_paid_customer: true,
       })
       .eq('id', lead.id)
-      .is('first_paid_at', null);
+      .is('first_paid_at', null)
+      .select('id')
+      .maybeSingle();
+
+    // First sale email (only fires when leadUpdate is non-null = first time converting)
+    if (leadUpdate?.id) {
+      const { data: commission } = await supabase
+        .from('partner_commissions')
+        .select('commission_amount_cents, commission_percent')
+        .eq('partner_sale_id', sale.id)
+        .maybeSingle();
+
+      sendPartnerEmail(supabase, lead.partner_id, 'partner_first_sale', {
+        amount_cents: input.amountCents,
+        commission_cents: commission?.commission_amount_cents || 0,
+        commission_percent: commission?.commission_percent || 0,
+        release_days: 30,
+      }).catch(() => {});
+    }
 
     return { ok: true, saleId: sale.id };
   } catch (e) {
