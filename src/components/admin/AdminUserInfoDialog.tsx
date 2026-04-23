@@ -196,6 +196,16 @@ export const AdminUserInfoDialog = ({ userId, open, onOpenChange }: Props) => {
                     <CreditCard className="h-3 w-3 mr-1" />
                     {(profile.plan || "free").toUpperCase()}
                   </Badge>
+                  {profile.is_custom_subscription && (
+                    <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30">
+                      Custom
+                    </Badge>
+                  )}
+                  {profile.is_blocked && (
+                    <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30">
+                      Bloqueado
+                    </Badge>
+                  )}
                   {scoreData?.score?.last_event_at && (
                     <Badge variant="outline" className="text-xs">
                       <Clock className="h-3 w-3 mr-1" />
