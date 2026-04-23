@@ -67,6 +67,13 @@ interface CreatePartnerBody {
   custom_commission_percent?: number | null;
   internal_notes?: string;
   status?: "active" | "inactive" | "blocked";
+  referral_code?: string;
+}
+
+const REFERRAL_CODE_REGEX = /^[a-z0-9]{3,30}$/;
+
+function normalizeReferralCode(input: string): string {
+  return input.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
 serve(async (req) => {
