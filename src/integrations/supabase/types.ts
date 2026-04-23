@@ -5962,6 +5962,7 @@ export type Database = {
         Returns: Json
       }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      compute_partner_balance: { Args: { p_partner_id: string }; Returns: Json }
       generate_partner_referral_code: {
         Args: { p_full_name: string }
         Returns: string
