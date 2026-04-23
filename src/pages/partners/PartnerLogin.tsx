@@ -39,7 +39,7 @@ export default function PartnerLogin() {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side - Branding with soft background image */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-[hsl(158_72%_32%)] via-[hsl(158_72%_38%)] to-[hsl(158_65%_28%)]">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#31AA62]">
         {/* Soft decorative background */}
         <img
           src={loginBg}
@@ -51,11 +51,11 @@ export default function PartnerLogin() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,hsl(var(--primary-foreground)/0.12),transparent_55%)]" />
 
         <div className="relative z-10 flex flex-col justify-between p-12 text-primary-foreground w-full">
-          <Link to="/" className="flex items-center gap-4 group">
-            <img src={wiizeLogo} alt="Wiize" className="h-44 w-44 object-contain" />
+          <Link to="/" className="flex items-center gap-3 group">
+            <img src={wiizeLogo} alt="Wiize" className="h-20 w-20 object-contain" />
             <div className="flex flex-col leading-tight">
-              <span className="text-3xl font-bold tracking-tight">Wiize</span>
-              <span className="text-sm opacity-80 -mt-0.5">Partners</span>
+              <span className="text-2xl font-bold tracking-tight">Wiize</span>
+              <span className="text-xs opacity-80 -mt-0.5">Partners</span>
             </div>
           </Link>
 
