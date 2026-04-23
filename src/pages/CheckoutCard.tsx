@@ -196,6 +196,8 @@ function CheckoutCardInner() {
           planKey,
           billingPeriod,
           paymentMethodId,
+          promotionCodeId: appliedCoupon?.promotionCodeId,
+          couponId: appliedCoupon?.couponId,
           customerData: {
             ...customerData,
             postalCode: postalCode.replace(/\D/g, ""),
