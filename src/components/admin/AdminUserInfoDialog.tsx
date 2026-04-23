@@ -319,6 +319,13 @@ export const AdminUserInfoDialog = ({ userId, open, onOpenChange }: Props) => {
                 </Card>
               </TabsContent>
 
+              {/* CUSTOM CONTRACT TAB */}
+              {profile?.is_custom_subscription && (
+                <TabsContent value="custom" className="space-y-4 mt-4">
+                  <CustomSubscriptionTab userId={userId} onChanged={loadAll} />
+                </TabsContent>
+              )}
+
               {/* SCORE TAB */}
               <TabsContent value="score" className="space-y-4 mt-4">
                 {scoreData?.score ? (
