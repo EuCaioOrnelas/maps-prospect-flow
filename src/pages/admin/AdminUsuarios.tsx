@@ -19,23 +19,31 @@ export default function AdminUsuarios() {
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
   const [providerFilter, setProviderFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"active" | "archived" | "all">("active");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const loadUsers = async () => {
     setLoading(true);
     const { data } = await supabase
       .from("profiles")
-      .select("*, is_custom_subscription, custom_subscription_id")
+      .select("*, is_custom_subscription, custom_subscription_id, is_archived, archived_at")
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(500);
     setUsers(data || []);
     setLoading(false);
   };
 
   useEffect(() => { loadUsers(); }, []);
 
+  const archivedCount = useMemo(() => users.filter(u => u.is_archived).length, [users]);
+  const activeCount = useMemo(() => users.filter(u => !u.is_archived).length, [users]);
+
   const filtered = useMemo(() => {
     return users.filter(u => {
+      const matchStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && !u.is_archived) ||
+        (statusFilter === "archived" && u.is_archived);
       const matchSearch = !search || u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase());
       const matchPlan = planFilter === "all" || u.plan === planFilter;
       const bucket = getProviderBucket(u.payment_provider);
@@ -44,9 +52,9 @@ export default function AdminUsuarios() {
         (providerFilter === "stripe" && bucket === "stripe") ||
         (providerFilter === "pix" && bucket === "pix") ||
         (providerFilter === "none" && !u.payment_provider);
-      return matchSearch && matchPlan && matchProvider;
+      return matchStatus && matchSearch && matchPlan && matchProvider;
     });
-  }, [users, search, planFilter, providerFilter]);
+  }, [users, statusFilter, search, planFilter, providerFilter]);
 
   const planColors: Record<string, string> = {
     free: "bg-muted text-muted-foreground",
@@ -66,7 +74,9 @@ export default function AdminUsuarios() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Usuários</h1>
-          <p className="text-sm text-muted-foreground mt-1">{users.length} usuários cadastrados</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {activeCount} ativos · {archivedCount} arquivados
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="text-xs">
@@ -102,6 +112,16 @@ export default function AdminUsuarios() {
             <SelectItem value="stripe">Stripe (Cartão)</SelectItem>
             <SelectItem value="pix">Asaas / PIX</SelectItem>
             <SelectItem value="none">Sem pagamento</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Ativos</SelectItem>
+            <SelectItem value="archived">Arquivados</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -144,6 +164,16 @@ export default function AdminUsuarios() {
                             Custom
                           </Badge>
                         )}
+                        {user.is_archived && (
+                          <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground border-border px-1.5 py-0">
+                            Arquivado
+                          </Badge>
+                        )}
+                        {user.is_blocked && !user.is_archived && (
+                          <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/30 px-1.5 py-0">
+                            Bloqueado
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -169,12 +199,13 @@ export default function AdminUsuarios() {
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(user.created_at).toLocaleDateString("pt-BR")}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <UserActionsMenu
                         userId={user.id}
                         userEmail={user.email}
                         userName={user.name}
                         isBlocked={user.is_blocked || false}
+                        isArchived={user.is_archived || false}
                         onActionComplete={loadUsers}
                       />
                     </TableCell>
