@@ -579,13 +579,22 @@ export default function AdminDashboard() {
                   </div>
                 )}
                 {otherMrrVal > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      Outros
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-500/10 text-gray-500">{pctOther}%</span>
-                    </span>
-                    <span className="font-semibold text-foreground">{formatCurrency(otherMrrVal)}</span>
-                  </div>
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground flex items-center gap-2">
+                        Custom (Manual)
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500">{pctOther}%</span>
+                      </span>
+                      <span className="font-semibold text-foreground">{formatCurrency(otherMrrVal)}</span>
+                    </div>
+                    {/* Breakdown por método de pagamento das custom subscriptions */}
+                    {(otherMRR?.byMethod ?? []).map((m) => (
+                      <div key={m.method} className="flex justify-between text-xs pl-3">
+                        <span className="text-muted-foreground/80">↳ {m.label} ({m.count})</span>
+                        <span className="font-medium text-foreground/80">{formatCurrency(m.mrr)}</span>
+                      </div>
+                    ))}
+                  </>
                 )}
               <div className="flex justify-between text-sm pt-1 border-t border-border/20">
                 <span className="text-muted-foreground font-medium">Total MRR</span>
