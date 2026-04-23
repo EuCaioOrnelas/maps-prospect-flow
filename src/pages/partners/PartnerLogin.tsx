@@ -39,7 +39,7 @@ export default function PartnerLogin() {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side - Branding with soft background image */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-[hsl(158_72%_32%)] via-[hsl(158_72%_38%)] to-[hsl(158_65%_28%)]">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#31AA62]">
         {/* Soft decorative background */}
         <img
           src={loginBg}
