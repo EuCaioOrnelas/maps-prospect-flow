@@ -74,143 +74,182 @@ async function checkRateLimit(
   }
 }
 
+// Helper: ALWAYS return HTTP 200 so the client can read the body.
+// supabase-js wraps non-2xx responses in FunctionsHttpError and often discards the body,
+// which is exactly what produced the "non-2xx status code" generic error the user saw.
+function respond(payload: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let stage = 'init';
   try {
+    console.log('[evo-send] === REQUEST START ===');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    
-    // Rate limiting check
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('[evo-send] Missing SUPABASE env');
+      return respond({ success: false, error: 'Configuração do servidor incompleta (SUPABASE env).', stage: 'env' });
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    stage = 'rate_limit';
     const clientIP = getClientIP(req);
     const rateLimitResult = await checkRateLimit(supabase, clientIP, 'evolution-send-message', 100, 60);
-    
     if (!rateLimitResult.allowed) {
-      console.log('Rate limit exceeded for IP:', clientIP);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Muitas requisições. Aguarde alguns segundos.',
-          success: false,
-          retryAfter: rateLimitResult.retryAfter
-        }),
-        { 
-          status: 429, 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json',
-            'Retry-After': String(rateLimitResult.retryAfter || 60)
-          } 
-        }
-      );
+      console.log('[evo-send] Rate limit exceeded for IP:', clientIP);
+      return respond({
+        success: false,
+        error: 'Muitas requisições. Aguarde alguns segundos.',
+        retryAfter: rateLimitResult.retryAfter,
+        stage,
+      });
     }
 
+    stage = 'auth';
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('No authorization header');
+      console.warn('[evo-send] Missing Authorization header');
+      return respond({ success: false, error: 'Sessão expirada — recarregue a página e faça login novamente.', stage });
     }
-    
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
-    if (userError || !user) {
-      throw new Error('Invalid user token');
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !userData?.user) {
+      console.warn('[evo-send] Invalid user token:', userError?.message);
+      return respond({ success: false, error: 'Sessão inválida — faça login novamente.', stage, detail: userError?.message });
     }
+    const user = userData.user;
 
-    const body = await req.json();
+    stage = 'parse_body';
+    let body: any;
+    try {
+      body = await req.json();
+    } catch (e) {
+      console.error('[evo-send] Body parse error:', e);
+      return respond({ success: false, error: 'Corpo da requisição inválido.', stage });
+    }
     const instanceName = body.instanceName ?? body.instance_name;
     const phoneNumber = body.phoneNumber ?? body.phone;
     const message = body.message;
     const numberId = body.numberId ?? body.number_id;
 
     if (!instanceName || !phoneNumber || !message) {
-      return new Response(JSON.stringify({
-        error: 'Campos obrigatórios: instanceName, phoneNumber e message',
+      console.warn('[evo-send] Missing required fields', { hasInstance: !!instanceName, hasPhone: !!phoneNumber, hasMsg: !!message });
+      return respond({
         success: false,
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        error: 'Campos obrigatórios ausentes (instanceName, phoneNumber e message).',
+        stage,
       });
     }
 
-    // Get the correct Evolution API based on the number's api_tier WITH user plan fallback
-    const evoCredentials = await getEvolutionCredentialsForNumber(supabase, numberId, user.id);
+    stage = 'load_credentials';
+    let evoCredentials: EvolutionCredentials;
+    try {
+      evoCredentials = await getEvolutionCredentialsForNumber(supabase, numberId, user.id);
+    } catch (e: any) {
+      console.error('[evo-send] Credentials error:', e?.message);
+      return respond({ success: false, error: `Credenciais Evolution: ${e?.message || 'erro desconhecido'}`, stage });
+    }
     const EVOLUTION_API_URL = evoCredentials.url;
     const EVOLUTION_API_KEY = evoCredentials.apiKey;
 
-    // Format phone number (remove non-digits, add country code if needed)
-    let formattedPhone = phoneNumber.replace(/\D/g, '');
+    let formattedPhone = String(phoneNumber).replace(/\D/g, '');
     if (!formattedPhone.startsWith('55')) {
       formattedPhone = '55' + formattedPhone;
     }
 
-    console.log(`Sending message via ${instanceName} to ${formattedPhone} on ${evoCredentials.tier} API`);
+    stage = 'evolution_request';
+    const targetUrl = `${EVOLUTION_API_URL}/message/sendText/${instanceName}`;
+    console.log(`[evo-send] POST ${targetUrl} (tier=${evoCredentials.tier}, phone=${formattedPhone}, msgLen=${message.length})`);
 
-    // Send message via Evolution API
-    const sendResponse = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': EVOLUTION_API_KEY,
-      },
-      body: JSON.stringify({
-        number: formattedPhone,
-        text: message,
-      }),
-    });
+    let sendResponse: Response;
+    try {
+      sendResponse = await fetch(targetUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': EVOLUTION_API_KEY,
+        },
+        body: JSON.stringify({ number: formattedPhone, text: message }),
+      });
+    } catch (e: any) {
+      console.error('[evo-send] Network error calling Evolution:', e?.message);
+      return respond({
+        success: false,
+        error: `Falha de rede ao contatar Evolution API: ${e?.message || 'erro desconhecido'}`,
+        stage,
+        target: targetUrl,
+      });
+    }
+
+    const rawBody = await sendResponse.text();
+    console.log(`[evo-send] Evolution responded HTTP ${sendResponse.status}: ${rawBody.slice(0, 500)}`);
 
     if (!sendResponse.ok) {
-      const errorText = await sendResponse.text();
-      console.error('Evolution API error:', errorText);
-      throw new Error(`Failed to send message: ${errorText}`);
+      let parsedErr: any = rawBody;
+      try { parsedErr = JSON.parse(rawBody); } catch (_) {}
+      const evoMsg = parsedErr?.message || parsedErr?.error || rawBody || `HTTP ${sendResponse.status}`;
+      return respond({
+        success: false,
+        error: `Evolution API retornou erro: ${typeof evoMsg === 'string' ? evoMsg : JSON.stringify(evoMsg)}`,
+        stage,
+        evolutionStatus: sendResponse.status,
+      });
     }
 
-    const sendData = await sendResponse.json();
-    console.log('Send response:', JSON.stringify(sendData));
+    let sendData: any = {};
+    try { sendData = JSON.parse(rawBody); } catch (_) {}
 
-    // Update daily sent count
+    stage = 'update_counters';
     if (numberId) {
-      const { data: numberData } = await supabase
-        .from('whatsapp_numbers')
-        .select('daily_sent_count, last_sent_at')
-        .eq('id', numberId)
-        .single();
+      try {
+        const { data: numberData } = await supabase
+          .from('whatsapp_numbers')
+          .select('daily_sent_count, last_sent_at')
+          .eq('id', numberId)
+          .maybeSingle();
 
-      const today = new Date().toDateString();
-      const lastSentDate = numberData?.last_sent_at ? new Date(numberData.last_sent_at).toDateString() : null;
-      
-      const newCount = lastSentDate === today ? (numberData?.daily_sent_count || 0) + 1 : 1;
+        const today = new Date().toDateString();
+        const lastSentDate = numberData?.last_sent_at ? new Date(numberData.last_sent_at).toDateString() : null;
+        const newCount = lastSentDate === today ? (numberData?.daily_sent_count || 0) + 1 : 1;
 
-      await supabase
-        .from('whatsapp_numbers')
-        .update({ 
-          daily_sent_count: newCount,
-          last_sent_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', numberId);
+        await supabase
+          .from('whatsapp_numbers')
+          .update({
+            daily_sent_count: newCount,
+            last_sent_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', numberId);
+      } catch (e: any) {
+        // Non-fatal — message already sent
+        console.warn('[evo-send] Counter update failed (non-fatal):', e?.message);
+      }
     }
 
-    return new Response(JSON.stringify({
+    console.log('[evo-send] === SUCCESS ===');
+    return respond({
       success: true,
-      messageId: sendData.key?.id || sendData.messageId,
-      status: sendData.status || 'sent',
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      messageId: sendData?.key?.id || sendData?.messageId,
+      status: sendData?.status || 'sent',
     });
 
   } catch (error: unknown) {
-    console.error('Error in evolution-send-message:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ 
-      error: errorMessage,
+    console.error(`[evo-send] UNHANDLED error at stage="${stage}":`, errorMessage);
+    return respond({
       success: false,
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      error: errorMessage,
+      stage,
     });
   }
 });
