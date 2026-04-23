@@ -84,18 +84,18 @@ function SectionCard({
   accent?: "primary" | "amber" | "emerald" | "violet" | "sky";
 }) {
   const accents = {
-    primary: "before:bg-primary/40",
-    amber: "before:bg-amber-500/40",
-    emerald: "before:bg-emerald-500/40",
-    violet: "before:bg-violet-500/40",
-    sky: "before:bg-sky-500/40",
+    primary: "before:bg-primary/30",
+    amber: "before:bg-primary/30",
+    emerald: "before:bg-primary/30",
+    violet: "before:bg-primary/30",
+    sky: "before:bg-primary/30",
   };
   const iconBg = {
     primary: "bg-primary/10 text-primary ring-primary/20",
-    amber: "bg-amber-500/10 text-amber-500 ring-amber-500/20",
-    emerald: "bg-emerald-500/10 text-emerald-500 ring-emerald-500/20",
-    violet: "bg-violet-500/10 text-violet-500 ring-violet-500/20",
-    sky: "bg-sky-500/10 text-sky-500 ring-sky-500/20",
+    amber: "bg-primary/10 text-primary ring-primary/20",
+    emerald: "bg-primary/10 text-primary ring-primary/20",
+    violet: "bg-primary/10 text-primary ring-primary/20",
+    sky: "bg-primary/10 text-primary ring-primary/20",
   };
 
   return (
