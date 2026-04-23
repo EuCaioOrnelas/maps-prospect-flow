@@ -100,6 +100,7 @@ export default function AdminPartnerDetail() {
     internal_notes: "",
   });
   const [newPassword, setNewPassword] = useState("");
+  const [newReferralCode, setNewReferralCode] = useState("");
   const [copied, setCopied] = useState(false);
 
   const load = async () => {
@@ -196,6 +197,20 @@ export default function AdminPartnerDetail() {
     await callUpdate({ reset_referral_code: true }, "Novo código gerado");
   };
 
+  const onApplyCustomReferral = async () => {
+    const candidate = newReferralCode.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (candidate.length < 3 || candidate.length > 30) {
+      toast({ title: "Código inválido", description: "Use de 3 a 30 letras/números, sem espaços ou símbolos.", variant: "destructive" });
+      return;
+    }
+    if (partner && candidate === partner.referral_code) {
+      toast({ title: "Sem alterações", description: "Este já é o código atual." });
+      return;
+    }
+    const ok = await callUpdate({ referral_code: candidate }, "Código atualizado");
+    if (ok) setNewReferralCode("");
+  };
+
   const onToggleBlock = async () => {
     if (!partner) return;
     const next: Status = partner.status === "blocked" ? "active" : "blocked";
@@ -258,9 +273,7 @@ export default function AdminPartnerDetail() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" className="gap-2" onClick={onResetReferral} disabled={saving}>
-              <RefreshCcw size={14} /> Resetar código
-            </Button>
+            {/* Reset rápido continua útil; edição completa fica em Configurações */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
@@ -561,6 +574,35 @@ export default function AdminPartnerDetail() {
                   Aplicar
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60">
+            <CardContent className="p-6 space-y-4">
+              <div className="text-sm font-semibold flex items-center gap-2"><RefreshCcw size={16} /> Código de indicação</div>
+              <p className="text-xs text-muted-foreground">
+                Código atual: <span className="font-mono font-semibold text-foreground">{partner.referral_code}</span>. Você pode definir um código personalizado (3-30 letras/números, sem espaços) ou gerar um novo automaticamente.
+              </p>
+              <div className="flex flex-wrap gap-2 max-w-2xl">
+                <Input
+                  className="flex-1 min-w-[200px] font-mono"
+                  placeholder={`Novo código (ex: ${partner.full_name.split(" ")[0]?.toLowerCase() || "parceiro"})`}
+                  value={newReferralCode}
+                  onChange={(e) => setNewReferralCode(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ""))}
+                  maxLength={30}
+                />
+                <Button onClick={onApplyCustomReferral} disabled={saving || newReferralCode.length < 3} className="gap-2">
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  Aplicar
+                </Button>
+                <Button variant="outline" onClick={onResetReferral} disabled={saving} className="gap-2">
+                  <RefreshCcw size={14} />
+                  Gerar aleatório
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                ⚠️ Trocar o código invalida o link de indicação anterior. Cliques e leads já registrados continuam vinculados ao parceiro.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>

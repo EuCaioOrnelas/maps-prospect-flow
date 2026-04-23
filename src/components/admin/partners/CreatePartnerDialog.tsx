@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, User, Mail, Phone, Lock, Award, Percent, FileText } from "lucide-react";
+import { Loader2, User, Mail, Phone, Lock, Award, Percent, FileText, Link2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,12 +27,13 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
     level: "bronze" as const,
     custom_commission_percent: "",
     internal_notes: "",
+    referral_code: "",
   });
   const { toast } = useToast();
 
   const reset = () => setForm({
     full_name: "", email: "", password: "", phone: "", company: "", tax_id: "",
-    level: "bronze", custom_commission_percent: "", internal_notes: "",
+    level: "bronze", custom_commission_percent: "", internal_notes: "", referral_code: "",
   });
 
   const submit = async () => {
@@ -46,6 +47,7 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
         body: {
           ...form,
           custom_commission_percent: form.custom_commission_percent ? Number(form.custom_commission_percent) : null,
+          referral_code: form.referral_code.trim() || undefined,
         },
       });
       if (error) throw error;
@@ -117,6 +119,17 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
           <div className="space-y-2">
             <Label className="flex items-center gap-1.5"><Percent size={14} /> Comissão personalizada (%)</Label>
             <Input type="number" min="0" max="100" step="0.01" value={form.custom_commission_percent} onChange={(e) => setForm({ ...form, custom_commission_percent: e.target.value })} placeholder="Deixe vazio para usar % do nível" />
+          </div>
+
+          <div className="md:col-span-2 space-y-2">
+            <Label className="flex items-center gap-1.5"><Link2 size={14} /> Código de indicação (opcional)</Label>
+            <Input
+              value={form.referral_code}
+              onChange={(e) => setForm({ ...form, referral_code: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "") })}
+              placeholder="Ex: joaosilva (deixe vazio para gerar automaticamente)"
+              maxLength={30}
+            />
+            <p className="text-xs text-muted-foreground">3 a 30 letras/números, sem espaços ou símbolos. Se vazio, é gerado a partir do nome.</p>
           </div>
 
           <div className="md:col-span-2 space-y-2">
