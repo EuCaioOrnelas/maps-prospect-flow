@@ -1063,6 +1063,182 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_subscription_payments: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          custom_subscription_id: string
+          id: string
+          notes: string | null
+          paid_at: string
+          payment_method: string
+          receipt_file_name: string | null
+          receipt_file_url: string | null
+          recorded_by_admin_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          custom_subscription_id: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          payment_method?: string
+          receipt_file_name?: string | null
+          receipt_file_url?: string | null
+          recorded_by_admin_id: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          custom_subscription_id?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          payment_method?: string
+          receipt_file_name?: string | null
+          receipt_file_url?: string | null
+          recorded_by_admin_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_subscription_payments_custom_subscription_id_fkey"
+            columns: ["custom_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "custom_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_subscription_renewals: {
+        Row: {
+          id: string
+          new_subscription_id: string
+          notes: string | null
+          previous_subscription_id: string
+          renewed_at: string
+          renewed_by_admin_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          new_subscription_id: string
+          notes?: string | null
+          previous_subscription_id: string
+          renewed_at?: string
+          renewed_by_admin_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          new_subscription_id?: string
+          notes?: string | null
+          previous_subscription_id?: string
+          renewed_at?: string
+          renewed_by_admin_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_subscription_renewals_new_subscription_id_fkey"
+            columns: ["new_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "custom_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_subscription_renewals_previous_subscription_id_fkey"
+            columns: ["previous_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "custom_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_subscriptions: {
+        Row: {
+          cancel_reason: string | null
+          canceled_at: string | null
+          contract_file_name: string | null
+          contract_file_url: string | null
+          contract_months: number | null
+          created_at: string
+          created_by_admin_id: string
+          ends_at: string | null
+          id: string
+          is_lifetime: boolean
+          monthly_value_cents: number
+          notes: string | null
+          payment_method: string
+          payment_notes: string | null
+          plan: string
+          renewed_into_id: string | null
+          searches_limit: number
+          starts_at: string
+          status: string
+          subscription_label: string | null
+          total_value_cents: number
+          updated_at: string
+          user_id: string
+          whatsapp_numbers_limit: number
+        }
+        Insert: {
+          cancel_reason?: string | null
+          canceled_at?: string | null
+          contract_file_name?: string | null
+          contract_file_url?: string | null
+          contract_months?: number | null
+          created_at?: string
+          created_by_admin_id: string
+          ends_at?: string | null
+          id?: string
+          is_lifetime?: boolean
+          monthly_value_cents?: number
+          notes?: string | null
+          payment_method?: string
+          payment_notes?: string | null
+          plan: string
+          renewed_into_id?: string | null
+          searches_limit?: number
+          starts_at?: string
+          status?: string
+          subscription_label?: string | null
+          total_value_cents?: number
+          updated_at?: string
+          user_id: string
+          whatsapp_numbers_limit?: number
+        }
+        Update: {
+          cancel_reason?: string | null
+          canceled_at?: string | null
+          contract_file_name?: string | null
+          contract_file_url?: string | null
+          contract_months?: number | null
+          created_at?: string
+          created_by_admin_id?: string
+          ends_at?: string | null
+          id?: string
+          is_lifetime?: boolean
+          monthly_value_cents?: number
+          notes?: string | null
+          payment_method?: string
+          payment_notes?: string | null
+          plan?: string
+          renewed_into_id?: string | null
+          searches_limit?: number
+          starts_at?: string
+          status?: string
+          subscription_label?: string | null
+          total_value_cents?: number
+          updated_at?: string
+          user_id?: string
+          whatsapp_numbers_limit?: number
+        }
+        Relationships: []
+      }
       email_flow_edges: {
         Row: {
           condition_label: string | null
@@ -2205,11 +2381,15 @@ export type Database = {
           city: string | null
           cpf: string | null
           created_at: string
+          custom_searches_limit: number | null
+          custom_subscription_id: string | null
+          custom_whatsapp_numbers_limit: number | null
           device_fingerprint: string | null
           email: string
           fraud_flags: Json | null
           id: string
           is_blocked: boolean | null
+          is_custom_subscription: boolean
           last_searches_reset: string | null
           name: string | null
           neighborhood: string | null
@@ -2256,11 +2436,15 @@ export type Database = {
           city?: string | null
           cpf?: string | null
           created_at?: string
+          custom_searches_limit?: number | null
+          custom_subscription_id?: string | null
+          custom_whatsapp_numbers_limit?: number | null
           device_fingerprint?: string | null
           email: string
           fraud_flags?: Json | null
           id: string
           is_blocked?: boolean | null
+          is_custom_subscription?: boolean
           last_searches_reset?: string | null
           name?: string | null
           neighborhood?: string | null
@@ -2307,11 +2491,15 @@ export type Database = {
           city?: string | null
           cpf?: string | null
           created_at?: string
+          custom_searches_limit?: number | null
+          custom_subscription_id?: string | null
+          custom_whatsapp_numbers_limit?: number | null
           device_fingerprint?: string | null
           email?: string
           fraud_flags?: Json | null
           id?: string
           is_blocked?: boolean | null
+          is_custom_subscription?: boolean
           last_searches_reset?: string | null
           name?: string | null
           neighborhood?: string | null

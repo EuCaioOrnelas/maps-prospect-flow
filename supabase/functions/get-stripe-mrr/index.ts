@@ -485,21 +485,95 @@ Deno.serve(async (req) => {
       monthlyMRR[monthKey] = { mrr: mrrForMonth, activeCount: activeForMonth };
     }
 
-    console.log(`[GET-STRIPE-MRR] Active MRR: R$ ${activeMRR}, Active: ${activeCount}, Canceled: ${canceledCount}, Churn: ${churnRate.toFixed(1)}%`);
-    console.log(`[GET-STRIPE-MRR] Total Sales: R$ ${totalSalesValue} (${totalSalesCount} transactions)`);
-    console.log(`[GET-STRIPE-MRR] Refunds: ${wiizeRefundCount} (R$ ${wiizeRefundedAmount})`);
+    // ============================================================
+    // Custom subscriptions (admin-managed manual contracts)
+    // - MRR uses monthly_value_cents directly
+    // - Active = status='active' AND (is_lifetime OR ends_at > now)
+    // - Total sales/LTV uses sum of payments
+    // ============================================================
+    const { data: customSubs } = await supabaseAdmin
+      .from("custom_subscriptions")
+      .select("id, status, monthly_value_cents, total_value_cents, is_lifetime, starts_at, ends_at, created_at, plan, canceled_at");
+
+    const { data: customPayments } = await supabaseAdmin
+      .from("custom_subscription_payments")
+      .select("amount_cents, paid_at");
+
+    let customMRR = 0;
+    let customActiveCount = 0;
+    let customCanceledCount = 0;
+    const nowMs = Date.now();
+
+    for (const cs of customSubs || []) {
+      const isActive =
+        cs.status === "active" &&
+        (cs.is_lifetime || (cs.ends_at && new Date(cs.ends_at).getTime() > nowMs));
+      if (isActive) {
+        customMRR += (cs.monthly_value_cents || 0) / 100;
+        customActiveCount++;
+        const planKey = `${cs.plan}_custom`;
+        planDistribution[planKey] = (planDistribution[planKey] || 0) + 1;
+      } else if (cs.status === "canceled" || cs.status === "expired") {
+        customCanceledCount++;
+        if (cs.canceled_at) {
+          const canceledMs = new Date(cs.canceled_at).getTime();
+          if (canceledMs >= nowMs - 30 * 24 * 60 * 60 * 1000) cancellationsLast30d++;
+        }
+      }
+    }
+
+    let customSalesValue = 0;
+    let customSalesCount = 0;
+    for (const p of customPayments || []) {
+      const amount = (p.amount_cents || 0) / 100;
+      customSalesValue += amount;
+      customSalesCount++;
+      const d = new Date(p.paid_at);
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (!monthlySales[monthKey]) {
+        monthlySales[monthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
+      }
+      monthlySales[monthKey].newSales++;
+      monthlySales[monthKey].salesValue += amount;
+    }
+
+    // Add custom MRR to monthly snapshot for current month
+    if (monthlyMRR[currentMonthKey]) {
+      monthlyMRR[currentMonthKey].mrr += customMRR;
+      monthlyMRR[currentMonthKey].activeCount += customActiveCount;
+    } else {
+      monthlyMRR[currentMonthKey] = { mrr: customMRR, activeCount: customActiveCount };
+    }
+
+    const finalMRR = activeMRR + customMRR;
+    const finalActiveCount = activeCount + customActiveCount;
+    const finalCanceledCount = canceledCount + customCanceledCount;
+    const finalSalesValue = totalSalesValue + customSalesValue;
+    const finalSalesCount = totalSalesCount + customSalesCount;
+    const finalBase = finalActiveCount + finalCanceledCount;
+    const finalChurn = finalBase > 0 ? (finalCanceledCount / finalBase) * 100 : 0;
+
+    console.log(
+      `[GET-STRIPE-MRR] Stripe MRR: R$ ${activeMRR} (${activeCount}) | Custom MRR: R$ ${customMRR} (${customActiveCount}) | Total: R$ ${finalMRR}`
+    );
+    console.log(`[GET-STRIPE-MRR] Total Sales: R$ ${finalSalesValue} (${finalSalesCount})`);
+
     return new Response(
       JSON.stringify({
-        totalMRR: activeMRR,
-        activeSubscriptions: activeCount,
+        totalMRR: finalMRR,
+        stripeMRR: activeMRR,
+        customMRR,
+        activeSubscriptions: finalActiveCount,
+        stripeActiveSubscriptions: activeCount,
+        customActiveSubscriptions: customActiveCount,
         totalRefunded: wiizeRefundedAmount,
         refundCount: wiizeRefundCount,
-        canceledSubscriptions: canceledCount,
+        canceledSubscriptions: finalCanceledCount,
         cancellationsLast30d,
-        churnRate: parseFloat(churnRate.toFixed(1)),
-        totalSalesValue,
-        totalSalesCount,
-        totalNewSales,
+        churnRate: parseFloat(finalChurn.toFixed(1)),
+        totalSalesValue: finalSalesValue,
+        totalSalesCount: finalSalesCount,
+        totalNewSales: finalSalesCount,
         planDistribution,
         monthlyMRR: Object.entries(monthlyMRR)
           .map(([month, data]) => ({ month, mrr: data.mrr, activeCount: data.activeCount }))
