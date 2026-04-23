@@ -121,13 +121,20 @@ function useNewSystemMetrics(): NewSystemMetrics {
       .eq("status", "paid")
       .gte("paid_at", sixMonthsAgo.toISOString());
 
-    // ----- Filter: novo sistema = APENAS Asaas (PIX). Stripe entra no Cockpit pelo
-    // get-stripe-mrr; Abacate Pay e providers nulos NÃO contam mais. -----
+    // STEP D — Custom subscriptions (admin-created manual users) — fonte de verdade
+    // do MRR/novas vendas para clientes vendidos no manual (PIX direto, transferência, etc.)
+    const { data: customSubs } = await supabase
+      .from("custom_subscriptions")
+      .select("user_id, monthly_value_cents, status, starts_at, ends_at, is_lifetime, created_at")
+      .eq("status", "active");
+
+    // ----- Filter: novo sistema = Asaas (PIX recorrente) + Manual (custom subs).
+    // Stripe entra no Cockpit pelo get-stripe-mrr; abacate/null não contam mais. -----
     const newSystemProfiles = (profiles || []).filter(
-      (p: any) => p.payment_provider === "asaas"
+      (p: any) => p.payment_provider === "asaas" || p.payment_provider === "manual"
     );
     const newSystemCancellations = (cancellations || []).filter(
-      (c: any) => c.provider === "asaas"
+      (c: any) => c.provider === "asaas" || c.provider === "manual"
     );
 
     // ----- Build last 6 month keys: ["2025-06", ...] -----
@@ -135,6 +142,16 @@ function useNewSystemMetrics(): NewSystemMetrics {
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+
+    // Mapa user_id -> monthly_value (R$) das custom subs ativas (fonte da receita real manual)
+    const customMonthlyByUser = new Map<string, number>();
+    for (const sub of (customSubs || []) as any[]) {
+      if (!sub.is_lifetime && sub.ends_at && new Date(sub.ends_at) < now) continue;
+      const monthly = (sub.monthly_value_cents || 0) / 100;
+      if (monthly <= 0) continue;
+      // se houver múltiplas, soma (raro mas seguro)
+      customMonthlyByUser.set(sub.user_id, (customMonthlyByUser.get(sub.user_id) || 0) + monthly);
     }
 
     // ----- Aggregate new clients & revenue per month -----
@@ -145,7 +162,12 @@ function useNewSystemMetrics(): NewSystemMetrics {
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       if (!monthKeys.includes(key)) continue;
       monthlyNewClients[key] = (monthlyNewClients[key] || 0) + 1;
-      monthlyNewRevenue[key] = (monthlyNewRevenue[key] || 0) + (PLAN_PRICES_MONTHLY[p.plan] || 0);
+      // Para usuários manuais, usa o monthly_value_cents real da custom_subscription;
+      // para asaas, usa o preço de tabela do plano.
+      const revenue = p.payment_provider === "manual"
+        ? (customMonthlyByUser.get(p.id) || (p.subscription_price_cents ? p.subscription_price_cents / 100 : 0))
+        : (PLAN_PRICES_MONTHLY[p.plan] || 0);
+      monthlyNewRevenue[key] = (monthlyNewRevenue[key] || 0) + revenue;
     }
 
     // PIX renewal revenue per month (counts as recurring revenue, not new sales)
