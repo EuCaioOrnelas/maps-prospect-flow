@@ -40,15 +40,16 @@ export default function PartnerLogin() {
     <div className="min-h-screen flex bg-background">
       {/* Left side - Branding with soft background image */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#31AA62]">
-        {/* Soft decorative background */}
+        {/* Rich gradient layers */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#31AA62] via-[#249651] to-[#0f5d33]" />
         <img
           src={loginBg}
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-soft-light pointer-events-none select-none"
+          className="absolute inset-0 w-full h-full object-cover opacity-15 mix-blend-overlay pointer-events-none select-none"
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary-foreground)/0.18),transparent_55%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,hsl(var(--primary-foreground)/0.12),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(255,255,255,0.18),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_85%,rgba(0,0,0,0.25),transparent_55%)]" />
 
         <div className="relative z-10 flex flex-col justify-between p-12 text-primary-foreground w-full">
           <div />
@@ -67,22 +68,22 @@ export default function PartnerLogin() {
             </div>
 
             <div className="grid grid-cols-1 gap-3 max-w-sm">
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-primary-foreground/5 backdrop-blur-sm border border-primary-foreground/10">
-                <div className="h-8 w-8 rounded-md bg-primary-foreground/15 flex items-center justify-center shrink-0">
-                  <TrendingUp size={16} />
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-white/15 backdrop-blur-md border border-white/25 shadow-lg shadow-black/10">
+                <div className="h-10 w-10 rounded-lg bg-white/25 flex items-center justify-center shrink-0 ring-1 ring-white/30">
+                  <TrendingUp size={18} />
                 </div>
                 <div>
                   <div className="text-sm font-semibold">Comissões recorrentes</div>
-                  <div className="text-xs opacity-80">Ganhe enquanto seus indicados forem clientes</div>
+                  <div className="text-xs opacity-95">Ganhe enquanto seus indicados forem clientes</div>
                 </div>
               </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-primary-foreground/5 backdrop-blur-sm border border-primary-foreground/10">
-                <div className="h-8 w-8 rounded-md bg-primary-foreground/15 flex items-center justify-center shrink-0">
-                  <ShieldCheck size={16} />
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-white/15 backdrop-blur-md border border-white/25 shadow-lg shadow-black/10">
+                <div className="h-10 w-10 rounded-lg bg-white/25 flex items-center justify-center shrink-0 ring-1 ring-white/30">
+                  <ShieldCheck size={18} />
                 </div>
                 <div>
                   <div className="text-sm font-semibold">Saques transparentes</div>
-                  <div className="text-xs opacity-80">Acompanhe cada centavo do seu saldo</div>
+                  <div className="text-xs opacity-95">Acompanhe cada centavo do seu saldo</div>
                 </div>
               </div>
             </div>
