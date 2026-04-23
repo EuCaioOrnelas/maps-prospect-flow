@@ -24,6 +24,7 @@ import {
   RotateCcw,
   Star,
   MessageCircle,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,6 +33,7 @@ import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { Elements, useStripe, useElements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
+import { CouponInputCard, type AppliedCoupon } from "@/components/checkout/CouponInputCard";
 
 function formatCurrency(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
@@ -98,6 +100,7 @@ function CheckoutCardInner() {
   const [cepError, setCepError] = useState("");
   const [cvvFocused, setCvvFocused] = useState(false);
   const [installmentDropdownOpen, setInstallmentDropdownOpen] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   // Load customer data from sessionStorage
   useEffect(() => {
@@ -173,6 +176,19 @@ function CheckoutCardInner() {
   const totalPrice = planConfig ? (isAnnual ? planConfig.annual : planConfig.monthly) : 0;
   const installmentValue = totalPrice;
 
+  // Calcula desconto da primeira cobrança (apenas referência visual no resumo)
+  const discountCents = (() => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.percentOff) {
+      return Math.round((totalPrice * appliedCoupon.percentOff) / 100);
+    }
+    if (appliedCoupon.amountOff) {
+      return Math.min(appliedCoupon.amountOff, totalPrice);
+    }
+    return 0;
+  })();
+  const totalAfterDiscount = Math.max(0, totalPrice - discountCents);
+
   const handleSubmit = async () => {
     if (!customerData || !planKey || !isCardValid) return;
     setLoading(true);
@@ -194,6 +210,8 @@ function CheckoutCardInner() {
           planKey,
           billingPeriod,
           paymentMethodId,
+          promotionCodeId: appliedCoupon?.promotionCodeId,
+          couponId: appliedCoupon?.couponId,
           customerData: {
             ...customerData,
             postalCode: postalCode.replace(/\D/g, ""),
@@ -496,11 +514,37 @@ function CheckoutCardInner() {
                   <span className="font-medium text-foreground text-xs truncate max-w-[180px]">{customerData?.email}</span>
                 </div>
                 <div className="h-px bg-border/50" />
+                {appliedCoupon && (
+                  <>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span className="font-medium text-foreground line-through opacity-70">
+                        {formatCurrency(totalPrice)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                          <Sparkles className="h-3 w-3" /> Cupom {appliedCoupon.code}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+                          {appliedCoupon.description}
+                        </span>
+                      </div>
+                      <span className="text-xs font-semibold text-emerald-600 whitespace-nowrap">
+                        −{formatCurrency(discountCents)}
+                      </span>
+                    </div>
+                    <div className="h-px bg-border/50" />
+                  </>
+                )}
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold text-foreground">Total</span>
+                  <span className="font-semibold text-foreground">
+                    {appliedCoupon ? "Cobrança hoje" : "Total"}
+                  </span>
                   <div className="text-right">
                     <span className="font-bold text-lg text-foreground block">
-                      {isAnnual ? formatCurrency(planConfig.annual) : formatCurrency(planConfig.monthly)}
+                      {formatCurrency(totalAfterDiscount)}
                     </span>
                     {isAnnual ? (
                       <span className="text-xs text-muted-foreground">
@@ -508,13 +552,27 @@ function CheckoutCardInner() {
                       </span>
                     ) : (
                       <span className="text-xs text-muted-foreground">
-                        cobrado todo mês
+                        {appliedCoupon ? "primeira cobrança mensal" : "cobrado todo mês"}
+                      </span>
+                    )}
+                    {appliedCoupon && appliedCoupon.duration !== "forever" && (
+                      <span className="text-[10px] text-muted-foreground/80 block mt-1 italic">
+                        Após o desconto: {formatCurrency(totalPrice)}/{isAnnual ? "ano" : "mês"}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* Coupon card — abaixo do detalhe do plano e acima das info de segurança */}
+            <CouponInputCard
+              planKey={planKey}
+              billingPeriod={billingPeriod}
+              applied={appliedCoupon}
+              onApply={setAppliedCoupon}
+              onRemove={() => setAppliedCoupon(null)}
+            />
 
             {/* Testimonials */}
             <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
