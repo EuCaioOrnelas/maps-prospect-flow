@@ -139,7 +139,7 @@ export default function PartnerLogin() {
                     className="h-11"
                   />
                 </div>
-                <Button type="submit" className="w-full h-11 font-semibold" disabled={loading}>
+                <Button type="submit" className="w-full h-11 font-semibold bg-[#31AA62] hover:bg-[#2a9555] text-white" disabled={loading}>
                   {loading ? (
                     <><Loader2 className="animate-spin mr-2" size={16} />Entrando...</>
                   ) : (
