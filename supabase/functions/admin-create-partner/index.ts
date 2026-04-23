@@ -192,12 +192,30 @@ serve(async (req) => {
       console.warn("[admin-create-partner] role insert warning:", roleErr.message);
     }
 
-    // Generate referral code
-    const { data: codeData, error: codeErr } = await supabaseAdmin.rpc("generate_partner_referral_code", {
-      p_full_name: body.full_name,
-    });
-    if (codeErr) {
-      console.error("[admin-create-partner] referral code error", codeErr);
+    // Determine referral code: use custom (if provided & unique) or auto-generate
+    let referralCode: string | null = null;
+    if (body.referral_code && body.referral_code.trim()) {
+      const candidate = normalizeReferralCode(body.referral_code);
+      if (!REFERRAL_CODE_REGEX.test(candidate)) {
+        return new Response(JSON.stringify({ error: "Código de referral inválido. Use 3 a 30 letras/números, sem espaços ou símbolos." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: existingCode } = await supabaseAdmin
+        .from("partners")
+        .select("id")
+        .eq("referral_code", candidate)
+        .maybeSingle();
+      if (existingCode) {
+        return new Response(JSON.stringify({ error: `Código "${candidate}" já está em uso por outro parceiro.` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      referralCode = candidate;
+    } else {
+      const { data: codeData, error: codeErr } = await supabaseAdmin.rpc("generate_partner_referral_code", {
+        p_full_name: body.full_name,
+      });
+      if (codeErr) {
+        console.error("[admin-create-partner] referral code error", codeErr);
+      }
+      referralCode = codeData || `partner${Date.now()}`;
     }
 
     // Create partner record
@@ -211,7 +229,7 @@ serve(async (req) => {
         company: body.company || null,
         tax_id: body.tax_id || null,
         country: body.country || "BR",
-        referral_code: codeData || `partner${Date.now()}`,
+        referral_code: referralCode,
         level: body.level || "bronze",
         status: body.status || "active",
         custom_commission_percent: body.custom_commission_percent ?? null,
