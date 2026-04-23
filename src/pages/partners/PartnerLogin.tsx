@@ -39,7 +39,7 @@ export default function PartnerLogin() {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side - Branding with soft background image */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#31AA62]">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-primary">
         {/* Soft decorative background */}
         <img
           src={loginBg}
@@ -51,13 +51,7 @@ export default function PartnerLogin() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,hsl(var(--primary-foreground)/0.12),transparent_55%)]" />
 
         <div className="relative z-10 flex flex-col justify-between p-12 text-primary-foreground w-full">
-          <Link to="/" className="flex items-center gap-1 group">
-            <img src={wiizeLogo} alt="Wiize" className="h-20 w-20 object-contain" />
-            <div className="flex flex-col leading-tight">
-              <span className="text-3xl font-bold tracking-tight">Wiize</span>
-              <span className="text-sm opacity-80 -mt-0.5">Partners</span>
-            </div>
-          </Link>
+          <div />
 
           <div className="space-y-8">
             <div>
@@ -103,20 +97,18 @@ export default function PartnerLogin() {
       {/* Right side - clean form, no background image */}
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-background">
         <div className="w-full max-w-md">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <img src={wiizeLogo} alt="Wiize" className="h-11 w-11 object-contain" />
-            <div className="flex flex-col leading-tight">
-              <span className="text-xl font-bold tracking-tight">Wiize</span>
-              <span className="text-xs text-muted-foreground -mt-0.5">Partners</span>
-            </div>
-          </div>
-
           <Card className="border-border/60 shadow-xl shadow-primary/5">
             <CardContent className="p-8">
-              <div className="mb-7">
+              <div className="flex flex-col items-center mb-7">
+                <Link to="/" className="flex items-center gap-1 mb-4">
+                  <img src={wiizeLogo} alt="Wiize" className="h-16 w-16 object-contain" />
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-2xl font-bold tracking-tight">Wiize</span>
+                    <span className="text-xs text-muted-foreground -mt-0.5">Partners</span>
+                  </div>
+                </Link>
                 <h2 className="text-2xl font-bold tracking-tight">Entrar no portal</h2>
-                <p className="text-sm text-muted-foreground mt-1.5">
+                <p className="text-sm text-muted-foreground mt-1.5 text-center">
                   Acesse seu painel de parceiro Wiize.
                 </p>
               </div>
