@@ -175,6 +175,19 @@ function CheckoutCardInner() {
   const totalPrice = planConfig ? (isAnnual ? planConfig.annual : planConfig.monthly) : 0;
   const installmentValue = totalPrice;
 
+  // Calcula desconto da primeira cobrança (apenas referência visual no resumo)
+  const discountCents = (() => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.percentOff) {
+      return Math.round((totalPrice * appliedCoupon.percentOff) / 100);
+    }
+    if (appliedCoupon.amountOff) {
+      return Math.min(appliedCoupon.amountOff, totalPrice);
+    }
+    return 0;
+  })();
+  const totalAfterDiscount = Math.max(0, totalPrice - discountCents);
+
   const handleSubmit = async () => {
     if (!customerData || !planKey || !isCardValid) return;
     setLoading(true);
