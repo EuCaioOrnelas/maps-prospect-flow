@@ -82,8 +82,25 @@ serve(async (req) => {
       if (body[f] !== undefined) updates[f] = body[f];
     }
 
-    // Reset referral code if requested
-    if (body.reset_referral_code) {
+    // Custom referral code (takes precedence over reset)
+    if (body.referral_code && body.referral_code.trim()) {
+      const candidate = normalizeReferralCode(body.referral_code);
+      if (!REFERRAL_CODE_REGEX.test(candidate)) {
+        return new Response(JSON.stringify({ error: "Código de referral inválido. Use 3 a 30 letras/números, sem espaços ou símbolos." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      // Ensure uniqueness (allow keeping the same code for this partner)
+      const { data: existingCode } = await supabaseAdmin
+        .from("partners")
+        .select("id")
+        .eq("referral_code", candidate)
+        .neq("id", partner.id)
+        .maybeSingle();
+      if (existingCode) {
+        return new Response(JSON.stringify({ error: `Código "${candidate}" já está em uso por outro parceiro.` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      updates.referral_code = candidate;
+    } else if (body.reset_referral_code) {
+      // Auto-generate new code
       const { data: codeData, error: codeErr } = await supabaseAdmin.rpc("generate_partner_referral_code", {
         p_full_name: body.full_name || partner.full_name,
       });
