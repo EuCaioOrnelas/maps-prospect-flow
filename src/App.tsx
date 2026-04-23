@@ -148,6 +148,7 @@ const App = () => (
           <AuthProvider>
             <GuidedTourProvider>
             <Suspense fallback={<PageLoader />}>
+              <PartnerTrackingProvider>
               <Routes>
                 <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />
                 
@@ -261,6 +262,7 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />
               </Routes>
+              </PartnerTrackingProvider>
             </Suspense>
             <ActivationChecklist />
             <GuidedTour />
