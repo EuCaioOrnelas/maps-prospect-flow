@@ -44,6 +44,7 @@ export default function AdminPartnersList() {
   const [createOpen, setCreateOpen] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const load = async () => {
     setLoading(true);
@@ -65,7 +66,8 @@ export default function AdminPartnersList() {
     return p.full_name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q) || p.referral_code.toLowerCase().includes(q);
   });
 
-  const copyLink = async (code: string) => {
+  const copyLink = async (e: React.MouseEvent, code: string) => {
+    e.stopPropagation();
     const url = `${window.location.origin}/?ref=${code}`;
     await navigator.clipboard.writeText(url);
     setCopiedCode(code);
