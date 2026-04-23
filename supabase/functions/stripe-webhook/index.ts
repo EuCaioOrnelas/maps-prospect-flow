@@ -1,7 +1,167 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { registerPartnerSale } from "../_shared/partner-sale.ts";
+
+async function sendPartnerEmail(
+  supabase: any,
+  partnerId: string,
+  type: string,
+  extraData: Record<string, unknown> = {}
+): Promise<void> {
+  try {
+    const { data: partner } = await supabase
+      .from("partners")
+      .select("email, full_name, referral_code, user_id")
+      .eq("id", partnerId)
+      .maybeSingle();
+
+    if (!partner?.email) {
+      console.warn(`[sendPartnerEmail] partner ${partnerId} has no email`);
+      return;
+    }
+
+    const firstName = (partner.full_name || "").split(" ")[0] || "Parceiro";
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const resp = await fetch(`${supabaseUrl}/functions/v1/send-partner-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({
+        type,
+        to: partner.email,
+        data: {
+          first_name: firstName,
+          referral_code: partner.referral_code,
+          user_id: partner.user_id,
+          ...extraData,
+        },
+      }),
+    });
+
+    if (!resp.ok) {
+      const txt = await resp.text();
+      console.error(`[sendPartnerEmail] ${type} failed:`, resp.status, txt);
+    }
+  } catch (e) {
+    console.error("[sendPartnerEmail] exception:", e);
+  }
+}
+
+interface RegisterPartnerSaleInput {
+  userId: string;
+  email?: string | null;
+  amountCents: number;
+  plan?: string | null;
+  billingPeriod?: 'monthly' | 'yearly' | null;
+  paymentMethod: 'stripe' | 'asaas_pix' | 'manual';
+  stripeInvoiceId?: string | null;
+  stripeSubscriptionId?: string | null;
+  asaasPaymentId?: string | null;
+  paidAt?: string;
+  isRecurring?: boolean;
+}
+
+async function registerPartnerSale(
+  supabase: any,
+  input: RegisterPartnerSaleInput
+): Promise<{ ok: boolean; reason?: string; saleId?: string }> {
+  try {
+    if (!input.userId || !input.amountCents || input.amountCents <= 0) {
+      return { ok: false, reason: 'invalid_input' };
+    }
+
+    const { data: lead } = await supabase
+      .from('partner_leads')
+      .select('id, partner_id, click_id')
+      .eq('user_id', input.userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!lead?.partner_id) {
+      return { ok: false, reason: 'not_attributed' };
+    }
+
+    if (input.stripeInvoiceId) {
+      const { data: existing } = await supabase
+        .from('partner_sales')
+        .select('id')
+        .eq('stripe_invoice_id', input.stripeInvoiceId)
+        .maybeSingle();
+      if (existing?.id) return { ok: true, reason: 'duplicate', saleId: existing.id };
+    }
+
+    if (input.asaasPaymentId) {
+      const { data: existing } = await supabase
+        .from('partner_sales')
+        .select('id')
+        .eq('asaas_payment_id', input.asaasPaymentId)
+        .maybeSingle();
+      if (existing?.id) return { ok: true, reason: 'duplicate', saleId: existing.id };
+    }
+
+    const { data: sale, error: saleErr } = await supabase
+      .from('partner_sales')
+      .insert({
+        partner_id: lead.partner_id,
+        partner_lead_id: lead.id,
+        customer_user_id: input.userId,
+        customer_email: input.email,
+        plan: input.plan,
+        billing_period: input.billingPeriod,
+        amount_cents: input.amountCents,
+        payment_method: input.paymentMethod,
+        stripe_invoice_id: input.stripeInvoiceId,
+        stripe_subscription_id: input.stripeSubscriptionId,
+        asaas_payment_id: input.asaasPaymentId,
+        is_recurring: input.isRecurring ?? false,
+        paid_at: input.paidAt || new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+
+    if (saleErr) {
+      console.error('[registerPartnerSale] insert error:', saleErr);
+      return { ok: false, reason: saleErr.message };
+    }
+
+    const { data: leadUpdate } = await supabase
+      .from('partner_leads')
+      .update({
+        first_paid_at: new Date().toISOString(),
+        is_paid_customer: true,
+      })
+      .eq('id', lead.id)
+      .is('first_paid_at', null)
+      .select('id')
+      .maybeSingle();
+
+    if (leadUpdate?.id) {
+      const { data: commission } = await supabase
+        .from('partner_commissions')
+        .select('commission_amount_cents, commission_percent')
+        .eq('partner_sale_id', sale.id)
+        .maybeSingle();
+
+      sendPartnerEmail(supabase, lead.partner_id, 'partner_first_sale', {
+        amount_cents: input.amountCents,
+        commission_cents: commission?.commission_amount_cents || 0,
+        commission_percent: commission?.commission_percent || 0,
+        release_days: 30,
+      }).catch(() => {});
+    }
+
+    return { ok: true, saleId: sale.id };
+  } catch (e) {
+    console.error('[registerPartnerSale] exception:', e);
+    return { ok: false, reason: e instanceof Error ? e.message : 'unknown' };
+  }
+}
+
 // --- Evolution API credentials helper (inlined) ---
 interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
 const PAID_PLANS = ['start', 'growth', 'scale'];

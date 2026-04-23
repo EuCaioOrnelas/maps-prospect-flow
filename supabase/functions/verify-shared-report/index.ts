@@ -1,5 +1,62 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { verifyPassword } from "../_shared/password-hash.ts";
+
+const ITERATIONS = 100000;
+const KEY_LENGTH = 256;
+
+function fromHex(hex: string): Uint8Array {
+  const matches = hex.match(/.{1,2}/g);
+  if (!matches) return new Uint8Array(0);
+  return new Uint8Array(matches.map((byte) => parseInt(byte, 16)));
+}
+
+async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  if (!storedHash.includes(':')) {
+    try {
+      return storedHash === btoa(password);
+    } catch {
+      return false;
+    }
+  }
+
+  const [saltHex, hashHex] = storedHash.split(':');
+  if (!saltHex || !hashHex) return false;
+
+  const salt = fromHex(saltHex);
+  const expectedHash = fromHex(hashHex);
+  const encoder = new TextEncoder();
+  const passwordData = encoder.encode(password);
+
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    passwordData,
+    'PBKDF2',
+    false,
+    ['deriveBits']
+  );
+
+  const saltBuffer = new Uint8Array(salt.buffer.slice(salt.byteOffset, salt.byteOffset + salt.byteLength));
+
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: saltBuffer.buffer as ArrayBuffer,
+      iterations: ITERATIONS,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    KEY_LENGTH
+  );
+
+  const computedHash = new Uint8Array(derivedBits);
+  if (computedHash.length !== expectedHash.length) return false;
+
+  let result = 0;
+  for (let i = 0; i < computedHash.length; i++) {
+    result |= computedHash[i] ^ expectedHash[i];
+  }
+
+  return result === 0;
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,7 +64,6 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -27,7 +83,6 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch the shared report
     const { data: report, error } = await supabase
       .from('shared_reports')
       .select('*')
@@ -42,7 +97,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if expired
     if (new Date(report.expires_at) < new Date()) {
       return new Response(
         JSON.stringify({ error: 'Este link expirou' }),
@@ -50,8 +104,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Secure password verification using PBKDF2
-    // Also supports legacy base64 format for backward compatibility
     const isValid = await verifyPassword(password, report.password_hash);
     
     if (!isValid) {
