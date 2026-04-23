@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Tag, Check, X, Sparkles } from "lucide-react";
+import { Loader2, Tag, Check, X, Sparkles, TicketPercent } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface AppliedCoupon {
@@ -35,7 +35,6 @@ export function CouponInputCard({
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
 
   const validate = async () => {
     if (!code.trim()) return;
@@ -70,7 +69,6 @@ export function CouponInputCard({
         description: data.description,
       });
       setCode("");
-      setOpen(false);
     } catch (e: any) {
       setError(e?.message || "Erro ao validar cupom");
     } finally {
@@ -81,15 +79,15 @@ export function CouponInputCard({
   // Estado: cupom aplicado
   if (applied) {
     return (
-      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-4 sm:p-5 space-y-3">
+      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
-              <Sparkles className="h-4 w-4 text-emerald-600" />
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+              <Sparkles className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">Cupom aplicado</p>
-              <p className="text-[11px] text-muted-foreground font-mono uppercase tracking-wider">
+              <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider mt-0.5">
                 {applied.code}
               </p>
             </div>
@@ -97,9 +95,9 @@ export function CouponInputCard({
           <button
             onClick={onRemove}
             aria-label="Remover cupom"
-            className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
         <div className="rounded-lg bg-background/60 border border-emerald-500/20 px-3 py-2.5 flex items-start gap-2">
@@ -110,73 +108,57 @@ export function CouponInputCard({
     );
   }
 
-  // Estado: aberto para inserir cupom
-  if (open) {
-    return (
-      <div className="rounded-2xl border border-border/40 bg-card p-4 sm:p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-primary" />
-            <p className="text-sm font-semibold text-foreground">Cupom de desconto</p>
-          </div>
-          <button
-            onClick={() => {
-              setOpen(false);
-              setError(null);
-              setCode("");
-            }}
-            className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Cancelar
-          </button>
-        </div>
-        <div className="flex gap-2">
-          <Input
-            value={code}
-            onChange={(e) => {
-              setCode(e.target.value.toUpperCase());
-              setError(null);
-            }}
-            placeholder="DIGITE O CÓDIGO"
-            className={cn("uppercase font-mono tracking-wider", error && "border-destructive")}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                validate();
-              }
-            }}
-            autoFocus
-            disabled={loading}
-          />
-          <Button
-            onClick={validate}
-            disabled={loading || !code.trim()}
-            size="default"
-            className="shrink-0"
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aplicar"}
-          </Button>
-        </div>
-        {error && (
-          <p className="text-xs text-destructive flex items-center gap-1.5">
-            <X className="h-3 w-3" />
-            {error}
-          </p>
-        )}
-      </div>
-    );
-  }
-
-  // Estado: fechado (CTA discreto)
+  // Card de cupom — sempre visível e destacado
   return (
-    <button
-      onClick={() => setOpen(true)}
-      className="w-full rounded-2xl border border-dashed border-border/60 bg-card hover:border-primary/40 hover:bg-primary/[0.03] transition-all p-4 flex items-center justify-center gap-2 group"
-    >
-      <Tag className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-      <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-        Tenho um cupom de desconto
-      </span>
-    </button>
+    <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+          <TicketPercent className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">Cupom de desconto</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Tem um código promocional? Aplique aqui.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <Input
+          value={code}
+          onChange={(e) => {
+            setCode(e.target.value.toUpperCase());
+            setError(null);
+          }}
+          placeholder="DIGITE O CÓDIGO"
+          className={cn(
+            "uppercase tracking-wider font-sans font-medium text-foreground placeholder:text-muted-foreground/50 placeholder:font-normal placeholder:tracking-normal",
+            error && "border-destructive",
+          )}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              validate();
+            }
+          }}
+          disabled={loading}
+        />
+        <Button
+          onClick={validate}
+          disabled={loading || !code.trim()}
+          size="default"
+          className="shrink-0 px-5"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aplicar"}
+        </Button>
+      </div>
+
+      {error && (
+        <p className="text-xs text-destructive flex items-center gap-1.5">
+          <X className="h-3 w-3" />
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
