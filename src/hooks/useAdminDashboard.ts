@@ -40,7 +40,18 @@ interface AsaasCardMRRData {
 interface OtherMRRData {
   otherMrr: number;
   otherSubscriptions: number;
+  /** MRR e assinantes agregados por método de pagamento das custom_subscriptions ativas. */
+  byMethod: Array<{ method: string; label: string; mrr: number; count: number }>;
 }
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  pix: "PIX (manual)",
+  transfer: "Transferência",
+  card: "Cartão (manual)",
+  cash: "Dinheiro",
+  other: "Outro",
+  free: "Cortesia",
+};
 
 interface PayingProfile {
   id: string;
