@@ -48,7 +48,7 @@ const levelMeta = {
   bronze: { icon: Medal, color: "text-amber-600", bg: "from-amber-500/20 to-amber-600/5", ring: "ring-amber-500/30" },
   silver: { icon: Award, color: "text-slate-400", bg: "from-slate-400/20 to-slate-500/5", ring: "ring-slate-400/30" },
   gold: { icon: Crown, color: "text-yellow-500", bg: "from-yellow-500/20 to-yellow-600/5", ring: "ring-yellow-500/30" },
-  platinum: { icon: Gem, color: "text-purple-400", bg: "from-purple-500/20 to-purple-600/5", ring: "ring-purple-500/30" },
+  platinum: { icon: Gem, color: "text-sky-400", bg: "from-sky-400/20 to-sky-500/5", ring: "ring-sky-400/30" },
 } as const;
 
 function HelpHint({ text }: { text: string }) {
