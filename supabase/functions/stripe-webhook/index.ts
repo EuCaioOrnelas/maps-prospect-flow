@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { registerPartnerSale } from "../_shared/partner-sale.ts";
 // --- Evolution API credentials helper (inlined) ---
 interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
 const PAID_PLANS = ['start', 'growth', 'scale'];
@@ -439,6 +440,25 @@ serve(async (req) => {
                     newPlan: plan 
                   });
                   await cleanupFreeInstances(supabaseClient, profile.id, customerEmail);
+                }
+
+                // Partner program: register sale if user came from a referral
+                try {
+                  const partnerResult = await registerPartnerSale(supabaseClient, {
+                    userId: profile.id,
+                    email: customerEmail,
+                    amountCents: typeof session.amount_total === 'number' ? session.amount_total : 0,
+                    plan,
+                    billingPeriod: (priceId === 'price_1TLZkSK8CM0R6xMMwr1Ke1IX' || priceId === 'price_1TLZn8K8CM0R6xMMaEz5JuVW') ? 'yearly' : 'monthly',
+                    paymentMethod: 'stripe',
+                    stripeInvoiceId: typeof session.invoice === 'string' ? session.invoice : null,
+                    stripeSubscriptionId: session.subscription as string,
+                    paidAt: new Date().toISOString(),
+                    isRecurring: false,
+                  });
+                  logStep("Partner sale check (checkout)", partnerResult);
+                } catch (e) {
+                  logStep("Partner sale registration failed (checkout)", { error: String(e) });
                 }
               }
 
