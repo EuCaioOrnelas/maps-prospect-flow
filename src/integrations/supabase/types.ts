@@ -2223,6 +2223,72 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_applications: {
+        Row: {
+          audience_size: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          ip_address: string | null
+          motivation: string | null
+          phone: string | null
+          profile: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by_admin_id: string | null
+          source: string | null
+          status: string
+          updated_at: string
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          audience_size?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          ip_address?: string | null
+          motivation?: string | null
+          phone?: string | null
+          profile?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by_admin_id?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          audience_size?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          ip_address?: string | null
+          motivation?: string | null
+          phone?: string | null
+          profile?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by_admin_id?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
       partner_bank_accounts: {
         Row: {
           account_type: string | null
@@ -2516,6 +2582,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      partner_materials: {
+        Row: {
+          asset_url: string | null
+          category: string
+          content_text: string | null
+          created_at: string
+          description: string | null
+          dimensions: string | null
+          display_order: number
+          format: string | null
+          id: string
+          is_active: boolean
+          preview_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          asset_url?: string | null
+          category: string
+          content_text?: string | null
+          created_at?: string
+          description?: string | null
+          dimensions?: string | null
+          display_order?: number
+          format?: string | null
+          id?: string
+          is_active?: boolean
+          preview_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          asset_url?: string | null
+          category?: string
+          content_text?: string | null
+          created_at?: string
+          description?: string | null
+          dimensions?: string | null
+          display_order?: number
+          format?: string | null
+          id?: string
+          is_active?: boolean
+          preview_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       partner_payouts: {
         Row: {
