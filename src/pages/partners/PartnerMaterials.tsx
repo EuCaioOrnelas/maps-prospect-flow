@@ -51,9 +51,9 @@ export default function PartnerMaterials() {
 
   const replaceVars = (text: string) => {
     return text
-      .replaceAll("{{LINK}}", refLink)
-      .replaceAll("{{NOME}}", "[Nome do contato]")
-      .replaceAll("{{SEU_NOME}}", partner.full_name.split(" ")[0]);
+      .split("{{LINK}}").join(refLink)
+      .split("{{NOME}}").join("[Nome do contato]")
+      .split("{{SEU_NOME}}").join(partner.full_name.split(" ")[0]);
   };
 
   const copyContent = async (m: Material) => {
