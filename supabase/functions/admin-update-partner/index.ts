@@ -21,6 +21,13 @@ interface UpdatePartnerBody {
   new_password?: string;
   // referral
   reset_referral_code?: boolean;
+  referral_code?: string; // custom code (overrides reset_referral_code)
+}
+
+const REFERRAL_CODE_REGEX = /^[a-z0-9]{3,30}$/;
+
+function normalizeReferralCode(input: string): string {
+  return input.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
 serve(async (req) => {
