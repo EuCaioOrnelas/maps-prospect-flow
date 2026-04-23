@@ -27,7 +27,7 @@ const levelMeta = {
   bronze: { icon: Medal, classes: "bg-amber-700/10 text-amber-600 border-amber-700/30", label: "Bronze" },
   silver: { icon: Award, classes: "bg-slate-400/10 text-slate-400 border-slate-400/30", label: "Silver" },
   gold: { icon: Crown, classes: "bg-yellow-500/10 text-yellow-500 border-yellow-500/30", label: "Gold" },
-  platinum: { icon: Gem, classes: "bg-purple-500/10 text-purple-400 border-purple-500/30", label: "Platinum" },
+  platinum: { icon: Gem, classes: "bg-sky-400/10 text-sky-400 border-sky-400/30", label: "Platinum" },
 } as const;
 
 const statusMeta: Record<Partner["status"], { dot: string; classes: string; label: string }> = {
@@ -83,7 +83,7 @@ export default function AdminPartnersList() {
         {/* Header */}
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-card/60 to-card/20 p-6 lg:p-8 backdrop-blur-sm">
           <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
           <div className="relative flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-start gap-4">
               <div className="rounded-2xl bg-primary/15 p-3 ring-1 ring-primary/30 shadow-lg shadow-primary/10">
@@ -117,10 +117,10 @@ export default function AdminPartnersList() {
             </CardContent>
           </Card>
           <Card className="relative overflow-hidden border-border/60 bg-card/60 backdrop-blur-sm">
-            <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-gradient-to-br from-emerald-500/30 to-transparent blur-3xl opacity-50" />
+            <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-gradient-to-br from-primary/20 to-transparent blur-3xl opacity-50" />
             <CardContent className="relative p-5">
               <div className="flex items-start justify-between mb-3">
-                <div className="rounded-xl p-2 bg-emerald-500/10 ring-1 ring-emerald-500/20 text-emerald-500">
+                <div className="rounded-xl p-2 bg-primary/10 ring-1 ring-primary/20 text-primary">
                   <UserCheck size={16} />
                 </div>
               </div>
@@ -129,10 +129,10 @@ export default function AdminPartnersList() {
             </CardContent>
           </Card>
           <Card className="relative overflow-hidden border-border/60 bg-card/60 backdrop-blur-sm">
-            <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-gradient-to-br from-violet-500/30 to-transparent blur-3xl opacity-50" />
+            <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-gradient-to-br from-primary/20 to-transparent blur-3xl opacity-50" />
             <CardContent className="relative p-5">
               <div className="flex items-start justify-between mb-3">
-                <div className="rounded-xl p-2 bg-violet-500/10 ring-1 ring-violet-500/20 text-violet-500">
+                <div className="rounded-xl p-2 bg-primary/10 ring-1 ring-primary/20 text-primary">
                   <DollarSign size={16} />
                 </div>
               </div>

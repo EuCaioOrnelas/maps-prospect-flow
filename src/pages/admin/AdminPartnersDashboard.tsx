@@ -37,12 +37,12 @@ const fmt = (cents: number) =>
 type Accent = "primary" | "emerald" | "amber" | "violet" | "sky" | "rose";
 
 const accentMap: Record<Accent, { bg: string; ring: string; glow: string; text: string }> = {
-  primary: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/30", text: "text-primary" },
-  emerald: { bg: "bg-emerald-500/10", ring: "ring-emerald-500/20", glow: "from-emerald-500/30", text: "text-emerald-500" },
-  amber: { bg: "bg-amber-500/10", ring: "ring-amber-500/20", glow: "from-amber-500/30", text: "text-amber-500" },
-  violet: { bg: "bg-violet-500/10", ring: "ring-violet-500/20", glow: "from-violet-500/30", text: "text-violet-500" },
-  sky: { bg: "bg-sky-500/10", ring: "ring-sky-500/20", glow: "from-sky-500/30", text: "text-sky-500" },
-  rose: { bg: "bg-rose-500/10", ring: "ring-rose-500/20", glow: "from-rose-500/30", text: "text-rose-500" },
+  primary: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/25", text: "text-primary" },
+  emerald: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/25", text: "text-primary" },
+  amber: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/25", text: "text-primary" },
+  violet: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/25", text: "text-primary" },
+  sky: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/25", text: "text-primary" },
+  rose: { bg: "bg-primary/10", ring: "ring-primary/20", glow: "from-primary/25", text: "text-primary" },
 };
 
 function StatCard({
@@ -149,7 +149,7 @@ export default function AdminPartnersDashboard() {
         {/* Hero Header */}
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-card/60 to-card/20 p-6 lg:p-8 backdrop-blur-sm">
           <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
           <div className="relative flex items-start gap-4">
             <div className="rounded-2xl bg-primary/15 p-3 ring-1 ring-primary/30 shadow-lg shadow-primary/10">
               <LayoutDashboard size={22} className="text-primary" />
@@ -180,10 +180,10 @@ export default function AdminPartnersDashboard() {
 
         {/* Roadmap card */}
         <Card className="relative overflow-hidden border-border/60 bg-card/60 backdrop-blur-sm">
-          <div className="absolute -top-24 right-0 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl" />
+          <div className="absolute -top-24 right-0 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
           <CardHeader className="relative">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-emerald-500/10 p-2 ring-1 ring-emerald-500/20 text-emerald-500">
+              <div className="rounded-xl bg-primary/10 p-2 ring-1 ring-primary/20 text-primary">
                 <CheckCircle2 size={18} />
               </div>
               <div>
@@ -201,9 +201,9 @@ export default function AdminPartnersDashboard() {
             ].map((item) => (
               <div key={item.text} className="flex items-start gap-3 rounded-lg border border-border/40 bg-background/40 p-3">
                 {item.done ? (
-                  <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-500" />
+                  <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-primary" />
                 ) : (
-                  <CircleDashed size={16} className="mt-0.5 shrink-0 text-amber-500" />
+                  <CircleDashed size={16} className="mt-0.5 shrink-0 text-muted-foreground" />
                 )}
                 <span className={`text-sm ${item.done ? "text-foreground" : "text-muted-foreground"}`}>{item.text}</span>
               </div>

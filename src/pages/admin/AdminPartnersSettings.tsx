@@ -48,7 +48,7 @@ const levelMeta = {
   bronze: { icon: Medal, color: "text-amber-600", bg: "from-amber-500/20 to-amber-600/5", ring: "ring-amber-500/30" },
   silver: { icon: Award, color: "text-slate-400", bg: "from-slate-400/20 to-slate-500/5", ring: "ring-slate-400/30" },
   gold: { icon: Crown, color: "text-yellow-500", bg: "from-yellow-500/20 to-yellow-600/5", ring: "ring-yellow-500/30" },
-  platinum: { icon: Gem, color: "text-purple-400", bg: "from-purple-500/20 to-purple-600/5", ring: "ring-purple-500/30" },
+  platinum: { icon: Gem, color: "text-sky-400", bg: "from-sky-400/20 to-sky-500/5", ring: "ring-sky-400/30" },
 } as const;
 
 function HelpHint({ text }: { text: string }) {
@@ -84,18 +84,18 @@ function SectionCard({
   accent?: "primary" | "amber" | "emerald" | "violet" | "sky";
 }) {
   const accents = {
-    primary: "before:bg-primary/40",
-    amber: "before:bg-amber-500/40",
-    emerald: "before:bg-emerald-500/40",
-    violet: "before:bg-violet-500/40",
-    sky: "before:bg-sky-500/40",
+    primary: "before:bg-primary/30",
+    amber: "before:bg-primary/30",
+    emerald: "before:bg-primary/30",
+    violet: "before:bg-primary/30",
+    sky: "before:bg-primary/30",
   };
   const iconBg = {
     primary: "bg-primary/10 text-primary ring-primary/20",
-    amber: "bg-amber-500/10 text-amber-500 ring-amber-500/20",
-    emerald: "bg-emerald-500/10 text-emerald-500 ring-emerald-500/20",
-    violet: "bg-violet-500/10 text-violet-500 ring-violet-500/20",
-    sky: "bg-sky-500/10 text-sky-500 ring-sky-500/20",
+    amber: "bg-primary/10 text-primary ring-primary/20",
+    emerald: "bg-primary/10 text-primary ring-primary/20",
+    violet: "bg-primary/10 text-primary ring-primary/20",
+    sky: "bg-primary/10 text-primary ring-primary/20",
   };
 
   return (
@@ -182,7 +182,7 @@ export default function AdminPartnersSettings() {
         {/* Header */}
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-card/60 to-card/20 p-6 lg:p-8 backdrop-blur-sm">
           <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
           <div className="relative flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-start gap-4">
               <div className="rounded-2xl bg-primary/15 p-3 ring-1 ring-primary/30 shadow-lg shadow-primary/10">
@@ -279,8 +279,8 @@ export default function AdminPartnersSettings() {
           description="O parceiro sobe de nível automaticamente quando atinge X clientes pagantes ativos."
           accent="violet"
         >
-          <div className="mb-4 flex items-start gap-2 rounded-lg border border-violet-500/20 bg-violet-500/5 p-3">
-            <Layers size={16} className="mt-0.5 shrink-0 text-violet-500" />
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/40 p-3">
+            <Layers size={16} className="mt-0.5 shrink-0 text-primary" />
             <div className="text-xs text-muted-foreground leading-relaxed">
               <strong className="text-foreground">Como funciona:</strong> todo parceiro começa em <em>Bronze</em>. Ao
               atingir o <em>Threshold Silver</em> de clientes pagantes, é promovido para Silver (e passa a ganhar a
@@ -293,7 +293,7 @@ export default function AdminPartnersSettings() {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Award size={14} className="text-slate-400" />
+                  <Award size={14} className="text-muted-foreground" />
                   <Label className="text-sm font-medium">Threshold Silver</Label>
                 </div>
                 <HelpHint text="Quantidade de clientes pagantes ativos que o parceiro precisa ter para ser promovido automaticamente de Bronze para Silver." />
@@ -313,7 +313,7 @@ export default function AdminPartnersSettings() {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Crown size={14} className="text-yellow-500" />
+                  <Crown size={14} className="text-muted-foreground" />
                   <Label className="text-sm font-medium">Threshold Gold</Label>
                 </div>
                 <HelpHint text="Quantidade de clientes pagantes ativos para o parceiro ser promovido de Silver para Gold automaticamente." />
@@ -343,7 +343,7 @@ export default function AdminPartnersSettings() {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-amber-500" />
+                  <Clock size={14} className="text-muted-foreground" />
                   <Label className="text-sm font-medium">Prazo de liberação</Label>
                 </div>
                 <HelpHint text="Janela anti-fraude e anti-chargeback. A comissão fica como 'pendente' por X dias antes de ficar 'disponível para saque'." />
@@ -366,7 +366,7 @@ export default function AdminPartnersSettings() {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <DollarSign size={14} className="text-emerald-500" />
+                  <DollarSign size={14} className="text-muted-foreground" />
                   <Label className="text-sm font-medium">Saque mínimo</Label>
                 </div>
                 <HelpHint text="Valor mínimo acumulado em comissões disponíveis para que o parceiro consiga solicitar um saque." />
@@ -416,7 +416,7 @@ export default function AdminPartnersSettings() {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Globe size={14} className="text-sky-500" />
+                  <Globe size={14} className="text-muted-foreground" />
                   <Label className="text-sm font-medium">Domínio do portal de parceiros</Label>
                 </div>
                 <HelpHint text="Domínio personalizado opcional. Mesmo sem isso, o portal funciona em /partners/login no domínio principal da Wiize." />
@@ -436,7 +436,7 @@ export default function AdminPartnersSettings() {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Mail size={14} className="text-sky-500" />
+                  <Mail size={14} className="text-muted-foreground" />
                   <Label className="text-sm font-medium">Emails para notificações admin</Label>
                 </div>
                 <HelpHint text="Estes emails recebem aviso quando um parceiro solicita um novo saque ou quando há eventos críticos no programa." />
