@@ -158,6 +158,15 @@ serve(async (req) => {
 
       newUserId = foundUserId;
       userAlreadyExisted = true;
+
+      // Update existing user password so admin-provided credentials work
+      const { error: updPwdErr } = await supabaseAdmin.auth.admin.updateUserById(foundUserId, {
+        password: body.password,
+        email_confirm: true,
+      });
+      if (updPwdErr) {
+        console.warn("[admin-create-partner] failed to update existing user password:", updPwdErr.message);
+      }
     } else {
       newUserId = created.user.id;
     }
