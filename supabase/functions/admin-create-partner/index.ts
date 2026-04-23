@@ -170,8 +170,11 @@ serve(async (req) => {
       phone: body.phone || null,
     }, { onConflict: "id" });
 
-    // Assign 'partner' role
-    await supabaseAdmin.from("user_roles").insert({ user_id: newUserId, role: "partner" });
+    // Assign 'partner' role (ignore if already exists)
+    const { error: roleErr } = await supabaseAdmin.from("user_roles").insert({ user_id: newUserId, role: "partner" });
+    if (roleErr && !roleErr.message?.toLowerCase().includes("duplicate")) {
+      console.warn("[admin-create-partner] role insert warning:", roleErr.message);
+    }
 
     // Generate referral code
     const { data: codeData, error: codeErr } = await supabaseAdmin.rpc("generate_partner_referral_code", {
