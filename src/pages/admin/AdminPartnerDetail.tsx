@@ -197,6 +197,20 @@ export default function AdminPartnerDetail() {
     await callUpdate({ reset_referral_code: true }, "Novo código gerado");
   };
 
+  const onApplyCustomReferral = async () => {
+    const candidate = newReferralCode.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (candidate.length < 3 || candidate.length > 30) {
+      toast({ title: "Código inválido", description: "Use de 3 a 30 letras/números, sem espaços ou símbolos.", variant: "destructive" });
+      return;
+    }
+    if (partner && candidate === partner.referral_code) {
+      toast({ title: "Sem alterações", description: "Este já é o código atual." });
+      return;
+    }
+    const ok = await callUpdate({ referral_code: candidate }, "Código atualizado");
+    if (ok) setNewReferralCode("");
+  };
+
   const onToggleBlock = async () => {
     if (!partner) return;
     const next: Status = partner.status === "blocked" ? "active" : "blocked";
