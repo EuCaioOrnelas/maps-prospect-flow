@@ -105,17 +105,62 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Nome, email e senha (mínimo 8 caracteres) são obrigatórios" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Create auth user (auto-confirmed)
+    const normalizedEmail = body.email.trim().toLowerCase();
+    let newUserId: string | null = null;
+    let userAlreadyExisted = false;
+
+    // Try to create auth user (auto-confirmed)
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-      email: body.email.trim().toLowerCase(),
+      email: normalizedEmail,
       password: body.password,
       email_confirm: true,
       user_metadata: { full_name: body.full_name, is_partner: true },
     });
-    if (createErr || !created.user) {
-      return new Response(JSON.stringify({ error: createErr?.message || "Falha ao criar usuário" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    if (createErr || !created?.user) {
+      const msg = (createErr?.message || "").toLowerCase();
+      const alreadyRegistered =
+        msg.includes("already been registered") ||
+        msg.includes("already registered") ||
+        msg.includes("already exists") ||
+        msg.includes("duplicate");
+
+      if (!alreadyRegistered) {
+        return new Response(JSON.stringify({ error: createErr?.message || "Falha ao criar usuário" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // User already exists — find them and reuse
+      let foundUserId: string | null = null;
+      let page = 1;
+      while (page <= 20 && !foundUserId) {
+        const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+        if (listErr) break;
+        const match = list?.users?.find((u: any) => (u.email || "").toLowerCase() === normalizedEmail);
+        if (match) foundUserId = match.id;
+        if (!list?.users?.length || list.users.length < 200) break;
+        page++;
+      }
+
+      if (!foundUserId) {
+        return new Response(JSON.stringify({ error: "Email já cadastrado, mas não foi possível localizar o usuário" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Check if this user is already a partner
+      const { data: existingPartner } = await supabaseAdmin
+        .from("partners")
+        .select("id")
+        .eq("user_id", foundUserId)
+        .maybeSingle();
+
+      if (existingPartner) {
+        return new Response(JSON.stringify({ error: "Este email já está cadastrado como parceiro" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      newUserId = foundUserId;
+      userAlreadyExisted = true;
+    } else {
+      newUserId = created.user.id;
     }
-    const newUserId = created.user.id;
 
     // Upsert profile (handle_new_user may have created it)
     await supabaseAdmin.from("profiles").upsert({
@@ -125,8 +170,11 @@ serve(async (req) => {
       phone: body.phone || null,
     }, { onConflict: "id" });
 
-    // Assign 'partner' role
-    await supabaseAdmin.from("user_roles").insert({ user_id: newUserId, role: "partner" });
+    // Assign 'partner' role (ignore if already exists)
+    const { error: roleErr } = await supabaseAdmin.from("user_roles").insert({ user_id: newUserId, role: "partner" });
+    if (roleErr && !roleErr.message?.toLowerCase().includes("duplicate")) {
+      console.warn("[admin-create-partner] role insert warning:", roleErr.message);
+    }
 
     // Generate referral code
     const { data: codeData, error: codeErr } = await supabaseAdmin.rpc("generate_partner_referral_code", {
@@ -158,8 +206,10 @@ serve(async (req) => {
       .single();
 
     if (partnerErr) {
-      // Rollback auth user
-      await supabaseAdmin.auth.admin.deleteUser(newUserId).catch(() => {});
+      // Rollback auth user only if we created it now
+      if (!userAlreadyExisted) {
+        await supabaseAdmin.auth.admin.deleteUser(newUserId).catch(() => {});
+      }
       return new Response(JSON.stringify({ error: partnerErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
