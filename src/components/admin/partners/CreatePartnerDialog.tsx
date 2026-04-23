@@ -47,6 +47,7 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
         body: {
           ...form,
           custom_commission_percent: form.custom_commission_percent ? Number(form.custom_commission_percent) : null,
+          referral_code: form.referral_code.trim() || undefined,
         },
       });
       if (error) throw error;
