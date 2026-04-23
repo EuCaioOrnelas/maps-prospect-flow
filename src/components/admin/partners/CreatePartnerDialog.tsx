@@ -27,12 +27,13 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
     level: "bronze" as const,
     custom_commission_percent: "",
     internal_notes: "",
+    referral_code: "",
   });
   const { toast } = useToast();
 
   const reset = () => setForm({
     full_name: "", email: "", password: "", phone: "", company: "", tax_id: "",
-    level: "bronze", custom_commission_percent: "", internal_notes: "",
+    level: "bronze", custom_commission_percent: "", internal_notes: "", referral_code: "",
   });
 
   const submit = async () => {
