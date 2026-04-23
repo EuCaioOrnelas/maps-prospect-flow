@@ -122,6 +122,17 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
           </div>
 
           <div className="md:col-span-2 space-y-2">
+            <Label className="flex items-center gap-1.5"><Link2 size={14} /> Código de indicação (opcional)</Label>
+            <Input
+              value={form.referral_code}
+              onChange={(e) => setForm({ ...form, referral_code: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "") })}
+              placeholder="Ex: joaosilva (deixe vazio para gerar automaticamente)"
+              maxLength={30}
+            />
+            <p className="text-xs text-muted-foreground">3 a 30 letras/números, sem espaços ou símbolos. Se vazio, é gerado a partir do nome.</p>
+          </div>
+
+          <div className="md:col-span-2 space-y-2">
             <Label className="flex items-center gap-1.5"><FileText size={14} /> Observações internas</Label>
             <Textarea value={form.internal_notes} onChange={(e) => setForm({ ...form, internal_notes: e.target.value })} placeholder="Anotações visíveis só pelo admin" rows={3} />
           </div>
