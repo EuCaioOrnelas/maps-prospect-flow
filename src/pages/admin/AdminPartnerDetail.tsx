@@ -100,6 +100,7 @@ export default function AdminPartnerDetail() {
     internal_notes: "",
   });
   const [newPassword, setNewPassword] = useState("");
+  const [newReferralCode, setNewReferralCode] = useState("");
   const [copied, setCopied] = useState(false);
 
   const load = async () => {
