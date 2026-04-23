@@ -68,9 +68,12 @@ export default function AdminUsuarios() {
           <h1 className="text-2xl font-bold text-foreground">Usuários</h1>
           <p className="text-sm text-muted-foreground mt-1">{users.length} usuários cadastrados</p>
         </div>
-        <Button variant="outline" size="sm" className="text-xs">
-          <Download size={14} className="mr-1.5" /> Exportar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="text-xs">
+            <Download size={14} className="mr-1.5" /> Exportar
+          </Button>
+          <CreateUserDialog onUserCreated={loadUsers} />
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
