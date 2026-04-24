@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Wallet } from "lucide-react";
+import { Loader2, Wallet, Clock, CheckCircle2, ShieldAlert, ChevronRight } from "lucide-react";
 import { fmtBRL, fmtDate, withdrawalStatusColors, withdrawalStatusLabel } from "@/lib/partnerFormat";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/partners/PageHeader";
+import { StatCard } from "@/components/partners/StatCard";
 
 export default function PartnerWithdrawals() {
   const { partner } = useOutletContext<any>();
@@ -41,26 +43,29 @@ export default function PartnerWithdrawals() {
 
   useEffect(() => { load(); }, [partner?.id]);
 
-  const hasBank = bankAccount?.pix_key && bankAccount?.holder_name;
+  const isBankComplete = !!(
+    bankAccount?.holder_name && bankAccount?.holder_tax_id &&
+    bankAccount?.pix_key && bankAccount?.pix_key_type &&
+    bankAccount?.bank_name && bankAccount?.bank_code &&
+    bankAccount?.bank_branch && bankAccount?.bank_account && bankAccount?.account_type
+  );
   const hasPending = withdrawals.some((w) => w.status === "pending" || w.status === "approved");
   const minCents = settings?.minimum_withdrawal_cents || 5000;
-  const canRequest = hasBank && balance.available_cents >= minCents && (settings?.allow_multiple_pending_withdrawals || !hasPending);
+  const canRequest = isBankComplete && balance.available_cents >= minCents && (settings?.allow_multiple_pending_withdrawals || !hasPending);
 
   const submit = async () => {
     const cents = Math.round(Number(amount) * 100);
     if (!cents || cents <= 0) { toast({ title: "Valor inválido", variant: "destructive" }); return; }
-    if (cents > balance.available_cents) { toast({ title: "Saldo insuficiente", variant: "destructive" }); return; }
     if (cents < minCents) { toast({ title: `Saque mínimo: ${fmtBRL(minCents)}`, variant: "destructive" }); return; }
 
     setSubmitting(true);
-    const { error } = await supabase.from("partner_withdrawals").insert({
-      partner_id: partner.id,
-      amount_cents: cents,
-      bank_snapshot: bankAccount,
-      status: "pending",
-    });
+    // Server-side secure RPC: locks partner row, recomputes balance, snapshots bank
+    const { data, error } = await supabase.rpc("request_partner_withdrawal", { p_amount_cents: cents });
     setSubmitting(false);
+
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    const result = data as any;
+    if (result?.error) { toast({ title: "Não foi possível", description: result.error, variant: "destructive" }); return; }
 
     toast({ title: "Solicitação enviada!", description: "Aguarde aprovação do admin." });
     setOpen(false);
@@ -68,66 +73,73 @@ export default function PartnerWithdrawals() {
     load();
   };
 
-  return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Saques</h1>
-          <p className="text-sm text-muted-foreground">Solicite e acompanhe seus saques</p>
-        </div>
-        <Button onClick={() => setOpen(true)} disabled={!canRequest} className="gap-2">
-          <Wallet size={16} /> Solicitar saque
-        </Button>
-      </div>
+  const cards = [
+    { label: "Disponível p/ saque", value: fmtBRL(balance.available_cents), icon: Wallet, accent: "emerald" as const, highlight: true, hint: "Pronto para resgate" },
+    { label: "Em saque solicitado", value: fmtBRL(balance.requested_cents), icon: Clock, accent: "blue" as const, hint: "Em análise" },
+    { label: "Pendente liberação", value: fmtBRL(balance.pending_cents), icon: Clock, accent: "amber" as const, hint: "Após período de retenção" },
+    { label: "Total recebido", value: fmtBRL(balance.paid_cents), icon: CheckCircle2, accent: "primary" as const, hint: "Histórico" },
+  ];
 
-      {!hasBank && (
-        <Card className="border-amber-500/30 bg-amber-500/5">
-          <CardContent className="p-4 text-sm">
-            ⚠️ Cadastre seus dados bancários antes de solicitar um saque. <a href="/partners/banco" className="underline font-medium">Cadastrar agora →</a>
+  return (
+    <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
+      <PageHeader
+        title="Saques"
+        subtitle="Solicite resgates do seu saldo de comissões"
+        icon={Wallet}
+        actions={
+          <Button onClick={() => setOpen(true)} disabled={!canRequest} className="gap-2">
+            <Wallet size={16} /> Solicitar saque
+          </Button>
+        }
+      />
+
+      {!isBankComplete && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardContent className="p-4 flex items-start gap-3">
+            <div className="h-9 w-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 ring-1 ring-amber-500/30 shrink-0">
+              <ShieldAlert size={16} />
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-semibold">Complete seus dados bancários</div>
+              <p className="text-xs text-muted-foreground mt-0.5">Para liberar saques precisamos de: titular, CPF/CNPJ, banco completo (nome, número, agência, conta, tipo) e chave PIX.</p>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/partners/dados-bancarios" className="gap-1">Cadastrar <ChevronRight size={14} /></Link>
+            </Button>
           </CardContent>
         </Card>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Disponível p/ saque", value: balance.available_cents, highlight: true },
-          { label: "Em saque solicitado", value: balance.requested_cents },
-          { label: "Pendente liberação", value: balance.pending_cents },
-          { label: "Total já recebido", value: balance.paid_cents },
-        ].map((c) => (
-          <Card key={c.label} className={c.highlight ? "border-primary/30 bg-primary/5" : ""}>
-            <CardContent className="p-5">
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">{c.label}</div>
-              <div className="text-2xl font-semibold mt-1">{fmtBRL(c.value)}</div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map((c) => <StatCard key={c.label} {...c} />)}
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Histórico</CardTitle></CardHeader>
+      <Card className="border-border/60">
+        <CardHeader className="pb-3"><CardTitle className="text-base">Histórico de saques</CardTitle></CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-muted/30 hover:bg-muted/30">
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Solicitado</TableHead>
+                  <TableHead>Aprovado</TableHead>
                   <TableHead>Pago em</TableHead>
                   <TableHead>Observações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Carregando...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">Carregando...</TableCell></TableRow>
                 ) : withdrawals.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Nenhum saque ainda.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">Nenhum saque ainda.</TableCell></TableRow>
                 ) : withdrawals.map((w) => (
                   <TableRow key={w.id}>
-                    <TableCell className="text-right font-medium">{fmtBRL(w.amount_cents)}</TableCell>
+                    <TableCell className="text-right font-semibold">{fmtBRL(w.amount_cents)}</TableCell>
                     <TableCell><Badge variant="outline" className={withdrawalStatusColors[w.status]}>{withdrawalStatusLabel[w.status]}</Badge></TableCell>
                     <TableCell className="text-sm">{fmtDate(w.requested_at)}</TableCell>
+                    <TableCell className="text-sm">{fmtDate(w.approved_at)}</TableCell>
                     <TableCell className="text-sm">{fmtDate(w.paid_at)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{w.rejection_reason || "—"}</TableCell>
                   </TableRow>
@@ -142,17 +154,39 @@ export default function PartnerWithdrawals() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Solicitar saque</DialogTitle>
-            <DialogDescription>Saldo disponível: <strong>{fmtBRL(balance.available_cents)}</strong> · Mínimo: {fmtBRL(minCents)}</DialogDescription>
+            <DialogDescription>
+              Saldo disponível: <strong className="text-foreground">{fmtBRL(balance.available_cents)}</strong> · Mínimo: {fmtBRL(minCents)}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-2">
               <Label>Valor (R$)</Label>
-              <Input type="number" min="0" step="10" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={String(minCents / 100)} />
+              <Input
+                type="number"
+                min="0"
+                step="10"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder={String(minCents / 100)}
+                onKeyDown={(e) => e.key === "Enter" && submit()}
+              />
+              <button
+                type="button"
+                onClick={() => setAmount(String(balance.available_cents / 100))}
+                className="text-xs text-primary hover:underline"
+              >
+                Usar saldo total disponível
+              </button>
             </div>
-            <div className="bg-muted/40 p-3 rounded-md text-xs space-y-1">
+            <div className="bg-muted/40 p-3 rounded-md text-xs space-y-1.5">
+              <div className="font-semibold text-foreground text-[11px] uppercase tracking-wider">Destino do saque</div>
               <div><span className="text-muted-foreground">PIX:</span> <strong>{bankAccount?.pix_key}</strong> ({bankAccount?.pix_key_type})</div>
-              <div><span className="text-muted-foreground">Titular:</span> {bankAccount?.holder_name}</div>
+              <div><span className="text-muted-foreground">Titular:</span> {bankAccount?.holder_name} · {bankAccount?.holder_tax_id}</div>
+              <div><span className="text-muted-foreground">Banco:</span> {bankAccount?.bank_code} - {bankAccount?.bank_name} · Ag {bankAccount?.bank_branch} · Cc {bankAccount?.bank_account}</div>
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              ✅ Validação executada no servidor. O saldo é recalculado e travado no momento da solicitação para impedir falsificação.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>Cancelar</Button>
