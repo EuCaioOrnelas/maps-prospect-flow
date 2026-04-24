@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, DollarSign } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Loader2, DollarSign, Check, ChevronsUpDown, User as UserIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -17,9 +20,15 @@ interface Props {
 export const RecordManualSaleDialog = ({ open, onOpenChange, onCreated }: Props) => {
   const [loading, setLoading] = useState(false);
   const [partners, setPartners] = useState<Array<{ id: string; full_name: string; email: string }>>([]);
+  const [users, setUsers] = useState<Array<{ id: string; email: string; full_name: string | null; current_plan: string | null }>>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [userOpen, setUserOpen] = useState(false);
+  const [searchingUsers, setSearchingUsers] = useState(false);
   const [form, setForm] = useState({
     partner_id: "",
+    customer_user_id: "",
     customer_email: "",
+    customer_label: "",
     amount: "",
     plan: "start",
     payment_provider: "asaas",
@@ -37,6 +46,27 @@ export const RecordManualSaleDialog = ({ open, onOpenChange, onCreated }: Props)
       });
     }
   }, [open]);
+
+  // Search users (profiles) with debounce
+  useEffect(() => {
+    if (!open) return;
+    const q = userSearch.trim();
+    setSearchingUsers(true);
+    const t = setTimeout(async () => {
+      let query = supabase
+        .from("profiles")
+        .select("id, email, full_name, current_plan")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (q.length >= 2) {
+        query = query.or(`email.ilike.%${q}%,full_name.ilike.%${q}%`);
+      }
+      const { data } = await query;
+      setUsers(data || []);
+      setSearchingUsers(false);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [userSearch, open]);
 
   const submit = async () => {
     if (!form.partner_id || !form.customer_email.trim() || !form.amount) {
