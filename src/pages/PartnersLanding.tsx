@@ -101,7 +101,7 @@ export default function PartnersLanding() {
       <section className="relative px-6 pt-24 pb-28 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[520px] w-[820px] rounded-full bg-primary/15 blur-[120px]" />
-          <div className="absolute top-40 right-10 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
+          <div className="absolute top-40 right-10 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
         </div>
         <div className="max-w-5xl mx-auto text-center relative">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-6 ring-1 ring-primary/20">
