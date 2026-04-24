@@ -42,7 +42,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     (async () => {
       const { data, error } = await supabase
         .from('user_onboarding')
-        .select('id')
+        .select('id, role, completed_at, skipped')
         .eq('user_id', user.id)
         .maybeSingle();
       if (cancelled) return;
@@ -50,7 +50,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
         setNeedsOnboarding(false);
         return;
       }
-      setNeedsOnboarding(!data);
+      // Considera concluído apenas se tiver completed_at OU foi pulado explicitamente
+      // com role preenchido (registros legados sem role devem refazer)
+      const done =
+        !!data && (!!data.completed_at || (data.skipped === true && !!data.role));
+      setNeedsOnboarding(!done);
     })();
     return () => {
       cancelled = true;
