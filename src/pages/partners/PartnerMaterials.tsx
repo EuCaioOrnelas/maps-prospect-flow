@@ -33,11 +33,11 @@ const categoryLabels: Record<string, { label: string; icon: any }> = {
 };
 
 const brandColors = [
-  { name: "Wiize Green", hex: "#10b981", hsl: "158 64% 52%" },
-  { name: "Wiize Dark", hex: "#0f172a", hsl: "222 47% 11%" },
-  { name: "Wiize Surface", hex: "#f8fafc", hsl: "210 40% 98%" },
-  { name: "Wiize Accent", hex: "#3b82f6", hsl: "217 91% 60%" },
-  { name: "Wiize Warning", hex: "#f59e0b", hsl: "38 92% 50%" },
+  { name: "Wiize Green", hex: "#1AAB6B", hsl: "158 72% 38%" },
+  { name: "Wiize Green Hover", hex: "#15945C", hsl: "158 75% 33%" },
+  { name: "Wiize Dark", hex: "#0A0F14", hsl: "220 20% 4%" },
+  { name: "Wiize Surface", hex: "#0F141B", hsl: "220 18% 8%" },
+  { name: "Wiize Foreground", hex: "#F8FAFC", hsl: "210 40% 98%" },
 ];
 
 const logoAssets = [
