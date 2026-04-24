@@ -9,7 +9,6 @@ import { PageHeader } from "@/components/partners/PageHeader";
 import { ReferralLinksCard } from "@/components/partners/ReferralLinksCard";
 import { MRRChart } from "@/components/partners/MRRChart";
 import { PlanDistributionChart } from "@/components/partners/PlanDistributionChart";
-import { LevelBadge } from "@/components/partners/LevelBadge";
 
 export default function PartnerDashboard() {
   const { partner } = useOutletContext<any>();
@@ -76,9 +75,9 @@ export default function PartnerDashboard() {
 
   const headlineCards = useMemo(() => stats ? [
     { label: "MRR atribuído", value: fmtBRL(mrrCents), icon: Repeat, accent: "primary" as const, hint: "Mensalidades ativas", highlight: true },
-    { label: "Disponível p/ saque", value: fmtBRL(stats.available_cents), icon: Wallet, accent: "emerald" as const, hint: "Pronto para resgate" },
-    { label: "Comissão pendente", value: fmtBRL(stats.pending_cents), icon: Clock, accent: "amber" as const, hint: "Liberação programada" },
-    { label: "Receita gerada (LTV)", value: fmtBRL(stats.lifetime_revenue_cents || 0), icon: DollarSign, accent: "violet" as const, hint: "Total histórico" },
+    { label: "Disponível p/ saque", value: fmtBRL(stats.available_cents), icon: Wallet, accent: "emerald" as const, hint: "Pronto para resgate", highlight: true },
+    { label: "Comissão pendente", value: fmtBRL(stats.pending_cents), icon: Clock, accent: "amber" as const, hint: "Liberação programada", highlight: true },
+    { label: "Receita gerada (LTV)", value: fmtBRL(stats.lifetime_revenue_cents || 0), icon: DollarSign, accent: "violet" as const, hint: "Total histórico", highlight: true },
   ] : [], [stats, mrrCents]);
 
   const funnelCards = useMemo(() => stats ? [
@@ -107,12 +106,9 @@ export default function PartnerDashboard() {
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl lg:text-[28px] font-bold tracking-tight">
-              Olá, {partner.full_name.split(" ")[0]} 👋
-            </h1>
-            <LevelBadge level={partner.level} size="lg" />
-          </div>
+          <h1 className="text-2xl lg:text-[28px] font-bold tracking-tight">
+            Olá, {partner.full_name.split(" ")[0]} 👋
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Cockpit de indicações — receita recorrente, conversões e materiais.
           </p>
