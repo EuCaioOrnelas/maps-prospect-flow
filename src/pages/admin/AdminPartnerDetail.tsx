@@ -478,6 +478,16 @@ export default function AdminPartnerDetail() {
           </Card>
         </TabsContent>
 
+        {/* GOALS */}
+        <TabsContent value="goals" className="mt-4">
+          <PartnerGoalsTab partnerId={partner.id} partnerName={partner.full_name} />
+        </TabsContent>
+
+        {/* LINKS */}
+        <TabsContent value="links" className="mt-4">
+          <PartnerLinksTab partnerId={partner.id} referralCode={partner.referral_code} />
+        </TabsContent>
+
         {/* BANK */}
         <TabsContent value="bank" className="mt-4">
           <Card className="border-border/60">

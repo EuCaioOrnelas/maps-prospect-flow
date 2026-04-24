@@ -298,7 +298,7 @@ const App = () => (
                   <Route path="saques" element={<PartnerWithdrawals />} />
                   <Route path="materiais" element={<PartnerMaterials />} />
                   <Route path="metas" element={<PartnerGoals />} />
-                  <Route path="ranking" element={<PartnerRanking />} />
+                  <Route path="ranking" element={<Navigate to="/partners/metas" replace />} />
                   <Route path="dados-bancarios" element={<PartnerBankAccount />} />
                   <Route path="banco" element={<PartnerBankAccount />} />
                 </Route>
