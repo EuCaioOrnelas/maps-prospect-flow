@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, DollarSign, Wallet, Clock, TrendingUp, MousePointerClick, Repeat, Target } from "lucide-react";
+import { Users, DollarSign, Wallet, Clock, TrendingUp, MousePointerClick, Repeat, Target, Sparkles } from "lucide-react";
 import { fmtBRL, fmtPct } from "@/lib/partnerFormat";
 import { StatCard } from "@/components/partners/StatCard";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { ReferralLinksCard } from "@/components/partners/ReferralLinksCard";
 import { MRRChart } from "@/components/partners/MRRChart";
 import { PlanDistributionChart } from "@/components/partners/PlanDistributionChart";
+import { LevelBadge } from "@/components/partners/LevelBadge";
 
 export default function PartnerDashboard() {
   const { partner } = useOutletContext<any>();
@@ -104,11 +105,25 @@ export default function PartnerDashboard() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
-      <PageHeader
-        title={`Olá, ${partner.full_name.split(" ")[0]} 👋`}
-        subtitle="Cockpit de indicações — receita recorrente, conversões e materiais."
-      />
-
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl lg:text-[28px] font-bold tracking-tight">
+              Olá, {partner.full_name.split(" ")[0]} 👋
+            </h1>
+            <LevelBadge level={partner.level} size="lg" />
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Cockpit de indicações — receita recorrente, conversões e materiais.
+          </p>
+        </div>
+        <Link
+          to="/partners/niveis"
+          className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          <Sparkles size={16} /> Ver níveis & progresso
+        </Link>
+      </div>
       {/* Headline KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {headlineCards.map((c) => (
