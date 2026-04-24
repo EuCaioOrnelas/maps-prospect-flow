@@ -207,7 +207,14 @@ export default function Onboarding() {
   };
 
   const persist = async (skipped: boolean) => {
-    if (!user) return;
+    if (!user) throw new Error("Sessão expirada. Faça login novamente.");
+
+    // Garante que a sessão ainda está válida antes de gravar
+    const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+    if (sessionErr || !sessionData.session) {
+      throw new Error("Sessão expirada. Faça login novamente para salvar.");
+    }
+
     const payload = {
       user_id: user.id,
       role: answers.role || null,
@@ -219,10 +226,28 @@ export default function Onboarding() {
       skipped,
       completed_at: new Date().toISOString(),
     };
-    const { error } = await supabase
+
+    // Tenta upsert; em caso de falha, faz retry com fallback insert/update
+    let lastErr: any = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const { error } = await supabase
+        .from("user_onboarding")
+        .upsert(payload, { onConflict: "user_id" });
+      if (!error) return;
+      lastErr = error;
+      console.warn(`[Onboarding] upsert attempt ${attempt} failed:`, error);
+      // backoff curto antes de tentar novamente
+      await new Promise((r) => setTimeout(r, 400 * attempt));
+    }
+
+    // Fallback final: tenta update (caso o upsert esteja falhando por algum motivo)
+    const { error: updErr } = await supabase
       .from("user_onboarding")
-      .upsert(payload, { onConflict: "user_id" });
-    if (error) throw error;
+      .update(payload)
+      .eq("user_id", user.id);
+    if (!updErr) return;
+
+    throw lastErr || updErr;
   };
 
   const handleComplete = async (skipped: boolean) => {
@@ -237,9 +262,15 @@ export default function Onboarding() {
       setTimeout(() => {
         navigate("/dashboard", { replace: true });
       }, 2000);
-    } catch (err) {
-      console.error("Error saving onboarding:", err);
-      toast.error("Não conseguimos salvar agora. Tente novamente.");
+    } catch (err: any) {
+      console.error("[Onboarding] Error saving onboarding:", err);
+      const msg =
+        err?.message?.includes("Sessão")
+          ? err.message
+          : err?.code === "42501" || err?.message?.includes("row-level security")
+          ? "Sem permissão para salvar. Faça login novamente."
+          : err?.message || "Não conseguimos salvar agora. Verifique sua conexão e tente novamente.";
+      toast.error(msg);
       setSubmitting(false);
     }
   };
