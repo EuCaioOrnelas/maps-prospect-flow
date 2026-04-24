@@ -20,7 +20,7 @@ interface Props {
 export const RecordManualSaleDialog = ({ open, onOpenChange, onCreated }: Props) => {
   const [loading, setLoading] = useState(false);
   const [partners, setPartners] = useState<Array<{ id: string; full_name: string; email: string }>>([]);
-  const [users, setUsers] = useState<Array<{ id: string; email: string; full_name: string | null; current_plan: string | null }>>([]);
+  const [users, setUsers] = useState<Array<{ id: string; email: string; name: string | null; plan: string | null }>>([]);
   const [userSearch, setUserSearch] = useState("");
   const [userOpen, setUserOpen] = useState(false);
   const [searchingUsers, setSearchingUsers] = useState(false);
@@ -55,14 +55,14 @@ export const RecordManualSaleDialog = ({ open, onOpenChange, onCreated }: Props)
     const t = setTimeout(async () => {
       let query = supabase
         .from("profiles")
-        .select("id, email, full_name, current_plan")
+        .select("id, email, name, plan")
         .order("created_at", { ascending: false })
         .limit(20);
       if (q.length >= 2) {
-        query = query.or(`email.ilike.%${q}%,full_name.ilike.%${q}%`);
+        query = query.or(`email.ilike.%${q}%,name.ilike.%${q}%`);
       }
       const { data } = await query;
-      setUsers(data || []);
+      setUsers((data as any) || []);
       setSearchingUsers(false);
     }, 250);
     return () => clearTimeout(t);
