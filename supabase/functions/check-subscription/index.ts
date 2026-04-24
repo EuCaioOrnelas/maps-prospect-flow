@@ -334,7 +334,7 @@ serve(async (req) => {
 
     const { data: existingProfile, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen')
+      .select('searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen')
       .eq('id', userId)
       .maybeSingle();
 
@@ -349,7 +349,8 @@ serve(async (req) => {
     }
 
     if (currentProfile) {
-      currentProfile = await reconcileCompletedPixCheckout(supabaseClient, userId, userEmail, currentProfile);
+      const profileState = currentProfile;
+      currentProfile = await reconcileCompletedPixCheckout(supabaseClient, userId, userEmail, profileState);
     }
 
     if (!currentProfile) {
@@ -638,7 +639,7 @@ serve(async (req) => {
               .eq('id', userId)
               .maybeSingle();
 
-            if (shouldPreservePaidAccess(freshProfile as BillingProfileState | null)) {
+            if (freshProfile && shouldPreservePaidAccess(freshProfile as BillingProfileState)) {
               logStep("Skipping downgrade - preserving paid access after fresh profile check", {
                 plan: freshProfile.plan,
                 provider: freshProfile.payment_provider ?? null,
