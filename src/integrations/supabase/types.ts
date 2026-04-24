@@ -2486,6 +2486,47 @@ export type Database = {
           },
         ]
       }
+      partner_fraud_attempts: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          matched_field: string | null
+          metadata: Json | null
+          partner_id: string | null
+          reason: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          matched_field?: string | null
+          metadata?: Json | null
+          partner_id?: string | null
+          reason: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          matched_field?: string | null
+          metadata?: Json | null
+          partner_id?: string | null
+          reason?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_fraud_attempts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_goals: {
         Row: {
           achieved_value: number
@@ -6222,6 +6263,10 @@ export type Database = {
       }
       check_and_reset_monthly_searches: {
         Args: { user_id: string }
+        Returns: Json
+      }
+      check_partner_self_referral: {
+        Args: { p_partner_id: string; p_user_id: string }
         Returns: Json
       }
       check_rate_limit: {
