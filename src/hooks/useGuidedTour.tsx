@@ -49,7 +49,10 @@ interface GuidedTourContextValue {
   finish: () => void;
 }
 
-const LS_KEY = "wiize_tour_completed_v3";
+// Per-user key so the tour shows for each new account on the same browser.
+// Legacy global key is migrated/cleared at startup.
+const LS_KEY_LEGACY = "wiize_tour_completed_v3";
+const lsKeyFor = (userId: string) => `wiize_tour_completed_v3:${userId}`;
 
 const GuidedTourContext = createContext<GuidedTourContextValue | undefined>(undefined);
 
