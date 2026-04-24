@@ -49,7 +49,10 @@ interface GuidedTourContextValue {
   finish: () => void;
 }
 
-const LS_KEY = "wiize_tour_completed_v3";
+// Per-user key so the tour shows for each new account on the same browser.
+// Legacy global key is migrated/cleared at startup.
+const LS_KEY_LEGACY = "wiize_tour_completed_v3";
+const lsKeyFor = (userId: string) => `wiize_tour_completed_v3:${userId}`;
 
 const GuidedTourContext = createContext<GuidedTourContextValue | undefined>(undefined);
 
@@ -463,6 +466,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user || startedRef.current) return;
     if (location.pathname !== "/dashboard") return;
+    const LS_KEY = lsKeyFor(user.id);
+    // One-time migration: clear the legacy global flag so it doesn't block new users
+    if (localStorage.getItem(LS_KEY_LEGACY)) {
+      localStorage.removeItem(LS_KEY_LEGACY);
+    }
     if (localStorage.getItem(LS_KEY)) return;
 
     startedRef.current = true;
@@ -633,7 +641,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   }, [goToStep]);
 
   const persistCompletion = useCallback(async () => {
-    localStorage.setItem(LS_KEY, "1");
+    if (user) localStorage.setItem(lsKeyFor(user.id), "1");
     if (!user) return;
     try {
       await supabase
@@ -674,7 +682,8 @@ export function useGuidedTour() {
 }
 
 export async function resetGuidedTour(userId: string) {
-  localStorage.removeItem(LS_KEY);
+  localStorage.removeItem(lsKeyFor(userId));
+  localStorage.removeItem(LS_KEY_LEGACY);
   await supabase
     .from("user_onboarding")
     .update({ tour_completed_at: null })
