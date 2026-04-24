@@ -42,8 +42,8 @@ const brandColors = [
 
 const logoAssets = [
   { id: "color", label: "Logo colorido (PNG)", src: wiizeLogoColor, bg: "bg-white", filename: "wiize-logo-color.png" },
-  { id: "white", label: "Logo branco (PNG)", src: wiizeLogoWhite, bg: "bg-slate-900", filename: "wiize-logo-white.png" },
-  { id: "icon", label: "Ícone (PNG)", src: wiizeIcon, bg: "bg-white", filename: "wiize-icon.png" },
+  { id: "white", label: "Logo branco (PNG)", src: wiizeLogoWhite, bg: "bg-gradient-to-br from-slate-800 to-slate-950", filename: "wiize-logo-white.png" },
+  { id: "icon", label: "Ícone (PNG)", src: wiizeIcon, bg: "bg-gradient-to-br from-slate-50 to-slate-100", filename: "wiize-icon.png" },
 ];
 
 export default function PartnerMaterials() {
