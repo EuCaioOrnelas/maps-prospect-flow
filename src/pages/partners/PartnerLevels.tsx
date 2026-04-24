@@ -222,19 +222,24 @@ export default function PartnerLevels() {
               <Card
                 key={tier.key}
                 className={cn(
-                  "relative overflow-hidden border transition-all duration-300",
+                  "relative overflow-hidden border border-border/40 bg-card/80 backdrop-blur-sm transition-all duration-300",
                   isCurrent
-                    ? "border-primary/30 shadow-[0_0_0_1px_hsl(var(--primary)/0.10),0_18px_50px_-20px_hsl(var(--primary)/0.45)]"
-                    : "border-border/50 hover:border-border",
+                    ? "hover:border-border/60"
+                    : "hover:-translate-y-0.5 hover:border-border/60 hover:shadow-[0_8px_30px_-12px_hsl(var(--foreground)/0.15)]",
                   !isUnlocked && "opacity-75",
                 )}
               >
+                {/* soft accent glow blob — same pattern as StatCard */}
+                <div className={cn("pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl opacity-50 bg-gradient-to-br to-transparent", `from-primary/15`)} />
                 {isCurrent && (
-                  <div className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/15 text-primary ring-1 ring-primary/25">
-                    Você está aqui
-                  </div>
+                  <>
+                    <div className="pointer-events-none absolute -bottom-20 -left-16 h-44 w-44 rounded-full blur-3xl opacity-60 bg-gradient-to-tr from-primary/20 to-transparent" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.06] via-transparent to-transparent" />
+                    <div className="absolute top-3 right-3 z-10 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/15 text-primary ring-1 ring-primary/25">
+                      Você está aqui
+                    </div>
+                  </>
                 )}
-                <div className={cn("pointer-events-none absolute -top-16 -right-16 h-44 w-44 rounded-full blur-3xl opacity-60", meta.bg)} />
 
                 <CardContent className="relative p-5 space-y-4">
                   <div className="flex items-center gap-3">
