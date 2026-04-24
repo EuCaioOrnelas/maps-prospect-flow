@@ -3,6 +3,12 @@
 export const fmtBRL = (cents: number | null | undefined) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format((cents || 0) / 100);
 
+export const fmtNum = (n: number | null | undefined) =>
+  new Intl.NumberFormat("pt-BR").format(n || 0);
+
+export const fmtPct = (n: number | null | undefined, digits = 1) =>
+  `${(n || 0).toFixed(digits)}%`;
+
 export const fmtDate = (iso: string | null | undefined) => {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -56,3 +62,35 @@ export const levelLabel: Record<string, string> = {
   gold: "Gold",
   platinum: "Platinum",
 };
+
+export const goalStatusColors: Record<string, string> = {
+  active: "bg-blue-500/10 text-blue-600 border-blue-500/30",
+  completed: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
+  expired: "bg-muted text-muted-foreground border-border",
+  cancelled: "bg-destructive/10 text-destructive border-destructive/30",
+};
+
+export const goalStatusLabel: Record<string, string> = {
+  active: "Em andamento",
+  completed: "Concluída",
+  expired: "Expirada",
+  cancelled: "Cancelada",
+};
+
+export const goalTypeLabel: Record<string, string> = {
+  revenue: "Receita gerada",
+  paid_clients: "Clientes pagos",
+  leads: "Leads indicados",
+  mrr: "MRR atribuído",
+};
+
+export const goalPrizeStatusLabel: Record<string, string> = {
+  not_claimed: "Disponível para resgate",
+  requested: "Resgate solicitado",
+  paid: "Pago",
+};
+
+export function formatGoalValue(type: string, value: number) {
+  if (type === "revenue" || type === "mrr") return fmtBRL(value * 100);
+  return fmtNum(value);
+}
