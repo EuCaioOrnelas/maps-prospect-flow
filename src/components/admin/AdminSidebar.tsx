@@ -119,7 +119,6 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Vendas / Comissões", url: "/admin/partners/vendas", icon: DollarSign },
       { title: "Saques", url: "/admin/partners/saques", icon: WalletIcon },
       { title: "Pagamentos", url: "/admin/partners/pagamentos", icon: CheckCircle2 },
-      { title: "Rankings", url: "/admin/partners/rankings", icon: Award },
       { title: "Metas", url: "/admin/partners/metas", icon: Target },
       { title: "Links Campanha", url: "/admin/partners/links", icon: Workflow },
       { title: "Materiais", url: "/admin/partners/materiais", icon: FileText },

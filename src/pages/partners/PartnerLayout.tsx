@@ -40,8 +40,8 @@ export default function PartnerLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <aside className="w-64 border-r border-border bg-card flex flex-col">
+    <div className="min-h-screen bg-background">
+      <aside className="fixed inset-y-0 left-0 w-64 border-r border-border bg-card flex flex-col z-40">
         <div className="px-5 py-5 border-b flex items-center gap-3">
           <img src={wiizeLogo} alt="Wiize" className="h-9 w-9 object-contain shrink-0" />
           <div className="leading-tight min-w-0">
@@ -72,7 +72,7 @@ export default function PartnerLayout() {
           </Button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">
+      <main className="ml-64 min-h-screen">
         <Outlet context={{ partner }} />
       </main>
     </div>
