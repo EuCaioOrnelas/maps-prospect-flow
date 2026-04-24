@@ -55,6 +55,41 @@ export default function PartnerGoals() {
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     const result = data as any;
     if (result?.error) { toast({ title: "Não foi possível", description: result.error, variant: "destructive" }); return; }
+
+    // Best-effort emails: confirmation to partner + alert to admin
+    const goal = goals.find((g) => g.id === goalId);
+    const firstName = (partner?.full_name || "").split(" ")[0] || "Parceiro";
+    supabase.functions.invoke("send-partner-email", {
+      body: {
+        type: "partner_goal_prize_claimed",
+        to: partner?.email,
+        data: {
+          first_name: firstName,
+          goal_title: goal?.title || "Meta",
+          prize_amount_cents: goal?.prize_amount_cents || 0,
+          user_id: partner?.user_id,
+        },
+      },
+    }).catch(() => {});
+    supabase.functions.invoke("send-partner-email", {
+      body: {
+        type: "admin_partner_alert",
+        to: "parceiros@wiize.com.br",
+        data: {
+          subject: `🎁 Resgate de prêmio — ${partner?.full_name || "Parceiro"}`,
+          title: "Parceiro resgatou prêmio de meta",
+          lines: [
+            `Parceiro: <strong>${partner?.full_name}</strong> (${partner?.email})`,
+            `Meta: <strong>${goal?.title || "—"}</strong>`,
+            `Prêmio: <strong>R$ ${((goal?.prize_amount_cents || 0) / 100).toFixed(2).replace(".", ",")}</strong>`,
+            "O valor entrou na fila de saques. Revise e aprove o pagamento.",
+          ],
+          cta_url: `${window.location.origin}/admin/partners/saques`,
+          cta_label: "Ir para saques",
+        },
+      },
+    }).catch(() => {});
+
     toast({ title: "Prêmio resgatado!", description: "O valor foi adicionado à sua fila de saques." });
     load();
   };

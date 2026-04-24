@@ -13,12 +13,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Copy, Check, KeyRound, RefreshCcw, Ban, Save, Loader2,
-  Users, DollarSign, Wallet, TrendingUp, MousePointerClick, Award, Building2, Trash2
+  Users, DollarSign, Wallet, TrendingUp, MousePointerClick, Award, Building2, Trash2, Target, Link2,
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
+import { PartnerGoalsTab } from "@/components/admin/partners/PartnerGoalsTab";
+import { PartnerLinksTab } from "@/components/admin/partners/PartnerLinksTab";
 
 type Level = "bronze" | "silver" | "gold" | "platinum";
 type Status = "active" | "inactive" | "blocked";
@@ -330,6 +332,8 @@ export default function AdminPartnerDetail() {
           <TabsTrigger value="withdrawals">Saques</TabsTrigger>
           <TabsTrigger value="leads">Leads</TabsTrigger>
           <TabsTrigger value="clicks">Cliques</TabsTrigger>
+          <TabsTrigger value="goals" className="gap-1.5"><Target size={13} /> Metas</TabsTrigger>
+          <TabsTrigger value="links" className="gap-1.5"><Link2 size={13} /> Links</TabsTrigger>
           <TabsTrigger value="bank">Dados bancários</TabsTrigger>
           <TabsTrigger value="settings">Editar / Senha</TabsTrigger>
           <TabsTrigger value="history">Histórico</TabsTrigger>

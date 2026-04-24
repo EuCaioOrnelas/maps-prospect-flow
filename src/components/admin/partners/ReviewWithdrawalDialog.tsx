@@ -146,6 +146,20 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
     }).eq("id", withdrawal.id);
     setLoading(false);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+
+    // Best-effort rejection email
+    supabase.functions.invoke("send-partner-email", {
+      body: {
+        type: "partner_withdrawal_rejected",
+        to: withdrawal.partner.email,
+        data: {
+          first_name: (withdrawal.partner.full_name || "").split(" ")[0] || "Parceiro",
+          amount_cents: withdrawal.amount_cents,
+          reason,
+        },
+      },
+    }).catch(() => {});
+
     toast({ title: "Saque rejeitado" });
     onUpdated();
     onClose();
