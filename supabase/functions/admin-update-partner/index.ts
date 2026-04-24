@@ -130,10 +130,11 @@ serve(async (req) => {
       if (!partner.user_id) {
         return new Response(JSON.stringify({ error: "Parceiro não possui usuário vinculado" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      const { error: pwdErr } = await supabaseAdmin.auth.admin.updateUserById(partner.user_id, {
+      console.log("[admin-update-partner] updating password for user:", partner.user_id, "len:", body.new_password.length);
+      const { data: pwdData, error: pwdErr } = await supabaseAdmin.auth.admin.updateUserById(partner.user_id, {
         password: body.new_password,
-        email_confirm: true,
       });
+      console.log("[admin-update-partner] update result:", { ok: !!pwdData?.user, userId: pwdData?.user?.id, err: pwdErr?.message });
       if (pwdErr) {
         const msg = (pwdErr.message || "").toLowerCase();
         let friendly = pwdErr.message;
