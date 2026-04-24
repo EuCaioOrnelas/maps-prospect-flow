@@ -10,6 +10,7 @@ interface StoredReferral {
   code: string;
   partner_id: string;
   click_id: string;
+  referral_link_id?: string | null;
   ts: number;
 }
 
@@ -71,11 +72,28 @@ export function usePartnerTracking() {
 
         if (!partner || cancelled) return;
 
+        const linkSlug = params.get("rl")?.trim().toLowerCase();
+        let referralLinkId: string | null = null;
+
+        if (linkSlug) {
+          const { data: referralLink } = await supabase
+            .from("partner_referral_links")
+            .select("id, is_active")
+            .eq("slug", linkSlug)
+            .eq("partner_id", partner.id)
+            .maybeSingle();
+
+          if (referralLink?.is_active) {
+            referralLinkId = referralLink.id;
+          }
+        }
+
         const { data: click } = await supabase
           .from("partner_clicks")
           .insert({
             partner_id: partner.id,
             referral_code: ref,
+            referral_link_id: referralLinkId,
             user_agent: navigator.userAgent.substring(0, 500),
             landing_page: location.pathname,
             utm_source: params.get("utm_source"),
@@ -94,6 +112,7 @@ export function usePartnerTracking() {
           code: ref,
           partner_id: partner.id,
           click_id: click.id,
+          referral_link_id: referralLinkId,
           ts: Date.now(),
         });
       } catch (err) {
@@ -116,6 +135,7 @@ export async function attributePartnerLeadOnSignup(userId: string, email: string
       email,
       name: name || null,
       click_id: ref.click_id,
+      referral_link_id: ref.referral_link_id ?? null,
       is_trial: true,
     });
     await supabase
