@@ -213,10 +213,17 @@ export default function Onboarding() {
   const persist = async (skipped: boolean) => {
     if (!user) throw new Error("Sessão expirada. Faça login novamente.");
 
-    // Garante que a sessão ainda está válida antes de gravar
-    const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
-    if (sessionErr || !sessionData.session) {
-      throw new Error("Sessão expirada. Faça login novamente para salvar.");
+    // Tenta garantir token válido, mas NÃO bloqueia se a checagem falhar.
+    // O cliente Supabase já faz auto-refresh; bloquear aqui causa falsos
+    // "sessão expirada" depois de o usuário gastar minutos preenchendo.
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        // tenta refresh silencioso uma vez
+        await supabase.auth.refreshSession();
+      }
+    } catch (e) {
+      console.warn("[Onboarding] session check failed (continuando assim mesmo):", e);
     }
 
     const payload = {
