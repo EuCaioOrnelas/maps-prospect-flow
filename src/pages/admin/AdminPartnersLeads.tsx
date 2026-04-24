@@ -7,8 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { fmtDate } from "@/lib/partnerFormat";
+import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
 
 interface Lead {
+  user_id: string;
   id: string;
   name: string | null;
   email: string;
@@ -30,6 +32,7 @@ export default function AdminPartnersLeads() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [partnerFilter, setPartnerFilter] = useState<string>("all");
   const [partners, setPartners] = useState<Array<{ id: string; full_name: string }>>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -37,7 +40,7 @@ export default function AdminPartnersLeads() {
       const [leadsRes, partnersRes] = await Promise.all([
         supabase
           .from("partner_leads")
-          .select("id, name, email, partner_id, attributed_at, is_trial, is_paid, is_cancelled, current_plan, paid_at, last_activity_at, partner:partners(full_name, referral_code)")
+          .select("id, user_id, name, email, partner_id, attributed_at, is_trial, is_paid, is_cancelled, current_plan, paid_at, last_activity_at, partner:partners(full_name, referral_code)")
           .order("attributed_at", { ascending: false })
           .limit(500),
         supabase.from("partners").select("id, full_name").order("full_name"),
@@ -118,7 +121,11 @@ export default function AdminPartnersLeads() {
                 ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">Nenhum lead encontrado.</TableCell></TableRow>
                 ) : filtered.map((l) => (
-                  <TableRow key={l.id}>
+                  <TableRow
+                    key={l.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => setSelectedUserId(l.user_id)}
+                  >
                     <TableCell>
                       <div className="font-medium">{l.name || "—"}</div>
                       <div className="text-xs text-muted-foreground">{l.email}</div>
@@ -138,6 +145,14 @@ export default function AdminPartnersLeads() {
           </div>
         </CardContent>
       </Card>
+
+      {selectedUserId && (
+        <AdminUserInfoDialog
+          userId={selectedUserId}
+          open={!!selectedUserId}
+          onOpenChange={(o) => !o && setSelectedUserId(null)}
+        />
+      )}
     </div>
   );
 }
