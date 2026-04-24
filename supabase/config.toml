@@ -56,3 +56,15 @@ verify_jwt = false
 
 [functions.send-partner-email]
 verify_jwt = false
+
+[functions.submit-partner-application]
+verify_jwt = false
+
+[functions.partner-application-upload-url]
+verify_jwt = false
+
+[functions.reject-partner-application]
+verify_jwt = false
+
+[functions.approve-partner-application]
+verify_jwt = false
