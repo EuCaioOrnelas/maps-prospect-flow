@@ -226,7 +226,7 @@ const App = () => (
                 <Route path="/consultoria" element={<ProtectedRoute><Consultoria /></ProtectedRoute>} />
                 <Route path="/cancellation-feedback" element={<ProtectedRoute><CancellationFeedback /></ProtectedRoute>} />
                 <Route path="/thank-you" element={<LightThemeWrapper><ThankYou /></LightThemeWrapper>} />
-                <Route path="/r/:token" element={<LightThemeWrapper><SharedReport /></LightThemeWrapper>} />
+                <Route path="/shared-report/:token" element={<LightThemeWrapper><SharedReport /></LightThemeWrapper>} />
 
                 {/* Admin Layout with nested routes */}
                 <Route
