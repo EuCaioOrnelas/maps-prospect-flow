@@ -35,7 +35,7 @@ const STEPS = [
 
 const benefits = [
   { icon: Wallet, title: "Comissão recorrente até 24 meses", desc: "Receba todo mês enquanto seu indicado for cliente." },
-  { icon: TrendingUp, title: "Níveis até 40%", desc: "Quanto mais vendas, maior sua comissão." },
+  { icon: TrendingUp, title: "Níveis até 25%", desc: "Quanto mais vendas, maior sua comissão." },
   { icon: Megaphone, title: "Materiais prontos", desc: "Banners, copies e roteiros validados." },
   { icon: Target, title: "Atribuição last-click 2 anos", desc: "A venda continua sua mesmo se demorar a fechar." },
   { icon: Users, title: "Painel exclusivo", desc: "Cliques, leads, vendas e comissões em tempo real." },
@@ -363,8 +363,8 @@ export default function PartnersApply() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
         <Helmet>
-          <title>Torne-se Parceiro Oficial Wiize</title>
-          <meta name="description" content="Indique clientes, monetize sua audiência e receba comissões recorrentes como parceiro oficial Wiize." />
+          <title>Torne-se Parceiro Wiize Partners</title>
+          <meta name="description" content="Indique clientes, monetize sua audiência e receba comissões recorrentes como parceiro Wiize Partners." />
         </Helmet>
 
         {/* Nav */}
@@ -390,7 +390,7 @@ export default function PartnersApply() {
             Programa Oficial de Parceiros
           </div>
           <h1 className="text-5xl md:text-6xl font-semibold tracking-tight max-w-3xl mx-auto leading-[1.05]">
-            Torne-se <span className="text-primary">Parceiro Oficial</span> Wiize
+            Torne-se <span className="text-primary">Parceiro Wiize Partners</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Indique clientes, monetize sua audiência ou ofereça Wiize aos seus clientes
@@ -409,7 +409,7 @@ export default function PartnersApply() {
         {/* Benefits */}
         <section className="max-w-6xl mx-auto px-6 py-16">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Por que ser parceiro Wiize</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Por que ser parceiro Wiize Partners</h2>
             <p className="text-muted-foreground mt-3">Tudo que você precisa para gerar receita recorrente</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
