@@ -466,6 +466,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user || startedRef.current) return;
     if (location.pathname !== "/dashboard") return;
+    const LS_KEY = lsKeyFor(user.id);
+    // One-time migration: clear the legacy global flag so it doesn't block new users
+    if (localStorage.getItem(LS_KEY_LEGACY)) {
+      localStorage.removeItem(LS_KEY_LEGACY);
+    }
     if (localStorage.getItem(LS_KEY)) return;
 
     startedRef.current = true;
