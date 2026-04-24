@@ -59,6 +59,15 @@ interface BillingProfileState {
   trial_plan_chosen?: string | null;
 }
 
+interface CheckoutLeadState {
+  id: string;
+  user_id?: string | null;
+  plan_attempted: string;
+  checkout_completed?: boolean;
+  checkout_completed_at?: string | null;
+  stripe_session_id?: string | null;
+}
+
 const getActiveTrialAccess = (profile?: BillingProfileState | null) => {
   if (!profile?.trial_will_charge_at) return null;
 
@@ -93,7 +102,7 @@ const shouldPreservePaidAccess = (profile?: BillingProfileState | null) => {
 };
 
 async function ensureProfileAndApplyPendingCheckout(
-  supabaseClient: ReturnType<typeof createClient>,
+  supabaseClient: any,
   userId: string,
   userEmail: string,
 ) {
@@ -137,7 +146,9 @@ async function ensureProfileAndApplyPendingCheckout(
     .order("checkout_completed_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
 
-  const completedLead = (checkoutLeads || []).find(
+  const normalizedCheckoutLeads = ((checkoutLeads || []) as CheckoutLeadState[]);
+
+  const completedLead = normalizedCheckoutLeads.find(
     (lead) => lead.checkout_completed && (!lead.user_id || lead.user_id === userId),
   );
 
@@ -183,7 +194,7 @@ async function ensureProfileAndApplyPendingCheckout(
 }
 
 async function reconcileCompletedPixCheckout(
-  supabaseClient: ReturnType<typeof createClient>,
+  supabaseClient: any,
   userId: string,
   userEmail: string,
   currentProfile: BillingProfileState,
@@ -196,7 +207,9 @@ async function reconcileCompletedPixCheckout(
     .order("checkout_completed_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
 
-  const completedPixLead = (checkoutLeads || []).find((lead) => {
+  const normalizedCheckoutLeads = ((checkoutLeads || []) as CheckoutLeadState[]);
+
+  const completedPixLead = normalizedCheckoutLeads.find((lead) => {
     const checkoutId = lead.stripe_session_id || "";
     const isPixCheckout = checkoutId.startsWith("abacate_sub_") || checkoutId.startsWith("abacate_pix_") || checkoutId.startsWith("abacate_renewal_") || checkoutId.startsWith("asaas_sub_");
     return isPixCheckout && !lead.user_id;
