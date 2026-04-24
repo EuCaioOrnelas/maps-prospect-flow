@@ -284,7 +284,7 @@ const App = () => (
                 {/* Portal do Parceiro */}
                 <Route path="/parceiros" element={<LightThemeWrapper><PartnersLanding /></LightThemeWrapper>} />
                 <Route path="/partners/login" element={<LightThemeWrapper><PartnerLogin /></LightThemeWrapper>} />
-                <Route path="/partners" element={<PartnerLayout />}>
+                <Route path="/partners" element={<LightThemeWrapper><PartnerLayout /></LightThemeWrapper>}>
                   <Route index element={<PartnerDashboard />} />
                   <Route path="leads" element={<PartnerLeads />} />
                   <Route path="comissoes" element={<PartnerCommissions />} />
