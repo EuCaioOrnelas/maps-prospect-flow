@@ -10,6 +10,10 @@ interface Props {
   accent?: "primary" | "emerald" | "amber" | "violet" | "rose" | "blue";
   highlight?: boolean;
   className?: string;
+  /** Quando true, exibe placeholder "sem dados suficientes" no lugar do valor. */
+  empty?: boolean;
+  /** Texto customizado do estado vazio (default: "Sem dados suficientes"). */
+  emptyLabel?: string;
 }
 
 const accents: Record<string, { ring: string; iconBg: string; glow: string }> = {
@@ -34,7 +38,7 @@ function valueSizeClass(value: string | number): string {
   return "text-sm";
 }
 
-export function StatCard({ label, value, hint, icon: Icon, accent = "primary", highlight, className }: Props) {
+export function StatCard({ label, value, hint, icon: Icon, accent = "primary", highlight, className, empty, emptyLabel = "Sem dados suficientes" }: Props) {
   const a = accents[accent];
   const valueClass = valueSizeClass(value);
   return (
@@ -55,18 +59,29 @@ export function StatCard({ label, value, hint, icon: Icon, accent = "primary", h
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground truncate">{label}</div>
-            <div
-              className={cn(
-                "font-bold tracking-tight mt-1.5 tabular-nums leading-tight break-words",
-                valueClass,
-              )}
-              title={String(value)}
-            >
-              {value}
-            </div>
-            {hint && <div className="text-xs text-muted-foreground mt-1 truncate">{hint}</div>}
+            {empty ? (
+              <>
+                <div className="text-sm font-medium text-muted-foreground/80 mt-2 leading-snug">
+                  {emptyLabel}
+                </div>
+                {hint && <div className="text-xs text-muted-foreground/60 mt-1 truncate">{hint}</div>}
+              </>
+            ) : (
+              <>
+                <div
+                  className={cn(
+                    "font-bold tracking-tight mt-1.5 tabular-nums leading-tight break-words",
+                    valueClass,
+                  )}
+                  title={String(value)}
+                >
+                  {value}
+                </div>
+                {hint && <div className="text-xs text-muted-foreground mt-1 truncate">{hint}</div>}
+              </>
+            )}
           </div>
-          <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ring-1", a.iconBg, a.ring)}>
+          <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ring-1", a.iconBg, a.ring, empty && "opacity-60")}>
             <Icon size={16} />
           </div>
         </div>

@@ -74,19 +74,19 @@ export default function PartnerDashboard() {
   }, [partner?.id]);
 
   const headlineCards = useMemo(() => stats ? [
-    { label: "MRR atribuído", value: fmtBRL(mrrCents), icon: Repeat, accent: "primary" as const, hint: "Mensalidades ativas", highlight: true },
-    { label: "Disponível p/ saque", value: fmtBRL(stats.available_cents), icon: Wallet, accent: "emerald" as const, hint: "Pronto para resgate", highlight: true },
-    { label: "Comissão pendente", value: fmtBRL(stats.pending_cents), icon: Clock, accent: "amber" as const, hint: "Liberação programada", highlight: true },
-    { label: "Receita gerada (LTV)", value: fmtBRL(stats.lifetime_revenue_cents || 0), icon: DollarSign, accent: "violet" as const, hint: "Total histórico", highlight: true },
+    { label: "MRR atribuído", value: fmtBRL(mrrCents), icon: Repeat, accent: "primary" as const, hint: "Mensalidades ativas", highlight: true, empty: !mrrCents },
+    { label: "Disponível p/ saque", value: fmtBRL(stats.available_cents), icon: Wallet, accent: "emerald" as const, hint: "Pronto para resgate", highlight: true, empty: !stats.available_cents },
+    { label: "Comissão pendente", value: fmtBRL(stats.pending_cents), icon: Clock, accent: "amber" as const, hint: "Liberação programada", highlight: true, empty: !stats.pending_cents },
+    { label: "Receita gerada (LTV)", value: fmtBRL(stats.lifetime_revenue_cents || 0), icon: DollarSign, accent: "violet" as const, hint: "Total histórico", highlight: true, empty: !stats.lifetime_revenue_cents },
   ] : [], [stats, mrrCents]);
 
   const funnelCards = useMemo(() => stats ? [
-    { label: "Cliques rastreados", value: stats.total_clicks ?? 0, icon: MousePointerClick, accent: "blue" as const },
-    { label: "Leads totais", value: stats.total_leads, icon: Users, accent: "primary" as const },
-    { label: "Em trial", value: stats.trials, icon: Target, accent: "amber" as const },
-    { label: "Clientes pagos", value: stats.paid, icon: TrendingUp, accent: "emerald" as const },
-    { label: "Taxa de conversão", value: fmtPct(stats.conversion_rate), icon: TrendingUp, accent: "violet" as const, hint: "Lead → cliente pago" },
-    { label: "Cancelados", value: stats.cancelled, icon: Clock, accent: "rose" as const },
+    { label: "Cliques rastreados", value: stats.total_clicks ?? 0, icon: MousePointerClick, accent: "blue" as const, empty: !(stats.total_clicks ?? 0) },
+    { label: "Leads totais", value: stats.total_leads, icon: Users, accent: "primary" as const, empty: !stats.total_leads },
+    { label: "Em trial", value: stats.trials, icon: Target, accent: "amber" as const, empty: !stats.trials },
+    { label: "Clientes pagos", value: stats.paid, icon: TrendingUp, accent: "emerald" as const, empty: !stats.paid },
+    { label: "Taxa de conversão", value: fmtPct(stats.conversion_rate), icon: TrendingUp, accent: "violet" as const, hint: "Lead → cliente pago", empty: !stats.total_leads },
+    { label: "Cancelados", value: stats.cancelled, icon: Clock, accent: "rose" as const, empty: !stats.cancelled },
   ] : [], [stats]);
 
   if (!stats) {
@@ -157,7 +157,7 @@ export default function PartnerDashboard() {
       {/* Funnel */}
       <div>
         <div className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Funil de conversão</div>
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {funnelCards.map((c) => (
             <StatCard key={c.label} {...c} />
           ))}

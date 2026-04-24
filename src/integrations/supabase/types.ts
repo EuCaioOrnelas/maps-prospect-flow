@@ -2976,6 +2976,7 @@ export type Database = {
           minimum_withdrawal_cents: number
           partner_portal_domain: string | null
           platinum_commission_percent: number
+          platinum_threshold_clients: number
           program_enabled: boolean
           release_days: number
           silver_commission_percent: number
@@ -2993,6 +2994,7 @@ export type Database = {
           minimum_withdrawal_cents?: number
           partner_portal_domain?: string | null
           platinum_commission_percent?: number
+          platinum_threshold_clients?: number
           program_enabled?: boolean
           release_days?: number
           silver_commission_percent?: number
@@ -3010,6 +3012,7 @@ export type Database = {
           minimum_withdrawal_cents?: number
           partner_portal_domain?: string | null
           platinum_commission_percent?: number
+          platinum_threshold_clients?: number
           program_enabled?: boolean
           release_days?: number
           silver_commission_percent?: number
