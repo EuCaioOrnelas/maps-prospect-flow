@@ -423,7 +423,7 @@ export default function AdminPartnersApplications() {
                   </div>
                 </div>
               </div>
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-xs">
+              <div className="bg-warning/10 border border-warning/30 text-warning rounded-lg p-3 text-xs">
                 <strong>Atenção:</strong> esta senha não será exibida novamente. O parceiro poderá alterá-la no primeiro login.
               </div>
             </div>
