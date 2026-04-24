@@ -504,7 +504,7 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.5) 50%, transparent 75%, transparent 100%);
+    background: linear-gradient(45deg, transparent 28%, hsl(var(--background) / 0.18) 50%, transparent 72%, transparent 100%);
     background-size: 250% 250%, 100% 100%;
     background-position: 200% 0, 0 0;
     background-repeat: no-repeat;
@@ -517,7 +517,7 @@
     transition: background-position 1.8s ease;
   }
   .dark .btn-shine::before {
-    background: linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.3) 50%, transparent 75%, transparent 100%);
+    background: linear-gradient(45deg, transparent 28%, hsl(var(--background) / 0.12) 50%, transparent 72%, transparent 100%);
     background-size: 250% 250%, 100% 100%;
     background-position: 200% 0, 0 0;
     background-repeat: no-repeat;
