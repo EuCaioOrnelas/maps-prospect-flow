@@ -109,7 +109,7 @@ export default function PartnersLanding() {
           </div>
           <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05] mb-6">
             Indique a Wiize.<br />
-            <span className="bg-gradient-to-r from-primary via-emerald-500 to-primary bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary via-primary/70 to-primary bg-clip-text text-transparent">
               Receba até 25% por 24 meses.
             </span>
           </h1>
