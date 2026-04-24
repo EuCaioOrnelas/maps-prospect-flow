@@ -641,7 +641,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   }, [goToStep]);
 
   const persistCompletion = useCallback(async () => {
-    localStorage.setItem(LS_KEY, "1");
+    if (user) localStorage.setItem(lsKeyFor(user.id), "1");
     if (!user) return;
     try {
       await supabase
