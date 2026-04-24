@@ -595,6 +595,33 @@ serve(async (req) => {
           );
           
           if (!hasAnySub) {
+            // Extra safety: re-check admin_assigned_plan right before downgrading.
+            // Protects users who pay via PIX/Asaas but happen to have a Stripe customer.
+            const { data: freshProfile } = await supabaseClient
+              .from('profiles')
+              .select('admin_assigned_plan, plan, searches_limit, subscription_current_period_end')
+              .eq('id', userId)
+              .maybeSingle();
+
+            if (freshProfile?.admin_assigned_plan) {
+              logStep("Skipping downgrade - admin assigned plan (re-check before Stripe downgrade)", {
+                plan: freshProfile.plan,
+              });
+              plan = freshProfile.plan ?? currentProfile.plan;
+              searchesLimit = freshProfile.searches_limit ?? currentProfile.searches_limit ?? PLAN_LIMITS.free;
+              subscriptionEnd = freshProfile.subscription_current_period_end ?? currentProfile.subscription_current_period_end ?? null;
+
+              return new Response(JSON.stringify({
+                subscribed: true,
+                plan,
+                searches_limit: searchesLimit,
+                subscription_end: subscriptionEnd,
+              }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+                status: 200,
+              });
+            }
+
             plan = "free";
             searchesLimit = PLAN_LIMITS["free"];
 
