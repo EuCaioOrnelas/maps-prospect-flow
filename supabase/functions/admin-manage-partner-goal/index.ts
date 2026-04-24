@@ -58,12 +58,22 @@ serve(async (req) => {
     const action = body.action || "create";
 
     if (action === "create") {
-      const { partner_id, title, description, goal_type, target_value, prize_amount_cents, deadline_at, internal_notes } = body;
+      const { partner_id, title, description, goal_type, target_value, prize_amount_cents, deadline_at, internal_notes, referral_link_id } = body;
       if (!partner_id || !title?.trim() || !goal_type || !target_value || !deadline_at) {
         return new Response(JSON.stringify({ error: "partner_id, title, goal_type, target_value e deadline_at são obrigatórios" }), { status: 400, headers: corsHeaders });
       }
       if (!["revenue", "paid_clients", "leads", "mrr"].includes(goal_type)) {
         return new Response(JSON.stringify({ error: "goal_type inválido" }), { status: 400, headers: corsHeaders });
+      }
+      // If linked to a specific referral link, ensure it belongs to this partner
+      if (referral_link_id) {
+        const { data: rl } = await admin.from("partner_referral_links").select("partner_id").eq("id", referral_link_id).maybeSingle();
+        if (!rl || rl.partner_id !== partner_id) {
+          return new Response(JSON.stringify({ error: "Link de campanha inválido para este parceiro" }), { status: 400, headers: corsHeaders });
+        }
+        if (goal_type === "mrr") {
+          return new Response(JSON.stringify({ error: "Metas de MRR não podem ser vinculadas a um único link" }), { status: 400, headers: corsHeaders });
+        }
       }
       const { data, error } = await admin.from("partner_goals").insert({
         partner_id,
@@ -74,6 +84,7 @@ serve(async (req) => {
         prize_amount_cents: Math.max(0, Math.round(Number(prize_amount_cents) || 0)),
         deadline_at,
         internal_notes: internal_notes || null,
+        referral_link_id: referral_link_id || null,
         created_by_admin_id: u.user.id,
       }).select().single();
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders });
