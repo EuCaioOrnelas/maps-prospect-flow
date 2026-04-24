@@ -35,7 +35,7 @@ const STEPS = [
 
 const benefits = [
   { icon: Wallet, title: "Comissão recorrente até 24 meses", desc: "Receba todo mês enquanto seu indicado for cliente." },
-  { icon: TrendingUp, title: "Níveis até 40%", desc: "Quanto mais vendas, maior sua comissão." },
+  { icon: TrendingUp, title: "Níveis até 25%", desc: "Quanto mais vendas, maior sua comissão." },
   { icon: Megaphone, title: "Materiais prontos", desc: "Banners, copies e roteiros validados." },
   { icon: Target, title: "Atribuição last-click 2 anos", desc: "A venda continua sua mesmo se demorar a fechar." },
   { icon: Users, title: "Painel exclusivo", desc: "Cliques, leads, vendas e comissões em tempo real." },
