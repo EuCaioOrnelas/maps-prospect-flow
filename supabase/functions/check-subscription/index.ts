@@ -51,10 +51,21 @@ interface BillingProfileState {
   searches_limit?: number;
   searches_used?: number;
   admin_assigned_plan?: boolean;
+  payment_provider?: string | null;
+  is_custom_subscription?: boolean | null;
   subscription_current_period_end?: string | null;
   trial_will_charge_at?: string | null;
   trial_auto_charge_cancelled?: boolean | null;
   trial_plan_chosen?: string | null;
+}
+
+interface CheckoutLeadState {
+  id: string;
+  user_id?: string | null;
+  plan_attempted: string;
+  checkout_completed?: boolean;
+  checkout_completed_at?: string | null;
+  stripe_session_id?: string | null;
 }
 
 const getActiveTrialAccess = (profile?: BillingProfileState | null) => {
@@ -73,14 +84,31 @@ const getActiveTrialAccess = (profile?: BillingProfileState | null) => {
   };
 };
 
+const hasFuturePaidWindow = (profile?: BillingProfileState | null) => {
+  if (!profile?.subscription_current_period_end) return false;
+
+  const endsAt = new Date(profile.subscription_current_period_end);
+  return !Number.isNaN(endsAt.getTime()) && endsAt.getTime() > Date.now();
+};
+
+const shouldPreservePaidAccess = (profile?: BillingProfileState | null) => {
+  if (!profile?.plan || profile.plan === "free") return false;
+  if (profile.admin_assigned_plan || profile.is_custom_subscription) return true;
+
+  const provider = profile.payment_provider;
+  if (!provider || provider === "stripe") return false;
+
+  return hasFuturePaidWindow(profile);
+};
+
 async function ensureProfileAndApplyPendingCheckout(
-  supabaseClient: ReturnType<typeof createClient>,
+  supabaseClient: any,
   userId: string,
   userEmail: string,
 ) {
   const { data: existingProfile } = await supabaseClient
     .from("profiles")
-    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen")
+    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen")
     .eq("id", userId)
     .maybeSingle();
 
@@ -118,7 +146,9 @@ async function ensureProfileAndApplyPendingCheckout(
     .order("checkout_completed_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
 
-  const completedLead = (checkoutLeads || []).find(
+  const normalizedCheckoutLeads = ((checkoutLeads || []) as CheckoutLeadState[]);
+
+  const completedLead = normalizedCheckoutLeads.find(
     (lead) => lead.checkout_completed && (!lead.user_id || lead.user_id === userId),
   );
 
@@ -156,7 +186,7 @@ async function ensureProfileAndApplyPendingCheckout(
 
   const { data: profileAfterRecovery } = await supabaseClient
     .from("profiles")
-    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen")
+    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen")
     .eq("id", userId)
     .maybeSingle();
 
@@ -164,7 +194,7 @@ async function ensureProfileAndApplyPendingCheckout(
 }
 
 async function reconcileCompletedPixCheckout(
-  supabaseClient: ReturnType<typeof createClient>,
+  supabaseClient: any,
   userId: string,
   userEmail: string,
   currentProfile: BillingProfileState,
@@ -177,7 +207,9 @@ async function reconcileCompletedPixCheckout(
     .order("checkout_completed_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
 
-  const completedPixLead = (checkoutLeads || []).find((lead) => {
+  const normalizedCheckoutLeads = ((checkoutLeads || []) as CheckoutLeadState[]);
+
+  const completedPixLead = normalizedCheckoutLeads.find((lead) => {
     const checkoutId = lead.stripe_session_id || "";
     const isPixCheckout = checkoutId.startsWith("abacate_sub_") || checkoutId.startsWith("abacate_pix_") || checkoutId.startsWith("abacate_renewal_") || checkoutId.startsWith("asaas_sub_");
     return isPixCheckout && !lead.user_id;
@@ -239,7 +271,7 @@ async function reconcileCompletedPixCheckout(
 
   const { data: updatedProfile } = await supabaseClient
     .from("profiles")
-    .select("searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen")
+    .select("searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen")
     .eq("id", userId)
     .maybeSingle();
 
@@ -315,7 +347,7 @@ serve(async (req) => {
 
     const { data: existingProfile, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('searches_used, searches_limit, plan, admin_assigned_plan, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen')
+      .select('searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen')
       .eq('id', userId)
       .maybeSingle();
 
@@ -330,7 +362,8 @@ serve(async (req) => {
     }
 
     if (currentProfile) {
-      currentProfile = await reconcileCompletedPixCheckout(supabaseClient, userId, userEmail, currentProfile);
+      const profileState = currentProfile;
+      currentProfile = await reconcileCompletedPixCheckout(supabaseClient, userId, userEmail, profileState);
     }
 
     if (!currentProfile) {
@@ -578,12 +611,28 @@ serve(async (req) => {
         subscriptionEnd = activeTrialAccess.subscriptionEnd;
         logStep("Keeping plan - active trial window still valid", activeTrialAccess);
       } else if (currentProfile?.plan && currentProfile.plan !== "free") {
-        if (currentProfile.admin_assigned_plan) {
-          logStep("Skipping downgrade - admin assigned plan", { 
-            plan: currentProfile.plan 
+        if (shouldPreservePaidAccess(currentProfile)) {
+          logStep("Skipping downgrade - preserving paid access from profile", {
+            plan: currentProfile.plan,
+            provider: currentProfile.payment_provider ?? null,
+            subscriptionEnd: currentProfile.subscription_current_period_end ?? null,
+            adminAssigned: currentProfile.admin_assigned_plan ?? false,
+            isCustomSubscription: currentProfile.is_custom_subscription ?? false,
           });
+
           plan = currentProfile.plan;
           searchesLimit = currentProfile.searches_limit ?? PLAN_LIMITS[currentProfile.plan] ?? PLAN_LIMITS.free;
+          subscriptionEnd = currentProfile.subscription_current_period_end ?? null;
+
+          return new Response(JSON.stringify({
+            subscribed: true,
+            plan,
+            searches_limit: searchesLimit,
+            subscription_end: subscriptionEnd,
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
         } else {
           const allSubs = await stripe.subscriptions.list({
             customer: customerId,
@@ -599,13 +648,17 @@ serve(async (req) => {
             // Protects users who pay via PIX/Asaas but happen to have a Stripe customer.
             const { data: freshProfile } = await supabaseClient
               .from('profiles')
-              .select('admin_assigned_plan, plan, searches_limit, subscription_current_period_end')
+              .select('admin_assigned_plan, is_custom_subscription, payment_provider, plan, searches_limit, subscription_current_period_end')
               .eq('id', userId)
               .maybeSingle();
 
-            if (freshProfile?.admin_assigned_plan) {
-              logStep("Skipping downgrade - admin assigned plan (re-check before Stripe downgrade)", {
+            if (freshProfile && shouldPreservePaidAccess(freshProfile as BillingProfileState)) {
+              logStep("Skipping downgrade - preserving paid access after fresh profile check", {
                 plan: freshProfile.plan,
+                provider: freshProfile.payment_provider ?? null,
+                subscriptionEnd: freshProfile.subscription_current_period_end ?? null,
+                adminAssigned: freshProfile.admin_assigned_plan ?? false,
+                isCustomSubscription: freshProfile.is_custom_subscription ?? false,
               });
               plan = freshProfile.plan ?? currentProfile.plan;
               searchesLimit = freshProfile.searches_limit ?? currentProfile.searches_limit ?? PLAN_LIMITS.free;

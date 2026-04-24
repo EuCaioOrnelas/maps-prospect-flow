@@ -301,12 +301,16 @@ Deno.serve(async (req) => {
       } catch (e) {
         logStep("Error processing user", { userId: user.id, error: String(e) });
 
-        await supabaseClient.from("pix_tracking_events").insert({
+        const { error: trackingError } = await supabaseClient.from("pix_tracking_events").insert({
           user_id: user.id,
           event_type: "processing_error",
           renewal_stage: currentStage,
           metadata: { error: String(e) },
-        }).catch(() => {});
+        });
+
+        if (trackingError) {
+          logStep("Failed to record processing error", { userId: user.id, error: trackingError.message });
+        }
       }
     }
 

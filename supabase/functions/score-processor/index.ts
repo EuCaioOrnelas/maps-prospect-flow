@@ -35,7 +35,8 @@ serve(async (req) => {
     }
   } catch (err) {
     console.error("Score processor error:", err);
-    return json({ error: err.message }, 500);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return json({ error: errorMessage }, 500);
   }
 });
 
