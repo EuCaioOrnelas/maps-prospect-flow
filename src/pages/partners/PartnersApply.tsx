@@ -363,8 +363,8 @@ export default function PartnersApply() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
         <Helmet>
-          <title>Torne-se Parceiro Oficial Wiize</title>
-          <meta name="description" content="Indique clientes, monetize sua audiência e receba comissões recorrentes como parceiro oficial Wiize." />
+          <title>Torne-se Parceiro Wiize Partners</title>
+          <meta name="description" content="Indique clientes, monetize sua audiência e receba comissões recorrentes como parceiro Wiize Partners." />
         </Helmet>
 
         {/* Nav */}
