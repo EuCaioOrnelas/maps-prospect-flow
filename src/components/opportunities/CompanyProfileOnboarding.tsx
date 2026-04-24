@@ -138,18 +138,35 @@ export function CompanyProfileOnboarding({ open, userId, onComplete, onClose, in
       }
       setSaving(true);
       try {
-        // Save company profile
-        const { error } = await supabase
-          .from("company_profiles" as any)
-          .upsert({
-            user_id: userId,
-            ...form,
-          } as any, { onConflict: "user_id" });
-        if (error) throw error;
+        // Verifica sessão ativa antes de qualquer escrita
+        const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+        if (sessionErr || !sessionData.session) {
+          throw new Error("Sessão expirada. Faça login novamente para salvar.");
+        }
 
-        // Save services
-        await supabase.from("company_services").delete().eq("user_id", userId);
+        // 1) Save company profile (com retry)
+        let profileSaved = false;
+        let lastProfileErr: any = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          const { error } = await supabase
+            .from("company_profiles" as any)
+            .upsert({ user_id: userId, ...form } as any, { onConflict: "user_id" });
+          if (!error) { profileSaved = true; break; }
+          lastProfileErr = error;
+          console.warn(`[CompanyProfileOnboarding] profile upsert attempt ${attempt} failed:`, error);
+          await new Promise((r) => setTimeout(r, 400 * attempt));
+        }
+        if (!profileSaved) throw lastProfileErr || new Error("Falha ao salvar perfil");
+
+        // 2) Save services — INSERT primeiro em registros novos, só apaga os antigos depois de sucesso
         const validServices = services.filter(s => s.name.trim().length >= 2 && s.average_ticket > 0);
+
+        // Busca IDs antigos para apagar SOMENTE se a inserção dos novos der certo
+        const { data: oldServices } = await supabase
+          .from("company_services")
+          .select("id")
+          .eq("user_id", userId);
+
         if (validServices.length > 0) {
           const { error: svcError } = await supabase.from("company_services").insert(
             validServices.map(s => ({
@@ -159,14 +176,31 @@ export function CompanyProfileOnboarding({ open, userId, onComplete, onClose, in
               description: s.description.trim() || null,
             }))
           );
-          if (svcError) throw svcError;
+          if (svcError) {
+            console.error("[CompanyProfileOnboarding] services insert failed:", svcError);
+            throw svcError;
+          }
+        }
+
+        // Só apaga os antigos depois de inserir os novos com sucesso (evita perda de dados)
+        if (oldServices && oldServices.length > 0) {
+          const oldIds = oldServices.map(s => s.id);
+          await supabase.from("company_services").delete().in("id", oldIds);
         }
 
         toast({ title: "Perfil salvo com sucesso!", description: "Agora suas mensagens serão personalizadas com IA" });
         onComplete(form);
       } catch (err: any) {
-        console.error("Error saving company profile:", err);
-        toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+        console.error("[CompanyProfileOnboarding] Error saving:", err);
+        const msg =
+          err?.message?.includes("Sessão")
+            ? err.message
+            : err?.code === "42501" || err?.message?.includes("row-level security")
+            ? "Sem permissão para salvar. Faça login novamente."
+            : err?.code === "23505"
+            ? "Já existe um perfil salvo. Tentando atualizar..."
+            : err?.message || "Não conseguimos salvar agora. Verifique sua conexão e tente novamente.";
+        toast({ title: "Erro ao salvar", description: msg, variant: "destructive" });
       } finally {
         setSaving(false);
       }
