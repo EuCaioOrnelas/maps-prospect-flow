@@ -2662,6 +2662,7 @@ export type Database = {
           prize_claimed_at: string | null
           prize_status: Database["public"]["Enums"]["partner_goal_prize_status"]
           prize_withdrawal_id: string | null
+          referral_link_id: string | null
           starts_at: string
           status: Database["public"]["Enums"]["partner_goal_status"]
           target_value: number
@@ -2683,6 +2684,7 @@ export type Database = {
           prize_claimed_at?: string | null
           prize_status?: Database["public"]["Enums"]["partner_goal_prize_status"]
           prize_withdrawal_id?: string | null
+          referral_link_id?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["partner_goal_status"]
           target_value: number
@@ -2704,6 +2706,7 @@ export type Database = {
           prize_claimed_at?: string | null
           prize_status?: Database["public"]["Enums"]["partner_goal_prize_status"]
           prize_withdrawal_id?: string | null
+          referral_link_id?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["partner_goal_status"]
           target_value?: number
@@ -2723,6 +2726,13 @@ export type Database = {
             columns: ["prize_withdrawal_id"]
             isOneToOne: false
             referencedRelation: "partner_withdrawals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_goals_referral_link_id_fkey"
+            columns: ["referral_link_id"]
+            isOneToOne: false
+            referencedRelation: "partner_referral_links"
             referencedColumns: ["id"]
           },
         ]
@@ -2859,7 +2869,10 @@ export type Database = {
           format: string | null
           id: string
           is_active: boolean
+          meta: Json | null
           preview_url: string | null
+          subcategory: string | null
+          tags: string[] | null
           title: string
           updated_at: string
         }
@@ -2874,7 +2887,10 @@ export type Database = {
           format?: string | null
           id?: string
           is_active?: boolean
+          meta?: Json | null
           preview_url?: string | null
+          subcategory?: string | null
+          tags?: string[] | null
           title: string
           updated_at?: string
         }
@@ -2889,7 +2905,10 @@ export type Database = {
           format?: string | null
           id?: string
           is_active?: boolean
+          meta?: Json | null
           preview_url?: string | null
+          subcategory?: string | null
+          tags?: string[] | null
           title?: string
           updated_at?: string
         }
@@ -2960,7 +2979,9 @@ export type Database = {
           created_at: string
           created_by_admin_id: string | null
           description: string | null
+          expires_at: string | null
           id: string
+          internal_name: string | null
           is_active: boolean
           label: string
           partner_id: string
@@ -2977,7 +2998,9 @@ export type Database = {
           created_at?: string
           created_by_admin_id?: string | null
           description?: string | null
+          expires_at?: string | null
           id?: string
+          internal_name?: string | null
           is_active?: boolean
           label: string
           partner_id: string
@@ -2994,7 +3017,9 @@ export type Database = {
           created_at?: string
           created_by_admin_id?: string | null
           description?: string | null
+          expires_at?: string | null
           id?: string
+          internal_name?: string | null
           is_active?: boolean
           label?: string
           partner_id?: string
