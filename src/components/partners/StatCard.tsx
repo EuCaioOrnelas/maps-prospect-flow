@@ -21,8 +21,22 @@ const accents: Record<string, { ring: string; iconBg: string; glow: string }> = 
   blue: { ring: "ring-blue-500/20", iconBg: "bg-blue-500/10 text-blue-600", glow: "from-blue-500/15" },
 };
 
+/**
+ * Adaptive font sizing for values: shrinks gracefully so values like
+ * "R$ 1.234.567,89" don't overflow narrow cards. Uses CSS clamp + char-based heuristic.
+ */
+function valueSizeClass(value: string | number): string {
+  const len = String(value ?? "").length;
+  if (len <= 8) return "text-2xl";
+  if (len <= 11) return "text-xl";
+  if (len <= 14) return "text-lg";
+  if (len <= 18) return "text-base";
+  return "text-sm";
+}
+
 export function StatCard({ label, value, hint, icon: Icon, accent = "primary", highlight, className }: Props) {
   const a = accents[accent];
+  const valueClass = valueSizeClass(value);
   return (
     <Card className={cn(
       "relative overflow-hidden border border-border/40 bg-card/80 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-border/60 hover:shadow-[0_8px_30px_-12px_hsl(var(--foreground)/0.15)]",
@@ -39,10 +53,18 @@ export function StatCard({ label, value, hint, icon: Icon, accent = "primary", h
       )}
       <CardContent className="relative p-5">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
-            <div className="text-2xl font-bold tracking-tight mt-1.5 truncate">{value}</div>
-            {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground truncate">{label}</div>
+            <div
+              className={cn(
+                "font-bold tracking-tight mt-1.5 tabular-nums leading-tight break-words",
+                valueClass,
+              )}
+              title={String(value)}
+            >
+              {value}
+            </div>
+            {hint && <div className="text-xs text-muted-foreground mt-1 truncate">{hint}</div>}
           </div>
           <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ring-1", a.iconBg, a.ring)}>
             <Icon size={16} />
