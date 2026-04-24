@@ -111,10 +111,10 @@ export default function PartnerLevels() {
       />
 
       {/* HERO — Current level + progress to next */}
-      <Card className="relative overflow-hidden border-border/60">
-        <div className={cn("pointer-events-none absolute -top-32 -right-20 h-72 w-72 rounded-full blur-3xl opacity-50", LEVEL_META[currentLevel].bg)} />
-        <div className="pointer-events-none absolute -bottom-28 -left-16 h-60 w-60 rounded-full blur-3xl opacity-40 bg-gradient-to-tr from-primary/15 to-transparent" />
-
+      <Card className="relative overflow-hidden border border-border/40 bg-card/80 backdrop-blur-sm">
+        <div className="pointer-events-none absolute -top-32 -right-20 h-72 w-72 rounded-full blur-3xl opacity-60 bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
+        <div className="pointer-events-none absolute -bottom-28 -left-16 h-60 w-60 rounded-full blur-3xl opacity-50 bg-gradient-to-tr from-primary/20 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.06] via-transparent to-transparent" />
         <CardContent className="relative p-6 lg:p-8">
           <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-8 items-center">
             {/* Left: current */}
