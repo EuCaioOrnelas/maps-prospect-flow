@@ -13,12 +13,13 @@ export default function PartnerSlugRedirect() {
     (async () => {
       const { data } = await supabase
         .from("partner_referral_links")
-        .select("partner_id, utm_source, utm_medium, utm_campaign, is_active, partners!inner(referral_code, status)")
+        .select("partner_id, utm_source, utm_medium, utm_campaign, is_active, expires_at, partners!inner(referral_code, status)")
         .eq("slug", slug)
         .maybeSingle();
 
       const link = data as any;
-      if (!link || !link.is_active || link.partners?.status !== "active") {
+      const isExpired = link?.expires_at && new Date(link.expires_at) < new Date();
+      if (!link || !link.is_active || isExpired || link.partners?.status !== "active") {
         navigate("/", { replace: true });
         return;
       }
