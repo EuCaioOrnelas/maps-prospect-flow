@@ -10,6 +10,10 @@ interface Props {
   accent?: "primary" | "emerald" | "amber" | "violet" | "rose" | "blue";
   highlight?: boolean;
   className?: string;
+  /** Quando true, exibe placeholder "sem dados suficientes" no lugar do valor. */
+  empty?: boolean;
+  /** Texto customizado do estado vazio (default: "Sem dados suficientes"). */
+  emptyLabel?: string;
 }
 
 const accents: Record<string, { ring: string; iconBg: string; glow: string }> = {
