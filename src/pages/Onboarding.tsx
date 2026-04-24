@@ -173,10 +173,14 @@ export default function Onboarding() {
     (async () => {
       const { data } = await supabase
         .from("user_onboarding")
-        .select("id")
+        .select("id, role, completed_at, skipped")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data) navigate("/dashboard", { replace: true });
+      // Só pula se já tiver concluído de fato (com completed_at) OU pulado explicitamente
+      // Registros legados sem 'role' nem 'completed_at' devem permitir refazer
+      const alreadyDone =
+        !!data && (!!data.completed_at || (data.skipped === true && !!data.role));
+      if (alreadyDone) navigate("/dashboard", { replace: true });
     })();
   }, [user, authLoading, navigate]);
 
@@ -227,27 +231,43 @@ export default function Onboarding() {
       completed_at: new Date().toISOString(),
     };
 
-    // Tenta upsert; em caso de falha, faz retry com fallback insert/update
+    // Verifica se já existe registro (legado ou novo) para escolher entre update/insert
+    const { data: existing } = await supabase
+      .from("user_onboarding")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
     let lastErr: any = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
-      const { error } = await supabase
-        .from("user_onboarding")
-        .upsert(payload, { onConflict: "user_id" });
+      let error: any = null;
+      if (existing) {
+        const res = await supabase
+          .from("user_onboarding")
+          .update(payload)
+          .eq("user_id", user.id);
+        error = res.error;
+      } else {
+        const res = await supabase
+          .from("user_onboarding")
+          .insert(payload);
+        error = res.error;
+        // Se outro processo criou enquanto isso, faz fallback para update
+        if (error && (error.code === "23505" || error.message?.includes("duplicate"))) {
+          const upd = await supabase
+            .from("user_onboarding")
+            .update(payload)
+            .eq("user_id", user.id);
+          error = upd.error;
+        }
+      }
       if (!error) return;
       lastErr = error;
-      console.warn(`[Onboarding] upsert attempt ${attempt} failed:`, error);
-      // backoff curto antes de tentar novamente
+      console.warn(`[Onboarding] save attempt ${attempt} failed:`, error);
       await new Promise((r) => setTimeout(r, 400 * attempt));
     }
 
-    // Fallback final: tenta update (caso o upsert esteja falhando por algum motivo)
-    const { error: updErr } = await supabase
-      .from("user_onboarding")
-      .update(payload)
-      .eq("user_id", user.id);
-    if (!updErr) return;
-
-    throw lastErr || updErr;
+    throw lastErr || new Error("Falha ao salvar onboarding");
   };
 
   const handleComplete = async (skipped: boolean) => {
