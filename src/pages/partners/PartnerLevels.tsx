@@ -243,11 +243,12 @@ export default function PartnerLevels() {
 
                 <CardContent className="relative p-5 space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center ring-1", meta.bg, meta.ring, meta.fg)}>
-                      {isUnlocked ? (
-                        <Icon size={22} strokeWidth={2.25} />
-                      ) : (
-                        <Lock size={18} className="text-muted-foreground" />
+                    <div className={cn("relative h-12 w-12 rounded-2xl flex items-center justify-center ring-1", meta.bg, meta.ring, meta.fg)}>
+                      <Icon size={22} strokeWidth={2.25} />
+                      {!isUnlocked && (
+                        <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-background ring-1 ring-border/60 flex items-center justify-center">
+                          <Lock size={10} className="text-muted-foreground" />
+                        </span>
                       )}
                     </div>
                     <div className="min-w-0">
