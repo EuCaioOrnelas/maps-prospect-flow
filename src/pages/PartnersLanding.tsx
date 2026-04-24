@@ -6,7 +6,7 @@ import {
   Award, TrendingUp, Users, Wallet, Sparkles, ArrowRight,
   Megaphone, Target, Rocket, Crown, ShieldCheck, Check,
 } from "lucide-react";
-import wiizeLogo from "@/assets/wiize-logo.png";
+import wiizeLogo from "@/assets/logo-icon-new.png";
 
 const APPLY_PATH = "/partners/apply";
 
