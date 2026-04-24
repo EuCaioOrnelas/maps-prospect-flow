@@ -150,6 +150,70 @@ function buildEmail(type: string, data: any): { subject: string; html: string } 
       );
       return { subject: "💸 Saque pago — confira sua conta", html };
     }
+    case "partner_withdrawal_requested": {
+      const html = layout("Recebemos sua solicitação de saque",
+        h(`Recebemos sua solicitação, ${data.first_name}! 📨`) +
+        p("Sua solicitação de saque foi registrada e está aguardando aprovação do nosso time financeiro.") +
+        box(
+          `<p style="margin:0;font-size:13px;color:#71717a;">Valor solicitado</p><p style="margin:4px 0 0;font-size:22px;font-weight:700;color:#18181b;">${fmtBRL(data.amount_cents)}</p>`
+        ) +
+        p("A análise costuma levar até <strong>2 dias úteis</strong>. Você receberá um novo e-mail assim que o status mudar.") +
+        btn(portal + "/saques", "Acompanhar saque"),
+        "Sua solicitação está em análise"
+      );
+      return { subject: "📨 Solicitação de saque recebida", html };
+    }
+    case "partner_withdrawal_rejected": {
+      const html = layout("Saque não aprovado",
+        h(`Olá, ${data.first_name}`) +
+        p("Infelizmente sua última solicitação de saque não foi aprovada nesta análise.") +
+        box(
+          `<p style="margin:0;font-size:13px;color:#71717a;">Valor solicitado</p><p style="margin:4px 0 8px;font-size:18px;font-weight:600;color:#18181b;">${fmtBRL(data.amount_cents)}</p>` +
+          (data.reason ? `<p style="margin:0;font-size:13px;color:#71717a;">Motivo</p><p style="margin:4px 0 0;font-size:14px;color:#dc2626;">${data.reason}</p>` : "")
+        ) +
+        p("Caso queira esclarecer, responda este e-mail ou fale com o nosso time. Você pode submeter uma nova solicitação a qualquer momento.") +
+        btn(portal + "/saques", "Ver detalhes"),
+        "Atualização sobre seu saque"
+      );
+      return { subject: "Atualização sobre seu saque", html };
+    }
+    case "partner_goal_completed": {
+      const html = layout("Meta concluída — prêmio liberado!",
+        h(`Você bateu a meta, ${data.first_name}! 🏆`) +
+        p(`A meta <strong>${data.goal_title}</strong> foi concluída com sucesso. Seu prêmio já está liberado para resgate dentro do portal.`) +
+        box(
+          `<p style="margin:0;font-size:13px;color:#71717a;">Prêmio</p><p style="margin:4px 0 0;font-size:24px;font-weight:700;color:${BRAND.color};">${fmtBRL(data.prize_amount_cents)}</p>`
+        ) +
+        p("Para receber, abra a página de Metas e clique em <strong>Resgatar prêmio</strong>. O valor entra na fila de saques como qualquer comissão.") +
+        btn(portal + "/metas", "Resgatar prêmio"),
+        "Meta concluída"
+      );
+      return { subject: "🏆 Meta concluída — seu prêmio está liberado", html };
+    }
+    case "partner_goal_prize_claimed": {
+      const html = layout("Resgate de prêmio confirmado",
+        h(`Resgate registrado, ${data.first_name}! 🎁`) +
+        p(`Recebemos seu pedido de resgate do prêmio da meta <strong>${data.goal_title}</strong>.`) +
+        box(
+          `<p style="margin:0;font-size:13px;color:#71717a;">Valor do prêmio</p><p style="margin:4px 0 0;font-size:22px;font-weight:700;color:${BRAND.color};">${fmtBRL(data.prize_amount_cents)}</p>`
+        ) +
+        p("O valor foi adicionado ao seu saldo disponível e segue o mesmo fluxo dos saques de comissão. Você receberá novos e-mails conforme o status mudar.") +
+        btn(portal + "/saques", "Acompanhar pagamento"),
+        "Prêmio em processamento"
+      );
+      return { subject: "🎁 Resgate de prêmio confirmado", html };
+    }
+    case "admin_partner_alert": {
+      const html = layout(data.subject || "Notificação interna",
+        h(data.title || "Atenção, time Wiize") +
+        (data.lines || [])
+          .map((l: string) => p(l))
+          .join("") +
+        (data.cta_url ? btn(data.cta_url, data.cta_label || "Abrir no admin") : ""),
+        data.preheader || "Notificação interna do programa de parceiros"
+      );
+      return { subject: data.subject || "🔔 Notificação interna — Parceiros", html };
+    }
     case "partner_application_received": {
       const html = layout("Recebemos sua candidatura",
         h(`Obrigado, ${data.first_name}!`) +
