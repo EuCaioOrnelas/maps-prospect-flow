@@ -241,6 +241,14 @@ function SignupWithCardInner() {
       toast({ title: "Complete o endereço", description: "Informe CEP, rua, número, bairro, cidade e estado.", variant: "destructive" });
       return;
     }
+    if (!acceptedTerms) {
+      toast({
+        title: "Aceite os termos para continuar",
+        description: "Você precisa aceitar os Termos de Uso e a Política de Reembolso para criar sua conta.",
+        variant: "destructive",
+      });
+      return;
+    }
     setStep(2);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -546,7 +554,31 @@ function SignupWithCardInner() {
                       )}
                     </section>
 
-                    <Button type="submit" variant="hero" size="lg" className="w-full group">
+                    <div className="flex items-start gap-3 pt-2">
+                      <Checkbox
+                        id="terms-step1"
+                        checked={acceptedTerms}
+                        onCheckedChange={(c) => setAcceptedTerms(c as boolean)}
+                        className="mt-0.5"
+                      />
+                      <Label htmlFor="terms-step1" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                        Li e aceito os{" "}
+                        <Link to="/terms" className="text-primary hover:underline" target="_blank">
+                          Termos de Uso
+                        </Link>
+                        ,{" "}
+                        <Link to="/privacy" className="text-primary hover:underline" target="_blank">
+                          Política de Privacidade
+                        </Link>{" "}
+                        e a{" "}
+                        <Link to="/refund" className="text-primary hover:underline" target="_blank">
+                          Política de Reembolso
+                        </Link>
+                        .
+                      </Label>
+                    </div>
+
+                    <Button type="submit" variant="hero" size="lg" className="w-full group" disabled={!acceptedTerms}>
                       Continuar para o cartão
                       <ArrowRight size={18} className="ml-2 transition-transform group-hover:translate-x-1" />
                     </Button>
