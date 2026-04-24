@@ -25,11 +25,16 @@ export function StatCard({ label, value, hint, icon: Icon, accent = "primary", h
   const a = accents[accent];
   return (
     <Card className={cn(
-      "relative overflow-hidden border-border/60 bg-card transition-all hover:shadow-lg hover:-translate-y-0.5",
-      highlight && "ring-1 ring-primary/30 shadow-[0_0_30px_-12px_hsl(var(--primary)/0.45)]",
+      "relative overflow-hidden border border-border/40 bg-card/80 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-border/60 hover:shadow-[0_8px_30px_-12px_hsl(var(--foreground)/0.15)]",
+      highlight && "border-primary/15 shadow-[0_0_0_1px_hsl(var(--primary)/0.08),0_10px_40px_-12px_hsl(var(--primary)/0.35)]",
       className,
     )}>
-      <div className={cn("pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full blur-3xl opacity-70 bg-gradient-to-br to-transparent", a.glow)} />
+      {/* soft accent glow blob */}
+      <div className={cn("pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl opacity-50 bg-gradient-to-br to-transparent", a.glow)} />
+      {/* extra ambient glow when highlighted */}
+      {highlight && (
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-transparent" />
+      )}
       <CardContent className="relative p-5">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
