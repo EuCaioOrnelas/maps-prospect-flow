@@ -40,7 +40,7 @@ export async function registerPartnerSale(
     // Find the partner_lead for this user (most recent active attribution)
     const { data: lead } = await supabase
       .from('partner_leads')
-      .select('id, partner_id, click_id')
+      .select('id, partner_id, click_id, referral_link_id')
       .eq('user_id', input.userId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -55,7 +55,7 @@ export async function registerPartnerSale(
       const { data: existing } = await supabase
         .from('partner_sales')
         .select('id')
-        .eq('stripe_invoice_id', input.stripeInvoiceId)
+        .eq('external_reference', input.stripeInvoiceId)
         .maybeSingle();
       if (existing?.id) return { ok: true, reason: 'duplicate', saleId: existing.id };
     }
@@ -63,7 +63,7 @@ export async function registerPartnerSale(
       const { data: existing } = await supabase
         .from('partner_sales')
         .select('id')
-        .eq('asaas_payment_id', input.asaasPaymentId)
+        .eq('external_reference', input.asaasPaymentId)
         .maybeSingle();
       if (existing?.id) return { ok: true, reason: 'duplicate', saleId: existing.id };
     }
@@ -74,14 +74,11 @@ export async function registerPartnerSale(
         partner_id: lead.partner_id,
         partner_lead_id: lead.id,
         customer_user_id: input.userId,
-        customer_email: input.email,
         plan: input.plan,
-        billing_period: input.billingPeriod,
         amount_cents: input.amountCents,
+        payment_provider: input.paymentMethod === 'stripe' ? 'stripe' : input.paymentMethod === 'asaas_pix' ? 'asaas' : 'manual',
         payment_method: input.paymentMethod,
-        stripe_invoice_id: input.stripeInvoiceId,
-        stripe_subscription_id: input.stripeSubscriptionId,
-        asaas_payment_id: input.asaasPaymentId,
+        external_reference: input.stripeInvoiceId || input.asaasPaymentId || input.stripeSubscriptionId || null,
         is_recurring: input.isRecurring ?? false,
         paid_at: input.paidAt || new Date().toISOString(),
       })
@@ -97,11 +94,13 @@ export async function registerPartnerSale(
     const { data: leadUpdate } = await supabase
       .from('partner_leads')
       .update({
-        first_paid_at: new Date().toISOString(),
-        is_paid_customer: true,
+        is_paid: true,
+        paid_at: input.paidAt || new Date().toISOString(),
+        current_plan: input.plan ?? null,
+        last_activity_at: new Date().toISOString(),
       })
       .eq('id', lead.id)
-      .is('first_paid_at', null)
+      .eq('is_paid', false)
       .select('id')
       .maybeSingle();
 
