@@ -66,7 +66,7 @@ export default function PartnerWithdrawals() {
     bankAccount?.bank_branch && bankAccount?.bank_account && bankAccount?.account_type
   );
   const hasPending = withdrawals.some((w) => w.status === "pending" || w.status === "approved");
-  const minCents = settings?.minimum_withdrawal_cents || 5000;
+  const minCents = settings?.minimum_withdrawal_cents || 10000;
   const canRequest = isBankComplete && balance.available_cents >= minCents && (settings?.allow_multiple_pending_withdrawals || !hasPending);
 
   const missingBank = REQUIRED_BANK_KEYS.filter((k) => !String(bankForm[k] || "").trim());
@@ -132,10 +132,10 @@ export default function PartnerWithdrawals() {
   };
 
   const cards = [
-    { label: "Disponível p/ saque", value: fmtBRL(balance.available_cents), icon: Wallet, accent: "emerald" as const, highlight: true, hint: "Pronto para resgate" },
-    { label: "Em saque solicitado", value: fmtBRL(balance.requested_cents), icon: Clock, accent: "blue" as const, hint: "Em análise" },
-    { label: "Pendente liberação", value: fmtBRL(balance.pending_cents), icon: Clock, accent: "amber" as const, hint: "Após período de retenção" },
-    { label: "Total recebido", value: fmtBRL(balance.paid_cents), icon: CheckCircle2, accent: "primary" as const, hint: "Histórico" },
+    { label: "Disponível p/ saque", value: fmtBRL(balance.available_cents), icon: Wallet, accent: "emerald" as const, highlight: true, hint: "Pronto para resgate", empty: !balance.available_cents },
+    { label: "Em saque solicitado", value: fmtBRL(balance.requested_cents), icon: Clock, accent: "blue" as const, hint: "Em análise", empty: !balance.requested_cents },
+    { label: "Pendente liberação", value: fmtBRL(balance.pending_cents), icon: Clock, accent: "amber" as const, hint: "Após período de retenção", empty: !balance.pending_cents },
+    { label: "Total recebido", value: fmtBRL(balance.paid_cents), icon: CheckCircle2, accent: "primary" as const, hint: "Histórico", empty: !balance.paid_cents },
   ];
 
   return (

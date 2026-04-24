@@ -70,7 +70,7 @@ export default function PartnerLevels() {
       },
       {
         key: "platinum",
-        thresholdClients: Math.max(settings.gold_threshold_clients * 2, 500),
+        thresholdClients: settings.platinum_threshold_clients ?? Math.max(settings.gold_threshold_clients * 2, 500),
         commissionPercent: Number(settings.platinum_commission_percent),
         perks: ["Comissão máxima do programa", "Co-marketing dedicado", "Gerente de parceria 1:1"],
       },

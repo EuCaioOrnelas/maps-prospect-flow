@@ -48,10 +48,10 @@ export default function PartnerCommissions() {
   }), [items, q, status]);
 
   const cards = [
-    { label: "Comissão pendente", value: fmtBRL(balance.pending_cents), icon: Clock, accent: "amber" as const, hint: "Aguardando liberação" },
-    { label: "Disponível p/ saque", value: fmtBRL(balance.available_cents), icon: Wallet, accent: "emerald" as const, highlight: true },
-    { label: "Em saque", value: fmtBRL(balance.requested_cents), icon: TrendingUp, accent: "blue" as const, hint: "Já solicitado" },
-    { label: "Total recebido", value: fmtBRL(balance.paid_cents), icon: CheckCircle2, accent: "primary" as const },
+    { label: "Comissão pendente", value: fmtBRL(balance.pending_cents), icon: Clock, accent: "amber" as const, hint: "Aguardando liberação", empty: !balance.pending_cents },
+    { label: "Disponível p/ saque", value: fmtBRL(balance.available_cents), icon: Wallet, accent: "emerald" as const, highlight: true, empty: !balance.available_cents },
+    { label: "Em saque", value: fmtBRL(balance.requested_cents), icon: TrendingUp, accent: "blue" as const, hint: "Já solicitado", empty: !balance.requested_cents },
+    { label: "Total recebido", value: fmtBRL(balance.paid_cents), icon: CheckCircle2, accent: "primary" as const, empty: !balance.paid_cents },
   ];
 
   return (
