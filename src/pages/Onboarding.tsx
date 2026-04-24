@@ -271,6 +271,22 @@ export default function Onboarding() {
       if (!error) return;
       lastErr = error;
       console.warn(`[Onboarding] save attempt ${attempt} failed:`, error);
+
+      // Se for erro de auth/JWT, tenta refresh antes do próximo attempt
+      const msg = (error?.message || "").toLowerCase();
+      if (
+        error?.code === "PGRST301" ||
+        error?.status === 401 ||
+        msg.includes("jwt") ||
+        msg.includes("token")
+      ) {
+        try {
+          await supabase.auth.refreshSession();
+        } catch (e) {
+          console.warn("[Onboarding] refreshSession failed:", e);
+        }
+      }
+
       await new Promise((r) => setTimeout(r, 400 * attempt));
     }
 
