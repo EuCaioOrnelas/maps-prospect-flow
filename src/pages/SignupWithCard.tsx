@@ -241,6 +241,14 @@ function SignupWithCardInner() {
       toast({ title: "Complete o endereço", description: "Informe CEP, rua, número, bairro, cidade e estado.", variant: "destructive" });
       return;
     }
+    if (!acceptedTerms) {
+      toast({
+        title: "Aceite os termos para continuar",
+        description: "Você precisa aceitar os Termos de Uso e a Política de Reembolso para criar sua conta.",
+        variant: "destructive",
+      });
+      return;
+    }
     setStep(2);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
