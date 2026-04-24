@@ -390,7 +390,7 @@ export default function PartnersApply() {
             Programa Oficial de Parceiros
           </div>
           <h1 className="text-5xl md:text-6xl font-semibold tracking-tight max-w-3xl mx-auto leading-[1.05]">
-            Torne-se <span className="text-primary">Parceiro Oficial</span> Wiize
+            Torne-se <span className="text-primary">Parceiro Wiize Partners</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Indique clientes, monetize sua audiência ou ofereça Wiize aos seus clientes
