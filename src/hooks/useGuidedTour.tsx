@@ -682,7 +682,8 @@ export function useGuidedTour() {
 }
 
 export async function resetGuidedTour(userId: string) {
-  localStorage.removeItem(LS_KEY);
+  localStorage.removeItem(lsKeyFor(userId));
+  localStorage.removeItem(LS_KEY_LEGACY);
   await supabase
     .from("user_onboarding")
     .update({ tour_completed_at: null })
