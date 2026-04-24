@@ -3,13 +3,18 @@
 // `send-email` function used by the rest of the platform.
 //
 // Supported email types:
-//   - partner_welcome           → after admin approves a partner
-//   - partner_new_lead          → when a new lead is attributed
-//   - partner_first_sale        → first paid sale of a referred customer
-//   - partner_commission_ready  → commission moves from pending → available
+//   - partner_welcome                  → after admin approves a partner
+//   - partner_new_lead                 → when a new lead is attributed
+//   - partner_first_sale               → first paid sale of a referred customer
+//   - partner_commission_ready         → commission moves from pending → available
+//   - partner_withdrawal_requested     → confirmation that the request was received
 //   - partner_withdrawal_approved
+//   - partner_withdrawal_rejected
 //   - partner_withdrawal_paid
-//   - partner_application_received  → confirmation to landing page applicant
+//   - partner_goal_completed           → when a partner achieves a goal
+//   - partner_goal_prize_claimed       → when partner requests prize redemption
+//   - partner_application_received     → confirmation to landing page applicant
+//   - admin_partner_alert              → internal alert to the partners team
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
