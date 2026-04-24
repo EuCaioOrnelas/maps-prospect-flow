@@ -133,6 +133,10 @@ const PartnerWithdrawals = lazyWithRetry(() => import("./pages/partners/PartnerW
 const PartnerBankAccount = lazyWithRetry(() => import("./pages/partners/PartnerBankAccount"), "PartnerBankAccount");
 const PartnerMaterials = lazyWithRetry(() => import("./pages/partners/PartnerMaterials"), "PartnerMaterials");
 const PartnerRanking = lazyWithRetry(() => import("./pages/partners/PartnerRanking"), "PartnerRanking");
+const PartnerGoals = lazyWithRetry(() => import("./pages/partners/PartnerGoals"), "PartnerGoals");
+const AdminPartnersGoals = lazyWithRetry(() => import("./pages/admin/AdminPartnersGoals"), "AdminPartnersGoals");
+const AdminPartnersLinks = lazyWithRetry(() => import("./pages/admin/AdminPartnersLinks"), "AdminPartnersLinks");
+const PartnerSlugRedirect = lazyWithRetry(() => import("./pages/PartnerSlugRedirect"), "PartnerSlugRedirect");
 const PartnersLanding = lazyWithRetry(() => import("./pages/PartnersLanding"), "PartnersLanding");
 const AdminPartnersApplications = lazyWithRetry(() => import("./pages/admin/AdminPartnersApplications"), "AdminPartnersApplications");
 const AdminPartnersMaterials = lazyWithRetry(() => import("./pages/admin/AdminPartnersMaterials"), "AdminPartnersMaterials");
@@ -279,18 +283,23 @@ const App = () => (
                   <Route path="partners/rankings" element={<AdminPartnersRankings />} />
                   <Route path="partners/candidaturas" element={<AdminPartnersApplications />} />
                   <Route path="partners/materiais" element={<AdminPartnersMaterials />} />
+                  <Route path="partners/metas" element={<AdminPartnersGoals />} />
+                  <Route path="partners/links" element={<AdminPartnersLinks />} />
                 </Route>
 
                 {/* Portal do Parceiro */}
                 <Route path="/parceiros" element={<LightThemeWrapper><PartnersLanding /></LightThemeWrapper>} />
                 <Route path="/partners/login" element={<LightThemeWrapper><PartnerLogin /></LightThemeWrapper>} />
+                <Route path="/r/:slug" element={<LightThemeWrapper><PartnerSlugRedirect /></LightThemeWrapper>} />
                 <Route path="/partners" element={<LightThemeWrapper><PartnerLayout /></LightThemeWrapper>}>
                   <Route index element={<PartnerDashboard />} />
                   <Route path="leads" element={<PartnerLeads />} />
                   <Route path="comissoes" element={<PartnerCommissions />} />
                   <Route path="saques" element={<PartnerWithdrawals />} />
                   <Route path="materiais" element={<PartnerMaterials />} />
+                  <Route path="metas" element={<PartnerGoals />} />
                   <Route path="ranking" element={<PartnerRanking />} />
+                  <Route path="dados-bancarios" element={<PartnerBankAccount />} />
                   <Route path="banco" element={<PartnerBankAccount />} />
                 </Route>
 

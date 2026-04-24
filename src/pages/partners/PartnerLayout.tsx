@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Outlet, NavLink } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, DollarSign, Wallet, Building2, LogOut, Award, Megaphone, Trophy } from "lucide-react";
+import { LayoutDashboard, Users, DollarSign, Wallet, Building2, LogOut, Award, Megaphone, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import wiizeLogo from "@/assets/logo-icon-new.png";
 
@@ -34,9 +34,9 @@ export default function PartnerLayout() {
     { to: "/partners/leads", label: "Meus leads", icon: Users },
     { to: "/partners/comissoes", label: "Comissões", icon: DollarSign },
     { to: "/partners/saques", label: "Saques", icon: Wallet },
+    { to: "/partners/dados-bancarios", label: "Dados bancários", icon: Building2 },
+    { to: "/partners/metas", label: "Metas", icon: Target },
     { to: "/partners/materiais", label: "Materiais", icon: Megaphone },
-    { to: "/partners/ranking", label: "Ranking", icon: Trophy },
-    { to: "/partners/banco", label: "Dados bancários", icon: Building2 },
   ];
 
   return (
