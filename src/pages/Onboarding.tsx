@@ -173,10 +173,14 @@ export default function Onboarding() {
     (async () => {
       const { data } = await supabase
         .from("user_onboarding")
-        .select("id")
+        .select("id, role, completed_at, skipped")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data) navigate("/dashboard", { replace: true });
+      // Só pula se já tiver concluído de fato (com completed_at) OU pulado explicitamente
+      // Registros legados sem 'role' nem 'completed_at' devem permitir refazer
+      const alreadyDone =
+        !!data && (!!data.completed_at || (data.skipped === true && !!data.role));
+      if (alreadyDone) navigate("/dashboard", { replace: true });
     })();
   }, [user, authLoading, navigate]);
 
