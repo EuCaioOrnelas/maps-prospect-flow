@@ -609,11 +609,27 @@ serve(async (req) => {
                 }
 
                 // Partner program: register sale if user came from a referral
+                // IMPORTANT: amountCents uses session.amount_total which is THE FINAL AMOUNT CHARGED
+                // (subtotal - discounts/coupons + tax). This guarantees commission is calculated
+                // on the REAL value the customer paid, not on the list price.
                 try {
+                  const finalAmountCents = typeof session.amount_total === 'number' ? session.amount_total : 0;
+                  const subtotalCents = typeof session.amount_subtotal === 'number' ? session.amount_subtotal : finalAmountCents;
+                  const discountCents = Math.max(0, subtotalCents - finalAmountCents);
+                  const totalDetails = (session as any).total_details;
+                  const couponDiscount = totalDetails?.amount_discount || discountCents;
+
+                  logStep("Partner sale: amount calculation", {
+                    subtotalCents,
+                    finalAmountCents,
+                    discountApplied: couponDiscount,
+                    note: 'commission_will_be_calculated_on_finalAmountCents',
+                  });
+
                   const partnerResult = await registerPartnerSale(supabaseClient, {
                     userId: profile.id,
                     email: customerEmail,
-                    amountCents: typeof session.amount_total === 'number' ? session.amount_total : 0,
+                    amountCents: finalAmountCents,
                     plan,
                     billingPeriod: (priceId === 'price_1TLZkSK8CM0R6xMMwr1Ke1IX' || priceId === 'price_1TLZn8K8CM0R6xMMaEz5JuVW') ? 'yearly' : 'monthly',
                     paymentMethod: 'stripe',
@@ -622,7 +638,7 @@ serve(async (req) => {
                     paidAt: new Date().toISOString(),
                     isRecurring: false,
                   });
-                  logStep("Partner sale check (checkout)", partnerResult);
+                  logStep("Partner sale check (checkout)", { ...partnerResult, finalAmountCents, discountCents: couponDiscount });
                 } catch (e) {
                   logStep("Partner sale registration failed (checkout)", { error: String(e) });
                 }
