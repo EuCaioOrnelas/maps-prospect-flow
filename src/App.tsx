@@ -134,6 +134,7 @@ const PartnerBankAccount = lazyWithRetry(() => import("./pages/partners/PartnerB
 const PartnerMaterials = lazyWithRetry(() => import("./pages/partners/PartnerMaterials"), "PartnerMaterials");
 const PartnerRanking = lazyWithRetry(() => import("./pages/partners/PartnerRanking"), "PartnerRanking");
 const PartnerGoals = lazyWithRetry(() => import("./pages/partners/PartnerGoals"), "PartnerGoals");
+const PartnerLevels = lazyWithRetry(() => import("./pages/partners/PartnerLevels"), "PartnerLevels");
 const AdminPartnersGoals = lazyWithRetry(() => import("./pages/admin/AdminPartnersGoals"), "AdminPartnersGoals");
 const AdminPartnersLinks = lazyWithRetry(() => import("./pages/admin/AdminPartnersLinks"), "AdminPartnersLinks");
 const PartnerSlugRedirect = lazyWithRetry(() => import("./pages/PartnerSlugRedirect"), "PartnerSlugRedirect");
@@ -298,6 +299,7 @@ const App = () => (
                   <Route path="saques" element={<PartnerWithdrawals />} />
                   <Route path="materiais" element={<PartnerMaterials />} />
                   <Route path="metas" element={<PartnerGoals />} />
+                  <Route path="niveis" element={<PartnerLevels />} />
                   <Route path="ranking" element={<Navigate to="/partners/metas" replace />} />
                   <Route path="dados-bancarios" element={<PartnerBankAccount />} />
                   <Route path="banco" element={<PartnerBankAccount />} />

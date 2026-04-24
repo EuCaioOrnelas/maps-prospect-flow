@@ -129,6 +129,30 @@ export async function attributePartnerLeadOnSignup(userId: string, email: string
   const ref = getStoredReferral();
   if (!ref) return;
   try {
+    // Server-side anti-self-referral guard (CPF, e-mail, IP, fingerprint, telefone)
+    const { data: fraudCheck } = await supabase.rpc("check_partner_self_referral", {
+      p_partner_id: ref.partner_id,
+      p_user_id: userId,
+    });
+    if (fraudCheck && (fraudCheck as any).blocked) {
+      console.warn("[attributePartnerLeadOnSignup] self-referral blocked:", fraudCheck);
+      // Clear stored referral so future actions don't retry
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        document.cookie = `${COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+      } catch {}
+      // Audit-only log; insertion is allowed by RLS for authenticated users
+      await supabase.from("partner_fraud_attempts").insert({
+        partner_id: ref.partner_id,
+        user_id: userId,
+        email,
+        reason: (fraudCheck as any).reason,
+        matched_field: (fraudCheck as any).matched_field,
+        metadata: { source: "signup", click_id: ref.click_id },
+      });
+      return;
+    }
+
     await supabase.from("partner_leads").insert({
       partner_id: ref.partner_id,
       user_id: userId,

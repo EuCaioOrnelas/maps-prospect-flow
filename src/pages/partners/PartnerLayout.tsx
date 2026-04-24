@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate, Outlet, NavLink } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, DollarSign, Wallet, LogOut, Award, Megaphone, Target } from "lucide-react";
+import { LayoutDashboard, Users, DollarSign, Wallet, LogOut, Megaphone, Target, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LevelBadge } from "@/components/partners/LevelBadge";
 import wiizeLogo from "@/assets/logo-icon-new.png";
 
 export default function PartnerLayout() {
@@ -35,6 +36,7 @@ export default function PartnerLayout() {
     { to: "/partners/comissoes", label: "Comissões", icon: DollarSign },
     { to: "/partners/saques", label: "Saques", icon: Wallet },
     { to: "/partners/metas", label: "Metas", icon: Target },
+    { to: "/partners/niveis", label: "Níveis", icon: Sparkles },
     { to: "/partners/materiais", label: "Materiais", icon: Megaphone },
   ];
 
@@ -48,12 +50,15 @@ export default function PartnerLayout() {
             <div className="text-[11px] text-muted-foreground -mt-0.5 uppercase tracking-wider">Partners</div>
           </div>
         </div>
-        <div className="px-5 py-4 border-b">
-          <div className="text-sm font-medium truncate">{partner.full_name}</div>
-          <div className="text-xs text-muted-foreground truncate">{partner.email}</div>
-          <div className="mt-2 inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md bg-primary/10 text-primary">
-            <Award size={12} /> <span className="capitalize">{partner.level}</span>
+        <div className="px-5 py-4 border-b space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-medium truncate flex-1">{partner.full_name}</div>
+            <LevelBadge level={partner.level} size="sm" showLabel={false} />
           </div>
+          <div className="text-xs text-muted-foreground truncate">{partner.email}</div>
+          <NavLink to="/partners/niveis" className="block">
+            <LevelBadge level={partner.level} size="md" className="w-full justify-center hover:scale-[1.02] transition-transform cursor-pointer" />
+          </NavLink>
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {items.map((it) => (

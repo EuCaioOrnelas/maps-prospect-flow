@@ -50,6 +50,24 @@ export async function registerPartnerSale(
       return { ok: false, reason: 'not_attributed' };
     }
 
+    // Defensive anti-self-referral check (in case lead was created before fraud rules existed)
+    const { data: fraudCheck } = await supabase.rpc('check_partner_self_referral', {
+      p_partner_id: lead.partner_id,
+      p_user_id: input.userId,
+    });
+    if (fraudCheck && (fraudCheck as any).blocked) {
+      console.warn('[registerPartnerSale] self-referral blocked:', fraudCheck);
+      await supabase.from('partner_fraud_attempts').insert({
+        partner_id: lead.partner_id,
+        user_id: input.userId,
+        email: input.email ?? null,
+        reason: (fraudCheck as any).reason,
+        matched_field: (fraudCheck as any).matched_field,
+        metadata: { source: 'registerPartnerSale', amount_cents: input.amountCents },
+      });
+      return { ok: false, reason: 'self_referral_blocked' };
+    }
+
     // Idempotency: avoid duplicating the same invoice
     if (input.stripeInvoiceId) {
       const { data: existing } = await supabase
