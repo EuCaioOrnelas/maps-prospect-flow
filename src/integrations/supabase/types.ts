@@ -2225,69 +2225,188 @@ export type Database = {
       }
       partner_applications: {
         Row: {
+          access_email: string | null
+          address: string | null
+          admin_notes: string | null
+          approved_partner_id: string | null
           audience_size: string | null
+          city: string | null
+          cnpj: string | null
+          community_url: string | null
+          company_name: string | null
+          contact_authorized: boolean | null
+          country: string | null
+          cpf: string | null
           created_at: string
+          current_clients_count: number | null
+          differential: string | null
+          documents: Json | null
           email: string
+          expected_monthly_referrals: number | null
           full_name: string
+          has_team: boolean | null
+          how_would_sell: string | null
           id: string
+          info_accuracy_confirmed: boolean | null
+          instagram_url: string | null
+          internal_score: number | null
           ip_address: string | null
+          linkedin_url: string | null
+          monthly_leads_estimate: string | null
           motivation: string | null
+          other_softwares_details: string | null
+          password_hash: string | null
           phone: string | null
+          phone_secondary: string | null
+          postal_code: string | null
           profile: string | null
+          promoted_other_softwares: boolean | null
+          promotion_channels: string[] | null
+          reason_to_be_approved: string | null
+          reason_to_be_partner: string | null
           rejection_reason: string | null
+          results_90_days: string | null
           reviewed_at: string | null
           reviewed_by_admin_id: string | null
           source: string | null
+          state: string | null
           status: string
+          terms_accepted: boolean | null
+          tiktok_url: string | null
           updated_at: string
           user_agent: string | null
           utm_campaign: string | null
           utm_medium: string | null
           utm_source: string | null
+          website_url: string | null
+          years_in_market: string | null
+          youtube_url: string | null
         }
         Insert: {
+          access_email?: string | null
+          address?: string | null
+          admin_notes?: string | null
+          approved_partner_id?: string | null
           audience_size?: string | null
+          city?: string | null
+          cnpj?: string | null
+          community_url?: string | null
+          company_name?: string | null
+          contact_authorized?: boolean | null
+          country?: string | null
+          cpf?: string | null
           created_at?: string
+          current_clients_count?: number | null
+          differential?: string | null
+          documents?: Json | null
           email: string
+          expected_monthly_referrals?: number | null
           full_name: string
+          has_team?: boolean | null
+          how_would_sell?: string | null
           id?: string
+          info_accuracy_confirmed?: boolean | null
+          instagram_url?: string | null
+          internal_score?: number | null
           ip_address?: string | null
+          linkedin_url?: string | null
+          monthly_leads_estimate?: string | null
           motivation?: string | null
+          other_softwares_details?: string | null
+          password_hash?: string | null
           phone?: string | null
+          phone_secondary?: string | null
+          postal_code?: string | null
           profile?: string | null
+          promoted_other_softwares?: boolean | null
+          promotion_channels?: string[] | null
+          reason_to_be_approved?: string | null
+          reason_to_be_partner?: string | null
           rejection_reason?: string | null
+          results_90_days?: string | null
           reviewed_at?: string | null
           reviewed_by_admin_id?: string | null
           source?: string | null
+          state?: string | null
           status?: string
+          terms_accepted?: boolean | null
+          tiktok_url?: string | null
           updated_at?: string
           user_agent?: string | null
           utm_campaign?: string | null
           utm_medium?: string | null
           utm_source?: string | null
+          website_url?: string | null
+          years_in_market?: string | null
+          youtube_url?: string | null
         }
         Update: {
+          access_email?: string | null
+          address?: string | null
+          admin_notes?: string | null
+          approved_partner_id?: string | null
           audience_size?: string | null
+          city?: string | null
+          cnpj?: string | null
+          community_url?: string | null
+          company_name?: string | null
+          contact_authorized?: boolean | null
+          country?: string | null
+          cpf?: string | null
           created_at?: string
+          current_clients_count?: number | null
+          differential?: string | null
+          documents?: Json | null
           email?: string
+          expected_monthly_referrals?: number | null
           full_name?: string
+          has_team?: boolean | null
+          how_would_sell?: string | null
           id?: string
+          info_accuracy_confirmed?: boolean | null
+          instagram_url?: string | null
+          internal_score?: number | null
           ip_address?: string | null
+          linkedin_url?: string | null
+          monthly_leads_estimate?: string | null
           motivation?: string | null
+          other_softwares_details?: string | null
+          password_hash?: string | null
           phone?: string | null
+          phone_secondary?: string | null
+          postal_code?: string | null
           profile?: string | null
+          promoted_other_softwares?: boolean | null
+          promotion_channels?: string[] | null
+          reason_to_be_approved?: string | null
+          reason_to_be_partner?: string | null
           rejection_reason?: string | null
+          results_90_days?: string | null
           reviewed_at?: string | null
           reviewed_by_admin_id?: string | null
           source?: string | null
+          state?: string | null
           status?: string
+          terms_accepted?: boolean | null
+          tiktok_url?: string | null
           updated_at?: string
           user_agent?: string | null
           utm_campaign?: string | null
           utm_medium?: string | null
           utm_source?: string | null
+          website_url?: string | null
+          years_in_market?: string | null
+          youtube_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "partner_applications_approved_partner_id_fkey"
+            columns: ["approved_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       partner_bank_accounts: {
         Row: {
@@ -6349,6 +6468,10 @@ export type Database = {
       normalize_brazilian_phone: {
         Args: { phone_input: string }
         Returns: string
+      }
+      partner_application_pre_check: {
+        Args: { p_cpf: string; p_email: string }
+        Returns: Json
       }
       release_pending_commissions: { Args: never; Returns: number }
       request_partner_withdrawal: {

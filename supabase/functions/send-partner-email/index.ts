@@ -73,17 +73,29 @@ function buildEmail(type: string, data: any): { subject: string; html: string } 
   const portal = `${BRAND.url}/partners`;
   switch (type) {
     case "partner_welcome": {
-      const refLink = `${BRAND.url}/?ref=${data.referral_code}`;
+      const refLink = data.referral_code ? `${BRAND.url}/?ref=${data.referral_code}` : null;
+      const portalLogin = data.portal_url || `${BRAND.url}/partners/login`;
+      const credentialsBlock = data.temp_password
+        ? box(
+            small("Suas credenciais de acesso (troque a senha após o primeiro login):") +
+            `<p style="margin:8px 0 0;font-size:14px;color:#18181b;"><strong>E-mail:</strong> ${data.login_email || data.email || ""}</p>` +
+            `<p style="margin:4px 0 0;font-size:14px;color:#18181b;"><strong>Senha temporária:</strong> <span style="font-family:monospace;background:#fff;padding:2px 6px;border-radius:4px;border:1px solid #e4e4e7;">${data.temp_password}</span></p>`
+          )
+        : "";
+      const refBlock = refLink
+        ? box(small("Seu link exclusivo de indicação:") + `<p style="margin:8px 0 0;font-family:monospace;font-size:14px;color:${BRAND.color};word-break:break-all;">${refLink}</p>`)
+        : "";
       const html = layout("Bem-vindo ao Programa Wiize Parceiros",
         h(`Bem-vindo ao Programa Wiize Parceiros, ${data.first_name}! 🎉`) +
-        p("A sua conta foi aprovada. A partir de agora você ganha comissão recorrente sobre cada cliente que indicar para a Wiize.") +
-        box(small("Seu link exclusivo de indicação:") + `<p style="margin:8px 0 0;font-family:monospace;font-size:14px;color:${BRAND.color};word-break:break-all;">${refLink}</p>`) +
-        p("Compartilhe esse link em WhatsApp, redes sociais e e-mails. Toda venda gerada nos próximos <strong>2 anos</strong> é vinculada à sua conta.") +
-        btn(portal, "Acessar meu portal") +
+        p("A sua candidatura foi aprovada. A partir de agora você ganha comissão recorrente sobre cada cliente que indicar para a Wiize.") +
+        credentialsBlock +
+        refBlock +
+        p("Compartilhe seu link em WhatsApp, redes sociais e e-mails. Toda venda gerada nos próximos <strong>2 anos</strong> é vinculada à sua conta.") +
+        btn(portalLogin, "Acessar meu portal") +
         small("Comece pelo painel — você encontra materiais prontos, métricas de conversão e seu saldo em tempo real."),
         "Sua conta de parceiro foi aprovada"
       );
-      return { subject: "🎉 Bem-vindo ao Programa Wiize Parceiros", html };
+      return { subject: "🎉 Sua candidatura para Wiize Partners foi aprovada", html };
     }
     case "partner_new_lead": {
       const html = layout("Você ganhou um novo lead",
