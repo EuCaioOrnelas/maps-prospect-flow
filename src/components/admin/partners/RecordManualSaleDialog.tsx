@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, DollarSign } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Loader2, DollarSign, Check, ChevronsUpDown, User as UserIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -17,9 +20,15 @@ interface Props {
 export const RecordManualSaleDialog = ({ open, onOpenChange, onCreated }: Props) => {
   const [loading, setLoading] = useState(false);
   const [partners, setPartners] = useState<Array<{ id: string; full_name: string; email: string }>>([]);
+  const [users, setUsers] = useState<Array<{ id: string; email: string; name: string | null; plan: string | null }>>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [userOpen, setUserOpen] = useState(false);
+  const [searchingUsers, setSearchingUsers] = useState(false);
   const [form, setForm] = useState({
     partner_id: "",
+    customer_user_id: "",
     customer_email: "",
+    customer_label: "",
     amount: "",
     plan: "start",
     payment_provider: "asaas",
@@ -38,9 +47,30 @@ export const RecordManualSaleDialog = ({ open, onOpenChange, onCreated }: Props)
     }
   }, [open]);
 
+  // Search users (profiles) with debounce
+  useEffect(() => {
+    if (!open) return;
+    const q = userSearch.trim();
+    setSearchingUsers(true);
+    const t = setTimeout(async () => {
+      let query = supabase
+        .from("profiles")
+        .select("id, email, name, plan")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (q.length >= 2) {
+        query = query.or(`email.ilike.%${q}%,name.ilike.%${q}%`);
+      }
+      const { data } = await query;
+      setUsers((data as any) || []);
+      setSearchingUsers(false);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [userSearch, open]);
+
   const submit = async () => {
-    if (!form.partner_id || !form.customer_email.trim() || !form.amount) {
-      toast({ title: "Campos obrigatórios", description: "Parceiro, email do cliente e valor são obrigatórios.", variant: "destructive" });
+    if (!form.partner_id || !form.customer_user_id || !form.amount) {
+      toast({ title: "Campos obrigatórios", description: "Selecione parceiro, cliente e informe o valor.", variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -91,9 +121,77 @@ export const RecordManualSaleDialog = ({ open, onOpenChange, onCreated }: Props)
           </div>
 
           <div className="md:col-span-2 space-y-2">
-            <Label>Email do cliente *</Label>
-            <Input type="email" value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} placeholder="cliente@empresa.com" />
-            <p className="text-xs text-muted-foreground">Precisa existir um perfil com esse email.</p>
+            <Label>Cliente (usuário existente) *</Label>
+            <Popover open={userOpen} onOpenChange={setUserOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={userOpen}
+                  className="w-full justify-between font-normal"
+                >
+                  {form.customer_user_id ? (
+                    <span className="flex items-center gap-2 truncate">
+                      <UserIcon size={14} className="text-muted-foreground" />
+                      <span className="truncate">{form.customer_label}</span>
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">Buscar por nome ou email…</span>
+                  )}
+                  <ChevronsUpDown size={14} className="ml-2 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-popover" align="start">
+                <Command shouldFilter={false}>
+                  <CommandInput
+                    placeholder="Digite nome ou email…"
+                    value={userSearch}
+                    onValueChange={setUserSearch}
+                  />
+                  <CommandList>
+                    {searchingUsers ? (
+                      <div className="py-6 text-center text-sm text-muted-foreground">Buscando…</div>
+                    ) : (
+                      <>
+                        <CommandEmpty>Nenhum usuário encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {users.map((u) => {
+                            const label = u.name ? `${u.name} — ${u.email}` : u.email;
+                            return (
+                              <CommandItem
+                                key={u.id}
+                                value={u.id}
+                                onSelect={() => {
+                                  setForm({
+                                    ...form,
+                                    customer_user_id: u.id,
+                                    customer_email: u.email,
+                                    customer_label: label,
+                                    plan: u.plan && ["start","growth","scale"].includes(u.plan) ? u.plan : form.plan,
+                                  });
+                                  setUserOpen(false);
+                                }}
+                                className="flex items-center justify-between gap-2"
+                              >
+                                <div className="flex flex-col min-w-0">
+                                  <span className="truncate font-medium">{u.name || "—"}</span>
+                                  <span className="truncate text-xs text-muted-foreground">{u.email}</span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {u.plan && <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{u.plan}</span>}
+                                  <Check className={cn("h-4 w-4", form.customer_user_id === u.id ? "opacity-100" : "opacity-0")} />
+                                </div>
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <p className="text-xs text-muted-foreground">A venda será vinculada ao perfil do usuário selecionado.</p>
           </div>
 
           <div className="space-y-2">
