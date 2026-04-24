@@ -2294,6 +2294,7 @@ export type Database = {
           account_type: string | null
           bank_account: string | null
           bank_branch: string | null
+          bank_code: string | null
           bank_name: string | null
           created_at: string
           holder_name: string | null
@@ -2308,6 +2309,7 @@ export type Database = {
           account_type?: string | null
           bank_account?: string | null
           bank_branch?: string | null
+          bank_code?: string | null
           bank_name?: string | null
           created_at?: string
           holder_name?: string | null
@@ -2322,6 +2324,7 @@ export type Database = {
           account_type?: string | null
           bank_account?: string | null
           bank_branch?: string | null
+          bank_code?: string | null
           bank_name?: string | null
           created_at?: string
           holder_name?: string | null
@@ -2352,6 +2355,7 @@ export type Database = {
           landing_page: string | null
           partner_id: string
           referral_code: string
+          referral_link_id: string | null
           session_id: string | null
           user_agent: string | null
           utm_campaign: string | null
@@ -2369,6 +2373,7 @@ export type Database = {
           landing_page?: string | null
           partner_id: string
           referral_code: string
+          referral_link_id?: string | null
           session_id?: string | null
           user_agent?: string | null
           utm_campaign?: string | null
@@ -2386,6 +2391,7 @@ export type Database = {
           landing_page?: string | null
           partner_id?: string
           referral_code?: string
+          referral_link_id?: string | null
           session_id?: string | null
           user_agent?: string | null
           utm_campaign?: string | null
@@ -2400,6 +2406,13 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_clicks_referral_link_id_fkey"
+            columns: ["referral_link_id"]
+            isOneToOne: false
+            referencedRelation: "partner_referral_links"
             referencedColumns: ["id"]
           },
         ]
@@ -2473,6 +2486,87 @@ export type Database = {
           },
         ]
       }
+      partner_goals: {
+        Row: {
+          achieved_value: number
+          completed_at: string | null
+          created_at: string
+          created_by_admin_id: string | null
+          deadline_at: string
+          description: string | null
+          goal_type: Database["public"]["Enums"]["partner_goal_type"]
+          id: string
+          internal_notes: string | null
+          partner_id: string
+          prize_amount_cents: number
+          prize_claimed_at: string | null
+          prize_status: Database["public"]["Enums"]["partner_goal_prize_status"]
+          prize_withdrawal_id: string | null
+          starts_at: string
+          status: Database["public"]["Enums"]["partner_goal_status"]
+          target_value: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          achieved_value?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by_admin_id?: string | null
+          deadline_at: string
+          description?: string | null
+          goal_type: Database["public"]["Enums"]["partner_goal_type"]
+          id?: string
+          internal_notes?: string | null
+          partner_id: string
+          prize_amount_cents?: number
+          prize_claimed_at?: string | null
+          prize_status?: Database["public"]["Enums"]["partner_goal_prize_status"]
+          prize_withdrawal_id?: string | null
+          starts_at?: string
+          status?: Database["public"]["Enums"]["partner_goal_status"]
+          target_value: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          achieved_value?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by_admin_id?: string | null
+          deadline_at?: string
+          description?: string | null
+          goal_type?: Database["public"]["Enums"]["partner_goal_type"]
+          id?: string
+          internal_notes?: string | null
+          partner_id?: string
+          prize_amount_cents?: number
+          prize_claimed_at?: string | null
+          prize_status?: Database["public"]["Enums"]["partner_goal_prize_status"]
+          prize_withdrawal_id?: string | null
+          starts_at?: string
+          status?: Database["public"]["Enums"]["partner_goal_status"]
+          target_value?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_goals_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_goals_prize_withdrawal_id_fkey"
+            columns: ["prize_withdrawal_id"]
+            isOneToOne: false
+            referencedRelation: "partner_withdrawals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_leads: {
         Row: {
           attributed_at: string
@@ -2489,6 +2583,7 @@ export type Database = {
           name: string | null
           paid_at: string | null
           partner_id: string
+          referral_link_id: string | null
           updated_at: string
           user_id: string
         }
@@ -2507,6 +2602,7 @@ export type Database = {
           name?: string | null
           paid_at?: string | null
           partner_id: string
+          referral_link_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -2525,6 +2621,7 @@ export type Database = {
           name?: string | null
           paid_at?: string | null
           partner_id?: string
+          referral_link_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -2541,6 +2638,13 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_leads_referral_link_id_fkey"
+            columns: ["referral_link_id"]
+            isOneToOne: false
+            referencedRelation: "partner_referral_links"
             referencedColumns: ["id"]
           },
         ]
@@ -2687,6 +2791,68 @@ export type Database = {
             columns: ["withdrawal_id"]
             isOneToOne: false
             referencedRelation: "partner_withdrawals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_referral_links: {
+        Row: {
+          created_at: string
+          created_by_admin_id: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          label: string
+          partner_id: string
+          slug: string
+          total_clicks: number
+          total_leads: number
+          total_paid_clients: number
+          updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by_admin_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          partner_id: string
+          slug: string
+          total_clicks?: number
+          total_leads?: number
+          total_paid_clients?: number
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by_admin_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          partner_id?: string
+          slug?: string
+          total_clicks?: number
+          total_leads?: number
+          total_paid_clients?: number
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_referral_links_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
@@ -6075,8 +6241,10 @@ export type Database = {
         Args: { p_cpf?: string; p_fingerprint: string; p_ip: string }
         Returns: Json
       }
+      claim_partner_goal_prize: { Args: { p_goal_id: string }; Returns: Json }
       cleanup_rate_limits: { Args: never; Returns: undefined }
       compute_partner_balance: { Args: { p_partner_id: string }; Returns: Json }
+      compute_partner_mrr: { Args: { p_partner_id: string }; Returns: number }
       generate_partner_referral_code: {
         Args: { p_full_name: string }
         Returns: string
@@ -6135,6 +6303,10 @@ export type Database = {
         Returns: string
       }
       release_pending_commissions: { Args: never; Returns: number }
+      request_partner_withdrawal: {
+        Args: { p_amount_cents: number }
+        Returns: Json
+      }
       revenue_score_to_bucket: {
         Args: { p_score: number }
         Returns: Database["public"]["Enums"]["revenue_status_bucket"]
@@ -6144,6 +6316,10 @@ export type Database = {
         Returns: undefined
       }
       unaccent_simple: { Args: { input: string }; Returns: string }
+      update_partner_goal_progress: {
+        Args: { p_partner_id: string }
+        Returns: undefined
+      }
       verify_webhook_signature: {
         Args: { p_payload: string; p_secret_name: string; p_signature: string }
         Returns: boolean
@@ -6169,6 +6345,9 @@ export type Database = {
         | "SUBSCRIPTION_RENEWAL"
         | "AGENT_HUMAN_HANDOFF"
         | "AGENT_OBJECTIVE_COMPLETED"
+      partner_goal_prize_status: "not_claimed" | "requested" | "paid"
+      partner_goal_status: "active" | "completed" | "expired" | "cancelled"
+      partner_goal_type: "revenue" | "paid_clients" | "leads" | "mrr"
       partner_level: "bronze" | "silver" | "gold" | "platinum"
       partner_status: "active" | "inactive" | "blocked"
       revenue_risk_state: "OK" | "COOLING" | "AT_RISK"
@@ -6334,6 +6513,9 @@ export const Constants = {
         "AGENT_HUMAN_HANDOFF",
         "AGENT_OBJECTIVE_COMPLETED",
       ],
+      partner_goal_prize_status: ["not_claimed", "requested", "paid"],
+      partner_goal_status: ["active", "completed", "expired", "cancelled"],
+      partner_goal_type: ["revenue", "paid_clients", "leads", "mrr"],
       partner_level: ["bronze", "silver", "gold", "platinum"],
       partner_status: ["active", "inactive", "blocked"],
       revenue_risk_state: ["OK", "COOLING", "AT_RISK"],
