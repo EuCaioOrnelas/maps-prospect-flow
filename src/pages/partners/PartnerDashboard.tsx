@@ -157,7 +157,7 @@ export default function PartnerDashboard() {
       {/* Funnel */}
       <div>
         <div className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Funil de conversão</div>
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {funnelCards.map((c) => (
             <StatCard key={c.label} {...c} />
           ))}
