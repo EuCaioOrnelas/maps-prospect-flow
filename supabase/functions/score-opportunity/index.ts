@@ -1302,7 +1302,7 @@ serve(async (req) => {
 
     // Run page fetches only (no SerpAPI cost - direct HTTP crawling is free)
     const pageSummaries = await Promise.all(
-      pageTargets.map((target) => fetchPageSummary(target.url, target.label, target.platform))
+      pageTargets.map((target) => fetchPageSummary(target.url, target.label, "platform" in target ? target.platform : undefined))
     );
     // Social insights derived from page crawling data only (zero SerpAPI usage)
     const socialInsights: SocialMediaInsight[] = [];
