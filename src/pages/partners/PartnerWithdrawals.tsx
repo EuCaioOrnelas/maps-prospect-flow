@@ -67,6 +67,33 @@ export default function PartnerWithdrawals() {
     const result = data as any;
     if (result?.error) { toast({ title: "Não foi possível", description: result.error, variant: "destructive" }); return; }
 
+    // Best-effort notifications: confirmation to partner + alert to admin
+    const firstName = (partner?.full_name || "").split(" ")[0] || "Parceiro";
+    supabase.functions.invoke("send-partner-email", {
+      body: {
+        type: "partner_withdrawal_requested",
+        to: partner?.email,
+        data: { first_name: firstName, amount_cents: cents, user_id: partner?.user_id },
+      },
+    }).catch(() => {});
+    supabase.functions.invoke("send-partner-email", {
+      body: {
+        type: "admin_partner_alert",
+        to: "parceiros@wiize.com.br",
+        data: {
+          subject: `💰 Novo saque solicitado — ${partner?.full_name || "Parceiro"}`,
+          title: "Novo pedido de saque",
+          lines: [
+            `Parceiro: <strong>${partner?.full_name}</strong> (${partner?.email})`,
+            `Valor: <strong>R$ ${(cents / 100).toFixed(2).replace(".", ",")}</strong>`,
+            "Acesse o admin para revisar os dados bancários e aprovar.",
+          ],
+          cta_url: `${window.location.origin}/admin/partners/saques`,
+          cta_label: "Revisar saque",
+        },
+      },
+    }).catch(() => {});
+
     toast({ title: "Solicitação enviada!", description: "Aguarde aprovação do admin." });
     setOpen(false);
     setAmount("");
