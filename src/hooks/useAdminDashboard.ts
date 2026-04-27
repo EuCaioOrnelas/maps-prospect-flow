@@ -96,8 +96,22 @@ export function useAdminDashboard() {
 
   const loadAsaasLive = useCallback(async () => {
     try {
-      const { data, error } = await supabase.functions.invoke("admin-asaas-stats");
-      if (error) throw error;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("No auth session for Asaas stats");
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-asaas-stats`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || `admin-asaas-stats HTTP ${response.status}`);
       if (data?.error) throw new Error(data.error);
       if (data?.summary) setAsaasLive(data.summary);
     } catch (err) {
