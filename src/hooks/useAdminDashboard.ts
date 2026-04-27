@@ -489,13 +489,56 @@ export function useAdminDashboard() {
     return { avgMonths, ltv };
   }, [payingProfiles, averageTicket]);
 
+  // pixMRR efetivo: combina o histórico mensal local com o valor real do Asaas no mês corrente.
+  const effectivePixMRR = useMemo(() => {
+    if (!pixMRR) {
+      return asaasLive
+        ? {
+            pixMrr: asaasLive.pix_mrr,
+            pixActiveSubscriptions: asaasLive.pix_active_subs,
+            pixMonthlyMRR: [],
+          }
+        : null;
+    }
+    if (!asaasLive) return pixMRR;
+
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const updatedMonthly = pixMRR.pixMonthlyMRR.map((m) =>
+      m.month === currentMonthKey
+        ? { ...m, mrr: asaasLive.pix_mrr, activeCount: asaasLive.pix_active_subs }
+        : m
+    );
+    // Garante que o mês corrente exista no array
+    if (!updatedMonthly.some((m) => m.month === currentMonthKey)) {
+      updatedMonthly.push({ month: currentMonthKey, mrr: asaasLive.pix_mrr, activeCount: asaasLive.pix_active_subs });
+      updatedMonthly.sort((a, b) => a.month.localeCompare(b.month));
+    }
+    return {
+      pixMrr: asaasLive.pix_mrr,
+      pixActiveSubscriptions: asaasLive.pix_active_subs,
+      pixMonthlyMRR: updatedMonthly,
+    };
+  }, [pixMRR, asaasLive]);
+
+  const effectiveAsaasCardMRR = useMemo(() => {
+    if (asaasLive) {
+      return {
+        asaasCardMrr: asaasLive.card_mrr,
+        asaasCardSubscriptions: asaasLive.card_active_subs,
+      };
+    }
+    return asaasCardMRR;
+  }, [asaasCardMRR, asaasLive]);
+
   return {
     loading,
     stats,
     stripeMRR,
-    pixMRR,
-    asaasCardMRR,
+    pixMRR: effectivePixMRR,
+    asaasCardMRR: effectiveAsaasCardMRR,
     otherMRR,
+    asaasLive,
     totalMRR,
     totalSubscribers,
     churnRate,
