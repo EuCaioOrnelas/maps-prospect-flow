@@ -204,7 +204,10 @@ Deno.serve(async (req) => {
     }
 
     // Hash password
-    const password_hash = await bcrypt.hash(payload.password);
+    // IMPORTANT: use hashSync — bcrypt.hash() async usa Web Workers que não estão
+    // disponíveis no Supabase Edge Runtime (Deno) e quebram com "Worker is not defined".
+    const salt = await bcrypt.genSaltSync(10);
+    const password_hash = bcrypt.hashSync(payload.password, salt);
 
     // Compute score
     const internal_score = computeScore(payload);
