@@ -215,19 +215,22 @@ serve(async (req) => {
     }
 
     logStep("Churn payload ready", {
-      cancellations: cancellationsRes.data?.length || 0,
+      cancellationsRaw: cancellationsRes.data?.length || 0,
+      cancellationsFiltered: filteredCancellations.length,
       feedbacks: feedbacksRes.data?.length || 0,
-      events: eventsRes.data?.length || 0,
+      eventsRaw: eventsRes.data?.length || 0,
+      eventsFiltered: filteredEvents.length,
       profiles: profiles.length,
       expiredProfiles: expiredProfiles.length,
       stripeChurns: stripeChurns.length,
+      usersWithRealPayment: usersWithRealPayment.size,
     });
 
     return new Response(
       JSON.stringify({
-        cancellations: cancellationsRes.data || [],
+        cancellations: filteredCancellations,
         feedbacks: feedbacksRes.data || [],
-        subEvents: eventsRes.data || [],
+        subEvents: filteredEvents,
         profiles,
         expiredProfiles,
         stripeChurns,
