@@ -297,27 +297,38 @@ export default function AdminChurn() {
   };
 
   const now = Date.now();
-  const last30d = records.filter((record) => new Date(record.cancelled_at).getTime() > now - 30 * 86400000);
-  const last7d = records.filter((record) => new Date(record.cancelled_at).getTime() > now - 7 * 86400000);
+  // Quando houver filtro de período, KPIs refletem o período selecionado.
+  // Sem filtro: mantém a lógica original (total + janelas 7d/30d).
+  const kpiBase = hasDateFilter ? dateFilteredRecords : records;
+  const last30d = hasDateFilter
+    ? dateFilteredRecords
+    : records.filter((record) => new Date(record.cancelled_at).getTime() > now - 30 * 86400000);
+  const last7d = hasDateFilter
+    ? dateFilteredRecords
+    : records.filter((record) => new Date(record.cancelled_at).getTime() > now - 7 * 86400000);
   const last30dRate = totalUsers > 0 ? ((last30d.length / totalUsers) * 100).toFixed(1) : "0";
   const last7dRate = totalUsers > 0 ? ((last7d.length / totalUsers) * 100).toFixed(1) : "0";
-  const churnRateTotal = totalUsers > 0 ? ((records.length / totalUsers) * 100).toFixed(1) : "0";
+  const churnRateTotal = totalUsers > 0 ? ((kpiBase.length / totalUsers) * 100).toFixed(1) : "0";
 
   const reasonCounts: Record<string, number> = {};
-  records.forEach((record) => {
+  kpiBase.forEach((record) => {
     if (!record.cancellation_reason) return;
     const key = reasonLabels[record.cancellation_reason] || record.cancellation_reason;
     reasonCounts[key] = (reasonCounts[key] || 0) + 1;
   });
   const topReason = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0];
 
-  const returnYes = records.filter((record) => record.intends_to_return === "yes").length;
-  const returnMaybe = records.filter((record) => record.intends_to_return === "maybe").length;
+  const returnYes = kpiBase.filter((record) => record.intends_to_return === "yes").length;
+  const returnMaybe = kpiBase.filter((record) => record.intends_to_return === "maybe").length;
+
+  const periodLabel = hasDateFilter
+    ? `${startDate ? new Date(`${startDate}T00:00:00`).toLocaleDateString("pt-BR") : "início"} → ${endDate ? new Date(`${endDate}T00:00:00`).toLocaleDateString("pt-BR") : "hoje"}`
+    : null;
 
   const kpis = [
-    { label: "Total Cancelamentos", value: records.length, subtext: `${churnRateTotal}% da base`, icon: UserX, color: "text-red-500" },
-    { label: "Churns 30 dias", value: `${last30dRate}%`, subtext: `(${last30d.length} usuários)`, icon: Calendar, color: "text-amber-500" },
-    { label: "Churns 7 dias", value: `${last7dRate}%`, subtext: `(${last7d.length} usuários)`, icon: TrendingDown, color: "text-orange-500" },
+    { label: "Total Cancelamentos", value: kpiBase.length, subtext: `${churnRateTotal}% da base`, icon: UserX, color: "text-red-500" },
+    { label: hasDateFilter ? "Churn no período" : "Churns 30 dias", value: `${last30dRate}%`, subtext: `(${last30d.length} usuários)`, icon: Calendar, color: "text-amber-500" },
+    { label: hasDateFilter ? "Cancelamentos no período" : "Churns 7 dias", value: `${last7dRate}%`, subtext: `(${last7d.length} usuários)`, icon: TrendingDown, color: "text-orange-500" },
     { label: "Taxa Churn Total", value: `${churnRateTotal}%`, icon: Percent, color: "text-red-500" },
     { label: "Principal Motivo", value: topReason ? topReason[0] : "—", icon: AlertTriangle, color: "text-primary", small: true },
     { label: "Pretendem Voltar", value: returnYes + returnMaybe, subtext: `${returnYes} sim · ${returnMaybe} talvez`, icon: Users, color: "text-emerald-500" },
