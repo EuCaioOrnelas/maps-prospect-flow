@@ -252,7 +252,13 @@ export function useAdminDashboard() {
             activeCount++;
           }
 
-          pixMonthlyMRRMap.set(monthKey, { mrr, activeCount });
+          // Mês corrente: força o valor REAL atual (igual aos cards) para evitar drift no gráfico
+          const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+          if (monthKey === currentMonthKey) {
+            pixMonthlyMRRMap.set(monthKey, { mrr: pixMrrTotal, activeCount: pixActiveSubs });
+          } else {
+            pixMonthlyMRRMap.set(monthKey, { mrr, activeCount });
+          }
           cursor.setMonth(cursor.getMonth() + 1);
         }
       }
