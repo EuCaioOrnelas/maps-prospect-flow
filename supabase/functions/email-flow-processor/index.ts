@@ -650,6 +650,23 @@ async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiK
       case "email": {
         const config = node.config || {};
         if (config.subject && config.body) {
+          // ── IDEMPOTENCY GUARD ──
+          // If this exact email node has ALREADY been sent for this enrollment,
+          // skip the send and just advance to the next node. This prevents
+          // re-sending the same email if the flow loops back or is reprocessed.
+          const { count: alreadySentCount } = await supabase
+            .from("email_flow_execution_logs")
+            .select("*", { count: "exact", head: true })
+            .eq("enrollment_id", enrollment.id)
+            .eq("node_id", node.id)
+            .eq("action_type", "email_sent")
+            .eq("status", "success");
+
+          if ((alreadySentCount || 0) > 0) {
+            console.log(`[email-flow] Skipping duplicate send for enrollment ${enrollment.id}, node ${node.id} — already sent`);
+            break; // advance to next node without re-sending
+          }
+
           // Check email preferences — skip if user opted out of marketing
           if (user.id && user.plan !== "none") {
             const { data: prefs } = await supabase
@@ -824,6 +841,23 @@ async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiK
       results.steps_advanced++;
       continue;
     }
+
+    // ── LOOP GUARD ──
+    // If the next node has already been visited in this enrollment, do NOT revisit it
+    // (would cause infinite re-sends). Complete the enrollment instead.
+    const { count: alreadyVisitedCount } = await supabase
+      .from("email_flow_execution_logs")
+      .select("*", { count: "exact", head: true })
+      .eq("enrollment_id", enrollment.id)
+      .eq("node_id", nextEdge.target_node_id);
+
+    if ((alreadyVisitedCount || 0) > 0) {
+      console.warn(`[email-flow] Loop detected: enrollment ${enrollment.id} would revisit node ${nextEdge.target_node_id}. Completing.`);
+      await completeEnrollment(supabase, enrollment, "loop_detected");
+      results.steps_advanced++;
+      continue;
+    }
+
     await moveToNextNode(supabase, enrollment, nextEdge.target_node_id);
 
     results.steps_advanced++;
