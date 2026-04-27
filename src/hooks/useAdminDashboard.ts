@@ -432,19 +432,28 @@ export function useAdminDashboard() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      await Promise.all([loadStats(), loadStripeMRR(), loadNonStripeMRR(), loadAlerts(), loadNewSystemChurn()]);
+      await Promise.all([loadStats(), loadStripeMRR(), loadNonStripeMRR(), loadAlerts(), loadNewSystemChurn(), loadAsaasLive()]);
       setLoading(false);
     })();
   }, []);
 
-  // Total MRR = Stripe (cartão) + Asaas (PIX) + Custom subscriptions (manual: PIX/transferência/cartão/etc.)
+  // ===== MRR consolidado =====
+  // Quando a API do Asaas responde, ela é a FONTE DE VERDADE para PIX recorrente
+  // e cartão Asaas (sobrescreve o cálculo local baseado em profiles).
+  // Caso contrário, usamos os números locais como fallback.
+  const effectivePixMrr = asaasLive ? asaasLive.pix_mrr : (pixMRR?.pixMrr ?? 0);
+  const effectivePixSubs = asaasLive ? asaasLive.pix_active_subs : (pixMRR?.pixActiveSubscriptions ?? 0);
+  const effectiveAsaasCardMrr = asaasLive ? asaasLive.card_mrr : (asaasCardMRR?.asaasCardMrr ?? 0);
+  const effectiveAsaasCardSubs = asaasLive ? asaasLive.card_active_subs : (asaasCardMRR?.asaasCardSubscriptions ?? 0);
+
+  // Total MRR = Stripe (cartão) + Asaas (PIX) + Asaas (cartão) + Custom subscriptions (manual)
   const totalMRR = useMemo(() => {
-    return (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0) + (otherMRR?.otherMrr ?? 0);
-  }, [stripeMRR, pixMRR, otherMRR]);
+    return (stripeMRR?.totalMRR ?? 0) + effectivePixMrr + effectiveAsaasCardMrr + (otherMRR?.otherMrr ?? 0);
+  }, [stripeMRR, effectivePixMrr, effectiveAsaasCardMrr, otherMRR]);
 
   const totalSubscribers = useMemo(() => {
-    return (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0) + (otherMRR?.otherSubscriptions ?? 0);
-  }, [stripeMRR, pixMRR, otherMRR]);
+    return (stripeMRR?.activeSubscriptions ?? 0) + effectivePixSubs + effectiveAsaasCardSubs + (otherMRR?.otherSubscriptions ?? 0);
+  }, [stripeMRR, effectivePixSubs, effectiveAsaasCardSubs, otherMRR]);
 
   // Churn = cancelamentos Stripe + Asaas nos últimos 30 dias ÷ base ativa total.
   const churnRate = useMemo(() => {
