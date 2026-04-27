@@ -78,10 +78,13 @@ function interpolate(text: string, vars: Record<string, string>): string {
   return text.replace(/\{(\w+)\}/g, (m, name) => vars[name] ?? m);
 }
 
-function evaluateCondition(
+async function evaluateCondition(
+  supabase: any,
+  userId: string,
+  leadPhone: string,
   config: any,
   ctx: { lastUserText: string; lastButtonId: string | null; lastButtonTitle: string | null },
-): boolean {
+): Promise<boolean> {
   const conditionType = config.condition_type || "responded";
   const rawValue = String(config.condition_value || "").trim();
   const normalizedValue = rawValue.toLowerCase();
@@ -105,6 +108,74 @@ function evaluateCondition(
       return !ctx.lastUserText.trim();
     case "field_equals":
       return !!normalizedValue && normalizedText.includes(normalizedValue);
+
+    case "has_tag": {
+      if (!rawValue) return false;
+      const last8 = leadPhone.replace(/\D/g, "").slice(-8);
+      if (!last8) return false;
+      const { data: leads } = await supabase
+        .from("leads")
+        .select("id, phone, tags")
+        .eq("user_id", userId)
+        .like("phone", `%${last8}%`)
+        .limit(10);
+      const lead = (leads || []).find(
+        (l: any) => String(l.phone).replace(/\D/g, "").endsWith(last8),
+      );
+      if (!lead) return false;
+      const tags: string[] = Array.isArray(lead.tags) ? lead.tags : [];
+      return tags.some((t) => String(t).toLowerCase() === normalizedValue);
+    }
+
+    case "score_above": {
+      const last8 = leadPhone.replace(/\D/g, "").slice(-8);
+      if (!last8) return false;
+      const { data: leads } = await supabase
+        .from("leads")
+        .select("id, phone, score")
+        .eq("user_id", userId)
+        .like("phone", `%${last8}%`)
+        .limit(10);
+      const lead = (leads || []).find(
+        (l: any) => String(l.phone).replace(/\D/g, "").endsWith(last8),
+      );
+      if (!lead) return false;
+      const score = Number(lead.score || 0);
+
+      const checkType = config.score_check_type || "number";
+      if (checkType === "category") {
+        const cat = String(config.score_category || "").toLowerCase();
+        // Buckets aligned with revenue scoring: cold <150, warm 150-649, hot ≥650
+        if (cat === "hot") return score >= 650;
+        if (cat === "warm") return score >= 150;
+        if (cat === "cold") return score >= 0;
+        return false;
+      }
+      const minScore = Number(rawValue || 0);
+      return score >= minScore;
+    }
+
+    case "is_customer": {
+      const last8 = leadPhone.replace(/\D/g, "").slice(-8);
+      if (!last8) return false;
+      const { data: leads } = await supabase
+        .from("leads")
+        .select("id, phone")
+        .eq("user_id", userId)
+        .like("phone", `%${last8}%`)
+        .limit(10);
+      const lead = (leads || []).find(
+        (l: any) => String(l.phone).replace(/\D/g, "").endsWith(last8),
+      );
+      if (!lead) return false;
+      const { count } = await supabase
+        .from("crm_sales")
+        .select("*", { count: "exact", head: true })
+        .eq("lead_id", lead.id)
+        .eq("user_id", userId);
+      return (count || 0) > 0;
+    }
+
     default:
       return false;
   }
