@@ -258,15 +258,22 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
 
   if (actions.length === 0) return;
 
-  // Find the lead by phone (multi-format)
-  const cleanPhone = leadPhone.replace(/\D/g, "");
-  const last8 = cleanPhone.slice(-8);
+  // #6 fix: Find the lead by phone using DB-side filter (no arbitrary limit).
+  // Match using the last 8 digits (tolerant to +55, 9th digit, formatting differences).
+  const last8 = leadPhone.replace(/\D/g, "").slice(-8);
+  if (!last8) {
+    console.log("[wa-flow-runner] Action skipped — invalid phone for", leadPhone);
+    return;
+  }
   const { data: leads } = await supabase
     .from("leads")
     .select("id, phone, tags, pipeline_stage_id")
     .eq("user_id", userId)
-    .limit(20);
-  const lead = (leads || []).find((l: any) => String(l.phone).replace(/\D/g, "").endsWith(last8));
+    .like("phone", `%${last8}%`)
+    .limit(10);
+  const lead = (leads || []).find(
+    (l: any) => String(l.phone).replace(/\D/g, "").endsWith(last8),
+  );
   if (!lead) {
     console.log("[wa-flow-runner] Action skipped — lead not found for", leadPhone);
     return;
