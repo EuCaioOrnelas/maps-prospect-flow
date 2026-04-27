@@ -466,6 +466,8 @@ interface RuntimeCtx {
   lastButtonTitle: string | null;
   hasFreshUserInput: boolean;
   variables: Record<string, string>;
+  /** Internal: set by scheduler when timing out a no_response condition */
+  forceNoResponseTimeout?: boolean;
 }
 
 async function runFlow(
