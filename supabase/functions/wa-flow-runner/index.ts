@@ -613,18 +613,53 @@ async function runFlow(
       }
 
       case "buttons": {
-        // Send the body text + options as plain text fallback (full interactive support is API-specific).
-        const lines = [config.header_text, config.body_text || "Escolha uma opção:", config.footer_text]
-          .filter((v: any) => typeof v === "string" && v.trim())
-          .map((t: string) => interpolate(t, ctx.variables));
-        const choices = (config.interaction_type === "list" ? config.list_items : config.buttons) || [];
-        const optionLines = choices
-          .map((c: any, i: number) => `${i + 1}. ${typeof c === "string" ? c : c?.title || `Opção ${i + 1}`}`)
-          .join("\n");
-        await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
-          type: "text",
-          content: `${lines.join("\n\n")}${optionLines ? `\n\n${optionLines}` : ""}`,
+        // Send native interactive buttons (Meta) or interactive list (Meta) — Evolution maps to sendButtons/sendList.
+        const headerText = config.header_text ? interpolate(config.header_text, ctx.variables) : "";
+        const bodyText = interpolate(config.body_text || "Escolha uma opção:", ctx.variables);
+        const footerText = config.footer_text ? interpolate(config.footer_text, ctx.variables) : "";
+        const isList = config.interaction_type === "list";
+        const choices: any[] = (isList ? config.list_items : config.buttons) || [];
+
+        // Normalize handles: btn_0, btn_1... or item_0, item_1... (kept stable for edge matching)
+        const prefix = isList ? "item" : "btn";
+        const normalizedChoices = choices.map((c: any, i: number) => {
+          const rawId = typeof c === "object" && c?.id ? String(c.id) : `${prefix}_${i}`;
+          const id = normalizeHandle(rawId) || `${prefix}_${i}`;
+          const title = String(typeof c === "string" ? c : c?.title || `Opção ${i + 1}`);
+          const description = typeof c === "object" ? c?.description : undefined;
+          return { id, title: interpolate(title, ctx.variables), description };
         });
+
+        try {
+          if (isList) {
+            await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+              type: "list",
+              header: headerText,
+              body: bodyText,
+              footer: footerText,
+              buttonText: config.list_button_text || "Ver opções",
+              sections: [{ title: config.list_section_title || "Opções", rows: normalizedChoices }],
+            });
+          } else {
+            await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+              type: "buttons",
+              header: headerText,
+              body: bodyText,
+              footer: footerText,
+              buttons: normalizedChoices.slice(0, 3),
+            });
+          }
+        } catch (e) {
+          // Fallback to plain-text numbered list if interactive send fails (e.g. Evolution endpoint unavailable).
+          console.warn("[wa-flow-runner] interactive send failed, falling back to text:", e);
+          const lines = [headerText, bodyText, footerText].filter((s) => s && s.trim());
+          const optionLines = normalizedChoices.map((c, i) => `${i + 1}. ${c.title}`).join("\n");
+          await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+            type: "text",
+            content: `${lines.join("\n\n")}${optionLines ? `\n\n${optionLines}` : ""}`,
+          });
+        }
+
         ctx.hasFreshUserInput = false;
         pausedNodeId = node.id;
         currentNodeId = null;
