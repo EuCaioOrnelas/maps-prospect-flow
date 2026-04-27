@@ -109,8 +109,11 @@ export default function AdminChurn() {
       const profiles = data?.profiles || [];
       const expiredProfiles = data?.expiredProfiles || [];
       const stripeChurns = data?.stripeChurns || [];
+      // Base correta para churn rate: usuários que pagaram pelo menos 1 vez
+      // (não usar profiles.length pois inclui trial-only e nunca-pagantes)
+      const payingUsers = data?.payingUsersCount ?? 0;
 
-      setTotalUsers(profiles.length || 0);
+      setTotalUsers(payingUsers || profiles.length || 0);
 
       const profileMap = new Map<string, any>();
       profiles.forEach((profile: any) => profileMap.set(profile.id, profile));
