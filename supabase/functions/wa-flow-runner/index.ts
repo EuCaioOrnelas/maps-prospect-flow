@@ -597,15 +597,18 @@ serve(async (req) => {
 
     console.log(`[wa-flow-runner] invoked: user=${body.user_id} phone=${body.lead_phone} text=${body.incoming_text?.slice(0, 60)}`);
 
-    // 1) Resume any active execution for this lead
-    const { data: activeExecutions } = await supabase
+    // 1) Resume any active execution for this lead — #5 fix: tolerant phone match (last 8 digits)
+    const leadKey8 = phoneKey(body.lead_phone);
+    const { data: candidateExecs } = await supabase
       .from("wa_flow_executions")
       .select("*, wa_automation_flows!inner(*)")
       .eq("user_id", body.user_id)
-      .eq("lead_phone", body.lead_phone)
       .eq("status", "active")
       .order("started_at", { ascending: false })
-      .limit(5);
+      .limit(50);
+    const activeExecutions = (candidateExecs || []).filter(
+      (e: any) => phoneKey(e.lead_phone) === leadKey8,
+    ).slice(0, 5);
 
     const resumed: string[] = [];
     for (const exec of activeExecutions || []) {
@@ -625,9 +628,10 @@ serve(async (req) => {
       // For "buttons" pause we re-enter via the chosen button handle
       const node = nodes.find((n: any) => n.id === startId);
       let realStart = startId;
+      let buttonResolved = false;
       if (node?.node_type === "buttons" && body.button_id) {
         const next = getTargetByHandle(buildEdgeIndex(edges), startId, body.button_id);
-        if (next) realStart = next;
+        if (next) { realStart = next; buttonResolved = true; }
       } else if (node?.node_type === "buttons" && body.incoming_text) {
         // Try to match button by typed text/index
         const choices = ((node.config?.interaction_type === "list" ? node.config?.list_items : node.config?.buttons) || []);
@@ -642,9 +646,17 @@ serve(async (req) => {
           ctx.lastButtonId = handle;
           ctx.lastButtonTitle = String(typeof chosen === "string" ? chosen : chosen?.title || "");
           const next = getTargetByHandle(buildEdgeIndex(edges), startId, handle);
-          if (next) realStart = next;
+          if (next) { realStart = next; buttonResolved = true; }
         }
       }
+
+      // #7 fix: if we're paused on a "buttons" node and the user reply did NOT match any handle,
+      // skip re-execution (don't re-send the same buttons message). The execution stays paused.
+      if (node?.node_type === "buttons" && !buttonResolved && (body.button_id || body.incoming_text)) {
+        console.log(`[wa-flow-runner] No matching button handle for exec ${exec.id} — staying paused`);
+        continue;
+      }
+
       await runFlow(supabase, body, flow, nodes, edges, realStart, exec, ctx);
       resumed.push(exec.id);
     }
