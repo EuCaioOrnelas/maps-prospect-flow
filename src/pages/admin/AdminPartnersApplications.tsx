@@ -145,6 +145,7 @@ export default function AdminPartnersApplications() {
           msg = parsed?.error || msg;
         } else if (data?.error) msg = data.error;
       } catch { /* ignore */ }
+      console.error("[approve] error:", { error, data, ctx: (error as any)?.context });
       toast({ title: "Erro ao aprovar", description: msg, variant: "destructive" });
       setSubmitting(false);
       return;
