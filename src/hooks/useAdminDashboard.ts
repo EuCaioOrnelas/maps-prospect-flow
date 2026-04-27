@@ -91,6 +91,20 @@ export function useAdminDashboard() {
   // Churn calculado SOMENTE pelo novo sistema de gerenciamento (exclui Stripe).
   // Fonte: tabela subscription_cancellations onde provider != 'stripe', últimos 30 dias.
   const [newSystemChurn, setNewSystemChurn] = useState<{ cancellations30d: number }>({ cancellations30d: 0 });
+  // Dados em tempo real direto da API do Asaas (fonte de verdade para PIX + cartão Asaas).
+  const [asaasLive, setAsaasLive] = useState<AsaasLiveStats | null>(null);
+
+  const loadAsaasLive = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-asaas-stats");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.summary) setAsaasLive(data.summary);
+    } catch (err) {
+      console.warn("[useAdminDashboard] Asaas live stats unavailable:", err);
+      setAsaasLive(null);
+    }
+  }, []);
 
   const loadStats = useCallback(async () => {
     try {
