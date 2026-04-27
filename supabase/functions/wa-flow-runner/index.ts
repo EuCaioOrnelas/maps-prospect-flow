@@ -485,6 +485,9 @@ async function runFlow(
 
   let currentNodeId: string | null = startNodeId;
   let pausedNodeId: string | null = null;
+  let waitUntil: string | null = null;
+  let awaitingInputUntil: string | null = null;
+  let awaitingNodeId: string | null = null;
   let safety = 0;
   const history: any[] = Array.isArray(execution.node_history) ? execution.node_history : [];
 
