@@ -55,9 +55,22 @@ async function enrollEligibleLeads(supabase: any, results: any) {
     const audienceType = flow.audience_type;
     const entryRules = flow.entry_rules || {};
 
-    // CRITICAL: Use flow.updated_at as activation cutoff date.
-    // Only enroll users whose triggering event happened AFTER the flow was activated.
-    const flowActivatedAt = flow.updated_at;
+    // BUG FIX #1/#2: Refuse to enroll anyone if the flow is mis-configured.
+    // Without these guards, an active flow with NULL trigger/audience would
+    // silently enroll arbitrary users (e.g., trial users into a cart-recovery
+    // flow). The UI now blocks activation without these fields, but legacy
+    // active flows or service-role updates could still leave them null.
+    if (!triggerType || !audienceType) {
+      console.warn(`[email-flow] Skipping flow ${flow.id} — missing trigger_type or audience_type`);
+      continue;
+    }
+
+    // CRITICAL: Use the moment the flow was *activated* (status flipped to
+    // 'active'), NOT flow.updated_at. Editing/saving an active flow updates
+    // updated_at and would re-open enrollment for users who already passed
+    // through, causing infinite re-sends.
+    // Falls back to updated_at only if activated_at is missing (legacy rows).
+    const flowActivatedAt = flow.activated_at || flow.updated_at;
 
     // ── CHECKOUT ABANDONED: special path using checkout_leads table ──
     if (triggerType === "checkout_abandoned") {
