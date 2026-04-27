@@ -177,36 +177,29 @@ export function useAdminDashboard() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setStripeMRR(data);
-    } catch {
+    } catch (err) {
+      console.error("[useAdminDashboard] get-stripe-mrr failed:", err);
       setStripeMRR(null);
     }
   }, []);
 
   const loadNonStripeMRR = useCallback(async () => {
+    // ===== 1. PIX/Asaas (a partir de profiles) — independente do bloco manual =====
     try {
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesErr } = await supabase
         .from("profiles")
         .select("id, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at")
         .neq("plan", "free")
         .eq("is_blocked", false);
 
-      // Custom subscriptions (manual users) — fonte de verdade para MRR de admin-create
-      const { data: customSubs } = await supabase
-        .from("custom_subscriptions")
-        .select("user_id, monthly_value_cents, payment_method, status, ends_at, is_lifetime")
-        .eq("status", "active");
-
-      if (!profiles) return;
+      if (profilesErr) throw profilesErr;
+      if (!profiles) throw new Error("No profiles returned");
 
       const now = new Date();
       let pixMrrTotal = 0;
       let pixActiveSubs = 0;
 
       const typedProfiles = profiles as PayingProfile[];
-      // 'stripe' = cartão recorrente
-      // 'asaas' = PIX recorrente
-      // 'manual' = assinaturas custom criadas pelo admin
-      // null = perfis pagos sem provedor explícito (legado/manual) — incluídos pois têm plano
       const recognizedProfiles = typedProfiles.filter(
         (p) =>
           p.payment_provider === "stripe" ||
@@ -237,18 +230,13 @@ export function useAdminDashboard() {
       for (const p of recognizedProfiles) {
         const periodEnd = p.subscription_current_period_end;
         if (periodEnd && new Date(periodEnd) < now) continue;
-        // PIX = Asaas
         if (p.payment_provider === "asaas") {
           pixMrrTotal += getMonthlyValue(p);
           pixActiveSubs++;
         }
-        // stripe → contabilizado em get-stripe-mrr
-        // manual / null → contabilizado abaixo via custom_subscriptions
       }
 
-      const asaasProfiles = recognizedProfiles.filter(
-        (p) => p.payment_provider === "asaas"
-      );
+      const asaasProfiles = recognizedProfiles.filter((p) => p.payment_provider === "asaas");
       const pixMonthlyMRRMap = new Map<string, { mrr: number; activeCount: number }>();
 
       if (asaasProfiles.length > 0) {
@@ -277,7 +265,6 @@ export function useAdminDashboard() {
             activeCount++;
           }
 
-          // Mês corrente: força o valor REAL atual (igual aos cards) para evitar drift no gráfico
           const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
           if (monthKey === currentMonthKey) {
             pixMonthlyMRRMap.set(monthKey, { mrr: pixMrrTotal, activeCount: pixActiveSubs });
@@ -296,17 +283,27 @@ export function useAdminDashboard() {
           .sort((a, b) => a.month.localeCompare(b.month)),
       });
 
-      setAsaasCardMRR({
-        asaasCardMrr: 0,
-        asaasCardSubscriptions: 0,
-      });
+      setAsaasCardMRR({ asaasCardMrr: 0, asaasCardSubscriptions: 0 });
+    } catch (err) {
+      console.error("[useAdminDashboard] PIX/Asaas profiles load failed:", err);
+      setPixMRR(null);
+      setAsaasCardMRR(null);
+    }
 
-      // ===== Custom subscriptions → otherMRR (manual: PIX manual, transferência, etc.) =====
+    // ===== 2. Custom subscriptions (manual) — bloco INDEPENDENTE =====
+    try {
+      const { data: customSubs, error: customErr } = await supabase
+        .from("custom_subscriptions")
+        .select("user_id, monthly_value_cents, payment_method, status, ends_at, is_lifetime")
+        .eq("status", "active");
+
+      if (customErr) throw customErr;
+
+      const now = new Date();
       let otherMrrTotal = 0;
       let otherSubsTotal = 0;
       const byMethodMap = new Map<string, { mrr: number; count: number }>();
       for (const sub of (customSubs || []) as any[]) {
-        // Ignora assinaturas vencidas (a menos que seja vitalícia)
         if (!sub.is_lifetime && sub.ends_at && new Date(sub.ends_at) < now) continue;
         const monthly = (sub.monthly_value_cents || 0) / 100;
         if (monthly <= 0) continue;
@@ -331,9 +328,8 @@ export function useAdminDashboard() {
           }))
           .sort((a, b) => b.mrr - a.mrr),
       });
-    } catch {
-      setPixMRR(null);
-      setAsaasCardMRR(null);
+    } catch (err) {
+      console.error("[useAdminDashboard] custom_subscriptions load failed:", err);
       setOtherMRR(null);
     }
   }, []);
