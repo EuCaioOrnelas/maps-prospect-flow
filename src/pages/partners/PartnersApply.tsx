@@ -745,7 +745,7 @@ export default function PartnersApply() {
                 <CheckLine
                   checked={form.terms_accepted} onChange={(v) => set("terms_accepted", v)}
                   error={errors.terms_accepted}
-                  label={<>Li e aceito os <Link to="/terms" target="_blank" className="text-primary underline">Termos do Programa de Parceiros Wiize</Link></>}
+                  label={<>Li e aceito os <Link to="/partners/terms" target="_blank" className="text-primary underline">Termos do Programa de Parceiros Wiize</Link></>}
                 />
                 <CheckLine
                   checked={form.info_accuracy_confirmed} onChange={(v) => set("info_accuracy_confirmed", v)}
