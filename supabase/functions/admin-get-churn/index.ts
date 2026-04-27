@@ -132,6 +132,14 @@ serve(async (req) => {
       return usersWithRealPayment.has(e.user_id);
     });
 
+    // Filtrar feedbacks: só inclui usuários que tiveram pelo menos 1 pagamento real.
+    // Sem isso, feedbacks de quem cancelou DURANTE o trial (sem nunca ter pago)
+    // entrariam no merge do frontend e gerariam churns falsos.
+    const filteredFeedbacks = (feedbacksRes.data || []).filter((f: any) => {
+      if (!f.user_id) return false;
+      return usersWithRealPayment.has(f.user_id);
+    });
+
     // Buscar cancelamentos diretos no Stripe (feitos fora do nosso fluxo)
     // Mescla qualquer subscription canceled pós-15/04 que não esteja já em subscription_cancellations
     const stripeChurns: any[] = [];
