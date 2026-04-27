@@ -178,15 +178,14 @@ export function useAdminDashboard() {
       let pixActiveSubs = 0;
 
       const typedProfiles = profiles as PayingProfile[];
+      // 'stripe' = cartão recorrente
+      // 'asaas' = PIX recorrente
       // 'manual' = assinaturas custom criadas pelo admin
-      // 'asaas' = PIX recorrente (novo)
-      // 'abacate_pay' = PIX legado
       // null = perfis pagos sem provedor explícito (legado/manual) — incluídos pois têm plano
       const recognizedProfiles = typedProfiles.filter(
         (p) =>
           p.payment_provider === "stripe" ||
           p.payment_provider === "asaas" ||
-          p.payment_provider === "abacate_pay" ||
           p.payment_provider === "manual" ||
           p.payment_provider === null
       );
@@ -213,8 +212,8 @@ export function useAdminDashboard() {
       for (const p of recognizedProfiles) {
         const periodEnd = p.subscription_current_period_end;
         if (periodEnd && new Date(periodEnd) < now) continue;
-        // Inclui Asaas (PIX novo) E abacate_pay (PIX legado)
-        if (p.payment_provider === "asaas" || p.payment_provider === "abacate_pay") {
+        // PIX = Asaas
+        if (p.payment_provider === "asaas") {
           pixMrrTotal += getMonthlyValue(p);
           pixActiveSubs++;
         }
@@ -223,7 +222,7 @@ export function useAdminDashboard() {
       }
 
       const asaasProfiles = recognizedProfiles.filter(
-        (p) => p.payment_provider === "asaas" || p.payment_provider === "abacate_pay"
+        (p) => p.payment_provider === "asaas"
       );
       const pixMonthlyMRRMap = new Map<string, { mrr: number; activeCount: number }>();
 
