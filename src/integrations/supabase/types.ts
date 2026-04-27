@@ -5844,6 +5844,7 @@ export type Database = {
           exit_node_name: string | null
           flow_id: string
           id: string
+          last_error: string | null
           lead_name: string | null
           lead_phone: string
           node_history: Json | null
@@ -5865,6 +5866,7 @@ export type Database = {
           exit_node_name?: string | null
           flow_id: string
           id?: string
+          last_error?: string | null
           lead_name?: string | null
           lead_phone: string
           node_history?: Json | null
@@ -5886,6 +5888,7 @@ export type Database = {
           exit_node_name?: string | null
           flow_id?: string
           id?: string
+          last_error?: string | null
           lead_name?: string | null
           lead_phone?: string
           node_history?: Json | null
