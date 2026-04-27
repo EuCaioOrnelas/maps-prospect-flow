@@ -178,9 +178,17 @@ export function useAdminDashboard() {
       let pixActiveSubs = 0;
 
       const typedProfiles = profiles as PayingProfile[];
-      // 'manual' agora é reconhecido (assinaturas custom criadas pelo admin)
+      // 'manual' = assinaturas custom criadas pelo admin
+      // 'asaas' = PIX recorrente (novo)
+      // 'abacate_pay' = PIX legado
+      // null = perfis pagos sem provedor explícito (legado/manual) — incluídos pois têm plano
       const recognizedProfiles = typedProfiles.filter(
-        (p) => p.payment_provider === "stripe" || p.payment_provider === "asaas" || p.payment_provider === "manual"
+        (p) =>
+          p.payment_provider === "stripe" ||
+          p.payment_provider === "asaas" ||
+          p.payment_provider === "abacate_pay" ||
+          p.payment_provider === "manual" ||
+          p.payment_provider === null
       );
       setPayingProfiles(
         recognizedProfiles.filter((p) => !p.subscription_current_period_end || new Date(p.subscription_current_period_end) >= now)
@@ -205,15 +213,18 @@ export function useAdminDashboard() {
       for (const p of recognizedProfiles) {
         const periodEnd = p.subscription_current_period_end;
         if (periodEnd && new Date(periodEnd) < now) continue;
-        if (p.payment_provider === "asaas") {
+        // Inclui Asaas (PIX novo) E abacate_pay (PIX legado)
+        if (p.payment_provider === "asaas" || p.payment_provider === "abacate_pay") {
           pixMrrTotal += getMonthlyValue(p);
           pixActiveSubs++;
         }
         // stripe → contabilizado em get-stripe-mrr
-        // manual → contabilizado abaixo via custom_subscriptions
+        // manual / null → contabilizado abaixo via custom_subscriptions
       }
 
-      const asaasProfiles = recognizedProfiles.filter((p) => p.payment_provider === "asaas");
+      const asaasProfiles = recognizedProfiles.filter(
+        (p) => p.payment_provider === "asaas" || p.payment_provider === "abacate_pay"
+      );
       const pixMonthlyMRRMap = new Map<string, { mrr: number; activeCount: number }>();
 
       if (asaasProfiles.length > 0) {

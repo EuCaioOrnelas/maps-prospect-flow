@@ -77,12 +77,13 @@ export function PixDashboardTab() {
         const periodEnd = p.subscription_current_period_end ? new Date(p.subscription_current_period_end) : null;
         const isExpired = periodEnd && periodEnd < now;
 
-        // Detect annual plans
-        let monthlyValue = priceReais;
+        // Fallback: usar preço do plano quando não há subscription_price_cents
+        const PLAN_PRICES: Record<string, number> = { start: 296, growth: 696, scale: 897 };
+        let monthlyValue = priceReais > 0 ? priceReais : (PLAN_PRICES[p.plan] || 0);
         if (priceCents > 0) {
           const createdAt = new Date(p.created_at);
-          const daysSpan = periodEnd 
-            ? (periodEnd.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24) 
+          const daysSpan = periodEnd
+            ? (periodEnd.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
             : 0;
           if (daysSpan > 300) monthlyValue = priceReais / 12;
         }
@@ -94,7 +95,7 @@ export function PixDashboardTab() {
           else { overdueCount++; overdueRenewals++; }
           if (periodEnd && periodEnd > now && periodEnd <= sevenDaysFromNow) renewalNext7++;
         }
-        // stripe is handled by get-stripe-mrr (cartão)
+        // stripe → contabilizado em get-stripe-mrr
       }
 
       // PIX invoices stats

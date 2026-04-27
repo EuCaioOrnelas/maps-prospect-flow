@@ -65,7 +65,7 @@ serve(async (req) => {
 
     const now = Date.now();
 
-    const [cancellationsRes, feedbacksRes, eventsRes, profilesRes] = await Promise.all([
+    const [cancellationsRes, feedbacksRes, eventsRes, profilesRes, paidLeadsRes, paidInvoicesRes] = await Promise.all([
       adminClient.from("subscription_cancellations").select("*").order("cancelled_at", { ascending: false }),
       adminClient.from("cancellation_feedback").select("*").order("created_at", { ascending: false }),
       adminClient
@@ -77,12 +77,30 @@ serve(async (req) => {
         .from("profiles")
         .select("id, email, name, plan, payment_provider, subscription_current_period_end, admin_assigned_plan")
         .order("created_at", { ascending: false }),
+      // Leads de checkout pagos: identificam usuários que de fato pagaram (não-trial puro)
+      adminClient
+        .from("checkout_leads")
+        .select("user_id")
+        .eq("checkout_completed", true)
+        .not("user_id", "is", null),
+      // Faturas PIX pagas (renovação confirmada)
+      adminClient
+        .from("pix_invoices")
+        .select("user_id")
+        .eq("status", "paid")
+        .not("user_id", "is", null),
     ]);
 
     if (cancellationsRes.error) throw cancellationsRes.error;
     if (feedbacksRes.error) throw feedbacksRes.error;
     if (eventsRes.error) throw eventsRes.error;
     if (profilesRes.error) throw profilesRes.error;
+
+    // Conjunto de user_ids que tiveram pelo menos um pagamento real confirmado.
+    // Usado para descartar cancelamentos durante o trial (nunca cobrado de fato).
+    const usersWithRealPayment = new Set<string>();
+    (paidLeadsRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
+    (paidInvoicesRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
 
     const profiles = profilesRes.data || [];
     const expiredProfiles = profiles.filter((profile) => {
@@ -91,9 +109,27 @@ serve(async (req) => {
       if (!["abacate_pay", "asaas"].includes(profile.payment_provider || "")) return false;
       // Only include profiles that had a paid plan (not free) — real churn
       if (!profile.plan || profile.plan === "free") return false;
+      // Excluir quem nunca confirmou um pagamento real (cancelou durante trial)
+      if (!usersWithRealPayment.has(profile.id)) return false;
 
       const periodEnd = new Date(profile.subscription_current_period_end).getTime();
       return Number.isFinite(periodEnd) && periodEnd < now;
+    });
+
+    // Filtrar subscription_cancellations: descartar quem nunca pagou nada (trial)
+    const filteredCancellations = (cancellationsRes.data || []).filter((c: any) => {
+      // Stripe: a verificação de trial já é feita abaixo no merge com Stripe API
+      // Para nosso fluxo interno (asaas/abacate/manual), exigir pagamento real
+      if (c.provider === "stripe") return true;
+      if (!c.user_id) return true;
+      return usersWithRealPayment.has(c.user_id);
+    });
+
+    // Filtrar subscription_events do mesmo modo
+    const filteredEvents = (eventsRes.data || []).filter((e: any) => {
+      if (!e.user_id) return true;
+      // pix_not_renewed e similares: só conta se houve pagamento real prévio
+      return usersWithRealPayment.has(e.user_id);
     });
 
     // Buscar cancelamentos diretos no Stripe (feitos fora do nosso fluxo)
@@ -179,19 +215,22 @@ serve(async (req) => {
     }
 
     logStep("Churn payload ready", {
-      cancellations: cancellationsRes.data?.length || 0,
+      cancellationsRaw: cancellationsRes.data?.length || 0,
+      cancellationsFiltered: filteredCancellations.length,
       feedbacks: feedbacksRes.data?.length || 0,
-      events: eventsRes.data?.length || 0,
+      eventsRaw: eventsRes.data?.length || 0,
+      eventsFiltered: filteredEvents.length,
       profiles: profiles.length,
       expiredProfiles: expiredProfiles.length,
       stripeChurns: stripeChurns.length,
+      usersWithRealPayment: usersWithRealPayment.size,
     });
 
     return new Response(
       JSON.stringify({
-        cancellations: cancellationsRes.data || [],
+        cancellations: filteredCancellations,
         feedbacks: feedbacksRes.data || [],
-        subEvents: eventsRes.data || [],
+        subEvents: filteredEvents,
         profiles,
         expiredProfiles,
         stripeChurns,
