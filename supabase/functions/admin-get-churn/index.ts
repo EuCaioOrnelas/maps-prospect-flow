@@ -132,6 +132,14 @@ serve(async (req) => {
       return usersWithRealPayment.has(e.user_id);
     });
 
+    // Filtrar feedbacks: só inclui usuários que tiveram pelo menos 1 pagamento real.
+    // Sem isso, feedbacks de quem cancelou DURANTE o trial (sem nunca ter pago)
+    // entrariam no merge do frontend e gerariam churns falsos.
+    const filteredFeedbacks = (feedbacksRes.data || []).filter((f: any) => {
+      if (!f.user_id) return false;
+      return usersWithRealPayment.has(f.user_id);
+    });
+
     // Buscar cancelamentos diretos no Stripe (feitos fora do nosso fluxo)
     // Mescla qualquer subscription canceled pós-15/04 que não esteja já em subscription_cancellations
     const stripeChurns: any[] = [];
@@ -217,7 +225,8 @@ serve(async (req) => {
     logStep("Churn payload ready", {
       cancellationsRaw: cancellationsRes.data?.length || 0,
       cancellationsFiltered: filteredCancellations.length,
-      feedbacks: feedbacksRes.data?.length || 0,
+      feedbacksRaw: feedbacksRes.data?.length || 0,
+      feedbacksFiltered: filteredFeedbacks.length,
       eventsRaw: eventsRes.data?.length || 0,
       eventsFiltered: filteredEvents.length,
       profiles: profiles.length,
@@ -229,11 +238,13 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         cancellations: filteredCancellations,
-        feedbacks: feedbacksRes.data || [],
+        feedbacks: filteredFeedbacks,
         subEvents: filteredEvents,
         profiles,
         expiredProfiles,
         stripeChurns,
+        // Base "paying" usada para cálculo correto de churn rate (não inclui trial-only)
+        payingUsersCount: usersWithRealPayment.size,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
