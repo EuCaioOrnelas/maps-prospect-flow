@@ -48,6 +48,31 @@ function normalizeHandle(value: any): string | null {
   return s;
 }
 
+// Strip accents and lowercase for keyword matching ("preço" -> "preco")
+function normalizeText(s: string): string {
+  return String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+// Last-8-digit key for tolerant phone matching across formats (with/without 9th digit, +55, etc.)
+function phoneKey(p: string | null | undefined): string {
+  return String(p || "").replace(/\D/g, "").slice(-8);
+}
+
+// Parse keywords stored either as CSV string or as array
+function parseKeywords(raw: any): string[] {
+  if (!raw) return [];
+  const arr = Array.isArray(raw)
+    ? raw
+    : String(raw).split(/[,\n;]/);
+  return arr
+    .map((k: any) => normalizeText(String(k)))
+    .filter((k: string) => k.length > 0);
+}
+
 function interpolate(text: string, vars: Record<string, string>): string {
   if (!text) return text;
   return text.replace(/\{(\w+)\}/g, (m, name) => vars[name] ?? m);
@@ -233,15 +258,22 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
 
   if (actions.length === 0) return;
 
-  // Find the lead by phone (multi-format)
-  const cleanPhone = leadPhone.replace(/\D/g, "");
-  const last8 = cleanPhone.slice(-8);
+  // #6 fix: Find the lead by phone using DB-side filter (no arbitrary limit).
+  // Match using the last 8 digits (tolerant to +55, 9th digit, formatting differences).
+  const last8 = leadPhone.replace(/\D/g, "").slice(-8);
+  if (!last8) {
+    console.log("[wa-flow-runner] Action skipped — invalid phone for", leadPhone);
+    return;
+  }
   const { data: leads } = await supabase
     .from("leads")
     .select("id, phone, tags, pipeline_stage_id")
     .eq("user_id", userId)
-    .limit(20);
-  const lead = (leads || []).find((l: any) => String(l.phone).replace(/\D/g, "").endsWith(last8));
+    .like("phone", `%${last8}%`)
+    .limit(10);
+  const lead = (leads || []).find(
+    (l: any) => String(l.phone).replace(/\D/g, "").endsWith(last8),
+  );
   if (!lead) {
     console.log("[wa-flow-runner] Action skipped — lead not found for", leadPhone);
     return;
@@ -572,15 +604,18 @@ serve(async (req) => {
 
     console.log(`[wa-flow-runner] invoked: user=${body.user_id} phone=${body.lead_phone} text=${body.incoming_text?.slice(0, 60)}`);
 
-    // 1) Resume any active execution for this lead
-    const { data: activeExecutions } = await supabase
+    // 1) Resume any active execution for this lead — #5 fix: tolerant phone match (last 8 digits)
+    const leadKey8 = phoneKey(body.lead_phone);
+    const { data: candidateExecs } = await supabase
       .from("wa_flow_executions")
       .select("*, wa_automation_flows!inner(*)")
       .eq("user_id", body.user_id)
-      .eq("lead_phone", body.lead_phone)
       .eq("status", "active")
       .order("started_at", { ascending: false })
-      .limit(5);
+      .limit(50);
+    const activeExecutions = (candidateExecs || []).filter(
+      (e: any) => phoneKey(e.lead_phone) === leadKey8,
+    ).slice(0, 5);
 
     const resumed: string[] = [];
     for (const exec of activeExecutions || []) {
@@ -600,9 +635,10 @@ serve(async (req) => {
       // For "buttons" pause we re-enter via the chosen button handle
       const node = nodes.find((n: any) => n.id === startId);
       let realStart = startId;
+      let buttonResolved = false;
       if (node?.node_type === "buttons" && body.button_id) {
         const next = getTargetByHandle(buildEdgeIndex(edges), startId, body.button_id);
-        if (next) realStart = next;
+        if (next) { realStart = next; buttonResolved = true; }
       } else if (node?.node_type === "buttons" && body.incoming_text) {
         // Try to match button by typed text/index
         const choices = ((node.config?.interaction_type === "list" ? node.config?.list_items : node.config?.buttons) || []);
@@ -617,9 +653,17 @@ serve(async (req) => {
           ctx.lastButtonId = handle;
           ctx.lastButtonTitle = String(typeof chosen === "string" ? chosen : chosen?.title || "");
           const next = getTargetByHandle(buildEdgeIndex(edges), startId, handle);
-          if (next) realStart = next;
+          if (next) { realStart = next; buttonResolved = true; }
         }
       }
+
+      // #7 fix: if we're paused on a "buttons" node and the user reply did NOT match any handle,
+      // skip re-execution (don't re-send the same buttons message). The execution stays paused.
+      if (node?.node_type === "buttons" && !buttonResolved && (body.button_id || body.incoming_text)) {
+        console.log(`[wa-flow-runner] No matching button handle for exec ${exec.id} — staying paused`);
+        continue;
+      }
+
       await runFlow(supabase, body, flow, nodes, edges, realStart, exec, ctx);
       resumed.push(exec.id);
     }
@@ -665,18 +709,51 @@ serve(async (req) => {
       if (triggerType === "first_message") {
         // Trigger only on the lead's FIRST inbound message — i.e. no prior execution and an incoming text
         if (!body.incoming_text) continue;
-        const { count } = await supabase
+        // #5 fix: tolerant phone match (compare last 8 digits across all executions of this flow)
+        const leadKey = phoneKey(body.lead_phone);
+        const { data: priorExec } = await supabase
           .from("wa_flow_executions")
-          .select("id", { count: "exact", head: true })
-          .eq("flow_id", flow.id)
-          .eq("lead_phone", body.lead_phone);
-        shouldTrigger = (count || 0) === 0;
+          .select("lead_phone")
+          .eq("flow_id", flow.id);
+        const alreadyRan = (priorExec || []).some((e: any) => phoneKey(e.lead_phone) === leadKey);
+        shouldTrigger = !alreadyRan && !!body.incoming_text;
       } else if (triggerType === "keyword") {
-        const keywords = (entryConfig.keywords || []).map((k: string) => String(k).toLowerCase().trim()).filter(Boolean);
-        const text = (body.incoming_text || "").toLowerCase();
-        shouldTrigger = keywords.length === 0 ? false : keywords.some((k: string) => text.includes(k));
+        // #1 fix: keywords may be CSV string OR array. #2 fix: respect exact_match flag.
+        const keywords = parseKeywords(entryConfig.keywords);
+        if (keywords.length === 0 || !body.incoming_text) { continue; }
+        const text = normalizeText(body.incoming_text);
+        const exactMatch = !!entryConfig.exact_match;
+        shouldTrigger = exactMatch
+          ? keywords.some((k: string) => text === k)
+          : keywords.some((k: string) => text.includes(k));
+      } else if (triggerType === "campaign_reply") {
+        // #3: campaign_reply triggers when this lead replied to a campaign of this user.
+        // Source of truth: public.campaign_responses (logged by the campaign engine).
+        if (!body.incoming_text) { continue; }
+        const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+        const leadKey = phoneKey(body.lead_phone);
+        let q = supabase
+          .from("campaign_responses")
+          .select("id, campaign_id, contact_phone, responded_at")
+          .eq("user_id", body.user_id)
+          .gte("responded_at", since)
+          .limit(100);
+        if (entryConfig.campaign_id) {
+          q = q.eq("campaign_id", entryConfig.campaign_id);
+        }
+        const { data: responses } = await q;
+        const matched = (responses || []).find((r: any) => phoneKey(r.contact_phone) === leadKey);
+        if (!matched) { continue; }
+        // ensure not already triggered for this lead+flow
+        const { data: priorExec2 } = await supabase
+          .from("wa_flow_executions")
+          .select("lead_phone")
+          .eq("flow_id", flow.id);
+        const alreadyRan2 = (priorExec2 || []).some((e: any) => phoneKey(e.lead_phone) === leadKey);
+        shouldTrigger = !alreadyRan2;
       } else {
-        // Other triggers (campaign_reply, button_click, webhook, qr_code, re_entry, template_reply) — not auto-fired here.
+        // Unknown trigger types — log and skip
+        console.log(`[wa-flow-runner] Unsupported trigger_type='${triggerType}' on flow ${flow.id}`);
         continue;
       }
 
