@@ -1500,6 +1500,7 @@ export type Database = {
       }
       email_flows: {
         Row: {
+          activated_at: string | null
           audience_config: Json | null
           audience_type: string | null
           created_at: string
@@ -1515,6 +1516,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          activated_at?: string | null
           audience_config?: Json | null
           audience_type?: string | null
           created_at?: string
@@ -1530,6 +1532,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          activated_at?: string | null
           audience_config?: Json | null
           audience_type?: string | null
           created_at?: string
