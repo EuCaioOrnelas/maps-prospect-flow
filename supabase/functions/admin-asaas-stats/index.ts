@@ -118,27 +118,20 @@ serve(async (req) => {
       });
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("VITE_SUPABASE_PUBLISHABLE_KEY") ?? "";
 
-    // Validar usuário e papel admin
-    const { data: userData } = await supabaseClient.auth.getUser(authHeader.replace("Bearer ", ""));
-    const userId = userData?.user?.id;
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
-    const { data: roleRow } = await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!roleRow) {
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Validar o mesmo status de admin usado pelo frontend, com o token do usuário.
+    const { data: isAdmin, error: adminError } = await userClient.rpc("is_current_user_admin");
+    if (adminError || isAdmin !== true) {
+      log("Forbidden", { adminError: adminError?.message || null, isAdmin });
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 403,
