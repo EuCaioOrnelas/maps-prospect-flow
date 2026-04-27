@@ -900,6 +900,80 @@ serve(async (req) => {
     );
 
     const body = await req.json();
+
+    // ── Scheduler mode: invoked by pg_cron every minute. Resume waits & no_response timeouts. ──
+    if (body.scheduler === true) {
+      const nowIso = new Date().toISOString();
+
+      // a) Waits whose time has come
+      const { data: dueWaits } = await supabase
+        .from("wa_flow_executions")
+        .select("*, wa_automation_flows!inner(*)")
+        .eq("status", "active")
+        .lte("wait_until", nowIso)
+        .not("wait_until", "is", null)
+        .limit(100);
+
+      // b) no_response conditions whose timeout fired
+      const { data: dueTimeouts } = await supabase
+        .from("wa_flow_executions")
+        .select("*, wa_automation_flows!inner(*)")
+        .eq("status", "active")
+        .lte("awaiting_input_until", nowIso)
+        .not("awaiting_input_until", "is", null)
+        .limit(100);
+
+      const resumedIds: string[] = [];
+
+      // Helper to resume an execution
+      const resumeExec = async (exec: any, mode: "wait" | "timeout") => {
+        const flow = exec.wa_automation_flows;
+        if (!flow || flow.status !== "active") return;
+        const { nodes, edges } = await loadFlowGraph(supabase, flow.id);
+
+        const ctx: RuntimeCtx = {
+          lastUserText: "",
+          lastButtonId: null,
+          lastButtonTitle: null,
+          hasFreshUserInput: false,
+          variables: (exec.collected_data && typeof exec.collected_data === "object") ? exec.collected_data : {},
+          forceNoResponseTimeout: mode === "timeout",
+        };
+
+        // Clear scheduling fields BEFORE running so we don't re-trigger.
+        await supabase.from("wa_flow_executions").update({
+          wait_until: null,
+          awaiting_input_until: null,
+          awaiting_node_id: null,
+        }).eq("id", exec.id);
+
+        let startId = exec.current_node_id;
+        if (mode === "wait") {
+          // For wait nodes, advance to the next node (default target).
+          const bySource = buildEdgeIndex(edges);
+          const next = getDefaultTarget(bySource, exec.current_node_id);
+          if (next) startId = next;
+        }
+        if (!startId) return;
+
+        const fakeBody = {
+          user_id: exec.user_id,
+          lead_phone: exec.lead_phone,
+          lead_name: exec.lead_name,
+          source: flow.api_type === "meta" ? "meta" : "evolution",
+        };
+        await runFlow(supabase, fakeBody, flow, nodes, edges, startId, exec, ctx);
+        resumedIds.push(exec.id);
+      };
+
+      for (const exec of dueWaits || []) await resumeExec(exec, "wait");
+      for (const exec of dueTimeouts || []) await resumeExec(exec, "timeout");
+
+      return new Response(JSON.stringify({ scheduler: true, resumed: resumedIds.length }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!body.user_id || !body.lead_phone) {
       return new Response(JSON.stringify({ error: "user_id and lead_phone required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
