@@ -183,12 +183,31 @@ async function evaluateCondition(
 
 // ── WhatsApp send helpers ──
 
+// Shared payload type for all WhatsApp send helpers
+type SendPayload =
+  | { type: "text" | "image" | "audio" | "video" | "document"; content?: string; mediaUrl?: string; caption?: string; filename?: string }
+  | {
+      type: "buttons";
+      header?: string;
+      body?: string;
+      footer?: string;
+      buttons: Array<{ id: string; title: string }>;
+    }
+  | {
+      type: "list";
+      header?: string;
+      body?: string;
+      footer?: string;
+      buttonText?: string;
+      sections: Array<{ title?: string; rows: Array<{ id: string; title: string; description?: string }> }>;
+    };
+
 async function sendViaEvolution(
   supabase: any,
   numberId: string,
   userId: string,
   toPhone: string,
-  payload: { type: "text" | "image" | "audio" | "video" | "document"; content?: string; mediaUrl?: string; caption?: string; filename?: string },
+  payload: SendPayload,
 ) {
   const { data: numberRow } = await supabase
     .from("whatsapp_numbers")
@@ -236,6 +255,41 @@ async function sendViaEvolution(
       endpoint = `/message/sendMedia/${numberRow.instance_name}`;
       body = { ...body, mediatype: "document", media: payload.mediaUrl, fileName: payload.filename || "document.pdf" };
       break;
+    case "buttons": {
+      // Evolution API v2: /message/sendButtons
+      endpoint = `/message/sendButtons/${numberRow.instance_name}`;
+      body = {
+        ...body,
+        title: payload.header || "",
+        description: payload.body || "",
+        footer: payload.footer || "",
+        buttons: (payload.buttons || []).slice(0, 3).map((b) => ({
+          type: "reply",
+          displayText: b.title,
+          id: b.id,
+        })),
+      };
+      break;
+    }
+    case "list": {
+      endpoint = `/message/sendList/${numberRow.instance_name}`;
+      body = {
+        ...body,
+        title: payload.header || "",
+        description: payload.body || "",
+        footerText: payload.footer || "",
+        buttonText: payload.buttonText || "Ver opções",
+        sections: (payload.sections || []).map((s) => ({
+          title: s.title || "Opções",
+          rows: (s.rows || []).slice(0, 10).map((r) => ({
+            rowId: r.id,
+            title: r.title,
+            description: r.description || "",
+          })),
+        })),
+      };
+      break;
+    }
   }
 
   const res = await fetch(`${creds.url}${endpoint}`, {
