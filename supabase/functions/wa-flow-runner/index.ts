@@ -87,8 +87,10 @@ async function evaluateCondition(
 ): Promise<boolean> {
   const conditionType = config.condition_type || "responded";
   const rawValue = String(config.condition_value || "").trim();
-  const normalizedValue = rawValue.toLowerCase();
-  const normalizedText = (ctx.lastUserText || "").toLowerCase();
+  // Normalize with accent stripping + lowercase for accent-insensitive matching ("São" === "sao")
+  const normalizedValue = normalizeText(rawValue);
+  const normalizedText = normalizeText(ctx.lastUserText || "");
+  const normalizedButtonTitle = normalizeText(ctx.lastButtonTitle || "");
   const normalizedButtonId = normalizeHandle(ctx.lastButtonId);
   const normalizedConditionHandle = normalizeHandle(rawValue);
 
@@ -96,7 +98,7 @@ async function evaluateCondition(
     case "button_clicked":
       return (
         (!!normalizedConditionHandle && normalizedConditionHandle === normalizedButtonId) ||
-        (!!ctx.lastButtonTitle && ctx.lastButtonTitle.toLowerCase() === normalizedValue)
+        (!!normalizedButtonTitle && normalizedButtonTitle === normalizedValue)
       );
     case "keyword_match": {
       const keywords = normalizedValue.split(",").map((k) => k.trim()).filter(Boolean);
@@ -124,7 +126,7 @@ async function evaluateCondition(
       );
       if (!lead) return false;
       const tags: string[] = Array.isArray(lead.tags) ? lead.tags : [];
-      return tags.some((t) => String(t).toLowerCase() === normalizedValue);
+      return tags.some((t) => normalizeText(String(t)) === normalizedValue);
     }
 
     case "score_above": {
