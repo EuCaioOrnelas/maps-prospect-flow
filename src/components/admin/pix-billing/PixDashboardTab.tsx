@@ -59,8 +59,6 @@ export function PixDashboardTab() {
     setLoading(true);
     try {
       const now = new Date();
-      const sevenDaysFromNow = new Date();
-      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
       // Stripe MRR
@@ -70,85 +68,49 @@ export function PixDashboardTab() {
         if (!stripeError && stripeData) stripeMrr = stripeData.totalMRR || 0;
       } catch { console.debug("Could not fetch Stripe MRR"); }
 
-      // All paying profiles
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, plan, payment_provider, subscription_current_period_end, admin_assigned_plan, subscription_price_cents, created_at")
-        .neq("plan", "free")
-        .eq("is_blocked", false);
-
+      // Asaas em tempo real (fonte de verdade para PIX + cartão Asaas)
       let pixMrr = 0;
       let asaasCardMrr = 0;
       let activePixSubs = 0;
-      let overdueCount = 0;
-      let renewalNext7 = 0;
-      let overdueRenewals = 0;
+      let pixPaidCount = 0;
+      let pixPendingCount = 0;
+      let pixOverdueCount = 0;
+      let pixReceivedThisMonth = 0;
+      let invoicesList: AsaasInvoice[] = [];
 
-      for (const p of profiles || []) {
-        const provider = p.payment_provider;
-        const priceCents = p.subscription_price_cents || 0;
-        const priceReais = priceCents / 100;
-        const periodEnd = p.subscription_current_period_end ? new Date(p.subscription_current_period_end) : null;
-        const isExpired = periodEnd && periodEnd < now;
-
-        // Fallback: usar preço do plano quando não há subscription_price_cents
-        const PLAN_PRICES: Record<string, number> = { start: 296, growth: 696, scale: 897 };
-        let monthlyValue = priceReais > 0 ? priceReais : (PLAN_PRICES[p.plan] || 0);
-        if (priceCents > 0) {
-          const createdAt = new Date(p.created_at);
-          const daysSpan = periodEnd
-            ? (periodEnd.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
-            : 0;
-          if (daysSpan > 300) monthlyValue = priceReais / 12;
+      try {
+        const { data: asaasData, error: asaasError } = await supabase.functions.invoke("admin-asaas-stats");
+        if (!asaasError && asaasData?.summary) {
+          const s = asaasData.summary;
+          pixMrr = s.pix_mrr || 0;
+          asaasCardMrr = s.card_mrr || 0;
+          activePixSubs = s.pix_active_subs || 0;
+          pixPaidCount = s.pix_paid_count_90d || 0;
+          pixPendingCount = s.pix_pending_count_90d || 0;
+          pixOverdueCount = s.pix_overdue_count_90d || 0;
+          pixReceivedThisMonth = s.pix_received_this_month || 0;
+          invoicesList = (asaasData.pix_invoices || []) as AsaasInvoice[];
         }
-
-        // PIX = Asaas
-        if (provider === "asaas") {
-          pixMrr += monthlyValue;
-          if (!isExpired) activePixSubs++;
-          else { overdueCount++; overdueRenewals++; }
-          if (periodEnd && periodEnd > now && periodEnd <= sevenDaysFromNow) renewalNext7++;
-        }
-        // stripe → contabilizado em get-stripe-mrr
+      } catch (err) {
+        console.warn("Asaas stats not available:", err);
       }
 
-      // PIX invoices stats
-      const [paidInvRes, pendingInvRes] = await Promise.all([
-        supabase.from("pix_invoices").select("amount_cents").eq("status", "paid").gte("paid_at", monthStart),
-        supabase.from("pix_invoices").select("id").eq("status", "pending"),
-      ]);
-
-      const pixInvoiceRevenue = (paidInvRes.data || []).reduce((sum: number, inv: any) => sum + (inv.amount_cents / 100), 0);
-
-      // Checkout revenue this month (PIX/Asaas)
-      const { data: paidCheckouts } = await supabase
-        .from("checkout_leads")
-        .select("plan_attempted, stripe_session_id")
-        .eq("checkout_completed", true)
-        .like("stripe_session_id", "asaas_pixauto_%")
-        .gte("checkout_completed_at", monthStart);
-
-      const checkoutRevenue = (paidCheckouts || []).reduce((sum: number, c: any) => {
-        if (c.plan_attempted?.includes("Start")) return sum + 296;
-        if (c.plan_attempted?.includes("Growth")) return sum + 696;
-        if (c.plan_attempted?.includes("Scale")) return sum + 897;
-        return sum;
-      }, 0);
+      setAsaasInvoices(invoicesList);
 
       setMetrics({
         stripeMrr,
         pixMrr,
         asaasCardMrr,
         activePixSubscriptions: activePixSubs,
-        overduePixClients: overdueCount,
-        pixRevenueThisMonth: pixInvoiceRevenue + checkoutRevenue,
-        renewalsNext7Days: renewalNext7,
-        overdueRenewals,
-        totalPaidInvoices: paidInvRes.data?.length || 0,
-        totalPendingInvoices: pendingInvRes.data?.length || 0,
+        overduePixClients: pixOverdueCount,
+        pixRevenueThisMonth: pixReceivedThisMonth,
+        renewalsNext7Days: 0, // virá de outro endpoint se necessário
+        overdueRenewals: pixOverdueCount,
+        totalPaidInvoices: pixPaidCount,
+        totalPendingInvoices: pixPendingCount,
       });
 
-      // Stage metrics
+      // Stage metrics (mantido — emails de renovação locais)
       const { data: trackingData } = await supabase
         .from("pix_tracking_events")
         .select("renewal_stage, event_type")
