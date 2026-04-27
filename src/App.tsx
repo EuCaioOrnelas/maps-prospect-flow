@@ -296,6 +296,8 @@ const App = () => (
                 <Route path="/parceiros" element={<LightThemeWrapper><PartnersLanding /></LightThemeWrapper>} />
                 <Route path="/partners/apply" element={<LightThemeWrapper><PartnersApply /></LightThemeWrapper>} />
                 <Route path="/wiize-partners/candidatura" element={<LightThemeWrapper><PartnersApply /></LightThemeWrapper>} />
+                <Route path="/partners/terms" element={<LightThemeWrapper><PartnersTerms /></LightThemeWrapper>} />
+                <Route path="/parceiros/termos" element={<LightThemeWrapper><PartnersTerms /></LightThemeWrapper>} />
                 <Route path="/partners/login" element={<LightThemeWrapper><PartnerLogin /></LightThemeWrapper>} />
                 <Route path="/r/:slug" element={<LightThemeWrapper><PartnerSlugRedirect /></LightThemeWrapper>} />
                 <Route path="/partners" element={<LightThemeWrapper><PartnerLayout /></LightThemeWrapper>}>
