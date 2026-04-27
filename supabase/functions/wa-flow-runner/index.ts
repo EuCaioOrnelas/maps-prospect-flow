@@ -675,9 +675,9 @@ async function runFlow(
           const maxChars = Number(agent?.max_chars || config.max_chars || 500);
           const routes = aiRoutesRaw.split("\n").map((r: string) => r.trim()).filter(Boolean);
 
-          const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-          if (!LOVABLE_API_KEY) {
-            console.error("[wa-flow-runner] ai_agent skipped — LOVABLE_API_KEY missing");
+          const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+          if (!OPENAI_API_KEY) {
+            console.error("[wa-flow-runner] ai_agent skipped — OPENAI_API_KEY missing");
             currentNodeId = getDefaultTarget(bySource, node.id);
             break;
           }
@@ -689,18 +689,24 @@ async function runFlow(
             : "";
           const sysFinal = `${systemPrompt}\n\nResponda em até ${maxChars} caracteres.${routeBlock}`;
 
-          const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          // Use OpenAI directly. Respect agent's saved model when provider is openai; otherwise default.
+          const openaiModel = (agent?.ai_provider === "openai" && agent?.ai_model)
+            ? agent.ai_model
+            : "gpt-4o-mini";
+
+          const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              Authorization: `Bearer ${OPENAI_API_KEY}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "google/gemini-2.5-flash",
+              model: openaiModel,
               messages: [
                 { role: "system", content: interpolate(sysFinal, ctx.variables) },
                 { role: "user", content: userMessage },
               ],
+              max_tokens: Math.min(1000, Math.ceil(maxChars / 2) + 200),
             }),
           });
 
