@@ -314,6 +314,7 @@ export default function AdminEmailFlowEditor() {
       if (!hasEntry) { toast.error("O fluxo precisa de um bloco de entrada"); return; }
       const entryNode = nodes.find(n => n.type === "entry");
       if (!entryNode?.data?.config?.trigger_type) { toast.error("Configure o gatilho do bloco de entrada"); return; }
+      if (!entryNode?.data?.config?.audience_type) { toast.error("Selecione o público-alvo no bloco de entrada"); return; }
       const emailNodes = nodes.filter(n => n.type === "email");
       for (const en of emailNodes) {
         if (!en.data?.config?.subject || !en.data?.config?.body) {
