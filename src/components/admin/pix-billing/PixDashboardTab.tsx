@@ -88,8 +88,8 @@ export function PixDashboardTab() {
           if (daysSpan > 300) monthlyValue = priceReais / 12;
         }
 
-        // PIX = Asaas (novo) + abacate_pay (legado)
-        if (provider === "abacate_pay" || provider === "asaas") {
+        // PIX = Asaas
+        if (provider === "asaas") {
           pixMrr += monthlyValue;
           if (!isExpired) activePixSubs++;
           else { overdueCount++; overdueRenewals++; }
@@ -111,7 +111,7 @@ export function PixDashboardTab() {
         .from("checkout_leads")
         .select("plan_attempted, stripe_session_id")
         .eq("checkout_completed", true)
-        .or("stripe_session_id.like.abacate_%,stripe_session_id.like.asaas_pixauto_%")
+        .like("stripe_session_id", "asaas_pixauto_%")
         .gte("checkout_completed_at", monthStart);
 
       const checkoutRevenue = (paidCheckouts || []).reduce((sum: number, c: any) => {

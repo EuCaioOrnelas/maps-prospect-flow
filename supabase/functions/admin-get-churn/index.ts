@@ -106,7 +106,7 @@ serve(async (req) => {
     const expiredProfiles = profiles.filter((profile) => {
       if (profile.admin_assigned_plan) return false;
       if (!profile.subscription_current_period_end) return false;
-      if (!["abacate_pay", "asaas"].includes(profile.payment_provider || "")) return false;
+      if (profile.payment_provider !== "asaas") return false;
       // Only include profiles that had a paid plan (not free) — real churn
       if (!profile.plan || profile.plan === "free") return false;
       // Excluir quem nunca confirmou um pagamento real (cancelou durante trial)
@@ -119,7 +119,7 @@ serve(async (req) => {
     // Filtrar subscription_cancellations: descartar quem nunca pagou nada (trial)
     const filteredCancellations = (cancellationsRes.data || []).filter((c: any) => {
       // Stripe: a verificação de trial já é feita abaixo no merge com Stripe API
-      // Para nosso fluxo interno (asaas/abacate/manual), exigir pagamento real
+      // Para nosso fluxo interno (asaas/manual), exigir pagamento real
       if (c.provider === "stripe") return true;
       if (!c.user_id) return true;
       return usersWithRealPayment.has(c.user_id);
