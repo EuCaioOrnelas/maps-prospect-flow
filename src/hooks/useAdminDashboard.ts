@@ -32,9 +32,20 @@ interface PixMRRData {
 }
 
 interface AsaasCardMRRData {
-  /** Mantido por compatibilidade — hoje sempre 0 (Asaas é só PIX). */
+  /** Cartão recorrente via Asaas (consultado em tempo real na API). */
   asaasCardMrr: number;
   asaasCardSubscriptions: number;
+}
+
+interface AsaasLiveStats {
+  card_active_subs: number;
+  pix_active_subs: number;
+  card_mrr: number;
+  pix_mrr: number;
+  pix_received_this_month: number;
+  pix_paid_count_90d: number;
+  pix_pending_count_90d: number;
+  pix_overdue_count_90d: number;
 }
 
 interface OtherMRRData {
@@ -80,6 +91,20 @@ export function useAdminDashboard() {
   // Churn calculado SOMENTE pelo novo sistema de gerenciamento (exclui Stripe).
   // Fonte: tabela subscription_cancellations onde provider != 'stripe', últimos 30 dias.
   const [newSystemChurn, setNewSystemChurn] = useState<{ cancellations30d: number }>({ cancellations30d: 0 });
+  // Dados em tempo real direto da API do Asaas (fonte de verdade para PIX + cartão Asaas).
+  const [asaasLive, setAsaasLive] = useState<AsaasLiveStats | null>(null);
+
+  const loadAsaasLive = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-asaas-stats");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.summary) setAsaasLive(data.summary);
+    } catch (err) {
+      console.warn("[useAdminDashboard] Asaas live stats unavailable:", err);
+      setAsaasLive(null);
+    }
+  }, []);
 
   const loadStats = useCallback(async () => {
     try {
@@ -407,19 +432,28 @@ export function useAdminDashboard() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      await Promise.all([loadStats(), loadStripeMRR(), loadNonStripeMRR(), loadAlerts(), loadNewSystemChurn()]);
+      await Promise.all([loadStats(), loadStripeMRR(), loadNonStripeMRR(), loadAlerts(), loadNewSystemChurn(), loadAsaasLive()]);
       setLoading(false);
     })();
   }, []);
 
-  // Total MRR = Stripe (cartão) + Asaas (PIX) + Custom subscriptions (manual: PIX/transferência/cartão/etc.)
+  // ===== MRR consolidado =====
+  // Quando a API do Asaas responde, ela é a FONTE DE VERDADE para PIX recorrente
+  // e cartão Asaas (sobrescreve o cálculo local baseado em profiles).
+  // Caso contrário, usamos os números locais como fallback.
+  const effectivePixMrr = asaasLive ? asaasLive.pix_mrr : (pixMRR?.pixMrr ?? 0);
+  const effectivePixSubs = asaasLive ? asaasLive.pix_active_subs : (pixMRR?.pixActiveSubscriptions ?? 0);
+  const effectiveAsaasCardMrr = asaasLive ? asaasLive.card_mrr : (asaasCardMRR?.asaasCardMrr ?? 0);
+  const effectiveAsaasCardSubs = asaasLive ? asaasLive.card_active_subs : (asaasCardMRR?.asaasCardSubscriptions ?? 0);
+
+  // Total MRR = Stripe (cartão) + Asaas (PIX) + Asaas (cartão) + Custom subscriptions (manual)
   const totalMRR = useMemo(() => {
-    return (stripeMRR?.totalMRR ?? 0) + (pixMRR?.pixMrr ?? 0) + (otherMRR?.otherMrr ?? 0);
-  }, [stripeMRR, pixMRR, otherMRR]);
+    return (stripeMRR?.totalMRR ?? 0) + effectivePixMrr + effectiveAsaasCardMrr + (otherMRR?.otherMrr ?? 0);
+  }, [stripeMRR, effectivePixMrr, effectiveAsaasCardMrr, otherMRR]);
 
   const totalSubscribers = useMemo(() => {
-    return (stripeMRR?.activeSubscriptions ?? 0) + (pixMRR?.pixActiveSubscriptions ?? 0) + (otherMRR?.otherSubscriptions ?? 0);
-  }, [stripeMRR, pixMRR, otherMRR]);
+    return (stripeMRR?.activeSubscriptions ?? 0) + effectivePixSubs + effectiveAsaasCardSubs + (otherMRR?.otherSubscriptions ?? 0);
+  }, [stripeMRR, effectivePixSubs, effectiveAsaasCardSubs, otherMRR]);
 
   // Churn = cancelamentos Stripe + Asaas nos últimos 30 dias ÷ base ativa total.
   const churnRate = useMemo(() => {
@@ -455,13 +489,56 @@ export function useAdminDashboard() {
     return { avgMonths, ltv };
   }, [payingProfiles, averageTicket]);
 
+  // pixMRR efetivo: combina o histórico mensal local com o valor real do Asaas no mês corrente.
+  const effectivePixMRR = useMemo(() => {
+    if (!pixMRR) {
+      return asaasLive
+        ? {
+            pixMrr: asaasLive.pix_mrr,
+            pixActiveSubscriptions: asaasLive.pix_active_subs,
+            pixMonthlyMRR: [],
+          }
+        : null;
+    }
+    if (!asaasLive) return pixMRR;
+
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const updatedMonthly = pixMRR.pixMonthlyMRR.map((m) =>
+      m.month === currentMonthKey
+        ? { ...m, mrr: asaasLive.pix_mrr, activeCount: asaasLive.pix_active_subs }
+        : m
+    );
+    // Garante que o mês corrente exista no array
+    if (!updatedMonthly.some((m) => m.month === currentMonthKey)) {
+      updatedMonthly.push({ month: currentMonthKey, mrr: asaasLive.pix_mrr, activeCount: asaasLive.pix_active_subs });
+      updatedMonthly.sort((a, b) => a.month.localeCompare(b.month));
+    }
+    return {
+      pixMrr: asaasLive.pix_mrr,
+      pixActiveSubscriptions: asaasLive.pix_active_subs,
+      pixMonthlyMRR: updatedMonthly,
+    };
+  }, [pixMRR, asaasLive]);
+
+  const effectiveAsaasCardMRR = useMemo(() => {
+    if (asaasLive) {
+      return {
+        asaasCardMrr: asaasLive.card_mrr,
+        asaasCardSubscriptions: asaasLive.card_active_subs,
+      };
+    }
+    return asaasCardMRR;
+  }, [asaasCardMRR, asaasLive]);
+
   return {
     loading,
     stats,
     stripeMRR,
-    pixMRR,
-    asaasCardMRR,
+    pixMRR: effectivePixMRR,
+    asaasCardMRR: effectiveAsaasCardMRR,
     otherMRR,
+    asaasLive,
     totalMRR,
     totalSubscribers,
     churnRate,
