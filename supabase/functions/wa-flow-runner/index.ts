@@ -1012,8 +1012,9 @@ async function runFlow(
   }
   } catch (err) {
     runError = err;
+    const errMsg = (err as any)?.message ?? String(err);
     console.error(`[wa-flow-runner] runtime error in execution=${execution.id}:`, err);
-    history.push({ type: "_error", at: new Date().toISOString(), node_id: currentNodeId, message: String(err?.message || err) });
+    history.push({ type: "_error", at: new Date().toISOString(), node_id: currentNodeId, message: String(errMsg) });
   }
 
   // Always persist state — partial history preserved even on errors / safety overflow.
