@@ -884,6 +884,9 @@ async function runFlow(
     current_node_name: (currentNodeId || pausedNodeId) ? (nodeMap.get(currentNodeId || pausedNodeId)?.name || null) : null,
     collected_data: ctx.variables,
     node_history: history,
+    wait_until: waitUntil,
+    awaiting_input_until: awaitingInputUntil,
+    awaiting_node_id: awaitingNodeId,
   }).eq("id", execution.id);
 }
 
