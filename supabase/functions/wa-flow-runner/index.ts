@@ -78,10 +78,13 @@ function interpolate(text: string, vars: Record<string, string>): string {
   return text.replace(/\{(\w+)\}/g, (m, name) => vars[name] ?? m);
 }
 
-function evaluateCondition(
+async function evaluateCondition(
+  supabase: any,
+  userId: string,
+  leadPhone: string,
   config: any,
   ctx: { lastUserText: string; lastButtonId: string | null; lastButtonTitle: string | null },
-): boolean {
+): Promise<boolean> {
   const conditionType = config.condition_type || "responded";
   const rawValue = String(config.condition_value || "").trim();
   const normalizedValue = rawValue.toLowerCase();
@@ -105,6 +108,74 @@ function evaluateCondition(
       return !ctx.lastUserText.trim();
     case "field_equals":
       return !!normalizedValue && normalizedText.includes(normalizedValue);
+
+    case "has_tag": {
+      if (!rawValue) return false;
+      const last8 = leadPhone.replace(/\D/g, "").slice(-8);
+      if (!last8) return false;
+      const { data: leads } = await supabase
+        .from("leads")
+        .select("id, phone, tags")
+        .eq("user_id", userId)
+        .like("phone", `%${last8}%`)
+        .limit(10);
+      const lead = (leads || []).find(
+        (l: any) => String(l.phone).replace(/\D/g, "").endsWith(last8),
+      );
+      if (!lead) return false;
+      const tags: string[] = Array.isArray(lead.tags) ? lead.tags : [];
+      return tags.some((t) => String(t).toLowerCase() === normalizedValue);
+    }
+
+    case "score_above": {
+      const last8 = leadPhone.replace(/\D/g, "").slice(-8);
+      if (!last8) return false;
+      const { data: leads } = await supabase
+        .from("leads")
+        .select("id, phone, score")
+        .eq("user_id", userId)
+        .like("phone", `%${last8}%`)
+        .limit(10);
+      const lead = (leads || []).find(
+        (l: any) => String(l.phone).replace(/\D/g, "").endsWith(last8),
+      );
+      if (!lead) return false;
+      const score = Number(lead.score || 0);
+
+      const checkType = config.score_check_type || "number";
+      if (checkType === "category") {
+        const cat = String(config.score_category || "").toLowerCase();
+        // Buckets aligned with revenue scoring: cold <150, warm 150-649, hot ≥650
+        if (cat === "hot") return score >= 650;
+        if (cat === "warm") return score >= 150;
+        if (cat === "cold") return score >= 0;
+        return false;
+      }
+      const minScore = Number(rawValue || 0);
+      return score >= minScore;
+    }
+
+    case "is_customer": {
+      const last8 = leadPhone.replace(/\D/g, "").slice(-8);
+      if (!last8) return false;
+      const { data: leads } = await supabase
+        .from("leads")
+        .select("id, phone")
+        .eq("user_id", userId)
+        .like("phone", `%${last8}%`)
+        .limit(10);
+      const lead = (leads || []).find(
+        (l: any) => String(l.phone).replace(/\D/g, "").endsWith(last8),
+      );
+      if (!lead) return false;
+      const { count } = await supabase
+        .from("lead_deals")
+        .select("*", { count: "exact", head: true })
+        .eq("lead_id", lead.id)
+        .eq("user_id", userId);
+      return (count || 0) > 0;
+    }
+
     default:
       return false;
   }
@@ -298,16 +369,34 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
         }
         case "move_kanban":
         case "move_pipeline": {
-          const stageName = action.stage_name || action.value;
-          if (!stageName) break;
-          const { data: stage } = await supabase
-            .from("pipeline_stages")
-            .select("id")
-            .eq("user_id", userId)
-            .eq("name", stageName)
-            .maybeSingle();
-          if (stage?.id) {
-            await supabase.from("leads").update({ pipeline_stage_id: stage.id }).eq("id", lead.id);
+          // Editor saves UUID in `pipeline_stage_id`; legacy callers may pass `stage_name`.
+          let stageId: string | null = action.pipeline_stage_id || null;
+          if (!stageId) {
+            const stageName = action.stage_name || action.value;
+            if (!stageName) break;
+            const { data: stage } = await supabase
+              .from("pipeline_stages")
+              .select("id")
+              .eq("user_id", userId)
+              .eq("name", stageName)
+              .maybeSingle();
+            stageId = stage?.id || null;
+          }
+          if (stageId) {
+            await supabase.from("leads").update({ pipeline_stage_id: stageId }).eq("id", lead.id);
+          }
+          break;
+        }
+        case "send_to_crm": {
+          // Create or update the lead in CRM with mapped fields (supports {variable} interpolation upstream).
+          const updates: Record<string, any> = {};
+          if (action.crm_name) updates.name = String(action.crm_name);
+          if (action.crm_email) updates.email = String(action.crm_email);
+          if (action.crm_company) updates.company = String(action.crm_company);
+          if (action.crm_notes) updates.notes = String(action.crm_notes);
+          if (action.crm_stage_id) updates.pipeline_stage_id = action.crm_stage_id;
+          if (Object.keys(updates).length > 0) {
+            await supabase.from("leads").update(updates).eq("id", lead.id);
           }
           break;
         }
@@ -459,7 +548,7 @@ async function runFlow(
           currentNodeId = null;
           break;
         }
-        const result = evaluateCondition(config, ctx);
+        const result = await evaluateCondition(supabase, body.user_id, body.lead_phone, config, ctx);
         ctx.hasFreshUserInput = false;
         const next = getConditionTarget(bySource, node.id, result);
         currentNodeId = next;

@@ -6562,6 +6562,11 @@ export type Database = {
         | "end"
         | "ai_agent"
         | "data_collect"
+        | "ab_test"
+        | "random_split"
+        | "google_sheets"
+        | "google_calendar"
+        | "gmail"
       wa_flow_status: "draft" | "active" | "paused" | "archived"
       withdrawal_status: "pending" | "approved" | "rejected" | "paid"
     }
@@ -6730,6 +6735,11 @@ export const Constants = {
         "end",
         "ai_agent",
         "data_collect",
+        "ab_test",
+        "random_split",
+        "google_sheets",
+        "google_calendar",
+        "gmail",
       ],
       wa_flow_status: ["draft", "active", "paused", "archived"],
       withdrawal_status: ["pending", "approved", "rejected", "paid"],
