@@ -243,6 +243,8 @@ serve(async (req) => {
         profiles,
         expiredProfiles,
         stripeChurns,
+        // Base "paying" usada para cálculo correto de churn rate (não inclui trial-only)
+        payingUsersCount: usersWithRealPayment.size,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
