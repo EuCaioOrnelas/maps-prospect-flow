@@ -32,9 +32,20 @@ interface PixMRRData {
 }
 
 interface AsaasCardMRRData {
-  /** Mantido por compatibilidade — hoje sempre 0 (Asaas é só PIX). */
+  /** Cartão recorrente via Asaas (consultado em tempo real na API). */
   asaasCardMrr: number;
   asaasCardSubscriptions: number;
+}
+
+interface AsaasLiveStats {
+  card_active_subs: number;
+  pix_active_subs: number;
+  card_mrr: number;
+  pix_mrr: number;
+  pix_received_this_month: number;
+  pix_paid_count_90d: number;
+  pix_pending_count_90d: number;
+  pix_overdue_count_90d: number;
 }
 
 interface OtherMRRData {
