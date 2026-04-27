@@ -183,12 +183,31 @@ async function evaluateCondition(
 
 // ── WhatsApp send helpers ──
 
+// Shared payload type for all WhatsApp send helpers
+type SendPayload =
+  | { type: "text" | "image" | "audio" | "video" | "document"; content?: string; mediaUrl?: string; caption?: string; filename?: string }
+  | {
+      type: "buttons";
+      header?: string;
+      body?: string;
+      footer?: string;
+      buttons: Array<{ id: string; title: string }>;
+    }
+  | {
+      type: "list";
+      header?: string;
+      body?: string;
+      footer?: string;
+      buttonText?: string;
+      sections: Array<{ title?: string; rows: Array<{ id: string; title: string; description?: string }> }>;
+    };
+
 async function sendViaEvolution(
   supabase: any,
   numberId: string,
   userId: string,
   toPhone: string,
-  payload: { type: "text" | "image" | "audio" | "video" | "document"; content?: string; mediaUrl?: string; caption?: string; filename?: string },
+  payload: SendPayload,
 ) {
   const { data: numberRow } = await supabase
     .from("whatsapp_numbers")
@@ -236,6 +255,41 @@ async function sendViaEvolution(
       endpoint = `/message/sendMedia/${numberRow.instance_name}`;
       body = { ...body, mediatype: "document", media: payload.mediaUrl, fileName: payload.filename || "document.pdf" };
       break;
+    case "buttons": {
+      // Evolution API v2: /message/sendButtons
+      endpoint = `/message/sendButtons/${numberRow.instance_name}`;
+      body = {
+        ...body,
+        title: payload.header || "",
+        description: payload.body || "",
+        footer: payload.footer || "",
+        buttons: (payload.buttons || []).slice(0, 3).map((b) => ({
+          type: "reply",
+          displayText: b.title,
+          id: b.id,
+        })),
+      };
+      break;
+    }
+    case "list": {
+      endpoint = `/message/sendList/${numberRow.instance_name}`;
+      body = {
+        ...body,
+        title: payload.header || "",
+        description: payload.body || "",
+        footerText: payload.footer || "",
+        buttonText: payload.buttonText || "Ver opções",
+        sections: (payload.sections || []).map((s) => ({
+          title: s.title || "Opções",
+          rows: (s.rows || []).slice(0, 10).map((r) => ({
+            rowId: r.id,
+            title: r.title,
+            description: r.description || "",
+          })),
+        })),
+      };
+      break;
+    }
   }
 
   const res = await fetch(`${creds.url}${endpoint}`, {
@@ -256,7 +310,7 @@ async function sendViaMeta(
   supabase: any,
   wabaConnectionId: string,
   toPhone: string,
-  payload: { type: "text" | "image" | "video" | "audio" | "document"; content?: string; mediaUrl?: string; caption?: string; filename?: string },
+  payload: SendPayload,
 ) {
   const { data: conn } = await supabase
     .from("user_waba_connections")
@@ -273,12 +327,45 @@ async function sendViaMeta(
   if (payload.type === "text") {
     body.type = "text";
     body.text = { body: payload.content || "" };
+  } else if (payload.type === "buttons") {
+    body.type = "interactive";
+    body.interactive = {
+      type: "button",
+      ...(payload.header ? { header: { type: "text", text: payload.header.slice(0, 60) } } : {}),
+      body: { text: (payload.body || "Escolha uma opção:").slice(0, 1024) },
+      ...(payload.footer ? { footer: { text: payload.footer.slice(0, 60) } } : {}),
+      action: {
+        buttons: (payload.buttons || []).slice(0, 3).map((b) => ({
+          type: "reply",
+          reply: { id: b.id, title: (b.title || "Opção").slice(0, 20) },
+        })),
+      },
+    };
+  } else if (payload.type === "list") {
+    body.type = "interactive";
+    body.interactive = {
+      type: "list",
+      ...(payload.header ? { header: { type: "text", text: payload.header.slice(0, 60) } } : {}),
+      body: { text: (payload.body || "Escolha uma opção:").slice(0, 1024) },
+      ...(payload.footer ? { footer: { text: payload.footer.slice(0, 60) } } : {}),
+      action: {
+        button: (payload.buttonText || "Ver opções").slice(0, 20),
+        sections: (payload.sections || []).map((s) => ({
+          title: (s.title || "Opções").slice(0, 24),
+          rows: (s.rows || []).slice(0, 10).map((r) => ({
+            id: r.id,
+            title: (r.title || "Opção").slice(0, 24),
+            ...(r.description ? { description: r.description.slice(0, 72) } : {}),
+          })),
+        })),
+      },
+    };
   } else {
     body.type = payload.type;
     body[payload.type] = {
-      link: payload.mediaUrl,
-      ...(payload.caption ? { caption: payload.caption } : {}),
-      ...(payload.filename ? { filename: payload.filename } : {}),
+      link: (payload as any).mediaUrl,
+      ...((payload as any).caption ? { caption: (payload as any).caption } : {}),
+      ...((payload as any).filename ? { filename: (payload as any).filename } : {}),
     };
   }
 
@@ -526,18 +613,53 @@ async function runFlow(
       }
 
       case "buttons": {
-        // Send the body text + options as plain text fallback (full interactive support is API-specific).
-        const lines = [config.header_text, config.body_text || "Escolha uma opção:", config.footer_text]
-          .filter((v: any) => typeof v === "string" && v.trim())
-          .map((t: string) => interpolate(t, ctx.variables));
-        const choices = (config.interaction_type === "list" ? config.list_items : config.buttons) || [];
-        const optionLines = choices
-          .map((c: any, i: number) => `${i + 1}. ${typeof c === "string" ? c : c?.title || `Opção ${i + 1}`}`)
-          .join("\n");
-        await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
-          type: "text",
-          content: `${lines.join("\n\n")}${optionLines ? `\n\n${optionLines}` : ""}`,
+        // Send native interactive buttons (Meta) or interactive list (Meta) — Evolution maps to sendButtons/sendList.
+        const headerText = config.header_text ? interpolate(config.header_text, ctx.variables) : "";
+        const bodyText = interpolate(config.body_text || "Escolha uma opção:", ctx.variables);
+        const footerText = config.footer_text ? interpolate(config.footer_text, ctx.variables) : "";
+        const isList = config.interaction_type === "list";
+        const choices: any[] = (isList ? config.list_items : config.buttons) || [];
+
+        // Normalize handles: btn_0, btn_1... or item_0, item_1... (kept stable for edge matching)
+        const prefix = isList ? "item" : "btn";
+        const normalizedChoices = choices.map((c: any, i: number) => {
+          const rawId = typeof c === "object" && c?.id ? String(c.id) : `${prefix}_${i}`;
+          const id = normalizeHandle(rawId) || `${prefix}_${i}`;
+          const title = String(typeof c === "string" ? c : c?.title || `Opção ${i + 1}`);
+          const description = typeof c === "object" ? c?.description : undefined;
+          return { id, title: interpolate(title, ctx.variables), description };
         });
+
+        try {
+          if (isList) {
+            await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+              type: "list",
+              header: headerText,
+              body: bodyText,
+              footer: footerText,
+              buttonText: config.list_button_text || "Ver opções",
+              sections: [{ title: config.list_section_title || "Opções", rows: normalizedChoices }],
+            });
+          } else {
+            await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+              type: "buttons",
+              header: headerText,
+              body: bodyText,
+              footer: footerText,
+              buttons: normalizedChoices.slice(0, 3),
+            });
+          }
+        } catch (e) {
+          // Fallback to plain-text numbered list if interactive send fails (e.g. Evolution endpoint unavailable).
+          console.warn("[wa-flow-runner] interactive send failed, falling back to text:", e);
+          const lines = [headerText, bodyText, footerText].filter((s) => s && s.trim());
+          const optionLines = normalizedChoices.map((c, i) => `${i + 1}. ${c.title}`).join("\n");
+          await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+            type: "text",
+            content: `${lines.join("\n\n")}${optionLines ? `\n\n${optionLines}` : ""}`,
+          });
+        }
+
         ctx.hasFreshUserInput = false;
         pausedNodeId = node.id;
         currentNodeId = null;
