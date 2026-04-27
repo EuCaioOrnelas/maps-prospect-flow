@@ -223,32 +223,14 @@ const TourCompleto = () => {
                 />
 
                 {/* Video aspect ratio container */}
-                <div className="relative aspect-video bg-secondary/40 flex items-center justify-center">
-                  {/* PLACEHOLDER — substituir pelo embed do vídeo (YouTube/Loom/Vimeo) */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-                    <div className="h-20 w-20 rounded-full bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center mb-5 backdrop-blur-sm">
-                      <PlayCircle size={42} className="text-primary" strokeWidth={1.5} />
-                    </div>
-                    <div className="text-lg sm:text-xl font-semibold mb-1.5">
-                      Vídeo do tour completo
-                    </div>
-                    <div className="text-sm text-muted-foreground max-w-md">
-                      Em breve: o tour gravado será inserido aqui. Substitua este placeholder
-                      pelo embed do YouTube, Loom ou Vimeo.
-                    </div>
-                  </div>
-
-                  {/*
-                    Quando tiver o vídeo, troque o bloco acima por:
-
-                    <iframe
-                      src="https://www.youtube.com/embed/SEU_ID?rel=0&modestbranding=1"
-                      title="Tour completo Wiize"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="absolute inset-0 w-full h-full"
-                    />
-                  */}
+                <div className="relative aspect-video bg-secondary/40">
+                  <iframe
+                    src="https://www.youtube.com/embed/ZRzK42SYNFc?rel=0&modestbranding=1&playsinline=1&vq=hd1080&hd=1"
+                    title="Tour completo Wiize"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full"
+                  />
                 </div>
               </div>
 
