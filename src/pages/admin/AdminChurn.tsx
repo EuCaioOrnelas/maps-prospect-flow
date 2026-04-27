@@ -70,11 +70,24 @@ export default function AdminChurn() {
   const [selectedRecord, setSelectedRecord] = useState<ChurnRecord | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // Filtro de período: aplicado antes do KPIs e da busca textual
+  const dateFilteredRecords = useMemo(() => {
+    if (!startDate && !endDate) return records;
+    const startTs = startDate ? new Date(`${startDate}T00:00:00`).getTime() : -Infinity;
+    const endTs = endDate ? new Date(`${endDate}T23:59:59.999`).getTime() : Infinity;
+    return records.filter((record) => {
+      const t = new Date(record.cancelled_at).getTime();
+      return t >= startTs && t <= endTs;
+    });
+  }, [records, startDate, endDate]);
 
   const filteredRecords = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return records;
-    return records.filter((record) => {
+    if (!term) return dateFilteredRecords;
+    return dateFilteredRecords.filter((record) => {
       const reasonLabel = record.cancellation_reason
         ? (reasonLabels[record.cancellation_reason] || record.cancellation_reason).toLowerCase()
         : "";
@@ -89,7 +102,9 @@ export default function AdminChurn() {
         reasonLabel.includes(term)
       );
     });
-  }, [records, search]);
+  }, [dateFilteredRecords, search]);
+
+  const hasDateFilter = Boolean(startDate || endDate);
 
   useEffect(() => {
     loadData();
