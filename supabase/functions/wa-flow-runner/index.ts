@@ -545,10 +545,26 @@ async function runFlow(
       }
 
       case "condition": {
-        const needsInput = ["responded", "keyword_match", "button_clicked", "field_equals", "no_response"].includes(
-          config.condition_type || "responded",
-        );
+        const conditionType = config.condition_type || "responded";
+        const needsInput = ["responded", "keyword_match", "button_clicked", "field_equals", "no_response"].includes(conditionType);
+
         if (needsInput && !ctx.hasFreshUserInput) {
+          // Special case: "no_response" can have a timeout window. If timeout expired (or scheduler forced),
+          // resolve as TRUE (no response) and continue. Otherwise pause and schedule.
+          if (conditionType === "no_response") {
+            const timeoutMin = Number(config.timeout_minutes ?? config.no_response_timeout ?? 0);
+            if (ctx.forceNoResponseTimeout) {
+              const result = true; // no_response timeout fired → "yes" branch
+              ctx.hasFreshUserInput = false;
+              ctx.forceNoResponseTimeout = false;
+              currentNodeId = getConditionTarget(bySource, node.id, result);
+              break;
+            }
+            if (timeoutMin > 0) {
+              awaitingInputUntil = new Date(Date.now() + timeoutMin * 60_000).toISOString();
+              awaitingNodeId = node.id;
+            }
+          }
           pausedNodeId = node.id;
           currentNodeId = null;
           break;
@@ -561,7 +577,6 @@ async function runFlow(
       }
 
       case "wait": {
-        // For minutes/hours/days/weeks waits, schedule and exit. (For now: only short waits inline; long waits = persist + exit.)
         const value = Number(config.delay_value || 0);
         const unit = config.delay_unit || "minutes";
         const ms =
@@ -574,9 +589,11 @@ async function runFlow(
           await new Promise((r) => setTimeout(r, ms));
           currentNodeId = getDefaultTarget(bySource, node.id);
         } else {
-          console.log(`[wa-flow-runner] Long wait (${ms}ms) paused at wait node.`);
+          // Persist wait_until so the cron scheduler can resume after the delay.
+          waitUntil = new Date(Date.now() + ms).toISOString();
           pausedNodeId = node.id;
           currentNodeId = null;
+          console.log(`[wa-flow-runner] Wait scheduled for ${waitUntil} (exec ${execution.id})`);
         }
         break;
       }
