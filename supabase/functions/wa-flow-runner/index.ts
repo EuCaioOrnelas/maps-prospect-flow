@@ -708,23 +708,22 @@ serve(async (req) => {
           ? keywords.some((k: string) => text === k)
           : keywords.some((k: string) => text.includes(k));
       } else if (triggerType === "campaign_reply") {
-        // #3: campaign_reply requires upstream attribution we don't carry on inbound.
-        // Trigger if (a) any campaign or specific campaign_id, AND (b) lead has a campaign_recipient
-        // for this user (and matching campaign, when set) sent in the last 14 days.
+        // #3: campaign_reply triggers when this lead replied to a campaign of this user.
+        // Source of truth: public.campaign_responses (logged by the campaign engine).
         if (!body.incoming_text) { continue; }
         const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
         const leadKey = phoneKey(body.lead_phone);
         let q = supabase
-          .from("wa_campaign_recipients")
-          .select("id, campaign_id, phone, sent_at")
-          .gte("sent_at", since)
-          .limit(50);
-        const { data: recipients } = await q;
-        const matched = (recipients || []).find((r: any) => {
-          if (phoneKey(r.phone) !== leadKey) return false;
-          if (entryConfig.campaign_id && r.campaign_id !== entryConfig.campaign_id) return false;
-          return true;
-        });
+          .from("campaign_responses")
+          .select("id, campaign_id, contact_phone, responded_at")
+          .eq("user_id", body.user_id)
+          .gte("responded_at", since)
+          .limit(100);
+        if (entryConfig.campaign_id) {
+          q = q.eq("campaign_id", entryConfig.campaign_id);
+        }
+        const { data: responses } = await q;
+        const matched = (responses || []).find((r: any) => phoneKey(r.contact_phone) === leadKey);
         if (!matched) { continue; }
         // ensure not already triggered for this lead+flow
         const { data: priorExec2 } = await supabase
