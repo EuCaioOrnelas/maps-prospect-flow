@@ -316,6 +316,81 @@ export function PixDashboardTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Faturas Asaas (PIX) — direto da API */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm font-medium text-foreground font-sans">
+            Faturas PIX (Asaas) — últimos 90 dias
+          </CardTitle>
+          <Badge variant="outline" className="text-xs">
+            {asaasInvoices.length} fatura{asaasInvoices.length === 1 ? "" : "s"}
+          </Badge>
+        </CardHeader>
+        <CardContent>
+          {asaasInvoices.length === 0 ? (
+            <p className="text-center text-muted-foreground text-sm py-8">
+              Nenhuma fatura PIX encontrada nos últimos 90 dias na sua conta Asaas.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Cliente</th>
+                    <th className="text-left py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">E-mail</th>
+                    <th className="text-right py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Valor</th>
+                    <th className="text-center py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                    <th className="text-left py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Vencimento</th>
+                    <th className="text-left py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Pago em</th>
+                    <th className="text-center py-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Link</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {asaasInvoices.slice(0, 100).map((inv) => {
+                    const statusMap: Record<string, { label: string; color: string }> = {
+                      CONFIRMED: { label: "Pago", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+                      RECEIVED: { label: "Recebido", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+                      PENDING: { label: "Pendente", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
+                      OVERDUE: { label: "Vencido", color: "bg-red-500/10 text-red-400 border-red-500/20" },
+                      REFUNDED: { label: "Estornado", color: "bg-muted text-muted-foreground" },
+                    };
+                    const st = statusMap[inv.status] || { label: inv.status, color: "bg-muted text-muted-foreground" };
+                    return (
+                      <tr key={inv.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                        <td className="py-3 px-3 text-foreground">{inv.customer_name || "—"}</td>
+                        <td className="py-3 px-3 text-muted-foreground text-xs">{inv.customer_email || "—"}</td>
+                        <td className="py-3 px-3 text-right tabular-nums font-medium text-foreground">{formatCurrency(inv.value)}</td>
+                        <td className="py-3 px-3 text-center">
+                          <Badge variant="outline" className={`text-xs ${st.color}`}>{st.label}</Badge>
+                        </td>
+                        <td className="py-3 px-3 text-muted-foreground text-xs">
+                          {inv.due_date ? new Date(inv.due_date).toLocaleDateString("pt-BR") : "—"}
+                        </td>
+                        <td className="py-3 px-3 text-muted-foreground text-xs">
+                          {inv.payment_date ? new Date(inv.payment_date).toLocaleDateString("pt-BR") : "—"}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {inv.invoice_url ? (
+                            <a href={inv.invoice_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-primary hover:underline">
+                              <ExternalLink size={14} />
+                            </a>
+                          ) : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {asaasInvoices.length > 100 && (
+                <p className="text-center text-xs text-muted-foreground py-3">
+                  Mostrando 100 de {asaasInvoices.length} faturas.
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
