@@ -87,8 +87,10 @@ async function evaluateCondition(
 ): Promise<boolean> {
   const conditionType = config.condition_type || "responded";
   const rawValue = String(config.condition_value || "").trim();
-  const normalizedValue = rawValue.toLowerCase();
-  const normalizedText = (ctx.lastUserText || "").toLowerCase();
+  // Normalize with accent stripping + lowercase for accent-insensitive matching ("São" === "sao")
+  const normalizedValue = normalizeText(rawValue);
+  const normalizedText = normalizeText(ctx.lastUserText || "");
+  const normalizedButtonTitle = normalizeText(ctx.lastButtonTitle || "");
   const normalizedButtonId = normalizeHandle(ctx.lastButtonId);
   const normalizedConditionHandle = normalizeHandle(rawValue);
 
@@ -96,7 +98,7 @@ async function evaluateCondition(
     case "button_clicked":
       return (
         (!!normalizedConditionHandle && normalizedConditionHandle === normalizedButtonId) ||
-        (!!ctx.lastButtonTitle && ctx.lastButtonTitle.toLowerCase() === normalizedValue)
+        (!!normalizedButtonTitle && normalizedButtonTitle === normalizedValue)
       );
     case "keyword_match": {
       const keywords = normalizedValue.split(",").map((k) => k.trim()).filter(Boolean);
@@ -124,7 +126,7 @@ async function evaluateCondition(
       );
       if (!lead) return false;
       const tags: string[] = Array.isArray(lead.tags) ? lead.tags : [];
-      return tags.some((t) => String(t).toLowerCase() === normalizedValue);
+      return tags.some((t) => normalizeText(String(t)) === normalizedValue);
     }
 
     case "score_above": {
@@ -576,9 +578,13 @@ async function runFlow(
   let awaitingInputUntil: string | null = null;
   let awaitingNodeId: string | null = null;
   let safety = 0;
+  const MAX_ITERATIONS = 60;
   const history: any[] = Array.isArray(execution.node_history) ? execution.node_history : [];
+  let runError: any = null;
+  let overflowed = false;
 
-  while (currentNodeId && safety < 60) {
+  try {
+  while (currentNodeId && safety < MAX_ITERATIONS) {
     safety += 1;
     const node = nodeMap.get(currentNodeId);
     if (!node) break;
@@ -999,9 +1005,28 @@ async function runFlow(
     }
   }
 
-  // Persist state when paused
+  if (currentNodeId && safety >= MAX_ITERATIONS) {
+    overflowed = true;
+    console.error(`[wa-flow-runner] safety guard triggered: execution=${execution.id} node=${currentNodeId} iterations=${safety}`);
+    history.push({ type: "_safety_overflow", at: new Date().toISOString(), node_id: currentNodeId, iterations: safety });
+  }
+  } catch (err) {
+    runError = err;
+    console.error(`[wa-flow-runner] runtime error in execution=${execution.id}:`, err);
+    history.push({ type: "_error", at: new Date().toISOString(), node_id: currentNodeId, message: String(err?.message || err) });
+  }
+
+  // Always persist state — partial history preserved even on errors / safety overflow.
+  const finalStatus = runError
+    ? "error"
+    : overflowed
+    ? "error"
+    : (currentNodeId || pausedNodeId)
+    ? "active"
+    : "abandoned";
+
   await supabase.from("wa_flow_executions").update({
-    status: currentNodeId || pausedNodeId ? "active" : "abandoned",
+    status: finalStatus,
     current_node_id: currentNodeId || pausedNodeId,
     current_node_name: (currentNodeId || pausedNodeId) ? (nodeMap.get(currentNodeId || pausedNodeId)?.name || null) : null,
     collected_data: ctx.variables,
@@ -1009,6 +1034,7 @@ async function runFlow(
     wait_until: waitUntil,
     awaiting_input_until: awaitingInputUntil,
     awaiting_node_id: awaitingNodeId,
+    last_error: runError ? String(runError?.message || runError).slice(0, 500) : (overflowed ? `safety_overflow_${MAX_ITERATIONS}` : null),
   }).eq("id", execution.id);
 }
 
