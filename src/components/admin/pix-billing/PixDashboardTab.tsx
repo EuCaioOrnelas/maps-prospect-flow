@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Loader2, CreditCard, QrCode, Users, AlertTriangle,
-  TrendingUp, Clock, RefreshCw, ArrowUpRight, Percent, Banknote
+  TrendingUp, Clock, RefreshCw, ArrowUpRight, Percent, Banknote, ExternalLink
 } from "lucide-react";
 
 interface DashboardMetrics {
@@ -19,6 +19,19 @@ interface DashboardMetrics {
   overdueRenewals: number;
   totalPaidInvoices: number;
   totalPendingInvoices: number;
+}
+
+interface AsaasInvoice {
+  id: string;
+  customer_name: string;
+  customer_email: string | null;
+  customer_doc: string | null;
+  value: number;
+  status: string;
+  description: string | null;
+  due_date: string | null;
+  payment_date: string | null;
+  invoice_url: string | null;
 }
 
 interface StageMetric {
@@ -36,6 +49,7 @@ export function PixDashboardTab() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [stageMetrics, setStageMetrics] = useState<StageMetric[]>([]);
+  const [asaasInvoices, setAsaasInvoices] = useState<AsaasInvoice[]>([]);
 
   useEffect(() => {
     loadMetrics();
