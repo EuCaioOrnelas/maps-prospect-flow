@@ -298,16 +298,34 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
         }
         case "move_kanban":
         case "move_pipeline": {
-          const stageName = action.stage_name || action.value;
-          if (!stageName) break;
-          const { data: stage } = await supabase
-            .from("pipeline_stages")
-            .select("id")
-            .eq("user_id", userId)
-            .eq("name", stageName)
-            .maybeSingle();
-          if (stage?.id) {
-            await supabase.from("leads").update({ pipeline_stage_id: stage.id }).eq("id", lead.id);
+          // Editor saves UUID in `pipeline_stage_id`; legacy callers may pass `stage_name`.
+          let stageId: string | null = action.pipeline_stage_id || null;
+          if (!stageId) {
+            const stageName = action.stage_name || action.value;
+            if (!stageName) break;
+            const { data: stage } = await supabase
+              .from("pipeline_stages")
+              .select("id")
+              .eq("user_id", userId)
+              .eq("name", stageName)
+              .maybeSingle();
+            stageId = stage?.id || null;
+          }
+          if (stageId) {
+            await supabase.from("leads").update({ pipeline_stage_id: stageId }).eq("id", lead.id);
+          }
+          break;
+        }
+        case "send_to_crm": {
+          // Create or update the lead in CRM with mapped fields (supports {variable} interpolation upstream).
+          const updates: Record<string, any> = {};
+          if (action.crm_name) updates.name = String(action.crm_name);
+          if (action.crm_email) updates.email = String(action.crm_email);
+          if (action.crm_company) updates.company = String(action.crm_company);
+          if (action.crm_notes) updates.notes = String(action.crm_notes);
+          if (action.crm_stage_id) updates.pipeline_stage_id = action.crm_stage_id;
+          if (Object.keys(updates).length > 0) {
+            await supabase.from("leads").update(updates).eq("id", lead.id);
           }
           break;
         }
