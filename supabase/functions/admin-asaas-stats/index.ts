@@ -162,16 +162,26 @@ serve(async (req) => {
       500
     );
 
-    // 2. PIX automático (recurring PIX) — endpoint dedicado
+    // 2. PIX automático — endpoint correto usado na criação/polling é /pix/automatic/authorizations.
+    // Mantemos fallback para o endpoint antigo caso a API varie por conta/ambiente.
     let pixAuths: AsaasPixAuth[] = [];
     try {
       pixAuths = await fetchAllPages<AsaasPixAuth>(
-        `${ASAAS_BASE}/pix/recurring/authorizations?status=ACTIVE`,
+        `${ASAAS_BASE}/pix/automatic/authorizations?status=ACTIVE`,
         apiKey,
         500
       );
-    } catch (e) {
-      log("PIX auths endpoint not available", { error: String(e) });
+    } catch (primaryError) {
+      log("PIX automatic endpoint failed, trying legacy endpoint", { error: String(primaryError) });
+      try {
+        pixAuths = await fetchAllPages<AsaasPixAuth>(
+          `${ASAAS_BASE}/pix/recurring/authorizations?status=ACTIVE`,
+          apiKey,
+          500
+        );
+      } catch (legacyError) {
+        log("PIX auths endpoints not available", { primaryError: String(primaryError), legacyError: String(legacyError) });
+      }
     }
 
     // 3. Pagamentos recentes (últimos 90 dias) — para faturas PIX e MRR realizado
