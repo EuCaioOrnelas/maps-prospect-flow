@@ -548,7 +548,7 @@ async function runFlow(
           currentNodeId = null;
           break;
         }
-        const result = evaluateCondition(config, ctx);
+        const result = await evaluateCondition(supabase, body.user_id, body.lead_phone, config, ctx);
         ctx.hasFreshUserInput = false;
         const next = getConditionTarget(bySource, node.id, result);
         currentNodeId = next;
