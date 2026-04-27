@@ -235,14 +235,34 @@ export default function AdminEmailFlowEditor() {
     if (!id) return;
     setSaving(true);
 
-    // Update flow name
-    await supabase.from("email_flows").update({ name: flowName }).eq("id", id);
+    // CRITICAL: Sync entry node config to email_flows columns so the
+    // backend processor (which reads flow.trigger_type / flow.audience_type
+    // directly) targets the correct audience. Without this, the processor
+    // falls back to wrong defaults and enrolls users that should never
+    // be in the flow (e.g., trial users receiving cart-recovery emails).
+    const entryNode = nodes.find(n => n.type === "entry");
+    const entryCfg: any = entryNode?.data?.config || {};
+    const flowUpdate: any = { name: flowName };
+    if (entryNode) {
+      flowUpdate.trigger_type = entryCfg.trigger_type || null;
+      flowUpdate.audience_type = entryCfg.audience_type || null;
+      flowUpdate.trigger_config = {
+        ...(entryCfg.trigger_config || {}),
+        ...(entryCfg.inactive_days ? { inactive_days: entryCfg.inactive_days } : {}),
+        ...(entryCfg.score_threshold ? { score_threshold: entryCfg.score_threshold } : {}),
+        ...(entryCfg.tag_name ? { tag_name: entryCfg.tag_name } : {}),
+      };
+    }
+    await supabase.from("email_flows").update(flowUpdate).eq("id", id);
 
-    // Update node positions
+    // Persist node config + position (config was previously NEVER saved here,
+    // causing the entry node trigger to drift out of sync with the flow row)
     for (const node of nodes) {
       await supabase.from("email_flow_nodes").update({
         position_x: node.position.x,
         position_y: node.position.y,
+        config: (node.data as any)?.config || {},
+        name: typeof (node.data as any)?.label === "string" ? (node.data as any).label : undefined,
       }).eq("id", node.id);
     }
 
@@ -294,6 +314,7 @@ export default function AdminEmailFlowEditor() {
       if (!hasEntry) { toast.error("O fluxo precisa de um bloco de entrada"); return; }
       const entryNode = nodes.find(n => n.type === "entry");
       if (!entryNode?.data?.config?.trigger_type) { toast.error("Configure o gatilho do bloco de entrada"); return; }
+      if (!entryNode?.data?.config?.audience_type) { toast.error("Selecione o público-alvo no bloco de entrada"); return; }
       const emailNodes = nodes.filter(n => n.type === "email");
       for (const en of emailNodes) {
         if (!en.data?.config?.subject || !en.data?.config?.body) {
