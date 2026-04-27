@@ -138,7 +138,7 @@ async function enrollCheckoutAbandoned(supabase: any, flow: any, flowActivatedAt
   // Sort by checkout_started_at DESC so dedup keeps the most recent per email
   const { data: checkoutLeads } = await supabase
     .from("checkout_leads")
-    .select("id, user_id, email, name, plan_attempted, checkout_started_at")
+    .select("id, user_id, email, name, plan_attempted, checkout_started_at, checkout_completed")
     .eq("checkout_completed", false)
     .gte("checkout_started_at", flowActivatedAt)
     .order("checkout_started_at", { ascending: false });
@@ -149,13 +149,64 @@ async function enrollCheckoutAbandoned(supabase: any, flow: any, flowActivatedAt
   const seen = new Set<string>();
   const uniqueLeads = [];
   for (const lead of checkoutLeads) {
+    if (!lead.email) continue;
     const key = lead.email.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
     uniqueLeads.push(lead);
   }
 
+  const audienceType = flow.audience_type;
+  const now = new Date();
+
   for (const lead of uniqueLeads) {
+    const emailLower = lead.email.toLowerCase().trim();
+
+    // BUG FIX #3/#4: Re-validate that this lead has NOT completed checkout
+    // since enrolling. A lead can show up in `checkout_leads` with
+    // `checkout_completed=false` for the abandoned attempt but later have a
+    // separate row marked completed. Skip them so we don't email customers
+    // who already paid.
+    const completed = await hasCompletedCheckoutAfter(supabase, {
+      email: emailLower,
+      userId: lead.user_id || null,
+      since: null,
+    });
+    if (completed) continue;
+
+    // BUG FIX #1: Apply audience filter even for checkout_abandoned trigger.
+    // Previously matchesAudienceState() returned true unconditionally for
+    // this trigger, so a flow targeted at "trial_active" + "checkout_abandoned"
+    // would still enroll non-trial users (or vice-versa).
+    let profile: any = null;
+    if (lead.user_id) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, email, name, plan, trial_start_at, created_at, updated_at, subscription_current_period_end, is_blocked")
+        .eq("id", lead.user_id)
+        .maybeSingle();
+      profile = data;
+    } else {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, email, name, plan, trial_start_at, created_at, updated_at, subscription_current_period_end, is_blocked")
+        .eq("email", emailLower)
+        .maybeSingle();
+      profile = data;
+    }
+
+    // If audience requires a profile (anything other than "all" / not set)
+    // and we don't have one, skip — we cannot prove eligibility.
+    if (audienceType && audienceType !== "all") {
+      if (!profile) continue;
+      if (profile.is_blocked) continue;
+      // Reuse the same audience matcher used elsewhere, but force a
+      // non-checkout trigger so it actually checks the audience.
+      if (!matchesAudienceState(audienceType, profile, now, "__audience_check__")) continue;
+    } else if (profile?.is_blocked) {
+      continue;
+    }
+
     const metadata = {
       email: lead.email,
       name: lead.name,
@@ -169,7 +220,7 @@ async function enrollCheckoutAbandoned(supabase: any, flow: any, flowActivatedAt
       supabase,
       flow,
       lead.user_id || lead.id,
-      null,
+      profile,
       metadata,
     );
     if (!currentStateCheck.eligible) continue;
