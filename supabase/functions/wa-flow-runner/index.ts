@@ -48,6 +48,31 @@ function normalizeHandle(value: any): string | null {
   return s;
 }
 
+// Strip accents and lowercase for keyword matching ("preço" -> "preco")
+function normalizeText(s: string): string {
+  return String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+// Last-8-digit key for tolerant phone matching across formats (with/without 9th digit, +55, etc.)
+function phoneKey(p: string | null | undefined): string {
+  return String(p || "").replace(/\D/g, "").slice(-8);
+}
+
+// Parse keywords stored either as CSV string or as array
+function parseKeywords(raw: any): string[] {
+  if (!raw) return [];
+  const arr = Array.isArray(raw)
+    ? raw
+    : String(raw).split(/[,\n;]/);
+  return arr
+    .map((k: any) => normalizeText(String(k)))
+    .filter((k: string) => k.length > 0);
+}
+
 function interpolate(text: string, vars: Record<string, string>): string {
   if (!text) return text;
   return text.replace(/\{(\w+)\}/g, (m, name) => vars[name] ?? m);
