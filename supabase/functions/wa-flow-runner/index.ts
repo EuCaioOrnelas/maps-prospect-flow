@@ -466,6 +466,8 @@ interface RuntimeCtx {
   lastButtonTitle: string | null;
   hasFreshUserInput: boolean;
   variables: Record<string, string>;
+  /** Internal: set by scheduler when timing out a no_response condition */
+  forceNoResponseTimeout?: boolean;
 }
 
 async function runFlow(
@@ -483,6 +485,9 @@ async function runFlow(
 
   let currentNodeId: string | null = startNodeId;
   let pausedNodeId: string | null = null;
+  let waitUntil: string | null = null;
+  let awaitingInputUntil: string | null = null;
+  let awaitingNodeId: string | null = null;
   let safety = 0;
   const history: any[] = Array.isArray(execution.node_history) ? execution.node_history : [];
 
@@ -540,10 +545,26 @@ async function runFlow(
       }
 
       case "condition": {
-        const needsInput = ["responded", "keyword_match", "button_clicked", "field_equals", "no_response"].includes(
-          config.condition_type || "responded",
-        );
+        const conditionType = config.condition_type || "responded";
+        const needsInput = ["responded", "keyword_match", "button_clicked", "field_equals", "no_response"].includes(conditionType);
+
         if (needsInput && !ctx.hasFreshUserInput) {
+          // Special case: "no_response" can have a timeout window. If timeout expired (or scheduler forced),
+          // resolve as TRUE (no response) and continue. Otherwise pause and schedule.
+          if (conditionType === "no_response") {
+            const timeoutMin = Number(config.timeout_minutes ?? config.no_response_timeout ?? 0);
+            if (ctx.forceNoResponseTimeout) {
+              const result = true; // no_response timeout fired → "yes" branch
+              ctx.hasFreshUserInput = false;
+              ctx.forceNoResponseTimeout = false;
+              currentNodeId = getConditionTarget(bySource, node.id, result);
+              break;
+            }
+            if (timeoutMin > 0) {
+              awaitingInputUntil = new Date(Date.now() + timeoutMin * 60_000).toISOString();
+              awaitingNodeId = node.id;
+            }
+          }
           pausedNodeId = node.id;
           currentNodeId = null;
           break;
@@ -556,7 +577,6 @@ async function runFlow(
       }
 
       case "wait": {
-        // For minutes/hours/days/weeks waits, schedule and exit. (For now: only short waits inline; long waits = persist + exit.)
         const value = Number(config.delay_value || 0);
         const unit = config.delay_unit || "minutes";
         const ms =
@@ -569,9 +589,11 @@ async function runFlow(
           await new Promise((r) => setTimeout(r, ms));
           currentNodeId = getDefaultTarget(bySource, node.id);
         } else {
-          console.log(`[wa-flow-runner] Long wait (${ms}ms) paused at wait node.`);
+          // Persist wait_until so the cron scheduler can resume after the delay.
+          waitUntil = new Date(Date.now() + ms).toISOString();
           pausedNodeId = node.id;
           currentNodeId = null;
+          console.log(`[wa-flow-runner] Wait scheduled for ${waitUntil} (exec ${execution.id})`);
         }
         break;
       }
@@ -675,9 +697,9 @@ async function runFlow(
           const maxChars = Number(agent?.max_chars || config.max_chars || 500);
           const routes = aiRoutesRaw.split("\n").map((r: string) => r.trim()).filter(Boolean);
 
-          const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-          if (!LOVABLE_API_KEY) {
-            console.error("[wa-flow-runner] ai_agent skipped — LOVABLE_API_KEY missing");
+          const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+          if (!OPENAI_API_KEY) {
+            console.error("[wa-flow-runner] ai_agent skipped — OPENAI_API_KEY missing");
             currentNodeId = getDefaultTarget(bySource, node.id);
             break;
           }
@@ -689,18 +711,24 @@ async function runFlow(
             : "";
           const sysFinal = `${systemPrompt}\n\nResponda em até ${maxChars} caracteres.${routeBlock}`;
 
-          const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          // Use OpenAI directly. Respect agent's saved model when provider is openai; otherwise default.
+          const openaiModel = (agent?.ai_provider === "openai" && agent?.ai_model)
+            ? agent.ai_model
+            : "gpt-4o-mini";
+
+          const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              Authorization: `Bearer ${OPENAI_API_KEY}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "google/gemini-2.5-flash",
+              model: openaiModel,
               messages: [
                 { role: "system", content: interpolate(sysFinal, ctx.variables) },
                 { role: "user", content: userMessage },
               ],
+              max_tokens: Math.min(1000, Math.ceil(maxChars / 2) + 200),
             }),
           });
 
@@ -856,6 +884,9 @@ async function runFlow(
     current_node_name: (currentNodeId || pausedNodeId) ? (nodeMap.get(currentNodeId || pausedNodeId)?.name || null) : null,
     collected_data: ctx.variables,
     node_history: history,
+    wait_until: waitUntil,
+    awaiting_input_until: awaitingInputUntil,
+    awaiting_node_id: awaitingNodeId,
   }).eq("id", execution.id);
 }
 
@@ -869,6 +900,80 @@ serve(async (req) => {
     );
 
     const body = await req.json();
+
+    // ── Scheduler mode: invoked by pg_cron every minute. Resume waits & no_response timeouts. ──
+    if (body.scheduler === true) {
+      const nowIso = new Date().toISOString();
+
+      // a) Waits whose time has come
+      const { data: dueWaits } = await supabase
+        .from("wa_flow_executions")
+        .select("*, wa_automation_flows!inner(*)")
+        .eq("status", "active")
+        .lte("wait_until", nowIso)
+        .not("wait_until", "is", null)
+        .limit(100);
+
+      // b) no_response conditions whose timeout fired
+      const { data: dueTimeouts } = await supabase
+        .from("wa_flow_executions")
+        .select("*, wa_automation_flows!inner(*)")
+        .eq("status", "active")
+        .lte("awaiting_input_until", nowIso)
+        .not("awaiting_input_until", "is", null)
+        .limit(100);
+
+      const resumedIds: string[] = [];
+
+      // Helper to resume an execution
+      const resumeExec = async (exec: any, mode: "wait" | "timeout") => {
+        const flow = exec.wa_automation_flows;
+        if (!flow || flow.status !== "active") return;
+        const { nodes, edges } = await loadFlowGraph(supabase, flow.id);
+
+        const ctx: RuntimeCtx = {
+          lastUserText: "",
+          lastButtonId: null,
+          lastButtonTitle: null,
+          hasFreshUserInput: false,
+          variables: (exec.collected_data && typeof exec.collected_data === "object") ? exec.collected_data : {},
+          forceNoResponseTimeout: mode === "timeout",
+        };
+
+        // Clear scheduling fields BEFORE running so we don't re-trigger.
+        await supabase.from("wa_flow_executions").update({
+          wait_until: null,
+          awaiting_input_until: null,
+          awaiting_node_id: null,
+        }).eq("id", exec.id);
+
+        let startId = exec.current_node_id;
+        if (mode === "wait") {
+          // For wait nodes, advance to the next node (default target).
+          const bySource = buildEdgeIndex(edges);
+          const next = getDefaultTarget(bySource, exec.current_node_id);
+          if (next) startId = next;
+        }
+        if (!startId) return;
+
+        const fakeBody = {
+          user_id: exec.user_id,
+          lead_phone: exec.lead_phone,
+          lead_name: exec.lead_name,
+          source: flow.api_type === "meta" ? "meta" : "evolution",
+        };
+        await runFlow(supabase, fakeBody, flow, nodes, edges, startId, exec, ctx);
+        resumedIds.push(exec.id);
+      };
+
+      for (const exec of dueWaits || []) await resumeExec(exec, "wait");
+      for (const exec of dueTimeouts || []) await resumeExec(exec, "timeout");
+
+      return new Response(JSON.stringify({ scheduler: true, resumed: resumedIds.length }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!body.user_id || !body.lead_phone) {
       return new Response(JSON.stringify({ error: "user_id and lead_phone required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
