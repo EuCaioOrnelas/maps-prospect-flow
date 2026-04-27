@@ -336,9 +336,64 @@ export default function AdminChurn() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Churn Intelligence</h1>
-        <p className="text-sm text-muted-foreground mt-1">Análise de cancelamentos reais — Stripe, Asaas e PIX</p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Churn Intelligence</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Análise de cancelamentos reais — Stripe, Asaas e PIX
+            {periodLabel && (
+              <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                Período: {periodLabel}
+              </span>
+            )}
+          </p>
+        </div>
+
+        <Card className="border-border/40 bg-card/80 lg:min-w-[420px]">
+          <CardContent className="p-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div className="flex-1 space-y-1">
+                <Label htmlFor="churn-start" className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Início
+                </Label>
+                <Input
+                  id="churn-start"
+                  type="date"
+                  value={startDate}
+                  max={endDate || undefined}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="h-9 text-xs"
+                />
+              </div>
+              <div className="flex-1 space-y-1">
+                <Label htmlFor="churn-end" className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Fim
+                </Label>
+                <Input
+                  id="churn-end"
+                  type="date"
+                  value={endDate}
+                  min={startDate || undefined}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="h-9 text-xs"
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!hasDateFilter}
+                onClick={() => {
+                  setStartDate("");
+                  setEndDate("");
+                }}
+                className="h-9 gap-1 text-xs"
+              >
+                <X className="h-3.5 w-3.5" />
+                Limpar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
