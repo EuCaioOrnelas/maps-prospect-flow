@@ -225,7 +225,8 @@ serve(async (req) => {
     logStep("Churn payload ready", {
       cancellationsRaw: cancellationsRes.data?.length || 0,
       cancellationsFiltered: filteredCancellations.length,
-      feedbacks: feedbacksRes.data?.length || 0,
+      feedbacksRaw: feedbacksRes.data?.length || 0,
+      feedbacksFiltered: filteredFeedbacks.length,
       eventsRaw: eventsRes.data?.length || 0,
       eventsFiltered: filteredEvents.length,
       profiles: profiles.length,
@@ -237,7 +238,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         cancellations: filteredCancellations,
-        feedbacks: feedbacksRes.data || [],
+        feedbacks: filteredFeedbacks,
         subEvents: filteredEvents,
         profiles,
         expiredProfiles,
