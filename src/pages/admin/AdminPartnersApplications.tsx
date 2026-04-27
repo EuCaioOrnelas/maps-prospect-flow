@@ -145,6 +145,7 @@ export default function AdminPartnersApplications() {
           msg = parsed?.error || msg;
         } else if (data?.error) msg = data.error;
       } catch { /* ignore */ }
+      console.error("[approve] error:", { error, data, ctx: (error as any)?.context });
       toast({ title: "Erro ao aprovar", description: msg, variant: "destructive" });
       setSubmitting(false);
       return;
@@ -168,7 +169,18 @@ export default function AdminPartnersApplications() {
       body: { application_id: a.id, reason: rejectReason, send_email: true },
     });
     if (error || !data?.success) {
-      toast({ title: "Erro ao recusar", description: "Tente novamente.", variant: "destructive" });
+      // Extrai a mensagem real do FunctionsHttpError (supabase-js esconde o body em error.context)
+      let msg = "Não foi possível recusar.";
+      try {
+        const ctx = (error as any)?.context;
+        if (ctx?.json) msg = ctx.json.error || msg;
+        else if (ctx?.body) {
+          const parsed = typeof ctx.body === "string" ? JSON.parse(ctx.body) : ctx.body;
+          msg = parsed?.error || msg;
+        } else if (data?.error) msg = data.error;
+      } catch { /* ignore */ }
+      console.error("[reject] error:", { error, data });
+      toast({ title: "Erro ao recusar", description: msg, variant: "destructive" });
       setSubmitting(false);
       return;
     }
