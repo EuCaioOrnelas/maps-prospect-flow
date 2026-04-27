@@ -690,18 +690,52 @@ serve(async (req) => {
       if (triggerType === "first_message") {
         // Trigger only on the lead's FIRST inbound message — i.e. no prior execution and an incoming text
         if (!body.incoming_text) continue;
-        const { count } = await supabase
+        // #5 fix: tolerant phone match (compare last 8 digits across all executions of this flow)
+        const leadKey = phoneKey(body.lead_phone);
+        const { data: priorExec } = await supabase
           .from("wa_flow_executions")
-          .select("id", { count: "exact", head: true })
-          .eq("flow_id", flow.id)
-          .eq("lead_phone", body.lead_phone);
-        shouldTrigger = (count || 0) === 0;
+          .select("lead_phone")
+          .eq("flow_id", flow.id);
+        const alreadyRan = (priorExec || []).some((e: any) => phoneKey(e.lead_phone) === leadKey);
+        shouldTrigger = !alreadyRan && !!body.incoming_text;
       } else if (triggerType === "keyword") {
-        const keywords = (entryConfig.keywords || []).map((k: string) => String(k).toLowerCase().trim()).filter(Boolean);
-        const text = (body.incoming_text || "").toLowerCase();
-        shouldTrigger = keywords.length === 0 ? false : keywords.some((k: string) => text.includes(k));
+        // #1 fix: keywords may be CSV string OR array. #2 fix: respect exact_match flag.
+        const keywords = parseKeywords(entryConfig.keywords);
+        if (keywords.length === 0 || !body.incoming_text) { continue; }
+        const text = normalizeText(body.incoming_text);
+        const exactMatch = !!entryConfig.exact_match;
+        shouldTrigger = exactMatch
+          ? keywords.some((k: string) => text === k)
+          : keywords.some((k: string) => text.includes(k));
+      } else if (triggerType === "campaign_reply") {
+        // #3: campaign_reply requires upstream attribution we don't carry on inbound.
+        // Trigger if (a) any campaign or specific campaign_id, AND (b) lead has a campaign_recipient
+        // for this user (and matching campaign, when set) sent in the last 14 days.
+        if (!body.incoming_text) { continue; }
+        const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+        const leadKey = phoneKey(body.lead_phone);
+        let q = supabase
+          .from("wa_campaign_recipients")
+          .select("id, campaign_id, phone, sent_at")
+          .gte("sent_at", since)
+          .limit(50);
+        const { data: recipients } = await q;
+        const matched = (recipients || []).find((r: any) => {
+          if (phoneKey(r.phone) !== leadKey) return false;
+          if (entryConfig.campaign_id && r.campaign_id !== entryConfig.campaign_id) return false;
+          return true;
+        });
+        if (!matched) { continue; }
+        // ensure not already triggered for this lead+flow
+        const { data: priorExec2 } = await supabase
+          .from("wa_flow_executions")
+          .select("lead_phone")
+          .eq("flow_id", flow.id);
+        const alreadyRan2 = (priorExec2 || []).some((e: any) => phoneKey(e.lead_phone) === leadKey);
+        shouldTrigger = !alreadyRan2;
       } else {
-        // Other triggers (campaign_reply, button_click, webhook, qr_code, re_entry, template_reply) — not auto-fired here.
+        // Unknown trigger types — log and skip
+        console.log(`[wa-flow-runner] Unsupported trigger_type='${triggerType}' on flow ${flow.id}`);
         continue;
       }
 
