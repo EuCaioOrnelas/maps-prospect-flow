@@ -5833,6 +5833,8 @@ export type Database = {
       }
       wa_flow_executions: {
         Row: {
+          awaiting_input_until: string | null
+          awaiting_node_id: string | null
           collected_data: Json | null
           completed_at: string | null
           created_at: string
@@ -5849,8 +5851,11 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          wait_until: string | null
         }
         Insert: {
+          awaiting_input_until?: string | null
+          awaiting_node_id?: string | null
           collected_data?: Json | null
           completed_at?: string | null
           created_at?: string
@@ -5867,8 +5872,11 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
+          wait_until?: string | null
         }
         Update: {
+          awaiting_input_until?: string | null
+          awaiting_node_id?: string | null
           collected_data?: Json | null
           completed_at?: string | null
           created_at?: string
@@ -5885,6 +5893,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+          wait_until?: string | null
         }
         Relationships: [
           {
