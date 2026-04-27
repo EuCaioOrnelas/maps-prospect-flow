@@ -650,6 +650,23 @@ async function advanceEnrollments(supabase: any, supabaseUrl: string, resendApiK
       case "email": {
         const config = node.config || {};
         if (config.subject && config.body) {
+          // ── IDEMPOTENCY GUARD ──
+          // If this exact email node has ALREADY been sent for this enrollment,
+          // skip the send and just advance to the next node. This prevents
+          // re-sending the same email if the flow loops back or is reprocessed.
+          const { count: alreadySentCount } = await supabase
+            .from("email_flow_execution_logs")
+            .select("*", { count: "exact", head: true })
+            .eq("enrollment_id", enrollment.id)
+            .eq("node_id", node.id)
+            .eq("action_type", "email_sent")
+            .eq("status", "success");
+
+          if ((alreadySentCount || 0) > 0) {
+            console.log(`[email-flow] Skipping duplicate send for enrollment ${enrollment.id}, node ${node.id} — already sent`);
+            break; // advance to next node without re-sending
+          }
+
           // Check email preferences — skip if user opted out of marketing
           if (user.id && user.plan !== "none") {
             const { data: prefs } = await supabase
