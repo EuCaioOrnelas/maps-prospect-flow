@@ -131,7 +131,7 @@ export default function PartnersLanding() {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       <Helmet>
-        <title>Wiize Partners — Comissão recorrente até {settings.platinum}% indicando a Wiize</title>
+        <title>{`Wiize Partners — Comissão recorrente até ${settings.platinum}% indicando a Wiize`}</title>
         <meta name="description" content={`Indique a Wiize, receba até ${settings.platinum}% de comissão recorrente por 24 meses. Atribuição last-click, materiais prontos e saque via Pix.`} />
         <link rel="canonical" href="https://wiize.com.br/parceiros" />
       </Helmet>
