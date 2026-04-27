@@ -310,7 +310,7 @@ async function sendViaMeta(
   supabase: any,
   wabaConnectionId: string,
   toPhone: string,
-  payload: { type: "text" | "image" | "video" | "audio" | "document"; content?: string; mediaUrl?: string; caption?: string; filename?: string },
+  payload: SendPayload,
 ) {
   const { data: conn } = await supabase
     .from("user_waba_connections")
@@ -327,12 +327,45 @@ async function sendViaMeta(
   if (payload.type === "text") {
     body.type = "text";
     body.text = { body: payload.content || "" };
+  } else if (payload.type === "buttons") {
+    body.type = "interactive";
+    body.interactive = {
+      type: "button",
+      ...(payload.header ? { header: { type: "text", text: payload.header.slice(0, 60) } } : {}),
+      body: { text: (payload.body || "Escolha uma opção:").slice(0, 1024) },
+      ...(payload.footer ? { footer: { text: payload.footer.slice(0, 60) } } : {}),
+      action: {
+        buttons: (payload.buttons || []).slice(0, 3).map((b) => ({
+          type: "reply",
+          reply: { id: b.id, title: (b.title || "Opção").slice(0, 20) },
+        })),
+      },
+    };
+  } else if (payload.type === "list") {
+    body.type = "interactive";
+    body.interactive = {
+      type: "list",
+      ...(payload.header ? { header: { type: "text", text: payload.header.slice(0, 60) } } : {}),
+      body: { text: (payload.body || "Escolha uma opção:").slice(0, 1024) },
+      ...(payload.footer ? { footer: { text: payload.footer.slice(0, 60) } } : {}),
+      action: {
+        button: (payload.buttonText || "Ver opções").slice(0, 20),
+        sections: (payload.sections || []).map((s) => ({
+          title: (s.title || "Opções").slice(0, 24),
+          rows: (s.rows || []).slice(0, 10).map((r) => ({
+            id: r.id,
+            title: (r.title || "Opção").slice(0, 24),
+            ...(r.description ? { description: r.description.slice(0, 72) } : {}),
+          })),
+        })),
+      },
+    };
   } else {
     body.type = payload.type;
     body[payload.type] = {
-      link: payload.mediaUrl,
-      ...(payload.caption ? { caption: payload.caption } : {}),
-      ...(payload.filename ? { filename: payload.filename } : {}),
+      link: (payload as any).mediaUrl,
+      ...((payload as any).caption ? { caption: (payload as any).caption } : {}),
+      ...((payload as any).filename ? { filename: (payload as any).filename } : {}),
     };
   }
 
