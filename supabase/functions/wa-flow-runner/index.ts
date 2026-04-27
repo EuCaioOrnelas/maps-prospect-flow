@@ -169,7 +169,7 @@ async function evaluateCondition(
       );
       if (!lead) return false;
       const { count } = await supabase
-        .from("crm_sales")
+        .from("lead_deals")
         .select("*", { count: "exact", head: true })
         .eq("lead_id", lead.id)
         .eq("user_id", userId);
