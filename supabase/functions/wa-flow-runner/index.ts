@@ -1005,9 +1005,28 @@ async function runFlow(
     }
   }
 
-  // Persist state when paused
+  if (currentNodeId && safety >= MAX_ITERATIONS) {
+    overflowed = true;
+    console.error(`[wa-flow-runner] safety guard triggered: execution=${execution.id} node=${currentNodeId} iterations=${safety}`);
+    history.push({ type: "_safety_overflow", at: new Date().toISOString(), node_id: currentNodeId, iterations: safety });
+  }
+  } catch (err) {
+    runError = err;
+    console.error(`[wa-flow-runner] runtime error in execution=${execution.id}:`, err);
+    history.push({ type: "_error", at: new Date().toISOString(), node_id: currentNodeId, message: String(err?.message || err) });
+  }
+
+  // Always persist state — partial history preserved even on errors / safety overflow.
+  const finalStatus = runError
+    ? "error"
+    : overflowed
+    ? "error"
+    : (currentNodeId || pausedNodeId)
+    ? "active"
+    : "abandoned";
+
   await supabase.from("wa_flow_executions").update({
-    status: currentNodeId || pausedNodeId ? "active" : "abandoned",
+    status: finalStatus,
     current_node_id: currentNodeId || pausedNodeId,
     current_node_name: (currentNodeId || pausedNodeId) ? (nodeMap.get(currentNodeId || pausedNodeId)?.name || null) : null,
     collected_data: ctx.variables,
@@ -1015,6 +1034,7 @@ async function runFlow(
     wait_until: waitUntil,
     awaiting_input_until: awaitingInputUntil,
     awaiting_node_id: awaitingNodeId,
+    last_error: runError ? String(runError?.message || runError).slice(0, 500) : (overflowed ? `safety_overflow_${MAX_ITERATIONS}` : null),
   }).eq("id", execution.id);
 }
 
