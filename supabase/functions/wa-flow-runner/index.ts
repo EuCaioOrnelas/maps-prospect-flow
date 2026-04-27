@@ -657,6 +657,190 @@ async function runFlow(
         return;
       }
 
+      case "ai_agent": {
+        try {
+          // Reuse saved agent or inline config
+          let agent: any = null;
+          if (config.saved_agent_id) {
+            const { data } = await supabase
+              .from("user_ai_agents")
+              .select("*")
+              .eq("id", config.saved_agent_id)
+              .eq("user_id", body.user_id)
+              .maybeSingle();
+            agent = data;
+          }
+          const systemPrompt = agent?.system_prompt || config.system_prompt || "";
+          const aiRoutesRaw: string = agent?.ai_routes || config.ai_routes || "";
+          const maxChars = Number(agent?.max_chars || config.max_chars || 500);
+          const routes = aiRoutesRaw.split("\n").map((r: string) => r.trim()).filter(Boolean);
+
+          const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+          if (!LOVABLE_API_KEY) {
+            console.error("[wa-flow-runner] ai_agent skipped — LOVABLE_API_KEY missing");
+            currentNodeId = getDefaultTarget(bySource, node.id);
+            break;
+          }
+
+          const userMessage = ctx.lastUserText
+            || `(Lead acabou de entrar no fluxo, sem mensagem ainda. Inicie a conversa.)`;
+          const routeBlock = routes.length > 0
+            ? `\n\nAo final, classifique a conversa retornando OBRIGATORIAMENTE no formato:\n[ROUTE: <UMA_DAS_ROTAS>]\nRotas válidas: ${routes.join(", ")}.`
+            : "";
+          const sysFinal = `${systemPrompt}\n\nResponda em até ${maxChars} caracteres.${routeBlock}`;
+
+          const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash",
+              messages: [
+                { role: "system", content: interpolate(sysFinal, ctx.variables) },
+                { role: "user", content: userMessage },
+              ],
+            }),
+          });
+
+          if (!aiRes.ok) {
+            const errText = await aiRes.text();
+            console.error("[wa-flow-runner] AI gateway error:", aiRes.status, errText);
+            currentNodeId = getDefaultTarget(bySource, node.id);
+            break;
+          }
+          const aiJson = await aiRes.json();
+          const fullText: string = aiJson?.choices?.[0]?.message?.content || "";
+
+          // Extract route tag
+          let chosenRoute: string | null = null;
+          const routeMatch = fullText.match(/\[ROUTE:\s*([^\]]+)\]/i);
+          if (routeMatch) chosenRoute = routeMatch[1].trim().toUpperCase();
+          const cleanedText = fullText.replace(/\[ROUTE:[^\]]+\]/gi, "").trim().slice(0, maxChars);
+
+          if (cleanedText) {
+            await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+              type: "text",
+              content: cleanedText,
+            });
+          }
+          ctx.variables["ai_response"] = cleanedText;
+          if (chosenRoute) ctx.variables["ai_route"] = chosenRoute;
+
+          // Branch by route handle if matched, otherwise default edge.
+          let nextId: string | null = null;
+          if (chosenRoute) {
+            nextId = getTargetByHandle(bySource, node.id, chosenRoute)
+              || getTargetByHandle(bySource, node.id, chosenRoute.toLowerCase())
+              || null;
+          }
+          currentNodeId = nextId || getDefaultTarget(bySource, node.id);
+        } catch (e) {
+          console.error("[wa-flow-runner] ai_agent error:", e);
+          currentNodeId = getDefaultTarget(bySource, node.id);
+        }
+        break;
+      }
+
+      case "google_sheets": {
+        try {
+          if (!config.spreadsheet_id) {
+            console.warn("[wa-flow-runner] google_sheets skipped — no spreadsheet_id");
+            currentNodeId = getDefaultTarget(bySource, node.id);
+            break;
+          }
+          const columns: any[] = Array.isArray(config.columns) ? config.columns : [];
+          // Pre-populate {nome} {telefone} variables if missing
+          if (!ctx.variables.nome && body.lead_name) ctx.variables.nome = body.lead_name;
+          if (!ctx.variables.telefone) ctx.variables.telefone = body.lead_phone;
+
+          const row = columns.map((c: any) =>
+            interpolate(String(c.variable ?? c.value ?? ""), ctx.variables)
+          );
+
+          const { error } = await supabase.functions.invoke("google-sheets-action", {
+            body: {
+              user_id: body.user_id,
+              spreadsheet_id: config.spreadsheet_id,
+              sheet_name: config.sheet_name || "Dados",
+              data: row,
+              action: "append",
+            },
+          });
+          if (error) console.error("[wa-flow-runner] google_sheets error:", error);
+        } catch (e) {
+          console.error("[wa-flow-runner] google_sheets error:", e);
+        }
+        currentNodeId = getDefaultTarget(bySource, node.id);
+        break;
+      }
+
+      case "google_calendar": {
+        try {
+          const summary = interpolate(String(config.event_title || ""), ctx.variables);
+          if (!summary) {
+            console.warn("[wa-flow-runner] google_calendar skipped — no event_title");
+            currentNodeId = getDefaultTarget(bySource, node.id);
+            break;
+          }
+          // Default to "next business hour" if no explicit start (editor doesn't expose one yet).
+          const start = new Date(Date.now() + 60 * 60 * 1000); // +1h
+          start.setMinutes(0, 0, 0);
+
+          const attendeeRaw = interpolate(String(config.attendee_email || ""), ctx.variables);
+          const attendee = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(attendeeRaw) ? attendeeRaw : undefined;
+
+          const { error } = await supabase.functions.invoke("google-calendar-action", {
+            body: {
+              user_id: body.user_id,
+              summary,
+              description: interpolate(String(config.event_description || ""), ctx.variables),
+              start_datetime: start.toISOString(),
+              duration_minutes: Number(config.event_duration || 30),
+              attendee_email: attendee,
+            },
+          });
+          if (error) console.error("[wa-flow-runner] google_calendar error:", error);
+        } catch (e) {
+          console.error("[wa-flow-runner] google_calendar error:", e);
+        }
+        currentNodeId = getDefaultTarget(bySource, node.id);
+        break;
+      }
+
+      case "gmail": {
+        try {
+          const to = interpolate(String(config.email_to || ""), ctx.variables);
+          if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+            console.warn("[wa-flow-runner] gmail skipped — invalid recipient:", to);
+            currentNodeId = getDefaultTarget(bySource, node.id);
+            break;
+          }
+          const subject = interpolate(String(config.email_subject || "Novo lead"), ctx.variables);
+          const bodyText = interpolate(String(config.email_body || ""), ctx.variables);
+          const ccArr: string[] = Array.isArray(config.email_cc) ? config.email_cc : (config.email_cc ? [config.email_cc] : []);
+          const bccArr: string[] = Array.isArray(config.email_bcc) ? config.email_bcc : (config.email_bcc ? [config.email_bcc] : []);
+
+          const payload: any = {
+            user_id: body.user_id,
+            to,
+            cc: ccArr,
+            bcc: bccArr,
+            subject,
+          };
+          if (config.email_html) payload.body_html = bodyText;
+          else payload.body_text = bodyText;
+
+          const { error } = await supabase.functions.invoke("gmail-send-action", { body: payload });
+          if (error) console.error("[wa-flow-runner] gmail error:", error);
+        } catch (e) {
+          console.error("[wa-flow-runner] gmail error:", e);
+        }
+        currentNodeId = getDefaultTarget(bySource, node.id);
+        break;
+      }
+
       default: {
         // Skip unknown
         currentNodeId = getDefaultTarget(bySource, node.id);
