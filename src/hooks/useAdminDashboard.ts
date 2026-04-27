@@ -177,7 +177,8 @@ export function useAdminDashboard() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setStripeMRR(data);
-    } catch {
+    } catch (err) {
+      console.error("[useAdminDashboard] get-stripe-mrr failed:", err);
       setStripeMRR(null);
     }
   }, []);
