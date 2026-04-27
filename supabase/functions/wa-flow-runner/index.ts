@@ -578,9 +578,13 @@ async function runFlow(
   let awaitingInputUntil: string | null = null;
   let awaitingNodeId: string | null = null;
   let safety = 0;
+  const MAX_ITERATIONS = 60;
   const history: any[] = Array.isArray(execution.node_history) ? execution.node_history : [];
+  let runError: any = null;
+  let overflowed = false;
 
-  while (currentNodeId && safety < 60) {
+  try {
+  while (currentNodeId && safety < MAX_ITERATIONS) {
     safety += 1;
     const node = nodeMap.get(currentNodeId);
     if (!node) break;
