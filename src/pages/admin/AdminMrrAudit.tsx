@@ -224,6 +224,17 @@ export default function AdminMrrAudit() {
             {f === "all" ? "Todas" : f === "included" ? "No MRR" : f === "trial" ? "Trial" : "Excluídas"}
           </Button>
         ))}
+        <div className="h-5 w-px bg-border mx-1" />
+        {(["all", "stripe", "asaas"] as ProviderFilter[]).map((p) => (
+          <Button
+            key={p}
+            variant={providerFilter === p ? "default" : "outline"}
+            size="sm"
+            onClick={() => setProviderFilter(p)}
+          >
+            {p === "all" ? "Todos provedores" : p === "stripe" ? "Stripe" : "Asaas"}
+          </Button>
+        ))}
         <div className="relative flex-1 min-w-[240px] max-w-md ml-auto">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
