@@ -3475,6 +3475,7 @@ export type Database = {
           phone: string | null
           plan: string
           postal_code: string | null
+          requires_payment_setup: boolean
           searches_limit: number
           searches_used: number
           signup_ip: string | null
@@ -3532,6 +3533,7 @@ export type Database = {
           phone?: string | null
           plan?: string
           postal_code?: string | null
+          requires_payment_setup?: boolean
           searches_limit?: number
           searches_used?: number
           signup_ip?: string | null
@@ -3589,6 +3591,7 @@ export type Database = {
           phone?: string | null
           plan?: string
           postal_code?: string | null
+          requires_payment_setup?: boolean
           searches_limit?: number
           searches_used?: number
           signup_ip?: string | null
