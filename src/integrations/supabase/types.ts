@@ -5957,17 +5957,22 @@ export type Database = {
       }
       warming_interactions: {
         Row: {
+          ai_generated: boolean
           conversation_ended: boolean
+          conversation_history: Json
           created_at: string
           id: string
+          last_ai_error: string | null
           last_message_at: string | null
           last_message_sent: string | null
           last_response_at: string | null
+          lead_diagnostic_snapshot: Json | null
           lead_id: string | null
           lead_name: string | null
           lead_phone: string
           messages_received: number
           messages_sent: number
+          next_reply_at: string | null
           status: string
           updated_at: string
           user_id: string
@@ -5975,17 +5980,22 @@ export type Database = {
           warming_session_id: string
         }
         Insert: {
+          ai_generated?: boolean
           conversation_ended?: boolean
+          conversation_history?: Json
           created_at?: string
           id?: string
+          last_ai_error?: string | null
           last_message_at?: string | null
           last_message_sent?: string | null
           last_response_at?: string | null
+          lead_diagnostic_snapshot?: Json | null
           lead_id?: string | null
           lead_name?: string | null
           lead_phone: string
           messages_received?: number
           messages_sent?: number
+          next_reply_at?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -5993,17 +6003,22 @@ export type Database = {
           warming_session_id: string
         }
         Update: {
+          ai_generated?: boolean
           conversation_ended?: boolean
+          conversation_history?: Json
           created_at?: string
           id?: string
+          last_ai_error?: string | null
           last_message_at?: string | null
           last_message_sent?: string | null
           last_response_at?: string | null
+          lead_diagnostic_snapshot?: Json | null
           lead_id?: string | null
           lead_name?: string | null
           lead_phone?: string
           messages_received?: number
           messages_sent?: number
+          next_reply_at?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -6084,6 +6099,7 @@ export type Database = {
       warming_sessions: {
         Row: {
           agent_reply_limit: number | null
+          ai_mode: boolean
           assigned_search_city: string | null
           assigned_search_query: string | null
           completed_at: string | null
@@ -6109,6 +6125,7 @@ export type Database = {
         }
         Insert: {
           agent_reply_limit?: number | null
+          ai_mode?: boolean
           assigned_search_city?: string | null
           assigned_search_query?: string | null
           completed_at?: string | null
@@ -6134,6 +6151,7 @@ export type Database = {
         }
         Update: {
           agent_reply_limit?: number | null
+          ai_mode?: boolean
           assigned_search_city?: string | null
           assigned_search_query?: string | null
           completed_at?: string | null

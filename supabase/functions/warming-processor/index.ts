@@ -494,91 +494,295 @@ async function validateWhatsAppNumber(
   }
 }
 
-// Generate contextual opening message using OpenAI for levels 3-4
+// =====================================================================
+// AQUECIMENTO POR IA — geração contextual usando diagnóstico do lead
+// =====================================================================
+// Estratégia por nível:
+//  - N1 (dias 1-5):  quebra-gelo curto, hiper-natural, sem vender. 1 frase.
+//  - N2 (dias 6-10): mensagem leve com gancho específico do nicho/cidade. ~2 frases.
+//  - N3 (dias 11-15): conversa contextual usando endereço/categoria/pontos do diagnóstico.
+//  - N4 (dias 16+):  pré-comercial — cita o que o lead faz, sugere troca de ideia (sem fechar).
+//
+// SEMPRE injeta:
+//  - Empresa, nome contato, categoria, cidade, endereço (crítico para nichos como restaurante/delivery)
+//  - Diagnóstico IA (ai_diagnosis, pontos fortes/fracos, análise site/redes)
+//  - Avaliação Google e número de reviews
+//  - Perfil da empresa do USUÁRIO (quem está prospectando) para alinhar o tom
+// =====================================================================
+
+interface LeadDiagnostic {
+  company_name?: string | null;
+  contact_name?: string | null;
+  category?: string | null;
+  city?: string | null;
+  address?: string | null;
+  rating?: number | null;
+  review_count?: number | null;
+  website?: string | null;
+  ai_diagnosis?: string | null;
+  ai_score?: number | null;
+  enrichment_data?: any;
+}
+
+interface UserCompanyProfile {
+  company_name?: string | null;
+  attendant_name?: string | null;
+  company_niche?: string | null;
+  company_products?: string | null;
+  company_differential?: string | null;
+}
+
+function buildLeadContextBlock(lead: LeadDiagnostic): string {
+  const parts: string[] = [];
+  if (lead.company_name) parts.push(`- Empresa: ${lead.company_name}`);
+  if (lead.contact_name) parts.push(`- Contato: ${lead.contact_name}`);
+  if (lead.category) parts.push(`- Nicho/Categoria: ${lead.category}`);
+  if (lead.city) parts.push(`- Cidade: ${lead.city}`);
+  if (lead.address) parts.push(`- Endereço: ${lead.address}`);
+  if (lead.rating) parts.push(`- Avaliação Google: ${lead.rating}/5 (${lead.review_count || 0} reviews)`);
+  if (lead.website) parts.push(`- Site: ${lead.website}`);
+
+  const enr = (lead.enrichment_data && typeof lead.enrichment_data === 'object') ? lead.enrichment_data : {};
+  const pf = Array.isArray(enr.pontos_fortes) ? enr.pontos_fortes : [];
+  const pfr = Array.isArray(enr.pontos_fracos) ? enr.pontos_fracos : [];
+  if (lead.ai_diagnosis) parts.push(`- Diagnóstico IA: ${lead.ai_diagnosis}`);
+  if (pf.length) parts.push(`- Pontos fortes: ${pf.slice(0,3).join('; ')}`);
+  if (pfr.length) parts.push(`- Pontos fracos: ${pfr.slice(0,3).join('; ')}`);
+  if (enr.analise_site) parts.push(`- Análise site: ${String(enr.analise_site).slice(0,200)}`);
+
+  return parts.length ? parts.join('\n') : '- (sem dados detalhados deste lead)';
+}
+
+function buildUserContextBlock(profile: UserCompanyProfile | null): string {
+  if (!profile) return '';
+  const parts: string[] = [];
+  if (profile.attendant_name) parts.push(`- Você se chama: ${profile.attendant_name}`);
+  if (profile.company_name) parts.push(`- Trabalha na: ${profile.company_name}`);
+  if (profile.company_niche) parts.push(`- Nicho: ${profile.company_niche}`);
+  if (profile.company_products) parts.push(`- Vende: ${profile.company_products}`);
+  return parts.length ? `\nQUEM VOCÊ É (perfil do remetente):\n${parts.join('\n')}` : '';
+}
+
+function getLevelInstructions(level: number): string {
+  switch (level) {
+    case 1:
+      return `NÍVEL 1 — ATIVAÇÃO INICIAL (dias 1-5):
+- Mensagem CURTA, 1 frase apenas (~10-15 palavras).
+- Quebra-gelo MUITO natural, parecendo digitação humana de WhatsApp.
+- NÃO venda nada. NÃO se apresente ainda. NÃO faça pergunta direta sobre o negócio dele.
+- Pode ser um cumprimento + referência leve à cidade ou ao tipo de negócio.
+- Objetivo: provocar uma resposta curta tipo "Oi, tudo bem?".`;
+    case 2:
+      return `NÍVEL 2 — CONVERSA LEVE (dias 6-10):
+- Mensagem CURTA, 1-2 frases (~20-30 palavras).
+- Faça uma pergunta SIMPLES e RELEVANTE sobre o negócio (horário, se atende na região X, etc).
+- Use o ENDEREÇO/CIDADE do lead para personalizar — ex: restaurante "vocês entregam em [bairro]?", provedor "vocês atendem [cidade]?".
+- NÃO venda. NÃO se apresente como vendedor. Pareça um cliente curioso ou alguém da região.`;
+    case 3:
+      return `NÍVEL 3 — INTERAÇÃO NATURAL (dias 11-15):
+- Mensagem 2-3 frases (~40-60 palavras).
+- Mostre que você sabe O QUE eles fazem (use a categoria + diagnóstico).
+- Faça uma pergunta mais aberta, ainda como CURIOSO, não como vendedor.
+- Pode citar algo do diagnóstico (ex: "vi que vocês têm boa avaliação no Google", "vi o site de vocês").`;
+    case 4:
+    default:
+      return `NÍVEL 4 — PRÉ-COMERCIAL (dia 16+):
+- Mensagem 2-4 frases (~50-80 palavras).
+- Você JÁ pode se apresentar e dizer brevemente o que faz, MAS sem fechar venda.
+- Conecte o que VOCÊ vende (perfil do remetente) com uma DOR REAL identificada no diagnóstico do lead.
+- Termine com pergunta leve tipo "faz sentido conversarmos?" ou "posso te mandar uma info?".`;
+  }
+}
+
+async function callOpenAI(systemPrompt: string, userPrompt: string, maxTokens = 250): Promise<string | null> {
+  const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+  if (!OPENAI_API_KEY) {
+    console.log('[AI Warming] OPENAI_API_KEY missing');
+    return null;
+  }
+  try {
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.95,
+        max_tokens: maxTokens,
+      }),
+    });
+    if (!resp.ok) {
+      console.error('[AI Warming] OpenAI error', resp.status, (await resp.text()).slice(0, 300));
+      return null;
+    }
+    const data = await resp.json();
+    let msg: string | undefined = data.choices?.[0]?.message?.content?.trim();
+    if (!msg) return null;
+    // Remove cercas/aspas wrap
+    msg = msg.replace(/^["'`]+|["'`]+$/g, '').trim();
+    return msg;
+  } catch (e) {
+    console.error('[AI Warming] OpenAI exception', e);
+    return null;
+  }
+}
+
+/**
+ * Gera mensagem de abertura usando IA + diagnóstico completo do lead.
+ * Retorna null se IA falhar (caller deve usar fallback de template).
+ */
+async function generateAIWarmingOpener(
+  lead: LeadDiagnostic,
+  userProfile: UserCompanyProfile | null,
+  level: number,
+): Promise<string | null> {
+  const leadCtx = buildLeadContextBlock(lead);
+  const userCtx = buildUserContextBlock(userProfile);
+  const levelRules = getLevelInstructions(level);
+
+  const systemPrompt = `Você é uma pessoa REAL conversando pelo WhatsApp brasileiro. Seu objetivo é AQUECER um número novo de WhatsApp criando uma conversa NATURAL com um lead real — NÃO é venda direta, é construção de histórico de conversa que pareça humano.
+
+DADOS DO LEAD (para personalizar):
+${leadCtx}
+${userCtx}
+
+${levelRules}
+
+REGRAS UNIVERSAIS:
+- Responda APENAS com a mensagem final, sem aspas, sem prefixo, sem explicação.
+- Português BR coloquial, como WhatsApp real (pode usar "vc", "tá", minúsculas iniciais às vezes).
+- NÃO use saudação temporal ("bom dia", "boa tarde") — a mensagem pode chegar a qualquer hora.
+- NÃO use "Tudo bem?" / "Como vai?" como abertura genérica.
+- NO MÁXIMO 1 emoji, opcional.
+- NUNCA mencione "aquecimento", "automação", "IA", "robô", "teste".
+- Se nicho for restaurante/delivery, USE o endereço/cidade ("vocês entregam aqui no [bairro/cidade]?").
+- Se nicho for serviço local (provedor, solar, segurança), pergunte sobre área de atendimento.
+- Se nicho for loja/produto, pergunte sobre disponibilidade ou horário.`;
+
+  return await callOpenAI(systemPrompt, `Gere a mensagem de aquecimento (nível ${level}) agora.`, 200);
+}
+
+/**
+ * Gera RÉPLICA contextual quando o lead respondeu — usa histórico completo.
+ */
+async function generateAIWarmingReply(
+  lead: LeadDiagnostic,
+  userProfile: UserCompanyProfile | null,
+  level: number,
+  conversationHistory: Array<{ role: 'us' | 'lead'; text: string; at: string }>,
+  latestLeadMessage: string,
+): Promise<string | null> {
+  const leadCtx = buildLeadContextBlock(lead);
+  const userCtx = buildUserContextBlock(userProfile);
+  const levelRules = getLevelInstructions(level);
+  const histText = conversationHistory.slice(-10).map(m =>
+    `${m.role === 'us' ? 'EU' : 'LEAD'}: ${m.text}`
+  ).join('\n');
+
+  const systemPrompt = `Você é uma pessoa REAL conversando pelo WhatsApp. O lead acabou de te responder e você precisa dar uma réplica NATURAL para manter a conversa viva.
+
+DADOS DO LEAD:
+${leadCtx}
+${userCtx}
+
+${levelRules}
+
+HISTÓRICO DA CONVERSA (mais recente embaixo):
+${histText}
+
+ÚLTIMA MENSAGEM DO LEAD: "${latestLeadMessage}"
+
+REGRAS:
+- Responda APENAS com sua próxima mensagem, sem aspas/explicação.
+- Faça SENTIDO com o que ele acabou de dizer (não ignore a resposta dele).
+- Curta (1-3 frases). Português BR coloquial.
+- Se ele perguntou algo, responda primeiro e DEPOIS continue a conversa.
+- Se ele demonstrou desinteresse ("não tenho interesse", "para com isso"), responda gentilmente "tudo bem, obrigado!" e nada mais.
+- NUNCA force venda no nível ${level <= 2 ? '1-2' : 'atual'}, mantenha o tom conversacional.
+- Use o endereço/nicho do lead se for relevante para a continuidade.`;
+
+  return await callOpenAI(systemPrompt, 'Gere sua próxima mensagem agora.', 200);
+}
+
+/**
+ * Calcula delay inteligente para a próxima resposta.
+ * Base: 5-10min aleatório + ajuste por tamanho da mensagem do lead + horário comercial.
+ * Retorna timestamp ISO de quando responder.
+ */
+function calculateSmartReplyDelay(leadMessage: string): Date {
+  // Base: 5-10 min aleatório
+  let delayMs = (5 + Math.random() * 5) * 60 * 1000;
+  // Ajuste por tamanho: msg longa do lead → resposta mais demorada (até +5min)
+  const len = leadMessage.length;
+  if (len > 200) delayMs += 4 * 60 * 1000;
+  else if (len > 80) delayMs += 2 * 60 * 1000;
+
+  let target = new Date(Date.now() + delayMs);
+  // Horário comercial São Paulo: 8h-19h. Fora disso, agenda p/ próximo dia útil 9-11h.
+  const sp = new Date(target.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const h = sp.getHours();
+  if (h < 8) {
+    sp.setHours(8 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60), 0, 0);
+    target = new Date(sp.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  } else if (h >= 19) {
+    sp.setDate(sp.getDate() + 1);
+    sp.setHours(9 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60), 0, 0);
+    target = new Date(sp.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  }
+  return target;
+}
+
+/**
+ * Busca diagnóstico completo do lead na tabela leads (via lead_id ou phone).
+ */
+async function fetchLeadDiagnostic(supabase: any, userId: string, leadId: string | null, phone: string): Promise<LeadDiagnostic | null> {
+  let q = supabase.from('leads')
+    .select('id, company_name, contact_name, category, city, address, rating, review_count, website, ai_diagnosis, ai_score, enrichment_data, phone')
+    .eq('user_id', userId)
+    .limit(1);
+  if (leadId) {
+    const { data } = await q.eq('id', leadId).maybeSingle();
+    if (data) return data;
+  }
+  // fallback por últimos 8 dígitos do telefone
+  const tail = String(phone || '').replace(/\D/g, '').slice(-8);
+  if (tail.length >= 8) {
+    const { data } = await supabase.from('leads')
+      .select('id, company_name, contact_name, category, city, address, rating, review_count, website, ai_diagnosis, ai_score, enrichment_data, phone')
+      .eq('user_id', userId)
+      .ilike('phone', `%${tail}`)
+      .limit(1)
+      .maybeSingle();
+    if (data) return data;
+  }
+  return null;
+}
+
+async function fetchUserCompanyProfile(supabase: any, userId: string): Promise<UserCompanyProfile | null> {
+  const { data } = await supabase.from('company_profiles')
+    .select('company_name, attendant_name, company_niche, company_products, company_differential')
+    .eq('user_id', userId)
+    .maybeSingle();
+  return data || null;
+}
+
+// Wrapper de compatibilidade (mantém assinatura antiga caso seja chamado em outro lugar)
 async function generateContextualOpeningMessage(
   companyName: string,
   contactName: string | null,
   category: string | null,
   city: string | null,
-  level: number
+  level: number,
 ): Promise<string> {
-  const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-  
-  if (!OPENAI_API_KEY) {
-    console.log('OPENAI_API_KEY not available, falling back to template');
-    const fallbacks = [
-      `Oi, tudo bem? Vi seu trabalho e achei interessante!`,
-      `Olá! Vi que vocês trabalham na região, posso mandar uma info rápida?`,
-      `Oi, tudo bem? Trabalho com empresas da região e queria trocar uma ideia`,
-    ];
-    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
-  }
-  
-  try {
-    const contextParts = [];
-    if (companyName) contextParts.push(`Empresa: ${companyName}`);
-    if (contactName) contextParts.push(`Nome do contato: ${contactName}`);
-    if (category) contextParts.push(`Segmento: ${category}`);
-    if (city) contextParts.push(`Cidade: ${city}`);
-    
-    const systemPrompt = `Você é uma pessoa REAL mandando mensagem pelo WhatsApp para iniciar uma conversa comercial casual com um lead.
-
-CONTEXTO DO LEAD:
-${contextParts.join('\n')}
-
-REGRAS OBRIGATÓRIAS:
-- Gere APENAS a mensagem, sem aspas, sem explicação
-- Máximo 2 frases curtas (total ~50 palavras)
-- Tom casual brasileiro, como se estivesse mandando no WhatsApp
-- Mencione algo ESPECÍFICO sobre o negócio/segmento do lead de forma natural
-- NÃO use saudações genéricas como apenas "Oi" ou "Olá"
-- NÃO mencione preços ou vendas diretamente
-- O objetivo é gerar curiosidade e uma resposta
-- Use no máximo 1 emoji (ou nenhum)
-- Varie entre estilos: pergunta, elogio ao trabalho, referência à região, etc.
-- Pareça uma pessoa real, NÃO um bot
-
-EXEMPLOS DE BOAS MENSAGENS:
-- "Oi, vi que vocês trabalham com [segmento] aqui em [cidade], muito bacana o trabalho de vocês!"
-- "Olá! Achei o perfil de vocês buscando [segmento] na região, posso trocar uma ideia rápida?"
-- "Oi [nome], tudo bem? Vi que a [empresa] atua com [segmento], queria conhecer melhor o trabalho de vocês"`;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'Gere uma mensagem de abertura natural para este lead.' }
-        ],
-        temperature: 1.0,
-        max_tokens: 150,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error('OpenAI contextual message error:', response.status);
-      return `Oi, tudo bem? Vi o trabalho de vocês com ${category || 'empresas da região'} e achei interessante!`;
-    }
-
-    const result = await response.json();
-    let aiMessage = result.choices?.[0]?.message?.content?.trim();
-    
-    if (aiMessage) {
-      aiMessage = aiMessage.replace(/^["']|["']$/g, '').trim();
-      console.log('OpenAI generated contextual opening:', aiMessage);
-      return aiMessage;
-    }
-  } catch (error) {
-    console.error('Error generating contextual message:', error);
-  }
-  
-  // Fallback
-  return `Oi, tudo bem? Vi que vocês trabalham com ${category || 'empresas da região'} e queria trocar uma ideia!`;
+  const ai = await generateAIWarmingOpener(
+    { company_name: companyName, contact_name: contactName, category, city },
+    null,
+    level,
+  );
+  return ai || `Oi! Vi o trabalho de vocês com ${category || 'empresas da região'}, queria trocar uma ideia.`;
 }
 
 
@@ -1176,22 +1380,60 @@ Deno.serve(async (req) => {
           continue
         }
 
-        // Get message - use AI for levels 3-4 with lead context, templates for levels 1-2
-        let message: string;
+        // ===========================================================
+        // GERAÇÃO DE MENSAGEM — IA + DIAGNÓSTICO (com fallback clássico)
+        // ===========================================================
         const currentLevel = getWarmingLevel(advancedDay);
-        
-        if (currentLevel >= 3 && validLead.company_name) {
-          // Use AI to generate contextual prospecting message
-          message = await generateContextualOpeningMessage(
-            validLead.company_name,
-            validLead.contact_name || null,
-            (validLead as any).category || null,
-            (validLead as any).city || null,
-            currentLevel
-          );
+        const aiMode = (session as any).ai_mode !== false; // default true
+
+        let message: string;
+        let aiUsed = false;
+        let aiError: string | null = null;
+        let leadDiagnostic: LeadDiagnostic | null = null;
+
+        if (aiMode) {
+          // Busca diagnóstico completo do lead na tabela leads (rico em endereço/categoria/ai_diagnosis)
+          leadDiagnostic = await fetchLeadDiagnostic(supabase, session.user_id, validLead.id || null, validatedPhone);
+          // Merge dados básicos do candidate caso lead não esteja na tabela
+          const mergedLead: LeadDiagnostic = {
+            company_name: leadDiagnostic?.company_name || validLead.company_name || null,
+            contact_name: leadDiagnostic?.contact_name || validLead.contact_name || null,
+            category: leadDiagnostic?.category || (validLead as any).category || null,
+            city: leadDiagnostic?.city || (validLead as any).city || null,
+            address: leadDiagnostic?.address || null,
+            rating: leadDiagnostic?.rating || null,
+            review_count: leadDiagnostic?.review_count || null,
+            website: leadDiagnostic?.website || null,
+            ai_diagnosis: leadDiagnostic?.ai_diagnosis || null,
+            ai_score: leadDiagnostic?.ai_score || null,
+            enrichment_data: leadDiagnostic?.enrichment_data || null,
+          };
+          const userProfile = await fetchUserCompanyProfile(supabase, session.user_id);
+
+          const aiMsg = await generateAIWarmingOpener(mergedLead, userProfile, currentLevel);
+          if (aiMsg && aiMsg.length >= 5 && aiMsg.length <= 600) {
+            message = aiMsg;
+            aiUsed = true;
+            console.log(`[AI Warming] N${currentLevel} message generated for ${mergedLead.company_name || validatedPhone}`);
+          } else {
+            aiError = 'ai_returned_invalid_or_null';
+            console.log(`[AI Warming] Falling back to template (${aiError})`);
+            message = await getUniqueMessageFromDB(supabase, session.id, levelConfig.initialMessages);
+          }
+          leadDiagnostic = mergedLead;
         } else {
-          // Use template messages for levels 1-2 or leads without company data
-          message = await getUniqueMessageFromDB(supabase, session.id, levelConfig.initialMessages);
+          // Modo clássico legado
+          if (currentLevel >= 3 && validLead.company_name) {
+            message = await generateContextualOpeningMessage(
+              validLead.company_name,
+              validLead.contact_name || null,
+              (validLead as any).category || null,
+              (validLead as any).city || null,
+              currentLevel,
+            );
+          } else {
+            message = await getUniqueMessageFromDB(supabase, session.id, levelConfig.initialMessages);
+          }
         }
         console.log(`Sending to validated lead ${validatedPhone}: "${message}"`)
 
@@ -1222,7 +1464,8 @@ Deno.serve(async (req) => {
         }
 
         if (sendResult.success) {
-          // Create interaction record
+          const nowIso = new Date().toISOString();
+          // Create interaction record (ai-aware)
           await supabase
             .from('warming_interactions')
             .insert({
@@ -1234,10 +1477,14 @@ Deno.serve(async (req) => {
               warming_level: level,
               messages_sent: 1,
               messages_received: 0,
-              status: levelConfig.waitForResponse ? 'in_progress' : 'completed',
+              status: levelConfig.waitForResponse ? 'pending_response' : 'completed',
               last_message_sent: message,
-              last_message_at: new Date().toISOString(),
-              conversation_ended: !levelConfig.waitForResponse
+              last_message_at: nowIso,
+              conversation_ended: !levelConfig.waitForResponse,
+              ai_generated: aiUsed,
+              last_ai_error: aiError,
+              lead_diagnostic_snapshot: leadDiagnostic || null,
+              conversation_history: [{ role: 'us', text: message, at: nowIso, ai: aiUsed }],
             })
 
           // Update session
