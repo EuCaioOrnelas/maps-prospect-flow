@@ -1,5 +1,5 @@
 // Edge function: audit-mrr
-// Retorna a lista detalhada de cada assinatura Stripe da Wiize com a decisão
+// Retorna a lista detalhada de cada assinatura (Stripe + Asaas) da Wiize com a decisão
 // de inclusão/exclusão no MRR, junto do motivo. Usado pelo painel admin
 // "Auditoria de MRR" para diagnosticar rapidamente por que o MRR mudou.
 
