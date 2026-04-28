@@ -13,8 +13,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { ReferralLinksCard } from "@/components/partners/ReferralLinksCard";
-import wiizeLogoColor from "@/assets/logos/wiize-logo.png";
-import wiizeLogoWhite from "@/assets/logos/wiize-logo-white.png";
+const wiizeLogoColor = "/wiize-logo.png";
+const wiizeLogoWhite = "/wiize-logo-white.png";
 import wiizeIcon from "@/assets/logo-icon-new.png";
 
 interface Material {
