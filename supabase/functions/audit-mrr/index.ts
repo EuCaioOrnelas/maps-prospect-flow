@@ -136,6 +136,7 @@ Deno.serve(async (req) => {
     }
 
     type Row = {
+      provider: "stripe" | "asaas";
       subscription_id: string;
       customer_email: string;
       stripe_status: string;
