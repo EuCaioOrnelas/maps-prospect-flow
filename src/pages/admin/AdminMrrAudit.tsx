@@ -45,6 +45,8 @@ const fmtBRL = (n: number) =>
 const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString("pt-BR") : "—");
 
 type Filter = "all" | "included" | "trial" | "excluded";
+type ProviderFilter = "all" | "stripe" | "asaas";
+const PAGE_SIZE = 25;
 
 export default function AdminMrrAudit() {
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,9 @@ export default function AdminMrrAudit() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
+  const [providerFilter, setProviderFilter] = useState<ProviderFilter>("all");
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
 
   const load = async () => {
     setLoading(true);
