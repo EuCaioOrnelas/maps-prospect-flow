@@ -175,7 +175,109 @@ Deno.serve(async (req) => {
 
   let body: any = {};
   try { body = await req.json(); } catch { /* cron sem body ok */ }
-  const mode: 'inbound' | 'cron' = body?.mode === 'inbound' ? 'inbound' : 'cron';
+  const mode: 'inbound' | 'cron' | 'debug' = body?.mode === 'inbound' ? 'inbound' : (body?.mode === 'debug' ? 'debug' : 'cron');
+
+  // ===== MODE DEBUG (admin testing) =====
+  // Body: { mode:'debug', user_id, lead_id?, level?, simulated_lead_message? }
+  // Não envia nada — só roda checagens e gera amostra de IA.
+  if (mode === 'debug') {
+    const checks: Array<{ step: string; ok: boolean; detail?: string }> = [];
+    const t0 = Date.now();
+
+    // 1) OpenAI key
+    const openaiKey = Deno.env.get('OPENAI_API_KEY');
+    checks.push({ step: 'openai_api_key', ok: !!openaiKey, detail: openaiKey ? 'configured' : 'MISSING' });
+
+    // 2) Evolution creds (default + paid)
+    const evoUrl = Deno.env.get('EVOLUTION_API_URL');
+    const evoKey = Deno.env.get('EVOLUTION_API_KEY');
+    checks.push({ step: 'evolution_default', ok: !!(evoUrl && evoKey), detail: evoUrl ? 'configured' : 'MISSING' });
+    const evoUrlPaid = Deno.env.get('EVOLUTION_API_URL_PAID');
+    const evoKeyPaid = Deno.env.get('EVOLUTION_API_KEY_PAID');
+    checks.push({ step: 'evolution_paid', ok: !!(evoUrlPaid && evoKeyPaid), detail: evoUrlPaid ? 'configured' : 'missing (fallback to default)' });
+
+    const userId = body?.user_id;
+    let diag: any = null;
+    let userProfile: any = null;
+    let aiSample: string | null = null;
+    let aiError: string | null = null;
+    let smartDelay: { iso: string; minutes: number } | null = null;
+
+    if (userId) {
+      // 3) Diagnóstico do lead (último gerado pelo usuário, se não passar lead_id)
+      let leadQ = supabase
+        .from('leads')
+        .select('id, company_name, contact_name, category, city, address, rating, review_count, ai_diagnosis, enrichment_data')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (body?.lead_id) {
+        const { data: lead } = await supabase
+          .from('leads')
+          .select('id, company_name, contact_name, category, city, address, rating, review_count, ai_diagnosis, enrichment_data')
+          .eq('id', body.lead_id).maybeSingle();
+        diag = lead;
+      } else {
+        const { data: latest } = await leadQ;
+        diag = latest?.[0] || null;
+      }
+      checks.push({ step: 'lead_diagnostic', ok: !!diag, detail: diag ? `${diag.company_name || diag.id} (${diag.category || 'sem nicho'})` : 'no lead found' });
+
+      // 4) Profile da empresa do usuário
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('attendant_name, company_name, company_products')
+        .eq('id', userId).maybeSingle();
+      userProfile = prof;
+      checks.push({ step: 'company_profile', ok: !!(prof?.company_name), detail: prof?.company_name || 'incomplete' });
+
+      // 5) Sessão ativa em ai_mode
+      const { data: sessions } = await supabase
+        .from('warming_sessions')
+        .select('id, status, ai_mode, warming_level, leads_used, leads_limit, whatsapp_number_id')
+        .eq('user_id', userId).eq('ai_mode', true);
+      const activeAi = (sessions || []).filter(s => s.status === 'active');
+      checks.push({ step: 'active_ai_sessions', ok: activeAi.length > 0, detail: `${activeAi.length}/${(sessions || []).length} ai sessões` });
+
+      // 6) Geração IA de amostra
+      if (openaiKey && diag) {
+        const level = Number(body?.level || 2);
+        const simulated = body?.simulated_lead_message || 'opa, tudo bem? quem fala?';
+        try {
+          aiSample = await generateAIReply(diag, userProfile, level, [{ role: 'us', text: 'Olá! tudo bem?' }], simulated);
+          if (!aiSample) aiError = 'AI returned empty';
+        } catch (e: any) {
+          aiError = e?.message || String(e);
+        }
+        checks.push({ step: 'ai_sample_generation', ok: !!aiSample, detail: aiError || `${(aiSample || '').length} chars` });
+
+        // 7) Smart delay calc
+        const next = calculateSmartReplyDelay(simulated);
+        const minutes = Math.round((next.getTime() - Date.now()) / 60000);
+        smartDelay = { iso: next.toISOString(), minutes };
+      }
+
+      // 8) Cron status (last 4 interactions com erros)
+      const { data: errs } = await supabase
+        .from('warming_interactions')
+        .select('id, last_ai_error, updated_at')
+        .eq('user_id', userId)
+        .not('last_ai_error', 'is', null)
+        .order('updated_at', { ascending: false }).limit(5);
+      checks.push({ step: 'recent_ai_errors', ok: (errs || []).length === 0, detail: `${(errs || []).length} interações com erro` });
+    }
+
+    return new Response(JSON.stringify({
+      mode: 'debug',
+      duration_ms: Date.now() - t0,
+      checks,
+      sample: aiSample,
+      sample_error: aiError,
+      smart_delay: smartDelay,
+      diagnostic_used: diag ? { id: diag.id, company_name: diag.company_name, category: diag.category, city: diag.city } : null,
+      user_profile_used: userProfile ? { company_name: userProfile.company_name, has_products: !!userProfile.company_products } : null,
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
 
   // ===== MODE INBOUND =====
   if (mode === 'inbound') {
