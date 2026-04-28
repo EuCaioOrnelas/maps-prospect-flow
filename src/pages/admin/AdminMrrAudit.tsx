@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { Download, RefreshCw, Search } from "lucide-react";
 
 type Row = {
+  provider?: "stripe" | "asaas";
   subscription_id: string;
   customer_email: string;
   stripe_status: string;
@@ -30,6 +31,8 @@ type Row = {
 
 type Summary = {
   total_subscriptions: number;
+  stripe_count?: number;
+  asaas_count?: number;
   active_count: number;
   active_mrr: number;
   trialing_count: number;
