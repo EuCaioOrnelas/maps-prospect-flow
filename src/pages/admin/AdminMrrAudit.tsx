@@ -109,6 +109,7 @@ export default function AdminMrrAudit() {
 
   const exportCsv = () => {
     const headers = [
+      "provider",
       "subscription_id",
       "customer_email",
       "stripe_status",
