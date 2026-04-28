@@ -836,45 +836,97 @@ const ProductionTests = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Flame className="h-5 w-5" />
-                    Verificação de Aquecimento
+                    Auditoria do Aquecimento IA
                   </CardTitle>
                   <CardDescription>
-                    Verifica status das sessões de aquecimento e interações recentes
+                    Testa o novo sistema IA: OpenAI key, diagnóstico do lead, geração de mensagem, smart delay e cron
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Número WhatsApp (opcional)</Label>
+                      <Select value={selectedWarmingNumberId} onValueChange={setSelectedWarmingNumberId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todos os números" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos os números</SelectItem>
+                          {numbers.map(n => (
+                            <SelectItem key={n.id} value={n.id}>
+                              {n.name || n.phone_number}{n.is_connected ? ' ✓' : ' (offline)'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Nível IA para teste</Label>
+                      <Select value={warmingDebugLevel} onValueChange={setWarmingDebugLevel}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Nível 1 — Ativação Inicial</SelectItem>
+                          <SelectItem value="2">Nível 2 — Conversa Leve</SelectItem>
+                          <SelectItem value="3">Nível 3 — Interação Natural</SelectItem>
+                          <SelectItem value="4">Nível 4 — Pré-Comercial</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label>Número WhatsApp (opcional)</Label>
-                    <Select value={selectedWarmingNumberId} onValueChange={setSelectedWarmingNumberId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todos os números" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos os números</SelectItem>
-                        {numbers.map(n => (
-                          <SelectItem key={n.id} value={n.id}>
-                            {n.name || n.phone_number}
-                            {n.is_connected ? ' ✓' : ' (offline)'}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label>Mensagem simulada do lead</Label>
+                    <Input
+                      value={warmingSimulatedMsg}
+                      onChange={(e) => setWarmingSimulatedMsg(e.target.value)}
+                      placeholder="opa, tudo bem? quem fala?"
+                    />
                     <p className="text-xs text-muted-foreground">
-                      Selecione um número para filtrar as sessões ou deixe em "Todos" para ver todas
+                      A IA vai gerar uma resposta usando o último diagnóstico de lead do usuário + esta mensagem.
                     </p>
                   </div>
-                  
-                  <Button 
-                    onClick={runWarmingTests} 
+
+                  <Button
+                    onClick={runWarmingTests}
                     disabled={isRunning}
                     className="w-full"
                   >
                     {isRunning ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verificando...</>
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Auditando IA...</>
                     ) : (
-                      <><RefreshCw className="h-4 w-4 mr-2" /> Verificar Warming</>
+                      <><Bot className="h-4 w-4 mr-2" /> Auditar Sistema IA</>
                     )}
                   </Button>
+
+                  {warmingDebugSample?.sample && (
+                    <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                        <Bot className="h-4 w-4" /> Amostra IA (não enviada)
+                      </div>
+                      {warmingDebugSample.diagnostic_used && (
+                        <div className="text-xs text-muted-foreground">
+                          Diagnóstico usado: <strong>{warmingDebugSample.diagnostic_used.company_name || '—'}</strong>
+                          {warmingDebugSample.diagnostic_used.category && ` · ${warmingDebugSample.diagnostic_used.category}`}
+                          {warmingDebugSample.diagnostic_used.city && ` · ${warmingDebugSample.diagnostic_used.city}`}
+                        </div>
+                      )}
+                      <div className="rounded bg-background p-3 text-sm whitespace-pre-wrap">
+                        "{warmingDebugSample.sample}"
+                      </div>
+                      {warmingDebugSample.smart_delay && (
+                        <div className="text-xs text-muted-foreground">
+                          ⏱️ Smart delay: <strong>{warmingDebugSample.smart_delay.minutes} min</strong> →{' '}
+                          {new Date(warmingDebugSample.smart_delay.iso).toLocaleString('pt-BR')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {warmingDebugSample?.sample_error && (
+                    <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                      Erro IA: {warmingDebugSample.sample_error}
+                    </div>
+                  )}
 
                   {testResults.warming.length > 0 && renderResults(testResults.warming)}
                 </CardContent>
