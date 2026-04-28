@@ -403,7 +403,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         summary: {
-          total_subscriptions: wiizeSubs.length,
+          total_subscriptions: rows.length,
+          stripe_count: wiizeSubs.length,
+          asaas_count: rows.length - wiizeSubs.length,
           active_count: activeCount,
           active_mrr: Math.round(totalActiveMrr * 100) / 100,
           trialing_count: trialingCount,
