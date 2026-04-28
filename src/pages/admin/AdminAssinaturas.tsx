@@ -48,7 +48,7 @@ export default function AdminAssinaturas() {
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Assinaturas</h1>
-        <p className="text-sm text-muted-foreground mt-1">Todos os usuários pagantes — Stripe (Cartão), Asaas (PIX) e contratos customizados</p>
+        <p className="text-sm text-muted-foreground mt-1">Assinantes pagantes (Stripe, Asaas, manual) + trials com cartão. Trials não somam MRR até o primeiro pagamento.</p>
       </div>
 
       <div className="flex items-center gap-3">
