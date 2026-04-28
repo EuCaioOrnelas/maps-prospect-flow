@@ -82,6 +82,7 @@ export default function AdminMrrAudit() {
       if (filter === "included" && !r.counted_in_mrr) return false;
       if (filter === "trial" && !r.counted_as_trial) return false;
       if (filter === "excluded" && (r.counted_in_mrr || r.counted_as_trial)) return false;
+      if (providerFilter !== "all" && (r.provider ?? "stripe") !== providerFilter) return false;
       if (query) {
         const q = query.toLowerCase();
         if (
@@ -94,7 +95,17 @@ export default function AdminMrrAudit() {
       }
       return true;
     });
-  }, [rows, filter, query]);
+  }, [rows, filter, providerFilter, query]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [filter, providerFilter, query]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage],
+  );
 
   const exportCsv = () => {
     const headers = [
