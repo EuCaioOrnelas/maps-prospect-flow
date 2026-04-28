@@ -96,6 +96,7 @@ const AdminAlertas = lazyWithRetry(() => import("./pages/admin/AdminAlertas"), "
 const AdminRelatorios = lazyWithRetry(() => import("./pages/admin/AdminRelatorios"), "AdminRelatorios");
 
 const AdminAssinaturas = lazyWithRetry(() => import("./pages/admin/AdminAssinaturas"), "AdminAssinaturas");
+const AdminMrrAudit = lazyWithRetry(() => import("./pages/admin/AdminMrrAudit"), "AdminMrrAudit");
 const AdminChurn = lazyWithRetry(() => import("./pages/admin/AdminChurn"), "AdminChurn");
 const AdminForecast = lazyWithRetry(() => import("./pages/admin/AdminForecast"), "AdminForecast");
 const AdminUsuarios = lazyWithRetry(() => import("./pages/admin/AdminUsuarios"), "AdminUsuarios");
@@ -246,6 +247,7 @@ const App = () => (
                   <Route path="pix-billing" element={<AdminPixBilling />} />
                   
                   <Route path="assinaturas" element={<AdminAssinaturas />} />
+                  <Route path="mrr-audit" element={<AdminMrrAudit />} />
                   <Route path="churn" element={<AdminChurn />} />
                   <Route path="forecast" element={<AdminForecast />} />
                   {/* Produto */}
