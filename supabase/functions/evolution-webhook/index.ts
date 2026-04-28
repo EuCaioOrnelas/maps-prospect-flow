@@ -2229,6 +2229,7 @@ REGRAS:
                       .eq('id', matchingInteraction.id);
                     
                     console.log(`Updated warming interaction ${matchingInteraction.id}: received=${messagesReceived}, status=${updateData.status || 'unchanged'}`);
+                    } // end if (!aiDelegated)
                   }
                 }
                 } catch (warmingError) {
