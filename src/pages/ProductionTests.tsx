@@ -607,7 +607,7 @@ const ProductionTests = () => {
       if (targetNumberId) {
         const { data: numberData } = await supabase
           .from('whatsapp_numbers')
-          .select('name, is_connected, plan_tier')
+          .select('name, is_connected')
           .eq('id', targetNumberId).single();
         results.push({
           name: 'Conexão WhatsApp',
