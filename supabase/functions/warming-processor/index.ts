@@ -1380,22 +1380,60 @@ Deno.serve(async (req) => {
           continue
         }
 
-        // Get message - use AI for levels 3-4 with lead context, templates for levels 1-2
-        let message: string;
+        // ===========================================================
+        // GERAÇÃO DE MENSAGEM — IA + DIAGNÓSTICO (com fallback clássico)
+        // ===========================================================
         const currentLevel = getWarmingLevel(advancedDay);
-        
-        if (currentLevel >= 3 && validLead.company_name) {
-          // Use AI to generate contextual prospecting message
-          message = await generateContextualOpeningMessage(
-            validLead.company_name,
-            validLead.contact_name || null,
-            (validLead as any).category || null,
-            (validLead as any).city || null,
-            currentLevel
-          );
+        const aiMode = (session as any).ai_mode !== false; // default true
+
+        let message: string;
+        let aiUsed = false;
+        let aiError: string | null = null;
+        let leadDiagnostic: LeadDiagnostic | null = null;
+
+        if (aiMode) {
+          // Busca diagnóstico completo do lead na tabela leads (rico em endereço/categoria/ai_diagnosis)
+          leadDiagnostic = await fetchLeadDiagnostic(supabase, session.user_id, validLead.id || null, validatedPhone);
+          // Merge dados básicos do candidate caso lead não esteja na tabela
+          const mergedLead: LeadDiagnostic = {
+            company_name: leadDiagnostic?.company_name || validLead.company_name || null,
+            contact_name: leadDiagnostic?.contact_name || validLead.contact_name || null,
+            category: leadDiagnostic?.category || (validLead as any).category || null,
+            city: leadDiagnostic?.city || (validLead as any).city || null,
+            address: leadDiagnostic?.address || null,
+            rating: leadDiagnostic?.rating || null,
+            review_count: leadDiagnostic?.review_count || null,
+            website: leadDiagnostic?.website || null,
+            ai_diagnosis: leadDiagnostic?.ai_diagnosis || null,
+            ai_score: leadDiagnostic?.ai_score || null,
+            enrichment_data: leadDiagnostic?.enrichment_data || null,
+          };
+          const userProfile = await fetchUserCompanyProfile(supabase, session.user_id);
+
+          const aiMsg = await generateAIWarmingOpener(mergedLead, userProfile, currentLevel);
+          if (aiMsg && aiMsg.length >= 5 && aiMsg.length <= 600) {
+            message = aiMsg;
+            aiUsed = true;
+            console.log(`[AI Warming] N${currentLevel} message generated for ${mergedLead.company_name || validatedPhone}`);
+          } else {
+            aiError = 'ai_returned_invalid_or_null';
+            console.log(`[AI Warming] Falling back to template (${aiError})`);
+            message = await getUniqueMessageFromDB(supabase, session.id, levelConfig.initialMessages);
+          }
+          leadDiagnostic = mergedLead;
         } else {
-          // Use template messages for levels 1-2 or leads without company data
-          message = await getUniqueMessageFromDB(supabase, session.id, levelConfig.initialMessages);
+          // Modo clássico legado
+          if (currentLevel >= 3 && validLead.company_name) {
+            message = await generateContextualOpeningMessage(
+              validLead.company_name,
+              validLead.contact_name || null,
+              (validLead as any).category || null,
+              (validLead as any).city || null,
+              currentLevel,
+            );
+          } else {
+            message = await getUniqueMessageFromDB(supabase, session.id, levelConfig.initialMessages);
+          }
         }
         console.log(`Sending to validated lead ${validatedPhone}: "${message}"`)
 
@@ -1426,7 +1464,8 @@ Deno.serve(async (req) => {
         }
 
         if (sendResult.success) {
-          // Create interaction record
+          const nowIso = new Date().toISOString();
+          // Create interaction record (ai-aware)
           await supabase
             .from('warming_interactions')
             .insert({
@@ -1438,10 +1477,14 @@ Deno.serve(async (req) => {
               warming_level: level,
               messages_sent: 1,
               messages_received: 0,
-              status: levelConfig.waitForResponse ? 'in_progress' : 'completed',
+              status: levelConfig.waitForResponse ? 'pending_response' : 'completed',
               last_message_sent: message,
-              last_message_at: new Date().toISOString(),
-              conversation_ended: !levelConfig.waitForResponse
+              last_message_at: nowIso,
+              conversation_ended: !levelConfig.waitForResponse,
+              ai_generated: aiUsed,
+              last_ai_error: aiError,
+              lead_diagnostic_snapshot: leadDiagnostic || null,
+              conversation_history: [{ role: 'us', text: message, at: nowIso, ai: aiUsed }],
             })
 
           // Update session
