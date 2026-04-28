@@ -19,7 +19,7 @@ export default function AdminAssinaturas() {
     const load = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_custom_subscription")
+        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_custom_subscription, trial_will_charge_at")
         .neq("plan", "free")
         .in("payment_provider", ["stripe", "asaas", "manual"])
         .order("created_at", { ascending: false })
@@ -29,6 +29,9 @@ export default function AdminAssinaturas() {
     };
     load();
   }, []);
+
+  const isTrialing = (s: any) =>
+    s.trial_will_charge_at && new Date(s.trial_will_charge_at).getTime() > Date.now();
 
   const filtered = subscribers.filter(s => 
     s.email?.toLowerCase().includes(search.toLowerCase()) || 
