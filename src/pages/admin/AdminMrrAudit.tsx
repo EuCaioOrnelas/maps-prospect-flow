@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { Download, RefreshCw, Search } from "lucide-react";
 
 type Row = {
+  provider?: "stripe" | "asaas";
   subscription_id: string;
   customer_email: string;
   stripe_status: string;
@@ -30,6 +31,8 @@ type Row = {
 
 type Summary = {
   total_subscriptions: number;
+  stripe_count?: number;
+  asaas_count?: number;
   active_count: number;
   active_mrr: number;
   trialing_count: number;
@@ -42,6 +45,8 @@ const fmtBRL = (n: number) =>
 const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString("pt-BR") : "—");
 
 type Filter = "all" | "included" | "trial" | "excluded";
+type ProviderFilter = "all" | "stripe" | "asaas";
+const PAGE_SIZE = 25;
 
 export default function AdminMrrAudit() {
   const [loading, setLoading] = useState(true);
@@ -49,7 +54,9 @@ export default function AdminMrrAudit() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
+  const [providerFilter, setProviderFilter] = useState<ProviderFilter>("all");
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
 
   const load = async () => {
     setLoading(true);
@@ -75,6 +82,7 @@ export default function AdminMrrAudit() {
       if (filter === "included" && !r.counted_in_mrr) return false;
       if (filter === "trial" && !r.counted_as_trial) return false;
       if (filter === "excluded" && (r.counted_in_mrr || r.counted_as_trial)) return false;
+      if (providerFilter !== "all" && (r.provider ?? "stripe") !== providerFilter) return false;
       if (query) {
         const q = query.toLowerCase();
         if (
@@ -87,10 +95,21 @@ export default function AdminMrrAudit() {
       }
       return true;
     });
-  }, [rows, filter, query]);
+  }, [rows, filter, providerFilter, query]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [filter, providerFilter, query]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage],
+  );
 
   const exportCsv = () => {
     const headers = [
+      "provider",
       "subscription_id",
       "customer_email",
       "stripe_status",
@@ -133,7 +152,12 @@ export default function AdminMrrAudit() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Auditoria de MRR</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Lista de cada assinatura Stripe com decisão de inclusão/exclusão no MRR e o motivo.
+            Lista de cada assinatura (Stripe + Asaas) com decisão de inclusão/exclusão no MRR e o motivo.
+            {summary && (
+              <span className="ml-2 text-xs">
+                Stripe: {summary.stripe_count ?? 0} · Asaas: {summary.asaas_count ?? 0}
+              </span>
+            )}
             {generatedAt && (
               <span className="ml-2 text-xs">Atualizado em {new Date(generatedAt).toLocaleString("pt-BR")}</span>
             )}
@@ -200,6 +224,17 @@ export default function AdminMrrAudit() {
             {f === "all" ? "Todas" : f === "included" ? "No MRR" : f === "trial" ? "Trial" : "Excluídas"}
           </Button>
         ))}
+        <div className="h-5 w-px bg-border mx-1" />
+        {(["all", "stripe", "asaas"] as ProviderFilter[]).map((p) => (
+          <Button
+            key={p}
+            variant={providerFilter === p ? "default" : "outline"}
+            size="sm"
+            onClick={() => setProviderFilter(p)}
+          >
+            {p === "all" ? "Todos provedores" : p === "stripe" ? "Stripe" : "Asaas"}
+          </Button>
+        ))}
         <div className="relative flex-1 min-w-[240px] max-w-md ml-auto">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -225,9 +260,10 @@ export default function AdminMrrAudit() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Status</TableHead>
+                  <TableHead>Provedor</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Plano</TableHead>
-                  <TableHead>Stripe</TableHead>
+                  <TableHead>Status pgto</TableHead>
                   <TableHead className="text-right">MRR/mês</TableHead>
                   <TableHead>trial_end</TableHead>
                   <TableHead>trial_will_charge_at</TableHead>
@@ -235,9 +271,21 @@ export default function AdminMrrAudit() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((r) => (
-                  <TableRow key={r.subscription_id}>
+                {paginated.map((r) => (
+                  <TableRow key={`${r.provider ?? "stripe"}-${r.subscription_id}`}>
                     <TableCell><StatusBadge row={r} /></TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={
+                          (r.provider ?? "stripe") === "asaas"
+                            ? "text-[10px] border-blue-500/40 text-blue-600"
+                            : "text-[10px] border-purple-500/40 text-purple-600"
+                        }
+                      >
+                        {(r.provider ?? "stripe").toUpperCase()}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-sm">{r.customer_email || "—"}</TableCell>
                     <TableCell className="text-sm capitalize">
                       {r.plan}
@@ -262,6 +310,37 @@ export default function AdminMrrAudit() {
           )}
         </CardContent>
       </Card>
+
+      {/* Paginação */}
+      {!loading && filtered.length > 0 && (
+        <div className="flex items-center justify-between text-sm">
+          <div className="text-muted-foreground">
+            Mostrando {(currentPage - 1) * PAGE_SIZE + 1}–
+            {Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Anterior
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Página {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Próxima
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 // Edge function: audit-mrr
-// Retorna a lista detalhada de cada assinatura Stripe da Wiize com a decisão
+// Retorna a lista detalhada de cada assinatura (Stripe + Asaas) da Wiize com a decisão
 // de inclusão/exclusão no MRR, junto do motivo. Usado pelo painel admin
 // "Auditoria de MRR" para diagnosticar rapidamente por que o MRR mudou.
 
@@ -136,6 +136,7 @@ Deno.serve(async (req) => {
     }
 
     type Row = {
+      provider: "stripe" | "asaas";
       subscription_id: string;
       customer_email: string;
       stripe_status: string;
@@ -228,6 +229,7 @@ Deno.serve(async (req) => {
       }
 
       rows.push({
+        provider: "stripe",
         subscription_id: sub.id,
         customer_email: email,
         stripe_status: sub.status,
@@ -249,6 +251,147 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ============ ASAAS ============
+    const asaasKey = Deno.env.get("ASAAS_API_KEY");
+    if (asaasKey) {
+      try {
+        const ASAAS_BASE = "https://api.asaas.com/v3";
+        const fetchAsaas = async (path: string) => {
+          const all: any[] = [];
+          let offset = 0;
+          const limit = 100;
+          while (true) {
+            const u = new URL(`${ASAAS_BASE}${path}`);
+            u.searchParams.set("limit", String(limit));
+            u.searchParams.set("offset", String(offset));
+            const r = await fetch(u.toString(), {
+              headers: { access_token: asaasKey, "Content-Type": "application/json" },
+            });
+            if (!r.ok) break;
+            const j = await r.json();
+            const data = j.data || [];
+            all.push(...data);
+            if (data.length < limit) break;
+            offset += limit;
+            if (all.length >= 1000) break;
+          }
+          return all;
+        };
+
+        const [asaasSubs, asaasPixAuths] = await Promise.all([
+          fetchAsaas("/subscriptions"),
+          fetchAsaas("/pix/automatic/authorizations").catch(() => []),
+        ]);
+
+        // Mapa de customers Asaas -> email (via profiles)
+        const asaasCustomerIds = new Set<string>([
+          ...asaasSubs.map((s: any) => s.customer).filter(Boolean),
+          ...asaasPixAuths.map((s: any) => s.customer).filter(Boolean),
+        ]);
+        const customerEmail = new Map<string, string>();
+        const customerProfile = new Map<string, any>();
+        if (asaasCustomerIds.size > 0) {
+          const ids = Array.from(asaasCustomerIds);
+          const { data: aProfs } = await admin
+            .from("profiles")
+            .select("id,email,plan,trial_will_charge_at,asaas_customer_id,trial_asaas_customer_id,asaas_subscription_id,trial_asaas_subscription_id")
+            .or(
+              `asaas_customer_id.in.(${ids.join(",")}),trial_asaas_customer_id.in.(${ids.join(",")})`,
+            );
+          for (const p of aProfs ?? []) {
+            if (p.asaas_customer_id) {
+              customerEmail.set(p.asaas_customer_id, p.email);
+              customerProfile.set(p.asaas_customer_id, p);
+            }
+            if (p.trial_asaas_customer_id) {
+              customerEmail.set(p.trial_asaas_customer_id, p.email);
+              customerProfile.set(p.trial_asaas_customer_id, p);
+            }
+          }
+        }
+
+        const buildAsaasRow = (
+          s: any,
+          kind: "subscription" | "pix_auth",
+        ): Row | null => {
+          const email = (customerEmail.get(s.customer) || "").toLowerCase();
+          const profile = customerProfile.get(s.customer);
+          const isAdminEmail = ADMIN_EMAILS.includes(email);
+
+          const cycle = (s.cycle || s.frequency || "MONTHLY").toUpperCase();
+          const value = Number(s.value) || 0;
+          const monthlyMrr =
+            cycle === "YEARLY" ? Math.round((value / 12) * 100) / 100 : Math.round(value * 100) / 100;
+
+          const status = (s.status || "").toUpperCase();
+          const isActive = status === "ACTIVE";
+          const planGuess =
+            (s.description || "").toLowerCase().includes("growth") ? "growth" :
+            (s.description || "").toLowerCase().includes("start") ? "start" :
+            (profile?.plan || "unknown");
+
+          // Trial: profile tem trial_will_charge_at futuro = ainda não pagou
+          const trialChargeAt = profile?.trial_will_charge_at
+            ? new Date(profile.trial_will_charge_at)
+            : null;
+          const isTrial = trialChargeAt && trialChargeAt.getTime() > Date.now();
+
+          let countedInMrr = false;
+          let countedAsTrial = false;
+          let reason = "";
+
+          if (isAdminEmail) {
+            reason = "Excluído: e-mail admin";
+          } else if (monthlyMrr <= 0) {
+            reason = "Excluído: valor R$ 0";
+          } else if (!isActive) {
+            reason = `Excluído: status Asaas = ${status}`;
+          } else if (isTrial) {
+            countedAsTrial = true;
+            trialingCount++;
+            totalTrialingMrr += monthlyMrr;
+            reason = "Trial Asaas: cartão cadastrado mas ainda não cobrou (não conta no MRR)";
+          } else {
+            countedInMrr = true;
+            activeCount++;
+            totalActiveMrr += monthlyMrr;
+            reason = `Incluído: assinatura Asaas ativa (${kind === "pix_auth" ? "PIX automático" : s.billingType || "cartão"})`;
+          }
+
+          return {
+            provider: "asaas",
+            subscription_id: s.id,
+            customer_email: email,
+            stripe_status: status.toLowerCase(),
+            plan: planGuess,
+            price_id: s.billingType || (kind === "pix_auth" ? "PIX" : ""),
+            interval: cycle === "YEARLY" ? "year" : "month",
+            monthly_mrr: monthlyMrr,
+            cancel_at_period_end: false,
+            trial_end: null,
+            current_period_end: s.nextDueDate || s.nextScheduledDate || null,
+            canceled_at: null,
+            trial_will_charge_at: profile?.trial_will_charge_at ?? null,
+            profile_plan: profile?.plan ?? null,
+            counted_in_mrr: countedInMrr,
+            counted_as_trial: countedAsTrial,
+            reason,
+          };
+        };
+
+        for (const s of asaasSubs) {
+          const r = buildAsaasRow(s, "subscription");
+          if (r) rows.push(r);
+        }
+        for (const s of asaasPixAuths) {
+          const r = buildAsaasRow(s, "pix_auth");
+          if (r) rows.push(r);
+        }
+      } catch (e) {
+        console.error("[AUDIT-MRR] Asaas fetch error:", e);
+      }
+    }
+
     // Ordenação: incluídos primeiro, depois trials, depois excluídos. Dentro de cada grupo, MRR desc.
     rows.sort((a, b) => {
       const rank = (r: Row) => (r.counted_in_mrr ? 0 : r.counted_as_trial ? 1 : 2);
@@ -260,7 +403,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         summary: {
-          total_subscriptions: wiizeSubs.length,
+          total_subscriptions: rows.length,
+          stripe_count: wiizeSubs.length,
+          asaas_count: rows.length - wiizeSubs.length,
           active_count: activeCount,
           active_mrr: Math.round(totalActiveMrr * 100) / 100,
           trialing_count: trialingCount,
