@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.approve-partner-application]
 verify_jwt = false
+
+[functions.warming-reply-processor]
+verify_jwt = false
