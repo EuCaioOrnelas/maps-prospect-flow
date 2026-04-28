@@ -494,103 +494,129 @@ const ProductionTests = () => {
     setIsRunning(false);
   };
 
-  // ===== WARMING TESTS =====
+  // ===== WARMING TESTS (NEW AI SYSTEM) =====
+  const [warmingDebugLevel, setWarmingDebugLevel] = useState<string>("2");
+  const [warmingSimulatedMsg, setWarmingSimulatedMsg] = useState<string>("opa, tudo bem? quem fala?");
+  const [warmingDebugSample, setWarmingDebugSample] = useState<any>(null);
+
   const runWarmingTests = async () => {
     setIsRunning(true);
-    addLog('info', '🚀 Iniciando testes de aquecimento...');
-    
+    setWarmingDebugSample(null);
+    addLog('info', '🔥 Auditoria do Sistema de Aquecimento IA...');
     const results: TestResult[] = [];
 
     try {
-      // If a specific number is selected, filter the session
-      const targetNumberId = selectedWarmingNumberId || null;
-      
-      // 1. Check existing sessions
-      addLog('info', 'Verificando sessões de aquecimento...');
-      await fetchWarmingSessions();
+      const targetNumberId = (selectedWarmingNumberId && selectedWarmingNumberId !== 'all') ? selectedWarmingNumberId : null;
 
-      const sessionsToCheck = targetNumberId 
+      // 1) Sessões + ai_mode
+      addLog('info', 'Verificando sessões (ai_mode)...');
+      await fetchWarmingSessions();
+      const sessionsToCheck = targetNumberId
         ? warmingSessions.filter(s => s.whatsapp_number_id === targetNumberId)
         : warmingSessions;
 
-      if (sessionsToCheck.length === 0) {
-        results.push({ name: 'Sessões Ativas', status: 'warning', message: targetNumberId ? 'Nenhuma sessão para este número' : 'Nenhuma sessão ativa' });
-        addLog('warning', targetNumberId ? '⚠️ Nenhuma sessão de aquecimento para o número selecionado' : '⚠️ Nenhuma sessão de aquecimento ativa');
-      } else {
-        results.push({ 
-          name: 'Sessões Ativas', 
-          status: 'success', 
-          message: `${sessionsToCheck.length} sessões` 
+      const aiSessions = sessionsToCheck.filter((s: any) => s.ai_mode === true);
+      const activeAiSessions = aiSessions.filter((s: any) => s.status === 'active');
+
+      results.push({
+        name: 'Sessões IA',
+        status: aiSessions.length > 0 ? 'success' : 'warning',
+        message: `${aiSessions.length} com ai_mode | ${activeAiSessions.length} ativas`
+      });
+      addLog(aiSessions.length > 0 ? 'success' : 'warning',
+        `${aiSessions.length} sessões IA encontradas (${activeAiSessions.length} ativas)`);
+
+      for (const s of activeAiSessions) {
+        results.push({
+          name: `Sessão ${s.whatsapp_number?.name || s.id.slice(0, 8)}`,
+          status: 'success',
+          message: `Nível ${s.warming_level} | ${s.leads_used}/${s.leads_limit} leads`
         });
-        addLog('success', `✅ ${sessionsToCheck.length} sessões encontradas`);
-
-        // Check each session status
-        for (const session of sessionsToCheck) {
-          addLog('info', `Verificando sessão ${session.whatsapp_number?.name || session.id.slice(0, 8)}...`);
-          
-          results.push({
-            name: `Sessão ${session.whatsapp_number?.name || 'Sem nome'}`,
-            status: session.status === 'active' ? 'success' : 'warning',
-            message: `${session.status} | Nível ${session.warming_level} | ${session.leads_used}/${session.leads_limit} leads`
-          });
-
-          if (session.status === 'paused' && session.error_message) {
-            addLog('warning', `⚠️ Sessão pausada: ${session.error_message}`);
-          }
-        }
       }
 
-      // 2. Check warming processor - filter by number if selected
-      addLog('info', 'Verificando processor de aquecimento...');
-      let interactionsQuery = supabase
+      // 2) Interações IA recentes
+      addLog('info', 'Verificando interações IA...');
+      const { data: aiInteractions } = await supabase
         .from('warming_interactions')
-        .select('*, warming_session:warming_sessions(whatsapp_number_id)')
+        .select('id, status, ai_generated, last_ai_error, conversation_history, next_reply_at, lead_phone, created_at, warming_session_id')
         .eq('user_id', user?.id)
+        .eq('ai_generated', true)
         .order('created_at', { ascending: false })
         .limit(20);
 
-      const { data: allInteractions } = await interactionsQuery;
-      
-      const interactions = targetNumberId 
-        ? allInteractions?.filter(i => i.warming_session?.whatsapp_number_id === targetNumberId)
-        : allInteractions;
+      const totalAi = aiInteractions?.length || 0;
+      const pendingReply = (aiInteractions || []).filter(i => i.status === 'pending_response' && i.next_reply_at).length;
+      const errors = (aiInteractions || []).filter(i => i.last_ai_error).length;
 
-      if (interactions?.length) {
-        results.push({ 
-          name: 'Interações', 
-          status: 'success', 
-          message: `${interactions.length} interações recentes` 
-        });
-        addLog('success', `✅ ${interactions.length} interações encontradas`);
-        
-        // Show last interaction details
-        const lastInteraction = interactions[0];
-        addLog('info', `📋 Última interação: ${lastInteraction.lead_name || lastInteraction.lead_phone} - Status: ${lastInteraction.status}`);
-      } else {
-        results.push({ name: 'Interações', status: 'warning', message: 'Sem interações recentes' });
-        addLog('warning', '⚠️ Nenhuma interação de aquecimento recente');
+      results.push({
+        name: 'Interações IA (últimas 20)',
+        status: totalAi > 0 ? 'success' : 'warning',
+        message: `${totalAi} totais | ${pendingReply} pendentes | ${errors} com erro`
+      });
+      addLog(totalAi > 0 ? 'success' : 'warning', `${totalAi} interações IA encontradas`);
+
+      if (errors > 0) {
+        const lastErr = (aiInteractions || []).find(i => i.last_ai_error);
+        addLog('error', `Último erro IA: ${lastErr?.last_ai_error}`);
+        results.push({ name: 'Último erro IA', status: 'error', message: lastErr?.last_ai_error || 'desconhecido' });
       }
 
-      // 3. Check number connection status
-      if (targetNumberId) {
-        addLog('info', 'Verificando conexão do número...');
-        const { data: numberData } = await supabase
-          .from('whatsapp_numbers')
-          .select('*')
-          .eq('id', targetNumberId)
-          .single();
-        
-        if (numberData?.is_connected) {
-          results.push({ name: 'Conexão WhatsApp', status: 'success', message: `${numberData.name} conectado` });
-          addLog('success', `✅ Número ${numberData.name} está conectado`);
-        } else {
-          results.push({ name: 'Conexão WhatsApp', status: 'error', message: 'Número desconectado' });
-          addLog('error', '❌ Número desconectado');
+      // 3) Webhook delegando? checa últimas mensagens recebidas com ai_mode session
+      addLog('info', 'Verificando réplicas agendadas pelo webhook...');
+      const recentScheduled = (aiInteractions || []).filter(i =>
+        i.next_reply_at && new Date(i.next_reply_at).getTime() > Date.now() - 60 * 60 * 1000
+      );
+      results.push({
+        name: 'Réplicas agendadas (1h)',
+        status: 'success',
+        message: `${recentScheduled.length} próximas`
+      });
+
+      // 4) Cron job ativo? — chamada debug ao próprio function (sem efeito colateral)
+      addLog('info', 'Chamando warming-reply-processor (modo debug)...');
+      const { data: dbg, error: dbgErr } = await supabase.functions.invoke('warming-reply-processor', {
+        body: {
+          mode: 'debug',
+          user_id: user?.id,
+          level: parseInt(warmingDebugLevel, 10),
+          simulated_lead_message: warmingSimulatedMsg,
+        }
+      });
+
+      if (dbgErr) {
+        results.push({ name: 'Edge function debug', status: 'error', message: dbgErr.message });
+        addLog('error', `Falha na edge function: ${dbgErr.message}`);
+      } else if (dbg?.checks) {
+        setWarmingDebugSample(dbg);
+        for (const c of dbg.checks) {
+          results.push({
+            name: c.step,
+            status: c.ok ? 'success' : (c.step === 'evolution_paid' ? 'warning' : 'error'),
+            message: c.detail || (c.ok ? 'ok' : 'fail')
+          });
+        }
+        if (dbg.sample) {
+          addLog('success', `🤖 Amostra IA gerada (${dbg.sample.length} chars): "${dbg.sample.slice(0, 120)}${dbg.sample.length > 120 ? '...' : ''}"`);
+        }
+        if (dbg.smart_delay) {
+          addLog('info', `⏱️ Smart delay calculado: ${dbg.smart_delay.minutes} min (próximo: ${new Date(dbg.smart_delay.iso).toLocaleString('pt-BR')})`);
         }
       }
 
-      addLog('success', '🎉 Verificação de aquecimento concluída!');
+      // 5) Conexão do número (se filtrado)
+      if (targetNumberId) {
+        const { data: numberData } = await supabase
+          .from('whatsapp_numbers')
+          .select('name, is_connected')
+          .eq('id', targetNumberId).single();
+        results.push({
+          name: 'Conexão WhatsApp',
+          status: numberData?.is_connected ? 'success' : 'error',
+          message: numberData?.is_connected ? `${numberData.name} conectado` : 'Desconectado'
+        });
+      }
 
+      addLog('success', '🎉 Auditoria concluída!');
     } catch (error: any) {
       results.push({ name: 'Erro', status: 'error', message: error.message });
       addLog('error', `❌ Erro: ${error.message}`);
@@ -599,6 +625,7 @@ const ProductionTests = () => {
     setTestResults(prev => ({ ...prev, warming: results }));
     setIsRunning(false);
   };
+
 
   // ===== AGENT TESTS =====
   const runAgentTests = async () => {
@@ -809,45 +836,97 @@ const ProductionTests = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Flame className="h-5 w-5" />
-                    Verificação de Aquecimento
+                    Auditoria do Aquecimento IA
                   </CardTitle>
                   <CardDescription>
-                    Verifica status das sessões de aquecimento e interações recentes
+                    Testa o novo sistema IA: OpenAI key, diagnóstico do lead, geração de mensagem, smart delay e cron
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Número WhatsApp (opcional)</Label>
+                      <Select value={selectedWarmingNumberId} onValueChange={setSelectedWarmingNumberId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todos os números" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos os números</SelectItem>
+                          {numbers.map(n => (
+                            <SelectItem key={n.id} value={n.id}>
+                              {n.name || n.phone_number}{n.is_connected ? ' ✓' : ' (offline)'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Nível IA para teste</Label>
+                      <Select value={warmingDebugLevel} onValueChange={setWarmingDebugLevel}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Nível 1 — Ativação Inicial</SelectItem>
+                          <SelectItem value="2">Nível 2 — Conversa Leve</SelectItem>
+                          <SelectItem value="3">Nível 3 — Interação Natural</SelectItem>
+                          <SelectItem value="4">Nível 4 — Pré-Comercial</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label>Número WhatsApp (opcional)</Label>
-                    <Select value={selectedWarmingNumberId} onValueChange={setSelectedWarmingNumberId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todos os números" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos os números</SelectItem>
-                        {numbers.map(n => (
-                          <SelectItem key={n.id} value={n.id}>
-                            {n.name || n.phone_number}
-                            {n.is_connected ? ' ✓' : ' (offline)'}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label>Mensagem simulada do lead</Label>
+                    <Input
+                      value={warmingSimulatedMsg}
+                      onChange={(e) => setWarmingSimulatedMsg(e.target.value)}
+                      placeholder="opa, tudo bem? quem fala?"
+                    />
                     <p className="text-xs text-muted-foreground">
-                      Selecione um número para filtrar as sessões ou deixe em "Todos" para ver todas
+                      A IA vai gerar uma resposta usando o último diagnóstico de lead do usuário + esta mensagem.
                     </p>
                   </div>
-                  
-                  <Button 
-                    onClick={runWarmingTests} 
+
+                  <Button
+                    onClick={runWarmingTests}
                     disabled={isRunning}
                     className="w-full"
                   >
                     {isRunning ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verificando...</>
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Auditando IA...</>
                     ) : (
-                      <><RefreshCw className="h-4 w-4 mr-2" /> Verificar Warming</>
+                      <><Bot className="h-4 w-4 mr-2" /> Auditar Sistema IA</>
                     )}
                   </Button>
+
+                  {warmingDebugSample?.sample && (
+                    <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                        <Bot className="h-4 w-4" /> Amostra IA (não enviada)
+                      </div>
+                      {warmingDebugSample.diagnostic_used && (
+                        <div className="text-xs text-muted-foreground">
+                          Diagnóstico usado: <strong>{warmingDebugSample.diagnostic_used.company_name || '—'}</strong>
+                          {warmingDebugSample.diagnostic_used.category && ` · ${warmingDebugSample.diagnostic_used.category}`}
+                          {warmingDebugSample.diagnostic_used.city && ` · ${warmingDebugSample.diagnostic_used.city}`}
+                        </div>
+                      )}
+                      <div className="rounded bg-background p-3 text-sm whitespace-pre-wrap">
+                        "{warmingDebugSample.sample}"
+                      </div>
+                      {warmingDebugSample.smart_delay && (
+                        <div className="text-xs text-muted-foreground">
+                          ⏱️ Smart delay: <strong>{warmingDebugSample.smart_delay.minutes} min</strong> →{' '}
+                          {new Date(warmingDebugSample.smart_delay.iso).toLocaleString('pt-BR')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {warmingDebugSample?.sample_error && (
+                    <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                      Erro IA: {warmingDebugSample.sample_error}
+                    </div>
+                  )}
 
                   {testResults.warming.length > 0 && renderResults(testResults.warming)}
                 </CardContent>
