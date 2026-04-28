@@ -152,7 +152,12 @@ export default function AdminMrrAudit() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Auditoria de MRR</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Lista de cada assinatura Stripe com decisão de inclusão/exclusão no MRR e o motivo.
+            Lista de cada assinatura (Stripe + Asaas) com decisão de inclusão/exclusão no MRR e o motivo.
+            {summary && (
+              <span className="ml-2 text-xs">
+                Stripe: {summary.stripe_count ?? 0} · Asaas: {summary.asaas_count ?? 0}
+              </span>
+            )}
             {generatedAt && (
               <span className="ml-2 text-xs">Atualizado em {new Date(generatedAt).toLocaleString("pt-BR")}</span>
             )}
