@@ -2049,7 +2049,43 @@ REGRAS:
                     console.log('Lead message:', warmingMessageText);
                     console.log('Interaction status:', matchingInteraction.status);
                     console.log('Messages sent so far:', matchingInteraction.messages_sent);
-                    
+
+                    // ===== AI MODE: delegate to warming-reply-processor =====
+                    let aiDelegated = false;
+                    try {
+                      const { data: sessionRow } = await supabase
+                        .from('warming_sessions')
+                        .select('ai_mode, status')
+                        .eq('id', matchingInteraction.session_id)
+                        .maybeSingle();
+
+                      if (sessionRow?.ai_mode === true && sessionRow?.status === 'active') {
+                        console.log('[warming] AI mode enabled — delegating to warming-reply-processor');
+                        const supaUrl = Deno.env.get('SUPABASE_URL')!;
+                        const srv = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+                        await fetch(`${supaUrl}/functions/v1/warming-reply-processor`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${srv}`,
+                            apikey: srv,
+                          },
+                          body: JSON.stringify({
+                            mode: 'inbound',
+                            user_id: whatsappNumber.user_id,
+                            from_phone: normalizedLeadPhone,
+                            message_text: warmingMessageText,
+                            instance_name: instance,
+                          }),
+                        }).catch((e) => console.error('[warming] delegate error', e));
+                        aiDelegated = true;
+                      }
+                    } catch (delegateErr) {
+                      console.error('[warming] AI delegation check failed, falling back to classic:', delegateErr);
+                    }
+
+                    if (!aiDelegated) {
+
                     const messagesReceived = matchingInteraction.messages_received + 1;
                     const warmingLevel = matchingInteraction.warming_level || 1;
                     
@@ -2193,6 +2229,7 @@ REGRAS:
                       .eq('id', matchingInteraction.id);
                     
                     console.log(`Updated warming interaction ${matchingInteraction.id}: received=${messagesReceived}, status=${updateData.status || 'unchanged'}`);
+                    } // end if (!aiDelegated)
                   }
                 }
                 } catch (warmingError) {
