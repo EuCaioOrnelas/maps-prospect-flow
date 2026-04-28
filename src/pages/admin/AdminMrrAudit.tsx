@@ -260,9 +260,10 @@ export default function AdminMrrAudit() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Status</TableHead>
+                  <TableHead>Provedor</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Plano</TableHead>
-                  <TableHead>Stripe</TableHead>
+                  <TableHead>Status pgto</TableHead>
                   <TableHead className="text-right">MRR/mês</TableHead>
                   <TableHead>trial_end</TableHead>
                   <TableHead>trial_will_charge_at</TableHead>
@@ -270,9 +271,21 @@ export default function AdminMrrAudit() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((r) => (
-                  <TableRow key={r.subscription_id}>
+                {paginated.map((r) => (
+                  <TableRow key={`${r.provider ?? "stripe"}-${r.subscription_id}`}>
                     <TableCell><StatusBadge row={r} /></TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={
+                          (r.provider ?? "stripe") === "asaas"
+                            ? "text-[10px] border-blue-500/40 text-blue-600"
+                            : "text-[10px] border-purple-500/40 text-purple-600"
+                        }
+                      >
+                        {(r.provider ?? "stripe").toUpperCase()}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-sm">{r.customer_email || "—"}</TableCell>
                     <TableCell className="text-sm capitalize">
                       {r.plan}
@@ -297,6 +310,37 @@ export default function AdminMrrAudit() {
           )}
         </CardContent>
       </Card>
+
+      {/* Paginação */}
+      {!loading && filtered.length > 0 && (
+        <div className="flex items-center justify-between text-sm">
+          <div className="text-muted-foreground">
+            Mostrando {(currentPage - 1) * PAGE_SIZE + 1}–
+            {Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Anterior
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Página {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Próxima
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
