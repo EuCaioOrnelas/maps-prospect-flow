@@ -82,26 +82,11 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const isSubmittingRef = useRef(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signUp, user } = useAuth();
-
-  const handleGoogleSignUp = async () => {
-    setIsGoogleLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
-    if (error) {
-      setIsGoogleLoading(false);
-      toast({ title: "Erro ao criar conta com Google", description: error.message, variant: "destructive" });
-    }
-  };
 
   useEffect(() => {
     if (user) {

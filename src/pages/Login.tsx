@@ -62,6 +62,25 @@ const Login = () => {
   };
 
   useEffect(() => {
+    // Detecta erro vindo do callback do Google OAuth (trigger bloqueou signup)
+    const hash = window.location.hash || "";
+    const search = window.location.search || "";
+    const combined = `${hash} ${search}`.toLowerCase();
+    if (combined.includes("google_signup_not_allowed") || combined.includes("error_code=unexpected_failure") || combined.includes("error=server_error")) {
+      const isOurBlock = combined.includes("google_signup_not_allowed") || combined.includes("conta+n%c3%a3o+encontrada") || combined.includes("conta não encontrada");
+      toast({
+        title: isOurBlock ? "Conta não encontrada" : "Erro ao entrar com Google",
+        description: isOurBlock
+          ? "Você ainda não tem uma conta na Wiize. Cadastre-se com cartão na página de planos para começar seu trial de 7 dias."
+          : "Não foi possível entrar com Google. Tente novamente ou use email e senha.",
+        variant: "destructive",
+        duration: 8000,
+      });
+      // Limpa a URL
+      window.history.replaceState({}, "", "/login");
+      return;
+    }
+
     // Wait for profile to load before redirecting
     if (user && !loading) {
       // If trial expired and user is on free plan, redirect to upgrade
@@ -71,7 +90,7 @@ const Login = () => {
         navigate("/dashboard");
       }
     }
-  }, [user, loading, isTrialExpired, profile, navigate]);
+  }, [user, loading, isTrialExpired, profile, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
