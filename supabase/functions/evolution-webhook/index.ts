@@ -2051,6 +2051,7 @@ REGRAS:
                     console.log('Messages sent so far:', matchingInteraction.messages_sent);
 
                     // ===== AI MODE: delegate to warming-reply-processor =====
+                    let aiDelegated = false;
                     try {
                       const { data: sessionRow } = await supabase
                         .from('warming_sessions')
@@ -2077,12 +2078,13 @@ REGRAS:
                             instance_name: instance,
                           }),
                         }).catch((e) => console.error('[warming] delegate error', e));
-                        // Skip classic flow for this interaction
-                        continue;
+                        aiDelegated = true;
                       }
                     } catch (delegateErr) {
                       console.error('[warming] AI delegation check failed, falling back to classic:', delegateErr);
                     }
+
+                    if (!aiDelegated) {
 
                     const messagesReceived = matchingInteraction.messages_received + 1;
                     const warmingLevel = matchingInteraction.warming_level || 1;
