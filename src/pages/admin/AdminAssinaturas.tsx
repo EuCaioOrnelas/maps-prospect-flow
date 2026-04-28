@@ -90,8 +90,13 @@ export default function AdminAssinaturas() {
                     <TableCell>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <Badge className={`${planColors[sub.plan] || "bg-muted text-muted-foreground"} border-0 text-xs`}>
-                          {sub.plan}
+                          {isTrialing(sub) ? `trial ${sub.plan}` : sub.plan}
                         </Badge>
+                        {isTrialing(sub) && (
+                          <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-600 border-orange-500/30 px-1.5 py-0">
+                            Trial (não pago)
+                          </Badge>
+                        )}
                         {sub.is_custom_subscription && (
                           <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 px-1.5 py-0">
                             Custom
@@ -100,10 +105,14 @@ export default function AdminAssinaturas() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {sub.payment_provider === "manual" ? "Manual (Admin)" : getProviderLabel(sub.payment_provider)}
+                      {isTrialing(sub)
+                        ? `Trial • ${getProviderLabel(sub.payment_provider)}`
+                        : sub.payment_provider === "manual" ? "Manual (Admin)" : getProviderLabel(sub.payment_provider)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {sub.subscription_current_period_end ? new Date(sub.subscription_current_period_end).toLocaleDateString("pt-BR") : "—"}
+                      {isTrialing(sub)
+                        ? `Cobra em ${new Date(sub.trial_will_charge_at).toLocaleDateString("pt-BR")}`
+                        : sub.subscription_current_period_end ? new Date(sub.subscription_current_period_end).toLocaleDateString("pt-BR") : "—"}
                     </TableCell>
                   </TableRow>
                 ))}
