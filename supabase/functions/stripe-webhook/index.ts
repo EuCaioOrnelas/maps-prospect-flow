@@ -941,14 +941,15 @@ serve(async (req) => {
                 ? new Date(subscription.current_period_end * 1000).toISOString()
                 : null;
 
-              // Reset searches on renewal
+              // Reset searches on renewal + clear trial markers (trial virou pagante real)
               const { error: updateError } = await supabaseClient
                 .from("profiles")
                 .update({ 
                   searches_used: 0,
                   searches_limit: basePlanLimit,
                   last_searches_reset: new Date().toISOString(),
-                  subscription_current_period_end: subscriptionEnd
+                  subscription_current_period_end: subscriptionEnd,
+                  trial_will_charge_at: null,
                 })
                 .eq("id", profile.id);
 

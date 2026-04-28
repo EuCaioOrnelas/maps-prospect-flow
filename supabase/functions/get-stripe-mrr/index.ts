@@ -261,6 +261,8 @@ Deno.serve(async (req) => {
     // --- Process subscriptions for active MRR, cancellations ---
     let activeMRR = 0;
     let activeCount = 0;
+    let trialingCount = 0;
+    let trialingMRR = 0;
     let canceledCount = 0;
     let cancellationsLast30d = 0;
     const planDistribution: { [plan: string]: number } = {};
@@ -346,9 +348,17 @@ Deno.serve(async (req) => {
       const chargeId = latestInvoice?.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
       
-      // Stripe MRR: includes active, trialing, past_due BUT excludes cancel_at_period_end
-      const countsForMrr = ["active", "trialing", "past_due"].includes(sub.status) && !sub.cancel_at_period_end;
-      
+      // Stripe MRR: includes ONLY active and past_due (NOT trialing — trial não é receita real)
+      // trialing é contado separadamente em trialingCount/trialingMRR para exibição.
+      const isTrialing = sub.status === "trialing";
+      const countsForMrr = ["active", "past_due"].includes(sub.status) && !sub.cancel_at_period_end;
+
+      if (isTrialing && !sub.cancel_at_period_end && mrrAmount > 0 && !wasRefunded) {
+        trialingCount++;
+        trialingMRR += mrrAmount;
+        console.log(`[GET-STRIPE-MRR] Trial sub (NOT counted in MRR): ${sub.id} | email=${customerEmail} | plan=${planName} | future_mrr=R$${mrrAmount}`);
+      }
+
       if (countsForMrr && mrrAmount > 0 && !wasRefunded) {
         activeMRR += mrrAmount;
         activeCount++;
@@ -566,6 +576,8 @@ Deno.serve(async (req) => {
         activeSubscriptions: finalActiveCount,
         stripeActiveSubscriptions: activeCount,
         customActiveSubscriptions: customActiveCount,
+        trialingSubscriptions: trialingCount,
+        trialingMRR,
         totalRefunded: wiizeRefundedAmount,
         refundCount: wiizeRefundCount,
         canceledSubscriptions: finalCanceledCount,

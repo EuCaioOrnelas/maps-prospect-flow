@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface DashboardStats {
   totalUsers: number;
   payingUsers: number;
+  trialingUsers: number;
   freeUsers: number;
   activeUsers7d: number;
   activeUsers30d: number;
@@ -124,7 +125,7 @@ export function useAdminDashboard() {
     try {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, plan, searches_used, searches_limit, created_at, updated_at, is_blocked, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used")
+        .select("id, plan, payment_provider, trial_will_charge_at, searches_used, searches_limit, created_at, updated_at, is_blocked, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used")
         .order("created_at", { ascending: false });
 
       if (!profiles) return;
@@ -133,10 +134,18 @@ export function useAdminDashboard() {
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
+      // Helper: usuário em trial = tem trial_will_charge_at futuro (ainda não foi cobrado).
+      const isTrialing = (p: any) =>
+        p.plan !== "free" &&
+        p.trial_will_charge_at &&
+        new Date(p.trial_will_charge_at).getTime() > now.getTime();
+
       const totalUsers = profiles.length;
-      const payingUsers = profiles.filter((p) => p.plan !== "free").length;
+      const trialingUsers = profiles.filter(isTrialing).length;
+      // Pagantes "de verdade" = plano pago E NÃO está em trial.
+      const payingUsers = profiles.filter((p) => p.plan !== "free" && !isTrialing(p)).length;
       const freeUsers = profiles.filter((p) => p.plan === "free").length;
-      
+
       // Active users: updated in the period AND has any usage
       const activeUsers7d = profiles.filter(
         (p) => new Date(p.updated_at) >= sevenDaysAgo && (p.searches_used > 0 || (p as any).trial_messages_sent > 0 || (p as any).trial_leads_used > 0 || (p as any).trial_flows_used > 0 || (p as any).trial_campaigns_used > 0)
@@ -145,31 +154,38 @@ export function useAdminDashboard() {
         (p) => new Date(p.updated_at) >= thirtyDaysAgo && (p.searches_used > 0 || (p as any).trial_messages_sent > 0 || (p as any).trial_leads_used > 0 || (p as any).trial_flows_used > 0 || (p as any).trial_campaigns_used > 0)
       ).length;
 
+      // MRR local NÃO conta trials (ainda não pagaram)
       const mrrLocal = profiles
-        .filter((p) => p.plan !== "free")
+        .filter((p) => p.plan !== "free" && !isTrialing(p))
         .reduce((acc, p) => acc + (PLAN_PRICES_MONTHLY[p.plan] || 0), 0);
 
       // Activation: users who used any feature
-      const activatedUsers = profiles.filter((p) => 
-        p.searches_used > 0 || 
-        (p as any).trial_messages_sent > 0 || 
-        (p as any).trial_leads_used > 0 || 
-        (p as any).trial_flows_used > 0 || 
+      const activatedUsers = profiles.filter((p) =>
+        p.searches_used > 0 ||
+        (p as any).trial_messages_sent > 0 ||
+        (p as any).trial_leads_used > 0 ||
+        (p as any).trial_flows_used > 0 ||
         (p as any).trial_campaigns_used > 0
       ).length;
-      
+
       const activationRate = totalUsers > 0 ? (activatedUsers / totalUsers) * 100 : 0;
 
+      // Distribuição de planos: trials viram bucket separado "trial_<plan>" e não somam revenue
       const planCounts: Record<string, { count: number; revenue: number }> = {};
       profiles.forEach((p) => {
-        if (!planCounts[p.plan]) planCounts[p.plan] = { count: 0, revenue: 0 };
-        planCounts[p.plan].count++;
-        planCounts[p.plan].revenue += PLAN_PRICES_MONTHLY[p.plan] || 0;
+        const trial = isTrialing(p);
+        const bucket = trial ? `trial_${p.plan}` : p.plan;
+        if (!planCounts[bucket]) planCounts[bucket] = { count: 0, revenue: 0 };
+        planCounts[bucket].count++;
+        if (!trial) {
+          planCounts[bucket].revenue += PLAN_PRICES_MONTHLY[p.plan] || 0;
+        }
       });
 
       setStats({
         totalUsers,
         payingUsers,
+        trialingUsers,
         freeUsers,
         activeUsers7d,
         activeUsers30d,

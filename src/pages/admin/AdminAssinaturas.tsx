@@ -19,7 +19,7 @@ export default function AdminAssinaturas() {
     const load = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_custom_subscription")
+        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_custom_subscription, trial_will_charge_at")
         .neq("plan", "free")
         .in("payment_provider", ["stripe", "asaas", "manual"])
         .order("created_at", { ascending: false })
@@ -29,6 +29,9 @@ export default function AdminAssinaturas() {
     };
     load();
   }, []);
+
+  const isTrialing = (s: any) =>
+    s.trial_will_charge_at && new Date(s.trial_will_charge_at).getTime() > Date.now();
 
   const filtered = subscribers.filter(s => 
     s.email?.toLowerCase().includes(search.toLowerCase()) || 
@@ -45,7 +48,7 @@ export default function AdminAssinaturas() {
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Assinaturas</h1>
-        <p className="text-sm text-muted-foreground mt-1">Todos os usuários pagantes — Stripe (Cartão), Asaas (PIX) e contratos customizados</p>
+        <p className="text-sm text-muted-foreground mt-1">Assinantes pagantes (Stripe, Asaas, manual) + trials com cartão. Trials não somam MRR até o primeiro pagamento.</p>
       </div>
 
       <div className="flex items-center gap-3">
@@ -87,8 +90,13 @@ export default function AdminAssinaturas() {
                     <TableCell>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <Badge className={`${planColors[sub.plan] || "bg-muted text-muted-foreground"} border-0 text-xs`}>
-                          {sub.plan}
+                          {isTrialing(sub) ? `trial ${sub.plan}` : sub.plan}
                         </Badge>
+                        {isTrialing(sub) && (
+                          <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-600 border-orange-500/30 px-1.5 py-0">
+                            Trial (não pago)
+                          </Badge>
+                        )}
                         {sub.is_custom_subscription && (
                           <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 px-1.5 py-0">
                             Custom
@@ -97,10 +105,14 @@ export default function AdminAssinaturas() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {sub.payment_provider === "manual" ? "Manual (Admin)" : getProviderLabel(sub.payment_provider)}
+                      {isTrialing(sub)
+                        ? `Trial • ${getProviderLabel(sub.payment_provider)}`
+                        : sub.payment_provider === "manual" ? "Manual (Admin)" : getProviderLabel(sub.payment_provider)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {sub.subscription_current_period_end ? new Date(sub.subscription_current_period_end).toLocaleDateString("pt-BR") : "—"}
+                      {isTrialing(sub)
+                        ? `Cobra em ${new Date(sub.trial_will_charge_at).toLocaleDateString("pt-BR")}`
+                        : sub.subscription_current_period_end ? new Date(sub.subscription_current_period_end).toLocaleDateString("pt-BR") : "—"}
                     </TableCell>
                   </TableRow>
                 ))}
