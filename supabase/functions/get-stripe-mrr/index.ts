@@ -261,6 +261,8 @@ Deno.serve(async (req) => {
     // --- Process subscriptions for active MRR, cancellations ---
     let activeMRR = 0;
     let activeCount = 0;
+    let trialingCount = 0;
+    let trialingMRR = 0;
     let canceledCount = 0;
     let cancellationsLast30d = 0;
     const planDistribution: { [plan: string]: number } = {};
