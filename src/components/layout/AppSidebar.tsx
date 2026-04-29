@@ -57,8 +57,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isAutomationOpen, setIsAutomationOpen] = useState(false);
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
+  const can = (key: FeatureKey) => isAdmin || profileHasFeature(authProfile as any, key);
   
   const { hasDisconnectedWarming, disconnectedNumbers } = useWarmingConnectionAlert();
   const { unreadCount: unreadAnnouncements, disconnectedNumbers: disconnectedNumberAlerts, dismissDisconnectionAlert } = useUnreadAnnouncements();
