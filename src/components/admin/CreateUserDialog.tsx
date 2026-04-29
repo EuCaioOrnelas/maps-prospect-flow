@@ -64,6 +64,7 @@ export const CreateUserDialog = ({ onUserCreated }: Props) => {
     receipt_file_url: null as string | null,
     receipt_file_name: null as string | null,
     notes: "",
+    feature_permissions: null as FeatureKey[] | null, // null = full access
   });
 
   const set = (patch: Partial<typeof form>) => setForm((p) => ({ ...p, ...patch }));
