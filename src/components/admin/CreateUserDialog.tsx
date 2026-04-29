@@ -159,6 +159,7 @@ export const CreateUserDialog = ({ onUserCreated }: Props) => {
           receipt_file_url: form.receipt_file_url || undefined,
           receipt_file_name: form.receipt_file_name || undefined,
           notes: form.notes || undefined,
+          feature_permissions: form.feature_permissions,
         },
       });
       if (error) throw error;

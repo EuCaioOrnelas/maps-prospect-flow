@@ -42,6 +42,7 @@ interface CreateUserRequest {
   receipt_file_name?: string;
 
   notes?: string;
+  feature_permissions?: string[] | null;
 }
 
 const log = (step: string, details?: any) => {
