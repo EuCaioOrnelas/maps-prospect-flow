@@ -2245,7 +2245,7 @@ const Admin = () => {
                         <SelectItem value="free">Free</SelectItem>
                         <SelectItem value="start">Start</SelectItem>
                         <SelectItem value="growth">Growth</SelectItem>
-                        <SelectItem value="scale">Scale</SelectItem>
+                        <SelectItem value="scale">Enterprise</SelectItem>
                       </SelectContent>
                     </Select>
                     <Select value={userActivityFilter} onValueChange={(v) => setUserActivityFilter(v as typeof userActivityFilter)}>
@@ -2313,7 +2313,7 @@ const Admin = () => {
                                 <SelectItem value="free">Free</SelectItem>
                                 <SelectItem value="start">Start</SelectItem>
                                 <SelectItem value="growth">Growth</SelectItem>
-                                <SelectItem value="scale">Scale</SelectItem>
+                                <SelectItem value="scale">Enterprise</SelectItem>
                               </SelectContent>
                             </Select>
                           </TableCell>

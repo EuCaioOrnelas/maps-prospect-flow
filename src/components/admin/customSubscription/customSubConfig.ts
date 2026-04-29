@@ -19,8 +19,8 @@ export const PAYMENT_METHODS = [
 ] as const;
 
 export const SUBSCRIPTION_LABELS = [
-  "Scale Influenciador",
-  "Scale Personalizado",
+  "Enterprise Influenciador",
+  "Enterprise Personalizado",
   "Cortesia Interna",
   "Teste Beta",
   "Parceiro Estratégico",
