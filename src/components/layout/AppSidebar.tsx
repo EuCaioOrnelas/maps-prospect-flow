@@ -293,6 +293,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
 
             {/* Oportunidades with submenu */}
+            {can("oportunidades") && (
             <li data-tour="sidebar-oportunidades">
               <SidebarNavItem
                 title="Oportunidades"
