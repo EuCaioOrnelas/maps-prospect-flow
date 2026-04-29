@@ -365,7 +365,49 @@ export const CreateUserDialog = ({ onUserCreated }: Props) => {
 
               <div className="rounded-lg bg-muted/30 border border-border/60 p-3 text-[11px] text-muted-foreground flex items-start gap-2">
                 <Sparkles size={12} className="text-primary mt-0.5 shrink-0" />
-                <span>Os limites acima sobrescrevem os padrões do plano selecionado. Use para liberar acessos especiais (Scale custom, influenciadores, beta testers).</span>
+                <span>Os limites acima sobrescrevem os padrões do plano. Use para liberar acessos especiais (Enterprise custom, influenciadores, beta testers).</span>
+              </div>
+
+              <SectionTitle icon={ShieldCheck} title="Funcionalidades liberadas" />
+              <div className="rounded-lg bg-muted/30 border border-border/60 p-3 space-y-2">
+                <label className="flex items-center gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={form.feature_permissions === null}
+                    onChange={(e) => set({ feature_permissions: e.target.checked ? null : [] })}
+                  />
+                  <span className="font-medium text-foreground">Acesso total (todas as funcionalidades)</span>
+                </label>
+                {form.feature_permissions !== null && (
+                  <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-border/40">
+                    {FEATURE_CATALOG.map((f) => {
+                      const checked = (form.feature_permissions || []).includes(f.key);
+                      return (
+                        <label key={f.key} className="flex items-start gap-2 text-[11px] p-2 rounded hover:bg-muted/50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              const current = form.feature_permissions || [];
+                              const next = e.target.checked
+                                ? [...current, f.key]
+                                : current.filter((k) => k !== f.key);
+                              set({ feature_permissions: next });
+                            }}
+                            className="mt-0.5"
+                          />
+                          <div>
+                            <div className="font-medium text-foreground">{f.label}</div>
+                            <div className="text-muted-foreground text-[10px] leading-tight">{f.description}</div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="text-[10px] text-muted-foreground italic pt-1">
+                  Páginas não liberadas mostrarão erro 404 quando acessadas e ficarão escondidas no menu.
+                </p>
               </div>
             </div>
           )}
