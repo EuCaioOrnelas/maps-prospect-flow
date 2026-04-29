@@ -406,8 +406,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 </div>
               )}
             </li>
+            )}
 
             {/* CRM with submenu */}
+            {can("crm") && (
             <li data-tour="sidebar-crm">
               <SidebarNavItem
                 title="CRM"
