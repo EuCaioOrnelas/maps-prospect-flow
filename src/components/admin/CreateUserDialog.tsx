@@ -127,6 +127,7 @@ export const CreateUserDialog = ({ onUserCreated }: Props) => {
       starts_at: new Date().toISOString().slice(0, 10),
       contract_file_url: null, contract_file_name: null,
       receipt_file_url: null, receipt_file_name: null, notes: "",
+      feature_permissions: null,
     });
   };
 
