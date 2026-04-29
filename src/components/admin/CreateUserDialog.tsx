@@ -34,8 +34,10 @@ const PLAN_OPTIONS = [
   { value: "free", label: "Free", desc: "Cortesia / Teste", color: "text-muted-foreground" },
   { value: "start", label: "Start", desc: "Plano inicial", color: "text-blue-500" },
   { value: "growth", label: "Growth", desc: "Plano intermediário", color: "text-violet-500" },
-  { value: "scale", label: "Scale", desc: "Plano enterprise", color: "text-amber-500" },
+  { value: "scale", label: "Enterprise", desc: "Plano enterprise customizado", color: "text-amber-500" },
 ] as const;
+
+import { FEATURE_CATALOG, type FeatureKey } from "@/lib/featurePermissions";
 
 export const CreateUserDialog = ({ onUserCreated }: Props) => {
   const { toast } = useToast();
