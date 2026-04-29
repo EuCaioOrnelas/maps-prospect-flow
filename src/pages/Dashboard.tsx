@@ -430,7 +430,7 @@ const Dashboard = () => {
     switch (plan) {
       case 'start': return 'Start';
       case 'growth': return 'Growth';
-      case 'scale': return 'Scale';
+      case 'scale': return 'Enterprise';
       default: return 'Gratuito';
     }
   };

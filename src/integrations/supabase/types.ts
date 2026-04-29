@@ -3458,6 +3458,7 @@ export type Database = {
           city: string | null
           cpf: string | null
           created_at: string
+          custom_feature_permissions: Json | null
           custom_searches_limit: number | null
           custom_subscription_id: string | null
           custom_whatsapp_numbers_limit: number | null
@@ -3516,6 +3517,7 @@ export type Database = {
           city?: string | null
           cpf?: string | null
           created_at?: string
+          custom_feature_permissions?: Json | null
           custom_searches_limit?: number | null
           custom_subscription_id?: string | null
           custom_whatsapp_numbers_limit?: number | null
@@ -3574,6 +3576,7 @@ export type Database = {
           city?: string | null
           cpf?: string | null
           created_at?: string
+          custom_feature_permissions?: Json | null
           custom_searches_limit?: number | null
           custom_subscription_id?: string | null
           custom_whatsapp_numbers_limit?: number | null
@@ -6504,6 +6507,10 @@ export type Database = {
         Returns: number
       }
       get_phone_key: { Args: { phone_input: string }; Returns: string }
+      has_feature_access: {
+        Args: { _feature: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

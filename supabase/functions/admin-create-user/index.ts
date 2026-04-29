@@ -42,6 +42,7 @@ interface CreateUserRequest {
   receipt_file_name?: string;
 
   notes?: string;
+  feature_permissions?: string[] | null;
 }
 
 const log = (step: string, details?: any) => {
@@ -246,6 +247,7 @@ Deno.serve(async (req) => {
         is_custom_subscription: true,
         custom_searches_limit: body.searches_limit,
         custom_whatsapp_numbers_limit: body.whatsapp_numbers_limit,
+        custom_feature_permissions: body.feature_permissions ?? null,
         custom_subscription_id: customSub.id,
         admin_assigned_plan: true,
         payment_provider: "manual",

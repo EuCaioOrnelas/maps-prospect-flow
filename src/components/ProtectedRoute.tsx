@@ -6,6 +6,7 @@ import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { BlockedUserModal } from '@/components/BlockedUserModal';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardThemeProvider } from '@/contexts/ThemeContext';
+import { getFeatureForPath, profileHasFeature } from '@/lib/featurePermissions';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -165,6 +166,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   // Free users without trial also go to upgrade
   if (isFreeTrial && !profile?.trial_start_at && !profile?.trial_end_at && location.pathname !== '/trial-expired' && location.pathname !== '/upgrade' && location.pathname !== '/consultoria') {
     return <Navigate to="/trial-expired" replace />;
+  }
+
+  // Custom subscription feature gate: if the user is a custom-subscription user
+  // and the requested route maps to a feature module they don't have access to,
+  // pretend the page doesn't exist (404). Admins always pass through.
+  if (!isAdmin && !requireAdmin) {
+    const feat = getFeatureForPath(location.pathname);
+    if (feat && !profileHasFeature(profile as any, feat)) {
+      return <Navigate to="/404" replace />;
+    }
   }
 
   return <DashboardThemeProvider>{children}</DashboardThemeProvider>;
