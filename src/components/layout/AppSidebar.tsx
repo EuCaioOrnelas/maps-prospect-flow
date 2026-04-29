@@ -33,6 +33,7 @@ import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
 import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDialog";
 import { SidebarNavItem } from "./SidebarNavItem";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
 
 interface AppSidebarProps {
   profile?: {
