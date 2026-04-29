@@ -464,8 +464,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 </div>
               )}
             </li>
+            )}
 
             {/* Chat */}
+            {can("chat") && (
             <li data-tour="sidebar-chat">
               <SidebarNavItem
                 title="Chat"
@@ -476,8 +478,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 tooltip="Chat"
               />
             </li>
+            )}
 
             {/* Automação with submenu */}
+            {(can("flows") || can("agents") || can("warming")) && (
             <li data-tour="sidebar-automacao">
               <SidebarNavItem
                 title="Automação"
@@ -505,6 +509,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   )}
                 >
                   <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
+                    {can("flows") && (
                     <li data-tour="sidebar-automacao-fluxos">
                       <Link
                         to="/fluxos"
@@ -519,6 +524,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         <span className="whitespace-nowrap truncate">Fluxos</span>
                       </Link>
                     </li>
+                    )}
+                    {can("agents") && (
                     <li data-tour="sidebar-automacao-agentes">
                       <Link
                         to="/agents"
@@ -533,6 +540,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         <span className="whitespace-nowrap truncate">Agentes IA</span>
                       </Link>
                     </li>
+                    )}
+                    {can("warming") && (
                     <li data-tour="sidebar-automacao-aquecimento">
                       <Link
                         to="/warming"
@@ -547,10 +556,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         <span className="whitespace-nowrap truncate">Aquecimento</span>
                       </Link>
                     </li>
+                    )}
                   </ul>
                 </div>
               )}
             </li>
+            )}
           </ul>
         </nav>
 
