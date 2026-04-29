@@ -6,6 +6,7 @@ import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { BlockedUserModal } from '@/components/BlockedUserModal';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardThemeProvider } from '@/contexts/ThemeContext';
+import { getFeatureForPath, profileHasFeature } from '@/lib/featurePermissions';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
