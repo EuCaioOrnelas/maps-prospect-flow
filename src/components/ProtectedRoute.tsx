@@ -168,5 +168,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/trial-expired" replace />;
   }
 
+  // Custom subscription feature gate: if the user is a custom-subscription user
+  // and the requested route maps to a feature module they don't have access to,
+  // pretend the page doesn't exist (404). Admins always pass through.
+  if (!isAdmin && !requireAdmin) {
+    const feat = getFeatureForPath(location.pathname);
+    if (feat && !profileHasFeature(profile as any, feat)) {
+      return <Navigate to="/404" replace />;
+    }
+  }
+
   return <DashboardThemeProvider>{children}</DashboardThemeProvider>;
 };
