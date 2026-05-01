@@ -54,7 +54,60 @@ export function DisclaimerModal() {
             </div>
           </div>
 
-          {/* Protection strategies */}
+          {/* CRITICAL: Number must be warmed */}
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+            <Flame size={20} className="text-red-500 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium text-sm text-red-500">⚠️ Seu número PRECISA estar aquecido</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Disparar prospecção fria com um número <strong className="text-foreground">novo ou frio</strong> é a 
+                <strong className="text-foreground"> principal causa de bloqueio</strong>. Antes de iniciar campanhas, 
+                use o módulo de <strong className="text-foreground">Aquecimento</strong> e aguarde o número atingir o 
+                status <strong className="text-foreground">🔥 Aquecido (nível 4)</strong>. Números mornos ou frios 
+                têm risco extremamente alto de banimento permanente.
+              </p>
+            </div>
+          </div>
+
+          {/* CRITICAL: First contact rules */}
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+            <Ban size={20} className="text-destructive mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <p className="font-medium text-sm text-destructive">Proibido no primeiro contato (prospecção fria)</p>
+              <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+                A Meta monitora padrões de spam. <strong className="text-foreground">NUNCA</strong> envie no primeiro 
+                contato com um lead frio:
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li><strong className="text-foreground">Áudios</strong> — sinal forte de spam massivo</li>
+                <li><strong className="text-foreground">Imagens, vídeos ou figurinhas</strong></li>
+                <li><strong className="text-foreground">Documentos (PDF, DOCX etc.)</strong></li>
+                <li><strong className="text-foreground">Links de qualquer tipo</strong> (encurtados são os piores)</li>
+                <li><strong className="text-foreground">Mensagens longas demais</strong> ou copiadas e coladas iguais</li>
+                <li><strong className="text-foreground">Pedidos de PIX, ofertas agressivas ou gatilhos de venda fortes</strong></li>
+              </ul>
+              <p className="text-xs text-muted-foreground mt-2">
+                Use apenas <strong className="text-foreground">texto curto, personalizado e conversacional</strong>. 
+                Mídias e links só após o lead responder e demonstrar interesse.
+              </p>
+            </div>
+          </div>
+
+          {/* Best practices */}
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+            <FileText size={20} className="text-green-500 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium text-sm text-green-500">Boas práticas obrigatórias</p>
+              <ul className="text-xs text-muted-foreground mt-1 space-y-1 list-disc list-inside">
+                <li>Respeite horário comercial (9h–18h, dias úteis)</li>
+                <li>Sempre ofereça opção de opt-out ("responda SAIR para não receber mais")</li>
+                <li>Pare imediatamente se o lead pedir para não ser contatado</li>
+                <li>Use variações de mensagem (a IA já gera, não copie texto fixo)</li>
+                <li>Comece com volume baixo e aumente gradualmente</li>
+              </ul>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <p className="text-sm font-medium">Nossas estratégias para reduzir riscos:</p>
             <div className="grid grid-cols-2 gap-3">
