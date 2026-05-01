@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Zap, Shield, MessageSquare, Clock, AlertTriangle, Target, ExternalLink } from "lucide-react";
+import { Zap, Shield, MessageSquare, Clock, AlertTriangle, Target, ExternalLink, Flame, Ban, FileText } from "lucide-react";
 import { usePagePopupDismiss } from "@/hooks/usePagePopupDismiss";
 
 export function DisclaimerModal() {
