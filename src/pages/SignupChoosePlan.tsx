@@ -275,7 +275,7 @@ export default function SignupChoosePlan() {
           <p className="text-center text-xs text-muted-foreground mb-8">
             Mais de 5.000 oportunidades por mês?{" "}
             <Link to="/contato" className="text-primary hover:underline">
-              Fale com nosso time sobre o plano Scale
+              Fale com nosso time sobre o plano Enterprise
             </Link>
           </p>
 
