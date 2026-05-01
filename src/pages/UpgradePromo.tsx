@@ -81,27 +81,6 @@ const plans: Plan[] = [
     popular: true,
     icon: TrendingUp,
   },
-  {
-    name: "Scale",
-    key: "scale",
-    price: 897,
-    originalPrice: 1797,
-    searches: "1.200",
-    whatsappNumbers: 10,
-    monthlyMessages: "60.000",
-    description: "Para equipes e agências com alta demanda",
-    features: [
-      "Até 60.000 disparos/mês",
-      "Aquecimento de até 10 chips",
-      "Agentes de IA Integrados",
-      "Até 10 Números WhatsApp",
-      "CRM integrado",
-      "Até 60 leads por busca",
-      "Suporte VIP",
-    ],
-    popular: false,
-    icon: Building2,
-  },
 ];
 /** Animated number that counts from `from` to `to` */
 const AnimatedPrice = ({ from, to, prefix = "R$ " }: { from: number; to: number; prefix?: string }) => {
