@@ -16,11 +16,11 @@ export function DisclaimerModal() {
 
   return (
     <Dialog open={showPopup} onOpenChange={() => {}}>
-      <DialogContent className="max-w-3xl border-border/50 bg-gradient-to-b from-card to-card/95" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-border/50 bg-gradient-to-b from-card to-card/95" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-lg font-semibold flex items-center justify-center gap-2">
             <Target className="h-5 w-5 text-primary" />
-            Prospecção Ativa — API Inbound
+            Prospecção Ativa — Leia antes de prosseguir
           </DialogTitle>
           <DialogDescription className="text-center text-xs">
             Leia atentamente antes de prosseguir
