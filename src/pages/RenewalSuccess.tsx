@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 const planNames: Record<string, string> = {
   start: "Wiize Start",
   growth: "Wiize Growth",
-  scale: "Wiize Scale",
+  scale: "Wiize Enterprise",
 };
 
 const RenewalSuccess = () => {
