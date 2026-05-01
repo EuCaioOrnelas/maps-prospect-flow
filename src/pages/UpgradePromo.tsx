@@ -344,7 +344,7 @@ const UpgradePromo = () => {
 
       {/* Plans Grid */}
       <div className="container mx-auto px-4 pb-12 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl mx-auto">
           {plans.map((plan, index) => {
             const discountedPrice = Math.round(plan.price * 0.5);
             const savings = plan.price - discountedPrice;
