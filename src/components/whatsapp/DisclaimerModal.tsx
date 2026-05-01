@@ -130,9 +130,37 @@ export function DisclaimerModal() {
             </div>
           </div>
 
+          {/* Reality check: blocks are normal */}
+          <div className="rounded-lg bg-muted/40 border border-border/50 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-primary shrink-0" />
+              <p className="text-sm font-medium">Bloqueios fazem parte do jogo — entenda o porquê</p>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Em campanhas de prospecção fria, <strong className="text-foreground">bloqueios são normais e esperados</strong>. 
+              A maioria deles é apenas o WhatsApp <strong className="text-foreground">analisando o comportamento do número</strong> — 
+              muitos são temporários e o chip volta a funcionar em horas ou dias.
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              O WhatsApp realiza <strong className="text-foreground">análises constantes em todos os números</strong> para proteger 
+              seus usuários contra golpes, spam e fraudes. Isso faz parte da segurança da plataforma e contribui até para a 
+              <strong className="text-foreground"> segurança digital nacional</strong>, evitando que criminosos abusem do canal.
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Com as <strong className="text-foreground">estratégias certas</strong> — aquecimento, delays, variações de mensagem 
+              e respeito às diretrizes — você <strong className="text-foreground">prolonga muito a vida útil do chip</strong> e 
+              reduz drasticamente os bloqueios. Mas mais cedo ou mais tarde, <strong className="text-foreground">um bloqueio 
+              vai acontecer</strong>, e isso é completamente normal nesse tipo de operação.
+            </p>
+            <p className="text-xs text-foreground/90 font-medium leading-relaxed border-t border-border/50 pt-3">
+              💡 Boas operações tratam o chip como <strong>insumo da operação</strong>: tenha números reservas 
+              e nunca use seu número pessoal em campanhas frias.
+            </p>
+          </div>
+
           {/* Final warning */}
           <p className="text-xs text-amber-500 text-center font-medium">
-            ⚠️ Mesmo com todas as proteções, bloqueios podem ocorrer por fatores externos.
+            ⚠️ Bloqueios fazem parte da prospecção fria — esteja preparado.
           </p>
 
           <a
