@@ -477,6 +477,38 @@ const UpgradePromo = () => {
           })}
         </div>
 
+        {/* Enterprise — Sob medida */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="max-w-4xl mx-auto mt-8 rounded-2xl border border-border/50 bg-card/40 p-5 sm:p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 shrink-0">
+              <Building2 className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-display font-bold text-lg sm:text-xl text-foreground">Enterprise</h3>
+                <span className="bg-primary/15 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">SOB MEDIDA</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Volume alto, estrutura customizada, gerente dedicado e onboarding com especialista. 
+                <strong className="text-foreground"> Investimento personalizado</strong> conforme o porte da sua operação.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto shrink-0"
+              onClick={() => navigate("/enterprise")}
+            >
+              Falar com especialista
+            </Button>
+          </div>
+        </motion.div>
+
         {/* Trust Signals */}
         <motion.div
           className="max-w-3xl mx-auto mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4"
