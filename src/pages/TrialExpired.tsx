@@ -357,8 +357,8 @@ const TrialExpired = () => {
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
                     <Building2 className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                   </div>
-                  <h3 className="font-display font-bold text-lg md:text-xl">Scale</h3>
-                  <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-0.5 rounded-full">🔥 ENTERPRISE</span>
+                  <h3 className="font-display font-bold text-lg md:text-xl">Enterprise</h3>
+                  <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-0.5 rounded-full">🔥 SOB MEDIDA</span>
                 </div>
                 <p className="text-muted-foreground text-xs sm:text-sm mb-4">Um plano sob medida para a sua operação. Estrutura, volume e suporte dedicado.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -375,12 +375,13 @@ const TrialExpired = () => {
               </div>
               <div className="flex flex-col items-center md:items-end justify-center gap-4 md:min-w-[220px] md:border-l md:border-border/40 md:pl-6">
                 <div className="text-center md:text-right">
-                  <p className="text-xs text-muted-foreground mb-1">A partir de</p>
+                  <p className="text-xs text-muted-foreground mb-1">Investimento</p>
                   <div className="flex items-baseline gap-1 justify-center md:justify-end">
-                    <span className="text-sm text-muted-foreground">R$</span>
-                    <span className="font-display font-bold text-3xl md:text-4xl tabular-nums">1.496</span>
-                    <span className="text-muted-foreground">/mês</span>
+                    <span className="font-display font-bold text-2xl md:text-3xl">Personalizado</span>
                   </div>
+                  <p className="text-primary mt-1.5 text-xs font-medium">
+                    Sob medida conforme a sua operação
+                  </p>
                 </div>
                 <Button variant="outline" size="lg" className="w-full md:w-auto" onClick={() => navigate("/enterprise")}>
                   Falar com Especialista
