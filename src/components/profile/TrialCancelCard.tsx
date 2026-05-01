@@ -43,9 +43,9 @@ export const TrialCancelCard = () => {
   if (new Date(willCharge).getTime() < Date.now()) return null;
 
   const planLabel =
-    planChosen === "growth" ? "Wiize Growth" : planChosen === "scale" ? "Wiize Scale" : "Wiize Start";
+    planChosen === "growth" ? "Wiize Growth" : planChosen === "scale" ? "Wiize Enterprise" : "Wiize Start";
   const planValue =
-    planChosen === "growth" ? "R$ 696" : planChosen === "scale" ? "R$ 1.496" : "R$ 296";
+    planChosen === "growth" ? "R$ 696" : planChosen === "scale" ? "Personalizado" : "R$ 296";
   const chargeDate = willCharge ? new Date(willCharge) : null;
 
   const handleCancel = async () => {

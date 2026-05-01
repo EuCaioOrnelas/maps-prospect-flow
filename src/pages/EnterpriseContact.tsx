@@ -168,7 +168,7 @@ const EnterpriseContact = () => {
   return (
     <>
       <SEO
-        title="Enterprise — Wiize Scale"
+        title="Plano Enterprise — Wiize"
         description="Solicite uma estrutura personalizada para sua operação B2B. Gerente dedicado, volume ilimitado e infraestrutura sob medida."
         keywords="enterprise, B2B, vendas, automação, plano corporativo, Wiize"
       />
