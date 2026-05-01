@@ -39,7 +39,7 @@ import { useRef } from "react";
 const PLAN_INFO: Record<string, { name: string; monthly: number }> = {
   start: { name: "Wiize Start", monthly: 296 },
   growth: { name: "Wiize Growth", monthly: 696 },
-  scale: { name: "Wiize Scale", monthly: 1496 },
+  scale: { name: "Wiize Enterprise", monthly: 1496 },
 };
 
 function fmtCard(v: string) {
