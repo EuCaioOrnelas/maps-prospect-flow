@@ -28,13 +28,15 @@ export const ReconnectDialog = ({
   const [countdown, setCountdown] = useState(60);
   const [qrExpired, setQrExpired] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [activeInstanceName, setActiveInstanceName] = useState(instanceName);
 
   useEffect(() => {
     setQrCode(initialQrCode);
     setQrExpired(false);
     setCountdown(60);
     setIsConnected(false);
-  }, [initialQrCode, open]);
+    setActiveInstanceName(instanceName);
+  }, [initialQrCode, instanceName, open]);
 
   // QR code countdown
   useEffect(() => {
@@ -60,7 +62,7 @@ export const ReconnectDialog = ({
     const checkStatus = async () => {
       try {
         const response = await supabase.functions.invoke('evolution-check-status', {
-          body: { instanceName, numberId },
+          body: { instanceName: activeInstanceName, numberId },
         });
 
         if (response.data?.connected) {
@@ -77,25 +79,38 @@ export const ReconnectDialog = ({
 
     const interval = setInterval(checkStatus, 3000);
     return () => clearInterval(interval);
-  }, [open, instanceName, numberId, qrCode, isConnected, onReconnected, onOpenChange]);
+  }, [open, activeInstanceName, numberId, qrCode, isConnected, onReconnected, onOpenChange]);
 
   const handleRefreshQR = async () => {
     setLoading(true);
     try {
-      const response = await supabase.functions.invoke('evolution-reconnect', {
-        body: { instanceName, numberId },
+      if (activeInstanceName) {
+        await supabase.functions.invoke('evolution-disconnect', {
+          body: { instanceName: activeInstanceName, numberId, deleteInstance: true },
+        });
+      }
+
+      const freshInstanceName = `wiize_reconnect_${numberId.slice(0, 8)}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      setActiveInstanceName(freshInstanceName);
+
+      const response = await supabase.functions.invoke('evolution-create-instance', {
+        body: { instanceName: freshInstanceName, numberId },
       });
 
-      if (response.data?.qrCode) {
-        setQrCode(response.data.qrCode);
+      if (response.data?.qrcode) {
+        setQrCode(response.data.qrcode);
         setQrExpired(false);
         setCountdown(60);
-      } else if (response.data?.connected) {
-        setIsConnected(true);
-        setTimeout(() => {
-          onReconnected();
-          onOpenChange(false);
-        }, 2000);
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        const qrResponse = await supabase.functions.invoke('evolution-get-qrcode', {
+          body: { instanceName: freshInstanceName, numberId },
+        });
+        if (qrResponse.data?.qrcode) {
+          setQrCode(qrResponse.data.qrcode);
+          setQrExpired(false);
+          setCountdown(60);
+        }
       }
     } catch (err) {
       console.error('Error refreshing QR:', err);
