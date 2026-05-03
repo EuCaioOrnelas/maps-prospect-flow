@@ -944,6 +944,12 @@ async function processSingleMessage(
         phone: formattedPhone,
         error: result.error
       });
+      await deleteEvolutionInstance(numberData.instance_name);
+      await supabase.from('whatsapp_numbers').update({
+        is_connected: false,
+        instance_name: null,
+        updated_at: now
+      }).eq('id', numberData.id);
       
       await supabase.from('whatsapp_campaigns').update({
         status: 'paused',
