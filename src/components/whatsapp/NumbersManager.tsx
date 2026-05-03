@@ -364,22 +364,28 @@ export const NumbersManager = ({
             });
 
             const isReallyConnected = response.data?.connected === true;
+            const isDefinitelyDisconnected = response.data?.connected === false;
             
-            if (!isReallyConnected) {
-              // Update database - KEEP instance_name for reconnection
+            if (isDefinitelyDisconnected) {
+              if (number.instance_name) {
+                await supabase.functions.invoke('evolution-disconnect', {
+                  body: { instanceName: number.instance_name, numberId: number.id, deleteInstance: true },
+                });
+              }
+
               await supabase
                 .from('whatsapp_numbers')
                 .update({ 
                   is_connected: false,
                   phone_number: null,
+                  instance_name: null,
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', number.id);
 
-              // Update local state - keep instance_name
               onNumbersChange(numbers.map(n => 
                 n.id === number.id 
-                  ? { ...n, is_connected: false, phone_number: null } 
+                  ? { ...n, is_connected: false, phone_number: null, instance_name: null } 
                   : n
               ));
 
@@ -388,6 +394,8 @@ export const NumbersManager = ({
                 description: `O número "${number.name}" foi desconectado`,
                 variant: "destructive",
               });
+            } else if (!isReallyConnected) {
+              console.log(`[NumbersManager] Status uncertain for ${number.name}; keeping current connection state`);
             }
           } catch (e) {
             console.error('Error checking status for', number.name, e);
