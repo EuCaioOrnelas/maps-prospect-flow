@@ -1398,15 +1398,14 @@ export const NumbersManager = ({
           setConnectingNumberId(null);
           setPendingNumberName(null);
           
-          // Cleanup cancelled QR instance in background (non-blocking). For existing numbers,
-          // keep the old DB row but remove this fresh internal instance to avoid stale sessions.
+          // Cleanup cancelled QR instance in background (non-blocking) and clear the fresh
+          // instance_name from the existing DB row to avoid stale internal sessions.
           if (instanceToCleanup) {
             supabase.functions.invoke('evolution-disconnect', {
               body: { 
                 instanceName: instanceToCleanup,
                 numberId: numberIdToCleanup,
                 deleteInstance: true,
-                preserveNumberRecord: !isNewNumberCleanup,
               },
             }).then(() => {
               console.log('Cancelled orphan instance:', instanceToCleanup);
