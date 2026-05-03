@@ -71,3 +71,7 @@ verify_jwt = false
 
 [functions.warming-reply-processor]
 verify_jwt = false
+
+[functions.evolution-health-check]
+verify_jwt = false
+
