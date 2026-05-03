@@ -1391,18 +1391,22 @@ export const NumbersManager = ({
           setConnectDialogOpen(false);
           const instanceToCleanup = connectingInstanceName;
           const numberIdToCleanup = connectingNumberId;
+          const isNewNumberCleanup = pendingNumberName !== null;
           
           // Reset ALL states including pending number
           setConnectingInstanceName("");
           setConnectingNumberId(null);
           setPendingNumberName(null);
           
-          // Cleanup orphan instance in background (non-blocking)
+          // Cleanup cancelled QR instance in background (non-blocking). For existing numbers,
+          // keep the old DB row but remove this fresh internal instance to avoid stale sessions.
           if (instanceToCleanup) {
             supabase.functions.invoke('evolution-disconnect', {
               body: { 
                 instanceName: instanceToCleanup,
-                numberId: numberIdToCleanup
+                numberId: numberIdToCleanup,
+                deleteInstance: true,
+                preserveNumberRecord: !isNewNumberCleanup,
               },
             }).then(() => {
               console.log('Cancelled orphan instance:', instanceToCleanup);
