@@ -1391,7 +1391,6 @@ export const NumbersManager = ({
           setConnectDialogOpen(false);
           const instanceToCleanup = connectingInstanceName;
           const numberIdToCleanup = connectingNumberId;
-          const isNewNumberCleanup = pendingNumberName !== null;
           
           // Reset ALL states including pending number
           setConnectingInstanceName("");
