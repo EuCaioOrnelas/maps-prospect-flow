@@ -364,22 +364,28 @@ export const NumbersManager = ({
             });
 
             const isReallyConnected = response.data?.connected === true;
+            const isDefinitelyDisconnected = response.data?.connected === false;
             
-            if (!isReallyConnected) {
-              // Update database - KEEP instance_name for reconnection
+            if (isDefinitelyDisconnected) {
+              if (number.instance_name) {
+                await supabase.functions.invoke('evolution-disconnect', {
+                  body: { instanceName: number.instance_name, numberId: number.id, deleteInstance: true },
+                });
+              }
+
               await supabase
                 .from('whatsapp_numbers')
                 .update({ 
                   is_connected: false,
                   phone_number: null,
+                  instance_name: null,
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', number.id);
 
-              // Update local state - keep instance_name
               onNumbersChange(numbers.map(n => 
                 n.id === number.id 
-                  ? { ...n, is_connected: false, phone_number: null } 
+                  ? { ...n, is_connected: false, phone_number: null, instance_name: null } 
                   : n
               ));
 
@@ -388,6 +394,8 @@ export const NumbersManager = ({
                 description: `O número "${number.name}" foi desconectado`,
                 variant: "destructive",
               });
+            } else if (!isReallyConnected) {
+              console.log(`[NumbersManager] Status uncertain for ${number.name}; keeping current connection state`);
             }
           } catch (e) {
             console.error('Error checking status for', number.name, e);
@@ -942,16 +950,44 @@ export const NumbersManager = ({
   };
 
   const handleRefreshQR = async () => {
-    // Reuse the current instance name instead of generating a new one
-    await createInstanceAndGetQR(connectingNumberId, connectingInstanceName);
+    const previousInstanceName = connectingInstanceName;
+    const freshInstanceName = generateInstanceName();
+
+    if (previousInstanceName) {
+      supabase.functions.invoke('evolution-disconnect', {
+        body: {
+          instanceName: previousInstanceName,
+          numberId: connectingNumberId,
+          deleteInstance: true,
+        },
+      }).catch((err) => console.error('Error deleting expired QR instance:', err));
+    }
+
+    setConnectingInstanceName(freshInstanceName);
+    connectionHandledRef.current = false;
+    isInsertingRef.current = false;
+    await createInstanceAndGetQR(connectingNumberId, freshInstanceName);
   };
 
   const openConnectDialog = async (numberId: string) => {
     const number = numbers.find(n => n.id === numberId);
     if (!number) return;
 
-    // Reuse existing instance_name if available, otherwise generate a new one
-    const instanceName = number.instance_name || generateInstanceName();
+    const previousInstanceName = number.instance_name;
+    const instanceName = generateInstanceName();
+    if (previousInstanceName) {
+      try {
+        await supabase.functions.invoke('evolution-disconnect', {
+          body: {
+            instanceName: previousInstanceName,
+            numberId,
+            deleteInstance: true,
+          },
+        });
+      } catch (err) {
+        console.error('Error deleting stale instance before reconnect:', err);
+      }
+    }
     
     setConnectingNumberId(numberId);
     setConnectingInstanceName(instanceName);
@@ -1361,12 +1397,14 @@ export const NumbersManager = ({
           setConnectingNumberId(null);
           setPendingNumberName(null);
           
-          // Cleanup orphan instance in background (non-blocking)
+          // Cleanup cancelled QR instance in background (non-blocking) and clear the fresh
+          // instance_name from the existing DB row to avoid stale internal sessions.
           if (instanceToCleanup) {
             supabase.functions.invoke('evolution-disconnect', {
               body: { 
                 instanceName: instanceToCleanup,
-                numberId: numberIdToCleanup
+                numberId: numberIdToCleanup,
+                deleteInstance: true,
               },
             }).then(() => {
               console.log('Cancelled orphan instance:', instanceToCleanup);

@@ -3,17 +3,23 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // --- Evolution API credentials helper (inlined) ---
 interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
 const PAID_PLANS = ['start', 'growth', 'scale'];
+function normalizeApiUrl(url: string): string {
+  let clean = url.replace(/\/+$/, '');
+  if (clean.endsWith('/manager')) clean = clean.slice(0, -8);
+  return clean;
+}
 function getEvolutionCredentials(tierOrPlan: string | null | undefined): EvolutionCredentials {
   const normalized = (tierOrPlan || 'free').toLowerCase();
   if (normalized === 'paid' || PAID_PLANS.includes(normalized)) {
     const url = Deno.env.get('EVOLUTION_API_URL_PAID'), apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
-    if (url && apiKey) return { url, apiKey, tier: 'paid' };
+    if (url && apiKey) return { url: normalizeApiUrl(url), apiKey, tier: 'paid' };
   }
   const url = Deno.env.get('EVOLUTION_API_URL'), apiKey = Deno.env.get('EVOLUTION_API_KEY');
   if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
-  return { url, apiKey, tier: 'free' };
+  return { url: normalizeApiUrl(url), apiKey, tier: 'free' };
 }
-async function getEvolutionCredentialsByNumber(supabase: any, numberId: string): Promise<EvolutionCredentials> {
+async function getEvolutionCredentialsByNumber(supabase: any, numberId: string | null): Promise<EvolutionCredentials> {
+  if (!numberId) return getEvolutionCredentials('free');
   const { data } = await supabase.from('whatsapp_numbers').select('api_tier').eq('id', numberId).single();
   return getEvolutionCredentials(data?.api_tier || 'free');
 }
@@ -22,6 +28,25 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+async function deleteEvolutionInstance(instanceName: string): Promise<void> {
+  for (const tier of ['free', 'paid'] as const) {
+    try {
+      const creds = getEvolutionCredentials(tier);
+      await fetch(`${creds.url}/instance/logout/${instanceName}`, {
+        method: 'DELETE',
+        headers: { 'apikey': creds.apiKey },
+      }).catch(() => null);
+      const deleteResponse = await fetch(`${creds.url}/instance/delete/${instanceName}`, {
+        method: 'DELETE',
+        headers: { 'apikey': creds.apiKey },
+      });
+      console.log(`Delete ${instanceName} from ${tier} API response status:`, deleteResponse.status);
+    } catch (e) {
+      console.log(`Instance ${instanceName} not found on ${tier} API (expected):`, e);
+    }
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -46,14 +71,16 @@ serve(async (req) => {
       throw new Error('Invalid user token');
     }
 
-    const { instanceName, numberId, deleteInstance = false } = await req.json();
+    const body = await req.json();
+    const { instanceName, numberId: rawNumberId, deleteInstance = false, preserveNumberRecord = false } = body;
+    const numberId = rawNumberId && rawNumberId !== 'null' ? rawNumberId : null;
 
     // Get the correct Evolution API based on the number's api_tier
     const evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
     const EVOLUTION_API_URL = evoCredentials.url;
     const EVOLUTION_API_KEY = evoCredentials.apiKey;
 
-    console.log(`Disconnecting instance: ${instanceName} on ${evoCredentials.tier} API, deleteInstance: ${deleteInstance}`);
+    console.log(`Disconnecting instance: ${instanceName} on ${evoCredentials.tier} API, deleteInstance: ${deleteInstance}, preserveNumberRecord: ${preserveNumberRecord}`);
 
     // Always logout from WhatsApp session
     try {
@@ -70,28 +97,19 @@ serve(async (req) => {
 
     // Only delete the Evolution instance if explicitly requested
     if (deleteInstance) {
-      // Try deleting from BOTH APIs (free + paid) to ensure cleanup
-      for (const tier of ['free', 'paid'] as const) {
-        try {
-          const creds = getEvolutionCredentials(tier);
-          const deleteResponse = await fetch(`${creds.url}/instance/delete/${instanceName}`, {
-            method: 'DELETE',
-            headers: { 'apikey': creds.apiKey },
-          });
-          console.log(`Delete from ${tier} API response status:`, deleteResponse.status);
-        } catch (e) {
-          console.log(`Instance not found on ${tier} API (expected):`, e);
-        }
-      }
+      // Try logout + delete from BOTH APIs (free + paid) to avoid orphan internal instances
+      await deleteEvolutionInstance(instanceName);
 
       // Unlink proxy before deleting
       let savedPhoneNumber: string | null = null;
       try {
-        const { data: numberData } = await supabase
-          .from('whatsapp_numbers')
-          .select('proxy_id, phone_number')
-          .eq('id', numberId)
-          .single();
+        const { data: numberData } = numberId
+          ? await supabase
+              .from('whatsapp_numbers')
+              .select('proxy_id, phone_number')
+              .eq('id', numberId)
+              .single()
+          : { data: null };
         
         savedPhoneNumber = numberData?.phone_number || null;
 
@@ -119,10 +137,12 @@ serve(async (req) => {
         const phoneDigits = (savedPhoneNumber || '').replace(/\D/g, '');
         const phoneKey = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : null;
         
-        const { data: warmingSessions } = await supabase
-          .from('warming_sessions')
-          .select('id, status')
-          .eq('whatsapp_number_id', numberId);
+        const { data: warmingSessions } = numberId
+          ? await supabase
+              .from('warming_sessions')
+              .select('id, status')
+              .eq('whatsapp_number_id', numberId)
+          : { data: [] };
         
         if (warmingSessions && warmingSessions.length > 0) {
           // For completed sessions, preserve status as-is; only pause active ones
@@ -166,31 +186,33 @@ serve(async (req) => {
         console.error('Error preserving warming sessions:', e);
       }
 
-      const { error: updateError } = await supabase
-        .from('whatsapp_numbers')
-        .update({ 
-          is_connected: false,
-          phone_number: null,
-          instance_name: null,
-          proxy_id: null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', numberId)
-        ;
+      const { error: updateError } = numberId && !preserveNumberRecord
+        ? await supabase
+            .from('whatsapp_numbers')
+            .update({ 
+              is_connected: false,
+              phone_number: null,
+              instance_name: null,
+              proxy_id: null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', numberId)
+        : { error: null };
 
       if (updateError) {
         console.error('Error updating number status:', updateError);
       }
     } else {
-      const { error: updateError } = await supabase
-        .from('whatsapp_numbers')
-        .update({ 
-          is_connected: false,
-          phone_number: null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', numberId)
-        ;
+      const { error: updateError } = numberId
+        ? await supabase
+            .from('whatsapp_numbers')
+            .update({ 
+              is_connected: false,
+              phone_number: null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', numberId)
+        : { error: null };
 
       if (updateError) {
         console.error('Error updating number status:', updateError);
