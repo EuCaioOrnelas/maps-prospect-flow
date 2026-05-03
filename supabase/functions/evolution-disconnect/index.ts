@@ -71,17 +71,14 @@ serve(async (req) => {
       throw new Error('Invalid user token');
     }
 
-    const { instanceName, numberId: rawNumberId, deleteInstance = false } = await req.json();
+    const body = await req.json();
+    const { instanceName, numberId: rawNumberId, deleteInstance = false, preserveNumberRecord = false } = body;
     const numberId = rawNumberId && rawNumberId !== 'null' ? rawNumberId : null;
 
     // Get the correct Evolution API based on the number's api_tier
     const evoCredentials = await getEvolutionCredentialsByNumber(supabase, numberId);
     const EVOLUTION_API_URL = evoCredentials.url;
     const EVOLUTION_API_KEY = evoCredentials.apiKey;
-
-    const body = await req.json();
-    const { instanceName, numberId: rawNumberId, deleteInstance = false, preserveNumberRecord = false } = body;
-    const numberId = rawNumberId && rawNumberId !== 'null' ? rawNumberId : null;
 
     console.log(`Disconnecting instance: ${instanceName} on ${evoCredentials.tier} API, deleteInstance: ${deleteInstance}, preserveNumberRecord: ${preserveNumberRecord}`);
 
