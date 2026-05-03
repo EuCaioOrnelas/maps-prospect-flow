@@ -281,11 +281,14 @@ serve(async (req) => {
               .eq('id', numberId)
               .single();
 
-            // Mark as disconnected in DB
+            await deleteEvolutionInstance(instanceName);
+
+            // Mark as disconnected in DB and clear stale internal instance
             await supabase
               .from('whatsapp_numbers')
               .update({ 
                 is_connected: false,
+                instance_name: null,
                 updated_at: new Date().toISOString()
               })
               .eq('id', numberId)
