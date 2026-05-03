@@ -6339,6 +6339,7 @@ export type Database = {
           id: string
           instance_name: string | null
           is_connected: boolean
+          last_health_check_at: string | null
           last_sent_at: string | null
           name: string
           phone_number: string | null
@@ -6353,6 +6354,7 @@ export type Database = {
           id?: string
           instance_name?: string | null
           is_connected?: boolean
+          last_health_check_at?: string | null
           last_sent_at?: string | null
           name: string
           phone_number?: string | null
@@ -6367,6 +6369,7 @@ export type Database = {
           id?: string
           instance_name?: string | null
           is_connected?: boolean
+          last_health_check_at?: string | null
           last_sent_at?: string | null
           name?: string
           phone_number?: string | null
