@@ -29,6 +29,7 @@ export const ReconnectDialog = ({
   const [qrExpired, setQrExpired] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [activeInstanceName, setActiveInstanceName] = useState(instanceName);
+  const [createdFreshInstance, setCreatedFreshInstance] = useState(false);
 
   useEffect(() => {
     setQrCode(initialQrCode);
@@ -36,6 +37,7 @@ export const ReconnectDialog = ({
     setCountdown(60);
     setIsConnected(false);
     setActiveInstanceName(instanceName);
+    setCreatedFreshInstance(false);
   }, [initialQrCode, instanceName, open]);
 
   // QR code countdown
@@ -92,6 +94,7 @@ export const ReconnectDialog = ({
 
       const freshInstanceName = `wiize_reconnect_${numberId.slice(0, 8)}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       setActiveInstanceName(freshInstanceName);
+      setCreatedFreshInstance(true);
 
       const response = await supabase.functions.invoke('evolution-create-instance', {
         body: { instanceName: freshInstanceName, numberId },
@@ -120,7 +123,14 @@ export const ReconnectDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(nextOpen) => {
+      if (!nextOpen && createdFreshInstance && activeInstanceName && !isConnected) {
+        supabase.functions.invoke('evolution-disconnect', {
+          body: { instanceName: activeInstanceName, numberId, deleteInstance: true },
+        }).catch((err) => console.error('Error cleaning cancelled reconnect instance:', err));
+      }
+      onOpenChange(nextOpen);
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
