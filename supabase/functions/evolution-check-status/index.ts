@@ -47,6 +47,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+async function deleteEvolutionInstance(instanceName: string): Promise<void> {
+  for (const tier of ['free', 'paid'] as const) {
+    try {
+      const creds = getEvolutionCredentials(tier);
+      await fetch(`${creds.url}/instance/logout/${instanceName}`, {
+        method: 'DELETE',
+        headers: { 'apikey': creds.apiKey },
+      }).catch(() => null);
+      const deleteResponse = await fetch(`${creds.url}/instance/delete/${instanceName}`, {
+        method: 'DELETE',
+        headers: { 'apikey': creds.apiKey },
+      });
+      console.log(`Deleted stale instance ${instanceName} from ${tier} API: ${deleteResponse.status}`);
+    } catch (e) {
+      console.log(`Stale instance ${instanceName} not found on ${tier} API:`, e);
+    }
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
