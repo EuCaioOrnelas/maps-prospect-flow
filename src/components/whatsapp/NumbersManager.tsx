@@ -942,16 +942,44 @@ export const NumbersManager = ({
   };
 
   const handleRefreshQR = async () => {
-    // Reuse the current instance name instead of generating a new one
-    await createInstanceAndGetQR(connectingNumberId, connectingInstanceName);
+    const previousInstanceName = connectingInstanceName;
+    const freshInstanceName = generateInstanceName();
+
+    if (previousInstanceName) {
+      supabase.functions.invoke('evolution-disconnect', {
+        body: {
+          instanceName: previousInstanceName,
+          numberId: connectingNumberId,
+          deleteInstance: true,
+        },
+      }).catch((err) => console.error('Error deleting expired QR instance:', err));
+    }
+
+    setConnectingInstanceName(freshInstanceName);
+    connectionHandledRef.current = false;
+    isInsertingRef.current = false;
+    await createInstanceAndGetQR(connectingNumberId, freshInstanceName);
   };
 
   const openConnectDialog = async (numberId: string) => {
     const number = numbers.find(n => n.id === numberId);
     if (!number) return;
 
-    // Reuse existing instance_name if available, otherwise generate a new one
-    const instanceName = number.instance_name || generateInstanceName();
+    const previousInstanceName = number.instance_name;
+    const instanceName = generateInstanceName();
+    if (previousInstanceName) {
+      try {
+        await supabase.functions.invoke('evolution-disconnect', {
+          body: {
+            instanceName: previousInstanceName,
+            numberId,
+            deleteInstance: true,
+          },
+        });
+      } catch (err) {
+        console.error('Error deleting stale instance before reconnect:', err);
+      }
+    }
     
     setConnectingNumberId(numberId);
     setConnectingInstanceName(instanceName);
