@@ -1140,6 +1140,9 @@ Deno.serve(async (req) => {
         status: 'running',
         started_at: campaign.started_at || new Date().toISOString(),
         pause_reason: null,
+        // Reset stuck baseline on manual start so we don't false-positive
+        // a campaign that was created hours ago but only started now.
+        last_message_sent_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }).eq('id', campaignId);
 
