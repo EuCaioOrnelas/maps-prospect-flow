@@ -1,0 +1,1 @@
+DELETE FROM public.user_dismissed_popups WHERE user_id='62ba5c53-a297-49cd-9ca3-b44302fc59f4' AND popup_key='whatsapp_disclaimer';
