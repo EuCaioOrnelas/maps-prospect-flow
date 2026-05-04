@@ -1548,6 +1548,15 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error in campaign-processor:', error);
+    // BUG fix: mark any open heartbeat as failed so monitoring doesn't show
+    // a permanently "running" processor when an unhandled error happens.
+    try {
+      await supabase
+        .from('campaign_processor_heartbeats')
+        .update({ status: 'failed', completed_at: new Date().toISOString() })
+        .eq('status', 'running')
+        .gte('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
+    } catch (_) { /* ignore */ }
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'Unknown error' 
     }), {
