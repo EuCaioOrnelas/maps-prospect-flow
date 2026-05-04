@@ -67,16 +67,32 @@ serve(async (req) => {
   const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
+  // Optional body filters: target a specific number, optionally force-disconnect
+  // (used by campaign-processor when it has already confirmed a timeout).
+  let body: any = {};
+  try { body = await req.json(); } catch { /* no body / scheduler */ }
+  const filterNumberId: string | null = body?.number_id || null;
+  const forceDisconnect: boolean = !!body?.force_disconnect;
+  const forceReason: string = body?.reason || 'forced_by_caller';
+  const campaignName: string | null = body?.campaign_name || null;
+
   const startedAt = Date.now();
   const summary = { checked: 0, healthy: 0, disconnected: 0, skipped: 0, errors: 0 };
 
   try {
-    const { data: numbers, error } = await supabase
+    let q = supabase
       .from('whatsapp_numbers')
       .select('id, user_id, instance_name, phone_number, api_tier, is_connected, updated_at')
-      .eq('is_connected', true)
       .not('instance_name', 'is', null)
       .not('phone_number', 'is', null);
+
+    if (filterNumberId) {
+      q = q.eq('id', filterNumberId);
+    } else {
+      q = q.eq('is_connected', true);
+    }
+
+    const { data: numbers, error } = await q;
 
     if (error) throw error;
 
