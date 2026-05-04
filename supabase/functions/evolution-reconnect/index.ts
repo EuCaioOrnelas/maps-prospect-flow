@@ -128,7 +128,7 @@ serve(async (req) => {
       throw new Error('Invalid user token');
     }
 
-    const { instanceName, numberId } = await req.json();
+    const { instanceName, numberId, forceReset } = await req.json();
 
     // Get the correct Evolution API based on the number's api_tier WITH user plan fallback
     const evoCredentials = await getEvolutionCredentialsForNumber(supabase, numberId, user.id);
@@ -189,6 +189,58 @@ serve(async (req) => {
     }
 
     console.log(`Instance ${instanceName} exists: ${instanceExists}`);
+
+    // Step 1.5: If instance exists but is stuck in "connecting" (or forceReset),
+    // do a full reset (logout + delete) so a fresh QR can be generated.
+    // Stuck-in-connecting is the #1 cause of "I scan but it disconnects right after".
+    if (instanceExists) {
+      let stuckConnecting = !!forceReset;
+      try {
+        const stateResp = await fetch(`${effectiveUrl}/instance/connectionState/${instanceName}`, {
+          method: 'GET',
+          headers: { 'apikey': effectiveKey },
+        });
+        if (stateResp.ok) {
+          const stateData = await stateResp.json();
+          const currentState = stateData?.state || stateData?.instance?.state;
+          console.log(`Current Evolution state for ${instanceName}: ${currentState}`);
+          // If never reached 'open' OR is currently connecting (and DB says not connected),
+          // recycle the instance to break the Baileys re-pair loop.
+          if (currentState === 'connecting' || currentState === 'close') {
+            // Cross-check DB: only reset if the number isn't actually connected from our POV
+            const { data: numRow } = await supabase
+              .from('whatsapp_numbers')
+              .select('is_connected')
+              .eq('id', numberId)
+              .maybeSingle();
+            if (!numRow?.is_connected || forceReset) {
+              stuckConnecting = true;
+            }
+          }
+        }
+      } catch (e) {
+        console.log('connectionState check failed:', e);
+      }
+
+      if (stuckConnecting) {
+        console.log(`♻️ Resetting stuck instance ${instanceName} (logout + delete + recreate)`);
+        try {
+          await fetch(`${effectiveUrl}/instance/logout/${instanceName}`, {
+            method: 'DELETE',
+            headers: { 'apikey': effectiveKey },
+          });
+        } catch (e) { console.log('logout failed (ok if not logged in):', e); }
+        try {
+          await fetch(`${effectiveUrl}/instance/delete/${instanceName}`, {
+            method: 'DELETE',
+            headers: { 'apikey': effectiveKey },
+          });
+        } catch (e) { console.log('delete failed:', e); }
+        // Small wait so Evolution releases the slot
+        await new Promise((r) => setTimeout(r, 1500));
+        instanceExists = false; // force re-create below
+      }
+    }
 
     // Step 2: If instance doesn't exist, recreate it
     if (!instanceExists) {
