@@ -1261,7 +1261,12 @@ Deno.serve(async (req) => {
       const handledStuckNumbers = new Set<string>();
 
       for (const campaign of (runningCampaigns || [])) {
-        const lastSent = campaign.last_message_sent_at || campaign.started_at;
+        // Fallback chain: last sent → started_at → updated_at. Ensures campaigns
+        // that were marked running but NEVER sent (dead session from start) also
+        // get caught by the stuck-detector instead of running forever silently.
+        const lastSent = campaign.last_message_sent_at
+          || campaign.started_at
+          || campaign.updated_at;
         if (!lastSent || !campaign.whatsapp_number_id) continue;
         const lastSentMs = new Date(lastSent).getTime();
         const ageSec = (now.getTime() - lastSentMs) / 1000;
