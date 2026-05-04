@@ -181,9 +181,35 @@ async function handleDisconnection(
   reason: string,
   campaignName?: string | null,
 ) {
+  // ─── IDEMPOTENCY GUARD ──────────────────────────────────────────────────
+  // Atomically claim the disconnection: only one caller (cron, campaign-processor,
+  // or another concurrent invocation) wins. Subsequent callers see 0 rows
+  // updated and skip delete + email entirely. This prevents double-delete
+  // and double-email even under race conditions.
+  const { data: claimed, error: claimErr } = await supabase
+    .from('whatsapp_numbers')
+    .update({
+      is_connected: false,
+      instance_name: null,
+      last_health_check_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', n.id)
+    .eq('is_connected', true) // ← atomic CAS: only succeeds if still connected
+    .select('id');
+
+  if (claimErr) {
+    console.log(`[health-check] claim failed for ${n.instance_name}:`, claimErr);
+    return;
+  }
+  if (!claimed || claimed.length === 0) {
+    console.log(`[health-check] ${n.instance_name} already disconnected by another worker — skipping (idempotent).`);
+    return;
+  }
+
   console.log(`[health-check] disconnecting ${n.instance_name} (reason=${reason})`);
 
-  // Pause active campaigns on this number to avoid "infinite running"
+  // Pause active campaigns on this number
   const reasonText = reason === 'campaign_stuck_timeout'
     ? 'Campanha travou: WhatsApp parou de responder (timeout). Reconecte o número para retomar.'
     : reason === 'connection_state_close'
@@ -207,17 +233,10 @@ async function handleDisconnection(
 
   if (n.instance_name) await deleteInstanceEverywhere(n.instance_name);
 
-  await supabase
-    .from('whatsapp_numbers')
-    .update({
-      is_connected: false,
-      instance_name: null,
-      last_health_check_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', n.id);
-
   try {
+    // Strong idempotency key: per-number + per-day. Even multiple reasons in
+    // the same day collapse to one email (avoids spam loops).
+    const dayKey = new Date().toISOString().slice(0, 10);
     await supabase.functions.invoke('send-email', {
       body: {
         user_id: n.user_id,
@@ -228,7 +247,7 @@ async function handleDisconnection(
           reason,
           campaign_name: campaignName || undefined,
         },
-        idempotency_key: `health_disconnect_${n.id}_${new Date().toISOString().slice(0, 10)}`,
+        idempotency_key: `disconnect_${n.id}_${dayKey}`,
       },
     });
   } catch (e) {
