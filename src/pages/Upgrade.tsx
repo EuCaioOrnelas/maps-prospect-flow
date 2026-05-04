@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, X, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, Rocket, TrendingUp, Building2, Calculator, Calendar, Gift } from "lucide-react";
+import { Check, X, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, Rocket, TrendingUp, Building2, Calculator, Calendar, Gift, LogOut } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -353,7 +353,23 @@ const Upgrade = () => {
   const selectedPlanData = plans.find(p => p.key === selectedPlanKey);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden relative">
+      {/* Botão Sair sempre visível */}
+      <div className="absolute top-4 right-4 z-50">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 bg-background/90"
+          onClick={async () => {
+            await supabase.auth.signOut();
+            navigate("/login");
+          }}
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </Button>
+      </div>
+
       {!isCleanPage && (
         <>
           <AppSidebar profile={profile} />
