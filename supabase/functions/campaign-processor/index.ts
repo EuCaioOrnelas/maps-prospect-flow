@@ -1300,8 +1300,13 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Process running campaigns
+      // Process running campaigns — skip ones whose number was just force-disconnected
+      // by the stuck-detector above (avoid double email / wasted live checks on dead session).
       for (const campaign of (runningCampaigns || [])) {
+        if (campaign.whatsapp_number_id && handledStuckNumbers.has(campaign.whatsapp_number_id)) {
+          console.log(`⏭️ Skipping campaign ${campaign.id} — number was just disconnected by stuck-detector.`);
+          continue;
+        }
         if (!campaign.whatsapp_number_id) {
           await supabase.from('whatsapp_campaigns').update({
             status: 'failed',
