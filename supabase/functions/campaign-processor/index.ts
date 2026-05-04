@@ -810,12 +810,44 @@ async function processSingleMessage(
   const messageMode = (campaign as any).message_mode || 'custom';
   let personalizedMessage: string;
 
-  if (messageMode === 'ai_generated' && lead.aiMessage) {
-    // AI mode: use per-lead personalized message from opportunities
+  if (messageMode === 'ai_generated') {
+    // AI mode: each lead must carry its own pre-generated aiMessage.
+    // BUG fix: if missing, DO NOT crash on validMessages[0]=undefined.replace()
+    // (that would freeze the campaign at this index and trigger a false
+    // "stuck campaign" force-disconnect on a perfectly healthy number).
+    // Instead: skip this lead cleanly as a failure and advance.
+    if (!lead.aiMessage || typeof lead.aiMessage !== 'string' || !lead.aiMessage.trim()) {
+      campaignLog('⚠️', `AI campaign lead is missing aiMessage — skipping`, {
+        leadIndex: currentIndex + 1,
+        leadName: lead.name,
+        phone: formattedPhone,
+      });
+      failedCount++;
+      await supabase.from('whatsapp_campaigns').update({
+        current_lead_index: currentIndex + 1,
+        failed_count: failedCount,
+        last_message_sent_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', campaign.id);
+      return { processed: true, completed: false, skipped: false };
+    }
     personalizedMessage = lead.aiMessage;
     campaignLog('🤖', `Using AI-generated message for lead`, { phone: formattedPhone });
   } else {
-    // Custom mode: random variation
+    // Custom mode: random variation. Defensive guard: if validMessages somehow
+    // became empty after the initial check (shouldn't happen but covers race),
+    // skip this lead gracefully instead of crashing on undefined.replace().
+    if (validMessages.length === 0) {
+      campaignLog('⚠️', `Custom campaign has no valid messages — skipping lead`, { phone: formattedPhone });
+      failedCount++;
+      await supabase.from('whatsapp_campaigns').update({
+        current_lead_index: currentIndex + 1,
+        failed_count: failedCount,
+        last_message_sent_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', campaign.id);
+      return { processed: true, completed: false, skipped: false };
+    }
     const messageIndex = Math.floor(Math.random() * validMessages.length);
     const randomMessage = validMessages[messageIndex];
     personalizedMessage = randomMessage
