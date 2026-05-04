@@ -659,19 +659,7 @@ async function processSingleMessage(
 
   // Free plan: check daily limit (20 per day)
   if (isFreePlan) {
-    // Count messages sent today by this user (across all campaigns)
-    const spNowForFreeLimit = getSaoPauloTime();
-    const todayStr = spNowForFreeLimit.toISOString().split('T')[0];
-
-    const { count: todayUserSent } = await supabase
-      .from('whatsapp_campaigns')
-      .select('sent_count', { count: 'exact', head: false })
-      .eq('user_id', campaign.user_id)
-      .eq('status', 'running')
-      .gte('updated_at', todayStr + 'T00:00:00-03:00');
-
-    // Simple approach: use a dedicated counter or check via sent_count today
-    // For simplicity, track via daily_sent_count on the number (already tracked)
+    // dailySentCount is already tracked on the number; no extra query needed.
     if (dailySentCount >= FREE_DAILY_LIMIT) {
       const spNowFree = getSaoPauloTime();
       const spTomorrowFree = new Date(spNowFree);
