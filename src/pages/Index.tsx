@@ -81,9 +81,9 @@ const Index = () => {
   return (
     <>
       <SEO
-        title="Prospecção Inteligente e Disparos em Massa via WhatsApp"
-        description="Encontre leads estratégicos com IA e faça disparos em massa via WhatsApp. Prospecção inteligente B2B, automação de mensagens, CRM e agente de IA para converter mais clientes. Comece grátis!"
-        keywords="prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing digital, disparos em massa, WhatsApp marketing, automação WhatsApp, prospecção de clientes, Wiize, ferramenta de prospecção, captar clientes, envio de mensagens em massa, leads qualificados, prospectar novos clientes, CRM, agente de IA, aquecimento de chip, Google Maps leads"
+        title="Inteligência Comercial e Dados Qualificados para Vendas B2B"
+        description="Wiize é a plataforma de inteligência comercial B2B: dados de empresas qualificados, enriquecimento com IA, CRM e automação de vendas para você fechar com os clientes certos."
+        keywords="inteligência comercial, dados B2B, dados qualificados, enriquecimento de dados, sales intelligence, qualificação de leads, ICP, automação de vendas, CRM inteligente, agente de IA comercial, prospecção B2B, dados de empresas, Wiize"
         url="https://wiize.com.br/"
         jsonLd={[
           {
@@ -93,7 +93,7 @@ const Index = () => {
             applicationCategory: "BusinessApplication",
             operatingSystem: "Web",
             description:
-              "Plataforma de prospecção inteligente com IA. Encontre leads no Google Maps, faça disparos em massa via WhatsApp e converta com agente de IA.",
+              "Plataforma de inteligência comercial B2B: dados qualificados de empresas, enriquecimento com IA, CRM e automação para vendas mais inteligentes.",
             offers: {
               "@type": "AggregateOffer",
               priceCurrency: "BRL",

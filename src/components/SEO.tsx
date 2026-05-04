@@ -15,9 +15,9 @@ const SITE_URL = 'https://wiize.com.br';
 const SITE_NAME = 'Wiize';
 
 const defaultMeta = {
-  title: 'Wiize - Prospecção Inteligente e Disparos em Massa via WhatsApp',
-  description: 'Encontre leads estratégicos com IA e faça disparos em massa via WhatsApp. Prospecção inteligente, automação de mensagens e geração de leads B2B para aumentar suas vendas. Comece grátis!',
-  keywords: 'prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing, vendas B2B, disparos em massa, WhatsApp marketing, automação WhatsApp, prospecção de clientes, Wiize, ferramenta de prospecção, captar clientes, envio de mensagens em massa, leads qualificados, prospectar novos clientes, CRM, agente de IA, aquecimento de chip',
+  title: 'Wiize - Inteligência Comercial, Dados Qualificados e Automação B2B',
+  description: 'Plataforma de inteligência comercial B2B: dados de empresas qualificados, enriquecimento com IA e automação de vendas. Encontre, qualifique e converta os clientes certos.',
+  keywords: 'inteligência comercial, dados B2B, dados qualificados, enriquecimento de dados, sales intelligence, automação de vendas, qualificação de leads, prospecção B2B, CRM inteligente, agente de IA comercial, ICP, dados de empresas, Wiize',
   image: 'https://lovable.dev/opengraph-image-p98pqg.png',
   url: SITE_URL,
   type: 'website',
