@@ -176,6 +176,7 @@ async function handleDisconnection(
   n: { id: string; user_id: string; instance_name: string | null; phone_number: string | null },
   _creds: EvolutionCredentials,
   reason: string,
+  campaignName?: string | null,
 ) {
   console.log(`[health-check] disconnecting ${n.instance_name} (reason=${reason})`);
 
@@ -183,19 +184,19 @@ async function handleDisconnection(
   try {
     await supabase
       .from('whatsapp_campaigns')
-      .update({ status: 'paused', updated_at: new Date().toISOString() })
+      .update({
+        status: 'paused',
+        pause_reason: 'Conexão WhatsApp caiu por timeout. Reconecte o número para retomar.',
+        updated_at: new Date().toISOString(),
+      })
       .eq('whatsapp_number_id', n.id)
       .in('status', ['running', 'pending']);
   } catch (e) {
     console.log('[health-check] pause campaigns failed:', e);
   }
 
-  // Delete instance from BOTH APIs to prevent orphans (any tier)
-  if (n.instance_name) {
-    await deleteInstanceEverywhere(n.instance_name);
-  }
+  if (n.instance_name) await deleteInstanceEverywhere(n.instance_name);
 
-  // Mark disconnected and clear instance_name → next connect creates a fresh one
   await supabase
     .from('whatsapp_numbers')
     .update({
@@ -206,7 +207,6 @@ async function handleDisconnection(
     })
     .eq('id', n.id);
 
-  // Notify user via email (idempotent per day)
   try {
     await supabase.functions.invoke('send-email', {
       body: {
@@ -216,6 +216,7 @@ async function handleDisconnection(
           phone_number: n.phone_number || n.instance_name,
           instance_name: n.instance_name,
           reason,
+          campaign_name: campaignName || undefined,
         },
         idempotency_key: `health_disconnect_${n.id}_${new Date().toISOString().slice(0, 10)}`,
       },
