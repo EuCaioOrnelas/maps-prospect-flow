@@ -181,12 +181,19 @@ async function handleDisconnection(
   console.log(`[health-check] disconnecting ${n.instance_name} (reason=${reason})`);
 
   // Pause active campaigns on this number to avoid "infinite running"
+  const reasonText = reason === 'campaign_stuck_timeout'
+    ? 'Campanha travou: WhatsApp parou de responder (timeout). Reconecte o número para retomar.'
+    : reason === 'connection_state_close'
+      ? 'WhatsApp foi desconectado (sessão fechada). Reconecte o número para retomar.'
+      : reason === 'probe_failed'
+        ? 'WhatsApp não está respondendo (sessão morta). Reconecte o número para retomar.'
+        : 'Conexão WhatsApp caiu. Reconecte o número para retomar.';
   try {
     await supabase
       .from('whatsapp_campaigns')
       .update({
         status: 'paused',
-        pause_reason: 'Conexão WhatsApp caiu por timeout. Reconecte o número para retomar.',
+        pause_reason: reasonText,
         updated_at: new Date().toISOString(),
       })
       .eq('whatsapp_number_id', n.id)
