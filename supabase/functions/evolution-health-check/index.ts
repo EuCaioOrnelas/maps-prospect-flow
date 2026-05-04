@@ -115,8 +115,13 @@ serve(async (req) => {
         continue;
       }
 
-      // 2) "Fake send" probe (no real message)
-      const ok = await probeInstance(creds, n.instance_name!, n.phone_number!);
+      // 2) "Fake send" probe (no real message) — require TWO consecutive failures
+      // to avoid killing healthy numbers on a transient network blip.
+      let ok = await probeInstance(creds, n.instance_name!, n.phone_number!);
+      if (!ok) {
+        await new Promise(r => setTimeout(r, 2500));
+        ok = await probeInstance(creds, n.instance_name!, n.phone_number!);
+      }
       if (ok) {
         summary.healthy++;
         await supabase.from('whatsapp_numbers')
