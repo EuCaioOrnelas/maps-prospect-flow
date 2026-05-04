@@ -65,9 +65,9 @@ const LandingPage = () => {
   return (
     <>
       <SEO 
-        title="Prospecção Inteligente e Disparos em Massa via WhatsApp"
-        description="Encontre leads estratégicos com IA e faça disparos em massa via WhatsApp. Prospecção inteligente B2B, automação de mensagens e geração de leads qualificados. Comece grátis!"
-        keywords="prospecção, leads, vendas, IA, inteligência artificial, clientes, B2B, geração de leads, marketing digital, disparos em massa, WhatsApp marketing, automação WhatsApp, Wiize"
+        title="Inteligência Comercial e Dados Qualificados para Vendas B2B"
+        description="Plataforma de inteligência comercial B2B: dados qualificados de empresas, enriquecimento com IA, CRM e automação de vendas para fechar com os clientes certos."
+        keywords="inteligência comercial, dados B2B, dados qualificados, enriquecimento de dados, sales intelligence, qualificação de leads, ICP, automação de vendas, CRM inteligente, agente de IA comercial, Wiize"
       />
       <main className="landing-light min-h-screen bg-background overflow-x-hidden overflow-y-auto w-full max-w-full relative">
         {/* Aurora/mesh gradient background */}
