@@ -80,79 +80,70 @@ function templateNumberDisconnected(payload: Record<string, unknown>): TemplateR
   const reason = (payload.reason as string) || "";
   const campaignName = (payload.campaign_name as string) || "";
 
-  // Reason translation → user-friendly message
-  let reasonBlock = "";
+  // Reason translation → professional, user-friendly description
+  let reasonTitle = "Conexão interrompida";
+  let reasonBody = "";
   if (reason === "campaign_stuck_timeout") {
-    reasonBlock = `
-      <p style="margin:0;font-size:13px;color:#78350f;line-height:1.7;">
-        Detectamos que sua campanha <strong>${campaignName ? `"${campaignName}"` : ""}</strong> ficou parada
-        por um longo período sem enviar mensagens. Isso normalmente significa que a conexão do WhatsApp
-        sofreu <strong>timeout</strong> e a sessão "morreu" silenciosamente — o número aparecia conectado,
-        mas o canal com os servidores do WhatsApp/Meta já estava bloqueado.
-      </p>`;
+    reasonTitle = "Timeout durante campanha";
+    reasonBody = `Sua campanha${campaignName ? ` <strong>"${campaignName}"</strong>` : ""} ficou parada por um período prolongado sem conseguir enviar novas mensagens. Isso indica que a sessão do WhatsApp expirou por timeout — o número aparecia como conectado, mas o canal com os servidores da Meta já não estava ativo.`;
   } else if (reason === "probe_failed") {
-    reasonBlock = `
-      <p style="margin:0;font-size:13px;color:#78350f;line-height:1.7;">
-        Nosso sistema fez um teste de saúde no seu número e detectou que o canal com os servidores
-        do <strong>WhatsApp/Meta</strong> não está respondendo. Geralmente é causado por
-        <strong>timeout de sessão</strong> ou queda da conexão entre o servidor e a Meta.
-      </p>`;
+    reasonTitle = "Falha no teste de saúde da conexão";
+    reasonBody = `Durante nossa verificação periódica, o canal entre o seu número e os servidores da Meta deixou de responder. Esse comportamento normalmente é causado por timeout de sessão ou pela queda da conexão entre o servidor e o WhatsApp.`;
   } else if (reason === "connection_state_close") {
-    reasonBlock = `
-      <p style="margin:0;font-size:13px;color:#78350f;line-height:1.7;">
-        O WhatsApp encerrou a sessão deste número. Isso costuma acontecer quando o app é reaberto em
-        outro lugar, expira por inatividade, ou a Meta encerra a conexão por segurança.
-      </p>`;
+    reasonTitle = "Sessão encerrada pelo WhatsApp";
+    reasonBody = `O próprio WhatsApp encerrou a sessão deste número. Isso pode acontecer quando o aplicativo é aberto em outro dispositivo, após um longo período de inatividade, ou quando a Meta encerra a conexão por motivos de segurança.`;
+  } else if (reason === "send_failed_disconnected") {
+    reasonTitle = "Falha confirmada no envio";
+    reasonBody = `Ao tentar enviar uma mensagem da sua campanha, o WhatsApp retornou erro de conexão. Como o canal não está mais ativo, pausamos a campanha e preparamos o número para uma nova sessão.`;
   } else {
-    reasonBlock = `
-      <p style="margin:0;font-size:13px;color:#78350f;line-height:1.7;">
-        A conexão do número com o WhatsApp foi perdida. Pode ter sido timeout, atualização do app
-        ou nova sessão aberta em outro dispositivo.
-      </p>`;
+    reasonBody = `A conexão entre o seu número e o WhatsApp foi perdida. As causas mais comuns são timeout de sessão, atualização do aplicativo ou abertura de uma nova sessão em outro dispositivo.`;
   }
 
   return {
-    subject: `⚠️ Seu número ${phone} foi desconectado — reconecte para continuar`,
-    html: baseLayout(`Número Desconectado`, `
-      <h1 style="margin:0 0 8px;font-size:22px;color:#18181b;">Olá! Precisamos da sua atenção 👋</h1>
-      <p style="margin:0 0 16px;color:#3f3f46;font-size:15px;line-height:1.6;">
+    subject: `Ação necessária: número ${phone} foi desconectado`,
+    html: baseLayout(`Número desconectado`, `
+      <h1 style="margin:0 0 12px;font-size:22px;color:#18181b;font-weight:700;">Seu número WhatsApp precisa ser reconectado</h1>
+      <p style="margin:0 0 20px;color:#3f3f46;font-size:15px;line-height:1.6;">
         O número <strong>${phone}</strong>${instanceName ? ` <span style="color:#a1a1aa;font-size:13px;">(${instanceName})</span>` : ""}
-        foi <strong>desconectado automaticamente</strong> pelo nosso sistema de monitoramento.
+        foi desconectado automaticamente pelo nosso sistema de monitoramento de saúde.
       </p>
 
-      <div style="margin:16px 0;padding:14px 16px;background:#fffbeb;border-left:4px solid #f59e0b;border-radius:4px;">
-        <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#92400e;">🔍 O que aconteceu?</p>
-        ${reasonBlock}
+      <div style="margin:0 0 20px;padding:16px 18px;background:#fffbeb;border-left:4px solid #f59e0b;border-radius:6px;">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#92400e;">${reasonTitle}</p>
+        <p style="margin:0;font-size:13.5px;color:#78350f;line-height:1.65;">${reasonBody}</p>
       </div>
 
-      <div style="margin:12px 0;padding:14px 16px;background:#eff6ff;border-left:4px solid #3b82f6;border-radius:4px;">
-        <p style="margin:0 0 6px;font-size:14px;font-weight:600;color:#1e40af;">💡 Por que desconectamos automaticamente?</p>
-        <p style="margin:0;font-size:13px;color:#1e3a8a;line-height:1.6;">
-          Quando a sessão "morre" por timeout, simplesmente reconectar não resolve — a instância antiga
-          continua zumbi e os disparos falham silenciosamente. Por isso, nós <strong>destruímos a instância
-          antiga e preparamos seu número para criar uma nova sessão limpa</strong>. É só escanear o QR Code
-          de novo e tudo volta a funcionar perfeitamente.
+      <div style="margin:0 0 20px;padding:16px 18px;background:#eff6ff;border-left:4px solid #3b82f6;border-radius:6px;">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#1e40af;">Por que a desconexão é automática?</p>
+        <p style="margin:0;font-size:13.5px;color:#1e3a8a;line-height:1.65;">
+          Quando uma sessão expira por timeout, apenas reconectar pelo aplicativo não resolve — a instância anterior permanece inativa no servidor e os envios continuam falhando em silêncio. Por isso, encerramos a sessão antiga e preparamos o seu número para uma nova conexão limpa, garantindo que os próximos disparos voltem a funcionar normalmente.
         </p>
       </div>
 
-      <div style="margin:12px 0;padding:14px 16px;background:#fef2f2;border-left:4px solid #ef4444;border-radius:4px;">
-        <p style="margin:0;font-size:14px;color:#991b1b;line-height:1.6;">
-          ⛔ Suas <strong>campanhas e agentes IA</strong> que usavam este número foram pausados automaticamente
-          para não desperdiçar disparos no vazio. Eles voltam a rodar assim que você reconectar.
+      <div style="margin:0 0 20px;padding:16px 18px;background:#fef2f2;border-left:4px solid #ef4444;border-radius:6px;">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#991b1b;">Campanhas e agentes pausados</p>
+        <p style="margin:0;font-size:13.5px;color:#7f1d1d;line-height:1.65;">
+          Todas as <strong>campanhas e agentes de IA</strong> vinculados a este número foram pausados automaticamente para evitar que disparos sejam perdidos. Eles voltam a operar imediatamente após a reconexão.
         </p>
       </div>
 
-      <p style="margin:20px 0 8px;font-size:14px;color:#3f3f46;line-height:1.6;">
-        <strong>Próximo passo:</strong> entre na plataforma, vá em <strong>WhatsApp → Números</strong>,
-        clique em <strong>Conectar</strong> e escaneie o QR Code com o mesmo chip.
-      </p>
+      <div style="margin:0 0 20px;padding:16px 18px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;">
+        <p style="margin:0 0 10px;font-size:14px;font-weight:600;color:#111827;">Como reconectar (leva menos de 1 minuto)</p>
+        <ol style="margin:0;padding-left:20px;font-size:13.5px;color:#374151;line-height:1.7;">
+          <li>Acesse a plataforma e abra <strong>WhatsApp → Números</strong>.</li>
+          <li>Clique em <strong>Conectar</strong> no número desconectado.</li>
+          <li>Escaneie o QR Code utilizando o mesmo chip de antes.</li>
+        </ol>
+      </div>
 
-      <a href="${BRAND.url}/whatsapp" style="display:inline-block;margin-top:16px;padding:14px 28px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">Reconectar agora →</a>
+      <div style="text-align:center;margin:24px 0 8px;">
+        <a href="${BRAND.url}/whatsapp" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">Reconectar número</a>
+      </div>
 
-      <p style="margin:24px 0 0;font-size:12px;color:#a1a1aa;line-height:1.5;border-top:1px solid #e4e4e7;padding-top:16px;">
-        💬 Dúvidas? Responda este e-mail ou fale com nosso suporte. A maioria das reconexões leva menos de 30 segundos.
+      <p style="margin:24px 0 0;font-size:12px;color:#71717a;line-height:1.6;border-top:1px solid #e4e4e7;padding-top:16px;">
+        Em caso de dúvidas, responda este e-mail ou fale com o nosso suporte. Estamos à disposição para ajudar.
       </p>
-    `, `Sua sessão WhatsApp expirou — toque para reconectar em 30s`),
+    `, `Seu número WhatsApp ${phone} foi desconectado — reconecte para retomar campanhas e agentes`),
   };
 }
 

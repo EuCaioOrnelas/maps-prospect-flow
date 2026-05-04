@@ -143,7 +143,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ source: 'cron' }),
+      body: JSON.stringify({ action: 'process', source: 'cron' }),
     }).catch(err => console.error('[start-scheduled-campaigns] campaign-processor call failed:', err));
   } catch (e) {
     console.error('[start-scheduled-campaigns] campaign-processor trigger error:', e);
