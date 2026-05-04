@@ -111,7 +111,7 @@ async function startNextPostponedCampaign(
       .eq('user_id', userId)
       .order('created_at', { ascending: true })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (!postponedCampaign) return;
 
@@ -785,6 +785,7 @@ async function processSingleMessage(
     await supabase.from('whatsapp_campaigns').update({
       current_lead_index: currentIndex + 1,
       failed_count: failedCount,
+      last_message_sent_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }).eq('id', campaign.id);
 
@@ -800,6 +801,7 @@ async function processSingleMessage(
     // Don't count as failed - just skip to next lead
     await supabase.from('whatsapp_campaigns').update({
       current_lead_index: currentIndex + 1,
+      last_message_sent_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }).eq('id', campaign.id);
     
@@ -868,7 +870,7 @@ async function processSingleMessage(
     .from('whatsapp_campaigns')
     .select('status')
     .eq('id', campaign.id)
-    .single();
+    .maybeSingle();
 
   if (!statusCheck || statusCheck.status === 'cancelled' || statusCheck.status === 'paused') {
     campaignLog('⛔', `Campaign status changed externally`, { newStatus: statusCheck?.status });
