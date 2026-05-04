@@ -865,16 +865,26 @@ async function processSingleMessage(
     messagePreview: personalizedMessage.substring(0, 50) + '...'
   });
 
-  // Re-check campaign status
-  const { data: statusCheck } = await supabase
+  // ─── ATOMIC LEAD CLAIM (anti double-send) ─────────────────────────────
+  // CAS: only proceed if NO other worker has touched this campaign since we
+  // loaded it. We require status='running' AND current_lead_index unchanged
+  // AND updated_at unchanged. If two processor runs overlap, only one wins
+  // the claim — the other aborts cleanly, preventing duplicate messages.
+  const { data: claimedRow } = await supabase
     .from('whatsapp_campaigns')
-    .select('status')
+    .update({ updated_at: new Date().toISOString() })
     .eq('id', campaign.id)
+    .eq('current_lead_index', currentIndex)
+    .eq('status', 'running')
+    .eq('updated_at', campaign.updated_at)
+    .select('id')
     .maybeSingle();
 
-  if (!statusCheck || statusCheck.status === 'cancelled' || statusCheck.status === 'paused') {
-    campaignLog('⛔', `Campaign status changed externally`, { newStatus: statusCheck?.status });
-    return { processed: false, completed: false, skipped: false };
+  if (!claimedRow) {
+    campaignLog('🔒', `Lead claim lost (concurrent worker is processing this lead) — aborting to avoid duplicate send`, {
+      leadIndex: currentIndex,
+    });
+    return { processed: false, completed: false, skipped: true };
   }
 
   // Send the message (or simulate it) with retry on transient failures
