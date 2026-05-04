@@ -1221,11 +1221,15 @@ Deno.serve(async (req) => {
           console.log(`🧹 Cleared ${cleared} ignored contacts for campaign ${paused.id} (was paused by disconnection)`);
         }
         
+        // CRITICAL: reset last_message_sent_at when resuming so the
+        // stuck-campaign detector doesn't immediately trigger a false
+        // force_disconnect (the campaign was legitimately paused, not stuck).
         await supabase.from('whatsapp_campaigns').update({
           status: 'running',
           pause_reason: null,
           paused_at_limit: false,
           resume_at: null,
+          last_message_sent_at: now.toISOString(),
           updated_at: now.toISOString()
         }).eq('id', paused.id);
         
