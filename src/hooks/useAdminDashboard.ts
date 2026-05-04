@@ -170,16 +170,14 @@ export function useAdminDashboard() {
 
       const activationRate = totalUsers > 0 ? (activatedUsers / totalUsers) * 100 : 0;
 
-      // Distribuição de planos: trials viram bucket separado "trial_<plan>" e não somam revenue
+      // Distribuição de planos: APENAS planos pagos (não-trial). Trials e Free NÃO entram na distribuição/receita.
       const planCounts: Record<string, { count: number; revenue: number }> = {};
       profiles.forEach((p) => {
-        const trial = isTrialing(p);
-        const bucket = trial ? `trial_${p.plan}` : p.plan;
-        if (!planCounts[bucket]) planCounts[bucket] = { count: 0, revenue: 0 };
-        planCounts[bucket].count++;
-        if (!trial) {
-          planCounts[bucket].revenue += PLAN_PRICES_MONTHLY[p.plan] || 0;
-        }
+        if (p.plan === "free") return;
+        if (isTrialing(p)) return;
+        if (!planCounts[p.plan]) planCounts[p.plan] = { count: 0, revenue: 0 };
+        planCounts[p.plan].count++;
+        planCounts[p.plan].revenue += PLAN_PRICES_MONTHLY[p.plan] || 0;
       });
 
       setStats({
