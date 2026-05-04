@@ -216,7 +216,7 @@ export function useAdminDashboard() {
     try {
       const { data: profiles, error: profilesErr } = await supabase
         .from("profiles")
-        .select("id, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at")
+        .select("id, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, trial_will_charge_at")
         .neq("plan", "free")
         .eq("is_blocked", false);
 
