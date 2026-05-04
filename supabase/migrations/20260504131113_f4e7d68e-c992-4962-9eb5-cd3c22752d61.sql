@@ -1,0 +1,1 @@
+UPDATE public.whatsapp_numbers SET is_connected = false, updated_at = now() WHERE id = 'c17a6887-62d0-4b4b-a077-420bfe7b31de';
