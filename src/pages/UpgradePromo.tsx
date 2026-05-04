@@ -10,7 +10,7 @@ import { Logo } from "@/components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Crown, Check, Sparkles, Loader2, Shield, Clock, CreditCard,
-  Rocket, TrendingUp, Building2, Flame, ShieldCheck, AlertTriangle
+  Rocket, TrendingUp, Building2, Flame, ShieldCheck, AlertTriangle, LogOut
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
