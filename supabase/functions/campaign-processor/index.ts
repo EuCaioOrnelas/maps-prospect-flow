@@ -111,7 +111,7 @@ async function startNextPostponedCampaign(
       .eq('user_id', userId)
       .order('created_at', { ascending: true })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (!postponedCampaign) return;
 
@@ -868,7 +868,7 @@ async function processSingleMessage(
     .from('whatsapp_campaigns')
     .select('status')
     .eq('id', campaign.id)
-    .single();
+    .maybeSingle();
 
   if (!statusCheck || statusCheck.status === 'cancelled' || statusCheck.status === 'paused') {
     campaignLog('⛔', `Campaign status changed externally`, { newStatus: statusCheck?.status });
