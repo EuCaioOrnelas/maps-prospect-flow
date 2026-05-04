@@ -801,6 +801,7 @@ async function processSingleMessage(
     // Don't count as failed - just skip to next lead
     await supabase.from('whatsapp_campaigns').update({
       current_lead_index: currentIndex + 1,
+      last_message_sent_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }).eq('id', campaign.id);
     
