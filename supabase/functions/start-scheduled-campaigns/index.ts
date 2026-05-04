@@ -135,19 +135,10 @@ serve(async (req) => {
     console.error('[start-scheduled-campaigns] agent-buffer-processor trigger error:', e);
   }
 
-  // ─── TRIGGER CAMPAIGN PROCESSOR (fire-and-forget) ────────────────────
-  try {
-    fetch(`${SUPABASE_URL}/functions/v1/campaign-processor`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ action: 'process', source: 'cron' }),
-    }).catch(err => console.error('[start-scheduled-campaigns] campaign-processor call failed:', err));
-  } catch (e) {
-    console.error('[start-scheduled-campaigns] campaign-processor trigger error:', e);
-  }
+  // NOTE: Do NOT trigger campaign-processor from here.
+  // It already runs on its own cron (`campaign-processor-cron`, every minute).
+  // Calling it again from this function caused TWO concurrent processor runs per minute,
+  // which made each lead receive the same message twice (race condition on current_lead_index).
 
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
