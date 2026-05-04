@@ -218,12 +218,19 @@ export default function AdminDashboard() {
       .slice(-sliceCount)
       .map(([month, data]) => {
         const [y, m] = month.split("-");
-        const date = new Date(Number(y), Number(m) - 1, 1);
+        const yNum = Number(y);
+        const mNum = Number(m);
+        const today = new Date();
+        const isCurrentMonth = today.getFullYear() === yNum && today.getMonth() + 1 === mNum;
+        // Mês atual = snapshot do dia de hoje. Meses passados = snapshot do último dia do mês.
+        const snapshotDate = isCurrentMonth
+          ? today
+          : new Date(yNum, mNum, 0); // day 0 = último dia do mês anterior
         const totalDays = days;
         return {
           label: totalDays <= 30
-            ? date.toLocaleDateString("pt-BR", { month: "short", day: "numeric" })
-            : date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }),
+            ? snapshotDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+            : snapshotDate.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }),
           ...data,
         };
       });
