@@ -121,6 +121,9 @@ async function startNextPostponedCampaign(
       status: 'running',
       started_at: new Date().toISOString(),
       pause_reason: null,
+      // Reset stuck-detector baseline so the new campaign isn't flagged as
+      // "silent for hours" using the previous campaign's send timestamp.
+      last_message_sent_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }).eq('id', postponedCampaign.id);
   } catch (e) {
