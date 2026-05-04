@@ -935,33 +935,53 @@ async function processSingleMessage(
         phone: formattedPhone,
         error: result.error
       });
-      await deleteEvolutionInstance(numberData.instance_name);
-      await supabase.from('whatsapp_numbers').update({
-        is_connected: false,
-        instance_name: null,
-        last_health_check_at: new Date().toISOString(),
-        updated_at: now
-      }).eq('id', numberData.id);
-      
+
+      // ─── IDEMPOTENT CLAIM ──────────────────────────────────────────────
+      // Atomic CAS: only one worker actually performs delete + email per
+      // disconnection event. If health-check (or another concurrent send)
+      // already flipped is_connected=false, we skip side effects entirely.
+      const { data: claimed } = await supabase
+        .from('whatsapp_numbers')
+        .update({
+          is_connected: false,
+          instance_name: null,
+          last_health_check_at: new Date().toISOString(),
+          updated_at: now,
+        })
+        .eq('id', numberData.id)
+        .eq('is_connected', true)
+        .select('id');
+
+      const wonClaim = (claimed?.length || 0) > 0;
+
+      if (wonClaim) {
+        await deleteEvolutionInstance(numberData.instance_name);
+      } else {
+        campaignLog('ℹ️', `Number already marked disconnected by another worker — skipping delete/email`);
+      }
+
       await supabase.from('whatsapp_campaigns').update({
         status: 'paused',
         pause_reason: 'WhatsApp desconectado durante envio. Reconecte o número para retomar.',
         updated_at: new Date().toISOString()
       }).eq('id', campaign.id);
 
-      // Notify user (parity with evolution-health-check). Idempotent per day.
-      sendEmailNotification(
-        campaign.user_id,
-        'NUMBER_DISCONNECTED',
-        {
-          phone_number: numberData.phone_number || numberData.instance_name,
-          instance_name: numberData.instance_name,
-          reason: 'send_failed_disconnected',
-          campaign_name: campaign.name,
-        },
-        `send_disconnect_${numberData.id}_${new Date().toISOString().slice(0, 10)}`
-      ).catch(() => {});
-      
+      if (wonClaim) {
+        // Same key shape as evolution-health-check so cross-path duplicates collapse.
+        const dayKey = new Date().toISOString().slice(0, 10);
+        sendEmailNotification(
+          campaign.user_id,
+          'NUMBER_DISCONNECTED',
+          {
+            phone_number: numberData.phone_number || numberData.instance_name,
+            instance_name: numberData.instance_name,
+            reason: 'send_failed_disconnected',
+            campaign_name: campaign.name,
+          },
+          `disconnect_${numberData.id}_${dayKey}`
+        ).catch(() => {});
+      }
+
       // Don't increment index - this lead should be retried after reconnection
       return { processed: false, completed: false, skipped: false, error: 'Disconnected during send' };
     }
