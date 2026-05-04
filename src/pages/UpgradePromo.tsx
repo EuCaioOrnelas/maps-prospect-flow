@@ -10,7 +10,7 @@ import { Logo } from "@/components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Crown, Check, Sparkles, Loader2, Shield, Clock, CreditCard,
-  Rocket, TrendingUp, Building2, Flame, ShieldCheck, AlertTriangle
+  Rocket, TrendingUp, Building2, Flame, ShieldCheck, AlertTriangle, LogOut
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
@@ -315,10 +315,23 @@ const UpgradePromo = () => {
           transition={{ delay: 0.1 }}
           className="space-y-4"
         >
-          {/* Logo */}
-          <div className="flex justify-center mb-4">
+          {/* Logo + Logout */}
+          <div className="flex justify-center items-center gap-3 mb-4 relative">
             <Logo size="lg" asLink={false} />
+            <Button
+              variant="outline"
+              size="sm"
+              className="absolute right-0 top-1/2 -translate-y-1/2 gap-1.5"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                navigate("/login");
+              }}
+            >
+              <LogOut className="h-4 w-4" />
+              Sair
+            </Button>
           </div>
+
 
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-full px-4 py-1.5 text-sm font-semibold text-primary">
             <Sparkles className="h-4 w-4" />
