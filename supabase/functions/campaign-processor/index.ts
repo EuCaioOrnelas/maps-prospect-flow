@@ -948,6 +948,7 @@ async function processSingleMessage(
       await supabase.from('whatsapp_numbers').update({
         is_connected: false,
         instance_name: null,
+        last_health_check_at: new Date().toISOString(),
         updated_at: now
       }).eq('id', numberData.id);
       
@@ -956,6 +957,19 @@ async function processSingleMessage(
         pause_reason: 'WhatsApp desconectado durante envio. Reconecte o número para retomar.',
         updated_at: new Date().toISOString()
       }).eq('id', campaign.id);
+
+      // Notify user (parity with evolution-health-check). Idempotent per day.
+      sendEmailNotification(
+        campaign.user_id,
+        'NUMBER_DISCONNECTED',
+        {
+          phone_number: numberData.phone_number || numberData.instance_name,
+          instance_name: numberData.instance_name,
+          reason: 'send_failed_disconnected',
+          campaign_name: campaign.name,
+        },
+        `send_disconnect_${numberData.id}_${new Date().toISOString().slice(0, 10)}`
+      ).catch(() => {});
       
       // Don't increment index - this lead should be retried after reconnection
       return { processed: false, completed: false, skipped: false, error: 'Disconnected during send' };
