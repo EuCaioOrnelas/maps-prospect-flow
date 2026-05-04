@@ -101,10 +101,17 @@ serve(async (req) => {
     for (const n of numbers ?? []) {
       summary.checked++;
 
-      // Skip if no active campaigns AND number was just touched (<10min) — avoid noise
       const tier = (n.api_tier === 'paid' ? 'paid' : 'free') as 'free' | 'paid';
       const creds = getCreds(tier) || getCreds('free');
       if (!creds) { summary.skipped++; continue; }
+
+      // FORCE branch: caller (e.g., campaign-processor on stuck-campaign timeout)
+      // already proved the session is dead. Skip probes and disconnect immediately.
+      if (forceDisconnect && filterNumberId) {
+        summary.disconnected++;
+        await handleDisconnection(supabase, n, creds, forceReason, campaignName);
+        continue;
+      }
 
       // 1) connectionState must be 'open'
       let state: string | null = null;
