@@ -170,16 +170,14 @@ export function useAdminDashboard() {
 
       const activationRate = totalUsers > 0 ? (activatedUsers / totalUsers) * 100 : 0;
 
-      // Distribuição de planos: trials viram bucket separado "trial_<plan>" e não somam revenue
+      // Distribuição de planos: APENAS planos pagos (não-trial). Trials e Free NÃO entram na distribuição/receita.
       const planCounts: Record<string, { count: number; revenue: number }> = {};
       profiles.forEach((p) => {
-        const trial = isTrialing(p);
-        const bucket = trial ? `trial_${p.plan}` : p.plan;
-        if (!planCounts[bucket]) planCounts[bucket] = { count: 0, revenue: 0 };
-        planCounts[bucket].count++;
-        if (!trial) {
-          planCounts[bucket].revenue += PLAN_PRICES_MONTHLY[p.plan] || 0;
-        }
+        if (p.plan === "free") return;
+        if (isTrialing(p)) return;
+        if (!planCounts[p.plan]) planCounts[p.plan] = { count: 0, revenue: 0 };
+        planCounts[p.plan].count++;
+        planCounts[p.plan].revenue += PLAN_PRICES_MONTHLY[p.plan] || 0;
       });
 
       setStats({
@@ -218,7 +216,7 @@ export function useAdminDashboard() {
     try {
       const { data: profiles, error: profilesErr } = await supabase
         .from("profiles")
-        .select("id, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at")
+        .select("id, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, trial_will_charge_at")
         .neq("plan", "free")
         .eq("is_blocked", false);
 
@@ -229,13 +227,17 @@ export function useAdminDashboard() {
       let pixMrrTotal = 0;
       let pixActiveSubs = 0;
 
-      const typedProfiles = profiles as PayingProfile[];
+      const typedProfiles = profiles as (PayingProfile & { trial_will_charge_at?: string | null })[];
+      // Excluir trials (cartão registrado mas ainda não cobrado) do MRR e da contagem.
+      const isTrialingProfile = (p: any) =>
+        p.trial_will_charge_at && new Date(p.trial_will_charge_at).getTime() > now.getTime();
       const recognizedProfiles = typedProfiles.filter(
         (p) =>
-          p.payment_provider === "stripe" ||
-          p.payment_provider === "asaas" ||
-          p.payment_provider === "manual" ||
-          p.payment_provider === null
+          !isTrialingProfile(p) &&
+          (p.payment_provider === "stripe" ||
+            p.payment_provider === "asaas" ||
+            p.payment_provider === "manual" ||
+            p.payment_provider === null)
       );
       setPayingProfiles(
         recognizedProfiles.filter((p) => !p.subscription_current_period_end || new Date(p.subscription_current_period_end) >= now)
