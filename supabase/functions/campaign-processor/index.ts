@@ -659,19 +659,7 @@ async function processSingleMessage(
 
   // Free plan: check daily limit (20 per day)
   if (isFreePlan) {
-    // Count messages sent today by this user (across all campaigns)
-    const spNowForFreeLimit = getSaoPauloTime();
-    const todayStr = spNowForFreeLimit.toISOString().split('T')[0];
-
-    const { count: todayUserSent } = await supabase
-      .from('whatsapp_campaigns')
-      .select('sent_count', { count: 'exact', head: false })
-      .eq('user_id', campaign.user_id)
-      .eq('status', 'running')
-      .gte('updated_at', todayStr + 'T00:00:00-03:00');
-
-    // Simple approach: use a dedicated counter or check via sent_count today
-    // For simplicity, track via daily_sent_count on the number (already tracked)
+    // dailySentCount is already tracked on the number; no extra query needed.
     if (dailySentCount >= FREE_DAILY_LIMIT) {
       const spNowFree = getSaoPauloTime();
       const spTomorrowFree = new Date(spNowFree);
@@ -948,6 +936,7 @@ async function processSingleMessage(
       await supabase.from('whatsapp_numbers').update({
         is_connected: false,
         instance_name: null,
+        last_health_check_at: new Date().toISOString(),
         updated_at: now
       }).eq('id', numberData.id);
       
@@ -956,6 +945,19 @@ async function processSingleMessage(
         pause_reason: 'WhatsApp desconectado durante envio. Reconecte o número para retomar.',
         updated_at: new Date().toISOString()
       }).eq('id', campaign.id);
+
+      // Notify user (parity with evolution-health-check). Idempotent per day.
+      sendEmailNotification(
+        campaign.user_id,
+        'NUMBER_DISCONNECTED',
+        {
+          phone_number: numberData.phone_number || numberData.instance_name,
+          instance_name: numberData.instance_name,
+          reason: 'send_failed_disconnected',
+          campaign_name: campaign.name,
+        },
+        `send_disconnect_${numberData.id}_${new Date().toISOString().slice(0, 10)}`
+      ).catch(() => {});
       
       // Don't increment index - this lead should be retried after reconnection
       return { processed: false, completed: false, skipped: false, error: 'Disconnected during send' };
@@ -1247,7 +1249,12 @@ Deno.serve(async (req) => {
       const handledStuckNumbers = new Set<string>();
 
       for (const campaign of (runningCampaigns || [])) {
-        const lastSent = campaign.last_message_sent_at || campaign.started_at;
+        // Fallback chain: last sent → started_at → updated_at. Ensures campaigns
+        // that were marked running but NEVER sent (dead session from start) also
+        // get caught by the stuck-detector instead of running forever silently.
+        const lastSent = campaign.last_message_sent_at
+          || campaign.started_at
+          || campaign.updated_at;
         if (!lastSent || !campaign.whatsapp_number_id) continue;
         const lastSentMs = new Date(lastSent).getTime();
         const ageSec = (now.getTime() - lastSentMs) / 1000;
