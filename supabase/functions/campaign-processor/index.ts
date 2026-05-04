@@ -1221,11 +1221,15 @@ Deno.serve(async (req) => {
           console.log(`🧹 Cleared ${cleared} ignored contacts for campaign ${paused.id} (was paused by disconnection)`);
         }
         
+        // CRITICAL: reset last_message_sent_at when resuming so the
+        // stuck-campaign detector doesn't immediately trigger a false
+        // force_disconnect (the campaign was legitimately paused, not stuck).
         await supabase.from('whatsapp_campaigns').update({
           status: 'running',
           pause_reason: null,
           paused_at_limit: false,
           resume_at: null,
+          last_message_sent_at: now.toISOString(),
           updated_at: now.toISOString()
         }).eq('id', paused.id);
         
@@ -1251,6 +1255,26 @@ Deno.serve(async (req) => {
         const stuckThreshold = Math.max(expectedDelay * STUCK_MULTIPLIER, STUCK_FLOOR_MINUTES * 60);
         if (ageSec < stuckThreshold) continue;
         if (handledStuckNumbers.has(campaign.whatsapp_number_id)) continue;
+
+        // Guard: only fire if the number is still marked connected. Otherwise
+        // a previous health-check already handled it — avoid double email/delete.
+        const { data: numCheck } = await supabase
+          .from('whatsapp_numbers')
+          .select('id, is_connected, instance_name')
+          .eq('id', campaign.whatsapp_number_id)
+          .maybeSingle();
+
+        if (!numCheck || !numCheck.is_connected || !numCheck.instance_name) {
+          // Number already disconnected — just pause this campaign cleanly.
+          await supabase.from('whatsapp_campaigns').update({
+            status: 'paused',
+            pause_reason: 'WhatsApp desconectado. Reconecte o número para retomar.',
+            updated_at: now.toISOString(),
+          }).eq('id', campaign.id);
+          handledStuckNumbers.add(campaign.whatsapp_number_id);
+          console.log(`⏸️ Campaign ${campaign.id} paused (number already disconnected, no force needed).`);
+          continue;
+        }
 
         console.log(`🚨 STUCK CAMPAIGN detected: ${campaign.id} ("${campaign.name}") — silent for ${Math.round(ageSec/60)}min (threshold ${Math.round(stuckThreshold/60)}min). Triggering force disconnect.`);
         handledStuckNumbers.add(campaign.whatsapp_number_id);
