@@ -354,21 +354,22 @@ const Upgrade = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden relative">
-      {/* Botão Sair sempre visível */}
-      <div className="absolute top-4 right-4 z-50">
+      {/* Botão Sair — fixo no topo, sempre visível */}
+      <div className="fixed top-4 right-4 z-[9999]">
         <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5 bg-background/90"
+          variant="destructive"
+          size="lg"
+          className="gap-2 shadow-2xl font-bold"
           onClick={async () => {
             await supabase.auth.signOut();
-            navigate("/login");
+            window.location.href = "/login";
           }}
         >
-          <LogOut className="h-4 w-4" />
-          Sair
+          <LogOut className="h-5 w-5" />
+          Sair da conta
         </Button>
       </div>
+
 
       {!isCleanPage && (
         <>
