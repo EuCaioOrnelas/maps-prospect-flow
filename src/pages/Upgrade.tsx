@@ -353,7 +353,23 @@ const Upgrade = () => {
   const selectedPlanData = plans.find(p => p.key === selectedPlanKey);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden relative">
+      {/* Botão Sair sempre visível */}
+      <div className="absolute top-4 right-4 z-50">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 bg-background/90"
+          onClick={async () => {
+            await supabase.auth.signOut();
+            navigate("/login");
+          }}
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </Button>
+      </div>
+
       {!isCleanPage && (
         <>
           <AppSidebar profile={profile} />
