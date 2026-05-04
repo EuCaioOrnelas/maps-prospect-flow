@@ -503,7 +503,11 @@ Deno.serve(async (req) => {
       html = result.html;
     }
 
-    // Insert log as queued (with subject)
+    // Insert log as queued (with subject).
+    // CRITICAL: this is the second idempotency gate. If two concurrent callers
+    // both passed the SELECT above, the unique index on idempotency_key will
+    // make exactly one INSERT win; the loser must STOP and not call Resend
+    // (otherwise we'd send a duplicate email).
     const { data: logEntry, error: logError } = await supabase
       .from("email_logs")
       .insert({
@@ -519,6 +523,15 @@ Deno.serve(async (req) => {
       .single();
 
     if (logError) {
+      const isDup = (logError as any).code === '23505'
+        || /duplicate key|unique constraint/i.test(logError.message || '');
+      if (isDup && idempotency_key) {
+        console.log(`[send-email] Race: idempotency_key ${idempotency_key} won by another worker — aborting send.`);
+        return new Response(
+          JSON.stringify({ success: true, duplicate: true, race: true }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       console.error("[send-email] Log insert error:", logError);
     }
 
