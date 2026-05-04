@@ -1232,6 +1232,43 @@ Deno.serve(async (req) => {
         campaignsProcessed++;
       }
 
+      // ─── STUCK-CAMPAIGN DETECTION ────────────────────────────────────────
+      // If a running campaign hasn't sent anything for a long time relative to
+      // its configured delay, the WhatsApp session likely died silently
+      // (timeout / dropped Meta connection). Force a hard disconnect so the
+      // user gets an email and can reconnect, instead of waiting hours.
+      const STUCK_BUFFER_SECONDS = 180; // grace period on top of normal delay
+      const STUCK_MULTIPLIER = 6;       // delay must be exceeded this many times
+      const STUCK_FLOOR_MINUTES = 15;   // never flag before 15 min of silence
+      const handledStuckNumbers = new Set<string>();
+
+      for (const campaign of (runningCampaigns || [])) {
+        const lastSent = campaign.last_message_sent_at || campaign.started_at;
+        if (!lastSent || !campaign.whatsapp_number_id) continue;
+        const lastSentMs = new Date(lastSent).getTime();
+        const ageSec = (now.getTime() - lastSentMs) / 1000;
+        const expectedDelay = (campaign.delay_seconds_max || campaign.delay_seconds || 60) + STUCK_BUFFER_SECONDS;
+        const stuckThreshold = Math.max(expectedDelay * STUCK_MULTIPLIER, STUCK_FLOOR_MINUTES * 60);
+        if (ageSec < stuckThreshold) continue;
+        if (handledStuckNumbers.has(campaign.whatsapp_number_id)) continue;
+
+        console.log(`🚨 STUCK CAMPAIGN detected: ${campaign.id} ("${campaign.name}") — silent for ${Math.round(ageSec/60)}min (threshold ${Math.round(stuckThreshold/60)}min). Triggering force disconnect.`);
+        handledStuckNumbers.add(campaign.whatsapp_number_id);
+
+        try {
+          await supabase.functions.invoke('evolution-health-check', {
+            body: {
+              number_id: campaign.whatsapp_number_id,
+              force_disconnect: true,
+              reason: 'campaign_stuck_timeout',
+              campaign_name: campaign.name,
+            },
+          });
+        } catch (e) {
+          console.log('Failed to trigger force disconnect:', e);
+        }
+      }
+
       // Process running campaigns
       for (const campaign of (runningCampaigns || [])) {
         if (!campaign.whatsapp_number_id) {

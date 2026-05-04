@@ -67,16 +67,32 @@ serve(async (req) => {
   const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
+  // Optional body filters: target a specific number, optionally force-disconnect
+  // (used by campaign-processor when it has already confirmed a timeout).
+  let body: any = {};
+  try { body = await req.json(); } catch { /* no body / scheduler */ }
+  const filterNumberId: string | null = body?.number_id || null;
+  const forceDisconnect: boolean = !!body?.force_disconnect;
+  const forceReason: string = body?.reason || 'forced_by_caller';
+  const campaignName: string | null = body?.campaign_name || null;
+
   const startedAt = Date.now();
   const summary = { checked: 0, healthy: 0, disconnected: 0, skipped: 0, errors: 0 };
 
   try {
-    const { data: numbers, error } = await supabase
+    let q = supabase
       .from('whatsapp_numbers')
       .select('id, user_id, instance_name, phone_number, api_tier, is_connected, updated_at')
-      .eq('is_connected', true)
       .not('instance_name', 'is', null)
       .not('phone_number', 'is', null);
+
+    if (filterNumberId) {
+      q = q.eq('id', filterNumberId);
+    } else {
+      q = q.eq('is_connected', true);
+    }
+
+    const { data: numbers, error } = await q;
 
     if (error) throw error;
 
@@ -85,10 +101,17 @@ serve(async (req) => {
     for (const n of numbers ?? []) {
       summary.checked++;
 
-      // Skip if no active campaigns AND number was just touched (<10min) — avoid noise
       const tier = (n.api_tier === 'paid' ? 'paid' : 'free') as 'free' | 'paid';
       const creds = getCreds(tier) || getCreds('free');
       if (!creds) { summary.skipped++; continue; }
+
+      // FORCE branch: caller (e.g., campaign-processor on stuck-campaign timeout)
+      // already proved the session is dead. Skip probes and disconnect immediately.
+      if (forceDisconnect && filterNumberId) {
+        summary.disconnected++;
+        await handleDisconnection(supabase, n, creds, forceReason, campaignName);
+        continue;
+      }
 
       // 1) connectionState must be 'open'
       let state: string | null = null;
@@ -153,6 +176,7 @@ async function handleDisconnection(
   n: { id: string; user_id: string; instance_name: string | null; phone_number: string | null },
   _creds: EvolutionCredentials,
   reason: string,
+  campaignName?: string | null,
 ) {
   console.log(`[health-check] disconnecting ${n.instance_name} (reason=${reason})`);
 
@@ -160,19 +184,19 @@ async function handleDisconnection(
   try {
     await supabase
       .from('whatsapp_campaigns')
-      .update({ status: 'paused', updated_at: new Date().toISOString() })
+      .update({
+        status: 'paused',
+        pause_reason: 'Conexão WhatsApp caiu por timeout. Reconecte o número para retomar.',
+        updated_at: new Date().toISOString(),
+      })
       .eq('whatsapp_number_id', n.id)
       .in('status', ['running', 'pending']);
   } catch (e) {
     console.log('[health-check] pause campaigns failed:', e);
   }
 
-  // Delete instance from BOTH APIs to prevent orphans (any tier)
-  if (n.instance_name) {
-    await deleteInstanceEverywhere(n.instance_name);
-  }
+  if (n.instance_name) await deleteInstanceEverywhere(n.instance_name);
 
-  // Mark disconnected and clear instance_name → next connect creates a fresh one
   await supabase
     .from('whatsapp_numbers')
     .update({
@@ -183,7 +207,6 @@ async function handleDisconnection(
     })
     .eq('id', n.id);
 
-  // Notify user via email (idempotent per day)
   try {
     await supabase.functions.invoke('send-email', {
       body: {
@@ -193,6 +216,7 @@ async function handleDisconnection(
           phone_number: n.phone_number || n.instance_name,
           instance_name: n.instance_name,
           reason,
+          campaign_name: campaignName || undefined,
         },
         idempotency_key: `health_disconnect_${n.id}_${new Date().toISOString().slice(0, 10)}`,
       },
