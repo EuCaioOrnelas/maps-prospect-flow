@@ -88,6 +88,9 @@ serve(async (req) => {
 
     if (filterNumberId) {
       q = q.eq('id', filterNumberId);
+      // BUG fix: when targeting a specific number WITHOUT force_disconnect,
+      // skip if it's already disconnected to avoid duplicate emails / double-delete.
+      if (!forceDisconnect) q = q.eq('is_connected', true);
     } else {
       q = q.eq('is_connected', true);
     }

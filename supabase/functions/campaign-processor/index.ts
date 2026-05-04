@@ -121,6 +121,9 @@ async function startNextPostponedCampaign(
       status: 'running',
       started_at: new Date().toISOString(),
       pause_reason: null,
+      // Reset stuck-detector baseline so the new campaign isn't flagged as
+      // "silent for hours" using the previous campaign's send timestamp.
+      last_message_sent_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }).eq('id', postponedCampaign.id);
   } catch (e) {
@@ -1137,6 +1140,9 @@ Deno.serve(async (req) => {
         status: 'running',
         started_at: campaign.started_at || new Date().toISOString(),
         pause_reason: null,
+        // Reset stuck baseline on manual start so we don't false-positive
+        // a campaign that was created hours ago but only started now.
+        last_message_sent_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }).eq('id', campaignId);
 
@@ -1300,8 +1306,13 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Process running campaigns
+      // Process running campaigns — skip ones whose number was just force-disconnected
+      // by the stuck-detector above (avoid double email / wasted live checks on dead session).
       for (const campaign of (runningCampaigns || [])) {
+        if (campaign.whatsapp_number_id && handledStuckNumbers.has(campaign.whatsapp_number_id)) {
+          console.log(`⏭️ Skipping campaign ${campaign.id} — number was just disconnected by stuck-detector.`);
+          continue;
+        }
         if (!campaign.whatsapp_number_id) {
           await supabase.from('whatsapp_campaigns').update({
             status: 'failed',
@@ -1537,6 +1548,15 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error in campaign-processor:', error);
+    // BUG fix: mark any open heartbeat as failed so monitoring doesn't show
+    // a permanently "running" processor when an unhandled error happens.
+    try {
+      await supabase
+        .from('campaign_processor_heartbeats')
+        .update({ status: 'failed', completed_at: new Date().toISOString() })
+        .eq('status', 'running')
+        .gte('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
+    } catch (_) { /* ignore */ }
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'Unknown error' 
     }), {
