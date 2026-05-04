@@ -227,13 +227,17 @@ export function useAdminDashboard() {
       let pixMrrTotal = 0;
       let pixActiveSubs = 0;
 
-      const typedProfiles = profiles as PayingProfile[];
+      const typedProfiles = profiles as (PayingProfile & { trial_will_charge_at?: string | null })[];
+      // Excluir trials (cartão registrado mas ainda não cobrado) do MRR e da contagem.
+      const isTrialingProfile = (p: any) =>
+        p.trial_will_charge_at && new Date(p.trial_will_charge_at).getTime() > now.getTime();
       const recognizedProfiles = typedProfiles.filter(
         (p) =>
-          p.payment_provider === "stripe" ||
-          p.payment_provider === "asaas" ||
-          p.payment_provider === "manual" ||
-          p.payment_provider === null
+          !isTrialingProfile(p) &&
+          (p.payment_provider === "stripe" ||
+            p.payment_provider === "asaas" ||
+            p.payment_provider === "manual" ||
+            p.payment_provider === null)
       );
       setPayingProfiles(
         recognizedProfiles.filter((p) => !p.subscription_current_period_end || new Date(p.subscription_current_period_end) >= now)
