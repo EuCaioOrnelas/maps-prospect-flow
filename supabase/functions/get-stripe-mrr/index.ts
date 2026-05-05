@@ -591,6 +591,8 @@ Deno.serve(async (req) => {
         customActiveSubscriptions: customActiveCount,
         trialingSubscriptions: trialingCount,
         trialingMRR,
+        pastDueSubscriptions: pastDueCount,
+        pastDueMRR,
         totalRefunded: wiizeRefundedAmount,
         refundCount: wiizeRefundCount,
         canceledSubscriptions: finalCanceledCount,
