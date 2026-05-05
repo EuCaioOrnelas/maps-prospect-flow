@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -166,6 +166,25 @@ const PageLoader = () => (
   </div>
 );
 
+const PasswordRecoveryRedirect = () => {
+  useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const query = new URLSearchParams(window.location.search);
+    const isRecoveryLink =
+      hash.get("type") === "recovery" ||
+      query.get("type") === "recovery" ||
+      hash.has("access_token") ||
+      query.has("code") ||
+      hash.get("error_code") === "otp_expired";
+
+    if (window.location.pathname === "/" && isRecoveryLink) {
+      window.location.replace(`/reset-password${window.location.search}${window.location.hash}`);
+    }
+  }, []);
+
+  return null;
+};
+
 const App = () => (
   <ErrorBoundary>
   <HelmetProvider>
@@ -174,6 +193,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <PasswordRecoveryRedirect />
           <AuthProvider>
             <GuidedTourProvider>
             <Suspense fallback={<PageLoader />}>
