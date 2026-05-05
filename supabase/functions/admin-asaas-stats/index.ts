@@ -196,24 +196,59 @@ serve(async (req) => {
     const customerIds = pixPayments.map((p) => p.customer);
     const customerMap = await fetchCustomersMap(apiKey, customerIds);
 
+    // Set de subscription IDs (cartão) e PIX auth IDs que JÁ tiveram cobrança confirmada.
+    // Sub Asaas vira ACTIVE assim que o cartão é cadastrado, mesmo em trial não-pago.
+    // Para o MRR só contam subs que efetivamente cobraram pelo menos uma vez.
+    const paidCardSubIds = new Set<string>();
+    for (const p of cardPayments) {
+      if (!p.subscription) continue;
+      if (p.status === "CONFIRMED" || p.status === "RECEIVED") {
+        paidCardSubIds.add(p.subscription);
+      }
+    }
+    const paidPixAuthIds = new Set<string>();
+    for (const p of pixPayments) {
+      const authId = p.pixAutomaticAuthorizationId || p.subscription;
+      if (!authId) continue;
+      if (p.status === "CONFIRMED" || p.status === "RECEIVED") {
+        paidPixAuthIds.add(authId);
+      }
+    }
+
     // ==== MRR consolidado ====
-    // Cartão recorrente: somar valor mensalizado das subs ativas
+    // Cartão recorrente: somar valor mensalizado APENAS de subs com pagamento confirmado.
     let cardMrr = 0;
     let cardSubsCount = 0;
+    let cardTrialMrr = 0;
+    let cardTrialSubsCount = 0;
     for (const s of subs) {
       if (s.billingType !== "CREDIT_CARD") continue;
       const monthly = s.cycle === "YEARLY" ? s.value / 12 : s.value;
-      cardMrr += monthly;
-      cardSubsCount++;
+      if (paidCardSubIds.has(s.id)) {
+        cardMrr += monthly;
+        cardSubsCount++;
+      } else {
+        cardTrialMrr += monthly;
+        cardTrialSubsCount++;
+        log("Skipping unpaid card sub (trial/never paid)", { id: s.id, value: s.value });
+      }
     }
 
-    // PIX automático
+    // PIX automático: mesma lógica
     let pixMrr = 0;
     let pixSubsCount = 0;
+    let pixTrialMrr = 0;
+    let pixTrialSubsCount = 0;
     for (const a of pixAuths) {
       const monthly = a.frequency === "YEARLY" ? a.value / 12 : a.value;
-      pixMrr += monthly;
-      pixSubsCount++;
+      if (paidPixAuthIds.has(a.id)) {
+        pixMrr += monthly;
+        pixSubsCount++;
+      } else {
+        pixTrialMrr += monthly;
+        pixTrialSubsCount++;
+        log("Skipping unpaid PIX auth (trial/never paid)", { id: a.id, value: a.value });
+      }
     }
 
     // ==== Faturas PIX (formatadas para a UI) ====
@@ -272,6 +307,10 @@ serve(async (req) => {
           card_mrr: cardMrr,
           pix_mrr: pixMrr,
           total_mrr: cardMrr + pixMrr,
+          card_trial_subs: cardTrialSubsCount,
+          card_trial_mrr: cardTrialMrr,
+          pix_trial_subs: pixTrialSubsCount,
+          pix_trial_mrr: pixTrialMrr,
           pix_received_this_month: pixReceivedThisMonth,
           pix_paid_count_90d: pixPaidCount,
           pix_pending_count_90d: pixPendingCount,
