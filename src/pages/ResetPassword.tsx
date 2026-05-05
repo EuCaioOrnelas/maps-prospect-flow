@@ -15,23 +15,79 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerifyingLink, setIsVerifyingLink] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+    let mounted = true;
+
+    const rejectLink = () => {
+      if (!mounted) return;
+      toast({
+        title: "Link inválido",
+        description: "O link de recuperação expirou ou é inválido.",
+        variant: "destructive",
+      });
+      navigate("/login");
+    };
+
+    const verifyRecoveryLink = async () => {
+      const query = new URLSearchParams(window.location.search);
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const urlError = hash.get("error_description") || query.get("error_description");
+
+      if (urlError) {
         toast({
           title: "Link inválido",
-          description: "O link de recuperação expirou ou é inválido.",
+          description: decodeURIComponent(urlError.replace(/\+/g, " ")),
           variant: "destructive",
         });
         navigate("/login");
+        return;
+      }
+
+      const code = query.get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          rejectLink();
+          return;
+        }
+        window.history.replaceState({}, document.title, "/reset-password");
+      } else {
+        const accessToken = hash.get("access_token");
+        const refreshToken = hash.get("refresh_token");
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) {
+            rejectLink();
+            return;
+          }
+          window.history.replaceState({}, document.title, "/reset-password");
+        }
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        rejectLink();
+        return;
+      }
+
+      if (mounted) {
+        setIsVerifyingLink(false);
       }
     };
-    checkSession();
+
+    verifyRecoveryLink();
+
+    return () => {
+      mounted = false;
+    };
   }, [navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,7 +158,12 @@ const ResetPassword = () => {
               <Logo size="lg" />
             </div>
 
-            {!isSuccess ? (
+            {isVerifyingLink ? (
+              <div className="flex flex-col items-center gap-4 py-8 text-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Validando link de recuperação...</p>
+              </div>
+            ) : !isSuccess ? (
               <>
                 <h1 className="font-display text-xl sm:text-2xl font-bold text-center mb-2">
                   Redefinir senha
