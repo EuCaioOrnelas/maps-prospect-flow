@@ -411,7 +411,7 @@ export function useAdminDashboard() {
         alertsList.push({
           type: "info",
           text: `${hotFreeCount} usuário(s) Free com uso alto — oportunidade de upgrade`,
-          route: "/admin/usuarios",
+          route: "/admin/oportunidades-upgrade",
         });
       }
 

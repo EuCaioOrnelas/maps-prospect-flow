@@ -101,6 +101,25 @@ const WhatsAppCampaign = () => {
   const [selectedLeads, setSelectedLeads] = useState<Lead[]>([]);
   const [messages, setMessages] = useState<string[]>(["", "", "", "", ""]);
   const [campaignName, setCampaignName] = useState("");
+
+  // Preset de campanha vindo de outras páginas (ex: /admin/oportunidades-upgrade)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("wa_campaign_preset");
+      if (!raw) return;
+      sessionStorage.removeItem("wa_campaign_preset");
+      const preset = JSON.parse(raw) as { campaignName?: string; leads?: Lead[] };
+      if (preset.leads?.length) {
+        setSelectedLeads(preset.leads);
+        setMessageMode("ai_generated");
+      }
+      if (preset.campaignName) setCampaignName(preset.campaignName);
+      setActiveTab("new");
+      setStep("leads");
+    } catch (e) {
+      console.warn("Preset WA inválido", e);
+    }
+  }, []);
   const [delaySecondsMin, setDelaySecondsMin] = useState(120);
   const [delaySecondsMax, setDelaySecondsMax] = useState(180);
   const [pauseAfterContacts, setPauseAfterContacts] = useState(30);

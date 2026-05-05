@@ -93,6 +93,7 @@ const Onboarding = lazyWithRetry(() => import("./pages/Onboarding"), "Onboarding
 // Admin sub-pages (lazy loaded)
 const AdminKPIs = lazyWithRetry(() => import("./pages/admin/AdminKPIs"), "AdminKPIs");
 const AdminAlertas = lazyWithRetry(() => import("./pages/admin/AdminAlertas"), "AdminAlertas");
+const AdminOportunidadesUpgrade = lazyWithRetry(() => import("./pages/admin/AdminOportunidadesUpgrade"), "AdminOportunidadesUpgrade");
 const AdminRelatorios = lazyWithRetry(() => import("./pages/admin/AdminRelatorios"), "AdminRelatorios");
 
 const AdminAssinaturas = lazyWithRetry(() => import("./pages/admin/AdminAssinaturas"), "AdminAssinaturas");
@@ -286,6 +287,7 @@ const App = () => (
                   <Route path="operacoes/webhooks" element={<AdminWebhooks />} />
                   {/* Growth */}
                   <Route path="growth-intel" element={<AdminGrowthIntelligence />} />
+                  <Route path="oportunidades-upgrade" element={<AdminOportunidadesUpgrade />} />
                   <Route path="email-tests" element={<AdminEmailTests />} />
                   <Route path="email-flows" element={<AdminEmailFlows />} />
                   <Route path="email-flows/:id" element={<AdminEmailFlowEditor />} />
