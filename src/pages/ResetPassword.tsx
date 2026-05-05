@@ -41,7 +41,7 @@ const ResetPassword = () => {
       if (urlError) {
         toast({
           title: "Link inválido",
-          description: decodeURIComponent(urlError.replace(/\+/g, " ")),
+          description: urlError,
           variant: "destructive",
         });
         navigate("/login");
