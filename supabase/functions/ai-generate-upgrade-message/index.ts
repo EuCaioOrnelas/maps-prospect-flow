@@ -95,7 +95,7 @@ Uso: ${user.searches_used}/${user.searches_limit} oportunidades este mês (${usa
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
