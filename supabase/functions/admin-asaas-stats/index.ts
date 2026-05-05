@@ -197,23 +197,49 @@ serve(async (req) => {
     const customerMap = await fetchCustomersMap(apiKey, customerIds);
 
     // ==== MRR consolidado ====
-    // Cartão recorrente: somar valor mensalizado das subs ativas
+    // IMPORTANTE: no Asaas a subscription fica ACTIVE imediatamente após o
+    // cadastro do cartão, mesmo durante o trial (primeira cobrança futura).
+    // Para o MRR só contamos subs que JÁ tiveram pelo menos uma cobrança
+    // confirmada/recebida — evita inflar com trials que ainda não pagaram.
+    const paidSubIds = new Set<string>();
+    const paidPixAuthIds = new Set<string>();
+    for (const p of paymentsAll) {
+      if (!["CONFIRMED", "RECEIVED"].includes(p.status)) continue;
+      if (p.subscription) paidSubIds.add(p.subscription);
+      if (p.pixAutomaticAuthorizationId) paidPixAuthIds.add(p.pixAutomaticAuthorizationId);
+    }
+
+    // Cartão recorrente: somar valor mensalizado das subs ativas que já cobraram
     let cardMrr = 0;
     let cardSubsCount = 0;
+    let cardTrialMrr = 0;
+    let cardTrialSubsCount = 0;
     for (const s of subs) {
       if (s.billingType !== "CREDIT_CARD") continue;
       const monthly = s.cycle === "YEARLY" ? s.value / 12 : s.value;
-      cardMrr += monthly;
-      cardSubsCount++;
+      if (paidSubIds.has(s.id)) {
+        cardMrr += monthly;
+        cardSubsCount++;
+      } else {
+        cardTrialMrr += monthly;
+        cardTrialSubsCount++;
+      }
     }
 
-    // PIX automático
+    // PIX automático: idem — só conta como MRR após primeira cobrança confirmada
     let pixMrr = 0;
     let pixSubsCount = 0;
+    let pixTrialMrr = 0;
+    let pixTrialSubsCount = 0;
     for (const a of pixAuths) {
       const monthly = a.frequency === "YEARLY" ? a.value / 12 : a.value;
-      pixMrr += monthly;
-      pixSubsCount++;
+      if (paidPixAuthIds.has(a.id)) {
+        pixMrr += monthly;
+        pixSubsCount++;
+      } else {
+        pixTrialMrr += monthly;
+        pixTrialSubsCount++;
+      }
     }
 
     // ==== Faturas PIX (formatadas para a UI) ====
