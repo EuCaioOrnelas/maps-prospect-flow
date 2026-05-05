@@ -287,6 +287,7 @@ const App = () => (
                   <Route path="operacoes/webhooks" element={<AdminWebhooks />} />
                   {/* Growth */}
                   <Route path="growth-intel" element={<AdminGrowthIntelligence />} />
+                  <Route path="oportunidades-upgrade" element={<AdminOportunidadesUpgrade />} />
                   <Route path="email-tests" element={<AdminEmailTests />} />
                   <Route path="email-flows" element={<AdminEmailFlows />} />
                   <Route path="email-flows/:id" element={<AdminEmailFlowEditor />} />
