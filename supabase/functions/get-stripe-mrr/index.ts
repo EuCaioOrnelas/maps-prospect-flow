@@ -263,11 +263,16 @@ Deno.serve(async (req) => {
     let activeCount = 0;
     let trialingCount = 0;
     let trialingMRR = 0;
+    let pastDueCount = 0;
+    let pastDueMRR = 0;
     let canceledCount = 0;
     let cancellationsLast30d = 0;
     const planDistribution: { [plan: string]: number } = {};
     const monthlySales: { [month: string]: { newSales: number; salesValue: number; cancellations: number } } = {};
     const thirtyDaysAgoUnix = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
+
+    // Dedupe: mesmo customer com múltiplas subs ativas conta apenas a mais cara.
+    const bestSubByCustomer = new Map<string, { subId: string; mrr: number; planName: string; email: string }>();
 
     for (const sub of wiizeSubs) {
       const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
@@ -278,23 +283,17 @@ Deno.serve(async (req) => {
       let effectiveAmountCents = priceObj?.unit_amount || 0;
       const interval = priceObj?.recurring?.interval || "month";
       const intervalCount = priceObj?.recurring?.interval_count || 1;
-      
-      // Apply discount only when it affects the recurring renewal amount
-      // Temporary coupons (once / repeating) should not reduce MRR,
-      // because Stripe MRR reflects the ongoing renewal value.
+
       const discount = (sub as any).discount;
       if (discount?.coupon?.duration === "forever") {
         const coupon = discount.coupon;
         if (coupon.percent_off) {
           effectiveAmountCents = Math.round(effectiveAmountCents * (1 - coupon.percent_off / 100));
-          console.log(`[GET-STRIPE-MRR] Recurring coupon ${coupon.id}: ${coupon.percent_off}% off applied`);
         } else if (coupon.amount_off) {
           effectiveAmountCents = Math.max(0, effectiveAmountCents - coupon.amount_off);
-          console.log(`[GET-STRIPE-MRR] Recurring coupon ${coupon.id}: R$${coupon.amount_off/100} off applied`);
         }
       }
-      
-      // Normalize to monthly
+
       let monthlyAmountCents = effectiveAmountCents;
       if (interval === "year") {
         monthlyAmountCents = Math.round(effectiveAmountCents / (12 * intervalCount));
@@ -305,22 +304,17 @@ Deno.serve(async (req) => {
       } else {
         monthlyAmountCents = Math.round(effectiveAmountCents / intervalCount);
       }
-      
+
       const baseAmount = monthlyAmountCents / 100;
       const mrrAmount = Math.round(baseAmount * 100) / 100;
-      
+
       const priceId = sub.items.data[0]?.price.id;
       const planName = PRICE_TO_PLAN[priceId] || "unknown";
 
-      // Count cancellations only for subs that had at least one real payment
-      const hadAnyPayment = subsWithPayment.has(sub.id) || 
+      const hadAnyPayment = subsWithPayment.has(sub.id) ||
         (latestInvoice?.charge && typeof latestInvoice.charge === "string" && refundedChargeIds.has(latestInvoice.charge));
 
-      // Cutoff: ignorar churns anteriores a 15/04/2026 (legado pré-relançamento)
       const CHURN_CUTOFF_UNIX = Math.floor(new Date("2026-04-15T00:00:00-03:00").getTime() / 1000);
-
-      // Ignorar cancelamentos durante o trial (sub.trial_end existente e canceled_at <= trial_end).
-      // Não conta como churn quem cancelou a ativação automática antes da primeira cobrança.
       const canceledDuringTrial =
         sub.status === "canceled" && sub.trial_end && sub.canceled_at && sub.canceled_at <= sub.trial_end;
 
@@ -332,40 +326,59 @@ Deno.serve(async (req) => {
         sub.canceled_at >= CHURN_CUTOFF_UNIX
       ) {
         canceledCount++;
-        if (sub.canceled_at >= thirtyDaysAgoUnix) {
-          cancellationsLast30d++;
-        }
-
+        if (sub.canceled_at >= thirtyDaysAgoUnix) cancellationsLast30d++;
         const cancelDate = new Date(sub.canceled_at * 1000);
         const monthKey = `${cancelDate.getFullYear()}-${String(cancelDate.getMonth() + 1).padStart(2, "0")}`;
-        if (!monthlySales[monthKey]) {
-          monthlySales[monthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
-        }
+        if (!monthlySales[monthKey]) monthlySales[monthKey] = { newSales: 0, salesValue: 0, cancellations: 0 };
         monthlySales[monthKey].cancellations++;
       }
 
-      // For active MRR, skip $0 or refunded subs
       const chargeId = latestInvoice?.charge;
       const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
-      
-      // Stripe MRR: includes ONLY active and past_due (NOT trialing — trial não é receita real)
-      // trialing é contado separadamente em trialingCount/trialingMRR para exibição.
       const isTrialing = sub.status === "trialing";
-      const countsForMrr = ["active", "past_due"].includes(sub.status) && !sub.cancel_at_period_end;
 
       if (isTrialing && !sub.cancel_at_period_end && mrrAmount > 0 && !wasRefunded) {
         trialingCount++;
         trialingMRR += mrrAmount;
-        console.log(`[GET-STRIPE-MRR] Trial sub (NOT counted in MRR): ${sub.id} | email=${customerEmail} | plan=${planName} | future_mrr=R$${mrrAmount}`);
+        console.log(`[GET-STRIPE-MRR] Trial sub (NOT in MRR): ${sub.id} | ${customerEmail} | R$${mrrAmount}`);
+        continue;
       }
 
-      if (countsForMrr && mrrAmount > 0 && !wasRefunded) {
-        activeMRR += mrrAmount;
-        activeCount++;
-        planDistribution[planName] = (planDistribution[planName] || 0) + 1;
-        console.log(`[GET-STRIPE-MRR] MRR sub: ${sub.id} | status=${sub.status} | email=${customerEmail} | plan=${planName} | mrr=R$${mrrAmount}`);
+      // past_due = cartão falhou. NÃO é receita real.
+      if (sub.status === "past_due" && !sub.cancel_at_period_end && mrrAmount > 0 && !wasRefunded) {
+        pastDueCount++;
+        pastDueMRR += mrrAmount;
+        console.log(`[GET-STRIPE-MRR] Past_due sub (NOT in MRR): ${sub.id} | ${customerEmail} | R$${mrrAmount}`);
+        continue;
+      }
+
+      // MRR real = ACTIVE + ao menos 1 pagamento confirmado
+      const countsForMrr =
+        sub.status === "active" &&
+        !sub.cancel_at_period_end &&
+        hadAnyPayment &&
+        mrrAmount > 0 &&
+        !wasRefunded;
+
+      if (!countsForMrr) continue;
+
+      // Dedupe por customer
+      const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+      if (!customerId) continue;
+      const existing = bestSubByCustomer.get(customerId);
+      if (!existing || mrrAmount > existing.mrr) {
+        bestSubByCustomer.set(customerId, { subId: sub.id, mrr: mrrAmount, planName, email: customerEmail });
       }
     }
+
+    // Consolidar MRR pós-dedupe
+    for (const [, info] of bestSubByCustomer) {
+      activeMRR += info.mrr;
+      activeCount++;
+      planDistribution[info.planName] = (planDistribution[info.planName] || 0) + 1;
+      console.log(`[GET-STRIPE-MRR] MRR sub (counted): ${info.subId} | ${info.email} | plan=${info.planName} | mrr=R$${info.mrr}`);
+    }
+    console.log(`[GET-STRIPE-MRR] Excluded past_due: ${pastDueCount} subs / R$${pastDueMRR}`);
 
     // Count ALL paid invoices as sales (including renewals)
     let totalSalesValue = 0;
