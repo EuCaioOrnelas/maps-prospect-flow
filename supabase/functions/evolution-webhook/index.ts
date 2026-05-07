@@ -2820,52 +2820,16 @@ REGRAS:
             console.log(`Ignoring unknown state "${state}" for ${instanceName}`);
           }
 
-          // AUTO-CONFIGURE WEBHOOK when instance connects successfully
-          // Many Evolution API versions discard webhook config set before QR scan
-          // AUTO-CONFIGURE WEBHOOK only on FRESH connections.
-          // Calling /webhook/set on every 'open' event restarts the Baileys
-          // socket on this Evolution version, causing connect→disconnect loops.
-          if (state === 'open' && isFreshConnection) {
-            const webhookCreds = await getApiCredentials(instanceName);
-            const resolvedApiUrl = webhookCreds.url;
-            const resolvedApiKey = webhookCreds.apiKey;
-            
-            console.log(`🔄 Auto-configuring webhook for ${instanceName} on ${resolvedApiUrl.includes('paid') ? 'PAID' : 'FREE'} API`);
-            const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;
-            const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED"];
-            
-            const webhookFormats = [
-              { url: `${resolvedApiUrl}/webhook/set/${instanceName}`, method: 'POST', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
-              { url: `${resolvedApiUrl}/webhook/set/${instanceName}`, method: 'POST', body: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } },
-              { url: `${resolvedApiUrl}/webhook/instance/${instanceName}`, method: 'POST', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
-              { url: `${resolvedApiUrl}/webhook/${instanceName}`, method: 'PUT', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
-              { url: `${resolvedApiUrl}/settings/${instanceName}`, method: 'PUT', body: { webhook: { enabled: true, url: webhookUrl, webhookByEvents: false, webhookBase64: true, events: webhookEvents } } },
-            ];
-
-            let webhookOk = false;
-            for (const fmt of webhookFormats) {
-              if (webhookOk) break;
-              try {
-                const wRes = await fetch(fmt.url, {
-                  method: fmt.method,
-                  headers: { 'Content-Type': 'application/json', 'apikey': resolvedApiKey },
-                  body: JSON.stringify(fmt.body),
-                });
-                const wText = await wRes.text();
-                console.log(`Webhook set attempt ${fmt.method} ${fmt.url}: ${wRes.status} - ${wText.substring(0, 200)}`);
-                if (wRes.ok || wRes.status === 201) {
-                  webhookOk = true;
-                  console.log('✅ Webhook auto-configured successfully on connection!');
-                }
-              } catch (e) {
-                console.log(`Webhook set failed for ${fmt.url}:`, e);
-              }
-            }
-
-            if (!webhookOk) {
-              console.warn('⚠️ Could not auto-configure webhook on connection. Manual config may be needed.');
-            }
-          }
+          // ⚠️ DO NOT call /webhook/set here.
+          // On this Evolution build, /webhook/set restarts the Baileys socket,
+          // which causes the freshly-scanned session to drop within minutes
+          // (the classic "connects then disconnects without reason" bug).
+          // The webhook is ALREADY configured during evolution-create-instance
+          // (in the create payload + 3 fallback endpoints + a find/set retry).
+          // If it ever fails, the user has a manual "Sincronizar webhook" button
+          // (handleReconfigureWebhook → evolution-reconfigure-webhook) which is
+          // idempotent and only re-sets when the config actually differs.
+          // Keeping this block disabled is intentional — do not re-enable.
         }
         break;
 
