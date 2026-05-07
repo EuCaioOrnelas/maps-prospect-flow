@@ -653,7 +653,7 @@ const Dashboard = () => {
                 ) : (
                   <>
                     <Search size={20} />
-                    Prospectar Leads Estratégicos
+                    Buscar Oportunidades
                   </>
                 )}
               </Button>
