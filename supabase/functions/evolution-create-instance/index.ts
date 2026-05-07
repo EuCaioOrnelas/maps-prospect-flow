@@ -195,6 +195,11 @@ serve(async (req) => {
     const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED"];
 
     if (!instanceExists) {
+      // Per Evolution v2 docs the nested webhook in /instance/create uses
+      // `byEvents`/`base64`, while /webhook/set uses `webhookByEvents`/`webhookBase64`.
+      // Send BOTH variants so the webhook is actually registered during creation
+      // and we don't need to call /webhook/set afterwards (which restarts Baileys
+      // and drops the freshly-paired session).
       const createPayload: any = {
         instanceName: instanceName,
         qrcode: true,
@@ -202,6 +207,8 @@ serve(async (req) => {
         webhook: {
           enabled: true,
           url: webhookUrl,
+          byEvents: false,
+          base64: true,
           webhookByEvents: false,
           webhookBase64: true,
           events: webhookEvents,
