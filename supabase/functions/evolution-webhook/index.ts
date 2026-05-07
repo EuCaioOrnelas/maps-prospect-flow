@@ -2822,7 +2822,10 @@ REGRAS:
 
           // AUTO-CONFIGURE WEBHOOK when instance connects successfully
           // Many Evolution API versions discard webhook config set before QR scan
-          if (state === 'open') {
+          // AUTO-CONFIGURE WEBHOOK only on FRESH connections.
+          // Calling /webhook/set on every 'open' event restarts the Baileys
+          // socket on this Evolution version, causing connect→disconnect loops.
+          if (state === 'open' && isFreshConnection) {
             const webhookCreds = await getApiCredentials(instanceName);
             const resolvedApiUrl = webhookCreds.url;
             const resolvedApiKey = webhookCreds.apiKey;
