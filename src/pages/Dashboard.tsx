@@ -98,6 +98,23 @@ const Dashboard = () => {
   const { requestPermission, notifyCreditsExhausted, notifyLowCredits, isSupported, permission } = useNotifications();
   const { trackScoreEvent } = useAutoScoreTracking("dashboard");
 
+  // Company profile gate (mesmo perfil exigido em Oportunidades)
+  const [companyProfile, setCompanyProfile] = useState<any>(null);
+  const [showCompanyOnboarding, setShowCompanyOnboarding] = useState(false);
+  const [pendingSearch, setPendingSearch] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("company_profiles" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data) setCompanyProfile(data);
+    })();
+  }, [user]);
+
   const searchesRemaining = profile ? (profile.searches_limit - profile.searches_used) + (((profile as any).bonus_searches) || 0) : 0;  // opportunities remaining (plan + carried bonus)
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
   const showTrialIndicator = isFreePlan && trialDaysRemaining > 0 && !isTrialExpired;
