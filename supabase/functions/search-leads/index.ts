@@ -73,11 +73,12 @@ interface Lead {
   hasWhatsApp?: boolean;
 }
 
-// Normalize phone to strict BR mobile E.164 format: 55 + DDD + 9 + 8 digits
+// Normalize phone to BR E.164: aceita CELULAR (55+DDD+9+8) e FIXO (55+DDD+8)
+// Antes só aceitava celular, o que descartava ~80% dos restaurantes/comércios
 function normalizePhone(phone: string): string {
   const digits = String(phone || '').replace(/\D/g, '');
 
-  // Already in BR E.164 mobile format
+  // Celular já em E.164 (13 dígitos: 55 + DDD + 9 + 8)
   if (digits.length === 13 && digits.startsWith('55')) {
     const ddd = Number(digits.slice(2, 4));
     const firstLocal = digits[4];
@@ -87,11 +88,31 @@ function normalizePhone(phone: string): string {
     return '';
   }
 
-  // Local BR mobile format (DDD + 9 + 8)
+  // Fixo já em E.164 (12 dígitos: 55 + DDD + 8)
+  if (digits.length === 12 && digits.startsWith('55')) {
+    const ddd = Number(digits.slice(2, 4));
+    const firstLocal = digits[4];
+    // Fixo começa com 2,3,4 ou 5
+    if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && /[2-5]/.test(firstLocal)) {
+      return digits;
+    }
+    return '';
+  }
+
+  // Celular local (11 dígitos: DDD + 9 + 8)
   if (digits.length === 11) {
     const ddd = Number(digits.slice(0, 2));
     const firstLocal = digits[2];
     if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && firstLocal === '9') {
+      return `55${digits}`;
+    }
+  }
+
+  // Fixo local (10 dígitos: DDD + 8)
+  if (digits.length === 10) {
+    const ddd = Number(digits.slice(0, 2));
+    const firstLocal = digits[2];
+    if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && /[2-5]/.test(firstLocal)) {
       return `55${digits}`;
     }
   }
