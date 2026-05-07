@@ -119,13 +119,16 @@ serve(async (req) => {
     let newUserId: string | null = null;
     let userAlreadyExisted = false;
 
-    // Try to create auth user (auto-confirmed)
-    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-      email: normalizedEmail,
-      password: body.password,
-      email_confirm: true,
-      user_metadata: { full_name: body.full_name, is_partner: true },
-    });
+    // If no password was provided, the caller already knows this email
+    // belongs to an existing Wiize user. Skip the create attempt entirely.
+    const { data: created, error: createErr } = hasPassword
+      ? await supabaseAdmin.auth.admin.createUser({
+          email: normalizedEmail,
+          password: body.password,
+          email_confirm: true,
+          user_metadata: { full_name: body.full_name, is_partner: true },
+        })
+      : { data: null, error: { message: "no password — assume already registered" } as any };
 
     if (createErr || !created?.user) {
       const msg = (createErr?.message || "").toLowerCase();
