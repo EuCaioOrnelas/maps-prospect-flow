@@ -285,7 +285,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         revenueLeadsMap.set(key, rl);
       });
 
-      const radarLeads: RadarLead[] = (crmLeadsForRadar || [])
+      const allRadarLeads: RadarLead[] = (crmLeadsForRadar || [])
         .map((lead) => {
           const phoneKey = (lead.phone || "").replace(/\D/g, "").slice(-8);
           const revLead = phoneKey.length >= 8 ? revenueLeadsMap.get(phoneKey) : null;
@@ -294,7 +294,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
           const potential = Number(lead.estimated_value) || avgTicket;
           return {
             id: lead.id,
-            name: lead.company_name || "Sem nome",
+            name: lead.company_name || lead.phone || "Sem nome",
             phone: lead.phone || "",
             segment: lead.category || "",
             score,
@@ -303,9 +303,17 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
             scoreGrowth7d: scoreGrowth,
           };
         })
+        .filter(l => l.score > 0 || l.scoreGrowth7d > 0);
+
+      // Prioritize: 1) leads with recent growth, 2) leads with highest score
+      const withGrowth = allRadarLeads
         .filter(l => l.scoreGrowth7d > 0)
-        .sort((a, b) => b.scoreGrowth7d - a.scoreGrowth7d)
-        .slice(0, 6);
+        .sort((a, b) => b.scoreGrowth7d - a.scoreGrowth7d);
+      const withoutGrowth = allRadarLeads
+        .filter(l => l.scoreGrowth7d === 0 && l.score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      const radarLeads: RadarLead[] = [...withGrowth, ...withoutGrowth].slice(0, 6);
 
       // --- Executive Alerts (real data-driven) ---
       const executiveAlerts: ExecutiveAlert[] = [];
