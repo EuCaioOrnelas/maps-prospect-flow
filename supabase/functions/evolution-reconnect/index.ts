@@ -346,7 +346,45 @@ serve(async (req) => {
       }
     }
 
-    // Step 4: Try to connect/restart the instance
+    // Step 4: Check current state BEFORE calling /instance/connect
+    // (calling /instance/connect on an already-open instance can disturb the socket).
+    try {
+      const preState = await fetch(`${effectiveUrl}/instance/connectionState/${instanceName}`, {
+        method: 'GET',
+        headers: { 'apikey': effectiveKey },
+      });
+      if (preState.ok) {
+        const sd = await preState.json().catch(() => ({}));
+        const s = sd?.state || sd?.instance?.state;
+        if (s === 'open') {
+          await supabase
+            .from('whatsapp_numbers')
+            .update({
+              is_connected: true,
+              api_tier: effectiveTier,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', numberId)
+            .eq('user_id', user.id);
+
+          await relinkWarmingSessions(supabase, numberId, user.id);
+
+          return new Response(JSON.stringify({
+            success: true,
+            connected: true,
+            needsQR: false,
+            apiTier: effectiveTier,
+            message: 'Already connected'
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+    } catch (e) {
+      console.log('pre-connect state check failed:', e);
+    }
+
+    // Not open — request QR/connect
     const connectResponse = await fetch(`${effectiveUrl}/instance/connect/${instanceName}`, {
       method: 'GET',
       headers: { 'apikey': effectiveKey },
@@ -362,29 +400,6 @@ serve(async (req) => {
       if (connectData.base64 || connectData.qrcode?.base64) {
         qrCode = connectData.base64 || connectData.qrcode?.base64;
         needsQR = true;
-      } else if (connectData.instance?.state === 'open') {
-        await supabase
-          .from('whatsapp_numbers')
-          .update({ 
-            is_connected: true,
-            api_tier: effectiveTier,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', numberId)
-          .eq('user_id', user.id);
-
-        // Re-link orphaned warming sessions via phone_key
-        await relinkWarmingSessions(supabase, numberId, user.id);
-
-        return new Response(JSON.stringify({
-          success: true,
-          connected: true,
-          needsQR: false,
-          apiTier: effectiveTier,
-          message: 'Already connected'
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
       }
     }
 
