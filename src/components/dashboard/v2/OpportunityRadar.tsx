@@ -41,7 +41,7 @@ export function OpportunityRadar({ radarLeads }: OpportunityRadarProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="py-8 text-center">
-          <p className="text-sm text-muted-foreground/60">Prospecte leads para ativar o radar</p>
+          <p className="text-sm text-muted-foreground/60">Busque oportunidades para ativar o radar</p>
         </CardContent>
       </Card>
     );
