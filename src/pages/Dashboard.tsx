@@ -47,6 +47,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
 interface Lead {
   name: string;
   category: string;
@@ -96,6 +97,23 @@ const Dashboard = () => {
   const { profile, signOut, refreshProfile, user, isTrialExpired, trialDaysRemaining } = useAuth();
   const { requestPermission, notifyCreditsExhausted, notifyLowCredits, isSupported, permission } = useNotifications();
   const { trackScoreEvent } = useAutoScoreTracking("dashboard");
+
+  // Company profile gate (mesmo perfil exigido em Oportunidades)
+  const [companyProfile, setCompanyProfile] = useState<any>(null);
+  const [showCompanyOnboarding, setShowCompanyOnboarding] = useState(false);
+  const [pendingSearch, setPendingSearch] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("company_profiles" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data) setCompanyProfile(data);
+    })();
+  }, [user]);
 
   const searchesRemaining = profile ? (profile.searches_limit - profile.searches_used) + (((profile as any).bonus_searches) || 0) : 0;  // opportunities remaining (plan + carried bonus)
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
@@ -243,6 +261,17 @@ const Dashboard = () => {
 
     if (searchesRemaining <= 0) {
       setShowUpgradeModal(true);
+      return;
+    }
+
+    // Gate: exige Perfil da Empresa preenchido antes de qualquer busca/análise
+    if (!companyProfile) {
+      setPendingSearch(true);
+      setShowCompanyOnboarding(true);
+      toast({
+        title: "Configure seu Perfil da Empresa",
+        description: "Precisamos dessas informações para a IA analisar e personalizar suas oportunidades.",
+      });
       return;
     }
 
@@ -1031,6 +1060,23 @@ const Dashboard = () => {
         onClose={() => setShowWhatsAppUpgradeModal(false)} 
       />
 
+      {user && (
+        <CompanyProfileOnboarding
+          open={showCompanyOnboarding}
+          userId={user.id}
+          initialData={companyProfile}
+          onClose={() => { setShowCompanyOnboarding(false); setPendingSearch(false); }}
+          onComplete={(profile) => {
+            setCompanyProfile(profile);
+            setShowCompanyOnboarding(false);
+            if (pendingSearch) {
+              setPendingSearch(false);
+              // Reexecuta a busca automaticamente após salvar o perfil
+              handleSearch({ preventDefault: () => {} } as any);
+            }
+          }}
+        />
+      )}
       {/* Onboarding/Trial-feedback modais removidos — orientação fica a cargo do tour guiado. */}
 
         </div>
