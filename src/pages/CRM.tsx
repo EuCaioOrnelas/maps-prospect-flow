@@ -361,14 +361,6 @@ export default function CRM() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 self-end sm:self-auto">
-                  <NumbersManager
-                    numbers={waNumbers}
-                    onNumbersChange={setWaNumbers}
-                    maxNumbers={waMaxNumbers}
-                    onConnect={() => { refetchWaNumbers(); }}
-                  />
-                </div>
               </div>
 
               <CRMMetrics stages={stages} leads={filteredLeads} />
