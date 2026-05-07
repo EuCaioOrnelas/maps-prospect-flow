@@ -116,12 +116,27 @@ const Chat = () => {
                     💡 As mensagens recebidas durante a desconexão serão sincronizadas automaticamente ao reconectar.
                   </p>
                   <div className="flex flex-col gap-2">
-                    <Button onClick={() => navigate("/meta-campaigns")} className="h-11 px-6 text-sm w-full">
+                    <Button onClick={() => setReconnectOpen(true)} className="h-11 px-6 text-sm w-full">
                       <RefreshCw size={16} className="mr-2" />
                       Reconectar WhatsApp
                     </Button>
-                    <Button variant="ghost" onClick={() => chat.handleReconnect()} className="text-xs text-muted-foreground h-8">
-                      Verificar novamente
+                    <Button
+                      variant="ghost"
+                      disabled={verifying}
+                      onClick={async () => {
+                        setVerifying(true);
+                        await chat.handleReconnect();
+                        setVerifying(false);
+                        toast({
+                          title: "Verificação concluída",
+                          description: chat.allConnectionsExpired
+                            ? "Nenhum número ativo encontrado. Reconecte para continuar."
+                            : "Conexão restaurada com sucesso.",
+                        });
+                      }}
+                      className="text-xs text-muted-foreground h-8"
+                    >
+                      {verifying ? "Verificando..." : "Verificar novamente"}
                     </Button>
                   </div>
                 </div>
