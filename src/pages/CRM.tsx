@@ -15,7 +15,7 @@ import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { SEO } from '@/components/SEO';
-import { Users, Plus, Trash2, FlaskConical, MessageCircle, Settings2, Eye, EyeOff } from 'lucide-react';
+import { Users, Plus, Trash2, FlaskConical, MessageCircle, Settings2, Eye, EyeOff, Smartphone } from 'lucide-react';
 import { NumbersManager } from '@/components/whatsapp/NumbersManager';
 import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
 import { usePhonePrivacy } from '@/hooks/usePhonePrivacy';
@@ -83,6 +83,7 @@ export default function CRM() {
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
+  const [numbersManagerOpen, setNumbersManagerOpen] = useState(false);
   const columnWidth: ColumnWidth = 'medium';
 
   // Fetch custom origins
@@ -361,14 +362,6 @@ export default function CRM() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 self-end sm:self-auto">
-                  <NumbersManager
-                    numbers={waNumbers}
-                    onNumbersChange={setWaNumbers}
-                    maxNumbers={waMaxNumbers}
-                    onConnect={() => { refetchWaNumbers(); }}
-                  />
-                </div>
               </div>
 
               <CRMMetrics stages={stages} leads={filteredLeads} />
@@ -401,6 +394,29 @@ export default function CRM() {
                       {phoneHidden ? "Mostrar finais dos telefones" : "Ocultar finais dos telefones"}
                     </TooltipContent>
                   </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setNumbersManagerOpen(true)}
+                        className="h-8 sm:h-9 gap-2"
+                      >
+                        <Smartphone className="w-4 h-4 sm:mr-0" />
+                        <span className="hidden sm:inline">Gerenciar números</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Visualizar e conectar números de WhatsApp</TooltipContent>
+                  </Tooltip>
+                  <NumbersManager
+                    numbers={waNumbers}
+                    onNumbersChange={setWaNumbers}
+                    maxNumbers={waMaxNumbers}
+                    onConnect={() => { refetchWaNumbers(); }}
+                    hideButtons
+                    forceOpen={numbersManagerOpen}
+                    onClose={() => setNumbersManagerOpen(false)}
+                  />
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
