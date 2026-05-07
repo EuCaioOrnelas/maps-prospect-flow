@@ -309,6 +309,7 @@ const Chat = () => {
             </DialogDescription>
           </DialogHeader>
           <MetaManualSetup
+            embedded
             onConnectionSaved={async () => {
               setReconnectOpen(false);
               await chat.handleReconnect();

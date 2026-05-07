@@ -24,10 +24,11 @@ import type { WabaConnection } from "@/pages/MetaCampaigns";
 interface MetaManualSetupProps {
   onConnectionSaved: (connection: WabaConnection | null) => void;
   isAddingExtra?: boolean;
+  embedded?: boolean;
 }
 
 
-export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra }: MetaManualSetupProps) => {
+export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: MetaManualSetupProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -196,21 +197,22 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra }: MetaManual
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="glass rounded-2xl p-6 sm:p-8 space-y-6">
+    <div className={embedded ? "" : "max-w-3xl mx-auto"}>
+      <div className={embedded ? "space-y-6" : "glass rounded-2xl p-6 sm:p-8 space-y-6"}>
         {/* Header */}
-        <div className="text-center space-y-3">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-            <MessageSquare size={28} className="text-primary" />
+        {!embedded && (
+          <div className="text-center space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+              <MessageSquare size={28} className="text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold">
+              {isAddingExtra ? "Adicionar outro número" : "Conecte sua conta WhatsApp Business"}
+            </h2>
+            <p className="text-muted-foreground max-w-md mx-auto text-sm">
+              Cole abaixo as credenciais geradas no seu Meta Business Suite. Siga o passo a passo se for a primeira vez.
+            </p>
           </div>
-          <h2 className="text-2xl font-bold">
-            {isAddingExtra ? "Adicionar outro número" : "Conecte sua conta WhatsApp Business"}
-          </h2>
-          <p className="text-muted-foreground max-w-md mx-auto text-sm">
-            Cole abaixo as credenciais geradas no seu Meta Business Suite. Siga o passo a passo se for a primeira vez.
-          </p>
-        </div>
-
+        )}
         {/* Step-by-step guide */}
         <div className="rounded-xl border border-border bg-muted/20 p-5 space-y-4">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
