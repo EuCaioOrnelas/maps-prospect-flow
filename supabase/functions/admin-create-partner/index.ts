@@ -166,14 +166,11 @@ serve(async (req) => {
       newUserId = foundUserId;
       userAlreadyExisted = true;
 
-      // Update existing user password so admin-provided credentials work
-      const { error: updPwdErr } = await supabaseAdmin.auth.admin.updateUserById(foundUserId, {
-        password: body.password,
-        email_confirm: true,
-      });
-      if (updPwdErr) {
-        console.warn("[admin-create-partner] failed to update existing user password:", updPwdErr.message);
-      }
+      // IMPORTANT: do NOT overwrite the existing user's password.
+      // This user already has a Wiize account — changing their password here
+      // would break their original Wiize login. They will use their existing
+      // Wiize credentials to access the partner portal.
+      console.log("[admin-create-partner] reusing existing Wiize user, password preserved:", foundUserId);
     } else {
       newUserId = created.user.id;
     }

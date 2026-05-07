@@ -86,6 +86,7 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
           <div className="space-y-2">
             <Label className="flex items-center gap-1.5"><Lock size={14} /> Senha inicial *</Label>
             <Input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mínimo 8 caracteres" />
+            <p className="text-xs text-muted-foreground">Se o email já tiver conta Wiize, esta senha é ignorada — o parceiro entra com a senha que já usa na Wiize.</p>
           </div>
 
           <div className="space-y-2">
