@@ -83,6 +83,7 @@ export default function CRM() {
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
+  const [numbersManagerOpen, setNumbersManagerOpen] = useState(false);
   const columnWidth: ColumnWidth = 'medium';
 
   // Fetch custom origins
