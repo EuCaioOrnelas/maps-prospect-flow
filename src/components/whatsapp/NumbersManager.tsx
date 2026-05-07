@@ -1088,7 +1088,7 @@ export const NumbersManager = ({
             variant="outline" 
             size="sm"
             onClick={() => setManageDialogOpen(true)}
-            className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
+            className="gap-2"
           >
             <Settings2 size={16} />
             <span className="hidden sm:inline">Gerenciar Números</span>
