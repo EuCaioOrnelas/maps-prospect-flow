@@ -60,28 +60,69 @@ serve(async (req) => {
     console.log(`Reconfiguring webhook for instance: ${instanceName}`);
 
     const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;
-    
-    let webhookConfigured = false;
-    let responseData = null;
-    let successEndpoint = null;
 
-    // Try multiple endpoint formats - webhook config must be nested under "webhook" property
+    // IMPORTANT: must match EXACTLY the payload used by evolution-webhook auto-config
+    // and evolution-reconnect. Mismatched values cause Evolution to re-set the
+    // webhook (which restarts the Baileys socket → disconnect loop).
     const webhookEvents = [
       "MESSAGES_UPSERT",
       "MESSAGES_UPDATE",
-      "MESSAGES_EDITED",
+      "MESSAGES_EDIT",
       "CONNECTION_UPDATE",
       "QRCODE_UPDATED",
-      "SEND_MESSAGE",
     ];
 
     const webhookConfig = {
       enabled: true,
       url: webhookUrl,
-      webhookByEvents: true,
-      webhookBase64: false,
+      webhookByEvents: false,
+      webhookBase64: true,
       events: webhookEvents,
     };
+
+    // ─── IDEMPOTENCY GUARD ──────────────────────────────────────────────────
+    // If the webhook is ALREADY pointing at our URL with the same flags, skip
+    // the /webhook/set call entirely. Each call to /webhook/set restarts the
+    // underlying Baileys socket on this Evolution version, so re-running it
+    // unnecessarily (e.g. on every agent save) is the #1 cause of a connected
+    // number disconnecting a few minutes later.
+    try {
+      const findUrls = [
+        `${EVOLUTION_API_URL}/webhook/find/${instanceName}`,
+        `${EVOLUTION_API_URL}/instance/fetchWebhook/${instanceName}`,
+      ];
+      for (const fu of findUrls) {
+        const r = await fetch(fu, { method: 'GET', headers: { apikey: EVOLUTION_API_KEY } });
+        if (!r.ok) continue;
+        const j = await r.json().catch(() => null);
+        const w = j?.webhook ?? j;
+        const currentUrl = w?.url;
+        const currentEnabled = w?.enabled;
+        const currentByEvents = w?.webhookByEvents;
+        const currentBase64 = w?.webhookBase64;
+        if (
+          currentEnabled === true &&
+          currentUrl === webhookUrl &&
+          currentByEvents === false &&
+          currentBase64 === true
+        ) {
+          console.log(`✅ Webhook already correctly configured for ${instanceName} — skipping set to avoid socket restart`);
+          return new Response(JSON.stringify({
+            success: true,
+            skipped: true,
+            webhookUrl,
+            message: 'Webhook já está corretamente configurado.',
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        break;
+      }
+    } catch (e) {
+      console.log('webhook find check failed (non-blocking):', e);
+    }
+
+    let webhookConfigured = false;
+    let responseData = null;
+    let successEndpoint = null;
     
     const endpoints = [
       // Format 1: webhook/set with nested webhook object (most common for Evolution API)
