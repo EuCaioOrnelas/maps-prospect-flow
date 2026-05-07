@@ -73,48 +73,52 @@ interface Lead {
   hasWhatsApp?: boolean;
 }
 
-// Normalize phone to BR E.164: aceita CELULAR (55+DDD+9+8) e FIXO (55+DDD+8)
-// Antes só aceitava celular, o que descartava ~80% dos restaurantes/comércios
+// Normalize phone — aceita BR (celular/fixo) E qualquer número internacional E.164.
+// E.164: 8 a 15 dígitos, com código de país no início.
 function normalizePhone(phone: string): string {
-  const digits = String(phone || '').replace(/\D/g, '');
+  const raw = String(phone || '').trim();
+  const hasPlus = raw.startsWith('+');
+  const digits = raw.replace(/\D/g, '');
 
-  // Celular já em E.164 (13 dígitos: 55 + DDD + 9 + 8)
+  if (!digits) return '';
+
+  // === BRASIL (mantém validação rígida) ===
+  // Celular E.164 (13 díg: 55 + DDD + 9 + 8)
   if (digits.length === 13 && digits.startsWith('55')) {
     const ddd = Number(digits.slice(2, 4));
     const firstLocal = digits[4];
-    if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && firstLocal === '9') {
-      return digits;
-    }
+    if (ddd >= 11 && ddd <= 99 && firstLocal === '9') return digits;
     return '';
   }
-
-  // Fixo já em E.164 (12 dígitos: 55 + DDD + 8)
+  // Fixo E.164 (12 díg: 55 + DDD + 8)
   if (digits.length === 12 && digits.startsWith('55')) {
     const ddd = Number(digits.slice(2, 4));
     const firstLocal = digits[4];
-    // Fixo começa com 2,3,4 ou 5
-    if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && /[2-5]/.test(firstLocal)) {
-      return digits;
-    }
+    if (ddd >= 11 && ddd <= 99 && /[2-5]/.test(firstLocal)) return digits;
     return '';
   }
-
-  // Celular local (11 dígitos: DDD + 9 + 8)
-  if (digits.length === 11) {
+  // Celular local BR (11 díg)
+  if (digits.length === 11 && !hasPlus) {
     const ddd = Number(digits.slice(0, 2));
     const firstLocal = digits[2];
-    if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && firstLocal === '9') {
-      return `55${digits}`;
-    }
+    if (ddd >= 11 && ddd <= 99 && firstLocal === '9') return `55${digits}`;
+  }
+  // Fixo local BR (10 díg)
+  if (digits.length === 10 && !hasPlus) {
+    const ddd = Number(digits.slice(0, 2));
+    const firstLocal = digits[2];
+    if (ddd >= 11 && ddd <= 99 && /[2-5]/.test(firstLocal)) return `55${digits}`;
   }
 
-  // Fixo local (10 dígitos: DDD + 8)
-  if (digits.length === 10) {
-    const ddd = Number(digits.slice(0, 2));
-    const firstLocal = digits[2];
-    if (!Number.isNaN(ddd) && ddd >= 11 && ddd <= 99 && /[2-5]/.test(firstLocal)) {
-      return `55${digits}`;
-    }
+  // === INTERNACIONAL (E.164 genérico) ===
+  // Aceita qualquer número com 8 a 15 dígitos quando vier com "+" (formato E.164)
+  // ou quando começar com código de país plausível diferente de 55.
+  if (hasPlus && digits.length >= 8 && digits.length <= 15) {
+    return digits;
+  }
+  // Sem "+" mas claramente internacional (12-15 díg, não-BR)
+  if (digits.length >= 11 && digits.length <= 15 && !digits.startsWith('55')) {
+    return digits;
   }
 
   return '';
