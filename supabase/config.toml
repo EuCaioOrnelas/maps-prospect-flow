@@ -75,3 +75,6 @@ verify_jwt = false
 [functions.evolution-health-check]
 verify_jwt = false
 
+[functions.meta-token-health-check]
+verify_jwt = false
+
