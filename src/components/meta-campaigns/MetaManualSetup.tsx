@@ -24,10 +24,11 @@ import type { WabaConnection } from "@/pages/MetaCampaigns";
 interface MetaManualSetupProps {
   onConnectionSaved: (connection: WabaConnection | null) => void;
   isAddingExtra?: boolean;
+  embedded?: boolean;
 }
 
 
-export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra }: MetaManualSetupProps) => {
+export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: MetaManualSetupProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
 
