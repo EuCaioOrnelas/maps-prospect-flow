@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { MetaAccountSetup } from "@/components/meta-campaigns/MetaAccountSetup";
+import { MetaManualSetup } from "@/components/meta-campaigns/MetaManualSetup";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
@@ -308,7 +308,7 @@ const Chat = () => {
               Faça login com a Meta para renovar o acesso. Suas conversas continuam salvas.
             </DialogDescription>
           </DialogHeader>
-          <MetaAccountSetup
+          <MetaManualSetup
             onConnectionSaved={async () => {
               setReconnectOpen(false);
               await chat.handleReconnect();
