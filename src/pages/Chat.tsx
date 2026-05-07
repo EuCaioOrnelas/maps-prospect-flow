@@ -301,21 +301,23 @@ const Chat = () => {
       </div>
 
       <Dialog open={reconnectOpen} onOpenChange={setReconnectOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0 bg-background flex flex-col overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-3 border-b border-border shrink-0">
             <DialogTitle>Reconectar WhatsApp Business</DialogTitle>
             <DialogDescription>
               Faça login com a Meta para renovar o acesso. Suas conversas continuam salvas.
             </DialogDescription>
           </DialogHeader>
-          <MetaManualSetup
-            embedded
-            onConnectionSaved={async () => {
-              setReconnectOpen(false);
-              await chat.handleReconnect();
-              toast({ title: "Conectado!", description: "Seu WhatsApp Business foi reconectado." });
-            }}
-          />
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <MetaManualSetup
+              embedded
+              onConnectionSaved={async () => {
+                setReconnectOpen(false);
+                await chat.handleReconnect();
+                toast({ title: "Conectado!", description: "Seu WhatsApp Business foi reconectado." });
+              }}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </SidebarProvider>
