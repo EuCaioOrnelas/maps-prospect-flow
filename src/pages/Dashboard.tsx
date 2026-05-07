@@ -555,7 +555,7 @@ const Dashboard = () => {
               Encontre suas próximas oportunidades
             </h1>
             <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-              Nossa IA analisa e entrega até <span className="text-primary font-semibold">50 oportunidades estratégicas</span> por busca
+              Nossa IA analisa e entrega até <span className="text-primary font-semibold">60 oportunidades estratégicas</span> por busca
             </p>
           </div>
 
@@ -653,7 +653,7 @@ const Dashboard = () => {
                 ) : (
                   <>
                     <Search size={20} />
-                    Prospectar Leads Estratégicos
+                    Buscar Oportunidades
                   </>
                 )}
               </Button>
