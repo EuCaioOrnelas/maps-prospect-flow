@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { MetaAccountSetup } from "@/components/meta-campaigns/MetaAccountSetup";
+import { MetaManualSetup } from "@/components/meta-campaigns/MetaManualSetup";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
