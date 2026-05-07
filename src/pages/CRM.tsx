@@ -117,7 +117,9 @@ export default function CRM() {
   });
 
   // Fetch agent-silenced stage names (columns where agents won't respond)
-  const { data: agentSilencedStages = new Set<string>() } = useQuery({
+  // Só conta stages referenciadas por agentes ativos/pausados; se o agente foi
+  // excluído ou trocou de stage, a coluna volta ao normal automaticamente.
+  const { data: agentSilencedStages = new Set<string>(), refetch: refetchSilencedStages } = useQuery({
     queryKey: ['agent-silenced-stages', user?.id],
     queryFn: async () => {
       if (!user) return new Set<string>();
@@ -134,7 +136,24 @@ export default function CRM() {
       return stageNames;
     },
     enabled: !!user,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
   });
+
+  // Realtime: refetch sempre que ai_agents mudar (insert/update/delete)
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`crm-ai-agents-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ai_agents', filter: `user_id=eq.${user.id}` },
+        () => { refetchSilencedStages(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, refetchSilencedStages]);
 
   // Fetch user profile for sidebar
   const { data: sidebarProfile } = useQuery({
