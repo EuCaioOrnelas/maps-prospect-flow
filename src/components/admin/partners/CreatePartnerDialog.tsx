@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, User, Mail, Phone, Lock, Award, Percent, FileText, Link2 } from "lucide-react";
+import { Loader2, User, Mail, Phone, Lock, Award, Percent, FileText, Link2, CheckCircle2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -30,15 +30,50 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
     referral_code: "",
   });
   const { toast } = useToast();
-
-  const reset = () => setForm({
-    full_name: "", email: "", password: "", phone: "", company: "", tax_id: "",
-    level: "bronze", custom_commission_percent: "", internal_notes: "", referral_code: "",
+  const [emailCheck, setEmailCheck] = useState<{ checking: boolean; exists: boolean; isAlreadyPartner: boolean }>({
+    checking: false, exists: false, isAlreadyPartner: false,
   });
 
+  const reset = () => {
+    setForm({
+      full_name: "", email: "", password: "", phone: "", company: "", tax_id: "",
+      level: "bronze", custom_commission_percent: "", internal_notes: "", referral_code: "",
+    });
+    setEmailCheck({ checking: false, exists: false, isAlreadyPartner: false });
+  };
+
+  // Debounced check whether the email belongs to an existing Wiize user
+  useEffect(() => {
+    const email = form.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailCheck({ checking: false, exists: false, isAlreadyPartner: false });
+      return;
+    }
+    setEmailCheck((s) => ({ ...s, checking: true }));
+    const t = setTimeout(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("admin-check-wiize-account", { body: { email } });
+        if (error) throw error;
+        setEmailCheck({
+          checking: false,
+          exists: !!(data as any)?.exists,
+          isAlreadyPartner: !!(data as any)?.isAlreadyPartner,
+        });
+      } catch {
+        setEmailCheck({ checking: false, exists: false, isAlreadyPartner: false });
+      }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [form.email]);
+
   const submit = async () => {
-    if (!form.full_name.trim() || !form.email.trim() || form.password.length < 8) {
-      toast({ title: "Campos obrigatórios", description: "Nome, email e senha (mín. 8 caracteres) são obrigatórios.", variant: "destructive" });
+    const passwordRequired = !emailCheck.exists;
+    if (!form.full_name.trim() || !form.email.trim() || (passwordRequired && form.password.length < 8)) {
+      toast({ title: "Campos obrigatórios", description: passwordRequired ? "Nome, email e senha (mín. 8 caracteres) são obrigatórios." : "Nome e email são obrigatórios.", variant: "destructive" });
+      return;
+    }
+    if (emailCheck.isAlreadyPartner) {
+      toast({ title: "Já é parceiro", description: "Este email já está cadastrado como parceiro.", variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -81,13 +116,27 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
           <div className="space-y-2">
             <Label className="flex items-center gap-1.5"><Mail size={14} /> Email *</Label>
             <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="joao@empresa.com" />
+            {emailCheck.checking && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Loader2 size={12} className="animate-spin" /> Verificando…</p>
+            )}
+            {!emailCheck.checking && emailCheck.isAlreadyPartner && (
+              <p className="text-xs text-destructive flex items-center gap-1.5"><AlertCircle size={12} /> Este email já está cadastrado como parceiro.</p>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5"><Lock size={14} /> Senha inicial *</Label>
-            <Input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mínimo 8 caracteres" />
-            <p className="text-xs text-muted-foreground">Se o email já tiver conta Wiize, esta senha é ignorada — o parceiro entra com a senha que já usa na Wiize.</p>
-          </div>
+          {emailCheck.exists && !emailCheck.isAlreadyPartner ? (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-500" /> Conta Wiize detectada</Label>
+              <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-xs text-emerald-700 dark:text-emerald-300">
+                Este email já tem conta na Wiize. O parceiro fará login no portal usando a <strong>mesma senha</strong> que já utiliza na ferramenta principal — não é necessário definir uma nova.
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5"><Lock size={14} /> Senha inicial *</Label>
+              <Input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mínimo 8 caracteres" />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label className="flex items-center gap-1.5"><Phone size={14} /> Telefone</Label>
