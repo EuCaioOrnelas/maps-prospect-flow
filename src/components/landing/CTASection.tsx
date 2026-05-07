@@ -63,7 +63,7 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
                 </Button>
               </Link>
               <p className="text-sm text-muted-foreground mt-6">
-                Sem cartão de crédito • Acesso completo • Cancele quando quiser
+                Cartão como garantia • 7 dias sem cobrança • Cancele quando quiser
               </p>
             </>
           )}
