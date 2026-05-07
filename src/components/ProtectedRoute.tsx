@@ -163,8 +163,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   }
 
   // Free users with active trial can access the platform
-  // Free users without trial also go to upgrade
-  if (isFreeTrial && !profile?.trial_start_at && !profile?.trial_end_at && location.pathname !== '/trial-expired' && location.pathname !== '/upgrade' && location.pathname !== '/consultoria') {
+  // Free users without ANY trial marker also go to upgrade
+  // (considers trial_will_charge_at for paid trials via Stripe/Asaas)
+  if (
+    isFreeTrial &&
+    !profile?.trial_start_at &&
+    !profile?.trial_end_at &&
+    !(profile as any)?.trial_will_charge_at &&
+    location.pathname !== '/trial-expired' &&
+    location.pathname !== '/upgrade' &&
+    location.pathname !== '/consultoria'
+  ) {
     return <Navigate to="/trial-expired" replace />;
   }
 
