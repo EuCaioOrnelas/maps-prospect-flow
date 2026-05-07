@@ -133,6 +133,7 @@ serve(async (req) => {
     if (createErr || !created?.user) {
       const msg = (createErr?.message || "").toLowerCase();
       const alreadyRegistered =
+        !hasPassword ||
         msg.includes("already been registered") ||
         msg.includes("already registered") ||
         msg.includes("already exists") ||
