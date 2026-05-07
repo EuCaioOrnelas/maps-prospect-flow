@@ -52,6 +52,28 @@ export function CancellationFeedbackDialog({ open, onOpenChange, onConfirm, user
         details: details || null,
         provider: provider || null,
       } as any);
+
+      // Penaliza o score do usuário ao confirmar o cancelamento
+      if (userId) {
+        try {
+          await supabase.functions.invoke("score-processor", {
+            body: {
+              action: "track_event",
+              user_id: userId,
+              event_name: "cancellation_requested",
+              metadata: { reason, intends_to_return: intendsToReturn, provider },
+              source: "frontend",
+            },
+          });
+          await supabase.from("user_events").insert({
+            user_id: userId,
+            event_name: "cancellation_requested" as any,
+            event_data: { reason, intends_to_return: intendsToReturn, provider },
+          } as any);
+        } catch (e) {
+          console.debug("score/cancel track:", e);
+        }
+      }
     } catch (err) {
       console.error("Error saving feedback:", err);
     } finally {
