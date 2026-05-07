@@ -397,6 +397,29 @@ export default function CRM() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setNumbersManagerOpen(true)}
+                        className="h-8 sm:h-9 gap-2"
+                      >
+                        <Smartphone className="w-4 h-4 sm:mr-0" />
+                        <span className="hidden sm:inline">Gerenciar números</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Visualizar e conectar números de WhatsApp</TooltipContent>
+                  </Tooltip>
+                  <NumbersManager
+                    numbers={waNumbers}
+                    onNumbersChange={setWaNumbers}
+                    maxNumbers={waMaxNumbers}
+                    onConnect={() => { refetchWaNumbers(); }}
+                    hideButtons
+                    forceOpen={numbersManagerOpen}
+                    onClose={() => setNumbersManagerOpen(false)}
+                  />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setManageStagesOpen(true)}
