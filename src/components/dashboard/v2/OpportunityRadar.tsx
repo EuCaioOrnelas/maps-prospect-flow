@@ -100,7 +100,11 @@ export function OpportunityRadar({ radarLeads }: OpportunityRadarProps) {
                   </td>
                   <td className="px-3 py-3 text-center"><StatusBadge status={lead.status} /></td>
                   <td className="px-6 py-3 text-right">
-                    <span className="text-xs font-semibold text-primary">+{lead.scoreGrowth7d}pts</span>
+                    {lead.scoreGrowth7d > 0 ? (
+                      <span className="text-xs font-semibold text-primary">+{lead.scoreGrowth7d}pts</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground/50">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
