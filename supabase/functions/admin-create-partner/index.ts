@@ -108,9 +108,12 @@ serve(async (req) => {
     }
 
     const body: CreatePartnerBody = await req.json();
-    if (!body.full_name?.trim() || !body.email?.trim() || !body.password || body.password.length < 8) {
-      return new Response(JSON.stringify({ error: "Nome, email e senha (mínimo 8 caracteres) são obrigatórios" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!body.full_name?.trim() || !body.email?.trim()) {
+      return new Response(JSON.stringify({ error: "Nome e email são obrigatórios" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    // Password is only required when we'll create a new auth user.
+    // If the email already belongs to a Wiize user, we reuse it without password.
+    const hasPassword = !!body.password && body.password.length >= 8;
 
     const normalizedEmail = body.email.trim().toLowerCase();
     let newUserId: string | null = null;
