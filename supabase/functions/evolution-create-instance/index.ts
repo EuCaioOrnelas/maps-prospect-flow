@@ -338,115 +338,81 @@ serve(async (req) => {
       console.log('No numberId provided (new number flow), skipping DB update - will be saved after connection');
     }
 
-    // Configure webhook for chat messages - try multiple endpoints
-    console.log(`Configuring webhook for instance ${instanceName}: ${webhookUrl}`);
-    
+    // Configure webhook for chat messages — IDEMPOTENT.
+    // Each /webhook/set call restarts the Baileys socket on this Evolution build,
+    // so we ONLY call it if the current webhook config differs from desired.
+    console.log(`Verifying webhook for instance ${instanceName}: ${webhookUrl}`);
+
     let webhookConfigured = false;
-    const webhookEndpoints = [
-      {
-        url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
-        method: 'POST',
-        body: {
-          webhook: {
-            enabled: true,
-            url: webhookUrl,
-            webhookByEvents: false,
-            webhookBase64: true,
-            events: webhookEvents
-          }
-        }
-      },
-      {
-        url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
-        method: 'POST',
-        body: {
-          enabled: true,
-          url: webhookUrl,
-          webhookByEvents: false,
-          webhookBase64: true,
-          events: webhookEvents
-        }
-      },
-      {
-        url: `${EVOLUTION_API_URL}/instance/settings`,
-        method: 'POST',
-        body: {
-          instanceName: instanceName,
-          webhook: {
-            enabled: true,
-            url: webhookUrl,
-            webhookByEvents: false,
-            webhookBase64: true,
-            events: webhookEvents
-          }
-        }
-      }
-    ];
+    try {
+      const findResp = await fetch(`${EVOLUTION_API_URL}/webhook/find/${instanceName}`, {
+        method: 'GET',
+        headers: { 'apikey': EVOLUTION_API_KEY },
+      });
 
-    for (const endpoint of webhookEndpoints) {
-      if (webhookConfigured) break;
-      
-      try {
-        console.log(`Trying webhook: ${endpoint.method} ${endpoint.url}`);
-        
-        const response = await fetch(endpoint.url, {
-          method: endpoint.method,
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': EVOLUTION_API_KEY,
-          },
-          body: JSON.stringify(endpoint.body),
-        });
-
-        const responseText = await response.text();
-        console.log(`Response: ${response.status} - ${responseText.substring(0, 200)}`);
-
-        if (response.ok || response.status === 201) {
-          console.log('Webhook configured successfully via:', endpoint.url);
+      if (findResp.ok) {
+        const current = await findResp.json().catch(() => null);
+        const w = current?.webhook ?? current;
+        if (
+          w?.enabled === true &&
+          w?.url === webhookUrl &&
+          w?.webhookByEvents === false &&
+          w?.webhookBase64 === true
+        ) {
+          console.log(`✅ Webhook already configured for ${instanceName} — skipping /webhook/set (avoids socket restart)`);
           webhookConfigured = true;
         }
-      } catch (e) {
-        console.log(`Endpoint ${endpoint.url} failed:`, e);
       }
+    } catch (e) {
+      console.log('webhook find check failed (non-blocking):', e);
     }
 
     if (!webhookConfigured) {
-      console.error('Failed to configure webhook on all endpoints - will retry via find/set');
-      
-      try {
-        const findResponse = await fetch(`${EVOLUTION_API_URL}/webhook/find/${instanceName}`, {
-          method: 'GET',
-          headers: { 'apikey': EVOLUTION_API_KEY },
-        });
-        
-        if (findResponse.ok) {
-          const currentWebhook = await findResponse.json();
-          console.log('Current webhook config:', JSON.stringify(currentWebhook));
-          
-          if (!currentWebhook?.url || currentWebhook.url !== webhookUrl) {
-            const retryResponse = await fetch(`${EVOLUTION_API_URL}/webhook/set/${instanceName}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': EVOLUTION_API_KEY,
-              },
-              body: JSON.stringify({
-                enabled: true,
-                url: webhookUrl,
-                webhookByEvents: false,
-                webhookBase64: false,
-                events: webhookEvents
-              }),
-            });
-            
-            if (retryResponse.ok) {
-              console.log('Webhook configured on retry!');
-              webhookConfigured = true;
-            }
+      const webhookEndpoints = [
+        {
+          url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
+          method: 'POST',
+          body: {
+            webhook: {
+              enabled: true,
+              url: webhookUrl,
+              webhookByEvents: false,
+              webhookBase64: true,
+              events: webhookEvents,
+            },
+          },
+        },
+        {
+          url: `${EVOLUTION_API_URL}/webhook/set/${instanceName}`,
+          method: 'POST',
+          body: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: false,
+            webhookBase64: true,
+            events: webhookEvents,
+          },
+        },
+      ];
+
+      for (const endpoint of webhookEndpoints) {
+        if (webhookConfigured) break;
+        try {
+          console.log(`Trying webhook: ${endpoint.method} ${endpoint.url}`);
+          const response = await fetch(endpoint.url, {
+            method: endpoint.method,
+            headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY },
+            body: JSON.stringify(endpoint.body),
+          });
+          const responseText = await response.text();
+          console.log(`Response: ${response.status} - ${responseText.substring(0, 200)}`);
+          if (response.ok || response.status === 201) {
+            console.log('Webhook configured successfully via:', endpoint.url);
+            webhookConfigured = true;
           }
+        } catch (e) {
+          console.log(`Endpoint ${endpoint.url} failed:`, e);
         }
-      } catch (retryErr) {
-        console.error('Webhook retry failed:', retryErr);
       }
     }
 
