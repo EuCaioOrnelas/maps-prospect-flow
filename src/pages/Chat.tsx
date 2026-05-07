@@ -18,16 +18,22 @@ import {
   Clock3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { MetaAccountSetup } from "@/components/meta-campaigns/MetaAccountSetup";
+import { useToast } from "@/hooks/use-toast";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const Chat = () => {
   const { user } = useAuth();
   useAutoScoreTracking("chat");
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [showApiDialog, setShowApiDialog] = useState<boolean | null>(null);
   const [handledLaunchKey, setHandledLaunchKey] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
+  const [reconnectOpen, setReconnectOpen] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const chat = useChat();
 
   useEffect(() => {
@@ -110,12 +116,27 @@ const Chat = () => {
                     💡 As mensagens recebidas durante a desconexão serão sincronizadas automaticamente ao reconectar.
                   </p>
                   <div className="flex flex-col gap-2">
-                    <Button onClick={() => navigate("/meta-campaigns")} className="h-11 px-6 text-sm w-full">
+                    <Button onClick={() => setReconnectOpen(true)} className="h-11 px-6 text-sm w-full">
                       <RefreshCw size={16} className="mr-2" />
                       Reconectar WhatsApp
                     </Button>
-                    <Button variant="ghost" onClick={() => chat.handleReconnect()} className="text-xs text-muted-foreground h-8">
-                      Verificar novamente
+                    <Button
+                      variant="ghost"
+                      disabled={verifying}
+                      onClick={async () => {
+                        setVerifying(true);
+                        await chat.handleReconnect();
+                        setVerifying(false);
+                        toast({
+                          title: "Verificação concluída",
+                          description: chat.allConnectionsExpired
+                            ? "Nenhum número ativo encontrado. Reconecte para continuar."
+                            : "Conexão restaurada com sucesso.",
+                        });
+                      }}
+                      className="text-xs text-muted-foreground h-8"
+                    >
+                      {verifying ? "Verificando..." : "Verificar novamente"}
                     </Button>
                   </div>
                 </div>
@@ -278,6 +299,24 @@ const Chat = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={reconnectOpen} onOpenChange={setReconnectOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background">
+          <DialogHeader>
+            <DialogTitle>Reconectar WhatsApp Business</DialogTitle>
+            <DialogDescription>
+              Faça login com a Meta para renovar o acesso. Suas conversas continuam salvas.
+            </DialogDescription>
+          </DialogHeader>
+          <MetaAccountSetup
+            onConnectionSaved={async () => {
+              setReconnectOpen(false);
+              await chat.handleReconnect();
+              toast({ title: "Conectado!", description: "Seu WhatsApp Business foi reconectado." });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 };

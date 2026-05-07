@@ -532,7 +532,7 @@ export function useChat() {
     }
   }, [activeConnection]);
 
-  // Reconnect handler: clear cache and reload
+  // Reconnect handler: clear cache and reload, returns whether any healthy connection exists
   const handleReconnect = useCallback(async () => {
     if (user) {
       try { localStorage.removeItem(`waba_health_${user.id}`); } catch {}
