@@ -1060,6 +1060,23 @@ const Dashboard = () => {
         onClose={() => setShowWhatsAppUpgradeModal(false)} 
       />
 
+      {user && (
+        <CompanyProfileOnboarding
+          open={showCompanyOnboarding}
+          userId={user.id}
+          initialData={companyProfile}
+          onClose={() => { setShowCompanyOnboarding(false); setPendingSearch(false); }}
+          onComplete={(profile) => {
+            setCompanyProfile(profile);
+            setShowCompanyOnboarding(false);
+            if (pendingSearch) {
+              setPendingSearch(false);
+              // Reexecuta a busca automaticamente após salvar o perfil
+              handleSearch({ preventDefault: () => {} } as any);
+            }
+          }}
+        />
+      )}
       {/* Onboarding/Trial-feedback modais removidos — orientação fica a cargo do tour guiado. */}
 
         </div>
