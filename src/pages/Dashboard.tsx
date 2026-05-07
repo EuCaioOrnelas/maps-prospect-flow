@@ -264,6 +264,17 @@ const Dashboard = () => {
       return;
     }
 
+    // Gate: exige Perfil da Empresa preenchido antes de qualquer busca/análise
+    if (!companyProfile) {
+      setPendingSearch(true);
+      setShowCompanyOnboarding(true);
+      toast({
+        title: "Configure seu Perfil da Empresa",
+        description: "Precisamos dessas informações para a IA analisar e personalizar suas oportunidades.",
+      });
+      return;
+    }
+
     setIsSearching(true);
     setHasSearched(true);
 
