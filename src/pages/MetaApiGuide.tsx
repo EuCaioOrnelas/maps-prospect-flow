@@ -315,13 +315,17 @@ const MetaApiGuide = () => {
                 </p>
                 <StepList steps={[
                   {
-                    title: "Acesse o WhatsApp Manager",
-                    desc: "No Meta Business Suite, vá em 'Todas as ferramentas' e procure 'WhatsApp Manager' ou 'Contas do WhatsApp'. Link direto abaixo.",
-                    link: "https://business.facebook.com/wa/manage",
+                    title: "Acesse Configurações da conta",
+                    desc: "Em business.facebook.com, clique em 'Configurações' (ícone de engrenagem no canto inferior esquerdo).",
+                    link: "https://business.facebook.com",
                   },
                   {
-                    title: "Crie uma conta WhatsApp Business",
-                    desc: "Clique em 'Adicionar' ou 'Começar' e siga o assistente. Selecione a conta de negócio que acabou de criar.",
+                    title: "Vá em Contas → Contas do WhatsApp",
+                    desc: "No menu lateral de Configurações, abra 'Contas' e depois 'Contas do WhatsApp'.",
+                  },
+                  {
+                    title: "Adicionar conta WhatsApp",
+                    desc: "Clique em 'Adicionar', preencha os dados solicitados (nome do negócio, fuso horário, moeda) e confirme para criar a WABA.",
                   },
                   {
                     title: "Adicione um número de telefone",
