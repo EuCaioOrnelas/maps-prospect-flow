@@ -18,6 +18,9 @@ import {
   Clock3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { MetaAccountSetup } from "@/components/meta-campaigns/MetaAccountSetup";
+import { useToast } from "@/hooks/use-toast";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 
 const Chat = () => {
