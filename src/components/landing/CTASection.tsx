@@ -35,8 +35,7 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
             <span className="text-shimmer-highlight">sem compromisso</span>
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Teste a Wiize gratuitamente por 7 dias com acesso completo.
-            Captação, IA, CRM, automações e campanhas — tudo liberado sem cartão.
+            Teste a Wiize por 7 dias com acesso completo. Captação, IA, CRM, automações e campanhas, tudo liberado. Cadastre seu cartão como garantia, não cobramos nos primeiros 7 dias e você cancela quando quiser.
           </p>
           {TRIAL_DISABLED ? (
             <>
@@ -64,7 +63,7 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
                 </Button>
               </Link>
               <p className="text-sm text-muted-foreground mt-6">
-                Sem cartão de crédito • Acesso completo • Cancele quando quiser
+                Cartão como garantia • 7 dias sem cobrança • Cancele quando quiser
               </p>
             </>
           )}
