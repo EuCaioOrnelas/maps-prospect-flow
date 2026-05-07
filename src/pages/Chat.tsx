@@ -27,10 +27,13 @@ const Chat = () => {
   const { user } = useAuth();
   useAutoScoreTracking("chat");
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [showApiDialog, setShowApiDialog] = useState<boolean | null>(null);
   const [handledLaunchKey, setHandledLaunchKey] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
+  const [reconnectOpen, setReconnectOpen] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const chat = useChat();
 
   useEffect(() => {
