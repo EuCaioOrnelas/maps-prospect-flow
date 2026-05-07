@@ -16,6 +16,8 @@ import { MobileNav } from '@/components/layout/MobileNav';
 import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { SEO } from '@/components/SEO';
 import { Users, Plus, Trash2, FlaskConical, MessageCircle, Settings2, Eye, EyeOff } from 'lucide-react';
+import { NumbersManager } from '@/components/whatsapp/NumbersManager';
+import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
 import { usePhonePrivacy } from '@/hooks/usePhonePrivacy';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,6 +44,7 @@ export default function CRM() {
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("crm_beta_warning");
   useAutoScoreTracking("crm");
   const { hidden: phoneHidden, toggle: togglePhonePrivacy } = usePhonePrivacy();
+  const { numbers: waNumbers, setNumbers: setWaNumbers, maxNumbers: waMaxNumbers, fetchNumbers: refetchWaNumbers } = useWhatsAppNumbers();
 
   const {
     stages, 
@@ -357,6 +360,14 @@ export default function CRM() {
                       {filteredLeads.filter(l => l.pipeline_stage_id != null).length} leads no funil
                     </p>
                   </div>
+                </div>
+                <div className="flex items-center gap-2 self-end sm:self-auto">
+                  <NumbersManager
+                    numbers={waNumbers}
+                    onNumbersChange={setWaNumbers}
+                    maxNumbers={waMaxNumbers}
+                    onConnect={() => { refetchWaNumbers(); }}
+                  />
                 </div>
               </div>
 
