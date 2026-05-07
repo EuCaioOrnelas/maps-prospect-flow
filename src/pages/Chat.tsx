@@ -308,7 +308,7 @@ const Chat = () => {
               Faça login com a Meta para renovar o acesso. Suas conversas continuam salvas.
             </DialogDescription>
           </DialogHeader>
-          <MetaAccountSetup
+          <MetaManualSetup
             onConnectionSaved={async () => {
               setReconnectOpen(false);
               await chat.handleReconnect();
