@@ -315,8 +315,9 @@ const MetaApiGuide = () => {
                 </p>
                 <StepList steps={[
                   {
-                    title: "Acesse a seção WhatsApp",
-                    desc: "No Meta Business Suite, vá em 'Todas as ferramentas' e procure 'WhatsApp Manager' ou 'Contas do WhatsApp'.",
+                    title: "Acesse o WhatsApp Manager",
+                    desc: "No Meta Business Suite, vá em 'Todas as ferramentas' e procure 'WhatsApp Manager' ou 'Contas do WhatsApp'. Link direto abaixo.",
+                    link: "https://business.facebook.com/wa/manage",
                   },
                   {
                     title: "Crie uma conta WhatsApp Business",
