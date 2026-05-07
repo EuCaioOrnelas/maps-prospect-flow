@@ -690,6 +690,7 @@ const MetaCampaigns = () => {
             <DialogTitle>Adicionar Número</DialogTitle>
           </DialogHeader>
           <MetaManualSetup
+            embedded
             onConnectionSaved={(conn) => {
               if (conn) handleConnectionSaved(conn);
               else setShowAddNumber(false);
