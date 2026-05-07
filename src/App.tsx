@@ -17,6 +17,7 @@ import { DashboardThemeProvider } from "@/contexts/ThemeContext";
 import { lazyWithRetry } from "@/lib/runtimeRecovery";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PartnerTrackingProvider } from "@/components/partners/PartnerTrackingProvider";
+import { PageVisitTracker } from "@/components/tracking/PageVisitTracker";
 
 // Eager load critical pages
 import Index from "./pages/Index";
@@ -199,6 +200,7 @@ const App = () => (
             <GuidedTourProvider>
             <Suspense fallback={<PageLoader />}>
               <PartnerTrackingProvider>
+              <PageVisitTracker />
               <Routes>
                 <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />
                 
