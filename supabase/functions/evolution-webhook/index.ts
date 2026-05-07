@@ -2597,9 +2597,15 @@ REGRAS:
           if (state === 'open') {
             const { data: numberRow } = await supabase
               .from('whatsapp_numbers')
-              .select('id, user_id')
+              .select('id, user_id, is_connected')
               .eq('instance_name', instanceName)
               .maybeSingle();
+
+            // Track if this is a fresh connection (transition from false→true)
+            // We use this below to gate side effects that should NOT run on every
+            // repeated 'open' event (Evolution emits these periodically and
+            // re-running webhook/set restarts the Baileys socket → ping-pong).
+            const isFreshConnection = !numberRow?.is_connected;
 
             const apiCreds = await getApiCredentials(instanceName);
             const updatePayload: Record<string, any> = {
@@ -2816,7 +2822,10 @@ REGRAS:
 
           // AUTO-CONFIGURE WEBHOOK when instance connects successfully
           // Many Evolution API versions discard webhook config set before QR scan
-          if (state === 'open') {
+          // AUTO-CONFIGURE WEBHOOK only on FRESH connections.
+          // Calling /webhook/set on every 'open' event restarts the Baileys
+          // socket on this Evolution version, causing connect→disconnect loops.
+          if (state === 'open' && isFreshConnection) {
             const webhookCreds = await getApiCredentials(instanceName);
             const resolvedApiUrl = webhookCreds.url;
             const resolvedApiKey = webhookCreds.apiKey;
