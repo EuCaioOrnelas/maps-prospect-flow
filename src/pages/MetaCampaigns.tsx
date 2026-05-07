@@ -685,18 +685,20 @@ const MetaCampaigns = () => {
 
       {/* Add Number Dialog */}
       <Dialog open={showAddNumber} onOpenChange={setShowAddNumber}>
-        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] p-0 flex flex-col overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-3 border-b border-border shrink-0">
             <DialogTitle>Adicionar Número</DialogTitle>
           </DialogHeader>
-          <MetaManualSetup
-            embedded
-            onConnectionSaved={(conn) => {
-              if (conn) handleConnectionSaved(conn);
-              else setShowAddNumber(false);
-            }}
-            isAddingExtra
-          />
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <MetaManualSetup
+              embedded
+              onConnectionSaved={(conn) => {
+                if (conn) handleConnectionSaved(conn);
+                else setShowAddNumber(false);
+              }}
+              isAddingExtra
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
