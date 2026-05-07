@@ -93,7 +93,7 @@ const KanbanColumnComponent = ({
   return (
     <div
       className={cn(
-        "flex flex-col bg-card/60 backdrop-blur-sm rounded-xl border border-border/60 transition-all duration-200 h-full overflow-hidden will-change-transform shadow-sm",
+        "flex flex-col bg-gradient-to-br from-white/10 to-white/5 dark:from-white/5 dark:to-white/[0.02] backdrop-blur-xl rounded-xl border border-white/20 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-200 h-full overflow-hidden will-change-transform",
         getColumnWidthClass(columnWidth, isExpanded),
         isDragOver 
           ? "border-primary bg-primary/5 shadow-lg shadow-primary/20" 
