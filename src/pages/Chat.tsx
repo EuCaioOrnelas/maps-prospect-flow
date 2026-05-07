@@ -299,6 +299,24 @@ const Chat = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={reconnectOpen} onOpenChange={setReconnectOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background">
+          <DialogHeader>
+            <DialogTitle>Reconectar WhatsApp Business</DialogTitle>
+            <DialogDescription>
+              Faça login com a Meta para renovar o acesso. Suas conversas continuam salvas.
+            </DialogDescription>
+          </DialogHeader>
+          <MetaAccountSetup
+            onConnectionSaved={async () => {
+              setReconnectOpen(false);
+              await chat.handleReconnect();
+              toast({ title: "Conectado!", description: "Seu WhatsApp Business foi reconectado." });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 };
