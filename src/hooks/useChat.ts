@@ -137,6 +137,34 @@ export function useChat() {
       localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), health: healthMap }));
     } catch {}
 
+    // Notify user via email about disconnected Meta numbers (max 1x/day per connection)
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const NOTIF_KEY = `waba_disconnect_notified_${user.id}`;
+      let notified: Record<string, string> = {};
+      try {
+        const raw = localStorage.getItem(NOTIF_KEY);
+        if (raw) notified = JSON.parse(raw);
+      } catch {}
+      for (const conn of data) {
+        if (healthMap[conn.id] === false && notified[conn.id] !== today) {
+          supabase.functions.invoke("send-email", {
+            body: {
+              user_id: user.id,
+              email_type: "META_NUMBER_DISCONNECTED",
+              idempotency_key: `meta-disconnect-${conn.id}-${today}`,
+              payload: {
+                phone_number: conn.display_phone_number,
+                business_name: conn.business_name,
+              },
+            },
+          }).catch(() => {});
+          notified[conn.id] = today;
+        }
+      }
+      try { localStorage.setItem(NOTIF_KEY, JSON.stringify(notified)); } catch {}
+    } catch {}
+
     // Prefer a healthy connection
     const healthyConn = data.find(c => healthMap[c.id] === true);
     setActiveConnectionId(healthyConn?.id || data[0].id);
