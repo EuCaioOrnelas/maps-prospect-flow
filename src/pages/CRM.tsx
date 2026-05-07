@@ -397,7 +397,7 @@ export default function CRM() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        variant="default"
+                        variant="outline"
                         size="sm"
                         onClick={() => setNumbersManagerOpen(true)}
                         className="h-8 sm:h-9 gap-2"
