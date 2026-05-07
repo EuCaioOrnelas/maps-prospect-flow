@@ -269,16 +269,54 @@ serve(async (req) => {
       console.log('Instance created:', JSON.stringify(createData));
     }
 
-    // Step 3: Configure webhook
+    // Step 3: Configure webhook — IDEMPOTENT.
+    // Each /webhook/set call restarts the Baileys socket on this Evolution build,
+    // so check the current config first and skip the set if it already matches.
     const webhookUrl = `${SUPABASE_URL}/functions/v1/evolution-webhook`;
     const webhookEvents = ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "MESSAGES_EDIT", "CONNECTION_UPDATE", "QRCODE_UPDATED"];
-    
-    const webhookEndpoints = [
-      {
-        url: `${effectiveUrl}/webhook/set/${instanceName}`,
-        method: 'POST',
-        body: {
-          webhook: {
+
+    let webhookOk = false;
+    try {
+      const findResp = await fetch(`${effectiveUrl}/webhook/find/${instanceName}`, {
+        method: 'GET',
+        headers: { 'apikey': effectiveKey },
+      });
+      if (findResp.ok) {
+        const current = await findResp.json().catch(() => null);
+        const w = current?.webhook ?? current;
+        if (
+          w?.enabled === true &&
+          w?.url === webhookUrl &&
+          w?.webhookByEvents === false &&
+          w?.webhookBase64 === true
+        ) {
+          console.log(`✅ Webhook already configured for ${instanceName} — skipping /webhook/set`);
+          webhookOk = true;
+        }
+      }
+    } catch (e) {
+      console.log('webhook find check failed (non-blocking):', e);
+    }
+
+    if (!webhookOk) {
+      const webhookEndpoints = [
+        {
+          url: `${effectiveUrl}/webhook/set/${instanceName}`,
+          method: 'POST',
+          body: {
+            webhook: {
+              enabled: true,
+              url: webhookUrl,
+              webhookByEvents: false,
+              webhookBase64: true,
+              events: webhookEvents
+            }
+          }
+        },
+        {
+          url: `${effectiveUrl}/webhook/set/${instanceName}`,
+          method: 'POST',
+          body: {
             enabled: true,
             url: webhookUrl,
             webhookByEvents: false,
@@ -286,36 +324,25 @@ serve(async (req) => {
             events: webhookEvents
           }
         }
-      },
-      {
-        url: `${effectiveUrl}/webhook/set/${instanceName}`,
-        method: 'POST',
-        body: {
-          enabled: true,
-          url: webhookUrl,
-          webhookByEvents: false,
-          webhookBase64: true,
-          events: webhookEvents
-        }
-      }
-    ];
+      ];
 
-    for (const endpoint of webhookEndpoints) {
-      try {
-        const response = await fetch(endpoint.url, {
-          method: endpoint.method,
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': effectiveKey,
-          },
-          body: JSON.stringify(endpoint.body),
-        });
-        if (response.ok) {
-          console.log('Webhook configured successfully');
-          break;
+      for (const endpoint of webhookEndpoints) {
+        try {
+          const response = await fetch(endpoint.url, {
+            method: endpoint.method,
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': effectiveKey,
+            },
+            body: JSON.stringify(endpoint.body),
+          });
+          if (response.ok) {
+            console.log('Webhook configured successfully');
+            break;
+          }
+        } catch (e) {
+          console.error('Webhook config attempt failed:', e);
         }
-      } catch (e) {
-        console.error('Webhook config attempt failed:', e);
       }
     }
 
