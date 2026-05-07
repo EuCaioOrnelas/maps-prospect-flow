@@ -15,7 +15,7 @@ import { AppSidebar } from '@/components/layout/AppSidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { SEO } from '@/components/SEO';
-import { Users, Plus, Trash2, FlaskConical, MessageCircle, Settings2, Eye, EyeOff } from 'lucide-react';
+import { Users, Plus, Trash2, FlaskConical, MessageCircle, Settings2, Eye, EyeOff, Smartphone } from 'lucide-react';
 import { NumbersManager } from '@/components/whatsapp/NumbersManager';
 import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
 import { usePhonePrivacy } from '@/hooks/usePhonePrivacy';
