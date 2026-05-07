@@ -340,10 +340,65 @@ function templateAgentObjectiveCompleted(payload: Record<string, unknown>): Temp
   };
 }
 
+function templateMetaNumberDisconnected(payload: Record<string, unknown>): TemplateResult {
+  const phone = (payload.phone_number as string) || "Número desconhecido";
+  const businessName = (payload.business_name as string) || "";
+
+  return {
+    subject: `Ação necessária: número Meta ${phone} foi desconectado`,
+    html: baseLayout(`Número Meta desconectado`, `
+      <h1 style="margin:0 0 12px;font-size:22px;color:#18181b;font-weight:700;">Seu número WhatsApp Meta API precisa ser reconectado</h1>
+      <p style="margin:0 0 20px;color:#3f3f46;font-size:15px;line-height:1.6;">
+        O número <strong>${phone}</strong>${businessName ? ` <span style="color:#a1a1aa;font-size:13px;">(${businessName})</span>` : ""}
+        teve a conexão com a <strong>Meta Cloud API</strong> interrompida e não está mais conseguindo enviar nem receber mensagens pelo Chat.
+      </p>
+
+      <div style="margin:0 0 20px;padding:16px 18px;background:#fffbeb;border-left:4px solid #f59e0b;border-radius:6px;">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#92400e;">Token de acesso inválido ou expirado</p>
+        <p style="margin:0;font-size:13.5px;color:#78350f;line-height:1.65;">
+          O token de acesso (System User Token) usado para autenticar este número junto à Meta foi expirado, revogado ou as permissões do app foram removidas no Business Manager. Sem um token válido, a Graph API rejeita todas as chamadas.
+        </p>
+      </div>
+
+      <div style="margin:0 0 20px;padding:16px 18px;background:#eff6ff;border-left:4px solid #3b82f6;border-radius:6px;">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#1e40af;">Por que isso aconteceu?</p>
+        <p style="margin:0;font-size:13.5px;color:#1e3a8a;line-height:1.65;">
+          As causas mais comuns são: token de System User com validade expirada, remoção do app no Business Settings da Meta, alteração de permissões da WABA ou rotação manual do token. Como a conexão é direta com a Meta, basta gerar um novo token válido e reconectar.
+        </p>
+      </div>
+
+      <div style="margin:0 0 20px;padding:16px 18px;background:#fef2f2;border-left:4px solid #ef4444;border-radius:6px;">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#991b1b;">Chat e campanhas pausados</p>
+        <p style="margin:0;font-size:13.5px;color:#7f1d1d;line-height:1.65;">
+          Enquanto o token estiver inválido, <strong>não conseguimos enviar mensagens pelo Chat nem disparar campanhas Meta</strong> a partir deste número. Tudo volta a funcionar imediatamente após a reconexão.
+        </p>
+      </div>
+
+      <div style="margin:0 0 20px;padding:16px 18px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;">
+        <p style="margin:0 0 10px;font-size:14px;font-weight:600;color:#111827;">Como reconectar (leva menos de 1 minuto)</p>
+        <ol style="margin:0;padding-left:20px;font-size:13.5px;color:#374151;line-height:1.7;">
+          <li>Acesse a plataforma e abra o <strong>Chat</strong>.</li>
+          <li>No topo da conversa, clique em <strong>Reconectar</strong>.</li>
+          <li>Cole o novo <strong>Access Token</strong> gerado no Meta Business Manager.</li>
+        </ol>
+      </div>
+
+      <div style="text-align:center;margin:24px 0 8px;">
+        <a href="${BRAND.url}/chat" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">Reconectar número Meta</a>
+      </div>
+
+      <p style="margin:24px 0 0;font-size:12px;color:#71717a;line-height:1.6;border-top:1px solid #e4e4e7;padding-top:16px;">
+        Em caso de dúvidas, responda este e-mail ou fale com o nosso suporte. Estamos à disposição para ajudar.
+      </p>
+    `, `Seu número WhatsApp Meta ${phone} foi desconectado — reconecte para retomar o Chat e as campanhas`),
+  };
+}
+
 const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateResult> = {
   CAMPAIGN_SCHEDULED_STARTED: templateCampaignStarted,
   WEEKLY_SUMMARY: templateWeeklySummary,
   NUMBER_DISCONNECTED: templateNumberDisconnected,
+  META_NUMBER_DISCONNECTED: templateMetaNumberDisconnected,
   CAMPAIGN_FAILED_TO_START: templateCampaignFailed,
   ADMIN_BROADCAST: templateAdminBroadcast,
   CAMPAIGN_COMPLETED: templateCampaignCompleted,
