@@ -170,9 +170,9 @@ export default function AdminSupportTickets() {
       if (statusFilter === "open") q = q.eq("status", "open");
       else if (statusFilter === "closed") q = q.in("status", ["resolved", "closed"]);
       else if (statusFilter === "incomplete") {
-        // Chats started but abandoned mid-way: open/in_progress, not manual, sem atividade há +30min
+        // Chats abandonados ou pendentes de resolução: open/in_progress/escalated, sem atividade há +30min
         const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-        q = q.in("status", ["open", "in_progress"]).eq("is_manual", false).lt("updated_at", cutoff);
+        q = q.in("status", ["open", "in_progress", "escalated"]).lt("updated_at", cutoff);
       }
       if (search.trim()) {
         const s = `%${search.trim()}%`;
