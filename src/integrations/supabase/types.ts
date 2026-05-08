@@ -351,6 +351,53 @@ export type Database = {
           },
         ]
       }
+      ai_logs: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          id: string
+          matched_faq_ids: string[] | null
+          matched_kb_ids: string[] | null
+          model: string | null
+          query: string | null
+          ticket_id: string | null
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          matched_faq_ids?: string[] | null
+          matched_kb_ids?: string[] | null
+          model?: string | null
+          query?: string | null
+          ticket_id?: string | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          matched_faq_ids?: string[] | null
+          matched_kb_ids?: string[] | null
+          model?: string | null
+          query?: string | null
+          ticket_id?: string | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           content: string
@@ -1636,6 +1683,89 @@ export type Database = {
         }
         Relationships: []
       }
+      faq_topics: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          active: boolean | null
+          content: string | null
+          created_at: string
+          embedding: string | null
+          id: string
+          sort_order: number | null
+          tags: string[] | null
+          title: string
+          topic_id: string | null
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          content?: string | null
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          sort_order?: number | null
+          tags?: string[] | null
+          title: string
+          topic_id?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          content?: string | null
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          sort_order?: number | null
+          tags?: string[] | null
+          title?: string
+          topic_id?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faqs_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "faq_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ignored_contacts: {
         Row: {
           campaign_id: string | null
@@ -1680,6 +1810,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      knowledge_base: {
+        Row: {
+          active: boolean | null
+          auto_escalate: boolean | null
+          category: string | null
+          created_at: string
+          embedding: string | null
+          guided_flow: Json | null
+          id: string
+          min_confidence: number | null
+          pains: string | null
+          priority: string | null
+          severity: string | null
+          solution: string | null
+          subtopic: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          auto_escalate?: boolean | null
+          category?: string | null
+          created_at?: string
+          embedding?: string | null
+          guided_flow?: Json | null
+          id?: string
+          min_confidence?: number | null
+          pains?: string | null
+          priority?: string | null
+          severity?: string | null
+          solution?: string | null
+          subtopic?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          auto_escalate?: boolean | null
+          category?: string | null
+          created_at?: string
+          embedding?: string | null
+          guided_flow?: Json | null
+          id?: string
+          min_confidence?: number | null
+          pains?: string | null
+          priority?: string | null
+          severity?: string | null
+          solution?: string | null
+          subtopic?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       landing_page_events: {
         Row: {
@@ -4578,6 +4765,178 @@ export type Database = {
         }
         Relationships: []
       }
+      support_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          role: string
+          ticket_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role: string
+          ticket_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          resolved_by: string | null
+          stars: number
+          ticket_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          resolved_by?: string | null
+          stars: number
+          ticket_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          resolved_by?: string | null
+          stars?: number
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ratings_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          ai_confidence: number | null
+          ai_summary: string | null
+          category: string | null
+          created_at: string
+          email: string | null
+          id: string
+          internal_notes: string | null
+          name: string | null
+          phone: string | null
+          priority: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          visitor_session: string | null
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_summary?: string | null
+          category?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          internal_notes?: string | null
+          name?: string | null
+          phone?: string | null
+          priority?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          visitor_session?: string | null
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_summary?: string | null
+          category?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          internal_notes?: string | null
+          name?: string | null
+          phone?: string | null
+          priority?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          visitor_session?: string | null
+        }
+        Relationships: []
+      }
+      system_alerts: {
+        Row: {
+          alert_type: string
+          category: string | null
+          created_at: string
+          id: string
+          message: string | null
+          metadata: Json | null
+          occurrences: number | null
+          period_end: string | null
+          period_start: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          title: string
+        }
+        Insert: {
+          alert_type: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          occurrences?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          occurrences?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           created_at: string
@@ -6535,6 +6894,38 @@ export type Database = {
       log_sensitive_access: {
         Args: { p_action: string; p_details?: Json; p_table_name: string }
         Returns: undefined
+      }
+      match_faqs: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          id: string
+          similarity: number
+          title: string
+          video_url: string
+        }[]
+      }
+      match_knowledge: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          auto_escalate: boolean
+          category: string
+          id: string
+          min_confidence: number
+          pains: string
+          severity: string
+          similarity: number
+          solution: string
+          title: string
+        }[]
       }
       normalize_brazilian_phone: {
         Args: { phone_input: string }

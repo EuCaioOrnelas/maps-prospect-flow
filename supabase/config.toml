@@ -78,3 +78,12 @@ verify_jwt = false
 [functions.meta-token-health-check]
 verify_jwt = false
 
+[functions.support-chat]
+verify_jwt = false
+
+[functions.support-escalate]
+verify_jwt = false
+
+[functions.support-embed]
+verify_jwt = false
+
