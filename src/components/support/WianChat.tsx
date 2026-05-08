@@ -148,6 +148,8 @@ export function WianChat() {
   const [phone, setPhone] = useState(formDraft.phone || "");
   const [extra, setExtra] = useState(formDraft.extra || "");
   const [category, setCategory] = useState<string>(formDraft.category || "");
+  const [formErrors, setFormErrors] = useState<{ name?: string; email?: string; category?: string }>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
   const [isAuthed, setIsAuthed] = useState(false);
@@ -513,10 +515,18 @@ export function WianChat() {
   };
 
   const submitEscalation = async () => {
-    if (!name.trim() || !email.trim() || !category) {
-      toast({ title: "Preencha nome, email e tópico", variant: "destructive" });
+    const errs: { name?: string; email?: string; category?: string } = {};
+    if (!category) errs.category = "Selecione um tópico para o chamado.";
+    if (!name.trim()) errs.name = "Informe seu nome.";
+    const emailTrim = email.trim();
+    if (!emailTrim) errs.email = "Informe seu email.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) errs.email = "Email inválido. Verifique e tente novamente.";
+    setFormErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      setSubmitError("Preencha os campos destacados em vermelho para continuar.");
       return;
     }
+    setSubmitError(null);
     setLoading(true);
     try {
       // Garante ticket criado mesmo sem IA
@@ -563,7 +573,9 @@ export function WianChat() {
       try { localStorage.removeItem(FORM_KEY); } catch {}
       setPhase("done-escalated");
     } catch (e: any) {
-      toast({ title: "Erro ao abrir chamado", description: e.message, variant: "destructive" });
+      const msg = e?.message || "Não conseguimos abrir seu chamado agora. Tente novamente em instantes.";
+      setSubmitError(msg);
+      toast({ title: "Erro ao abrir chamado", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
     }
