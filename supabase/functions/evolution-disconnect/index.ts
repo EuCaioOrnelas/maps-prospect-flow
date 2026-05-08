@@ -72,7 +72,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { instanceName, numberId: rawNumberId, deleteInstance = false, preserveNumberRecord = false } = body;
+    const { instanceName, numberId: rawNumberId, deleteInstance = false, preserveNumberRecord = false, cascadeDelete = false } = body;
     const numberId = rawNumberId && rawNumberId !== 'null' ? rawNumberId : null;
 
     // Get the correct Evolution API based on the number's api_tier
