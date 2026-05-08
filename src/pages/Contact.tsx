@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
+import { WianChat } from "@/components/support/WianChat";
 
 const contactInfo = [
   {
