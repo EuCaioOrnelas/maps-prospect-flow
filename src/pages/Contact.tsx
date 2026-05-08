@@ -168,13 +168,8 @@ const Contact = () => {
                   </div>
                 </div>
 
-                {/* Typebot iframe */}
-                <iframe
-                  src="https://typebot.co/my-typebot-obap8ag"
-                  style={{ border: "none", width: "100%", height: "350px" }}
-                  className="bg-card sm:h-[400px] md:h-[450px]"
-                  title="Assistente Virtual Wiize"
-                />
+                {/* Wian Chat */}
+                <WianChat />
               </div>
             </motion.div>
           </div>
