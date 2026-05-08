@@ -238,7 +238,7 @@ export default function AdminSupportTickets() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome, email, telefone, categoria..."
+              placeholder="Buscar por protocolo (WIZ-...), nome, email, telefone, categoria..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { setPage(0); fetchTickets(); } }}
