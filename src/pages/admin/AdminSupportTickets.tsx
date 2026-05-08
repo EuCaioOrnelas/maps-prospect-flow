@@ -92,7 +92,7 @@ export default function AdminSupportTickets() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("open");
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<Ticket | null>(null);
