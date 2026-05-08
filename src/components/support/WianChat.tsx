@@ -351,6 +351,20 @@ export function WianChat() {
       return;
     }
 
+    // Problemas críticos que vão direto para abertura de chamado (sem "Funcionou?")
+    if ((sol as any).escalate) {
+      const intro = sol.intro ? `${sol.intro}\n\n` : "";
+      const stepsText = sol.steps.length ? sol.steps.map((s, i) => `${i + 1}. ${s}`).join("\n") + "\n\n" : "";
+      setMessages((prev) => [
+        ...prev,
+        userMsg,
+        { role: "ai", content: `${intro}${stepsText}Preencha os dados abaixo que vou abrir o chamado para o time analisar:` },
+      ]);
+      setCategory("Outro");
+      setPhase("collect-info");
+      return;
+    }
+
     // Resposta com solução guiada
     const intro = sol.intro ? `${sol.intro}\n\n` : "";
     const stepsText = sol.steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
