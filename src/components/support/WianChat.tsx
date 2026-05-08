@@ -31,7 +31,7 @@ const AiAvatar = () => (
   <img
     src={wianAvatar}
     alt="Wian"
-    className="w-7 h-7 rounded-full object-cover shrink-0"
+    className="w-10 h-10 rounded-full object-cover shrink-0"
   />
 );
 
