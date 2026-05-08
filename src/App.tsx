@@ -308,6 +308,7 @@ const App = () => (
                   {/* Suporte */}
                   <Route path="suporte/tickets" element={<AdminSupportTickets />} />
                   <Route path="suporte/mind-ia" element={<AdminSupportMindIA />} />
+                  <Route path="suporte/faqs" element={<AdminSupportFAQs />} />
                   {/* Partners */}
                   <Route path="partners" element={<AdminPartnersDashboard />} />
                   <Route path="partners/parceiros" element={<AdminPartnersList />} />
