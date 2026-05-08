@@ -219,6 +219,76 @@ serve(async (req) => {
       }
     }
 
+    // CASCADE DELETE: remove the whatsapp_numbers row + all FK dependents using service role
+    if (cascadeDelete && numberId) {
+      try {
+        // Verify ownership
+        const { data: ownerCheck } = await supabase
+          .from('whatsapp_numbers')
+          .select('user_id')
+          .eq('id', numberId)
+          .single();
+        if (ownerCheck && ownerCheck.user_id !== user.id) {
+          throw new Error('Forbidden: number does not belong to user');
+        }
+
+        const DELETABLE = ['running', 'paused', 'scheduled', 'postponed', 'pending'];
+
+        // 1) Delete active campaigns + their FK dependents
+        const { data: campaignsToDelete } = await supabase
+          .from('whatsapp_campaigns')
+          .select('id')
+          .eq('whatsapp_number_id', numberId)
+          .in('status', DELETABLE);
+        const campaignIds = (campaignsToDelete || []).map((c: any) => c.id);
+        if (campaignIds.length > 0) {
+          await supabase.from('campaign_daily_reservations').delete().in('campaign_id', campaignIds);
+          await supabase.from('campaign_responses').delete().in('campaign_id', campaignIds);
+          await supabase.from('campaign_incidents').update({ campaign_id: null }).in('campaign_id', campaignIds);
+          await supabase.from('ignored_contacts').update({ campaign_id: null }).in('campaign_id', campaignIds);
+          await supabase.from('whatsapp_campaigns').delete().in('id', campaignIds);
+        }
+        // Unlink completed/failed campaigns (preserve history)
+        await supabase
+          .from('whatsapp_campaigns')
+          .update({ whatsapp_number_id: null })
+          .eq('whatsapp_number_id', numberId);
+
+        // 2) Unlink/cleanup all remaining FK references
+        await Promise.allSettled([
+          supabase.from('ai_agents').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberId),
+          supabase.from('leads').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberId),
+          supabase.from('campaign_daily_reservations').delete().eq('whatsapp_number_id', numberId),
+          supabase.from('campaign_incidents').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberId),
+          supabase.from('ignored_contacts').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberId),
+          supabase.from('revenue_conversations').update({ number_instance_id: null }).eq('number_instance_id', numberId),
+          supabase.from('revenue_events').update({ number_instance_id: null }).eq('number_instance_id', numberId),
+          supabase.from('revenue_leads').update({ source_number_instance_id: null }).eq('source_number_instance_id', numberId),
+          supabase.from('revenue_number_config').delete().eq('whatsapp_number_id', numberId),
+          supabase.from('warming_sessions').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberId),
+          supabase.from('warming_search_assignments').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberId),
+        ]);
+
+        // 3) Delete the number row
+        const { error: delErr } = await supabase
+          .from('whatsapp_numbers')
+          .delete()
+          .eq('id', numberId);
+        if (delErr) throw new Error(`Failed to delete number row: ${delErr.message}`);
+
+        return new Response(JSON.stringify({ success: true, message: 'Number fully deleted' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Unknown error during cascade delete';
+        console.error('cascadeDelete error:', msg);
+        return new Response(JSON.stringify({ error: msg }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       message: deleteInstance ? 'Instance deleted successfully' : 'Instance disconnected (preserved for reconnection)',
