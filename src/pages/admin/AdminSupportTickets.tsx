@@ -75,6 +75,7 @@ export default function AdminSupportTickets() {
   const [internalNotes, setInternalNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const [stats, setStats] = useState({ open: 0, escalated: 0, resolved: 0, total: 0 });
+  const [userPlan, setUserPlan] = useState<string | null>(null);
 
   const fetchStats = async () => {
     const [{ count: open }, { count: escalated }, { count: resolved }, { count: totalAll }] = await Promise.all([
