@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Star, Loader2, User, Paperclip, X, ImageIcon } from "lucide-react";
+import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,30 @@ const AiAvatar = () => (
   </div>
 );
 
-type Msg = { role: "user" | "ai"; content: string; image?: string };
+type Attachment = {
+  name: string;
+  type: string;
+  size: number;
+  dataUrl?: string; // for images
+  textContent?: string; // for text files
+};
+
+type Msg = { role: "user" | "ai"; content: string; attachments?: Attachment[] };
 type Phase = "chat" | "ask-resolved" | "rate" | "collect-info" | "done-resolved" | "done-escalated";
 
-const STORAGE_KEY = "wian_chat_v2";
+const STORAGE_KEY = "wian_chat_v3";
 const RESPONSE_DELAY_MS = 10000;
-const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4MB
+const MAX_FILE_BYTES = 4 * 1024 * 1024; // 4MB
+const MAX_ATTACHMENTS_PER_SEND = 3;
+const TEXT_MIME_PREFIXES = ["text/"];
+const TEXT_EXTENSIONS = [".txt", ".md", ".csv", ".json", ".log", ".xml", ".yaml", ".yml", ".html", ".css", ".js", ".ts", ".tsx", ".jsx", ".py", ".sql"];
+
+function isTextFile(file: File) {
+  if (TEXT_MIME_PREFIXES.some((p) => file.type.startsWith(p))) return true;
+  if (file.type === "application/json" || file.type === "application/xml") return true;
+  const lower = file.name.toLowerCase();
+  return TEXT_EXTENSIONS.some((ext) => lower.endsWith(ext));
+}
 
 function loadState() {
   try {
@@ -32,7 +50,7 @@ function loadState() {
   }
 }
 
-function saveState(s: { ticketId: string | null; messages: Msg[]; imageUsed: boolean }) {
+function saveState(s: { ticketId: string | null; messages: Msg[] }) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
   } catch {}
@@ -44,10 +62,9 @@ export function WianChat() {
   const [messages, setMessages] = useState<Msg[]>(
     initial?.messages?.length
       ? initial.messages
-      : [{ role: "ai", content: "Olá! Eu sou o Wian, atendente virtual da Wiize. Como posso ajudar você hoje? Você pode anexar **uma imagem** para mostrar o problema." }]
+      : [{ role: "ai", content: "Oi! Eu sou o **Wian** 👋, atendente virtual da Wiize. Me conta o que está acontecendo — pode anexar imagens ou arquivos (até 3) e até colar do clipboard." }]
   );
-  const [imageUsed, setImageUsed] = useState<boolean>(initial?.imageUsed ?? false);
-  const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<Phase>("chat");
@@ -60,16 +77,23 @@ export function WianChat() {
   const [comment, setComment] = useState("");
   const [isAuthed, setIsAuthed] = useState(false);
   const [waitingSeconds, setWaitingSeconds] = useState(0);
+  const [showConfirmSend, setShowConfirmSend] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const queueRef = useRef<{ texts: string[]; image: string | null }>({ texts: [], image: null });
+  const queueRef = useRef<{ texts: string[]; attachments: Attachment[] }>({ texts: [], attachments: [] });
   const { toast } = useToast();
 
   useEffect(() => {
-    saveState({ ticketId, messages, imageUsed });
-  }, [ticketId, messages, imageUsed]);
+    // strip dataUrls from messages before saving (avoid huge localStorage)
+    const lite = messages.map((m) => ({
+      ...m,
+      attachments: m.attachments?.map((a) => ({ ...a, dataUrl: undefined, textContent: undefined })),
+    }));
+    saveState({ ticketId, messages: lite });
+  }, [ticketId, messages]);
 
   useEffect(() => {
     (async () => {
@@ -89,7 +113,7 @@ export function WianChat() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading, phase, waitingSeconds]);
+  }, [messages, loading, phase, waitingSeconds, showConfirmSend]);
 
   useEffect(() => {
     const handler = () => restart();
@@ -105,22 +129,55 @@ export function WianChat() {
     };
   }, []);
 
-  const handleFile = async (file: File) => {
-    if (imageUsed) {
-      toast({ title: "Limite atingido", description: "Apenas 1 imagem por chamado.", variant: "destructive" });
+  const readFile = (file: File): Promise<Attachment | null> => {
+    return new Promise((resolve) => {
+      if (file.size > MAX_FILE_BYTES) {
+        toast({ title: `${file.name}: muito grande`, description: "Máximo 4MB por arquivo.", variant: "destructive" });
+        resolve(null);
+        return;
+      }
+      const att: Attachment = { name: file.name || "arquivo", type: file.type, size: file.size };
+      if (file.type.startsWith("image/")) {
+        const r = new FileReader();
+        r.onload = () => { att.dataUrl = String(r.result); resolve(att); };
+        r.onerror = () => resolve(null);
+        r.readAsDataURL(file);
+      } else if (isTextFile(file)) {
+        const r = new FileReader();
+        r.onload = () => { att.textContent = String(r.result).slice(0, 50_000); resolve(att); };
+        r.onerror = () => resolve(null);
+        r.readAsText(file);
+      } else {
+        resolve(att); // metadata only
+      }
+    });
+  };
+
+  const addFiles = async (files: File[]) => {
+    const remaining = MAX_ATTACHMENTS_PER_SEND - pendingAttachments.length;
+    if (remaining <= 0) {
+      toast({ title: "Limite atingido", description: `Máximo ${MAX_ATTACHMENTS_PER_SEND} anexos por envio.`, variant: "destructive" });
       return;
     }
-    if (!file.type.startsWith("image/")) {
-      toast({ title: "Arquivo inválido", description: "Selecione uma imagem.", variant: "destructive" });
-      return;
+    const slice = files.slice(0, remaining);
+    const results = await Promise.all(slice.map(readFile));
+    const ok = results.filter((a): a is Attachment => !!a);
+    if (ok.length) setPendingAttachments((prev) => [...prev, ...ok]);
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = Array.from(e.clipboardData?.items ?? []);
+    const files: File[] = [];
+    for (const it of items) {
+      if (it.kind === "file") {
+        const f = it.getAsFile();
+        if (f) files.push(f);
+      }
     }
-    if (file.size > MAX_IMAGE_BYTES) {
-      toast({ title: "Imagem muito grande", description: "Máximo 4MB.", variant: "destructive" });
-      return;
+    if (files.length) {
+      e.preventDefault();
+      await addFiles(files);
     }
-    const reader = new FileReader();
-    reader.onload = () => setPendingImage(String(reader.result));
-    reader.readAsDataURL(file);
   };
 
   const startCountdown = () => {
@@ -138,19 +195,35 @@ export function WianChat() {
   };
 
   const flushQueue = async () => {
-    const { texts, image } = queueRef.current;
-    if (!texts.length && !image) return;
-    queueRef.current = { texts: [], image: null };
+    const { texts, attachments } = queueRef.current;
+    if (!texts.length && !attachments.length) return;
+    queueRef.current = { texts: [], attachments: [] };
     stopCountdown();
+    setShowConfirmSend(false);
     setLoading(true);
-    const combined = texts.join("\n\n").trim();
+
+    // Build message + collect first image for vision + append text-file content
+    let combined = texts.join("\n\n").trim();
+    const imageAttachment = attachments.find((a) => a.type.startsWith("image/") && a.dataUrl);
+    const textAttachments = attachments.filter((a) => a.textContent);
+    const otherAttachments = attachments.filter(
+      (a) => !a.type.startsWith("image/") && !a.textContent,
+    );
+
+    if (textAttachments.length) {
+      combined += "\n\n" + textAttachments.map((a) => `--- Arquivo: ${a.name} ---\n${a.textContent}`).join("\n\n");
+    }
+    if (otherAttachments.length) {
+      combined += "\n\n(usuário anexou arquivos sem conteúdo legível: " + otherAttachments.map((a) => `${a.name} [${a.type || "?"}]`).join(", ") + ")";
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke("support-chat", {
         body: {
           ticketId,
-          message: combined || "(usuário enviou apenas uma imagem)",
+          message: combined || "(usuário enviou apenas anexos)",
           history: messages.slice(-12).map((m) => ({ role: m.role, content: m.content })),
-          imageDataUrl: image,
+          imageDataUrl: imageAttachment?.dataUrl ?? null,
         },
       });
       if (error) {
@@ -166,10 +239,15 @@ export function WianChat() {
       }
       if (data?.error) throw new Error(data.error);
       if (data?.ticketId) setTicketId(data.ticketId);
-      if (image) setImageUsed(true);
       setMessages((prev) => [...prev, { role: "ai", content: data.answer }]);
-      if (data.escalate) setPhase("collect-info");
-      else setPhase("ask-resolved");
+
+      if (data.escalate) {
+        setPhase("collect-info");
+      } else if (data.phase === "solution") {
+        setPhase("ask-resolved");
+      } else {
+        setPhase("chat"); // stay conversational
+      }
     } catch (e: any) {
       const msg: string = e?.message || "";
       const friendly = /429|rate/i.test(msg)
@@ -181,7 +259,18 @@ export function WianChat() {
     }
   };
 
-  const scheduleFlush = () => {
+  const queueAndSchedule = (text: string, attachments: Attachment[]) => {
+    if (text) queueRef.current.texts.push(text);
+    if (attachments.length) queueRef.current.attachments.push(...attachments);
+
+    // Show in chat immediately
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", content: text || "(anexo)", attachments: attachments.length ? attachments : undefined },
+    ]);
+
+    // Reset debounce + show confirmation banner
+    setShowConfirmSend(true);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     startCountdown();
     debounceRef.current = setTimeout(() => {
@@ -191,21 +280,11 @@ export function WianChat() {
 
   const send = () => {
     const text = input.trim();
-    if ((!text && !pendingImage) || loading) return;
+    if ((!text && pendingAttachments.length === 0) || loading) return;
+    const atts = pendingAttachments;
     setInput("");
-
-    // Add to UI
-    const newMsg: Msg = { role: "user", content: text || "(imagem)", image: pendingImage || undefined };
-    setMessages((prev) => [...prev, newMsg]);
-
-    // Add to queue
-    if (text) queueRef.current.texts.push(text);
-    if (pendingImage && !queueRef.current.image) {
-      queueRef.current.image = pendingImage;
-      setPendingImage(null);
-    }
-
-    scheduleFlush();
+    setPendingAttachments([]);
+    queueAndSchedule(text, atts);
   };
 
   const sendNow = () => {
@@ -213,15 +292,35 @@ export function WianChat() {
     void flushQueue();
   };
 
+  const cancelQueue = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    stopCountdown();
+    setShowConfirmSend(false);
+    // Remove queued user messages from UI
+    const drop = queueRef.current.texts.length + (queueRef.current.attachments.length ? 1 : 0);
+    if (drop > 0) {
+      setMessages((prev) => {
+        // remove the last messages that came from this batch
+        let removed = 0;
+        const out = [...prev];
+        while (removed < drop && out.length && out[out.length - 1].role === "user") {
+          out.pop();
+          removed++;
+        }
+        return out;
+      });
+    }
+    queueRef.current = { texts: [], attachments: [] };
+  };
+
   const onResolved = (resolved: boolean) => {
     if (resolved) {
       setPhase("rate");
     } else {
-      setMessages((prev) => [
-        ...prev,
-        { role: "ai", content: "Sem problema. Vou conectar você com o nosso time. Preciso só de alguns dados rápidos." },
-      ]);
-      setPhase("collect-info");
+      // Don't escalate immediately — let AI try alternatives. Re-open chat with hint.
+      setPhase("chat");
+      const reply = "Não funcionou? Me conta o que aconteceu (em qual passo travou, apareceu alguma mensagem de erro?) que eu tento outro caminho.";
+      setMessages((prev) => [...prev, { role: "ai", content: reply }]);
     }
   };
 
@@ -289,18 +388,31 @@ export function WianChat() {
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     stopCountdown();
-    queueRef.current = { texts: [], image: null };
+    queueRef.current = { texts: [], attachments: [] };
     localStorage.removeItem(STORAGE_KEY);
     setTicketId(null);
-    setImageUsed(false);
-    setPendingImage(null);
+    setPendingAttachments([]);
+    setShowConfirmSend(false);
     setMessages([{ role: "ai", content: "Olá! Eu sou o Wian. Como posso ajudar?" }]);
     setPhase("chat");
     setStars(0); setComment(""); setExtra(""); setInput("");
   };
 
+  const renderAttachment = (a: Attachment, key: number) => {
+    if (a.dataUrl) {
+      return <img key={key} src={a.dataUrl} alt={a.name} className="rounded-lg max-h-40 object-contain" />;
+    }
+    return (
+      <div key={key} className="flex items-center gap-2 bg-background/60 border border-border rounded-md px-2 py-1 text-xs">
+        <FileText className="w-3.5 h-3.5 text-primary" />
+        <span className="truncate max-w-[180px]">{a.name}</span>
+        <span className="text-muted-foreground">{Math.ceil(a.size / 1024)}KB</span>
+      </div>
+    );
+  };
+
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0" onPaste={handlePaste}>
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background/30">
         <AnimatePresence initial={false}>
           {messages.map((m, i) => (
@@ -319,26 +431,37 @@ export function WianChat() {
                     : "bg-muted text-foreground rounded-bl-md"
                 }`}
               >
-                {m.image && (
-                  <img src={m.image} alt="anexo" className="rounded-lg mb-2 max-h-48 object-contain" />
-                )}
+                {m.attachments?.length ? (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {m.attachments.map(renderAttachment)}
+                  </div>
+                ) : null}
                 {m.role === "ai" ? (
                   <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_strong]:font-semibold">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                   </div>
                 ) : (
-                  m.content !== "(imagem)" && m.content
+                  m.content !== "(anexo)" && m.content
                 )}
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
 
-        {waitingSeconds > 0 && !loading && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center">
-            <div className="text-[11px] text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full">
-              Aguardando você terminar… respondo em {waitingSeconds}s ·{" "}
-              <button onClick={sendNow} className="text-primary underline">enviar agora</button>
+        {showConfirmSend && !loading && (
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center">
+            <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-foreground/80 flex items-center gap-3 flex-wrap">
+              <span>
+                Confirma o envio à IA? Respondo em <span className="font-semibold text-primary">{waitingSeconds}s</span> ou clique abaixo.
+              </span>
+              <div className="flex gap-1.5">
+                <Button size="sm" variant="default" className="h-7 px-2.5" onClick={sendNow}>
+                  <Check className="w-3.5 h-3.5 mr-1" /> Confirmar agora
+                </Button>
+                <Button size="sm" variant="ghost" className="h-7 px-2.5" onClick={cancelQueue}>
+                  Cancelar
+                </Button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -351,7 +474,7 @@ export function WianChat() {
                 <span className="w-1.5 h-1.5 bg-foreground/50 rounded-full animate-bounce" />
                 <span className="w-1.5 h-1.5 bg-foreground/50 rounded-full animate-bounce [animation-delay:120ms]" />
                 <span className="w-1.5 h-1.5 bg-foreground/50 rounded-full animate-bounce [animation-delay:240ms]" />
-                <span className="ml-2 text-xs text-muted-foreground">Wian está digitando…</span>
+                <span className="ml-2 text-xs text-muted-foreground">Wian está pensando…</span>
               </div>
             </div>
           </motion.div>
@@ -359,8 +482,8 @@ export function WianChat() {
 
         {phase === "ask-resolved" && !loading && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center gap-2 pt-1">
-            <Button size="sm" variant="default" onClick={() => onResolved(true)}>Sim, resolveu</Button>
-            <Button size="sm" variant="outline" onClick={() => onResolved(false)}>Não resolveu</Button>
+            <Button size="sm" variant="default" onClick={() => onResolved(true)}>Sim, funcionou ✅</Button>
+            <Button size="sm" variant="outline" onClick={() => onResolved(false)}>Não funcionou</Button>
           </motion.div>
         )}
 
@@ -425,26 +548,35 @@ export function WianChat() {
 
       {(phase === "chat" || phase === "ask-resolved") && (
         <div className="border-t border-border p-3 bg-background space-y-2">
-          {pendingImage && (
-            <div className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/40">
-              <img src={pendingImage} alt="preview" className="w-12 h-12 rounded object-cover" />
-              <div className="flex-1 text-xs text-muted-foreground flex items-center gap-1">
-                <ImageIcon className="w-3.5 h-3.5" /> Imagem anexada (1 por chamado)
-              </div>
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setPendingImage(null)}>
-                <X className="w-4 h-4" />
-              </Button>
+          {pendingAttachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 p-2 rounded-lg border border-border bg-muted/40">
+              {pendingAttachments.map((a, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-background border border-border rounded-md pl-2 pr-1 py-1 text-xs">
+                  {a.type.startsWith("image/") ? <ImageIcon className="w-3.5 h-3.5 text-primary" /> : <FileText className="w-3.5 h-3.5 text-primary" />}
+                  <span className="truncate max-w-[140px]">{a.name}</span>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-destructive p-0.5"
+                    onClick={() => setPendingAttachments((prev) => prev.filter((_, i) => i !== idx))}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              <span className="text-[11px] text-muted-foreground self-center">
+                {pendingAttachments.length}/{MAX_ATTACHMENTS_PER_SEND} anexos
+              </span>
             </div>
           )}
           <div className="flex gap-2">
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              multiple
               className="hidden"
               onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleFile(f);
+                const fs = Array.from(e.target.files ?? []);
+                if (fs.length) void addFiles(fs);
                 e.target.value = "";
               }}
             />
@@ -453,19 +585,19 @@ export function WianChat() {
               size="icon"
               variant="outline"
               onClick={() => fileRef.current?.click()}
-              disabled={loading || imageUsed || !!pendingImage}
-              title={imageUsed ? "Limite de 1 imagem por chamado" : "Anexar imagem"}
+              disabled={loading || pendingAttachments.length >= MAX_ATTACHMENTS_PER_SEND}
+              title="Anexar arquivo (ou cole com Ctrl+V)"
             >
               <Paperclip className="w-4 h-4" />
             </Button>
             <Input
-              placeholder="Digite sua mensagem…"
+              placeholder="Digite, cole arquivos (Ctrl+V) ou anexe…"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
               disabled={loading}
             />
-            <Button onClick={send} disabled={loading || (!input.trim() && !pendingImage)} size="icon">
+            <Button onClick={send} disabled={loading || (!input.trim() && pendingAttachments.length === 0)} size="icon">
               <Send className="w-4 h-4" />
             </Button>
           </div>
