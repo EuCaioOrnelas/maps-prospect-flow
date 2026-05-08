@@ -580,18 +580,19 @@ export function WianChat() {
     } catch {}
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    stopCountdown();
     queueRef.current = { texts: [], attachments: [] };
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(FORM_KEY);
     setTicketId(null);
+    setTicketNumber(null);
     setPendingAttachments([]);
-    setShowConfirmSend(false);
     setMessages([GREETING_MSG]);
     setActiveCategory(null);
     setActiveSolution(null);
     setTriage({});
     setPhase("triage-menu");
     setStars(0); setComment(""); setExtra(""); setInput("");
+    setPhone(""); setCategory("");
   };
 
   const renderAttachment = (a: Attachment, key: number) => {
