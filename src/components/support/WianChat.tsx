@@ -330,12 +330,28 @@ export function WianChat() {
   const pickProblem = (sol: Solution) => {
     setMenuOpen(false);
     setActiveSolution(sol);
-    setTriage((t) => ({ ...t, subcategory: sol.title }));
+    setTriage((t) => ({ ...t, subcategory: sol.title, triedSolution: sol.title, triedSteps: sol.steps }));
 
     // Mensagem do usuário
     const userMsg: Msg = { role: "user", content: sol.title };
 
-    // Resposta com solução
+    // "Outro problema..." ou problemas sem passos reais (que apenas pedem para o usuário
+    // descrever) NÃO devem mostrar "Funcionou?" — vão direto para o chat aberto com a IA.
+    const isOpenEnded =
+      sol.id.startsWith("outro_") ||
+      sol.steps.length === 0 ||
+      (sol.steps.length === 1 && /^(me conta|me conte|descreva|me explica|me explique)/i.test(sol.steps[0].trim()));
+
+    if (isOpenEnded) {
+      const prompt = sol.steps.length
+        ? sol.steps.map((s) => s).join("\n\n")
+        : "Me conta com mais detalhes o que está acontecendo — em qual tela, qual mensagem de erro aparece e o que você já tentou. 🙂";
+      setMessages((prev) => [...prev, userMsg, { role: "ai", content: prompt }]);
+      setPhase("chat");
+      return;
+    }
+
+    // Resposta com solução guiada
     const intro = sol.intro ? `${sol.intro}\n\n` : "";
     const stepsText = sol.steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
     const aiMsg: Msg = {
