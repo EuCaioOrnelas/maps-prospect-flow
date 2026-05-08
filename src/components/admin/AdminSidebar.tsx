@@ -128,6 +128,13 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: "Suporte",
+    icon: LifeBuoy,
+    items: [
+      { title: "Tickets", url: "/admin/suporte/tickets", icon: MessageSquare as any },
+    ],
+  },
+  {
     title: "Admin",
     icon: Shield,
     items: [
