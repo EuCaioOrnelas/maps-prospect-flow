@@ -303,6 +303,8 @@ const App = () => (
                   <Route path="auditoria" element={<AdminAuditoria />} />
                   <Route path="insights" element={<UserInsights />} />
                   <Route path="onboarding" element={<AdminOnboarding />} />
+                  {/* Suporte */}
+                  <Route path="suporte/tickets" element={<AdminSupportTickets />} />
                   {/* Partners */}
                   <Route path="partners" element={<AdminPartnersDashboard />} />
                   <Route path="partners/parceiros" element={<AdminPartnersList />} />
