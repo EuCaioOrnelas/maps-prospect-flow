@@ -6,7 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import logoIcon from "@/assets/logo-icon-new.png";
+
+const AiAvatar = () => (
+  <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
+    <User className="w-4 h-4" />
+  </div>
+);
 
 type Msg = { role: "user" | "ai"; content: string };
 type Phase = "chat" | "ask-resolved" | "rate" | "collect-info" | "done-resolved" | "done-escalated";
