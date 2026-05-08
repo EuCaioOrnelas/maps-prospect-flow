@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,11 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, MessageSquare, RefreshCw, HelpCircle, Mail, Phone, User, Tag, CreditCard, ExternalLink } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import {
+  Loader2, Search, MessageSquare, RefreshCw, HelpCircle, Mail, Phone, User, Tag, CreditCard,
+  ExternalLink, Plus, Paperclip, X, Image as ImageIcon, Clock, Star, UserPlus, AlertTriangle,
+} from "lucide-react";
+import { formatDistanceToNow, formatDistanceToNowStrict } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getPlanLabel } from "@/lib/planLabels";
 
@@ -34,6 +37,8 @@ type Ticket = {
   created_at: string;
   updated_at: string;
   resolved_at: string | null;
+  due_at: string | null;
+  is_manual: boolean | null;
 };
 
 type Message = {
@@ -42,6 +47,27 @@ type Message = {
   content: string;
   created_at: string;
   metadata: any;
+};
+
+type HistoryEntry = {
+  id: string;
+  ticket_id: string;
+  author_id: string | null;
+  author_name: string | null;
+  action_type: string;
+  content: string | null;
+  attachments: { path: string; name: string; type?: string }[];
+  created_at: string;
+};
+
+type Rating = {
+  id: string;
+  stars: number | null;
+  nps_score: number | null;
+  nps_recommend: number | null;
+  nps_comment: string | null;
+  comment: string | null;
+  created_at: string;
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -72,10 +98,27 @@ export default function AdminSupportTickets() {
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
-  const [internalNotes, setInternalNotes] = useState("");
-  const [savingNotes, setSavingNotes] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [rating, setRating] = useState<Rating | null>(null);
   const [stats, setStats] = useState({ open: 0, escalated: 0, resolved: 0, total: 0 });
   const [userPlan, setUserPlan] = useState<string | null>(null);
+
+  // History entry form
+  const [noteText, setNoteText] = useState("");
+  const [noteFiles, setNoteFiles] = useState<File[]>([]);
+  const [savingNote, setSavingNote] = useState(false);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Manual ticket modal
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualName, setManualName] = useState("");
+  const [manualEmail, setManualEmail] = useState("");
+  const [manualPhone, setManualPhone] = useState("");
+  const [manualCategory, setManualCategory] = useState("");
+  const [manualPriority, setManualPriority] = useState("medium");
+  const [manualSummary, setManualSummary] = useState("");
+  const [creatingManual, setCreatingManual] = useState(false);
 
   const fetchStats = async () => {
     const [{ count: open }, { count: escalated }, { count: resolved }, { count: totalAll }] = await Promise.all([
@@ -118,47 +161,60 @@ export default function AdminSupportTickets() {
     }
   };
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => { fetchTickets(); /* eslint-disable-next-line */ }, [page, statusFilter]);
 
-  useEffect(() => {
-    fetchTickets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, statusFilter]);
-
-  // realtime updates
   useEffect(() => {
     const channel = supabase
       .channel("admin-support-tickets")
       .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, () => {
-        fetchStats();
-        fetchTickets();
+        fetchStats(); fetchTickets();
       })
       .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line
   }, [page, statusFilter, search]);
+
+  const refreshHistory = async (ticketId: string) => {
+    const { data } = await supabase
+      .from("support_ticket_history")
+      .select("*")
+      .eq("ticket_id", ticketId)
+      .order("created_at", { ascending: false });
+    const entries = (data as any as HistoryEntry[]) || [];
+    setHistory(entries);
+    // sign attachments
+    const allPaths = entries.flatMap((e) => (e.attachments || []).map((a) => a.path));
+    if (allPaths.length) {
+      const { data: signed } = await supabase.storage.from("support-attachments").createSignedUrls(allPaths, 60 * 60);
+      const map: Record<string, string> = {};
+      signed?.forEach((s, i) => { if (s.signedUrl) map[allPaths[i]] = s.signedUrl; });
+      setSignedUrls(map);
+    } else {
+      setSignedUrls({});
+    }
+  };
 
   const openTicket = async (t: Ticket) => {
     setSelected(t);
-    setInternalNotes(t.internal_notes || "");
     setUserPlan(null);
+    setNoteText(""); setNoteFiles([]);
     setLoadingMsgs(true);
     try {
-      const [{ data: msgs, error: msgErr }, planRes] = await Promise.all([
+      const [{ data: msgs, error: msgErr }, planRes, ratingRes] = await Promise.all([
         supabase.from("support_messages").select("*").eq("ticket_id", t.id).order("created_at", { ascending: true }),
         t.user_id
           ? supabase.from("profiles").select("plan").eq("id", t.user_id).maybeSingle()
           : (t.email
               ? supabase.from("profiles").select("plan").ilike("email", t.email).maybeSingle()
               : Promise.resolve({ data: null } as any)),
+        supabase.from("support_ratings").select("*").eq("ticket_id", t.id).order("created_at", { ascending: false }).maybeSingle(),
       ]);
       if (msgErr) throw msgErr;
       setMessages((msgs as Message[]) || []);
       setUserPlan((planRes as any)?.data?.plan ?? null);
+      setRating((ratingRes as any)?.data ?? null);
+      await refreshHistory(t.id);
     } catch (e: any) {
       toast({ title: "Erro ao carregar mensagens", description: e.message, variant: "destructive" });
     } finally {
@@ -174,41 +230,122 @@ export default function AdminSupportTickets() {
       update.resolved_by = "human";
     }
     const { error } = await supabase.from("support_tickets").update(update).eq("id", selected.id);
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-      return;
-    }
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Status atualizado" });
     setSelected({ ...selected, ...update });
-    fetchStats();
-    fetchTickets();
+    fetchStats(); fetchTickets();
+
+    // log status change in history
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("support_ticket_history").insert({
+      ticket_id: selected.id,
+      author_id: user?.id ?? null,
+      author_name: user?.email ?? "Equipe",
+      action_type: "status_change",
+      content: `Status alterado para "${status}"`,
+      attachments: [],
+    });
+    refreshHistory(selected.id);
   };
 
   const updatePriority = async (priority: string) => {
     if (!selected) return;
     const { error } = await supabase.from("support_tickets").update({ priority }).eq("id", selected.id);
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-      return;
-    }
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     setSelected({ ...selected, priority });
     fetchTickets();
   };
 
-  const saveNotes = async () => {
+  const handleAddFiles = (files: FileList | null) => {
+    if (!files) return;
+    const valid: File[] = [];
+    Array.from(files).forEach((f) => {
+      if (f.size > 10 * 1024 * 1024) {
+        toast({ title: "Arquivo muito grande", description: `${f.name} excede 10MB`, variant: "destructive" });
+        return;
+      }
+      valid.push(f);
+    });
+    setNoteFiles((prev) => [...prev, ...valid]);
+  };
+
+  const addHistoryEntry = async () => {
     if (!selected) return;
-    setSavingNotes(true);
-    const { error } = await supabase
-      .from("support_tickets")
-      .update({ internal_notes: internalNotes })
-      .eq("id", selected.id);
-    setSavingNotes(false);
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    if (!noteText.trim() && noteFiles.length === 0) {
+      toast({ title: "Adicione um texto ou anexo", variant: "destructive" });
       return;
     }
-    toast({ title: "Notas salvas" });
-    setSelected({ ...selected, internal_notes: internalNotes });
+    setSavingNote(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Upload files
+      const uploaded: { path: string; name: string; type?: string }[] = [];
+      for (const file of noteFiles) {
+        const ext = file.name.split(".").pop() || "bin";
+        const path = `${selected.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("support-attachments").upload(path, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+        if (upErr) throw upErr;
+        uploaded.push({ path, name: file.name, type: file.type });
+      }
+
+      const { error } = await supabase.from("support_ticket_history").insert({
+        ticket_id: selected.id,
+        author_id: user?.id ?? null,
+        author_name: user?.email ?? "Equipe",
+        action_type: "note",
+        content: noteText.trim() || null,
+        attachments: uploaded,
+      });
+      if (error) throw error;
+
+      setNoteText(""); setNoteFiles([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      toast({ title: "Anotação adicionada" });
+      refreshHistory(selected.id);
+    } catch (e: any) {
+      toast({ title: "Erro ao adicionar nota", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const createManualTicket = async () => {
+    if (!manualName.trim() || (!manualEmail.trim() && !manualPhone.trim())) {
+      toast({ title: "Preencha nome e ao menos email ou telefone", variant: "destructive" });
+      return;
+    }
+    setCreatingManual(true);
+    try {
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .insert({
+          name: manualName.trim(),
+          email: manualEmail.trim() || null,
+          phone: manualPhone.trim() || null,
+          category: manualCategory.trim() || "Cliente VIP",
+          priority: manualPriority,
+          ai_summary: manualSummary.trim() || null,
+          status: "in_progress",
+          is_manual: true,
+          customer_type: "paid_client",
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      toast({ title: "Ticket criado", description: data.ticket_number || "" });
+      setManualOpen(false);
+      setManualName(""); setManualEmail(""); setManualPhone(""); setManualCategory(""); setManualSummary(""); setManualPriority("medium");
+      fetchStats(); fetchTickets();
+      openTicket(data as Ticket);
+    } catch (e: any) {
+      toast({ title: "Erro ao criar ticket", description: e.message, variant: "destructive" });
+    } finally {
+      setCreatingManual(false);
+    }
   };
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -220,6 +357,21 @@ export default function AdminSupportTickets() {
     { label: "Resolvidos", value: stats.resolved, color: "text-emerald-500" },
   ]), [stats]);
 
+  const dueBadge = (t: Ticket) => {
+    if (!t.due_at || t.status === "resolved" || t.status === "closed") return null;
+    const due = new Date(t.due_at);
+    const now = Date.now();
+    const overdue = due.getTime() < now;
+    return (
+      <Badge variant="outline" className={overdue
+        ? "bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/30 gap-1"
+        : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 gap-1"}>
+        <Clock className="w-3 h-3" />
+        {overdue ? "Atrasado " : "Vence em "}{formatDistanceToNowStrict(due, { locale: ptBR })}
+      </Badge>
+    );
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -227,9 +379,14 @@ export default function AdminSupportTickets() {
           <h1 className="text-2xl font-bold">Tickets de Suporte</h1>
           <p className="text-sm text-muted-foreground">Conversas e chamados gerenciados pelo Wian e equipe</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => { fetchStats(); fetchTickets(); }}>
-          <RefreshCw className="w-4 h-4 mr-2" /> Atualizar
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => { fetchStats(); fetchTickets(); }}>
+            <RefreshCw className="w-4 h-4 mr-2" /> Atualizar
+          </Button>
+          <Button size="sm" onClick={() => setManualOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Novo ticket manual
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -276,47 +433,32 @@ export default function AdminSupportTickets() {
                 <TableHead>Contato</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Prazo</TableHead>
                 <TableHead>Prioridade</TableHead>
-                <TableHead>IA</TableHead>
                 <TableHead>Criado</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
-                  </TableCell>
-                </TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-12"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
               ) : tickets.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
-                    Nenhum ticket encontrado.
-                  </TableCell>
-                </TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Nenhum ticket encontrado.</TableCell></TableRow>
               ) : tickets.map((t) => (
                 <TableRow key={t.id} className="cursor-pointer hover:bg-muted/40" onClick={() => openTicket(t)}>
                   <TableCell>
-                    {t.ticket_number && (
-                      <div className="font-mono text-[11px] text-primary mb-0.5">{t.ticket_number}</div>
-                    )}
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      {t.ticket_number && <span className="font-mono text-[11px] text-primary">{t.ticket_number}</span>}
+                      {t.is_manual && <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/30">Manual</Badge>}
+                    </div>
                     <div className="font-medium text-sm">{t.name || "—"}</div>
                     <div className="text-xs text-muted-foreground">{t.email || t.phone || "Visitante anônimo"}</div>
                   </TableCell>
                   <TableCell className="text-sm">{t.category || "—"}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={STATUS_COLORS[t.status] || ""}>{t.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`text-xs px-2 py-0.5 rounded-md ${PRIORITY_COLORS[t.priority] || ""}`}>{t.priority}</span>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {t.ai_confidence != null ? `${Math.round(t.ai_confidence * 100)}%` : "—"}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(t.created_at), { addSuffix: true, locale: ptBR })}
-                  </TableCell>
+                  <TableCell><Badge variant="outline" className={STATUS_COLORS[t.status] || ""}>{t.status}</Badge></TableCell>
+                  <TableCell>{dueBadge(t)}</TableCell>
+                  <TableCell><span className={`text-xs px-2 py-0.5 rounded-md ${PRIORITY_COLORS[t.priority] || ""}`}>{t.priority}</span></TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(t.created_at), { addSuffix: true, locale: ptBR })}</TableCell>
                   <TableCell>
                     <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openTicket(t); }}>
                       <MessageSquare className="w-4 h-4" />
@@ -337,16 +479,15 @@ export default function AdminSupportTickets() {
         </div>
       </Card>
 
+      {/* Detail dialog */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto bg-background">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 flex-wrap">
               {selected?.ticket_number || `Ticket #${selected?.id.slice(0, 8)}`}
-              {selected && (
-                <Badge variant="outline" className={STATUS_COLORS[selected.status] || ""}>
-                  {selected.status}
-                </Badge>
-              )}
+              {selected && <Badge variant="outline" className={STATUS_COLORS[selected.status] || ""}>{selected.status}</Badge>}
+              {selected?.is_manual && <Badge variant="outline" className="bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/30">Manual</Badge>}
+              {selected && dueBadge(selected)}
             </DialogTitle>
             <DialogDescription>
               Detalhes do chamado, contato do solicitante e histórico completo da conversa.
@@ -361,8 +502,7 @@ export default function AdminSupportTickets() {
                   <p className="text-sm font-semibold">Informações de contato</p>
                   {userPlan && (
                     <Badge variant="outline" className="gap-1">
-                      <CreditCard className="w-3 h-3" />
-                      Plano {getPlanLabel(userPlan)}
+                      <CreditCard className="w-3 h-3" /> Plano {getPlanLabel(userPlan)}
                     </Badge>
                   )}
                 </div>
@@ -390,17 +530,14 @@ export default function AdminSupportTickets() {
                           <span className="font-medium truncate">{selected.email}</span>
                           <a
                             href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(selected.email)}&su=${encodeURIComponent(`Re: ${selected.ticket_number || "Ticket"} - Suporte Wiize`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            target="_blank" rel="noopener noreferrer"
                           >
                             <Button size="sm" variant="outline" className="h-7 text-xs">
                               <ExternalLink className="w-3 h-3" /> Gmail
                             </Button>
                           </a>
                         </div>
-                      ) : (
-                        <p className="font-medium">—</p>
-                      )}
+                      ) : <p className="font-medium">—</p>}
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
@@ -416,7 +553,7 @@ export default function AdminSupportTickets() {
                                 <ExternalLink className="w-3 h-3" /> WhatsApp
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-48 p-2" align="end">
+                            <PopoverContent className="w-48 p-2 bg-popover" align="end">
                               <p className="text-xs text-muted-foreground px-2 py-1">Abrir conversa em:</p>
                               {(() => {
                                 const digits = selected.phone!.replace(/\D/g, "");
@@ -434,9 +571,7 @@ export default function AdminSupportTickets() {
                             </PopoverContent>
                           </Popover>
                         </div>
-                      ) : (
-                        <p className="font-medium">—</p>
-                      )}
+                      ) : <p className="font-medium">—</p>}
                     </div>
                   </div>
                 </div>
@@ -453,7 +588,7 @@ export default function AdminSupportTickets() {
                           <HelpCircle className="w-3.5 h-3.5" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-72 text-xs space-y-2" align="start">
+                      <PopoverContent className="w-72 text-xs space-y-2 bg-popover" align="start">
                         <p className="font-semibold text-sm">O que cada status significa</p>
                         <div><span className="font-medium text-blue-600 dark:text-blue-300">Aberto</span> — chamado novo, ainda não atendido pela equipe.</div>
                         <div><span className="font-medium text-amber-600 dark:text-amber-300">Em andamento</span> — alguém da equipe já está cuidando do caso.</div>
@@ -483,7 +618,7 @@ export default function AdminSupportTickets() {
                           <HelpCircle className="w-3.5 h-3.5" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-72 text-xs space-y-2" align="start">
+                      <PopoverContent className="w-72 text-xs space-y-2 bg-popover" align="start">
                         <p className="font-semibold text-sm">Níveis de prioridade</p>
                         <div><span className="font-medium">Baixa</span> — dúvidas gerais, sem impacto imediato.</div>
                         <div><span className="font-medium text-blue-600 dark:text-blue-300">Média</span> — afeta o uso, mas há contorno.</div>
@@ -504,6 +639,38 @@ export default function AdminSupportTickets() {
                 </div>
               </div>
 
+              {/* NPS / Avaliação */}
+              {rating && (
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
+                  <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Star className="w-4 h-4 text-emerald-500" /> Avaliação do cliente
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                    {rating.stars != null && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Nota do atendimento</p>
+                        <p className="font-bold text-lg">{rating.stars}/5 ★</p>
+                      </div>
+                    )}
+                    {rating.nps_score != null && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Ajudou? (0-10)</p>
+                        <p className="font-bold text-lg">{rating.nps_score}/10</p>
+                      </div>
+                    )}
+                    {rating.nps_recommend != null && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Indicaria a um amigo? (0-10)</p>
+                        <p className="font-bold text-lg">{rating.nps_recommend}/10</p>
+                      </div>
+                    )}
+                  </div>
+                  {(rating.nps_comment || rating.comment) && (
+                    <p className="text-sm mt-3 italic text-muted-foreground">"{rating.nps_comment || rating.comment}"</p>
+                  )}
+                </div>
+              )}
+
               {selected.ai_summary && (
                 <div className="rounded-lg border border-border bg-muted/30 p-3">
                   <p className="text-xs font-semibold mb-1">Resumo gerado pela IA</p>
@@ -511,13 +678,14 @@ export default function AdminSupportTickets() {
                 </div>
               )}
 
+              {/* Conversa */}
               <div>
                 <p className="text-sm font-semibold mb-2">Conversa</p>
                 <div className="rounded-lg border border-border bg-background max-h-[420px] overflow-y-auto p-3 space-y-2">
                   {loadingMsgs ? (
                     <div className="py-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" /></div>
                   ) : messages.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">Sem mensagens.</p>
+                    <p className="text-sm text-muted-foreground text-center py-6">Sem mensagens (ticket manual ou sem chat).</p>
                   ) : messages.map((m) => (
                     <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[80%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
@@ -527,29 +695,173 @@ export default function AdminSupportTickets() {
                             ? "bg-muted text-foreground"
                             : "bg-primary/10 text-foreground border border-primary/30"
                       }`}>
-                        <div className="text-[10px] uppercase tracking-wide opacity-60 mb-1">{m.role}</div>
+                        <div className="text-[10px] uppercase tracking-wide opacity-60 mb-1 flex items-center gap-1">
+                          {m.role}
+                          {m.metadata?.has_image && <ImageIcon className="w-3 h-3" />}
+                        </div>
                         {m.content}
+                        {m.metadata?.has_image && (
+                          <div className="mt-1 text-[10px] opacity-70 italic">📎 Cliente anexou imagem no chat</div>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
+              {/* Histórico interno */}
               <div>
-                <p className="text-sm font-semibold mb-2">Notas internas</p>
-                <Textarea
-                  rows={4}
-                  value={internalNotes}
-                  onChange={(e) => setInternalNotes(e.target.value)}
-                  placeholder="Anotações visíveis apenas para a equipe..."
-                />
-                <Button size="sm" className="mt-2" onClick={saveNotes} disabled={savingNotes}>
-                  {savingNotes && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Salvar notas
-                </Button>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold">Histórico interno (notas e anexos)</p>
+                  <Badge variant="outline" className="text-xs">{history.length} registro(s)</Badge>
+                </div>
+
+                {/* Form de nova entrada */}
+                <div className="rounded-lg border border-border bg-muted/10 p-3 space-y-2">
+                  <Textarea
+                    rows={3}
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder="Adicione uma anotação interna (ex: 'Liguei para o cliente, voltarei amanhã 14h'...)"
+                  />
+                  {noteFiles.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {noteFiles.map((f, i) => (
+                        <div key={i} className="flex items-center gap-1 text-xs bg-background border border-border rounded px-2 py-1">
+                          <Paperclip className="w-3 h-3" />
+                          <span className="max-w-[160px] truncate">{f.name}</span>
+                          <button onClick={() => setNoteFiles(noteFiles.filter((_, j) => j !== i))}>
+                            <X className="w-3 h-3 text-muted-foreground hover:text-foreground" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                      onChange={(e) => handleAddFiles(e.target.files)}
+                    />
+                    <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                      <Paperclip className="w-4 h-4 mr-1" /> Anexar prints
+                    </Button>
+                    <Button size="sm" onClick={addHistoryEntry} disabled={savingNote}>
+                      {savingNote && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Adicionar ao histórico
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Lista do histórico */}
+                <div className="mt-3 space-y-2 max-h-[400px] overflow-y-auto">
+                  {history.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">Nenhuma anotação ainda.</p>
+                  ) : history.map((h) => (
+                    <div key={h.id} className="rounded-lg border border-border bg-background p-3">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-foreground">{h.author_name || "Sistema"}</span>
+                          {h.action_type !== "note" && (
+                            <Badge variant="outline" className="text-[9px] py-0 h-4">{h.action_type}</Badge>
+                          )}
+                        </div>
+                        <span>{formatDistanceToNow(new Date(h.created_at), { addSuffix: true, locale: ptBR })}</span>
+                      </div>
+                      {h.content && <p className="text-sm whitespace-pre-wrap">{h.content}</p>}
+                      {h.attachments?.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {h.attachments.map((att, i) => {
+                            const url = signedUrls[att.path];
+                            const isImg = att.type?.startsWith("image/");
+                            if (isImg && url) {
+                              return (
+                                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                                  <img src={url} alt={att.name} className="h-24 w-24 object-cover rounded border border-border hover:opacity-80 transition" />
+                                </a>
+                              );
+                            }
+                            return (
+                              <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                                 className="text-xs flex items-center gap-1 bg-muted px-2 py-1 rounded hover:bg-muted/80">
+                                <Paperclip className="w-3 h-3" /> {att.name}
+                              </a>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual ticket modal */}
+      <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+        <DialogContent className="max-w-lg bg-background">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" /> Novo ticket manual
+            </DialogTitle>
+            <DialogDescription>
+              Para clientes VIP que falam direto pelo WhatsApp. O número do protocolo é gerado automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Nome do cliente *</label>
+              <Input value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="João Silva" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Email</label>
+                <Input value={manualEmail} onChange={(e) => setManualEmail(e.target.value)} placeholder="cliente@empresa.com" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Telefone</label>
+                <Input value={manualPhone} onChange={(e) => setManualPhone(e.target.value)} placeholder="+55 11 99999-9999" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Categoria</label>
+                <Input value={manualCategory} onChange={(e) => setManualCategory(e.target.value)} placeholder="Cliente VIP" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Prioridade</label>
+                <Select value={manualPriority} onValueChange={setManualPriority}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Baixa</SelectItem>
+                    <SelectItem value="medium">Média</SelectItem>
+                    <SelectItem value="high">Alta</SelectItem>
+                    <SelectItem value="urgent">Urgente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Resumo / motivo do contato</label>
+              <Textarea rows={3} value={manualSummary} onChange={(e) => setManualSummary(e.target.value)} placeholder="Cliente reportou problema com integração WhatsApp..." />
+            </div>
+            <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded p-2">
+              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+              <span>Use o histórico interno para registrar todas as interações pelo WhatsApp e manter a organização.</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManualOpen(false)}>Cancelar</Button>
+            <Button onClick={createManualTicket} disabled={creatingManual}>
+              {creatingManual && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Criar ticket
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
