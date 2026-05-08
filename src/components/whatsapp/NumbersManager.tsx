@@ -702,45 +702,22 @@ export const NumbersManager = ({
 
     try {
       const numberToRemove = numbers.find(n => n.id === numberToDelete);
-      const campaignsToDelete = deleteImpact.campaigns.length > 0
-        ? deleteImpact.campaigns
-        : ((await supabase
-            .from('whatsapp_campaigns')
-            .select('id, name, status')
-            .eq('whatsapp_number_id', numberToDelete)
-            .in('status', [...DELETABLE_CAMPAIGN_STATUSES])) as any).data || [];
-      const campaignIdsToDelete = campaignsToDelete.map((campaign: { id: string }) => campaign.id);
+      const campaignsCount = deleteImpact.campaigns.length;
 
-      if (campaignIdsToDelete.length > 0) {
-        // Clean FK dependencies FIRST, then delete campaigns (sequential to avoid FK violations)
-        await Promise.allSettled([
-          (supabase as any).from('campaign_daily_reservations').delete().in('campaign_id', campaignIdsToDelete),
-          (supabase as any).from('campaign_responses').delete().in('campaign_id', campaignIdsToDelete),
-          (supabase as any).from('campaign_incidents').update({ campaign_id: null }).in('campaign_id', campaignIdsToDelete),
-          (supabase as any).from('ignored_contacts').update({ campaign_id: null }).in('campaign_id', campaignIdsToDelete),
-        ]);
-        // Now safe to delete campaigns
-        await supabase.from('whatsapp_campaigns').delete().in('id', campaignIdsToDelete);
-      }
+      // Server-side cascade delete (handles Evolution + DB cleanup with service role)
+      const { data, error: fnError } = await supabase.functions.invoke('evolution-disconnect', {
+        body: {
+          instanceName: numberToRemove?.instance_name || null,
+          numberId: numberToDelete,
+          deleteInstance: true,
+          cascadeDelete: true,
+        },
+      });
 
-      // Delete the instance entirely from Evolution API since the number is being removed
-      if (numberToRemove?.instance_name) {
-        try {
-          console.log('Deleting instance:', numberToRemove.instance_name);
-          const response = await supabase.functions.invoke('evolution-disconnect', {
-            body: { 
-              instanceName: numberToRemove.instance_name,
-              numberId: numberToDelete,
-              deleteInstance: true // Fully delete since number is being removed
-            },
-          });
-          console.log('Delete instance response:', response);
-        } catch (e) {
-          console.error('Error deleting instance from Evolution:', e);
-        }
-      }
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
 
-      // Unlink proxy from whatsapp_proxies (decrement count)
+      // Unlink proxy locally (best-effort)
       try {
         const proxyId = (numberToRemove as any)?.proxy_id;
         if (proxyId) {
@@ -753,93 +730,15 @@ export const NumbersManager = ({
         console.error('Error unlinking proxy:', e);
       }
 
-      // Unlink completed/failed campaigns (preserve history, just remove FK)
-      await supabase
-        .from('whatsapp_campaigns')
-        .update({ whatsapp_number_id: null })
-        .eq('whatsapp_number_id', numberToDelete)
-        .not('status', 'in', `(${[...DELETABLE_CAMPAIGN_STATUSES].join(',')})`);
-
-      // Unlink related tables before deleting the number
-      const unlinkPromises = [
-        supabase.from('ai_agents').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
-        supabase.from('leads').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
-        (supabase as any).from('campaign_daily_reservations').delete().eq('whatsapp_number_id', numberToDelete),
-        (supabase as any).from('campaign_incidents').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
-        (supabase as any).from('ignored_contacts').update({ whatsapp_number_id: null }).eq('whatsapp_number_id', numberToDelete),
-        (supabase as any).from('revenue_conversations').update({ number_instance_id: null }).eq('number_instance_id', numberToDelete),
-        (supabase as any).from('revenue_events').update({ number_instance_id: null }).eq('number_instance_id', numberToDelete),
-        (supabase as any).from('revenue_leads').update({ source_number_instance_id: null }).eq('source_number_instance_id', numberToDelete),
-        (supabase as any).from('revenue_number_config').delete().eq('whatsapp_number_id', numberToDelete),
-      ];
-      
-      // PRESERVE warming sessions instead of deleting - pause and unlink so phone_key matching can re-link later
-      const { data: warmingData } = await supabase
-        .from('warming_sessions')
-        .select('id, status')
-        .eq('whatsapp_number_id', numberToDelete);
-      
-      if (warmingData && warmingData.length > 0) {
-        // Compute phone_key from the number being deleted (for future re-linking)
-        const phoneNumber = numberToRemove?.phone_number || '';
-        const phoneDigits = phoneNumber.replace(/\D/g, '');
-        const phoneKey = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : null;
-
-        const activeSessions = warmingData.filter(session => session.status === 'active');
-        const otherSessions = warmingData.filter(session => session.status !== 'active');
-
-        if (activeSessions.length > 0) {
-          await supabase
-            .from('warming_sessions')
-            .update({
-              status: 'paused',
-              paused_at: new Date().toISOString(),
-              error_message: 'Número removido - reconecte o mesmo chip para retomar o aquecimento',
-              whatsapp_number_id: null,
-              ...(phoneKey ? { phone_key: phoneKey } : {})
-            })
-            .in('id', activeSessions.map(session => session.id));
-        }
-
-        if (otherSessions.length > 0) {
-          await supabase
-            .from('warming_sessions')
-            .update({
-              whatsapp_number_id: null,
-              ...(phoneKey ? { phone_key: phoneKey } : {})
-            })
-            .in('id', otherSessions.map(session => session.id));
-        }
-      }
-
-      // Unlink warming_search_assignments (preserve with phone_key for re-linking)
-      await (supabase as any)
-        .from('warming_search_assignments')
-        .update({
-          whatsapp_number_id: null,
-          ...(numberToRemove?.phone_number ? { phone_key: numberToRemove.phone_number.replace(/\D/g, '').slice(-8) } : {})
-        })
-        .eq('whatsapp_number_id', numberToDelete);
-
-      await Promise.allSettled(unlinkPromises);
-
-      // Now delete the number
-      const { error } = await supabase
-        .from('whatsapp_numbers')
-        .delete()
-        .eq('id', numberToDelete);
-
-      if (error) throw error;
-
       onNumbersChange(numbers.filter(n => n.id !== numberToDelete));
       setNumberToDelete(null);
       setDeletingNumberId(null);
 
       toast({
         title: "Número removido",
-        description: campaignsToDelete.length > 0
-          ? `O número foi removido junto com ${campaignsToDelete.length} campanha(s) ativa(s)/agendada(s).`
-          : "O número foi desconectado e removido",
+        description: campaignsCount > 0
+          ? `O número foi removido junto com ${campaignsCount} campanha(s) ativa(s)/agendada(s).`
+          : "O número foi desconectado e removido do sistema",
       });
     } catch (err) {
       console.error('Error deleting number:', err);
@@ -1271,7 +1170,7 @@ export const NumbersManager = ({
                               variant="outline" 
                               size="sm" 
                               className="flex-1"
-                              onClick={() => handleDisconnect(number.id)}
+                              onClick={() => confirmDelete(number.id)}
                             >
                               <WifiOff size={14} className="mr-1" />
                               Desconectar
