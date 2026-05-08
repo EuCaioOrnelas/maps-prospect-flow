@@ -1249,19 +1249,18 @@ export function WianChat() {
                 ))
               : TRIAGE_TREE.map((cat) => {
                   const Icon = CATEGORY_ICONS[cat.id] || HelpCircle;
+                  const colorClass = CATEGORY_COLORS[cat.id] || "text-primary";
                   return (
                     <button
                       key={cat.id}
                       onClick={() => pickCategory(cat)}
-                      className="w-full text-left px-5 py-2.5 hover:bg-muted/60 transition-colors flex items-center gap-3 border-b border-border/50 last:border-b-0"
+                      className="w-full text-left px-5 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3.5 border-b border-border/40 last:border-b-0"
                     >
-                      <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                        <Icon className="w-4.5 h-4.5" strokeWidth={2} />
-                      </div>
+                      <Icon className={`w-5 h-5 shrink-0 ${colorClass}`} strokeWidth={2} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground">{cat.label}</p>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0" />
                     </button>
                   );
                 })}
