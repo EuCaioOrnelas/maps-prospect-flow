@@ -27,6 +27,7 @@ type KB = {
   min_confidence: number | null;
   active: boolean | null;
   embedding: any;
+  video_url: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -144,6 +145,7 @@ export default function AdminSupportMindIA() {
         auto_escalate: !!editing.auto_escalate,
         min_confidence: editing.min_confidence ?? 0.7,
         active: editing.active ?? true,
+        video_url: editing.video_url?.trim() || null,
       };
 
       let id = editing.id;
@@ -338,6 +340,18 @@ export default function AdminSupportMindIA() {
                   onChange={(e) => setEditing({ ...editing, solution: e.target.value })}
                   placeholder="Resposta que a IA deve dar. Pode usar markdown, listas e instruções passo a passo."
                 />
+              </div>
+
+              <div>
+                <Label>Vídeo passo a passo (YouTube)</Label>
+                <Input
+                  value={editing.video_url || ""}
+                  onChange={(e) => setEditing({ ...editing, video_url: e.target.value })}
+                  placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/..."
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Se preenchido, o Wian envia o vídeo direto no chat (player embutido) junto com a solução.
+                </p>
               </div>
 
               <div className="grid grid-cols-3 gap-3">

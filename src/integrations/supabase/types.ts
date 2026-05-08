@@ -1829,6 +1829,7 @@ export type Database = {
           tags: string[] | null
           title: string
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           active?: boolean | null
@@ -1847,6 +1848,7 @@ export type Database = {
           tags?: string[] | null
           title: string
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           active?: boolean | null
@@ -1865,6 +1867,7 @@ export type Database = {
           tags?: string[] | null
           title?: string
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: []
       }
@@ -4805,29 +4808,79 @@ export type Database = {
           comment: string | null
           created_at: string
           id: string
+          nps_comment: string | null
+          nps_recommend: number | null
+          nps_score: number | null
           resolved_by: string | null
-          stars: number
+          stars: number | null
           ticket_id: string
         }
         Insert: {
           comment?: string | null
           created_at?: string
           id?: string
+          nps_comment?: string | null
+          nps_recommend?: number | null
+          nps_score?: number | null
           resolved_by?: string | null
-          stars: number
+          stars?: number | null
           ticket_id: string
         }
         Update: {
           comment?: string | null
           created_at?: string
           id?: string
+          nps_comment?: string | null
+          nps_recommend?: number | null
+          nps_score?: number | null
           resolved_by?: string | null
-          stars?: number
+          stars?: number | null
           ticket_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "support_ratings_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_ticket_history: {
+        Row: {
+          action_type: string
+          attachments: Json
+          author_id: string | null
+          author_name: string | null
+          content: string | null
+          created_at: string
+          id: string
+          ticket_id: string
+        }
+        Insert: {
+          action_type?: string
+          attachments?: Json
+          author_id?: string | null
+          author_name?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          ticket_id: string
+        }
+        Update: {
+          action_type?: string
+          attachments?: Json
+          author_id?: string | null
+          author_name?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_history_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
             referencedRelation: "support_tickets"
@@ -4842,9 +4895,11 @@ export type Database = {
           category: string | null
           created_at: string
           customer_type: string | null
+          due_at: string | null
           email: string | null
           id: string
           internal_notes: string | null
+          is_manual: boolean
           name: string | null
           phone: string | null
           priority: string
@@ -4862,9 +4917,11 @@ export type Database = {
           category?: string | null
           created_at?: string
           customer_type?: string | null
+          due_at?: string | null
           email?: string | null
           id?: string
           internal_notes?: string | null
+          is_manual?: boolean
           name?: string | null
           phone?: string | null
           priority?: string
@@ -4882,9 +4939,11 @@ export type Database = {
           category?: string | null
           created_at?: string
           customer_type?: string | null
+          due_at?: string | null
           email?: string | null
           id?: string
           internal_notes?: string | null
+          is_manual?: boolean
           name?: string | null
           phone?: string | null
           priority?: string

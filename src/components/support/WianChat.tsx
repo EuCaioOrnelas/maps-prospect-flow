@@ -53,6 +53,7 @@ type Phase =
   | "chat"
   | "ask-resolved"
   | "rate"
+  | "nps"
   | "collect-info"
   | "done-resolved"
   | "done-escalated";
@@ -125,6 +126,47 @@ function splitAnswerIntoBubbles(answer: string): string[] {
   return out;
 }
 
+// Extrai o ID de um vídeo do YouTube a partir de várias formas de URL
+function extractYoutubeId(url: string): string | null {
+  try {
+    const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+    return m ? m[1] : null;
+  } catch { return null; }
+}
+
+// Encontra a primeira URL do YouTube no texto e retorna {id, urlOriginal}
+function AiBubbleContent({ content }: { content: string }) {
+  const yt = findYoutube(content);
+  const cleaned = yt ? content.replace(yt.url, "").replace(/\s{2,}/g, " ").trim() : content;
+  return (
+    <div className="space-y-2">
+      {cleaned && (
+        <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_strong]:font-semibold">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{cleaned}</ReactMarkdown>
+        </div>
+      )}
+      {yt && (
+        <div className="rounded-lg overflow-hidden border border-border/60 bg-black aspect-video w-full max-w-[420px]">
+          <iframe
+            src={`https://www.youtube.com/embed/${yt.id}`}
+            title="Vídeo passo a passo"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="w-full h-full"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function findYoutube(content: string): { id: string; url: string } | null {
+  const m = content.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)[A-Za-z0-9_\-?=&]+|youtu\.be\/[A-Za-z0-9_\-?=&]+)/);
+  if (!m) return null;
+  const id = extractYoutubeId(m[0]);
+  return id ? { id, url: m[0] } : null;
+}
+
 export function WianChat() {
   const initial = loadState();
   const [ticketId, setTicketId] = useState<string | null>(initial?.ticketId ?? null);
@@ -152,6 +194,9 @@ export function WianChat() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
+  const [npsScore, setNpsScore] = useState<number | null>(null);
+  const [npsRecommend, setNpsRecommend] = useState<number | null>(null);
+  const [npsComment, setNpsComment] = useState("");
   const [isAuthed, setIsAuthed] = useState(false);
   const [ticketNumber, setTicketNumber] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -496,23 +541,46 @@ export function WianChat() {
   };
 
   const submitRating = async () => {
-    if (!stars || !ticketId) {
-      // sem ticket criado (resolveu na triagem) — só agradece
-      if (!ticketId && stars) {
-        toast({ title: "Obrigado pela avaliação!" });
-        setPhase("done-resolved");
-      }
+    if (!stars) return;
+    // Sem ticket (resolveu só na triagem) — pula direto para NPS
+    if (!ticketId) {
+      setPhase("nps");
       return;
     }
     try {
       await supabase.from("support_ratings").insert({ ticket_id: ticketId, stars, comment, resolved_by: "ai" });
       await supabase.from("support_tickets").update({ status: "resolved", resolved_by: "ai", resolved_at: new Date().toISOString() }).eq("id", ticketId);
-      toast({ title: "Obrigado pela avaliação!" });
-      setPhase("done-resolved");
+      setPhase("nps");
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
     }
   };
+
+  const submitNps = async () => {
+    if (npsScore === null && npsRecommend === null) {
+      setPhase("done-resolved");
+      return;
+    }
+    try {
+      if (ticketId) {
+        await supabase.from("support_ratings").insert({
+          ticket_id: ticketId,
+          stars: null,
+          nps_score: npsScore,
+          nps_recommend: npsRecommend,
+          nps_comment: npsComment || null,
+          resolved_by: "ai",
+        });
+      }
+      toast({ title: "Obrigado pelo feedback! 🙌" });
+      setPhase("done-resolved");
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      setPhase("done-resolved");
+    }
+  };
+
+  const skipNps = () => setPhase("done-resolved");
 
   const submitEscalation = async () => {
     const errs: { name?: string; email?: string; category?: string } = {};
@@ -663,9 +731,7 @@ export function WianChat() {
                   </div>
                 ) : null}
                 {m.role === "ai" ? (
-                  <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_strong]:font-semibold">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
-                  </div>
+                  <AiBubbleContent content={m.content} />
                 ) : (
                   m.content !== "(anexo)" && m.content
                 )}
@@ -807,6 +873,71 @@ export function WianChat() {
             </div>
             <Textarea placeholder="Comentário (opcional)" value={comment} onChange={(e) => setComment(e.target.value)} rows={2} />
             <Button size="sm" onClick={submitRating} disabled={!stars}>Enviar avaliação</Button>
+          </motion.div>
+        )}
+
+        {phase === "nps" && (
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-4">
+            <div>
+              <p className="text-sm font-semibold mb-1">Mais uma rapidinha 🙏</p>
+              <p className="text-xs text-muted-foreground">Sua resposta ajuda a gente a melhorar o atendimento.</p>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium mb-2">De 0 a 10, o quanto este atendimento te ajudou?</p>
+              <div className="flex flex-wrap gap-1.5">
+                {Array.from({ length: 11 }, (_, n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setNpsScore(n)}
+                    className={`w-8 h-8 text-xs rounded-md border transition-colors ${
+                      npsScore === n
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border hover:border-primary/50 hover:bg-muted"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium mb-2">De 0 a 10, qual a chance de você indicar a Wiize para um amigo próximo?</p>
+              <div className="flex flex-wrap gap-1.5">
+                {Array.from({ length: 11 }, (_, n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setNpsRecommend(n)}
+                    className={`w-8 h-8 text-xs rounded-md border transition-colors ${
+                      npsRecommend === n
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border hover:border-primary/50 hover:bg-muted"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Textarea
+              rows={2}
+              placeholder="Quer deixar um comentário? (opcional)"
+              value={npsComment}
+              onChange={(e) => setNpsComment(e.target.value)}
+            />
+
+            <div className="flex gap-2">
+              <Button size="sm" onClick={submitNps} disabled={npsScore === null && npsRecommend === null} className="flex-1">
+                Enviar feedback
+              </Button>
+              <Button size="sm" variant="ghost" onClick={skipNps}>
+                Pular
+              </Button>
+            </div>
           </motion.div>
         )}
 

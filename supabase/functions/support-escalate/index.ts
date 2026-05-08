@@ -122,6 +122,7 @@ Deno.serve(async (req) => {
       status: "escalated",
       priority,
       internal_notes: internalNote,
+      due_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
     }).eq("id", ticketId).select("ticket_number").maybeSingle();
     if (updErr) throw updErr;
 
