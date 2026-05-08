@@ -13,11 +13,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2, Search, MessageSquare, RefreshCw, HelpCircle, Mail, Phone, User, Tag, CreditCard,
+  Loader2, Search, RefreshCw, HelpCircle, Mail, Phone, User, Tag, CreditCard,
   ExternalLink, Plus, Paperclip, X, Image as ImageIcon, Clock, Star, UserPlus, AlertTriangle,
   Inbox, CheckCircle2, Ticket as TicketIcon, SkipForward, Gauge,
 } from "lucide-react";
-import { formatDistanceToNow, formatDistanceToNowStrict } from "date-fns";
+import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getPlanLabel } from "@/lib/planLabels";
 
@@ -71,19 +71,36 @@ type Rating = {
   created_at: string;
 };
 
+const ACTIVE_STATUSES = ["open", "in_progress", "escalated"];
+
+const STATUS_LABELS: Record<string, string> = {
+  open: "Aberto",
+  in_progress: "Em andamento",
+  resolved: "Resolvido",
+  closed: "Fechado",
+  escalated: "Escalado",
+};
+
+const PRIORITY_LABELS: Record<string, string> = {
+  low: "Baixa",
+  medium: "Média",
+  high: "Alta",
+  urgent: "Urgente",
+};
+
 const STATUS_COLORS: Record<string, string> = {
-  open: "bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-500/30",
-  in_progress: "bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/30",
-  resolved: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-500/30",
+  open: "bg-primary/10 text-primary border-primary/20",
+  in_progress: "bg-warning/10 text-warning border-warning/30",
+  resolved: "bg-success/10 text-success border-success/30",
   closed: "bg-muted text-muted-foreground border-border",
-  escalated: "bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/30",
+  escalated: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
   low: "bg-muted text-muted-foreground",
-  medium: "bg-blue-500/15 text-blue-600 dark:text-blue-300",
-  high: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
-  urgent: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
+  medium: "bg-primary/10 text-primary",
+  high: "bg-warning/10 text-warning",
+  urgent: "bg-destructive/10 text-destructive",
 };
 
 const PAGE_SIZE = 20;
@@ -123,7 +140,6 @@ export default function AdminSupportTickets() {
   const [creatingManual, setCreatingManual] = useState(false);
 
   const fetchStats = async () => {
-    const abandonedCutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     const [
       { count: open },
       { count: escalated },
@@ -133,7 +149,7 @@ export default function AdminSupportTickets() {
       { data: ratedTicketIds },
       { count: closedTotal },
     ] = await Promise.all([
-      supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "open"),
+      supabase.from("support_tickets").select("*", { count: "exact", head: true }).in("status", ACTIVE_STATUSES),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "escalated"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "resolved"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }),
@@ -167,12 +183,12 @@ export default function AdminSupportTickets() {
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
-      if (statusFilter === "open") q = q.eq("status", "open");
+      if (statusFilter === "open") q = q.in("status", ACTIVE_STATUSES);
       else if (statusFilter === "closed") q = q.in("status", ["resolved", "closed"]);
       else if (statusFilter === "incomplete") {
-        // Chats abandonados ou pendentes de resolução: open/in_progress/escalated, sem atividade há +30min
+        // Chats abandonados: conversas abertas sem resolução e sem interação recente.
         const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-        q = q.in("status", ["open", "in_progress", "escalated"]).lt("updated_at", cutoff);
+        q = q.in("status", ["open", "in_progress"]).eq("is_manual", false).lt("updated_at", cutoff);
       }
       if (search.trim()) {
         const s = `%${search.trim()}%`;
@@ -396,22 +412,22 @@ export default function AdminSupportTickets() {
 
   const ratingColor = (score: number | null | undefined) => {
     if (score == null) return "bg-muted text-muted-foreground border-border";
-    if (score >= 8) return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30";
-    if (score >= 5) return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30";
-    return "bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/30";
+    if (score >= 8) return "bg-success/10 text-success border-success/30";
+    if (score >= 5) return "bg-warning/10 text-warning border-warning/30";
+    return "bg-destructive/10 text-destructive border-destructive/30";
   };
 
   const avgColor = stats.avgNps == null
     ? "text-muted-foreground"
-    : stats.avgNps >= 8 ? "text-emerald-500"
-    : stats.avgNps >= 5 ? "text-amber-500"
-    : "text-rose-500";
+    : stats.avgNps >= 8 ? "text-success"
+    : stats.avgNps >= 5 ? "text-warning"
+    : "text-destructive";
 
   const mainCards = useMemo(() => ([
     { label: "Total", value: stats.total, color: "text-foreground", suffix: "", icon: TicketIcon, iconColor: "text-muted-foreground" },
-    { label: "Abertos", value: stats.open, color: "text-blue-500", suffix: "", icon: Inbox, iconColor: "text-blue-500" },
-    { label: "Escalados", value: stats.escalated, color: "text-rose-500", suffix: "", icon: AlertTriangle, iconColor: "text-rose-500" },
-    { label: "Resolvidos", value: stats.resolved, color: "text-emerald-500", suffix: "", icon: CheckCircle2, iconColor: "text-emerald-500" },
+    { label: "Abertos", value: stats.open, color: "text-primary", suffix: "", icon: Inbox, iconColor: "text-primary" },
+    { label: "Escalados", value: stats.escalated, color: "text-destructive", suffix: "", icon: AlertTriangle, iconColor: "text-destructive" },
+    { label: "Resolvidos", value: stats.resolved, color: "text-success", suffix: "", icon: CheckCircle2, iconColor: "text-success" },
   ]), [stats]);
 
   const ratingCards = useMemo(() => ([
@@ -426,12 +442,17 @@ export default function AdminSupportTickets() {
     {
       label: "Avaliações puladas",
       value: stats.skippedRatings,
-      color: "text-amber-500",
+      color: "text-warning",
       suffix: "",
       icon: SkipForward,
-      iconColor: "text-amber-500",
+      iconColor: "text-warning",
     },
   ]), [stats, avgColor]);
+
+  const responseTime = (t: Ticket) => {
+    const end = t.resolved_at ? new Date(t.resolved_at) : new Date();
+    return formatDistanceStrict(new Date(t.created_at), end, { locale: ptBR });
+  };
 
   const dueBadge = (t: Ticket) => {
     if (!t.due_at || t.status === "resolved" || t.status === "closed") return null;
@@ -440,10 +461,10 @@ export default function AdminSupportTickets() {
     const overdue = due.getTime() < now;
     return (
       <Badge variant="outline" className={overdue
-        ? "bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/30 gap-1"
-        : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 gap-1"}>
+        ? "bg-destructive/10 text-destructive border-destructive/30 gap-1"
+        : "bg-warning/10 text-warning border-warning/30 gap-1"}>
         <Clock className="w-3 h-3" />
-        {overdue ? "Atrasado " : "Vence em "}{formatDistanceToNowStrict(due, { locale: ptBR })}
+        {overdue ? "Atrasado " : "Vence em "}{formatDistanceStrict(new Date(), due, { locale: ptBR })}
       </Badge>
     );
   };
@@ -519,24 +540,24 @@ export default function AdminSupportTickets() {
             <SelectContent>
               <SelectItem value="open">Abertos</SelectItem>
               <SelectItem value="closed">Fechados</SelectItem>
-              <SelectItem value="incomplete">Incompletos (em andamento / escalados)</SelectItem>
+              <SelectItem value="incomplete">Incompletos (chat abandonado)</SelectItem>
               <SelectItem value="all">Todos</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={() => { setPage(0); fetchTickets(); }}>Buscar</Button>
         </div>
 
-        <div className="rounded-lg border border-border overflow-hidden">
+        <div className="rounded-lg border border-border overflow-hidden bg-card">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Contato</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Avaliação</TableHead>
-                <TableHead>Prioridade</TableHead>
-                <TableHead>Criado</TableHead>
-                <TableHead></TableHead>
+            <TableHeader className="bg-muted/30">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-[32%] text-xs font-medium uppercase tracking-wide text-muted-foreground">Contato</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Categoria</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Avaliação</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Prioridade</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tempo de resposta</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Criado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -548,17 +569,17 @@ export default function AdminSupportTickets() {
                 const r = ticketRatings[t.id];
                 const score = r ? (r.nps_score ?? (r.stars != null ? r.stars * 2 : null)) : null;
                 return (
-                <TableRow key={t.id} className="cursor-pointer hover:bg-muted/40" onClick={() => openTicket(t)}>
+                <TableRow key={t.id} className="cursor-pointer border-border/60 hover:bg-muted/30" onClick={() => openTicket(t)}>
                   <TableCell>
                     <div className="flex items-center gap-1.5 mb-0.5">
                       {t.ticket_number && <span className="font-mono text-[11px] text-primary">{t.ticket_number}</span>}
-                      {t.is_manual && <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/30">Manual</Badge>}
+                      {t.is_manual && <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 bg-accent text-accent-foreground border-border">Manual</Badge>}
                     </div>
                     <div className="font-medium text-sm">{t.name || "—"}</div>
                     <div className="text-xs text-muted-foreground">{t.email || t.phone || "Visitante anônimo"}</div>
                   </TableCell>
-                  <TableCell className="text-sm">{t.category || "—"}</TableCell>
-                  <TableCell><Badge variant="outline" className={STATUS_COLORS[t.status] || ""}>{t.status}</Badge></TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{t.category || "—"}</TableCell>
+                  <TableCell><Badge variant="outline" className={STATUS_COLORS[t.status] || ""}>{STATUS_LABELS[t.status] || t.status}</Badge></TableCell>
                   <TableCell>
                     {score != null ? (
                       <Badge variant="outline" className={`${ratingColor(score)} gap-1`}>
@@ -568,13 +589,9 @@ export default function AdminSupportTickets() {
                       <span className="text-xs text-muted-foreground">Sem avaliação</span>
                     )}
                   </TableCell>
-                  <TableCell><span className={`text-xs px-2 py-0.5 rounded-md ${PRIORITY_COLORS[t.priority] || ""}`}>{t.priority}</span></TableCell>
+                  <TableCell><span className={`text-xs px-2 py-0.5 rounded-md ${PRIORITY_COLORS[t.priority] || ""}`}>{PRIORITY_LABELS[t.priority] || t.priority}</span></TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{responseTime(t)}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(t.created_at), { addSuffix: true, locale: ptBR })}</TableCell>
-                  <TableCell>
-                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openTicket(t); }}>
-                      <MessageSquare className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
                 </TableRow>
                 );
               })}
