@@ -233,7 +233,7 @@ Deno.serve(async (req) => {
     if (kbResults.length) {
       context += "\n--- BASE DE CONHECIMENTO ---\n";
       kbResults.forEach((k, i) => {
-        context += `\n[KB ${i + 1}] ${k.title}\nDores: ${k.pains || "-"}\nSolução: ${k.solution || "-"}\n`;
+        context += `\n[KB ${i + 1}] ${k.title}\nDores: ${k.pains || "-"}\nSolução: ${k.solution || "-"}${k.video_url ? `\nVídeo passo a passo: ${k.video_url}` : ""}\n`;
       });
     }
     if (faqResults.length) {
