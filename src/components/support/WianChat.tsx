@@ -746,24 +746,7 @@ export function WianChat() {
           </motion.div>
         )}
 
-        {/* Confirmação de envio */}
-        {showConfirmSend && !loading && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center">
-            <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-foreground/80 flex items-center gap-3 flex-wrap">
-              <span>
-                Confirma o envio à IA? Respondo em <span className="font-semibold text-primary">{waitingSeconds}s</span> ou clique abaixo.
-              </span>
-              <div className="flex gap-1.5">
-                <Button size="sm" variant="default" className="h-7 px-2.5" onClick={sendNow}>
-                  <Check className="w-3.5 h-3.5 mr-1" /> Confirmar agora
-                </Button>
-                <Button size="sm" variant="ghost" className="h-7 px-2.5" onClick={cancelQueue}>
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {/* (confirmação removida — só "digitando" abaixo) */}
 
         {loading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-end gap-2">
