@@ -407,16 +407,29 @@ export default function AdminSupportTickets() {
     : stats.avgNps >= 5 ? "text-amber-500"
     : "text-rose-500";
 
-  const statCards = useMemo(() => ([
-    { label: "Total", value: stats.total, color: "text-foreground", suffix: "" },
-    { label: "Abertos", value: stats.open, color: "text-blue-500", suffix: "" },
-    { label: "Escalados", value: stats.escalated, color: "text-rose-500", suffix: "" },
-    { label: "Resolvidos", value: stats.resolved, color: "text-emerald-500", suffix: "" },
+  const mainCards = useMemo(() => ([
+    { label: "Total", value: stats.total, color: "text-foreground", suffix: "", icon: TicketIcon, iconColor: "text-muted-foreground" },
+    { label: "Abertos", value: stats.open, color: "text-blue-500", suffix: "", icon: Inbox, iconColor: "text-blue-500" },
+    { label: "Escalados", value: stats.escalated, color: "text-rose-500", suffix: "", icon: AlertTriangle, iconColor: "text-rose-500" },
+    { label: "Resolvidos", value: stats.resolved, color: "text-emerald-500", suffix: "", icon: CheckCircle2, iconColor: "text-emerald-500" },
+  ]), [stats]);
+
+  const ratingCards = useMemo(() => ([
     {
-      label: `Satisfação média (${stats.ratingsCount} avaliações)`,
+      label: `Satisfação média (${stats.ratingsCount} ${stats.ratingsCount === 1 ? "avaliação" : "avaliações"})`,
       value: stats.avgNps == null ? "—" : stats.avgNps.toFixed(1),
       color: avgColor,
       suffix: stats.avgNps == null ? "" : "/10",
+      icon: Gauge,
+      iconColor: avgColor,
+    },
+    {
+      label: "Avaliações puladas",
+      value: stats.skippedRatings,
+      color: "text-amber-500",
+      suffix: "",
+      icon: SkipForward,
+      iconColor: "text-amber-500",
     },
   ]), [stats, avgColor]);
 
