@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Star, Loader2, User } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,6 +51,7 @@ export function WianChat() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [extra, setExtra] = useState("");
+  const [category, setCategory] = useState<string>("");
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
   const [isAuthed, setIsAuthed] = useState(false);
@@ -157,14 +161,21 @@ export function WianChat() {
   };
 
   const submitEscalation = async () => {
-    if (!ticketId || !name.trim() || !email.trim()) {
-      toast({ title: "Preencha nome e email", variant: "destructive" });
+    if (!ticketId || !name.trim() || !email.trim() || !category) {
+      toast({ title: "Preencha nome, email e tópico", variant: "destructive" });
       return;
     }
     setLoading(true);
     try {
       const { error } = await supabase.functions.invoke("support-escalate", {
-        body: { ticketId, name: name.trim(), email: email.trim(), phone: phone.trim() || null, extra: extra.trim() || null },
+        body: {
+          ticketId,
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim() || null,
+          extra: extra.trim() || null,
+          category,
+        },
       });
       if (error) throw error;
       setPhase("done-escalated");
@@ -222,13 +233,19 @@ export function WianChat() {
             >
               {m.role === "ai" && <AiAvatar />}
               <div
-                className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                   m.role === "user"
-                    ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100 rounded-br-md"
+                    ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100 rounded-br-md whitespace-pre-wrap"
                     : "bg-muted text-foreground rounded-bl-md"
                 }`}
               >
-                {m.content}
+                {m.role === "ai" ? (
+                  <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_strong]:font-semibold">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  m.content
+                )}
               </div>
             </motion.div>
           ))}
@@ -275,12 +292,28 @@ export function WianChat() {
             <p className="text-sm font-medium">
               {isAuthed
                 ? "Confirme seus dados para abrir o chamado:"
-                : "Para abrir seu chamado precisamos de:"}
+                : "Para abrir seu chamado precisamos de algumas informações:"}
             </p>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Tópico do chamado*" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="IA">IA / Atendimento automático</SelectItem>
+                <SelectItem value="WhatsApp">WhatsApp / Aquecimento</SelectItem>
+                <SelectItem value="Campanhas">Campanhas / Disparos</SelectItem>
+                <SelectItem value="CRM">CRM / Leads</SelectItem>
+                <SelectItem value="Financeiro">Financeiro / Pagamento</SelectItem>
+                <SelectItem value="Conta">Conta / Acesso</SelectItem>
+                <SelectItem value="Bug">Problema de sistema (bug)</SelectItem>
+                <SelectItem value="Operacional">Dúvida operacional</SelectItem>
+                <SelectItem value="Outro">Outro</SelectItem>
+              </SelectContent>
+            </Select>
             <Input placeholder="Seu nome*" value={name} onChange={(e) => setName(e.target.value)} />
             <Input type="email" placeholder="Seu email*" value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input placeholder="Telefone (opcional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            <Textarea placeholder="Algum detalhe adicional? (opcional)" value={extra} onChange={(e) => setExtra(e.target.value)} rows={2} />
+            <Textarea placeholder="Descreva sua dúvida ou problema (opcional)" value={extra} onChange={(e) => setExtra(e.target.value)} rows={3} />
             <Button size="sm" onClick={submitEscalation} disabled={loading}>
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Abrir chamado

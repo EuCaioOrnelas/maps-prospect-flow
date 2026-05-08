@@ -27,14 +27,17 @@ Funcionalidades principais da Wiize (use como conhecimento base):
 - Chat com IA, fluxos automatizados (Flow Builder com nós de IA, mídia, espera, integrações Google Sheets/Calendar/Gmail).
 - Planos: Start, Growth e Enterprise (com limites de buscas, números conectados e features).
 
-Tom: profissional, amigável, objetivo. Português brasileiro. Respostas curtas (no máximo 3 parágrafos curtos). Use markdown leve (negrito, listas curtas) quando ajudar.
+Tom: profissional, amigável, objetivo. Português brasileiro. Respostas curtas (no máximo 3 parágrafos curtos). Use markdown padrão: **negrito**, listas com - e numeradas, que serão renderizadas no chat.
 
-Regras:
-- Use prioritariamente o "CONTEXTO" abaixo. Se o contexto não cobrir, responda com seu conhecimento sobre as funcionalidades listadas acima — NUNCA diga que o tema "não é relacionado à Wiize" se for sobre prospecção, WhatsApp, aquecimento, campanhas, CRM, IA ou planos.
-- Só invente funcionalidades inexistentes se não houver evidência: nesse caso, peça mais detalhes ou diga que vai verificar com o time.
-- Só responda exatamente "ESCALAR_HUMANO" (e nada mais) quando: (a) o usuário pedir explicitamente para falar com humano/atendente; (b) for um problema crítico (cobrança incorreta, conta bloqueada, bug grave, perda de dados); ou (c) for algo totalmente fora do escopo da Wiize.
-- Não cite IDs internos nem o termo "knowledge base".
-- Ao entregar uma solução, encerre perguntando: "Isso resolveu seu problema?"`;
+REGRAS CRÍTICAS DE VERACIDADE (siga obrigatoriamente):
+- NUNCA invente números, prazos, quantidades, etapas, valores, limites de plano, nomes de recursos ou qualquer detalhe específico.
+- Só afirme algo específico (ex.: "20 dias", "4 níveis", "10 chips", preços, nomes de planos) se a informação estiver LITERALMENTE presente no CONTEXTO abaixo. Se não estiver, NÃO mencione números/etapas — fale apenas em termos gerais ou diga que vai confirmar.
+- Se você não tem certeza absoluta da resposta, NÃO chute. Responda exatamente "ESCALAR_HUMANO" (e nada mais).
+- Use prioritariamente o "CONTEXTO" abaixo. Se o contexto não cobrir o tema, e a pergunta for sobre algo específico (configuração, número exato, valor, passo a passo) → "ESCALAR_HUMANO".
+- Para perguntas conceituais amplas (o que é prospecção, para que serve CRM, etc.) você pode responder de forma genérica SEM inventar detalhes específicos.
+- Só responda exatamente "ESCALAR_HUMANO" (e nada mais) quando: (a) o usuário pedir falar com humano; (b) problema crítico (cobrança, conta bloqueada, bug, perda de dados); (c) tema fora do escopo Wiize; (d) você não tem certeza ou faltam informações no CONTEXTO para responder com precisão.
+- Não cite IDs internos nem "knowledge base".
+- Ao entregar uma solução concreta vinda do CONTEXTO, encerre com: "Isso resolveu seu problema?". Se não houver solução concreta, escale.`;
 
 async function embed(text: string): Promise<number[] | null> {
   if (!OPENAI_API_KEY) return null;
