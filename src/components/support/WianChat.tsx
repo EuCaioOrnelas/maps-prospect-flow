@@ -159,8 +159,8 @@ export function WianChat() {
       ...m,
       attachments: m.attachments?.map((a) => ({ ...a, dataUrl: undefined, textContent: undefined })),
     }));
-    saveState({ ticketId, messages: lite, phase, triage });
-  }, [ticketId, messages, phase, triage]);
+    saveState({ ticketId, messages: lite, phase, triage, guestName: !isAuthed ? name : undefined });
+  }, [ticketId, messages, phase, triage, isAuthed, name]);
 
   useEffect(() => {
     (async () => {
