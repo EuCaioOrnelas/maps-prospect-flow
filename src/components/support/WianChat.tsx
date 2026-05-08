@@ -112,9 +112,7 @@ export function WianChat() {
       }
     } catch (e: any) {
       const msg: string = e?.message || "";
-      const friendly = /cr[eé]dito|402/i.test(msg)
-        ? "O assistente está temporariamente indisponível. Já podemos encaminhar você para um humano."
-        : /429|rate/i.test(msg)
+      const friendly = /429|rate/i.test(msg)
         ? "Muitas mensagens em pouco tempo. Aguarde alguns segundos e tente novamente."
         : msg || "Tente novamente em instantes.";
       toast({
@@ -122,10 +120,6 @@ export function WianChat() {
         description: friendly,
         variant: "destructive",
       });
-      // Auto-fallback to human on credit/availability issues
-      if (/cr[eé]dito|402/i.test(msg)) {
-        setPhase("collect-info");
-      }
     } finally {
       setLoading(false);
     }
