@@ -4841,6 +4841,7 @@ export type Database = {
           ai_summary: string | null
           category: string | null
           created_at: string
+          customer_type: string | null
           email: string | null
           id: string
           internal_notes: string | null
@@ -4859,6 +4860,7 @@ export type Database = {
           ai_summary?: string | null
           category?: string | null
           created_at?: string
+          customer_type?: string | null
           email?: string | null
           id?: string
           internal_notes?: string | null
@@ -4877,6 +4879,7 @@ export type Database = {
           ai_summary?: string | null
           category?: string | null
           created_at?: string
+          customer_type?: string | null
           email?: string | null
           id?: string
           internal_notes?: string | null

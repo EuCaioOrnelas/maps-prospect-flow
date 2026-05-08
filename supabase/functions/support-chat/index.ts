@@ -1,8 +1,9 @@
-// Wian — Wiize support AI chat
-// - Creates/uses a support ticket
-// - Embeds the user query, finds relevant KB + FAQs via pgvector
-// - Calls Lovable AI Gateway with grounded system prompt
-// - Persists messages, computes confidence, decides escalation
+// Wian — Wiize support AI chat (OpenAI gpt-4o-mini)
+// - Cria/usa um support ticket
+// - Faz busca semântica em KB + FAQs (pgvector via Lovable Embeddings)
+// - Chama OpenAI com prompt grounded
+// - Só escala para humano quando o modelo explicitamente diz "ESCALAR_HUMANO"
+// - Identifica cliente pagante / usuário cadastrado / visitante para priorização
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -11,27 +12,32 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!; // só para embeddings
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const SYSTEM_BASE = `Você é Wian, atendente virtual oficial da Wiize (plataforma B2B de prospecção, WhatsApp e CRM).
 Tom: profissional, amigável, objetivo. Português brasileiro. Respostas curtas (no máximo 3 parágrafos curtos).
 Regras absolutas:
-- NUNCA invente informações. Use APENAS o "CONTEXTO" fornecido abaixo.
-- Se o contexto não tiver a resposta, responda exatamente: "ESCALAR_HUMANO" e nada mais.
-- Não cite IDs internos nem o nome "knowledge base".
-- Encerre suas respostas perguntando: "Isso resolveu seu problema?" quando entregar uma solução.`;
+- Use prioritariamente o "CONTEXTO" abaixo. Se o contexto não cobrir, você ainda pode responder com conhecimento geral sobre a Wiize de forma cuidadosa, sem inventar funcionalidades.
+- Só responda exatamente "ESCALAR_HUMANO" (e nada mais) quando: (a) o usuário pedir explicitamente para falar com humano/atendente; (b) for um problema crítico (cobrança incorreta, conta bloqueada, bug que impede uso, perda de dados); ou (c) você não conseguir ajudar de forma alguma.
+- Não cite IDs internos nem o termo "knowledge base".
+- Ao entregar uma solução, encerre perguntando: "Isso resolveu seu problema?"`;
 
 async function embed(text: string): Promise<number[] | null> {
-  const r = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "openai/text-embedding-3-small", input: text.slice(0, 8000) }),
-  });
-  if (!r.ok) return null;
-  const j = await r.json();
-  return j.data?.[0]?.embedding ?? null;
+  try {
+    const r = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "openai/text-embedding-3-small", input: text.slice(0, 8000) }),
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j.data?.[0]?.embedding ?? null;
+  } catch {
+    return null;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -48,34 +54,71 @@ Deno.serve(async (req) => {
 
     const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    // Resolve user
+    // Resolve usuário autenticado e classifica
     let userId: string | null = null;
+    let userEmail: string | null = null;
+    let userName: string | null = null;
+    let userPhone: string | null = null;
+    let customerType: "paid_client" | "registered_user" | "guest" = "guest";
+    let priority: "low" | "medium" | "high" = "low";
+
     const auth = req.headers.get("Authorization");
     if (auth) {
       const token = auth.replace("Bearer ", "");
       const { data: { user } } = await sb.auth.getUser(token);
-      if (user) userId = user.id;
+      if (user) {
+        userId = user.id;
+        userEmail = user.email ?? null;
+        const { data: profile } = await sb
+          .from("profiles")
+          .select("name, email, phone, plan, is_custom_subscription, subscription_current_period_end")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (profile) {
+          userName = profile.name ?? null;
+          userEmail = profile.email ?? userEmail;
+          userPhone = profile.phone ?? null;
+          const activePlan = profile.plan && profile.plan !== "free" && profile.plan !== "trial";
+          const activeSub = profile.subscription_current_period_end
+            ? new Date(profile.subscription_current_period_end).getTime() > Date.now()
+            : false;
+          if (activePlan || activeSub || profile.is_custom_subscription) {
+            customerType = "paid_client";
+            priority = "high";
+          } else {
+            customerType = "registered_user";
+            priority = "medium";
+          }
+        } else {
+          customerType = "registered_user";
+          priority = "medium";
+        }
+      }
     }
 
-    // Ensure ticket
+    // Garante o ticket
     let ticketId = incomingTicketId;
     if (!ticketId) {
       const { data: t, error } = await sb.from("support_tickets").insert({
         user_id: userId,
         visitor_session: visitorSession ?? null,
+        name: userName,
+        email: userEmail,
+        phone: userPhone,
         status: "open",
-        priority: "medium",
+        priority,
+        customer_type: customerType,
       }).select("id").single();
       if (error) throw error;
       ticketId = t.id;
     }
 
-    // Persist user message
+    // Persiste mensagem do usuário
     await sb.from("support_messages").insert({
       ticket_id: ticketId, role: "user", content: message,
     });
 
-    // Semantic search
+    // Busca semântica
     const queryEmbedding = await embed(message);
     let kbResults: any[] = [];
     let faqResults: any[] = [];
@@ -95,9 +138,8 @@ Deno.serve(async (req) => {
     );
 
     const mustEscalate = kbResults.some((k) => k.auto_escalate && k.similarity > 0.6);
-    const noContext = kbResults.length === 0 && faqResults.length === 0;
 
-    // Build context
+    // Monta contexto
     let context = "";
     if (kbResults.length) {
       context += "\n--- BASE DE CONHECIMENTO ---\n";
@@ -111,20 +153,25 @@ Deno.serve(async (req) => {
         context += `\n[FAQ ${i + 1}] ${f.title}\n${(f.content || "").replace(/<[^>]+>/g, " ").slice(0, 800)}\n`;
       });
     }
-    if (!context) context = "\n(sem contexto relevante encontrado)\n";
+    if (!context) context = "\n(sem itens específicos da base — responda com cautela usando conhecimento geral sobre a Wiize)\n";
 
-    // Call AI
     const messages = [
       { role: "system", content: `${SYSTEM_BASE}\n\nCONTEXTO:${context}` },
       ...history.slice(-10).map((m: any) => ({ role: m.role === "ai" ? "assistant" : m.role, content: m.content })),
       { role: "user", content: message },
     ];
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    if (!OPENAI_API_KEY) {
+      return new Response(JSON.stringify({ error: "OPENAI_API_KEY não configurada" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "gpt-4o-mini",
         messages,
         temperature: 0.3,
       }),
@@ -135,51 +182,55 @@ Deno.serve(async (req) => {
         status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (aiRes.status === 402) {
-      return new Response(JSON.stringify({ error: "Créditos de IA esgotados." }), {
-        status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
     if (!aiRes.ok) {
       const t = await aiRes.text();
-      console.error("AI error", aiRes.status, t);
-      throw new Error("AI gateway error");
+      console.error("OpenAI error", aiRes.status, t);
+      return new Response(JSON.stringify({ error: "Falha no provedor de IA." }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const aiJson = await aiRes.json();
     let answer: string = aiJson.choices?.[0]?.message?.content?.trim() || "";
 
-    let shouldEscalate = mustEscalate || noContext || answer.includes("ESCALAR_HUMANO") || topSim < 0.45;
+    const explicitEscalate = /^ESCALAR_HUMANO$/m.test(answer.trim());
+    let shouldEscalate = mustEscalate || explicitEscalate;
 
     if (shouldEscalate) {
-      answer = "Esse caso precisa de uma análise mais detalhada da nossa equipe. Vou conectar você com nosso time agora — preciso de alguns dados rápidos para abrir o seu chamado.";
+      answer = "Esse caso precisa de uma análise mais detalhada da nossa equipe. Vou conectar você com um humano agora.";
     }
 
-    // Persist AI message
     await sb.from("support_messages").insert({
       ticket_id: ticketId, role: "ai", content: answer,
       metadata: { confidence: topSim, escalated: shouldEscalate, kb_ids: kbResults.map((k) => k.id) },
     });
 
-    // Log
     await sb.from("ai_logs").insert({
       ticket_id: ticketId, query: message,
       matched_kb_ids: kbResults.map((k) => k.id),
       matched_faq_ids: faqResults.map((f) => f.id),
       confidence: topSim,
-      model: "google/gemini-3-flash-preview",
+      model: "gpt-4o-mini",
       tokens_in: aiJson.usage?.prompt_tokens ?? null,
       tokens_out: aiJson.usage?.completion_tokens ?? null,
     });
 
-    if (shouldEscalate) {
-      await sb.from("support_tickets").update({ status: "escalated", ai_confidence: topSim }).eq("id", ticketId);
-    } else {
-      await sb.from("support_tickets").update({ ai_confidence: topSim }).eq("id", ticketId);
-    }
+    const update: any = { ai_confidence: topSim };
+    if (shouldEscalate) update.status = "escalated";
+    await sb.from("support_tickets").update(update).eq("id", ticketId);
 
     return new Response(JSON.stringify({
-      ticketId, answer, escalate: shouldEscalate, confidence: topSim,
+      ticketId,
+      answer,
+      escalate: shouldEscalate,
+      confidence: topSim,
+      user: userId ? {
+        authenticated: true,
+        name: userName,
+        email: userEmail,
+        phone: userPhone,
+        customerType,
+      } : { authenticated: false },
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     console.error("support-chat error", e);

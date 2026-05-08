@@ -50,12 +50,30 @@ export function WianChat() {
   const [extra, setExtra] = useState("");
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
+  const [isAuthed, setIsAuthed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     saveState({ ticketId, messages });
   }, [ticketId, messages]);
+
+  // Pré-carrega dados do usuário logado para o ticket
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setIsAuthed(true);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("name, email, phone")
+        .eq("id", user.id)
+        .maybeSingle();
+      setName(profile?.name ?? "");
+      setEmail(profile?.email ?? user.email ?? "");
+      setPhone(profile?.phone ?? "");
+    })();
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -94,9 +112,7 @@ export function WianChat() {
       }
     } catch (e: any) {
       const msg: string = e?.message || "";
-      const friendly = /cr[eé]dito|402/i.test(msg)
-        ? "O assistente está temporariamente indisponível. Já podemos encaminhar você para um humano."
-        : /429|rate/i.test(msg)
+      const friendly = /429|rate/i.test(msg)
         ? "Muitas mensagens em pouco tempo. Aguarde alguns segundos e tente novamente."
         : msg || "Tente novamente em instantes.";
       toast({
@@ -104,10 +120,6 @@ export function WianChat() {
         description: friendly,
         variant: "destructive",
       });
-      // Auto-fallback to human on credit/availability issues
-      if (/cr[eé]dito|402/i.test(msg)) {
-        setPhase("collect-info");
-      }
     } finally {
       setLoading(false);
     }
@@ -229,7 +241,11 @@ export function WianChat() {
 
         {phase === "collect-info" && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-2.5">
-            <p className="text-sm font-medium">Para abrir seu chamado precisamos de:</p>
+            <p className="text-sm font-medium">
+              {isAuthed
+                ? "Confirme seus dados para abrir o chamado:"
+                : "Para abrir seu chamado precisamos de:"}
+            </p>
             <Input placeholder="Seu nome*" value={name} onChange={(e) => setName(e.target.value)} />
             <Input type="email" placeholder="Seu email*" value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input placeholder="Telefone (opcional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
