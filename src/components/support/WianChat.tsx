@@ -607,7 +607,7 @@ export function WianChat() {
   };
 
   const submitRating = async () => {
-    if (!stars) return;
+    if (stars === null) return;
     // Sem ticket (resolveu só na triagem) — pula direto para NPS
     if (!ticketId) {
       setPhase("nps");
@@ -615,6 +615,9 @@ export function WianChat() {
     }
     try {
       await supabase.from("support_ratings").insert({ ticket_id: ticketId, stars, comment, resolved_by: wasEscalated ? "human" : "ai" });
+      // Registra a avaliação como mensagem do ticket pra aparecer no admin.
+      const ratingMsg = `⭐ **Avaliação do atendimento:** ${stars}/10${comment.trim() ? `\n\n💬 **Como posso melhorar:** ${comment.trim()}` : ""}`;
+      await supabase.from("support_messages").insert({ ticket_id: ticketId, role: "user", content: ratingMsg });
       // Só marca como resolvido se a IA realmente resolveu (não em escalonamento humano).
       if (!wasEscalated) {
         await supabase.from("support_tickets").update({ status: "resolved", resolved_by: "ai", resolved_at: new Date().toISOString() }).eq("id", ticketId);
