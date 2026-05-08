@@ -160,8 +160,23 @@ export default function AdminSupportTickets() {
 
       const { data, error, count } = await q;
       if (error) throw error;
-      setTickets((data as Ticket[]) || []);
+      const list = (data as Ticket[]) || [];
+      setTickets(list);
       setTotal(count || 0);
+
+      // fetch ratings for visible tickets
+      if (list.length) {
+        const ids = list.map((t) => t.id);
+        const { data: rs } = await supabase
+          .from("support_ratings")
+          .select("ticket_id,stars,nps_score,nps_recommend")
+          .in("ticket_id", ids);
+        const map: Record<string, any> = {};
+        (rs || []).forEach((r: any) => { map[r.ticket_id] = r; });
+        setTicketRatings(map);
+      } else {
+        setTicketRatings({});
+      }
     } catch (e: any) {
       toast({ title: "Erro ao carregar tickets", description: e.message, variant: "destructive" });
     } finally {
