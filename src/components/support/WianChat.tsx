@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Star, Loader2, User } from "lucide-react";
+import { Send, Star, Loader2, User, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -168,12 +168,36 @@ export function WianChat() {
     }
   };
 
+  const RESET_LIMIT = 3;
+  const RESET_WINDOW_MS = 60 * 60 * 1000; // 1h
+  const RESET_KEY = "wian_chat_resets_v1";
+
   const restart = () => {
+    // Rate limit: máx 3 resets por hora
+    try {
+      const raw = localStorage.getItem(RESET_KEY);
+      const now = Date.now();
+      const arr: number[] = raw ? JSON.parse(raw) : [];
+      const recent = arr.filter((t) => now - t < RESET_WINDOW_MS);
+      if (recent.length >= RESET_LIMIT) {
+        const oldest = recent[0];
+        const waitMin = Math.ceil((RESET_WINDOW_MS - (now - oldest)) / 60000);
+        toast({
+          title: "Limite de reinícios atingido",
+          description: `Você pode reiniciar o chat até ${RESET_LIMIT}x por hora. Tente novamente em ${waitMin} min.`,
+          variant: "destructive",
+        });
+        return;
+      }
+      recent.push(now);
+      localStorage.setItem(RESET_KEY, JSON.stringify(recent));
+    } catch {}
+
     localStorage.removeItem(STORAGE_KEY);
     setTicketId(null);
     setMessages([{ role: "ai", content: "Olá! Eu sou o Wian. Como posso ajudar?" }]);
     setPhase("chat");
-    setStars(0); setComment(""); setName(""); setEmail(""); setPhone(""); setExtra("");
+    setStars(0); setComment(""); setName(""); setEmail(""); setPhone(""); setExtra(""); setInput("");
   };
 
   return (
@@ -275,6 +299,15 @@ export function WianChat() {
       {(phase === "chat" || phase === "ask-resolved") && (
         <div className="border-t border-border p-3 bg-background">
           <div className="flex gap-2">
+            <Button
+              onClick={restart}
+              size="icon"
+              variant="outline"
+              title="Reiniciar conversa"
+              disabled={loading}
+            >
+              <RotateCcw className="w-4 h-4" />
+            </Button>
             <Input
               placeholder="Digite sua mensagem…"
               value={input}
