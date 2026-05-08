@@ -100,8 +100,9 @@ export default function AdminSupportTickets() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [rating, setRating] = useState<Rating | null>(null);
-  const [stats, setStats] = useState({ open: 0, escalated: 0, resolved: 0, total: 0 });
+  const [stats, setStats] = useState({ open: 0, escalated: 0, resolved: 0, total: 0, avgNps: null as number | null, ratingsCount: 0 });
   const [userPlan, setUserPlan] = useState<string | null>(null);
+  const [ticketRatings, setTicketRatings] = useState<Record<string, { stars: number | null; nps_score: number | null; nps_recommend: number | null }>>({});
 
   // History entry form
   const [noteText, setNoteText] = useState("");
@@ -121,17 +122,24 @@ export default function AdminSupportTickets() {
   const [creatingManual, setCreatingManual] = useState(false);
 
   const fetchStats = async () => {
-    const [{ count: open }, { count: escalated }, { count: resolved }, { count: totalAll }] = await Promise.all([
+    const [{ count: open }, { count: escalated }, { count: resolved }, { count: totalAll }, { data: ratings }] = await Promise.all([
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "open"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "escalated"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "resolved"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }),
+      supabase.from("support_ratings").select("nps_score,stars"),
     ]);
+    const scores = (ratings || [])
+      .map((r: any) => (r.nps_score != null ? r.nps_score : (r.stars != null ? r.stars * 2 : null)))
+      .filter((n: number | null): n is number => n != null);
+    const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
     setStats({
       open: open || 0,
       escalated: escalated || 0,
       resolved: resolved || 0,
       total: totalAll || 0,
+      avgNps: avg,
+      ratingsCount: scores.length,
     });
   };
 
@@ -152,8 +160,23 @@ export default function AdminSupportTickets() {
 
       const { data, error, count } = await q;
       if (error) throw error;
-      setTickets((data as Ticket[]) || []);
+      const list = (data as Ticket[]) || [];
+      setTickets(list);
       setTotal(count || 0);
+
+      // fetch ratings for visible tickets
+      if (list.length) {
+        const ids = list.map((t) => t.id);
+        const { data: rs } = await supabase
+          .from("support_ratings")
+          .select("ticket_id,stars,nps_score,nps_recommend")
+          .in("ticket_id", ids);
+        const map: Record<string, any> = {};
+        (rs || []).forEach((r: any) => { map[r.ticket_id] = r; });
+        setTicketRatings(map);
+      } else {
+        setTicketRatings({});
+      }
     } catch (e: any) {
       toast({ title: "Erro ao carregar tickets", description: e.message, variant: "destructive" });
     } finally {
@@ -350,12 +373,31 @@ export default function AdminSupportTickets() {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  const ratingColor = (score: number | null | undefined) => {
+    if (score == null) return "bg-muted text-muted-foreground border-border";
+    if (score >= 8) return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30";
+    if (score >= 5) return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30";
+    return "bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/30";
+  };
+
+  const avgColor = stats.avgNps == null
+    ? "text-muted-foreground"
+    : stats.avgNps >= 8 ? "text-emerald-500"
+    : stats.avgNps >= 5 ? "text-amber-500"
+    : "text-rose-500";
+
   const statCards = useMemo(() => ([
-    { label: "Total", value: stats.total, color: "text-foreground" },
-    { label: "Abertos", value: stats.open, color: "text-blue-500" },
-    { label: "Escalados", value: stats.escalated, color: "text-rose-500" },
-    { label: "Resolvidos", value: stats.resolved, color: "text-emerald-500" },
-  ]), [stats]);
+    { label: "Total", value: stats.total, color: "text-foreground", suffix: "" },
+    { label: "Abertos", value: stats.open, color: "text-blue-500", suffix: "" },
+    { label: "Escalados", value: stats.escalated, color: "text-rose-500", suffix: "" },
+    { label: "Resolvidos", value: stats.resolved, color: "text-emerald-500", suffix: "" },
+    {
+      label: `Satisfação média (${stats.ratingsCount} avaliações)`,
+      value: stats.avgNps == null ? "—" : stats.avgNps.toFixed(1),
+      color: avgColor,
+      suffix: stats.avgNps == null ? "" : "/10",
+    },
+  ]), [stats, avgColor]);
 
   const dueBadge = (t: Ticket) => {
     if (!t.due_at || t.status === "resolved" || t.status === "closed") return null;
@@ -389,11 +431,13 @@ export default function AdminSupportTickets() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {statCards.map((s) => (
           <Card key={s.label} className="p-4">
             <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+            <p className={`text-2xl font-bold ${s.color}`}>
+              {s.value}{s.suffix && <span className="text-base font-medium opacity-70">{s.suffix}</span>}
+            </p>
           </Card>
         ))}
       </div>
@@ -433,7 +477,7 @@ export default function AdminSupportTickets() {
                 <TableHead>Contato</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Prazo</TableHead>
+                <TableHead>Avaliação</TableHead>
                 <TableHead>Prioridade</TableHead>
                 <TableHead>Criado</TableHead>
                 <TableHead></TableHead>
@@ -444,7 +488,10 @@ export default function AdminSupportTickets() {
                 <TableRow><TableCell colSpan={7} className="text-center py-12"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
               ) : tickets.length === 0 ? (
                 <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Nenhum ticket encontrado.</TableCell></TableRow>
-              ) : tickets.map((t) => (
+              ) : tickets.map((t) => {
+                const r = ticketRatings[t.id];
+                const score = r ? (r.nps_score ?? (r.stars != null ? r.stars * 2 : null)) : null;
+                return (
                 <TableRow key={t.id} className="cursor-pointer hover:bg-muted/40" onClick={() => openTicket(t)}>
                   <TableCell>
                     <div className="flex items-center gap-1.5 mb-0.5">
@@ -456,7 +503,15 @@ export default function AdminSupportTickets() {
                   </TableCell>
                   <TableCell className="text-sm">{t.category || "—"}</TableCell>
                   <TableCell><Badge variant="outline" className={STATUS_COLORS[t.status] || ""}>{t.status}</Badge></TableCell>
-                  <TableCell>{dueBadge(t)}</TableCell>
+                  <TableCell>
+                    {score != null ? (
+                      <Badge variant="outline" className={`${ratingColor(score)} gap-1`}>
+                        <Star className="w-3 h-3" /> {score}/10
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Sem avaliação</span>
+                    )}
+                  </TableCell>
                   <TableCell><span className={`text-xs px-2 py-0.5 rounded-md ${PRIORITY_COLORS[t.priority] || ""}`}>{t.priority}</span></TableCell>
                   <TableCell className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(t.created_at), { addSuffix: true, locale: ptBR })}</TableCell>
                   <TableCell>
@@ -465,7 +520,8 @@ export default function AdminSupportTickets() {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </div>
@@ -487,7 +543,7 @@ export default function AdminSupportTickets() {
               {selected?.ticket_number || `Ticket #${selected?.id.slice(0, 8)}`}
               {selected && <Badge variant="outline" className={STATUS_COLORS[selected.status] || ""}>{selected.status}</Badge>}
               {selected?.is_manual && <Badge variant="outline" className="bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/30">Manual</Badge>}
-              {selected && dueBadge(selected)}
+              
             </DialogTitle>
             <DialogDescription>
               Detalhes do chamado, contato do solicitante e histórico completo da conversa.
