@@ -12,7 +12,7 @@ const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const { ticketId, name, email, phone, extra } = await req.json();
+    const { ticketId, name, email, phone, extra, category: userCategory } = await req.json();
     if (!ticketId || !name || !email) {
       return new Response(JSON.stringify({ error: "missing fields" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -97,6 +97,16 @@ Deno.serve(async (req) => {
         const parsed = JSON.parse(raw);
         if (parsed.summary) summary = parsed.summary;
         if (parsed.category) category = parsed.category;
+      } catch (err) {
+        console.error("summary error", err);
+      }
+    }
+    // Categoria escolhida pelo usuário tem prioridade
+    if (userCategory && typeof userCategory === "string") {
+      category = userCategory;
+    }
+    {
+      try {
       } catch (err) {
         console.error("summary error", err);
       }
