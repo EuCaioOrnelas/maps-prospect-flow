@@ -297,6 +297,19 @@ export function WianChat() {
   }, []);
 
   // ============== TRIAGEM ==============
+  // Mostra a mensagem do usuário imediatamente, exibe "digitando..." por ~1s
+  // e só então responde com o próximo passo. Deixa o fluxo mais humano/profissional.
+  const TRIAGE_TYPING_MS = 1100;
+  const respondAfterTyping = (userMsg: Msg, aiMsgs: Msg[], onAfter?: () => void) => {
+    setMessages((prev) => [...prev, userMsg]);
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setMessages((prev) => [...prev, ...aiMsgs]);
+      onAfter?.();
+    }, TRIAGE_TYPING_MS);
+  };
+
   const pickCategory = (cat: Category) => {
     setMenuOpen(false);
     setActiveCategory(cat);
@@ -309,23 +322,21 @@ export function WianChat() {
         cat.id === "planos" ? "Financeiro" :
         cat.id === "suporte" ? "Outro" : "Outro"
       );
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", content: cat.label },
-        { role: "ai", content: cat.alwaysHuman
-            ? `Entendi 👋. Para **${cat.label.toLowerCase()}** o atendimento é feito direto pelo nosso time humano. Vou abrir um chamado para você — preencha os dados abaixo:`
-            : "Sem problema. Preencha os dados abaixo que vou abrir um chamado para o time:" },
-      ]);
-      setPhase("collect-info");
+      const aiMsg: Msg = {
+        role: "ai",
+        content: cat.alwaysHuman
+          ? `Entendi 👋. Para **${cat.label.toLowerCase()}** o atendimento é feito direto pelo nosso time humano. Vou abrir um chamado para você — preencha os dados abaixo:`
+          : "Sem problema. Preencha os dados abaixo que vou abrir um chamado para o time:",
+      };
+      respondAfterTyping({ role: "user", content: cat.label }, [aiMsg], () => setPhase("collect-info"));
       return;
     }
 
-    setMessages((prev) => [
-      ...prev,
+    respondAfterTyping(
       { role: "user", content: cat.label },
-      { role: "ai", content: `${cat.subcategoryLabel || "Qual é o problema?"}\n\nEscolha a opção mais próxima abaixo 👇` },
-    ]);
-    setPhase("triage-submenu");
+      [{ role: "ai", content: `${cat.subcategoryLabel || "Qual é o problema?"}\n\nEscolha a opção mais próxima abaixo 👇` }],
+      () => setPhase("triage-submenu"),
+    );
   };
 
   const pickProblem = (sol: Solution) => {
@@ -333,7 +344,6 @@ export function WianChat() {
     setActiveSolution(sol);
     setTriage((t) => ({ ...t, subcategory: sol.title, triedSolution: sol.title, triedSteps: sol.steps }));
 
-    // Mensagem do usuário
     const userMsg: Msg = { role: "user", content: sol.title };
 
     // "Outro problema..." ou problemas sem passos reais (que apenas pedem para o usuário
@@ -347,8 +357,7 @@ export function WianChat() {
       const prompt = sol.steps.length
         ? sol.steps.map((s) => s).join("\n\n")
         : "Me conta com mais detalhes o que está acontecendo — em qual tela, qual mensagem de erro aparece e o que você já tentou. 🙂";
-      setMessages((prev) => [...prev, userMsg, { role: "ai", content: prompt }]);
-      setPhase("chat");
+      respondAfterTyping(userMsg, [{ role: "ai", content: prompt }], () => setPhase("chat"));
       return;
     }
 
@@ -356,26 +365,23 @@ export function WianChat() {
     if ((sol as any).escalate) {
       const intro = sol.intro ? `${sol.intro}\n\n` : "";
       const stepsText = sol.steps.length ? sol.steps.map((s, i) => `${i + 1}. ${s}`).join("\n") + "\n\n" : "";
-      setMessages((prev) => [
-        ...prev,
-        userMsg,
-        { role: "ai", content: `${intro}${stepsText}Preencha os dados abaixo que vou abrir o chamado para o time analisar:` },
-      ]);
       setCategory("Outro");
-      setPhase("collect-info");
+      respondAfterTyping(
+        userMsg,
+        [{ role: "ai", content: `${intro}${stepsText}Preencha os dados abaixo que vou abrir o chamado para o time analisar:` }],
+        () => setPhase("collect-info"),
+      );
       return;
     }
 
     // Resposta com solução guiada
     const intro = sol.intro ? `${sol.intro}\n\n` : "";
     const stepsText = sol.steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
-    const aiMsg: Msg = {
-      role: "ai",
-      content: `${intro}**Tente isso:**\n\n${stepsText}\n\nFuncionou? 🙂`,
-    };
-
-    setMessages((prev) => [...prev, userMsg, aiMsg]);
-    setPhase("triage-solution");
+    respondAfterTyping(
+      userMsg,
+      [{ role: "ai", content: `${intro}**Tente isso:**\n\n${stepsText}\n\nFuncionou? 🙂` }],
+      () => setPhase("triage-solution"),
+    );
   };
 
   const onSolutionResolved = (resolved: boolean) => {
