@@ -97,19 +97,19 @@ const Contact = () => {
             </p>
           </motion.div>
 
-          {/* Content Grid */}
-          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 items-stretch">
-            {/* Left Column - Contact Info */}
+          {/* Content - cards on top, chat below */}
+          <div className="max-w-6xl mx-auto flex flex-col gap-4 sm:gap-6 md:gap-8">
+            {/* Top Row - Contact Info Cards */}
             <motion.div
-              className="flex flex-col gap-4 sm:gap-5 md:gap-6 order-2 lg:order-1"
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
+              className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 md:gap-6"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
             >
               {contactInfo.map((info, index) => (
                 <motion.div
                   key={index}
-                  className="flex-1 flex items-center gap-3 sm:gap-4 p-3 sm:p-4 md:p-5 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-[0_0_20px_hsl(var(--primary)/0.1)] transition-all duration-300"
+                  className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 md:p-5 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-[0_0_20px_hsl(var(--primary)/0.1)] transition-all duration-300"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
@@ -117,40 +117,21 @@ const Contact = () => {
                   <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                     <info.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${info.color}`} />
                   </div>
-                  <div>
-                    <p className="font-semibold text-foreground text-sm sm:text-base">{info.title}</p>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-foreground text-sm sm:text-base truncate">{info.title}</p>
                     <p className="text-xs sm:text-sm text-muted-foreground">{info.description}</p>
                   </div>
                 </motion.div>
               ))}
-
-              {/* Quick Tip */}
-              <motion.div
-                className="flex-1 p-3 sm:p-4 md:p-5 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl shadow-[0_0_30px_hsl(var(--primary)/0.15)]"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-              >
-                <div className="flex items-start gap-2 sm:gap-3">
-                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-primary mb-1 text-sm sm:text-base">Atendimento instantâneo</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Nosso assistente virtual está disponível 24 horas por dia para tirar suas dúvidas de forma rápida e prática!
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
             </motion.div>
 
-            {/* Right Column - Typebot Chat */}
+            {/* Bottom - Chat */}
             <motion.div
-              className="relative order-1 lg:order-2 h-full max-h-[640px] lg:max-h-[720px]"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
+              className="relative h-[640px] lg:h-[720px]"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.5 }}
             >
-              {/* Chat Container with unified rounded corners */}
               <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-[0_0_40px_hsl(var(--primary)/0.1)] flex flex-col h-full">
                 {/* Chat Header */}
                 <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
