@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { WianChat } from "@/components/support/WianChat";
+import wianAvatar from "@/assets/wian-avatar.png";
 
 const contactInfo = [
   {
@@ -132,7 +133,7 @@ const Contact = () => {
                 <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
                   <div className="relative">
                     <img
-                      src="/src/assets/wian-avatar.png"
+                      src={wianAvatar}
                       alt="Wian"
                       className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
                     />
