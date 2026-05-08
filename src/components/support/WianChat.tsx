@@ -56,7 +56,22 @@ type Phase =
   | "nps"
   | "collect-info"
   | "done-resolved"
-  | "done-escalated";
+  | "done-escalated"
+  | "blocked";
+
+// Cores específicas por categoria (visual mais profissional, sem quadrado cinza)
+const CATEGORY_COLORS: Record<string, string> = {
+  campanhas: "text-orange-500",
+  whatsapp: "text-emerald-500",
+  meta: "text-blue-500",
+  ia: "text-violet-500",
+  crm: "text-pink-500",
+  flows: "text-cyan-500",
+  financeiro: "text-amber-500",
+  planos: "text-indigo-500",
+  relatorios: "text-sky-500",
+  suporte: "text-rose-500",
+};
 
 type TriageContext = {
   category?: string;
@@ -667,6 +682,42 @@ export function WianChat() {
   const RESET_WINDOW_MS = 60 * 60 * 1000;
   const RESET_KEY = "wian_chat_resets_v1";
 
+  const [blockedUntil, setBlockedUntil] = useState<number | null>(null);
+  const [blockTick, setBlockTick] = useState(0);
+
+  // Ao montar, verifica se ainda está bloqueado por excesso de reinícios
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RESET_KEY);
+      if (!raw) return;
+      const arr: number[] = JSON.parse(raw);
+      const now = Date.now();
+      const recent = arr.filter((t) => now - t < RESET_WINDOW_MS);
+      if (recent.length >= RESET_LIMIT) {
+        const until = recent[0] + RESET_WINDOW_MS;
+        setBlockedUntil(until);
+        setPhase("blocked");
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Atualiza o contador da tela de bloqueio a cada 30s
+  useEffect(() => {
+    if (phase !== "blocked" || !blockedUntil) return;
+    const id = setInterval(() => {
+      if (Date.now() >= blockedUntil) {
+        setBlockedUntil(null);
+        try { localStorage.removeItem(RESET_KEY); } catch {}
+        setPhase("triage-menu");
+        setMessages([GREETING_MSG]);
+      } else {
+        setBlockTick((t) => t + 1);
+      }
+    }, 30000);
+    return () => clearInterval(id);
+  }, [phase, blockedUntil]);
+
   const restart = () => {
     try {
       const raw = localStorage.getItem(RESET_KEY);
@@ -674,13 +725,9 @@ export function WianChat() {
       const arr: number[] = raw ? JSON.parse(raw) : [];
       const recent = arr.filter((t) => now - t < RESET_WINDOW_MS);
       if (recent.length >= RESET_LIMIT) {
-        const oldest = recent[0];
-        const waitMin = Math.ceil((RESET_WINDOW_MS - (now - oldest)) / 60000);
-        toast({
-          title: "Limite de reinícios atingido",
-          description: `Você pode reiniciar o chat até ${RESET_LIMIT}x por hora. Tente novamente em ${waitMin} min.`,
-          variant: "destructive",
-        });
+        const until = recent[0] + RESET_WINDOW_MS;
+        setBlockedUntil(until);
+        setPhase("blocked");
         return;
       }
       recent.push(now);
@@ -1033,6 +1080,33 @@ export function WianChat() {
           </motion.div>
         )}
 
+        {phase === "blocked" && blockedUntil && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center space-y-3"
+          >
+            <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="w-6 h-6 text-destructive" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-foreground">Chat temporariamente bloqueado</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Você atingiu o limite de <strong>{RESET_LIMIT} reinícios por hora</strong>. Para evitar abusos e proteger
+                o atendimento, o chat será liberado automaticamente em{' '}
+                <strong className="text-foreground">
+                  {Math.max(1, Math.ceil((blockedUntil - Date.now()) / 60000))} min
+                </strong>
+                {/* re-render trigger */}
+                <span className="hidden">{blockTick}</span>.
+              </p>
+              <p className="text-[11px] text-muted-foreground pt-1">
+                Se for urgente, entre em contato pelo email <strong>suporte@wiize.com.br</strong>.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         {phase === "done-resolved" && (
           <div className="text-center py-4 text-sm text-muted-foreground">
             Atendimento finalizado. <button onClick={restart} className="text-primary underline">Iniciar novo</button>
@@ -1175,19 +1249,18 @@ export function WianChat() {
                 ))
               : TRIAGE_TREE.map((cat) => {
                   const Icon = CATEGORY_ICONS[cat.id] || HelpCircle;
+                  const colorClass = CATEGORY_COLORS[cat.id] || "text-primary";
                   return (
                     <button
                       key={cat.id}
                       onClick={() => pickCategory(cat)}
-                      className="w-full text-left px-5 py-2.5 hover:bg-muted/60 transition-colors flex items-center gap-3 border-b border-border/50 last:border-b-0"
+                      className="w-full text-left px-5 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3.5 border-b border-border/40 last:border-b-0"
                     >
-                      <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                        <Icon className="w-4.5 h-4.5" strokeWidth={2} />
-                      </div>
+                      <Icon className={`w-5 h-5 shrink-0 ${colorClass}`} strokeWidth={2} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground">{cat.label}</p>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0" />
                     </button>
                   );
                 })}
