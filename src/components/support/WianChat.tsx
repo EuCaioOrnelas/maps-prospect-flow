@@ -13,6 +13,19 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TRIAGE_TREE, findCategory, findProblem, type Solution, type Category } from "./triageTree";
 
+const CATEGORY_ICONS: Record<string, typeof Megaphone> = {
+  campanhas: Megaphone,
+  whatsapp: MessageSquare,
+  meta: Building2,
+  ia: Bot,
+  crm: LayoutGrid,
+  flows: GitBranch,
+  financeiro: CreditCard,
+  planos: Package,
+  relatorios: BarChart3,
+  suporte: Headphones,
+};
+
 const AiAvatar = () => (
   <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
     <User className="w-4 h-4" />
