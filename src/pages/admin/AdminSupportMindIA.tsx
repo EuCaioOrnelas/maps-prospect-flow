@@ -27,6 +27,7 @@ type KB = {
   min_confidence: number | null;
   active: boolean | null;
   embedding: any;
+  video_url: string | null;
   created_at: string;
   updated_at: string;
 };
