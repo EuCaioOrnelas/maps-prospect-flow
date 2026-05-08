@@ -17,6 +17,7 @@ import { ptBR } from "date-fns/locale";
 
 type Ticket = {
   id: string;
+  ticket_number: string | null;
   user_id: string | null;
   name: string | null;
   email: string | null;
