@@ -41,6 +41,7 @@ import {
   CheckCircle2,
   Settings as SettingsIcon,
   Award,
+  LifeBuoy,
 } from "lucide-react";
 
 interface NavItem {
