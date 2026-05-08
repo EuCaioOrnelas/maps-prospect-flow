@@ -43,6 +43,7 @@ type Attachment = {
 type Msg = { role: "user" | "ai"; content: string; attachments?: Attachment[] };
 
 type Phase =
+  | "ask-name"
   | "triage-menu"
   | "triage-submenu"
   | "triage-solution"
