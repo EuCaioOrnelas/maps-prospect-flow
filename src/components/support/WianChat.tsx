@@ -151,6 +151,7 @@ export function WianChat() {
 
   // ============== TRIAGEM ==============
   const pickCategory = (cat: Category) => {
+    setMenuOpen(false);
     setActiveCategory(cat);
     setTriage({ category: cat.label });
 
