@@ -1080,6 +1080,33 @@ export function WianChat() {
           </motion.div>
         )}
 
+        {phase === "blocked" && blockedUntil && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center space-y-3"
+          >
+            <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="w-6 h-6 text-destructive" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-foreground">Chat temporariamente bloqueado</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Você atingiu o limite de <strong>{RESET_LIMIT} reinícios por hora</strong>. Para evitar abusos e proteger
+                o atendimento, o chat será liberado automaticamente em{' '}
+                <strong className="text-foreground">
+                  {Math.max(1, Math.ceil((blockedUntil - Date.now()) / 60000))} min
+                </strong>
+                {/* re-render trigger */}
+                <span className="hidden">{blockTick}</span>.
+              </p>
+              <p className="text-[11px] text-muted-foreground pt-1">
+                Se for urgente, entre em contato pelo email <strong>suporte@wiize.com.br</strong>.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         {phase === "done-resolved" && (
           <div className="text-center py-4 text-sm text-muted-foreground">
             Atendimento finalizado. <button onClick={restart} className="text-primary underline">Iniciar novo</button>
