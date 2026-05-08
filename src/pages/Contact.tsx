@@ -109,7 +109,7 @@ const Contact = () => {
               {contactInfo.map((info, index) => (
                 <motion.div
                   key={index}
-                  className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 md:p-5 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-[0_0_20px_hsl(var(--primary)/0.1)] transition-all duration-300"
+                  className="flex-1 flex items-center gap-3 sm:gap-4 p-3 sm:p-4 md:p-5 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-[0_0_20px_hsl(var(--primary)/0.1)] transition-all duration-300"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
