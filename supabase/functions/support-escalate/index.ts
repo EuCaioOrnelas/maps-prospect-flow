@@ -106,18 +106,10 @@ Deno.serve(async (req) => {
       category = userCategory;
     }
 
-    // Monta nota interna com transcrição completa para o atendente humano
-    const formattedTranscript = (msgs ?? [])
-      .map((m: any, i: number) => `[${i + 1}] ${m.role === "user" ? "👤 Usuário" : "🤖 Wian"}:\n${m.content}`)
-      .join("\n\n");
-
-    const internalNote = [
-      `=== CHAMADO ESCALADO PARA ATENDIMENTO HUMANO ===`,
-      `Categoria escolhida pelo usuário: ${userCategory || "(não informado)"}`,
-      extra ? `\nDescrição adicional do usuário:\n${extra}` : "",
-      `\n=== TRANSCRIÇÃO COMPLETA DA CONVERSA COM O WIAN ===\n`,
-      formattedTranscript || "(sem mensagens)",
-    ].filter(Boolean).join("\n");
+    // Nota interna enxuta — a transcrição já está visível na aba Conversa.
+    const internalNote = extra
+      ? `Descrição adicional do usuário:\n${extra}`
+      : null;
 
     const { data: updated, error: updErr } = await sb.from("support_tickets").update({
       name,
