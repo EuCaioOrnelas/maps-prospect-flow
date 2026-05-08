@@ -216,8 +216,14 @@ Deno.serve(async (req) => {
         ]
       : message;
 
+    let triageBlock = "";
+    if (triageContext && typeof triageContext === "object") {
+      const { category, subcategory, triedSolution, triedSteps } = triageContext as any;
+      triageBlock = `\n\n--- TRIAGEM JÁ FEITA (use isso, NÃO repita perguntas básicas) ---\nCategoria: ${category || "-"}\nSubcategoria: ${subcategory || "-"}\nSolução já apresentada ao usuário: ${triedSolution || "-"}\nPassos já tentados:\n${(triedSteps || []).map((s: string, i: number) => `${i + 1}. ${s}`).join("\n") || "-"}\n\nO usuário disse que isso NÃO resolveu. Faça perguntas de diagnóstico específicas (em qual passo travou, qual mensagem de erro apareceu) e proponha uma alternativa diferente da que já foi tentada. Se nada mais funcionar, escale.`;
+    }
+
     const messages = [
-      { role: "system", content: `${SYSTEM_BASE}\n\nCONTEXTO:${context}` },
+      { role: "system", content: `${SYSTEM_BASE}\n\nCONTEXTO:${context}${triageBlock}` },
       ...history.slice(-10).map((m: any) => ({ role: m.role === "ai" ? "assistant" : m.role, content: m.content })),
       { role: "user", content: userContent },
     ];
