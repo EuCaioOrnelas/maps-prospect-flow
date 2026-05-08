@@ -156,13 +156,11 @@ export function WianChat() {
               transition={{ duration: 0.2 }}
               className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              {m.role === "ai" && (
-                <img src={logoIcon} alt="Wian" className="w-7 h-7 rounded-md shrink-0" />
-              )}
+              {m.role === "ai" && <AiAvatar />}
               <div
                 className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                   m.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-md"
+                    ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100 rounded-br-md"
                     : "bg-muted text-foreground rounded-bl-md"
                 }`}
               >
