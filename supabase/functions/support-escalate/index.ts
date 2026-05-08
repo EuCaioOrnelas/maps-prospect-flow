@@ -106,7 +106,20 @@ Deno.serve(async (req) => {
       category = userCategory;
     }
 
-    await sb.from("support_tickets").update({
+    // Monta nota interna com transcrição completa para o atendente humano
+    const formattedTranscript = (msgs ?? [])
+      .map((m: any, i: number) => `[${i + 1}] ${m.role === "user" ? "👤 Usuário" : "🤖 Wian"}:\n${m.content}`)
+      .join("\n\n");
+
+    const internalNote = [
+      `=== CHAMADO ESCALADO PARA ATENDIMENTO HUMANO ===`,
+      `Categoria escolhida pelo usuário: ${userCategory || "(não informado)"}`,
+      extra ? `\nDescrição adicional do usuário:\n${extra}` : "",
+      `\n=== TRANSCRIÇÃO COMPLETA DA CONVERSA COM O WIAN ===\n`,
+      formattedTranscript || "(sem mensagens)",
+    ].filter(Boolean).join("\n");
+
+    const { data: updated, error: updErr } = await sb.from("support_tickets").update({
       name,
       email,
       phone: phone ?? null,
@@ -116,7 +129,9 @@ Deno.serve(async (req) => {
       category,
       status: "escalated",
       priority,
-    }).eq("id", ticketId);
+      internal_notes: internalNote,
+    }).eq("id", ticketId).select("ticket_number").maybeSingle();
+    if (updErr) throw updErr;
 
     if (extra) {
       await sb.from("support_messages").insert({
@@ -126,7 +141,13 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({
-      ok: true, ticketId, summary, category, customerType, priority,
+      ok: true,
+      ticketId,
+      ticketNumber: updated?.ticket_number ?? null,
+      summary,
+      category,
+      customerType,
+      priority,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
