@@ -224,6 +224,7 @@ export function WianChat() {
   const [npsComment, setNpsComment] = useState("");
   const [isAuthed, setIsAuthed] = useState(false);
   const [ticketNumber, setTicketNumber] = useState<string | null>(null);
+  const [wasEscalated, setWasEscalated] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
