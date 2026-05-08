@@ -97,7 +97,7 @@ const Contact = () => {
           <div className="max-w-6xl mx-auto flex flex-col gap-4 sm:gap-6 md:gap-8">
             {/* Top Row - Contact Info Cards */}
             <motion.div
-              className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 md:gap-6"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
@@ -135,9 +135,9 @@ const Contact = () => {
                     <img
                       src={wianAvatar}
                       alt="Wian"
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
+                      className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover"
                     />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-card" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-green-500 rounded-full border-2 border-card" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground text-sm sm:text-base">Wian Assistente Virtual</p>
