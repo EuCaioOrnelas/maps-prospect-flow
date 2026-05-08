@@ -166,6 +166,14 @@ export function WianChat() {
     saveState({ ticketId, messages: lite, phase, triage, guestName: !isAuthed ? name : undefined });
   }, [ticketId, messages, phase, triage, isAuthed, name]);
 
+  // Persiste rascunho do formulário (nome, email, telefone, descrição, categoria) para
+  // não perder o que o usuário digitou caso o componente re-renderize.
+  useEffect(() => {
+    try {
+      localStorage.setItem(FORM_KEY, JSON.stringify({ name, email, phone, extra, category }));
+    } catch {}
+  }, [name, email, phone, extra, category]);
+
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
