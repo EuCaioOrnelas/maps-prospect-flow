@@ -79,6 +79,13 @@ export function WianChat() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading, phase]);
 
+  useEffect(() => {
+    const handler = () => restart();
+    window.addEventListener("wian:reset", handler);
+    return () => window.removeEventListener("wian:reset", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const send = async () => {
     const text = input.trim();
     if (!text || loading) return;
