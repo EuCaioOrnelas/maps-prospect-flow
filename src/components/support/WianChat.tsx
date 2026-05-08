@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check } from "lucide-react";
+import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { TRIAGE_TREE, findCategory, findProblem, type Solution, type Category } from "./triageTree";
 
 const AiAvatar = () => (
   <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
@@ -20,16 +22,33 @@ type Attachment = {
   name: string;
   type: string;
   size: number;
-  dataUrl?: string; // for images
-  textContent?: string; // for text files
+  dataUrl?: string;
+  textContent?: string;
 };
 
 type Msg = { role: "user" | "ai"; content: string; attachments?: Attachment[] };
-type Phase = "chat" | "ask-resolved" | "rate" | "collect-info" | "done-resolved" | "done-escalated";
 
-const STORAGE_KEY = "wian_chat_v3";
+type Phase =
+  | "triage-menu"
+  | "triage-submenu"
+  | "triage-solution"
+  | "chat"
+  | "ask-resolved"
+  | "rate"
+  | "collect-info"
+  | "done-resolved"
+  | "done-escalated";
+
+type TriageContext = {
+  category?: string;
+  subcategory?: string;
+  triedSolution?: string;
+  triedSteps?: string[];
+};
+
+const STORAGE_KEY = "wian_chat_v4";
 const RESPONSE_DELAY_MS = 10000;
-const MAX_FILE_BYTES = 4 * 1024 * 1024; // 4MB
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const MAX_ATTACHMENTS_PER_SEND = 3;
 const TEXT_MIME_PREFIXES = ["text/"];
 const TEXT_EXTENSIONS = [".txt", ".md", ".csv", ".json", ".log", ".xml", ".yaml", ".yml", ".html", ".css", ".js", ".ts", ".tsx", ".jsx", ".py", ".sql"];
@@ -50,7 +69,7 @@ function loadState() {
   }
 }
 
-function saveState(s: { ticketId: string | null; messages: Msg[] }) {
+function saveState(s: { ticketId: string | null; messages: Msg[]; phase: Phase; triage: TriageContext }) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
   } catch {}
@@ -59,15 +78,15 @@ function saveState(s: { ticketId: string | null; messages: Msg[] }) {
 export function WianChat() {
   const initial = loadState();
   const [ticketId, setTicketId] = useState<string | null>(initial?.ticketId ?? null);
-  const [messages, setMessages] = useState<Msg[]>(
-    initial?.messages?.length
-      ? initial.messages
-      : [{ role: "ai", content: "Oi! Eu sou o **Wian** 👋, atendente virtual da Wiize. Me conta o que está acontecendo — pode anexar imagens ou arquivos (até 3) e até colar do clipboard." }]
-  );
+  const [messages, setMessages] = useState<Msg[]>(initial?.messages ?? []);
+  const [phase, setPhase] = useState<Phase>(initial?.phase ?? "triage-menu");
+  const [triage, setTriage] = useState<TriageContext>(initial?.triage ?? {});
+  const [activeCategory, setActiveCategory] = useState<Category | null>(null);
+  const [activeSolution, setActiveSolution] = useState<Solution | null>(null);
+
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [phase, setPhase] = useState<Phase>("chat");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -87,13 +106,12 @@ export function WianChat() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // strip dataUrls from messages before saving (avoid huge localStorage)
     const lite = messages.map((m) => ({
       ...m,
       attachments: m.attachments?.map((a) => ({ ...a, dataUrl: undefined, textContent: undefined })),
     }));
-    saveState({ ticketId, messages: lite });
-  }, [ticketId, messages]);
+    saveState({ ticketId, messages: lite, phase, triage });
+  }, [ticketId, messages, phase, triage]);
 
   useEffect(() => {
     (async () => {
@@ -113,7 +131,7 @@ export function WianChat() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading, phase, waitingSeconds, showConfirmSend]);
+  }, [messages, loading, phase, waitingSeconds, showConfirmSend, activeCategory, activeSolution]);
 
   useEffect(() => {
     const handler = () => restart();
@@ -129,6 +147,89 @@ export function WianChat() {
     };
   }, []);
 
+  // ============== TRIAGEM ==============
+  const pickCategory = (cat: Category) => {
+    setActiveCategory(cat);
+    setTriage({ category: cat.label });
+
+    if (cat.directEscalate) {
+      // Financeiro / Planos / Falar com suporte → vai direto
+      setCategory(
+        cat.id === "financeiro" ? "Financeiro" :
+        cat.id === "planos" ? "Financeiro" :
+        cat.id === "suporte" ? "Outro" : "Outro"
+      );
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: cat.label },
+        { role: "ai", content: cat.alwaysHuman
+            ? `Entendi 👋. Para **${cat.label.toLowerCase()}** o atendimento é feito direto pelo nosso time humano. Vou abrir um chamado para você — preencha os dados abaixo:`
+            : "Sem problema. Preencha os dados abaixo que vou abrir um chamado para o time:" },
+      ]);
+      setPhase("collect-info");
+      return;
+    }
+
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", content: cat.label },
+      { role: "ai", content: `${cat.subcategoryLabel || "Qual é o problema?"}\n\nEscolha a opção mais próxima abaixo 👇` },
+    ]);
+    setPhase("triage-submenu");
+  };
+
+  const pickProblem = (sol: Solution) => {
+    setActiveSolution(sol);
+    setTriage((t) => ({ ...t, subcategory: sol.title }));
+
+    // Mensagem do usuário
+    const userMsg: Msg = { role: "user", content: sol.title };
+
+    // Resposta com solução
+    const intro = sol.intro ? `${sol.intro}\n\n` : "";
+    const stepsText = sol.steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
+    const aiMsg: Msg = {
+      role: "ai",
+      content: `${intro}**Tente isso:**\n\n${stepsText}\n\nFuncionou? 🙂`,
+    };
+
+    setMessages((prev) => [...prev, userMsg, aiMsg]);
+    setPhase("triage-solution");
+  };
+
+  const onSolutionResolved = (resolved: boolean) => {
+    if (resolved) {
+      setPhase("rate");
+      return;
+    }
+    // Não resolveu → entra na IA com contexto da triagem
+    if (activeSolution) {
+      setTriage((t) => ({
+        ...t,
+        triedSolution: activeSolution.title,
+        triedSteps: activeSolution.steps,
+      }));
+    }
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "ai",
+        content:
+          "Sem problema. Vou analisar com mais detalhes 🤔. Me conta o que aconteceu quando você tentou:\n\n- Em qual passo travou?\n- Apareceu alguma mensagem de erro?\n- O que você esperava que acontecesse?",
+      },
+    ]);
+    setPhase("chat");
+  };
+
+  const goBackToMenu = () => {
+    setActiveCategory(null);
+    setActiveSolution(null);
+    setTriage({});
+    setMessages([]);
+    setPhase("triage-menu");
+  };
+
+  // ============== ANEXOS ==============
   const readFile = (file: File): Promise<Attachment | null> => {
     return new Promise((resolve) => {
       if (file.size > MAX_FILE_BYTES) {
@@ -148,7 +249,7 @@ export function WianChat() {
         r.onerror = () => resolve(null);
         r.readAsText(file);
       } else {
-        resolve(att); // metadata only
+        resolve(att);
       }
     });
   };
@@ -180,6 +281,7 @@ export function WianChat() {
     }
   };
 
+  // ============== AI / DEBOUNCE ==============
   const startCountdown = () => {
     if (countdownRef.current) clearInterval(countdownRef.current);
     setWaitingSeconds(Math.ceil(RESPONSE_DELAY_MS / 1000));
@@ -187,7 +289,6 @@ export function WianChat() {
       setWaitingSeconds((s) => (s > 0 ? s - 1 : 0));
     }, 1000);
   };
-
   const stopCountdown = () => {
     if (countdownRef.current) clearInterval(countdownRef.current);
     countdownRef.current = null;
@@ -202,19 +303,16 @@ export function WianChat() {
     setShowConfirmSend(false);
     setLoading(true);
 
-    // Build message + collect first image for vision + append text-file content
     let combined = texts.join("\n\n").trim();
     const imageAttachment = attachments.find((a) => a.type.startsWith("image/") && a.dataUrl);
     const textAttachments = attachments.filter((a) => a.textContent);
-    const otherAttachments = attachments.filter(
-      (a) => !a.type.startsWith("image/") && !a.textContent,
-    );
+    const otherAttachments = attachments.filter((a) => !a.type.startsWith("image/") && !a.textContent);
 
     if (textAttachments.length) {
       combined += "\n\n" + textAttachments.map((a) => `--- Arquivo: ${a.name} ---\n${a.textContent}`).join("\n\n");
     }
     if (otherAttachments.length) {
-      combined += "\n\n(usuário anexou arquivos sem conteúdo legível: " + otherAttachments.map((a) => `${a.name} [${a.type || "?"}]`).join(", ") + ")";
+      combined += "\n\n(usuário anexou: " + otherAttachments.map((a) => `${a.name} [${a.type || "?"}]`).join(", ") + ")";
     }
 
     try {
@@ -224,6 +322,7 @@ export function WianChat() {
           message: combined || "(usuário enviou apenas anexos)",
           history: messages.slice(-12).map((m) => ({ role: m.role, content: m.content })),
           imageDataUrl: imageAttachment?.dataUrl ?? null,
+          triageContext: triage,
         },
       });
       if (error) {
@@ -243,10 +342,26 @@ export function WianChat() {
 
       if (data.escalate) {
         setPhase("collect-info");
+        // pré-seleciona categoria a partir da triagem
+        if (triage.category && !category) {
+          const map: Record<string, string> = {
+            "Campanhas e disparos": "Campanhas",
+            "WhatsApp e conexões": "WhatsApp",
+            "Meta API Oficial": "WhatsApp",
+            "IA e Agentes": "IA",
+            "CRM e Leads": "CRM",
+            "Fluxos e automações": "WhatsApp",
+            "Financeiro / Cobrança": "Financeiro",
+            "Planos e cancelamento": "Financeiro",
+            "Relatórios e métricas": "Operacional",
+            "Falar com suporte humano": "Outro",
+          };
+          setCategory(map[triage.category] || "Outro");
+        }
       } else if (data.phase === "solution") {
         setPhase("ask-resolved");
       } else {
-        setPhase("chat"); // stay conversational
+        setPhase("chat");
       }
     } catch (e: any) {
       const msg: string = e?.message || "";
@@ -263,13 +378,11 @@ export function WianChat() {
     if (text) queueRef.current.texts.push(text);
     if (attachments.length) queueRef.current.attachments.push(...attachments);
 
-    // Show in chat immediately
     setMessages((prev) => [
       ...prev,
       { role: "user", content: text || "(anexo)", attachments: attachments.length ? attachments : undefined },
     ]);
 
-    // Reset debounce + show confirmation banner
     setShowConfirmSend(true);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     startCountdown();
@@ -296,11 +409,9 @@ export function WianChat() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     stopCountdown();
     setShowConfirmSend(false);
-    // Remove queued user messages from UI
     const drop = queueRef.current.texts.length + (queueRef.current.attachments.length ? 1 : 0);
     if (drop > 0) {
       setMessages((prev) => {
-        // remove the last messages that came from this batch
         let removed = 0;
         const out = [...prev];
         while (removed < drop && out.length && out[out.length - 1].role === "user") {
@@ -317,15 +428,23 @@ export function WianChat() {
     if (resolved) {
       setPhase("rate");
     } else {
-      // Don't escalate immediately — let AI try alternatives. Re-open chat with hint.
       setPhase("chat");
-      const reply = "Não funcionou? Me conta o que aconteceu (em qual passo travou, apareceu alguma mensagem de erro?) que eu tento outro caminho.";
-      setMessages((prev) => [...prev, { role: "ai", content: reply }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", content: "Não funcionou? Me conta o que aconteceu (em qual passo travou, apareceu alguma mensagem de erro?) que eu tento outro caminho." },
+      ]);
     }
   };
 
   const submitRating = async () => {
-    if (!stars || !ticketId) return;
+    if (!stars || !ticketId) {
+      // sem ticket criado (resolveu na triagem) — só agradece
+      if (!ticketId && stars) {
+        toast({ title: "Obrigado pela avaliação!" });
+        setPhase("done-resolved");
+      }
+      return;
+    }
     try {
       await supabase.from("support_ratings").insert({ ticket_id: ticketId, stars, comment, resolved_by: "ai" });
       await supabase.from("support_tickets").update({ status: "resolved", resolved_by: "ai", resolved_at: new Date().toISOString() }).eq("id", ticketId);
@@ -337,15 +456,43 @@ export function WianChat() {
   };
 
   const submitEscalation = async () => {
-    if (!ticketId || !name.trim() || !email.trim() || !category) {
+    if (!name.trim() || !email.trim() || !category) {
       toast({ title: "Preencha nome, email e tópico", variant: "destructive" });
       return;
     }
     setLoading(true);
     try {
+      // Garante ticket criado mesmo sem IA
+      let tId = ticketId;
+      if (!tId) {
+        const triageSummary = triage.category
+          ? `Triagem: ${triage.category}${triage.subcategory ? ` → ${triage.subcategory}` : ""}`
+          : "Atendimento direto (sem triagem).";
+        const { data: t, error: tErr } = await supabase
+          .from("support_tickets")
+          .insert({
+            name: name.trim(),
+            email: email.trim(),
+            phone: phone.trim() || null,
+            status: "open",
+            priority: "medium",
+            customer_type: isAuthed ? "registered_user" : "guest",
+          })
+          .select("id")
+          .single();
+        if (tErr) throw tErr;
+        tId = t.id;
+        await supabase.from("support_messages").insert({
+          ticket_id: tId,
+          role: "user",
+          content: `${triageSummary}\n\n${extra.trim() || "(sem detalhes adicionais)"}`,
+        });
+        setTicketId(tId);
+      }
+
       const { error } = await supabase.functions.invoke("support-escalate", {
         body: {
-          ticketId,
+          ticketId: tId,
           name: name.trim(),
           email: email.trim(),
           phone: phone.trim() || null,
@@ -393,8 +540,11 @@ export function WianChat() {
     setTicketId(null);
     setPendingAttachments([]);
     setShowConfirmSend(false);
-    setMessages([{ role: "ai", content: "Olá! Eu sou o Wian. Como posso ajudar?" }]);
-    setPhase("chat");
+    setMessages([]);
+    setActiveCategory(null);
+    setActiveSolution(null);
+    setTriage({});
+    setPhase("triage-menu");
     setStars(0); setComment(""); setExtra(""); setInput("");
   };
 
@@ -411,9 +561,37 @@ export function WianChat() {
     );
   };
 
+  const showInputBar = phase === "chat" || phase === "ask-resolved";
+
   return (
     <div className="flex flex-col h-full min-h-0" onPaste={handlePaste}>
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background/30">
+        {/* Camada 1 — MENU */}
+        {phase === "triage-menu" && (
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <div className="flex items-end gap-2">
+              <AiAvatar />
+              <div className="bg-muted text-foreground rounded-2xl rounded-bl-md px-3.5 py-2.5 text-sm leading-relaxed max-w-[78%]">
+                Olá! Eu sou o **Wian** 👋, atendente virtual da Wiize.<br />
+                <span className="text-muted-foreground">Em qual área você precisa de ajuda?</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              {TRIAGE_TREE.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => pickCategory(cat)}
+                  className="text-left text-sm px-3 py-2.5 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-colors flex items-center gap-2"
+                >
+                  <span className="text-base">{cat.emoji}</span>
+                  <span className="font-medium">{cat.label}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Mensagens já trocadas */}
         <AnimatePresence initial={false}>
           {messages.map((m, i) => (
             <motion.div
@@ -448,6 +626,60 @@ export function WianChat() {
           ))}
         </AnimatePresence>
 
+        {/* Camada 2 — SUBMENU */}
+        {phase === "triage-submenu" && activeCategory && (
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+            <div className="grid grid-cols-1 gap-2">
+              {activeCategory.problems.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => pickProblem(p)}
+                  className="text-left text-sm px-3 py-2.5 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                >
+                  {p.title}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={goBackToMenu}
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mt-2"
+            >
+              <ChevronLeft className="w-3 h-3" /> Voltar ao menu
+            </button>
+          </motion.div>
+        )}
+
+        {/* Camada 3 — SOLUÇÃO + resolveu? */}
+        {phase === "triage-solution" && activeSolution && (
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+            {activeSolution.ctaPath && activeSolution.ctaLabel && (
+              <Link
+                to={activeSolution.ctaPath}
+                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition"
+              >
+                <ExternalLink className="w-3 h-3" /> {activeSolution.ctaLabel}
+              </Link>
+            )}
+            <div className="flex justify-center gap-2 pt-2">
+              <Button size="sm" variant="default" onClick={() => onSolutionResolved(true)}>
+                Sim, resolveu ✅
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => onSolutionResolved(false)}>
+                Não resolveu
+              </Button>
+            </div>
+            <div className="flex justify-center pt-1">
+              <button
+                onClick={goBackToMenu}
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+              >
+                <ChevronLeft className="w-3 h-3" /> Trocar de problema
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Confirmação de envio */}
         {showConfirmSend && !loading && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center">
             <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-foreground/80 flex items-center gap-3 flex-wrap">
@@ -546,8 +778,19 @@ export function WianChat() {
         )}
       </div>
 
-      {(phase === "chat" || phase === "ask-resolved") && (
+      {showInputBar && (
         <div className="border-t border-border p-3 bg-background space-y-2">
+          {triage.category && (
+            <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{triage.category}</span>
+              {triage.subcategory && (
+                <>
+                  <span>›</span>
+                  <span className="px-2 py-0.5 rounded-full bg-muted">{triage.subcategory}</span>
+                </>
+              )}
+            </div>
+          )}
           {pendingAttachments.length > 0 && (
             <div className="flex flex-wrap gap-2 p-2 rounded-lg border border-border bg-muted/40">
               {pendingAttachments.map((a, idx) => (
