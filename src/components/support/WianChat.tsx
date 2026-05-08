@@ -940,6 +940,8 @@ export function WianChat() {
             </div>
           </motion.div>
         )}
+
+        {phase === "collect-info" && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-3">
             <div className="space-y-1">
               <p className="text-sm font-medium">
