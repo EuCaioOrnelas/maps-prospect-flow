@@ -9,11 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, MessageSquare, RefreshCw } from "lucide-react";
+import { Loader2, Search, MessageSquare, RefreshCw, HelpCircle, Mail, Phone, User, Tag, CreditCard, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { getPlanLabel } from "@/lib/planLabels";
 
 type Ticket = {
   id: string;
@@ -73,6 +75,7 @@ export default function AdminSupportTickets() {
   const [internalNotes, setInternalNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const [stats, setStats] = useState({ open: 0, escalated: 0, resolved: 0, total: 0 });
+  const [userPlan, setUserPlan] = useState<string | null>(null);
 
   const fetchStats = async () => {
     const [{ count: open }, { count: escalated }, { count: resolved }, { count: totalAll }] = await Promise.all([
@@ -142,15 +145,20 @@ export default function AdminSupportTickets() {
   const openTicket = async (t: Ticket) => {
     setSelected(t);
     setInternalNotes(t.internal_notes || "");
+    setUserPlan(null);
     setLoadingMsgs(true);
     try {
-      const { data, error } = await supabase
-        .from("support_messages")
-        .select("*")
-        .eq("ticket_id", t.id)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      setMessages((data as Message[]) || []);
+      const [{ data: msgs, error: msgErr }, planRes] = await Promise.all([
+        supabase.from("support_messages").select("*").eq("ticket_id", t.id).order("created_at", { ascending: true }),
+        t.user_id
+          ? supabase.from("profiles").select("plan").eq("id", t.user_id).maybeSingle()
+          : (t.email
+              ? supabase.from("profiles").select("plan").ilike("email", t.email).maybeSingle()
+              : Promise.resolve({ data: null } as any)),
+      ]);
+      if (msgErr) throw msgErr;
+      setMessages((msgs as Message[]) || []);
+      setUserPlan((planRes as any)?.data?.plan ?? null);
     } catch (e: any) {
       toast({ title: "Erro ao carregar mensagens", description: e.message, variant: "destructive" });
     } finally {
@@ -329,26 +337,132 @@ export default function AdminSupportTickets() {
         </div>
       </Card>
 
-      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>{selected?.ticket_number || `Ticket #${selected?.id.slice(0, 8)}`}</SheetTitle>
-          </SheetHeader>
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selected?.ticket_number || `Ticket #${selected?.id.slice(0, 8)}`}
+              {selected && (
+                <Badge variant="outline" className={STATUS_COLORS[selected.status] || ""}>
+                  {selected.status}
+                </Badge>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              Detalhes do chamado, contato do solicitante e histórico completo da conversa.
+            </DialogDescription>
+          </DialogHeader>
 
           {selected && (
-            <div className="mt-6 space-y-6">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-xs text-muted-foreground">Contato</p>
-                  <p className="font-medium">{selected.name || "—"}</p>
-                  <p className="text-xs text-muted-foreground">{selected.email || selected.phone || "—"}</p>
+            <div className="mt-2 space-y-6">
+              {/* Card de contato */}
+              <div className="rounded-lg border border-border bg-muted/20 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-semibold">Informações de contato</p>
+                  {userPlan && (
+                    <Badge variant="outline" className="gap-1">
+                      <CreditCard className="w-3 h-3" />
+                      Plano {getPlanLabel(userPlan)}
+                    </Badge>
+                  )}
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Categoria</p>
-                  <p className="font-medium">{selected.category || "—"}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-start gap-2">
+                    <User className="w-4 h-4 text-muted-foreground mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">Nome</p>
+                      <p className="font-medium truncate">{selected.name || "—"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Tag className="w-4 h-4 text-muted-foreground mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">Categoria</p>
+                      <p className="font-medium truncate">{selected.category || "—"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Mail className="w-4 h-4 text-muted-foreground mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-muted-foreground">Email</p>
+                      {selected.email ? (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium truncate">{selected.email}</span>
+                          <a
+                            href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(selected.email)}&su=${encodeURIComponent(`Re: ${selected.ticket_number || "Ticket"} - Suporte Wiize`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button size="sm" variant="outline" className="h-7 text-xs">
+                              <ExternalLink className="w-3 h-3" /> Gmail
+                            </Button>
+                          </a>
+                        </div>
+                      ) : (
+                        <p className="font-medium">—</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Phone className="w-4 h-4 text-muted-foreground mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-muted-foreground">Telefone</p>
+                      {selected.phone ? (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium truncate">{selected.phone}</span>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button size="sm" variant="outline" className="h-7 text-xs">
+                                <ExternalLink className="w-3 h-3" /> WhatsApp
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-48 p-2" align="end">
+                              <p className="text-xs text-muted-foreground px-2 py-1">Abrir conversa em:</p>
+                              {(() => {
+                                const digits = selected.phone!.replace(/\D/g, "");
+                                return (
+                                  <div className="flex flex-col gap-1">
+                                    <a href={`https://web.whatsapp.com/send?phone=${digits}`} target="_blank" rel="noopener noreferrer">
+                                      <Button size="sm" variant="ghost" className="w-full justify-start h-8 text-xs">WhatsApp Web</Button>
+                                    </a>
+                                    <a href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer">
+                                      <Button size="sm" variant="ghost" className="w-full justify-start h-8 text-xs">App / Mobile</Button>
+                                    </a>
+                                  </div>
+                                );
+                              })()}
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      ) : (
+                        <p className="font-medium">—</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              {/* Status & Prioridade */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Status</p>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <p className="text-xs text-muted-foreground">Status</p>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button type="button" className="text-muted-foreground hover:text-foreground">
+                          <HelpCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72 text-xs space-y-2" align="start">
+                        <p className="font-semibold text-sm">O que cada status significa</p>
+                        <div><span className="font-medium text-blue-600 dark:text-blue-300">Aberto</span> — chamado novo, ainda não atendido pela equipe.</div>
+                        <div><span className="font-medium text-amber-600 dark:text-amber-300">Em andamento</span> — alguém da equipe já está cuidando do caso.</div>
+                        <div><span className="font-medium text-rose-600 dark:text-rose-300">Escalado</span> — Wian não conseguiu resolver e passou para humano.</div>
+                        <div><span className="font-medium text-emerald-600 dark:text-emerald-300">Resolvido</span> — problema solucionado, aguardando confirmação.</div>
+                        <div><span className="font-medium text-muted-foreground">Fechado</span> — finalizado e arquivado.</div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                   <Select value={selected.status} onValueChange={updateStatus}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -361,7 +475,23 @@ export default function AdminSupportTickets() {
                   </Select>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Prioridade</p>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <p className="text-xs text-muted-foreground">Prioridade</p>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button type="button" className="text-muted-foreground hover:text-foreground">
+                          <HelpCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72 text-xs space-y-2" align="start">
+                        <p className="font-semibold text-sm">Níveis de prioridade</p>
+                        <div><span className="font-medium">Baixa</span> — dúvidas gerais, sem impacto imediato.</div>
+                        <div><span className="font-medium text-blue-600 dark:text-blue-300">Média</span> — afeta o uso, mas há contorno.</div>
+                        <div><span className="font-medium text-amber-600 dark:text-amber-300">Alta</span> — bloqueia funcionalidade importante.</div>
+                        <div><span className="font-medium text-rose-600 dark:text-rose-300">Urgente</span> — cliente pagante parado, perda de receita.</div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                   <Select value={selected.priority} onValueChange={updatePriority}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -420,8 +550,8 @@ export default function AdminSupportTickets() {
               </div>
             </div>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
