@@ -682,11 +682,30 @@ export function WianChat() {
                     {m.attachments.map(renderAttachment)}
                   </div>
                 ) : null}
-                {m.role === "ai" ? (
-                  <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_strong]:font-semibold">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
-                  </div>
-                ) : (
+                {m.role === "ai" ? (() => {
+                  const yt = findYoutube(m.content);
+                  const cleaned = yt ? m.content.replace(yt.url, "").replace(/\s{2,}/g, " ").trim() : m.content;
+                  return (
+                    <div className="space-y-2">
+                      {cleaned && (
+                        <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_strong]:font-semibold">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{cleaned}</ReactMarkdown>
+                        </div>
+                      )}
+                      {yt && (
+                        <div className="rounded-lg overflow-hidden border border-border/60 bg-black aspect-video w-full max-w-[420px]">
+                          <iframe
+                            src={`https://www.youtube.com/embed/${yt.id}`}
+                            title="Vídeo passo a passo"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            className="w-full h-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })() : (
                   m.content !== "(anexo)" && m.content
                 )}
               </div>
