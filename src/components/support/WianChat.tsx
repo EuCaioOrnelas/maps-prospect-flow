@@ -682,6 +682,42 @@ export function WianChat() {
   const RESET_WINDOW_MS = 60 * 60 * 1000;
   const RESET_KEY = "wian_chat_resets_v1";
 
+  const [blockedUntil, setBlockedUntil] = useState<number | null>(null);
+  const [blockTick, setBlockTick] = useState(0);
+
+  // Ao montar, verifica se ainda está bloqueado por excesso de reinícios
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RESET_KEY);
+      if (!raw) return;
+      const arr: number[] = JSON.parse(raw);
+      const now = Date.now();
+      const recent = arr.filter((t) => now - t < RESET_WINDOW_MS);
+      if (recent.length >= RESET_LIMIT) {
+        const until = recent[0] + RESET_WINDOW_MS;
+        setBlockedUntil(until);
+        setPhase("blocked");
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Atualiza o contador da tela de bloqueio a cada 30s
+  useEffect(() => {
+    if (phase !== "blocked" || !blockedUntil) return;
+    const id = setInterval(() => {
+      if (Date.now() >= blockedUntil) {
+        setBlockedUntil(null);
+        try { localStorage.removeItem(RESET_KEY); } catch {}
+        setPhase("triage-menu");
+        setMessages([GREETING_MSG]);
+      } else {
+        setBlockTick((t) => t + 1);
+      }
+    }, 30000);
+    return () => clearInterval(id);
+  }, [phase, blockedUntil]);
+
   const restart = () => {
     try {
       const raw = localStorage.getItem(RESET_KEY);
@@ -689,13 +725,9 @@ export function WianChat() {
       const arr: number[] = raw ? JSON.parse(raw) : [];
       const recent = arr.filter((t) => now - t < RESET_WINDOW_MS);
       if (recent.length >= RESET_LIMIT) {
-        const oldest = recent[0];
-        const waitMin = Math.ceil((RESET_WINDOW_MS - (now - oldest)) / 60000);
-        toast({
-          title: "Limite de reinícios atingido",
-          description: `Você pode reiniciar o chat até ${RESET_LIMIT}x por hora. Tente novamente em ${waitMin} min.`,
-          variant: "destructive",
-        });
+        const until = recent[0] + RESET_WINDOW_MS;
+        setBlockedUntil(until);
+        setPhase("blocked");
         return;
       }
       recent.push(now);
