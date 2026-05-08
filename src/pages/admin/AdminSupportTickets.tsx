@@ -150,7 +150,7 @@ export default function AdminSupportTickets() {
       { data: ratedTicketIds },
       { count: closedTotal },
     ] = await Promise.all([
-      supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "open"),
+      supabase.from("support_tickets").select("*", { count: "exact", head: true }).in("status", ACTIVE_STATUSES),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "escalated"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "resolved"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }),
@@ -184,12 +184,12 @@ export default function AdminSupportTickets() {
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
-      if (statusFilter === "open") q = q.eq("status", "open");
+      if (statusFilter === "open") q = q.in("status", ACTIVE_STATUSES);
       else if (statusFilter === "closed") q = q.in("status", ["resolved", "closed"]);
       else if (statusFilter === "incomplete") {
-        // Chats abandonados ou pendentes de resolução: open/in_progress/escalated, sem atividade há +30min
+        // Chats abandonados: conversas abertas sem resolução e sem interação recente.
         const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-        q = q.in("status", ["open", "in_progress", "escalated"]).lt("updated_at", cutoff);
+        q = q.in("status", ["open", "in_progress"]).eq("is_manual", false).lt("updated_at", cutoff);
       }
       if (search.trim()) {
         const s = `%${search.trim()}%`;
