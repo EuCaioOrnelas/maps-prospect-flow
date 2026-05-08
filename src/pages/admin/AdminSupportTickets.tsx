@@ -100,7 +100,7 @@ export default function AdminSupportTickets() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [rating, setRating] = useState<Rating | null>(null);
-  const [stats, setStats] = useState({ open: 0, escalated: 0, resolved: 0, total: 0, avgNps: null as number | null, ratingsCount: 0 });
+  const [stats, setStats] = useState({ open: 0, escalated: 0, resolved: 0, total: 0, avgNps: null as number | null, ratingsCount: 0, skippedRatings: 0 });
   const [userPlan, setUserPlan] = useState<string | null>(null);
   const [ticketRatings, setTicketRatings] = useState<Record<string, { stars: number | null; nps_score: number | null; nps_recommend: number | null }>>({});
 
