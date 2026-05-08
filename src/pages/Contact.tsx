@@ -142,13 +142,23 @@ const Contact = () => {
                     </div>
                     <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-card" />
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground text-sm sm:text-base">Wian — Assistente Virtual</p>
                     <div className="flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
                       <span className="text-[10px] sm:text-xs text-green-500">Online</span>
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => window.dispatchEvent(new Event("wian:reset"))}
+                    title="Reiniciar conversa"
+                    className="gap-1.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span className="hidden sm:inline text-xs">Reiniciar</span>
+                  </Button>
                 </div>
 
                 {/* Wian Chat */}
