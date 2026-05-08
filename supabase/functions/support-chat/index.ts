@@ -182,6 +182,19 @@ Deno.serve(async (req) => {
       ]);
       kbResults = kb ?? [];
       faqResults = faqs ?? [];
+
+      // Hidrata video_url (RPCs match_* podem não retornar todas as colunas)
+      const ids = kbResults.map((k: any) => k.id).filter(Boolean);
+      if (ids.length) {
+        const { data: extra } = await sb
+          .from("knowledge_base")
+          .select("id, video_url")
+          .in("id", ids);
+        if (extra) {
+          const map = new Map(extra.map((e: any) => [e.id, e.video_url]));
+          kbResults = kbResults.map((k: any) => ({ ...k, video_url: map.get(k.id) ?? k.video_url ?? null }));
+        }
+      }
     }
 
     // Fallback por palavra-chave quando não há embeddings (ou nada bate)
