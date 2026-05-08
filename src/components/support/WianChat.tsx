@@ -172,7 +172,7 @@ export function WianChat() {
 
         {loading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-end gap-2">
-            <img src={logoIcon} alt="Wian" className="w-7 h-7 rounded-md" />
+            <AiAvatar />
             <div className="bg-muted rounded-2xl rounded-bl-md px-3.5 py-2.5">
               <div className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-foreground/50 rounded-full animate-bounce" />
