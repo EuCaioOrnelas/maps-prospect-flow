@@ -95,6 +95,32 @@ const GREETING_MSG: Msg = {
   content: "Olá! Eu sou o **Wian** 👋, atendente virtual da Wiize.\n\nToque no menu abaixo para selecionar a área onde precisa de ajuda.",
 };
 
+const ASK_NAME_MSG: Msg = {
+  role: "ai",
+  content: "Olá! Eu sou o **Wian** 👋, atendente virtual da Wiize.\n\nAntes da gente começar, como posso te chamar? 😊",
+};
+
+// Quebra a resposta longa do AI em vários "balões" curtos (estilo WhatsApp).
+// Divide por linhas em branco e mescla pedaços muito curtos para evitar bolhas órfãs.
+function splitAnswerIntoBubbles(answer: string): string[] {
+  if (!answer) return [];
+  const raw = answer.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean);
+  if (raw.length <= 1) return raw;
+  const out: string[] = [];
+  for (const chunk of raw) {
+    const last = out[out.length - 1];
+    // Se o chunk anterior é muito curto (<60 chars) e não termina em ":" e o próximo
+    // não começa com lista, mescla pra não ficar bolha minúscula.
+    const startsList = /^(\d+\.|[-*])\s/.test(chunk);
+    if (last && last.length < 60 && !/[:?]\s*$/.test(last) && !startsList) {
+      out[out.length - 1] = `${last}\n\n${chunk}`;
+    } else {
+      out.push(chunk);
+    }
+  }
+  return out;
+}
+
 export function WianChat() {
   const initial = loadState();
   const [ticketId, setTicketId] = useState<string | null>(initial?.ticketId ?? null);
