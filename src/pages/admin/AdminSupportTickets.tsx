@@ -145,15 +145,20 @@ export default function AdminSupportTickets() {
   const openTicket = async (t: Ticket) => {
     setSelected(t);
     setInternalNotes(t.internal_notes || "");
+    setUserPlan(null);
     setLoadingMsgs(true);
     try {
-      const { data, error } = await supabase
-        .from("support_messages")
-        .select("*")
-        .eq("ticket_id", t.id)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      setMessages((data as Message[]) || []);
+      const [{ data: msgs, error: msgErr }, planRes] = await Promise.all([
+        supabase.from("support_messages").select("*").eq("ticket_id", t.id).order("created_at", { ascending: true }),
+        t.user_id
+          ? supabase.from("profiles").select("plan").eq("id", t.user_id).maybeSingle()
+          : (t.email
+              ? supabase.from("profiles").select("plan").ilike("email", t.email).maybeSingle()
+              : Promise.resolve({ data: null } as any)),
+      ]);
+      if (msgErr) throw msgErr;
+      setMessages((msgs as Message[]) || []);
+      setUserPlan((planRes as any)?.data?.plan ?? null);
     } catch (e: any) {
       toast({ title: "Erro ao carregar mensagens", description: e.message, variant: "destructive" });
     } finally {
