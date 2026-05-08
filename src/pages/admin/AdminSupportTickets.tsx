@@ -543,7 +543,7 @@ export default function AdminSupportTickets() {
               {selected?.ticket_number || `Ticket #${selected?.id.slice(0, 8)}`}
               {selected && <Badge variant="outline" className={STATUS_COLORS[selected.status] || ""}>{selected.status}</Badge>}
               {selected?.is_manual && <Badge variant="outline" className="bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/30">Manual</Badge>}
-              {selected && dueBadge(selected)}
+              
             </DialogTitle>
             <DialogDescription>
               Detalhes do chamado, contato do solicitante e histórico completo da conversa.
