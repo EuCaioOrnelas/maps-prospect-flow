@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TRIAGE_TREE, findCategory, findProblem, type Solution, type Category } from "./triageTree";
+import wianAvatar from "@/assets/wian-avatar.png";
 
 const CATEGORY_ICONS: Record<string, typeof Megaphone> = {
   campanhas: Megaphone,
@@ -27,9 +28,11 @@ const CATEGORY_ICONS: Record<string, typeof Megaphone> = {
 };
 
 const AiAvatar = () => (
-  <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
-    <User className="w-4 h-4" />
-  </div>
+  <img
+    src={wianAvatar}
+    alt="Wian"
+    className="w-7 h-7 rounded-full object-cover shrink-0"
+  />
 );
 
 type Attachment = {
@@ -797,14 +800,9 @@ export function WianChat() {
 
         {phase === "collect-info" && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-2.5">
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium">
-                {isAuthed ? "Confirme seus dados para abrir o chamado:" : "Para abrir seu chamado precisamos de algumas informações:"}
-              </p>
-              <p className="text-[11px] text-muted-foreground leading-snug">
-                A conversa com o Wian será enviada junto — não precisa repetir tudo.
-              </p>
-            </div>
+            <p className="text-sm font-medium">
+              {isAuthed ? "Confirme seus dados para abrir o chamado:" : "Para abrir seu chamado precisamos de algumas informações:"}
+            </p>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger><SelectValue placeholder="Tópico do chamado*" /></SelectTrigger>
               <SelectContent>
