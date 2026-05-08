@@ -991,7 +991,7 @@ export function WianChat() {
                   <button
                     key={n}
                     onClick={() => setStars(n)}
-                    className={`aspect-square rounded-md text-xs font-semibold border transition ${
+                    className={`h-7 rounded-md text-[11px] font-semibold border transition flex items-center justify-center ${
                       selected
                         ? `${colorBg} text-white border-transparent shadow-sm scale-105`
                         : "bg-background border-border hover:border-primary/40 hover:bg-muted/50 text-foreground"
