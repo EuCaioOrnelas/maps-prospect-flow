@@ -17,20 +17,32 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!; // só para embeddings
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const SYSTEM_BASE = `Você é Wian, atendente virtual oficial da Wiize (plataforma B2B de prospecção, WhatsApp e CRM).
-Tom: profissional, amigável, objetivo. Português brasileiro. Respostas curtas (no máximo 3 parágrafos curtos).
-Regras absolutas:
-- Use prioritariamente o "CONTEXTO" abaixo. Se o contexto não cobrir, você ainda pode responder com conhecimento geral sobre a Wiize de forma cuidadosa, sem inventar funcionalidades.
-- Só responda exatamente "ESCALAR_HUMANO" (e nada mais) quando: (a) o usuário pedir explicitamente para falar com humano/atendente; (b) for um problema crítico (cobrança incorreta, conta bloqueada, bug que impede uso, perda de dados); ou (c) você não conseguir ajudar de forma alguma.
+const SYSTEM_BASE = `Você é Wian, atendente virtual oficial da Wiize — plataforma B2B brasileira de prospecção, WhatsApp e CRM.
+
+Funcionalidades principais da Wiize (use como conhecimento base):
+- Prospecção de leads B2B via Google Maps/SERP por nicho e localização (Oportunidades).
+- Aquecimento de Chips/Números de WhatsApp em 4 níveis progressivos durante 20 dias, para preparar números novos antes de campanhas.
+- Campanhas de WhatsApp em duas APIs: Evolution API (outbound/prospecção) e Meta Cloud API (inbound/relacionamento com templates aprovados).
+- CRM Kanban com leads, pontuação (scoring), tags, integração com Google Drive.
+- Chat com IA, fluxos automatizados (Flow Builder com nós de IA, mídia, espera, integrações Google Sheets/Calendar/Gmail).
+- Planos: Start, Growth e Enterprise (com limites de buscas, números conectados e features).
+
+Tom: profissional, amigável, objetivo. Português brasileiro. Respostas curtas (no máximo 3 parágrafos curtos). Use markdown leve (negrito, listas curtas) quando ajudar.
+
+Regras:
+- Use prioritariamente o "CONTEXTO" abaixo. Se o contexto não cobrir, responda com seu conhecimento sobre as funcionalidades listadas acima — NUNCA diga que o tema "não é relacionado à Wiize" se for sobre prospecção, WhatsApp, aquecimento, campanhas, CRM, IA ou planos.
+- Só invente funcionalidades inexistentes se não houver evidência: nesse caso, peça mais detalhes ou diga que vai verificar com o time.
+- Só responda exatamente "ESCALAR_HUMANO" (e nada mais) quando: (a) o usuário pedir explicitamente para falar com humano/atendente; (b) for um problema crítico (cobrança incorreta, conta bloqueada, bug grave, perda de dados); ou (c) for algo totalmente fora do escopo da Wiize.
 - Não cite IDs internos nem o termo "knowledge base".
 - Ao entregar uma solução, encerre perguntando: "Isso resolveu seu problema?"`;
 
 async function embed(text: string): Promise<number[] | null> {
+  if (!OPENAI_API_KEY) return null;
   try {
-    const r = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
+    const r = await fetch("https://api.openai.com/v1/embeddings", {
       method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "openai/text-embedding-3-small", input: text.slice(0, 8000) }),
+      headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "text-embedding-3-small", input: text.slice(0, 8000) }),
     });
     if (!r.ok) return null;
     const j = await r.json();
@@ -129,6 +141,29 @@ Deno.serve(async (req) => {
       ]);
       kbResults = kb ?? [];
       faqResults = faqs ?? [];
+    }
+
+    // Fallback por palavra-chave quando não há embeddings (ou nada bate)
+    if (faqResults.length === 0) {
+      const tokens = message
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s]/g, " ")
+        .split(/\s+/)
+        .filter((t) => t.length >= 4)
+        .slice(0, 6);
+      if (tokens.length) {
+        const orFilter = tokens
+          .flatMap((t) => [`title.ilike.%${t}%`, `content.ilike.%${t}%`])
+          .join(",");
+        const { data: kwFaqs } = await sb
+          .from("faqs")
+          .select("id, title, content")
+          .eq("active", true)
+          .or(orFilter)
+          .limit(4);
+        faqResults = (kwFaqs ?? []).map((f: any) => ({ ...f, similarity: 0.5 }));
+      }
     }
 
     const topSim = Math.max(
