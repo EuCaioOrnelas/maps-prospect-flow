@@ -440,7 +440,7 @@ export default function AdminSupportTickets() {
       iconColor: avgColor,
     },
     {
-      label: "Avaliações puladas",
+      label: "Avaliações ignoradas",
       value: stats.skippedRatings,
       color: "text-warning",
       suffix: "",
@@ -449,9 +449,23 @@ export default function AdminSupportTickets() {
     },
   ]), [stats, avgColor]);
 
+  const isAbandoned = (t: Ticket) => {
+    if (t.is_manual) return false;
+    if (!["open", "in_progress"].includes(t.status)) return false;
+    const last = new Date(t.updated_at || t.created_at).getTime();
+    return Date.now() - last > 30 * 60 * 1000;
+  };
+
   const responseTime = (t: Ticket) => {
+    if (isAbandoned(t)) return null;
     const end = t.resolved_at ? new Date(t.resolved_at) : new Date();
-    return formatDistanceStrict(new Date(t.created_at), end, { locale: ptBR });
+    const ms = end.getTime() - new Date(t.created_at).getTime();
+    const minutes = ms / 60000;
+    let color = "text-success";
+    if (minutes > 60 * 24) color = "text-destructive";
+    else if (minutes > 60 * 4) color = "text-warning";
+    else if (minutes > 30) color = "text-primary";
+    return { label: formatDistanceStrict(new Date(t.created_at), end, { locale: ptBR }), color };
   };
 
   const dueBadge = (t: Ticket) => {
