@@ -43,6 +43,7 @@ import {
   Award,
   LifeBuoy,
   MessageSquare,
+  HelpCircle,
 } from "lucide-react";
 
 interface NavItem {
