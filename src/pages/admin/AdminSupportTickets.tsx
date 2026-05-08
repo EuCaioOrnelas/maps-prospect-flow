@@ -477,7 +477,7 @@ export default function AdminSupportTickets() {
                 <TableHead>Contato</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Prazo</TableHead>
+                <TableHead>Avaliação</TableHead>
                 <TableHead>Prioridade</TableHead>
                 <TableHead>Criado</TableHead>
                 <TableHead></TableHead>
@@ -488,7 +488,10 @@ export default function AdminSupportTickets() {
                 <TableRow><TableCell colSpan={7} className="text-center py-12"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
               ) : tickets.length === 0 ? (
                 <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Nenhum ticket encontrado.</TableCell></TableRow>
-              ) : tickets.map((t) => (
+              ) : tickets.map((t) => {
+                const r = ticketRatings[t.id];
+                const score = r ? (r.nps_score ?? (r.stars != null ? r.stars * 2 : null)) : null;
+                return (
                 <TableRow key={t.id} className="cursor-pointer hover:bg-muted/40" onClick={() => openTicket(t)}>
                   <TableCell>
                     <div className="flex items-center gap-1.5 mb-0.5">
@@ -500,7 +503,15 @@ export default function AdminSupportTickets() {
                   </TableCell>
                   <TableCell className="text-sm">{t.category || "—"}</TableCell>
                   <TableCell><Badge variant="outline" className={STATUS_COLORS[t.status] || ""}>{t.status}</Badge></TableCell>
-                  <TableCell>{dueBadge(t)}</TableCell>
+                  <TableCell>
+                    {score != null ? (
+                      <Badge variant="outline" className={`${ratingColor(score)} gap-1`}>
+                        <Star className="w-3 h-3" /> {score}/10
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Sem avaliação</span>
+                    )}
+                  </TableCell>
                   <TableCell><span className={`text-xs px-2 py-0.5 rounded-md ${PRIORITY_COLORS[t.priority] || ""}`}>{t.priority}</span></TableCell>
                   <TableCell className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(t.created_at), { addSuffix: true, locale: ptBR })}</TableCell>
                   <TableCell>
