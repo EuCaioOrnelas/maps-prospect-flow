@@ -254,8 +254,22 @@ Deno.serve(async (req) => {
     const aiJson = await aiRes.json();
     let answer: string = aiJson.choices?.[0]?.message?.content?.trim() || "";
 
-    const explicitEscalate = /^ESCALAR_HUMANO$/m.test(answer.trim());
+    const rawAnswer = answer;
+    const explicitEscalate = /\[ESCALAR_HUMANO\]|^ESCALAR_HUMANO$/m.test(rawAnswer);
+    const isSolution = /\[SOLUCAO\]/.test(rawAnswer);
+    const isInvestigating = /\[INVESTIGANDO\]/.test(rawAnswer);
+
+    answer = rawAnswer
+      .replace(/\[ESCALAR_HUMANO\]/g, "")
+      .replace(/\[SOLUCAO\]/g, "")
+      .replace(/\[INVESTIGANDO\]/g, "")
+      .replace(/^ESCALAR_HUMANO$/gm, "")
+      .trim();
+
     let shouldEscalate = mustEscalate || explicitEscalate;
+    let phase: "investigating" | "solution" | "escalated" = "investigating";
+    if (shouldEscalate) phase = "escalated";
+    else if (isSolution) phase = "solution";
 
     if (shouldEscalate) {
       answer = "Esse caso precisa de uma análise mais detalhada da nossa equipe. Vou conectar você com um humano agora.";
@@ -263,7 +277,7 @@ Deno.serve(async (req) => {
 
     await sb.from("support_messages").insert({
       ticket_id: ticketId, role: "ai", content: answer,
-      metadata: { confidence: topSim, escalated: shouldEscalate, kb_ids: kbResults.map((k) => k.id) },
+      metadata: { confidence: topSim, escalated: shouldEscalate, phase, kb_ids: kbResults.map((k) => k.id) },
     });
 
     await sb.from("ai_logs").insert({
@@ -284,6 +298,7 @@ Deno.serve(async (req) => {
       ticketId,
       answer,
       escalate: shouldEscalate,
+      phase,
       confidence: topSim,
       user: userId ? {
         authenticated: true,
