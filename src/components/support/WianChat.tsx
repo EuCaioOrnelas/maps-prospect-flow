@@ -453,9 +453,9 @@ export function WianChat() {
       { role: "user", content: text || "(anexo)", attachments: attachments.length ? attachments : undefined },
     ]);
 
-    setShowConfirmSend(true);
+    // Mostra "digitando" imediatamente e dispara após pequena pausa para agrupar mensagens consecutivas
+    setLoading(true);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    startCountdown();
     debounceRef.current = setTimeout(() => {
       void flushQueue();
     }, RESPONSE_DELAY_MS);
@@ -468,30 +468,6 @@ export function WianChat() {
     setInput("");
     setPendingAttachments([]);
     queueAndSchedule(text, atts);
-  };
-
-  const sendNow = () => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    void flushQueue();
-  };
-
-  const cancelQueue = () => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    stopCountdown();
-    setShowConfirmSend(false);
-    const drop = queueRef.current.texts.length + (queueRef.current.attachments.length ? 1 : 0);
-    if (drop > 0) {
-      setMessages((prev) => {
-        let removed = 0;
-        const out = [...prev];
-        while (removed < drop && out.length && out[out.length - 1].role === "user") {
-          out.pop();
-          removed++;
-        }
-        return out;
-      });
-    }
-    queueRef.current = { texts: [], attachments: [] };
   };
 
   const onResolved = (resolved: boolean) => {
