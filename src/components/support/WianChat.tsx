@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink } from "lucide-react";
+import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink, List, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TRIAGE_TREE, findCategory, findProblem, type Solution, type Category } from "./triageTree";
@@ -97,6 +98,7 @@ export function WianChat() {
   const [isAuthed, setIsAuthed] = useState(false);
   const [waitingSeconds, setWaitingSeconds] = useState(0);
   const [showConfirmSend, setShowConfirmSend] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -149,6 +151,7 @@ export function WianChat() {
 
   // ============== TRIAGEM ==============
   const pickCategory = (cat: Category) => {
+    setMenuOpen(false);
     setActiveCategory(cat);
     setTriage({ category: cat.label });
 
@@ -179,6 +182,7 @@ export function WianChat() {
   };
 
   const pickProblem = (sol: Solution) => {
+    setMenuOpen(false);
     setActiveSolution(sol);
     setTriage((t) => ({ ...t, subcategory: sol.title }));
 
@@ -566,27 +570,25 @@ export function WianChat() {
   return (
     <div className="flex flex-col h-full min-h-0" onPaste={handlePaste}>
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background/30">
-        {/* Camada 1 — MENU */}
+        {/* Camada 1 — MENU (botão estilo WhatsApp) */}
         {phase === "triage-menu" && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
             <div className="flex items-end gap-2">
               <AiAvatar />
               <div className="bg-muted text-foreground rounded-2xl rounded-bl-md px-3.5 py-2.5 text-sm leading-relaxed max-w-[78%]">
                 Olá! Eu sou o **Wian** 👋, atendente virtual da Wiize.<br />
-                <span className="text-muted-foreground">Em qual área você precisa de ajuda?</span>
+                <span className="text-muted-foreground">Toque no menu abaixo para selecionar a área onde precisa de ajuda.</span>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-              {TRIAGE_TREE.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => pickCategory(cat)}
-                  className="text-left text-sm px-3 py-2.5 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-colors flex items-center gap-2"
-                >
-                  <span className="text-base">{cat.emoji}</span>
-                  <span className="font-medium">{cat.label}</span>
-                </button>
-              ))}
+            <div className="flex justify-start pl-9">
+              <button
+                onClick={() => setMenuOpen(true)}
+                className="group flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-card border border-primary/30 text-sm font-medium text-primary hover:bg-primary/5 hover:border-primary/50 transition-all shadow-sm"
+              >
+                <List className="w-4 h-4" />
+                Ver opções de atendimento
+                <ChevronRight className="w-4 h-4 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+              </button>
             </div>
           </motion.div>
         )}
@@ -626,25 +628,24 @@ export function WianChat() {
           ))}
         </AnimatePresence>
 
-        {/* Camada 2 — SUBMENU */}
+        {/* Camada 2 — SUBMENU (botão estilo WhatsApp) */}
         {phase === "triage-submenu" && activeCategory && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
-            <div className="grid grid-cols-1 gap-2">
-              {activeCategory.problems.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => pickProblem(p)}
-                  className="text-left text-sm px-3 py-2.5 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-colors"
-                >
-                  {p.title}
-                </button>
-              ))}
+            <div className="flex justify-start pl-9">
+              <button
+                onClick={() => setMenuOpen(true)}
+                className="group flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-card border border-primary/30 text-sm font-medium text-primary hover:bg-primary/5 hover:border-primary/50 transition-all shadow-sm"
+              >
+                <List className="w-4 h-4" />
+                Selecionar problema
+                <ChevronRight className="w-4 h-4 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+              </button>
             </div>
             <button
               onClick={goBackToMenu}
-              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mt-2"
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mt-2 pl-9"
             >
-              <ChevronLeft className="w-3 h-3" /> Voltar ao menu
+              <ChevronLeft className="w-3 h-3" /> Voltar ao menu principal
             </button>
           </motion.div>
         )}
@@ -846,6 +847,66 @@ export function WianChat() {
           </div>
         </div>
       )}
+
+      {/* Popup de seleção (estilo lista interativa do WhatsApp) */}
+      <Dialog
+        open={menuOpen}
+        onOpenChange={(o) => {
+          if (phase !== "triage-menu" && phase !== "triage-submenu") return;
+          setMenuOpen(o);
+        }}
+      >
+        <DialogContent className="bg-background border-border max-w-md p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
+            <DialogTitle className="text-base">
+              {phase === "triage-submenu" && activeCategory
+                ? activeCategory.label
+                : "Como podemos te ajudar?"}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {phase === "triage-submenu" && activeCategory
+                ? activeCategory.subcategoryLabel || "Selecione o problema mais próximo."
+                : "Escolha a área para iniciar o atendimento."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto py-1">
+            {phase === "triage-submenu" && activeCategory
+              ? activeCategory.problems.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => pickProblem(p)}
+                    className="w-full text-left px-5 py-3 hover:bg-muted/60 transition-colors flex items-center justify-between gap-3 border-b border-border/50 last:border-b-0"
+                  >
+                    <span className="text-sm font-medium text-foreground">{p.title}</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </button>
+                ))
+              : TRIAGE_TREE.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => pickCategory(cat)}
+                    className="w-full text-left px-5 py-3 hover:bg-muted/60 transition-colors flex items-center gap-3 border-b border-border/50 last:border-b-0"
+                  >
+                    <span className="text-xl shrink-0">{cat.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">{cat.label}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </button>
+                ))}
+          </div>
+          {phase === "triage-submenu" && (
+            <div className="px-5 py-3 border-t border-border bg-muted/30">
+              <button
+                onClick={() => { setMenuOpen(false); goBackToMenu(); }}
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+              >
+                <ChevronLeft className="w-3 h-3" /> Voltar ao menu principal
+              </button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
