@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink, List, ChevronRight } from "lucide-react";
+import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink, List, ChevronRight, Megaphone, MessageSquare, Building2, Bot, LayoutGrid, GitBranch, CreditCard, Package, BarChart3, Headphones, HelpCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -12,6 +12,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TRIAGE_TREE, findCategory, findProblem, type Solution, type Category } from "./triageTree";
+
+const CATEGORY_ICONS: Record<string, typeof Megaphone> = {
+  campanhas: Megaphone,
+  whatsapp: MessageSquare,
+  meta: Building2,
+  ia: Bot,
+  crm: LayoutGrid,
+  flows: GitBranch,
+  financeiro: CreditCard,
+  planos: Package,
+  relatorios: BarChart3,
+  suporte: Headphones,
+};
 
 const AiAvatar = () => (
   <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
@@ -575,9 +588,13 @@ export function WianChat() {
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
             <div className="flex items-end gap-2">
               <AiAvatar />
-              <div className="bg-muted text-foreground rounded-2xl rounded-bl-md px-3.5 py-2.5 text-sm leading-relaxed max-w-[78%]">
-                Olá! Eu sou o **Wian** 👋, atendente virtual da Wiize.<br />
-                <span className="text-muted-foreground">Toque no menu abaixo para selecionar a área onde precisa de ajuda.</span>
+              <div className="bg-muted/40 text-foreground rounded-2xl rounded-bl-md px-3.5 py-2.5 text-sm leading-relaxed max-w-[78%] border border-border/40">
+                <p className="m-0">
+                  Olá! Eu sou o <strong className="font-semibold">Wian</strong> 👋, atendente virtual da Wiize.
+                </p>
+                <p className="m-0 mt-1 text-muted-foreground">
+                  Toque no menu abaixo para selecionar a área onde precisa de ajuda.
+                </p>
               </div>
             </div>
             <div className="flex justify-start pl-9">
@@ -608,7 +625,7 @@ export function WianChat() {
                 className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                   m.role === "user"
                     ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100 rounded-br-md whitespace-pre-wrap"
-                    : "bg-muted text-foreground rounded-bl-md"
+                    : "bg-muted/40 text-foreground rounded-bl-md border border-border/40"
                 }`}
               >
                 {m.attachments?.length ? (
@@ -702,7 +719,7 @@ export function WianChat() {
         {loading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-end gap-2">
             <AiAvatar />
-            <div className="bg-muted rounded-2xl rounded-bl-md px-3.5 py-2.5">
+            <div className="bg-muted/40 border border-border/40 rounded-2xl rounded-bl-md px-3.5 py-2.5">
               <div className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-foreground/50 rounded-full animate-bounce" />
                 <span className="w-1.5 h-1.5 bg-foreground/50 rounded-full animate-bounce [animation-delay:120ms]" />
@@ -881,19 +898,24 @@ export function WianChat() {
                     <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                   </button>
                 ))
-              : TRIAGE_TREE.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => pickCategory(cat)}
-                    className="w-full text-left px-5 py-3 hover:bg-muted/60 transition-colors flex items-center gap-3 border-b border-border/50 last:border-b-0"
-                  >
-                    <span className="text-xl shrink-0">{cat.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">{cat.label}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                  </button>
-                ))}
+              : TRIAGE_TREE.map((cat) => {
+                  const Icon = CATEGORY_ICONS[cat.id] || HelpCircle;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => pickCategory(cat)}
+                      className="w-full text-left px-5 py-3 hover:bg-muted/60 transition-colors flex items-center gap-3 border-b border-border/50 last:border-b-0"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <Icon className="w-4.5 h-4.5" strokeWidth={2} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">{cat.label}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                    </button>
+                  );
+                })}
           </div>
           {phase === "triage-submenu" && (
             <div className="px-5 py-3 border-t border-border bg-muted/30">
