@@ -135,6 +135,31 @@ function extractYoutubeId(url: string): string | null {
 }
 
 // Encontra a primeira URL do YouTube no texto e retorna {id, urlOriginal}
+function AiBubbleContent({ content }: { content: string }) {
+  const yt = findYoutube(content);
+  const cleaned = yt ? content.replace(yt.url, "").replace(/\s{2,}/g, " ").trim() : content;
+  return (
+    <div className="space-y-2">
+      {cleaned && (
+        <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_strong]:font-semibold">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{cleaned}</ReactMarkdown>
+        </div>
+      )}
+      {yt && (
+        <div className="rounded-lg overflow-hidden border border-border/60 bg-black aspect-video w-full max-w-[420px]">
+          <iframe
+            src={`https://www.youtube.com/embed/${yt.id}`}
+            title="Vídeo passo a passo"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="w-full h-full"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function findYoutube(content: string): { id: string; url: string } | null {
   const m = content.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)[A-Za-z0-9_\-?=&]+|youtu\.be\/[A-Za-z0-9_\-?=&]+)/);
   if (!m) return null;
