@@ -43,6 +43,7 @@ type Attachment = {
 type Msg = { role: "user" | "ai"; content: string; attachments?: Attachment[] };
 
 type Phase =
+  | "ask-name"
   | "triage-menu"
   | "triage-submenu"
   | "triage-solution"
@@ -83,7 +84,7 @@ function loadState() {
   }
 }
 
-function saveState(s: { ticketId: string | null; messages: Msg[]; phase: Phase; triage: TriageContext }) {
+function saveState(s: { ticketId: string | null; messages: Msg[]; phase: Phase; triage: TriageContext; guestName?: string }) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
   } catch {}
@@ -93,6 +94,32 @@ const GREETING_MSG: Msg = {
   role: "ai",
   content: "Olá! Eu sou o **Wian** 👋, atendente virtual da Wiize.\n\nToque no menu abaixo para selecionar a área onde precisa de ajuda.",
 };
+
+const ASK_NAME_MSG: Msg = {
+  role: "ai",
+  content: "Olá! Eu sou o **Wian** 👋, atendente virtual da Wiize.\n\nAntes da gente começar, como posso te chamar? 😊",
+};
+
+// Quebra a resposta longa do AI em vários "balões" curtos (estilo WhatsApp).
+// Divide por linhas em branco e mescla pedaços muito curtos para evitar bolhas órfãs.
+function splitAnswerIntoBubbles(answer: string): string[] {
+  if (!answer) return [];
+  const raw = answer.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean);
+  if (raw.length <= 1) return raw;
+  const out: string[] = [];
+  for (const chunk of raw) {
+    const last = out[out.length - 1];
+    // Se o chunk anterior é muito curto (<60 chars) e não termina em ":" e o próximo
+    // não começa com lista, mescla pra não ficar bolha minúscula.
+    const startsList = /^(\d+\.|[-*])\s/.test(chunk);
+    if (last && last.length < 60 && !/[:?]\s*$/.test(last) && !startsList) {
+      out[out.length - 1] = `${last}\n\n${chunk}`;
+    } else {
+      out.push(chunk);
+    }
+  }
+  return out;
+}
 
 export function WianChat() {
   const initial = loadState();
@@ -132,23 +159,35 @@ export function WianChat() {
       ...m,
       attachments: m.attachments?.map((a) => ({ ...a, dataUrl: undefined, textContent: undefined })),
     }));
-    saveState({ ticketId, messages: lite, phase, triage });
-  }, [ticketId, messages, phase, triage]);
+    saveState({ ticketId, messages: lite, phase, triage, guestName: !isAuthed ? name : undefined });
+  }, [ticketId, messages, phase, triage, isAuthed, name]);
 
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setIsAuthed(true);
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("name, email, phone")
-        .eq("id", user.id)
-        .maybeSingle();
-      setName(profile?.name ?? "");
-      setEmail(profile?.email ?? user.email ?? "");
-      setPhone(profile?.phone ?? "");
+      if (user) {
+        setIsAuthed(true);
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("name, email, phone")
+          .eq("id", user.id)
+          .maybeSingle();
+        setName(profile?.name ?? "");
+        setEmail(profile?.email ?? user.email ?? "");
+        setPhone(profile?.phone ?? "");
+        return;
+      }
+      // Visitante sem nome → entra no fluxo "ask-name" (apenas no primeiro acesso)
+      const hadHistory = !!initial?.messages?.length;
+      const storedName = initial?.guestName;
+      if (storedName) {
+        setName(storedName);
+      } else if (!hadHistory) {
+        setMessages([ASK_NAME_MSG]);
+        setPhase("ask-name");
+      }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -350,6 +389,7 @@ export function WianChat() {
           history: messages.slice(-12).map((m) => ({ role: m.role, content: m.content })),
           imageDataUrl: imageAttachment?.dataUrl ?? null,
           triageContext: triage,
+          userName: name || null,
         },
       });
       if (error) {
@@ -365,7 +405,21 @@ export function WianChat() {
       }
       if (data?.error) throw new Error(data.error);
       if (data?.ticketId) setTicketId(data.ticketId);
-      setMessages((prev) => [...prev, { role: "ai", content: data.answer }]);
+
+      // Quebra em vários balões curtos para parecer mais humano (estilo WhatsApp)
+      const bubbles = splitAnswerIntoBubbles(data.answer || "");
+      if (bubbles.length === 0) {
+        setMessages((prev) => [...prev, { role: "ai", content: data.answer || "" }]);
+      } else {
+        // Adiciona o primeiro imediatamente; agenda os próximos com pequena pausa "digitando"
+        setMessages((prev) => [...prev, { role: "ai", content: bubbles[0] }]);
+        for (let i = 1; i < bubbles.length; i++) {
+          const delay = 600 + i * 700;
+          setTimeout(() => {
+            setMessages((prev) => [...prev, { role: "ai", content: bubbles[i] }]);
+          }, delay);
+        }
+      }
 
       if (data.escalate) {
         setPhase("collect-info");
@@ -627,6 +681,38 @@ export function WianChat() {
             </motion.div>
           ))}
         </AnimatePresence>
+
+        {/* Coleta de nome (visitante) */}
+        {phase === "ask-name" && (
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="pl-9">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const n = name.trim();
+                if (n.length < 2) {
+                  toast({ title: "Me diz seu nome 🙂", description: "Pode ser só o primeiro nome.", variant: "destructive" });
+                  return;
+                }
+                const firstName = n.split(/\s+/)[0];
+                setMessages((prev) => [
+                  ...prev,
+                  { role: "user", content: n },
+                  { role: "ai", content: `Prazer, **${firstName}**! 🙌\n\nMe conta: em qual área você precisa de ajuda? Toque no menu abaixo 👇` },
+                ]);
+                setPhase("triage-menu");
+              }}
+              className="flex gap-2 max-w-sm"
+            >
+              <Input
+                placeholder="Seu nome"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+              />
+              <Button type="submit" size="sm">Enviar</Button>
+            </form>
+          </motion.div>
+        )}
 
         {/* Camada 1 — MENU (botão estilo WhatsApp) */}
         {phase === "triage-menu" && (
