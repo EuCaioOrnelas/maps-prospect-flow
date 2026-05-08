@@ -115,6 +115,7 @@ const AdminAuditoria = lazyWithRetry(() => import("./pages/admin/AdminAuditoria"
 
 const AdminGrowthIntelligence = lazyWithRetry(() => import("./pages/admin/AdminGrowthIntelligence"), "AdminGrowthIntelligence");
 const AdminOnboarding = lazyWithRetry(() => import("./pages/admin/AdminOnboarding"), "AdminOnboarding");
+const AdminSupportTickets = lazyWithRetry(() => import("./pages/admin/AdminSupportTickets"), "AdminSupportTickets");
 
 // Partners - Admin (Programa de Parceiros)
 const AdminPartnersDashboard = lazyWithRetry(() => import("./pages/admin/AdminPartnersDashboard"), "AdminPartnersDashboard");
@@ -302,6 +303,8 @@ const App = () => (
                   <Route path="auditoria" element={<AdminAuditoria />} />
                   <Route path="insights" element={<UserInsights />} />
                   <Route path="onboarding" element={<AdminOnboarding />} />
+                  {/* Suporte */}
+                  <Route path="suporte/tickets" element={<AdminSupportTickets />} />
                   {/* Partners */}
                   <Route path="partners" element={<AdminPartnersDashboard />} />
                   <Route path="partners/parceiros" element={<AdminPartnersList />} />

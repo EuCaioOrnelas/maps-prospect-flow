@@ -41,6 +41,8 @@ import {
   CheckCircle2,
   Settings as SettingsIcon,
   Award,
+  LifeBuoy,
+  MessageSquare,
 } from "lucide-react";
 
 interface NavItem {
@@ -124,6 +126,13 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Links Campanha", url: "/admin/partners/links", icon: Workflow },
       { title: "Materiais", url: "/admin/partners/materiais", icon: FileText },
       { title: "Configurações", url: "/admin/partners/configuracoes", icon: SettingsIcon },
+    ],
+  },
+  {
+    title: "Suporte",
+    icon: LifeBuoy,
+    items: [
+      { title: "Tickets", url: "/admin/suporte/tickets", icon: MessageSquare as any },
     ],
   },
   {
