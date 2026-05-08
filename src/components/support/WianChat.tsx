@@ -811,34 +811,77 @@ export function WianChat() {
         )}
 
         {phase === "collect-info" && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-2.5">
-            <p className="text-sm font-medium">
-              {isAuthed ? "Confirme seus dados para abrir o chamado:" : "Para abrir seu chamado precisamos de algumas informações:"}
-            </p>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger><SelectValue placeholder="Tópico do chamado*" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="IA">IA / Atendimento automático</SelectItem>
-                <SelectItem value="WhatsApp">WhatsApp / Aquecimento</SelectItem>
-                <SelectItem value="Campanhas">Campanhas / Disparos</SelectItem>
-                <SelectItem value="CRM">CRM / Leads</SelectItem>
-                <SelectItem value="Financeiro">Financeiro / Pagamento</SelectItem>
-                <SelectItem value="Conta">Conta / Acesso</SelectItem>
-                <SelectItem value="Bug">Problema de sistema (bug)</SelectItem>
-                <SelectItem value="Operacional">Dúvida operacional</SelectItem>
-                <SelectItem value="Outro">Outro</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input placeholder="Seu nome*" value={name} onChange={(e) => setName(e.target.value)} />
-            <Input type="email" placeholder="Seu email*" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-3">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">
+                {isAuthed ? "Confirme seus dados para abrir o chamado" : "Para abrir seu chamado precisamos de algumas informações"}
+              </p>
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                Toda a conversa que você teve com o Wian será enviada junto com o chamado para nossa equipe — não precisa repetir o que já foi dito acima.
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <Select
+                value={category}
+                onValueChange={(v) => { setCategory(v); setFormErrors((p) => ({ ...p, category: undefined })); }}
+              >
+                <SelectTrigger className={formErrors.category ? "border-destructive focus:ring-destructive" : ""}>
+                  <SelectValue placeholder="Tópico do chamado*" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="IA">IA / Atendimento automático</SelectItem>
+                  <SelectItem value="WhatsApp">WhatsApp / Aquecimento</SelectItem>
+                  <SelectItem value="Campanhas">Campanhas / Disparos</SelectItem>
+                  <SelectItem value="CRM">CRM / Leads</SelectItem>
+                  <SelectItem value="Financeiro">Financeiro / Pagamento</SelectItem>
+                  <SelectItem value="Conta">Conta / Acesso</SelectItem>
+                  <SelectItem value="Bug">Problema de sistema (bug)</SelectItem>
+                  <SelectItem value="Operacional">Dúvida operacional</SelectItem>
+                  <SelectItem value="Outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+              {formErrors.category && <p className="text-[11px] text-destructive">{formErrors.category}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <Input
+                placeholder="Seu nome*"
+                value={name}
+                onChange={(e) => { setName(e.target.value); setFormErrors((p) => ({ ...p, name: undefined })); }}
+                className={formErrors.name ? "border-destructive focus-visible:ring-destructive" : ""}
+              />
+              {formErrors.name && <p className="text-[11px] text-destructive">{formErrors.name}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <Input
+                type="email"
+                placeholder="Seu email*"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setFormErrors((p) => ({ ...p, email: undefined })); }}
+                className={formErrors.email ? "border-destructive focus-visible:ring-destructive" : ""}
+              />
+              {formErrors.email && <p className="text-[11px] text-destructive">{formErrors.email}</p>}
+            </div>
+
             <Input placeholder="Telefone (opcional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
+
             <Textarea
-              placeholder="Descreva sua dúvida ou problema (opcional — a conversa acima já será enviada)"
+              placeholder="Algo a mais que queira contar? (opcional — a conversa acima já vai junto)"
               value={extra}
               onChange={(e) => setExtra(e.target.value)}
               rows={3}
             />
-            <Button size="sm" onClick={submitEscalation} disabled={loading}>
+
+            {submitError && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-[12px] text-destructive flex items-start gap-2">
+                <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                <span>{submitError}</span>
+              </div>
+            )}
+
+            <Button size="sm" onClick={submitEscalation} disabled={loading} className="w-full">
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Abrir chamado
             </Button>
