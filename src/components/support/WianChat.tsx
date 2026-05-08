@@ -56,7 +56,22 @@ type Phase =
   | "nps"
   | "collect-info"
   | "done-resolved"
-  | "done-escalated";
+  | "done-escalated"
+  | "blocked";
+
+// Cores específicas por categoria (visual mais profissional, sem quadrado cinza)
+const CATEGORY_COLORS: Record<string, string> = {
+  campanhas: "text-orange-500",
+  whatsapp: "text-emerald-500",
+  meta: "text-blue-500",
+  ia: "text-violet-500",
+  crm: "text-pink-500",
+  flows: "text-cyan-500",
+  financeiro: "text-amber-500",
+  planos: "text-indigo-500",
+  relatorios: "text-sky-500",
+  suporte: "text-rose-500",
+};
 
 type TriageContext = {
   category?: string;
