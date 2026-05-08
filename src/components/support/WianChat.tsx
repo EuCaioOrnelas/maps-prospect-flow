@@ -351,26 +351,11 @@ export function WianChat() {
     }
   };
 
-  // ============== AI / DEBOUNCE ==============
-  const startCountdown = () => {
-    if (countdownRef.current) clearInterval(countdownRef.current);
-    setWaitingSeconds(Math.ceil(RESPONSE_DELAY_MS / 1000));
-    countdownRef.current = setInterval(() => {
-      setWaitingSeconds((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-  };
-  const stopCountdown = () => {
-    if (countdownRef.current) clearInterval(countdownRef.current);
-    countdownRef.current = null;
-    setWaitingSeconds(0);
-  };
-
+  // ============== AI ==============
   const flushQueue = async () => {
     const { texts, attachments } = queueRef.current;
     if (!texts.length && !attachments.length) return;
     queueRef.current = { texts: [], attachments: [] };
-    stopCountdown();
-    setShowConfirmSend(false);
     setLoading(true);
 
     let combined = texts.join("\n\n").trim();
