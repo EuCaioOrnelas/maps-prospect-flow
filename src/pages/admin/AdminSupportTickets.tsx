@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Search, MessageSquare, RefreshCw, HelpCircle, Mail, Phone, User, Tag, CreditCard,
   ExternalLink, Plus, Paperclip, X, Image as ImageIcon, Clock, Star, UserPlus, AlertTriangle,
+  Inbox, CheckCircle2, Ticket as TicketIcon, SkipForward, Gauge,
 } from "lucide-react";
 import { formatDistanceToNow, formatDistanceToNowStrict } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -100,7 +101,7 @@ export default function AdminSupportTickets() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [rating, setRating] = useState<Rating | null>(null);
-  const [stats, setStats] = useState({ open: 0, escalated: 0, resolved: 0, total: 0, avgNps: null as number | null, ratingsCount: 0 });
+  const [stats, setStats] = useState({ open: 0, escalated: 0, resolved: 0, total: 0, avgNps: null as number | null, ratingsCount: 0, skippedRatings: 0 });
   const [userPlan, setUserPlan] = useState<string | null>(null);
   const [ticketRatings, setTicketRatings] = useState<Record<string, { stars: number | null; nps_score: number | null; nps_recommend: number | null }>>({});
 
@@ -122,17 +123,30 @@ export default function AdminSupportTickets() {
   const [creatingManual, setCreatingManual] = useState(false);
 
   const fetchStats = async () => {
-    const [{ count: open }, { count: escalated }, { count: resolved }, { count: totalAll }, { data: ratings }] = await Promise.all([
+    const abandonedCutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const [
+      { count: open },
+      { count: escalated },
+      { count: resolved },
+      { count: totalAll },
+      { data: ratings },
+      { data: ratedTicketIds },
+      { count: closedTotal },
+    ] = await Promise.all([
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "open"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "escalated"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "resolved"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }),
       supabase.from("support_ratings").select("nps_score,stars"),
+      supabase.from("support_ratings").select("ticket_id"),
+      supabase.from("support_tickets").select("*", { count: "exact", head: true }).in("status", ["resolved", "closed"]),
     ]);
     const scores = (ratings || [])
       .map((r: any) => (r.nps_score != null ? r.nps_score : (r.stars != null ? r.stars * 2 : null)))
       .filter((n: number | null): n is number => n != null);
     const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+    const ratedIds = new Set((ratedTicketIds || []).map((r: any) => r.ticket_id));
+    const skippedRatings = Math.max(0, (closedTotal || 0) - ratedIds.size);
     setStats({
       open: open || 0,
       escalated: escalated || 0,
@@ -140,6 +154,7 @@ export default function AdminSupportTickets() {
       total: totalAll || 0,
       avgNps: avg,
       ratingsCount: scores.length,
+      skippedRatings,
     });
   };
 
@@ -154,7 +169,11 @@ export default function AdminSupportTickets() {
 
       if (statusFilter === "open") q = q.eq("status", "open");
       else if (statusFilter === "closed") q = q.in("status", ["resolved", "closed"]);
-      else if (statusFilter === "incomplete") q = q.in("status", ["in_progress", "escalated"]);
+      else if (statusFilter === "incomplete") {
+        // Chats started but abandoned mid-way: open/in_progress, not manual, sem atividade há +30min
+        const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+        q = q.in("status", ["open", "in_progress"]).eq("is_manual", false).lt("updated_at", cutoff);
+      }
       if (search.trim()) {
         const s = `%${search.trim()}%`;
         q = q.or(`name.ilike.${s},email.ilike.${s},phone.ilike.${s},category.ilike.${s},ai_summary.ilike.${s},ticket_number.ilike.${s}`);
@@ -388,16 +407,29 @@ export default function AdminSupportTickets() {
     : stats.avgNps >= 5 ? "text-amber-500"
     : "text-rose-500";
 
-  const statCards = useMemo(() => ([
-    { label: "Total", value: stats.total, color: "text-foreground", suffix: "" },
-    { label: "Abertos", value: stats.open, color: "text-blue-500", suffix: "" },
-    { label: "Escalados", value: stats.escalated, color: "text-rose-500", suffix: "" },
-    { label: "Resolvidos", value: stats.resolved, color: "text-emerald-500", suffix: "" },
+  const mainCards = useMemo(() => ([
+    { label: "Total", value: stats.total, color: "text-foreground", suffix: "", icon: TicketIcon, iconColor: "text-muted-foreground" },
+    { label: "Abertos", value: stats.open, color: "text-blue-500", suffix: "", icon: Inbox, iconColor: "text-blue-500" },
+    { label: "Escalados", value: stats.escalated, color: "text-rose-500", suffix: "", icon: AlertTriangle, iconColor: "text-rose-500" },
+    { label: "Resolvidos", value: stats.resolved, color: "text-emerald-500", suffix: "", icon: CheckCircle2, iconColor: "text-emerald-500" },
+  ]), [stats]);
+
+  const ratingCards = useMemo(() => ([
     {
-      label: `Satisfação média (${stats.ratingsCount} avaliações)`,
+      label: `Satisfação média (${stats.ratingsCount} ${stats.ratingsCount === 1 ? "avaliação" : "avaliações"})`,
       value: stats.avgNps == null ? "—" : stats.avgNps.toFixed(1),
       color: avgColor,
       suffix: stats.avgNps == null ? "" : "/10",
+      icon: Gauge,
+      iconColor: avgColor,
+    },
+    {
+      label: "Avaliações puladas",
+      value: stats.skippedRatings,
+      color: "text-amber-500",
+      suffix: "",
+      icon: SkipForward,
+      iconColor: "text-amber-500",
     },
   ]), [stats, avgColor]);
 
@@ -433,15 +465,39 @@ export default function AdminSupportTickets() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {statCards.map((s) => (
-          <Card key={s.label} className="p-4">
-            <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className={`text-2xl font-bold ${s.color}`}>
-              {s.value}{s.suffix && <span className="text-base font-medium opacity-70">{s.suffix}</span>}
-            </p>
-          </Card>
-        ))}
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {mainCards.map((s) => {
+            const Icon = s.icon;
+            return (
+              <Card key={s.label} className="p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
+                  <Icon className={`w-4 h-4 ${s.iconColor}`} />
+                </div>
+                <p className={`text-2xl font-bold ${s.color}`}>
+                  {s.value}{s.suffix && <span className="text-base font-medium opacity-70">{s.suffix}</span>}
+                </p>
+              </Card>
+            );
+          })}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {ratingCards.map((s) => {
+            const Icon = s.icon;
+            return (
+              <Card key={s.label} className="p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
+                  <Icon className={`w-4 h-4 ${s.iconColor}`} />
+                </div>
+                <p className={`text-2xl font-bold ${s.color}`}>
+                  {s.value}{s.suffix && <span className="text-base font-medium opacity-70">{s.suffix}</span>}
+                </p>
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
       <Card className="p-4 space-y-4">
