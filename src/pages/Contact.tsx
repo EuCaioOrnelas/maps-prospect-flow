@@ -20,13 +20,15 @@ const contactInfo = [
     icon: Clock,
     title: "Horário de Suporte",
     description: "Seg - Sex: 9h às 18h",
-    color: "text-blue-500"
+    color: "text-blue-500",
+    bg: "bg-blue-500/10"
   },
   {
     icon: Zap,
     title: "Resposta Rápida",
     description: "Respondemos em até 24h úteis",
-    color: "text-amber-500"
+    color: "text-amber-500",
+    bg: "bg-amber-500/10"
   }
 ];
 
