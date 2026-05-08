@@ -13,11 +13,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2, Search, MessageSquare, RefreshCw, HelpCircle, Mail, Phone, User, Tag, CreditCard,
+  Loader2, Search, RefreshCw, HelpCircle, Mail, Phone, User, Tag, CreditCard,
   ExternalLink, Plus, Paperclip, X, Image as ImageIcon, Clock, Star, UserPlus, AlertTriangle,
   Inbox, CheckCircle2, Ticket as TicketIcon, SkipForward, Gauge,
 } from "lucide-react";
-import { formatDistanceToNow, formatDistanceToNowStrict } from "date-fns";
+import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getPlanLabel } from "@/lib/planLabels";
 
@@ -71,19 +71,36 @@ type Rating = {
   created_at: string;
 };
 
+const ACTIVE_STATUSES = ["open", "in_progress", "escalated"];
+
+const STATUS_LABELS: Record<string, string> = {
+  open: "Aberto",
+  in_progress: "Em andamento",
+  resolved: "Resolvido",
+  closed: "Fechado",
+  escalated: "Escalado",
+};
+
+const PRIORITY_LABELS: Record<string, string> = {
+  low: "Baixa",
+  medium: "Média",
+  high: "Alta",
+  urgent: "Urgente",
+};
+
 const STATUS_COLORS: Record<string, string> = {
-  open: "bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-500/30",
-  in_progress: "bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/30",
-  resolved: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-500/30",
+  open: "bg-primary/10 text-primary border-primary/20",
+  in_progress: "bg-warning/10 text-warning border-warning/30",
+  resolved: "bg-success/10 text-success border-success/30",
   closed: "bg-muted text-muted-foreground border-border",
-  escalated: "bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/30",
+  escalated: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
   low: "bg-muted text-muted-foreground",
-  medium: "bg-blue-500/15 text-blue-600 dark:text-blue-300",
-  high: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
-  urgent: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
+  medium: "bg-primary/10 text-primary",
+  high: "bg-warning/10 text-warning",
+  urgent: "bg-destructive/10 text-destructive",
 };
 
 const PAGE_SIZE = 20;
