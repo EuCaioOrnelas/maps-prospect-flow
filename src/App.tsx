@@ -306,6 +306,7 @@ const App = () => (
                   <Route path="onboarding" element={<AdminOnboarding />} />
                   {/* Suporte */}
                   <Route path="suporte/tickets" element={<AdminSupportTickets />} />
+                  <Route path="suporte/mind-ia" element={<AdminSupportMindIA />} />
                   {/* Partners */}
                   <Route path="partners" element={<AdminPartnersDashboard />} />
                   <Route path="partners/parceiros" element={<AdminPartnersList />} />
