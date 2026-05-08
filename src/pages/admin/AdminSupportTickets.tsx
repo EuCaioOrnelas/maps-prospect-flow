@@ -413,22 +413,22 @@ export default function AdminSupportTickets() {
 
   const ratingColor = (score: number | null | undefined) => {
     if (score == null) return "bg-muted text-muted-foreground border-border";
-    if (score >= 8) return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30";
-    if (score >= 5) return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30";
-    return "bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/30";
+    if (score >= 8) return "bg-success/10 text-success border-success/30";
+    if (score >= 5) return "bg-warning/10 text-warning border-warning/30";
+    return "bg-destructive/10 text-destructive border-destructive/30";
   };
 
   const avgColor = stats.avgNps == null
     ? "text-muted-foreground"
-    : stats.avgNps >= 8 ? "text-emerald-500"
-    : stats.avgNps >= 5 ? "text-amber-500"
-    : "text-rose-500";
+    : stats.avgNps >= 8 ? "text-success"
+    : stats.avgNps >= 5 ? "text-warning"
+    : "text-destructive";
 
   const mainCards = useMemo(() => ([
     { label: "Total", value: stats.total, color: "text-foreground", suffix: "", icon: TicketIcon, iconColor: "text-muted-foreground" },
-    { label: "Abertos", value: stats.open, color: "text-blue-500", suffix: "", icon: Inbox, iconColor: "text-blue-500" },
-    { label: "Escalados", value: stats.escalated, color: "text-rose-500", suffix: "", icon: AlertTriangle, iconColor: "text-rose-500" },
-    { label: "Resolvidos", value: stats.resolved, color: "text-emerald-500", suffix: "", icon: CheckCircle2, iconColor: "text-emerald-500" },
+    { label: "Abertos", value: stats.open, color: "text-primary", suffix: "", icon: Inbox, iconColor: "text-primary" },
+    { label: "Escalados", value: stats.escalated, color: "text-destructive", suffix: "", icon: AlertTriangle, iconColor: "text-destructive" },
+    { label: "Resolvidos", value: stats.resolved, color: "text-success", suffix: "", icon: CheckCircle2, iconColor: "text-success" },
   ]), [stats]);
 
   const ratingCards = useMemo(() => ([
@@ -443,12 +443,17 @@ export default function AdminSupportTickets() {
     {
       label: "Avaliações puladas",
       value: stats.skippedRatings,
-      color: "text-amber-500",
+      color: "text-warning",
       suffix: "",
       icon: SkipForward,
-      iconColor: "text-amber-500",
+      iconColor: "text-warning",
     },
   ]), [stats, avgColor]);
+
+  const responseTime = (t: Ticket) => {
+    const end = t.resolved_at ? new Date(t.resolved_at) : new Date();
+    return formatDistanceStrict(new Date(t.created_at), end, { locale: ptBR });
+  };
 
   const dueBadge = (t: Ticket) => {
     if (!t.due_at || t.status === "resolved" || t.status === "closed") return null;
@@ -457,10 +462,10 @@ export default function AdminSupportTickets() {
     const overdue = due.getTime() < now;
     return (
       <Badge variant="outline" className={overdue
-        ? "bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/30 gap-1"
-        : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 gap-1"}>
+        ? "bg-destructive/10 text-destructive border-destructive/30 gap-1"
+        : "bg-warning/10 text-warning border-warning/30 gap-1"}>
         <Clock className="w-3 h-3" />
-        {overdue ? "Atrasado " : "Vence em "}{formatDistanceToNowStrict(due, { locale: ptBR })}
+        {overdue ? "Atrasado " : "Vence em "}{formatDistanceStrict(new Date(), due, { locale: ptBR })}
       </Badge>
     );
   };
