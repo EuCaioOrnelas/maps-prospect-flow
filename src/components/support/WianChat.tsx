@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Star, Loader2 } from "lucide-react";
+import { Send, Star, Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import logoIcon from "@/assets/logo-icon-new.png";
+
+const AiAvatar = () => (
+  <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
+    <User className="w-4 h-4" />
+  </div>
+);
 
 type Msg = { role: "user" | "ai"; content: string };
 type Phase = "chat" | "ask-resolved" | "rate" | "collect-info" | "done-resolved" | "done-escalated";
@@ -139,7 +144,7 @@ export function WianChat() {
   };
 
   return (
-    <div className="flex flex-col h-[500px] sm:h-[560px]">
+    <div className="flex flex-col h-full min-h-[420px]">
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background/30">
         <AnimatePresence initial={false}>
@@ -151,13 +156,11 @@ export function WianChat() {
               transition={{ duration: 0.2 }}
               className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              {m.role === "ai" && (
-                <img src={logoIcon} alt="Wian" className="w-7 h-7 rounded-md shrink-0" />
-              )}
+              {m.role === "ai" && <AiAvatar />}
               <div
                 className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                   m.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-md"
+                    ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100 rounded-br-md"
                     : "bg-muted text-foreground rounded-bl-md"
                 }`}
               >
@@ -169,7 +172,7 @@ export function WianChat() {
 
         {loading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-end gap-2">
-            <img src={logoIcon} alt="Wian" className="w-7 h-7 rounded-md" />
+            <AiAvatar />
             <div className="bg-muted rounded-2xl rounded-bl-md px-3.5 py-2.5">
               <div className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-foreground/50 rounded-full animate-bounce" />

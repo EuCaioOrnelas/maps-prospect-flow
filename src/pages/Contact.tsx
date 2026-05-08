@@ -98,10 +98,10 @@ const Contact = () => {
           </motion.div>
 
           {/* Content Grid */}
-          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 items-start">
+          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 items-stretch">
             {/* Left Column - Contact Info */}
             <motion.div
-              className="space-y-3 sm:space-y-4 order-2 lg:order-1"
+              className="flex flex-col gap-4 sm:gap-5 md:gap-6 order-2 lg:order-1"
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
@@ -109,7 +109,7 @@ const Contact = () => {
               {contactInfo.map((info, index) => (
                 <motion.div
                   key={index}
-                  className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 md:p-5 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-[0_0_20px_hsl(var(--primary)/0.1)] transition-all duration-300"
+                  className="flex-1 flex items-center gap-3 sm:gap-4 p-3 sm:p-4 md:p-5 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-[0_0_20px_hsl(var(--primary)/0.1)] transition-all duration-300"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
@@ -126,7 +126,7 @@ const Contact = () => {
 
               {/* Quick Tip */}
               <motion.div
-                className="p-3 sm:p-4 md:p-5 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl shadow-[0_0_30px_hsl(var(--primary)/0.15)]"
+                className="flex-1 p-3 sm:p-4 md:p-5 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl shadow-[0_0_30px_hsl(var(--primary)/0.15)]"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
@@ -145,23 +145,23 @@ const Contact = () => {
 
             {/* Right Column - Typebot Chat */}
             <motion.div
-              className="relative order-1 lg:order-2"
+              className="relative order-1 lg:order-2 h-full"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3, duration: 0.5 }}
             >
               {/* Chat Container with unified rounded corners */}
-              <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-[0_0_40px_hsl(var(--primary)/0.1)]">
+              <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-[0_0_40px_hsl(var(--primary)/0.1)] flex flex-col h-full">
                 {/* Chat Header */}
                 <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
                   <div className="relative">
                     <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                      <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                      <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
                     <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-card" />
                   </div>
                   <div>
-                    <p className="font-semibold text-foreground text-sm sm:text-base">Assistente Virtual</p>
+                    <p className="font-semibold text-foreground text-sm sm:text-base">Wian — Assistente Virtual</p>
                     <div className="flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
                       <span className="text-[10px] sm:text-xs text-green-500">Online</span>
@@ -170,7 +170,9 @@ const Contact = () => {
                 </div>
 
                 {/* Wian Chat */}
-                <WianChat />
+                <div className="flex-1 min-h-0">
+                  <WianChat />
+                </div>
               </div>
             </motion.div>
           </div>
