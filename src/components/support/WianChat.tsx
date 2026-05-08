@@ -50,12 +50,30 @@ export function WianChat() {
   const [extra, setExtra] = useState("");
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
+  const [isAuthed, setIsAuthed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     saveState({ ticketId, messages });
   }, [ticketId, messages]);
+
+  // Pré-carrega dados do usuário logado para o ticket
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setIsAuthed(true);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("name, email, phone")
+        .eq("id", user.id)
+        .maybeSingle();
+      setName(profile?.name ?? "");
+      setEmail(profile?.email ?? user.email ?? "");
+      setPhone(profile?.phone ?? "");
+    })();
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
