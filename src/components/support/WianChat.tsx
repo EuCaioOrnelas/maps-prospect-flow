@@ -905,7 +905,7 @@ export function WianChat() {
             )}
             <div className="text-xs text-muted-foreground leading-relaxed text-left space-y-2 pt-1">
               <p>
-                <strong className="text-foreground">Guarde este número de protocolo</strong> — ele é o seu identificador
+                <strong className="text-foreground">Guarde este número de protocolo:</strong> ele é o seu identificador
                 único pra acompanhar esse chamado e agiliza qualquer contato futuro com o nosso suporte.
               </p>
               <p>
