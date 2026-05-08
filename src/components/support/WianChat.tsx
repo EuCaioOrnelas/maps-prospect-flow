@@ -698,7 +698,15 @@ export function WianChat() {
       if (escResp?.ticketNumber) setTicketNumber(escResp.ticketNumber);
       // Limpa rascunho do form depois que o chamado foi aberto com sucesso
       try { localStorage.removeItem(FORM_KEY); } catch {}
-      setPhase("done-escalated");
+      setWasEscalated(true);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "ai",
+          content: `✅ Pronto! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nAntes de finalizar, como você avalia o atendimento que tive com você até aqui? ⭐`,
+        },
+      ]);
+      setPhase("rate");
     } catch (e: any) {
       const msg = e?.message || "Não conseguimos abrir seu chamado agora. Tente novamente em instantes.";
       setSubmitError(msg);
