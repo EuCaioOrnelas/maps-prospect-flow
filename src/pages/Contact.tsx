@@ -112,8 +112,8 @@ const Contact = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
                 >
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                    <info.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${info.color}`} />
+                  <div className={`w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg ${info.bg} flex items-center justify-center flex-shrink-0`}>
+                    <info.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${info.color}`} strokeWidth={2.2} />
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold text-foreground text-sm sm:text-base truncate">{info.title}</p>
