@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink, List, ChevronRight, Megaphone, MessageSquare, Building2, Bot, LayoutGrid, GitBranch, CreditCard, Package, BarChart3, Headphones, HelpCircle } from "lucide-react";
+import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink, List, ChevronRight, Megaphone, MessageSquare, Building2, Bot, LayoutGrid, GitBranch, CreditCard, Package, BarChart3, Headphones, HelpCircle, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
