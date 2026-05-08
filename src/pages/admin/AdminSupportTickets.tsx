@@ -332,7 +332,7 @@ export default function AdminSupportTickets() {
       <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Ticket #{selected?.id.slice(0, 8)}</SheetTitle>
+            <SheetTitle>{selected?.ticket_number || `Ticket #${selected?.id.slice(0, 8)}`}</SheetTitle>
           </SheetHeader>
 
           {selected && (
