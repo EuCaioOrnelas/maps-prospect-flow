@@ -461,12 +461,10 @@ export default function AdminSupportTickets() {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
               <SelectItem value="open">Abertos</SelectItem>
-              <SelectItem value="in_progress">Em andamento</SelectItem>
-              <SelectItem value="escalated">Escalados</SelectItem>
-              <SelectItem value="resolved">Resolvidos</SelectItem>
               <SelectItem value="closed">Fechados</SelectItem>
+              <SelectItem value="incomplete">Incompletos (em andamento / escalados)</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={() => { setPage(0); fetchTickets(); }}>Buscar</Button>
