@@ -167,8 +167,18 @@ function findYoutube(content: string): { id: string; url: string } | null {
   return id ? { id, url: m[0] } : null;
 }
 
+const TERMINAL_PHASES: Phase[] = ["done-resolved", "done-escalated"];
+
 export function WianChat() {
-  const initial = loadState();
+  const rawInitial = loadState();
+  // Se a sessão anterior já tinha terminado (chamado aberto ou resolvido), zera tudo ao voltar.
+  const initial = rawInitial && TERMINAL_PHASES.includes(rawInitial.phase) ? null : rawInitial;
+  if (rawInitial && !initial) {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(FORM_KEY);
+    } catch {}
+  }
   const [ticketId, setTicketId] = useState<string | null>(initial?.ticketId ?? null);
   const [messages, setMessages] = useState<Msg[]>(
     initial?.messages?.length ? initial.messages : [GREETING_MSG]
@@ -459,12 +469,16 @@ export function WianChat() {
         setMessages((prev) => [...prev, { role: "ai", content: data.answer || "" }]);
       } else {
         // Adiciona o primeiro imediatamente; agenda os próximos com pequena pausa "digitando"
+        // Adiciona o primeiro imediatamente; agenda os próximos com pausa "digitando" entre cada um
         setMessages((prev) => [...prev, { role: "ai", content: bubbles[0] }]);
         for (let i = 1; i < bubbles.length; i++) {
-          const delay = 600 + i * 700;
+          const baseDelay = 600 + (i - 1) * 1400;
+          // Mostra o "digitando" um pouco antes de aparecer o próximo balão
+          setTimeout(() => setLoading(true), baseDelay);
           setTimeout(() => {
+            setLoading(false);
             setMessages((prev) => [...prev, { role: "ai", content: bubbles[i] }]);
-          }, delay);
+          }, baseDelay + 800);
         }
       }
 
