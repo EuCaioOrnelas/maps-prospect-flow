@@ -53,6 +53,7 @@ type Phase =
   | "chat"
   | "ask-resolved"
   | "rate"
+  | "nps"
   | "collect-info"
   | "done-resolved"
   | "done-escalated";
