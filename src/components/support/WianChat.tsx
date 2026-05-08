@@ -84,7 +84,7 @@ function loadState() {
   }
 }
 
-function saveState(s: { ticketId: string | null; messages: Msg[]; phase: Phase; triage: TriageContext }) {
+function saveState(s: { ticketId: string | null; messages: Msg[]; phase: Phase; triage: TriageContext; guestName?: string }) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
   } catch {}
