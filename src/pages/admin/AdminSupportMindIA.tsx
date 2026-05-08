@@ -145,6 +145,7 @@ export default function AdminSupportMindIA() {
         auto_escalate: !!editing.auto_escalate,
         min_confidence: editing.min_confidence ?? 0.7,
         active: editing.active ?? true,
+        video_url: editing.video_url?.trim() || null,
       };
 
       let id = editing.id;
