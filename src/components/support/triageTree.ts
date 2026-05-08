@@ -11,6 +11,8 @@ export type Solution = {
   ctaPath?: string; // rota interna
   // quando o usuário clica "Não resolveu" → IA já recebe esse resumo
   aiHint?: string;
+  // se true, vai direto para abertura de chamado humano (sem perguntar "Funcionou?")
+  escalate?: boolean;
 };
 
 export type Category = {
