@@ -126,7 +126,7 @@ const Contact = () => {
 
               {/* Quick Tip */}
               <motion.div
-                className="p-3 sm:p-4 md:p-5 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl shadow-[0_0_30px_hsl(var(--primary)/0.15)]"
+                className="flex-1 p-3 sm:p-4 md:p-5 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl shadow-[0_0_30px_hsl(var(--primary)/0.15)]"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
