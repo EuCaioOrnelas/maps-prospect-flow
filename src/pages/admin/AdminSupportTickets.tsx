@@ -520,7 +520,8 @@ export default function AdminSupportTickets() {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </div>
