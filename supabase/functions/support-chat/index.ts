@@ -131,6 +131,7 @@ Deno.serve(async (req) => {
     // Persiste mensagem do usuário
     await sb.from("support_messages").insert({
       ticket_id: ticketId, role: "user", content: message,
+      metadata: imageDataUrl ? { has_image: true } : null,
     });
 
     // Busca semântica
