@@ -544,7 +544,7 @@ export function WianChat() {
         setTicketId(tId);
       }
 
-      const { error } = await supabase.functions.invoke("support-escalate", {
+      const { data: escResp, error } = await supabase.functions.invoke("support-escalate", {
         body: {
           ticketId: tId,
           name: name.trim(),
@@ -555,6 +555,9 @@ export function WianChat() {
         },
       });
       if (error) throw error;
+      if (escResp?.ticketNumber) setTicketNumber(escResp.ticketNumber);
+      // Limpa rascunho do form depois que o chamado foi aberto com sucesso
+      try { localStorage.removeItem(FORM_KEY); } catch {}
       setPhase("done-escalated");
     } catch (e: any) {
       toast({ title: "Erro ao abrir chamado", description: e.message, variant: "destructive" });
