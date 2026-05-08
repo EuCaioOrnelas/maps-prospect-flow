@@ -152,7 +152,9 @@ export default function AdminSupportTickets() {
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
-      if (statusFilter !== "all") q = q.eq("status", statusFilter);
+      if (statusFilter === "open") q = q.eq("status", "open");
+      else if (statusFilter === "closed") q = q.in("status", ["resolved", "closed"]);
+      else if (statusFilter === "incomplete") q = q.in("status", ["in_progress", "escalated"]);
       if (search.trim()) {
         const s = `%${search.trim()}%`;
         q = q.or(`name.ilike.${s},email.ilike.${s},phone.ilike.${s},category.ilike.${s},ai_summary.ilike.${s},ticket_number.ilike.${s}`);
