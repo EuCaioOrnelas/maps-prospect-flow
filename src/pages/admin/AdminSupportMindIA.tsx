@@ -342,6 +342,18 @@ export default function AdminSupportMindIA() {
                 />
               </div>
 
+              <div>
+                <Label>Vídeo passo a passo (YouTube)</Label>
+                <Input
+                  value={editing.video_url || ""}
+                  onChange={(e) => setEditing({ ...editing, video_url: e.target.value })}
+                  placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/..."
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Se preenchido, o Wian envia o vídeo direto no chat (player embutido) junto com a solução.
+                </p>
+              </div>
+
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label>Prioridade</Label>
