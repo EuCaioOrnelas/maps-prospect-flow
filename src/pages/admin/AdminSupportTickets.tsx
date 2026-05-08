@@ -101,7 +101,7 @@ export default function AdminSupportTickets() {
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
       if (search.trim()) {
         const s = `%${search.trim()}%`;
-        q = q.or(`name.ilike.${s},email.ilike.${s},phone.ilike.${s},category.ilike.${s},ai_summary.ilike.${s}`);
+        q = q.or(`name.ilike.${s},email.ilike.${s},phone.ilike.${s},category.ilike.${s},ai_summary.ilike.${s},ticket_number.ilike.${s}`);
       }
 
       const { data, error, count } = await q;
