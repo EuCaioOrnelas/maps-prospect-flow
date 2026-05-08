@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Star, Loader2, User, RotateCcw } from "lucide-react";
+import { Send, Star, Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -78,6 +78,13 @@ export function WianChat() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading, phase]);
+
+  useEffect(() => {
+    const handler = () => restart();
+    window.addEventListener("wian:reset", handler);
+    return () => window.removeEventListener("wian:reset", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const send = async () => {
     const text = input.trim();
@@ -299,15 +306,6 @@ export function WianChat() {
       {(phase === "chat" || phase === "ask-resolved") && (
         <div className="border-t border-border p-3 bg-background">
           <div className="flex gap-2">
-            <Button
-              onClick={restart}
-              size="icon"
-              variant="outline"
-              title="Reiniciar conversa"
-              disabled={loading}
-            >
-              <RotateCcw className="w-4 h-4" />
-            </Button>
             <Input
               placeholder="Digite sua mensagem…"
               value={input}
