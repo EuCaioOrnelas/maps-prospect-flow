@@ -903,12 +903,14 @@ export function WianChat() {
         {phase === "triage-solution" && activeSolution && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
             {activeSolution.ctaPath && activeSolution.ctaLabel && (
-              <Link
-                to={activeSolution.ctaPath}
-                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition"
-              >
-                <ExternalLink className="w-3 h-3" /> {activeSolution.ctaLabel}
-              </Link>
+              <div className="pl-12">
+                <Link
+                  to={activeSolution.ctaPath}
+                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition"
+                >
+                  <ExternalLink className="w-3 h-3" /> {activeSolution.ctaLabel}
+                </Link>
+              </div>
             )}
             <div className="flex justify-center gap-2 pt-2">
               <Button size="sm" variant="default" onClick={() => onSolutionResolved(true)}>
