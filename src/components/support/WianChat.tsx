@@ -136,16 +136,19 @@ export function WianChat() {
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [extra, setExtra] = useState("");
-  const [category, setCategory] = useState<string>("");
+  // Form fields — inicializa com rascunho persistido para não sumir entre re-renders
+  const formDraft = (() => {
+    try { return JSON.parse(localStorage.getItem(FORM_KEY) || "{}"); } catch { return {}; }
+  })();
+  const [name, setName] = useState(formDraft.name || "");
+  const [email, setEmail] = useState(formDraft.email || "");
+  const [phone, setPhone] = useState(formDraft.phone || "");
+  const [extra, setExtra] = useState(formDraft.extra || "");
+  const [category, setCategory] = useState<string>(formDraft.category || "");
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
   const [isAuthed, setIsAuthed] = useState(false);
-  const [waitingSeconds, setWaitingSeconds] = useState(0);
-  const [showConfirmSend, setShowConfirmSend] = useState(false);
+  const [ticketNumber, setTicketNumber] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
