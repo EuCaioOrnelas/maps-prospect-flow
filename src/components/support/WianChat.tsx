@@ -247,7 +247,11 @@ export function WianChat() {
 
         {phase === "collect-info" && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-2.5">
-            <p className="text-sm font-medium">Para abrir seu chamado precisamos de:</p>
+            <p className="text-sm font-medium">
+              {isAuthed
+                ? "Confirme seus dados para abrir o chamado:"
+                : "Para abrir seu chamado precisamos de:"}
+            </p>
             <Input placeholder="Seu nome*" value={name} onChange={(e) => setName(e.target.value)} />
             <Input type="email" placeholder="Seu email*" value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input placeholder="Telefone (opcional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
