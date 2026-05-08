@@ -898,19 +898,24 @@ export function WianChat() {
                     <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                   </button>
                 ))
-              : TRIAGE_TREE.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => pickCategory(cat)}
-                    className="w-full text-left px-5 py-3 hover:bg-muted/60 transition-colors flex items-center gap-3 border-b border-border/50 last:border-b-0"
-                  >
-                    <span className="text-xl shrink-0">{cat.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">{cat.label}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                  </button>
-                ))}
+              : TRIAGE_TREE.map((cat) => {
+                  const Icon = CATEGORY_ICONS[cat.id] || HelpCircle;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => pickCategory(cat)}
+                      className="w-full text-left px-5 py-3 hover:bg-muted/60 transition-colors flex items-center gap-3 border-b border-border/50 last:border-b-0"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <Icon className="w-4.5 h-4.5" strokeWidth={2} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">{cat.label}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                    </button>
+                  );
+                })}
           </div>
           {phase === "triage-submenu" && (
             <div className="px-5 py-3 border-t border-border bg-muted/30">
