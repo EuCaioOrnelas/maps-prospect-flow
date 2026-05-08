@@ -608,8 +608,11 @@ export function WianChat() {
       return;
     }
     try {
-      await supabase.from("support_ratings").insert({ ticket_id: ticketId, stars, comment, resolved_by: "ai" });
-      await supabase.from("support_tickets").update({ status: "resolved", resolved_by: "ai", resolved_at: new Date().toISOString() }).eq("id", ticketId);
+      await supabase.from("support_ratings").insert({ ticket_id: ticketId, stars, comment, resolved_by: wasEscalated ? "human" : "ai" });
+      // Só marca como resolvido se a IA realmente resolveu (não em escalonamento humano).
+      if (!wasEscalated) {
+        await supabase.from("support_tickets").update({ status: "resolved", resolved_by: "ai", resolved_at: new Date().toISOString() }).eq("id", ticketId);
+      }
       setPhase("nps");
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
@@ -617,8 +620,9 @@ export function WianChat() {
   };
 
   const submitNps = async () => {
+    const finalPhase: Phase = wasEscalated ? "done-escalated" : "done-resolved";
     if (npsScore === null && npsRecommend === null) {
-      setPhase("done-resolved");
+      setPhase(finalPhase);
       return;
     }
     try {
@@ -629,18 +633,18 @@ export function WianChat() {
           nps_score: npsScore,
           nps_recommend: npsRecommend,
           nps_comment: npsComment || null,
-          resolved_by: "ai",
+          resolved_by: wasEscalated ? "human" : "ai",
         });
       }
       toast({ title: "Obrigado pelo feedback! 🙌" });
-      setPhase("done-resolved");
+      setPhase(finalPhase);
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
-      setPhase("done-resolved");
+      setPhase(finalPhase);
     }
   };
 
-  const skipNps = () => setPhase("done-resolved");
+  const skipNps = () => setPhase(wasEscalated ? "done-escalated" : "done-resolved");
 
   const submitEscalation = async () => {
     const errs: { name?: string; email?: string; category?: string } = {};
