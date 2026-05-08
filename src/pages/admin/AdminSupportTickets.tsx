@@ -92,7 +92,7 @@ export default function AdminSupportTickets() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("open");
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<Ticket | null>(null);
@@ -152,7 +152,9 @@ export default function AdminSupportTickets() {
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
-      if (statusFilter !== "all") q = q.eq("status", statusFilter);
+      if (statusFilter === "open") q = q.eq("status", "open");
+      else if (statusFilter === "closed") q = q.in("status", ["resolved", "closed"]);
+      else if (statusFilter === "incomplete") q = q.in("status", ["in_progress", "escalated"]);
       if (search.trim()) {
         const s = `%${search.trim()}%`;
         q = q.or(`name.ilike.${s},email.ilike.${s},phone.ilike.${s},category.ilike.${s},ai_summary.ilike.${s},ticket_number.ilike.${s}`);
@@ -459,12 +461,10 @@ export default function AdminSupportTickets() {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
               <SelectItem value="open">Abertos</SelectItem>
-              <SelectItem value="in_progress">Em andamento</SelectItem>
-              <SelectItem value="escalated">Escalados</SelectItem>
-              <SelectItem value="resolved">Resolvidos</SelectItem>
               <SelectItem value="closed">Fechados</SelectItem>
+              <SelectItem value="incomplete">Incompletos (em andamento / escalados)</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={() => { setPage(0); fetchTickets(); }}>Buscar</Button>
