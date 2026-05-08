@@ -98,6 +98,7 @@ export function WianChat() {
   const [isAuthed, setIsAuthed] = useState(false);
   const [waitingSeconds, setWaitingSeconds] = useState(0);
   const [showConfirmSend, setShowConfirmSend] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
