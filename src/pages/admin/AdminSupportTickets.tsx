@@ -140,7 +140,6 @@ export default function AdminSupportTickets() {
   const [creatingManual, setCreatingManual] = useState(false);
 
   const fetchStats = async () => {
-    const abandonedCutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     const [
       { count: open },
       { count: escalated },
@@ -541,7 +540,7 @@ export default function AdminSupportTickets() {
             <SelectContent>
               <SelectItem value="open">Abertos</SelectItem>
               <SelectItem value="closed">Fechados</SelectItem>
-              <SelectItem value="incomplete">Incompletos (em andamento / escalados)</SelectItem>
+              <SelectItem value="incomplete">Incompletos (chat abandonado)</SelectItem>
               <SelectItem value="all">Todos</SelectItem>
             </SelectContent>
           </Select>
