@@ -194,10 +194,17 @@ Deno.serve(async (req) => {
     }
     if (!context) context = "\n(sem itens específicos da base — responda com cautela usando conhecimento geral sobre a Wiize)\n";
 
+    const userContent: any = imageDataUrl
+      ? [
+          { type: "text", text: message },
+          { type: "image_url", image_url: { url: imageDataUrl } },
+        ]
+      : message;
+
     const messages = [
       { role: "system", content: `${SYSTEM_BASE}\n\nCONTEXTO:${context}` },
       ...history.slice(-10).map((m: any) => ({ role: m.role === "ai" ? "assistant" : m.role, content: m.content })),
-      { role: "user", content: message },
+      { role: "user", content: userContent },
     ];
 
     if (!OPENAI_API_KEY) {
