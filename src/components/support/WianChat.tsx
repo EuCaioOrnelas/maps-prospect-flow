@@ -847,6 +847,66 @@ export function WianChat() {
           </div>
         </div>
       )}
+
+      {/* Popup de seleção (estilo lista interativa do WhatsApp) */}
+      <Dialog
+        open={menuOpen}
+        onOpenChange={(o) => {
+          if (phase !== "triage-menu" && phase !== "triage-submenu") return;
+          setMenuOpen(o);
+        }}
+      >
+        <DialogContent className="bg-background border-border max-w-md p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
+            <DialogTitle className="text-base">
+              {phase === "triage-submenu" && activeCategory
+                ? activeCategory.label
+                : "Como podemos te ajudar?"}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {phase === "triage-submenu" && activeCategory
+                ? activeCategory.subcategoryLabel || "Selecione o problema mais próximo."
+                : "Escolha a área para iniciar o atendimento."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto py-1">
+            {phase === "triage-submenu" && activeCategory
+              ? activeCategory.problems.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => pickProblem(p)}
+                    className="w-full text-left px-5 py-3 hover:bg-muted/60 transition-colors flex items-center justify-between gap-3 border-b border-border/50 last:border-b-0"
+                  >
+                    <span className="text-sm font-medium text-foreground">{p.title}</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </button>
+                ))
+              : TRIAGE_TREE.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => pickCategory(cat)}
+                    className="w-full text-left px-5 py-3 hover:bg-muted/60 transition-colors flex items-center gap-3 border-b border-border/50 last:border-b-0"
+                  >
+                    <span className="text-xl shrink-0">{cat.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">{cat.label}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </button>
+                ))}
+          </div>
+          {phase === "triage-submenu" && (
+            <div className="px-5 py-3 border-t border-border bg-muted/30">
+              <button
+                onClick={() => { setMenuOpen(false); goBackToMenu(); }}
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+              >
+                <ChevronLeft className="w-3 h-3" /> Voltar ao menu principal
+              </button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
