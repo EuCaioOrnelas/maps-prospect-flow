@@ -903,10 +903,25 @@ export function WianChat() {
                 <span className="font-mono text-sm font-semibold text-primary">{ticketNumber}</span>
               </div>
             )}
-            <div className="text-xs text-muted-foreground">
-              Guarde este número para acompanhamento. Nossa equipe recebeu a conversa completa e entrará em contato pelo email informado em até <strong>24h úteis</strong>.
+            <div className="text-xs text-muted-foreground leading-relaxed text-left space-y-2 pt-1">
+              <p>
+                <strong className="text-foreground">Guarde este número de protocolo</strong> — ele é o seu identificador
+                único pra acompanhar esse chamado e agiliza qualquer contato futuro com o nosso suporte.
+              </p>
+              <p>
+                Nossa equipe já recebeu o histórico <strong>completo da sua conversa</strong> com o Wian, junto com os
+                detalhes que você informou. Vamos analisar o seu caso com calma e entrar em contato pelo email cadastrado
+                em até <strong>24h úteis</strong> (segunda a sexta, das 9h às 18h).
+              </p>
+              <p>
+                Se for algo urgente, pode responder esse email assim que ele chegar que continuamos por lá mesmo.
+              </p>
             </div>
-            <div className="pt-1"><button onClick={restart} className="text-primary underline text-sm">Novo atendimento</button></div>
+            <div className="pt-2">
+              <Button size="sm" variant="outline" onClick={restart} className="w-full">
+                Iniciar novo atendimento
+              </Button>
+            </div>
           </div>
         )}
       </div>
