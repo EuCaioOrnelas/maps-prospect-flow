@@ -469,12 +469,16 @@ export function WianChat() {
         setMessages((prev) => [...prev, { role: "ai", content: data.answer || "" }]);
       } else {
         // Adiciona o primeiro imediatamente; agenda os próximos com pequena pausa "digitando"
+        // Adiciona o primeiro imediatamente; agenda os próximos com pausa "digitando" entre cada um
         setMessages((prev) => [...prev, { role: "ai", content: bubbles[0] }]);
         for (let i = 1; i < bubbles.length; i++) {
-          const delay = 600 + i * 700;
+          const baseDelay = 600 + (i - 1) * 1400;
+          // Mostra o "digitando" um pouco antes de aparecer o próximo balão
+          setTimeout(() => setLoading(true), baseDelay);
           setTimeout(() => {
+            setLoading(false);
             setMessages((prev) => [...prev, { role: "ai", content: bubbles[i] }]);
-          }, delay);
+          }, baseDelay + 800);
         }
       }
 
