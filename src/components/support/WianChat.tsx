@@ -299,6 +299,15 @@ export function WianChat() {
       {(phase === "chat" || phase === "ask-resolved") && (
         <div className="border-t border-border p-3 bg-background">
           <div className="flex gap-2">
+            <Button
+              onClick={restart}
+              size="icon"
+              variant="outline"
+              title="Reiniciar conversa"
+              disabled={loading}
+            >
+              <RotateCcw className="w-4 h-4" />
+            </Button>
             <Input
               placeholder="Digite sua mensagem…"
               value={input}
