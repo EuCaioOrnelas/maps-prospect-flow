@@ -589,13 +589,9 @@ export default function AdminSupportTickets() {
                       <span className="text-xs text-muted-foreground">Sem avaliação</span>
                     )}
                   </TableCell>
-                  <TableCell><span className={`text-xs px-2 py-0.5 rounded-md ${PRIORITY_COLORS[t.priority] || ""}`}>{t.priority}</span></TableCell>
+                  <TableCell><span className={`text-xs px-2 py-0.5 rounded-md ${PRIORITY_COLORS[t.priority] || ""}`}>{PRIORITY_LABELS[t.priority] || t.priority}</span></TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{responseTime(t)}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(t.created_at), { addSuffix: true, locale: ptBR })}</TableCell>
-                  <TableCell>
-                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openTicket(t); }}>
-                      <MessageSquare className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
                 </TableRow>
                 );
               })}
