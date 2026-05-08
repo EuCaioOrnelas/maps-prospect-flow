@@ -20,13 +20,15 @@ const contactInfo = [
     icon: Clock,
     title: "Horário de Suporte",
     description: "Seg - Sex: 9h às 18h",
-    color: "text-blue-500"
+    color: "text-blue-500",
+    bg: "bg-blue-500/10"
   },
   {
     icon: Zap,
     title: "Resposta Rápida",
     description: "Respondemos em até 24h úteis",
-    color: "text-amber-500"
+    color: "text-amber-500",
+    bg: "bg-amber-500/10"
   }
 ];
 
@@ -110,8 +112,8 @@ const Contact = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
                 >
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                    <info.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${info.color}`} />
+                  <div className={`w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg ${info.bg} flex items-center justify-center flex-shrink-0`}>
+                    <info.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${info.color}`} strokeWidth={2.2} />
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold text-foreground text-sm sm:text-base truncate">{info.title}</p>
