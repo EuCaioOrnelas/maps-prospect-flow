@@ -803,7 +803,7 @@ export function WianChat() {
 
         {/* Coleta de nome (visitante) */}
         {phase === "ask-name" && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="pl-9">
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="pl-12">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -835,7 +835,7 @@ export function WianChat() {
 
         {/* Camada 1 — MENU (botão estilo WhatsApp) */}
         {phase === "triage-menu" && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start pl-9">
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start pl-12">
             <button
               onClick={() => setMenuOpen(true)}
               className="group flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-card border border-primary/30 text-sm font-medium text-primary hover:bg-primary/5 hover:border-primary/50 transition-all shadow-sm"
@@ -850,7 +850,7 @@ export function WianChat() {
         {/* Camada 2 — SUBMENU (botão estilo WhatsApp) */}
         {phase === "triage-submenu" && activeCategory && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
-            <div className="flex justify-start pl-9">
+            <div className="flex justify-start pl-12">
               <button
                 onClick={() => setMenuOpen(true)}
                 className="group flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-card border border-primary/30 text-sm font-medium text-primary hover:bg-primary/5 hover:border-primary/50 transition-all shadow-sm"
@@ -862,7 +862,7 @@ export function WianChat() {
             </div>
             <button
               onClick={goBackToMenu}
-              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mt-2 pl-9"
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mt-2 pl-12"
             >
               <ChevronLeft className="w-3 h-3" /> Voltar ao menu principal
             </button>
