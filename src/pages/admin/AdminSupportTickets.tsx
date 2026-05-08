@@ -290,6 +290,9 @@ export default function AdminSupportTickets() {
               ) : tickets.map((t) => (
                 <TableRow key={t.id} className="cursor-pointer hover:bg-muted/40" onClick={() => openTicket(t)}>
                   <TableCell>
+                    {t.ticket_number && (
+                      <div className="font-mono text-[11px] text-primary mb-0.5">{t.ticket_number}</div>
+                    )}
                     <div className="font-medium text-sm">{t.name || "—"}</div>
                     <div className="text-xs text-muted-foreground">{t.email || t.phone || "Visitante anônimo"}</div>
                   </TableCell>
