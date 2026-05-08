@@ -465,15 +465,39 @@ export default function AdminSupportTickets() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {statCards.map((s) => (
-          <Card key={s.label} className="p-4">
-            <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className={`text-2xl font-bold ${s.color}`}>
-              {s.value}{s.suffix && <span className="text-base font-medium opacity-70">{s.suffix}</span>}
-            </p>
-          </Card>
-        ))}
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {mainCards.map((s) => {
+            const Icon = s.icon;
+            return (
+              <Card key={s.label} className="p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
+                  <Icon className={`w-4 h-4 ${s.iconColor}`} />
+                </div>
+                <p className={`text-2xl font-bold ${s.color}`}>
+                  {s.value}{s.suffix && <span className="text-base font-medium opacity-70">{s.suffix}</span>}
+                </p>
+              </Card>
+            );
+          })}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {ratingCards.map((s) => {
+            const Icon = s.icon;
+            return (
+              <Card key={s.label} className="p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
+                  <Icon className={`w-4 h-4 ${s.iconColor}`} />
+                </div>
+                <p className={`text-2xl font-bold ${s.color}`}>
+                  {s.value}{s.suffix && <span className="text-base font-medium opacity-70">{s.suffix}</span>}
+                </p>
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
       <Card className="p-4 space-y-4">
