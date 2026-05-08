@@ -389,6 +389,7 @@ export function WianChat() {
           history: messages.slice(-12).map((m) => ({ role: m.role, content: m.content })),
           imageDataUrl: imageAttachment?.dataUrl ?? null,
           triageContext: triage,
+          userName: name || null,
         },
       });
       if (error) {
@@ -404,7 +405,21 @@ export function WianChat() {
       }
       if (data?.error) throw new Error(data.error);
       if (data?.ticketId) setTicketId(data.ticketId);
-      setMessages((prev) => [...prev, { role: "ai", content: data.answer }]);
+
+      // Quebra em vários balões curtos para parecer mais humano (estilo WhatsApp)
+      const bubbles = splitAnswerIntoBubbles(data.answer || "");
+      if (bubbles.length === 0) {
+        setMessages((prev) => [...prev, { role: "ai", content: data.answer || "" }]);
+      } else {
+        // Adiciona o primeiro imediatamente; agenda os próximos com pequena pausa "digitando"
+        setMessages((prev) => [...prev, { role: "ai", content: bubbles[0] }]);
+        for (let i = 1; i < bubbles.length; i++) {
+          const delay = 600 + i * 700;
+          setTimeout(() => {
+            setMessages((prev) => [...prev, { role: "ai", content: bubbles[i] }]);
+          }, delay);
+        }
+      }
 
       if (data.escalate) {
         setPhase("collect-info");
