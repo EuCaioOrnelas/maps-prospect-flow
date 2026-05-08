@@ -7,7 +7,8 @@ import {
   MessageCircle,
   ArrowLeft,
   Bot,
-  Sparkles
+  Sparkles,
+  RotateCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
