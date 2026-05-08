@@ -1170,7 +1170,7 @@ export const NumbersManager = ({
                               variant="outline" 
                               size="sm" 
                               className="flex-1"
-                              onClick={() => handleDisconnect(number.id)}
+                              onClick={() => confirmDelete(number.id)}
                             >
                               <WifiOff size={14} className="mr-1" />
                               Desconectar
