@@ -105,12 +105,6 @@ Deno.serve(async (req) => {
     if (userCategory && typeof userCategory === "string") {
       category = userCategory;
     }
-    {
-      try {
-      } catch (err) {
-        console.error("summary error", err);
-      }
-    }
 
     await sb.from("support_tickets").update({
       name,
