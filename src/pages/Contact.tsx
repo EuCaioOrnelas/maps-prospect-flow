@@ -13,14 +13,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { WianChat } from "@/components/support/WianChat";
+import wianAvatar from "@/assets/wian-avatar.png";
 
 const contactInfo = [
-  {
-    icon: Bot,
-    title: "IA de Atendimento",
-    description: "Wian responde em segundos, 24/7, com toda a base da Wiize",
-    color: "text-primary"
-  },
   {
     icon: Clock,
     title: "Horário de Suporte",
@@ -137,13 +132,15 @@ const Contact = () => {
                 {/* Chat Header */}
                 <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
                   <div className="relative">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                    </div>
+                    <img
+                      src={wianAvatar}
+                      alt="Wian"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
+                    />
                     <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-card" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground text-sm sm:text-base">Wian — Assistente Virtual</p>
+                    <p className="font-semibold text-foreground text-sm sm:text-base">Wian Assistente Virtual</p>
                     <div className="flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
                       <span className="text-[10px] sm:text-xs text-green-500">Online</span>
