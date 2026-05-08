@@ -217,7 +217,7 @@ export function WianChat() {
   const [category, setCategory] = useState<string>(formDraft.category || "");
   const [formErrors, setFormErrors] = useState<{ name?: string; email?: string; category?: string }>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [stars, setStars] = useState(0);
+  const [stars, setStars] = useState<number | null>(null);
   const [comment, setComment] = useState("");
   const [npsScore, setNpsScore] = useState<number | null>(null);
   const [npsRecommend, setNpsRecommend] = useState<number | null>(null);
@@ -607,7 +607,7 @@ export function WianChat() {
   };
 
   const submitRating = async () => {
-    if (!stars) return;
+    if (stars === null) return;
     // Sem ticket (resolveu só na triagem) — pula direto para NPS
     if (!ticketId) {
       setPhase("nps");
@@ -615,6 +615,9 @@ export function WianChat() {
     }
     try {
       await supabase.from("support_ratings").insert({ ticket_id: ticketId, stars, comment, resolved_by: wasEscalated ? "human" : "ai" });
+      // Registra a avaliação como mensagem do ticket pra aparecer no admin.
+      const ratingMsg = `⭐ **Avaliação do atendimento:** ${stars}/10${comment.trim() ? `\n\n💬 **Como posso melhorar:** ${comment.trim()}` : ""}`;
+      await supabase.from("support_messages").insert({ ticket_id: ticketId, role: "user", content: ratingMsg });
       // Só marca como resolvido se a IA realmente resolveu (não em escalonamento humano).
       if (!wasEscalated) {
         await supabase.from("support_tickets").update({ status: "resolved", resolved_by: "ai", resolved_at: new Date().toISOString() }).eq("id", ticketId);
@@ -975,16 +978,43 @@ export function WianChat() {
 
         {phase === "rate" && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-3">
-            <p className="text-sm font-medium">Como foi o atendimento?</p>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} onClick={() => setStars(n)} className="p-1">
-                  <Star className={`w-6 h-6 ${n <= stars ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
-                </button>
-              ))}
+            <div>
+              <p className="text-sm font-medium">Como foi o atendimento?</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Dê uma nota de 0 a 10</p>
             </div>
-            <Textarea placeholder="Comentário (opcional)" value={comment} onChange={(e) => setComment(e.target.value)} rows={2} />
-            <Button size="sm" onClick={submitRating} disabled={!stars}>Enviar avaliação</Button>
+            <div className="grid grid-cols-11 gap-1">
+              {Array.from({ length: 11 }, (_, n) => {
+                const selected = stars === n;
+                const colorBg =
+                  n <= 4 ? "bg-red-500" : n <= 6 ? "bg-amber-500" : n <= 8 ? "bg-emerald-500" : "bg-emerald-600";
+                return (
+                  <button
+                    key={n}
+                    onClick={() => setStars(n)}
+                    className={`aspect-square rounded-md text-xs font-semibold border transition ${
+                      selected
+                        ? `${colorBg} text-white border-transparent shadow-sm scale-105`
+                        : "bg-background border-border hover:border-primary/40 hover:bg-muted/50 text-foreground"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
+              <span>Péssimo</span>
+              <span>Excelente</span>
+            </div>
+            <Textarea
+              placeholder="Como posso melhorar? Deixe seu comentário (opcional)"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={2}
+            />
+            <Button size="sm" onClick={submitRating} disabled={stars === null} className="w-full">
+              Enviar avaliação
+            </Button>
           </motion.div>
         )}
 
