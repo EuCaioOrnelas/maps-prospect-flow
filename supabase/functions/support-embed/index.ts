@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     if (bulk) {
       const selectCols = table === "faqs"
         ? "id, title, content, tags"
-        : "id, title, pains, solution, content";
+        : "id, title, pains, solution";
       const { data: rows, error } = await sb
         .from(table)
         .select(selectCols)
