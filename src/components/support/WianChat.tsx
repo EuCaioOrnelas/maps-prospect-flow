@@ -800,6 +800,9 @@ export function WianChat() {
             <p className="text-sm font-medium">
               {isAuthed ? "Confirme seus dados para abrir o chamado:" : "Para abrir seu chamado precisamos de algumas informações:"}
             </p>
+            <div className="rounded-lg border border-amber-300/40 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 px-3 py-2 text-[12px] text-amber-900 dark:text-amber-100 leading-relaxed">
+              ℹ️ <strong>Atenção:</strong> toda a conversa que você teve aqui com o Wian será enviada junto para a equipe de atendimento humano analisar o seu caso. Não precisa repetir tudo de novo — só complete os dados abaixo.
+            </div>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger><SelectValue placeholder="Tópico do chamado*" /></SelectTrigger>
               <SelectContent>
@@ -817,7 +820,12 @@ export function WianChat() {
             <Input placeholder="Seu nome*" value={name} onChange={(e) => setName(e.target.value)} />
             <Input type="email" placeholder="Seu email*" value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input placeholder="Telefone (opcional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            <Textarea placeholder="Descreva sua dúvida ou problema (opcional)" value={extra} onChange={(e) => setExtra(e.target.value)} rows={3} />
+            <Textarea
+              placeholder="Descreva sua dúvida ou problema (opcional — a conversa acima já será enviada)"
+              value={extra}
+              onChange={(e) => setExtra(e.target.value)}
+              rows={3}
+            />
             <Button size="sm" onClick={submitEscalation} disabled={loading}>
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Abrir chamado
@@ -832,9 +840,18 @@ export function WianChat() {
         )}
 
         {phase === "done-escalated" && (
-          <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 text-center text-sm">
-            ✅ Chamado aberto! Nossa equipe entrará em contato pelo email informado em até 24h úteis.
-            <div className="mt-2"><button onClick={restart} className="text-primary underline">Novo atendimento</button></div>
+          <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 text-center text-sm space-y-2">
+            <div className="text-base">✅ Chamado aberto com sucesso!</div>
+            {ticketNumber && (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-primary/30">
+                <span className="text-xs text-muted-foreground">Nº de protocolo</span>
+                <span className="font-mono text-sm font-semibold text-primary">{ticketNumber}</span>
+              </div>
+            )}
+            <div className="text-xs text-muted-foreground">
+              Guarde este número para acompanhamento. Nossa equipe recebeu a conversa completa e entrará em contato pelo email informado em até <strong>24h úteis</strong>.
+            </div>
+            <div className="pt-1"><button onClick={restart} className="text-primary underline text-sm">Novo atendimento</button></div>
           </div>
         )}
       </div>
