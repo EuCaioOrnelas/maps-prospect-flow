@@ -196,7 +196,7 @@ export function WianChat() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading, phase, waitingSeconds, showConfirmSend, activeCategory, activeSolution]);
+  }, [messages, loading, phase, activeCategory, activeSolution]);
 
   useEffect(() => {
     const handler = () => restart();
