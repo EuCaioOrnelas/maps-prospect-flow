@@ -567,7 +567,7 @@ export function WianChat() {
     setTicketId(null);
     setPendingAttachments([]);
     setShowConfirmSend(false);
-    setMessages([]);
+    setMessages([GREETING_MSG]);
     setActiveCategory(null);
     setActiveSolution(null);
     setTriage({});
