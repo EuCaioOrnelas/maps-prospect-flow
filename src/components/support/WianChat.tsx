@@ -169,6 +169,9 @@ export function WianChat() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
+  const [npsScore, setNpsScore] = useState<number | null>(null);
+  const [npsRecommend, setNpsRecommend] = useState<number | null>(null);
+  const [npsComment, setNpsComment] = useState("");
   const [isAuthed, setIsAuthed] = useState(false);
   const [ticketNumber, setTicketNumber] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
