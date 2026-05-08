@@ -122,11 +122,12 @@ export const TRIAGE_TREE: Category[] = [
       {
         id: "numero_bloqueado",
         title: "Número bloqueado pelo WhatsApp",
-        intro: "Caso crítico — vou abrir um chamado humano para você.",
+        intro: "Caso crítico — vou abrir um chamado humano para você analisar o histórico do número.",
         steps: [
           "Não tente reconectar com o mesmo chip por enquanto.",
-          "Vamos abrir um ticket para nosso time analisar o histórico do número.",
+          "Vou abrir um ticket para nosso time analisar o histórico do número.",
         ],
+        escalate: true,
         aiHint: "Número possivelmente bloqueado pelo WhatsApp.",
       },
       {
