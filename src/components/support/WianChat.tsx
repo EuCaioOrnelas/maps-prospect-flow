@@ -886,7 +886,7 @@ export function WianChat() {
                 : "Escolha a área para iniciar o atendimento."}
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto py-1">
+          <div className="max-h-[min(85vh,720px)] overflow-y-auto py-1">
             {phase === "triage-submenu" && activeCategory
               ? activeCategory.problems.map((p) => (
                   <button
