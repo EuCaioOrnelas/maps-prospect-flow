@@ -373,12 +373,31 @@ export default function AdminSupportTickets() {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  const ratingColor = (score: number | null | undefined) => {
+    if (score == null) return "bg-muted text-muted-foreground border-border";
+    if (score >= 8) return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30";
+    if (score >= 5) return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30";
+    return "bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/30";
+  };
+
+  const avgColor = stats.avgNps == null
+    ? "text-muted-foreground"
+    : stats.avgNps >= 8 ? "text-emerald-500"
+    : stats.avgNps >= 5 ? "text-amber-500"
+    : "text-rose-500";
+
   const statCards = useMemo(() => ([
-    { label: "Total", value: stats.total, color: "text-foreground" },
-    { label: "Abertos", value: stats.open, color: "text-blue-500" },
-    { label: "Escalados", value: stats.escalated, color: "text-rose-500" },
-    { label: "Resolvidos", value: stats.resolved, color: "text-emerald-500" },
-  ]), [stats]);
+    { label: "Total", value: stats.total, color: "text-foreground", suffix: "" },
+    { label: "Abertos", value: stats.open, color: "text-blue-500", suffix: "" },
+    { label: "Escalados", value: stats.escalated, color: "text-rose-500", suffix: "" },
+    { label: "Resolvidos", value: stats.resolved, color: "text-emerald-500", suffix: "" },
+    {
+      label: `Satisfação média (${stats.ratingsCount} avaliações)`,
+      value: stats.avgNps == null ? "—" : stats.avgNps.toFixed(1),
+      color: avgColor,
+      suffix: stats.avgNps == null ? "" : "/10",
+    },
+  ]), [stats, avgColor]);
 
   const dueBadge = (t: Ticket) => {
     if (!t.due_at || t.status === "resolved" || t.status === "closed") return null;
