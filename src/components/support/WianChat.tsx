@@ -62,7 +62,8 @@ type TriageContext = {
 };
 
 const STORAGE_KEY = "wian_chat_v4";
-const RESPONSE_DELAY_MS = 10000;
+const FORM_KEY = "wian_form_draft_v1";
+const RESPONSE_DELAY_MS = 1500; // pequena pausa para "digitando" (sem confirmação)
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const MAX_ATTACHMENTS_PER_SEND = 3;
 const TEXT_MIME_PREFIXES = ["text/"];
