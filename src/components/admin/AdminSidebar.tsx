@@ -42,6 +42,7 @@ import {
   Settings as SettingsIcon,
   Award,
   LifeBuoy,
+  MessageSquare,
 } from "lucide-react";
 
 interface NavItem {
