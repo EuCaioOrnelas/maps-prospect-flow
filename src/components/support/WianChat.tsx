@@ -89,10 +89,17 @@ function saveState(s: { ticketId: string | null; messages: Msg[]; phase: Phase; 
   } catch {}
 }
 
+const GREETING_MSG: Msg = {
+  role: "ai",
+  content: "Olá! Eu sou o **Wian** 👋, atendente virtual da Wiize.\n\nToque no menu abaixo para selecionar a área onde precisa de ajuda.",
+};
+
 export function WianChat() {
   const initial = loadState();
   const [ticketId, setTicketId] = useState<string | null>(initial?.ticketId ?? null);
-  const [messages, setMessages] = useState<Msg[]>(initial?.messages ?? []);
+  const [messages, setMessages] = useState<Msg[]>(
+    initial?.messages?.length ? initial.messages : [GREETING_MSG]
+  );
   const [phase, setPhase] = useState<Phase>(initial?.phase ?? "triage-menu");
   const [triage, setTriage] = useState<TriageContext>(initial?.triage ?? {});
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
