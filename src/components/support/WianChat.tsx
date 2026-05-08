@@ -575,9 +575,13 @@ export function WianChat() {
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
             <div className="flex items-end gap-2">
               <AiAvatar />
-              <div className="bg-muted text-foreground rounded-2xl rounded-bl-md px-3.5 py-2.5 text-sm leading-relaxed max-w-[78%]">
-                Olá! Eu sou o **Wian** 👋, atendente virtual da Wiize.<br />
-                <span className="text-muted-foreground">Toque no menu abaixo para selecionar a área onde precisa de ajuda.</span>
+              <div className="bg-muted/40 text-foreground rounded-2xl rounded-bl-md px-3.5 py-2.5 text-sm leading-relaxed max-w-[78%] border border-border/40">
+                <p className="m-0">
+                  Olá! Eu sou o <strong className="font-semibold">Wian</strong> 👋, atendente virtual da Wiize.
+                </p>
+                <p className="m-0 mt-1 text-muted-foreground">
+                  Toque no menu abaixo para selecionar a área onde precisa de ajuda.
+                </p>
               </div>
             </div>
             <div className="flex justify-start pl-9">
