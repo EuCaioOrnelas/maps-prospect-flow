@@ -16,8 +16,8 @@ import { WianChat } from "@/components/support/WianChat";
 const contactInfo = [
   {
     icon: Bot,
-    title: "Assistente Inteligente",
-    description: "Tire dúvidas 24h com nosso chatbot",
+    title: "IA de Atendimento",
+    description: "Wian responde em segundos, 24/7, com toda a base da Wiize",
     color: "text-primary"
   },
   {
