@@ -98,10 +98,10 @@ const Contact = () => {
           </motion.div>
 
           {/* Content Grid */}
-          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 items-start">
+          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 items-stretch">
             {/* Left Column - Contact Info */}
             <motion.div
-              className="space-y-3 sm:space-y-4 order-2 lg:order-1"
+              className="flex flex-col gap-4 sm:gap-5 md:gap-6 order-2 lg:order-1"
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
