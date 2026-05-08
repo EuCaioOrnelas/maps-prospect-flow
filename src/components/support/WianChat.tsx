@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Star, Loader2, User } from "lucide-react";
+import { Send, Star, Loader2, User, Paperclip, X, ImageIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,12 @@ const AiAvatar = () => (
   </div>
 );
 
-type Msg = { role: "user" | "ai"; content: string };
+type Msg = { role: "user" | "ai"; content: string; image?: string };
 type Phase = "chat" | "ask-resolved" | "rate" | "collect-info" | "done-resolved" | "done-escalated";
 
-const STORAGE_KEY = "wian_chat_v1";
+const STORAGE_KEY = "wian_chat_v2";
+const RESPONSE_DELAY_MS = 10000;
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4MB
 
 function loadState() {
   try {
@@ -30,7 +32,7 @@ function loadState() {
   }
 }
 
-function saveState(s: { ticketId: string | null; messages: Msg[] }) {
+function saveState(s: { ticketId: string | null; messages: Msg[]; imageUsed: boolean }) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
   } catch {}
@@ -42,8 +44,10 @@ export function WianChat() {
   const [messages, setMessages] = useState<Msg[]>(
     initial?.messages?.length
       ? initial.messages
-      : [{ role: "ai", content: "Olá! Eu sou o Wian, atendente virtual da Wiize. Como posso ajudar você hoje?" }]
+      : [{ role: "ai", content: "Olá! Eu sou o Wian, atendente virtual da Wiize. Como posso ajudar você hoje? Você pode anexar **uma imagem** para mostrar o problema." }]
   );
+  const [imageUsed, setImageUsed] = useState<boolean>(initial?.imageUsed ?? false);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<Phase>("chat");
@@ -55,14 +59,18 @@ export function WianChat() {
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
   const [isAuthed, setIsAuthed] = useState(false);
+  const [waitingSeconds, setWaitingSeconds] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const queueRef = useRef<{ texts: string[]; image: string | null }>({ texts: [], image: null });
   const { toast } = useToast();
 
   useEffect(() => {
-    saveState({ ticketId, messages });
-  }, [ticketId, messages]);
+    saveState({ ticketId, messages, imageUsed });
+  }, [ticketId, messages, imageUsed]);
 
-  // Pré-carrega dados do usuário logado para o ticket
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -81,27 +89,70 @@ export function WianChat() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading, phase]);
+  }, [messages, loading, phase, waitingSeconds]);
 
   useEffect(() => {
     const handler = () => restart();
     window.addEventListener("wian:reset", handler);
     return () => window.removeEventListener("wian:reset", handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const send = async () => {
-    const text = input.trim();
-    if (!text || loading) return;
-    setInput("");
-    const next = [...messages, { role: "user" as const, content: text }];
-    setMessages(next);
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, []);
+
+  const handleFile = async (file: File) => {
+    if (imageUsed) {
+      toast({ title: "Limite atingido", description: "Apenas 1 imagem por chamado.", variant: "destructive" });
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Arquivo inválido", description: "Selecione uma imagem.", variant: "destructive" });
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      toast({ title: "Imagem muito grande", description: "Máximo 4MB.", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setPendingImage(String(reader.result));
+    reader.readAsDataURL(file);
+  };
+
+  const startCountdown = () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    setWaitingSeconds(Math.ceil(RESPONSE_DELAY_MS / 1000));
+    countdownRef.current = setInterval(() => {
+      setWaitingSeconds((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+  };
+
+  const stopCountdown = () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    countdownRef.current = null;
+    setWaitingSeconds(0);
+  };
+
+  const flushQueue = async () => {
+    const { texts, image } = queueRef.current;
+    if (!texts.length && !image) return;
+    queueRef.current = { texts: [], image: null };
+    stopCountdown();
     setLoading(true);
+    const combined = texts.join("\n\n").trim();
     try {
       const { data, error } = await supabase.functions.invoke("support-chat", {
-        body: { ticketId, message: text, history: messages.slice(-8) },
+        body: {
+          ticketId,
+          message: combined || "(usuário enviou apenas uma imagem)",
+          history: messages.slice(-12).map((m) => ({ role: m.role, content: m.content })),
+          imageDataUrl: image,
+        },
       });
-      // FunctionsHttpError carries the response body in `context`
       if (error) {
         let serverMsg = "";
         try {
@@ -115,25 +166,51 @@ export function WianChat() {
       }
       if (data?.error) throw new Error(data.error);
       if (data?.ticketId) setTicketId(data.ticketId);
+      if (image) setImageUsed(true);
       setMessages((prev) => [...prev, { role: "ai", content: data.answer }]);
-      if (data.escalate) {
-        setPhase("collect-info");
-      } else {
-        setPhase("ask-resolved");
-      }
+      if (data.escalate) setPhase("collect-info");
+      else setPhase("ask-resolved");
     } catch (e: any) {
       const msg: string = e?.message || "";
       const friendly = /429|rate/i.test(msg)
         ? "Muitas mensagens em pouco tempo. Aguarde alguns segundos e tente novamente."
         : msg || "Tente novamente em instantes.";
-      toast({
-        title: "Erro no atendimento",
-        description: friendly,
-        variant: "destructive",
-      });
+      toast({ title: "Erro no atendimento", description: friendly, variant: "destructive" });
     } finally {
       setLoading(false);
     }
+  };
+
+  const scheduleFlush = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    startCountdown();
+    debounceRef.current = setTimeout(() => {
+      void flushQueue();
+    }, RESPONSE_DELAY_MS);
+  };
+
+  const send = () => {
+    const text = input.trim();
+    if ((!text && !pendingImage) || loading) return;
+    setInput("");
+
+    // Add to UI
+    const newMsg: Msg = { role: "user", content: text || "(imagem)", image: pendingImage || undefined };
+    setMessages((prev) => [...prev, newMsg]);
+
+    // Add to queue
+    if (text) queueRef.current.texts.push(text);
+    if (pendingImage && !queueRef.current.image) {
+      queueRef.current.image = pendingImage;
+      setPendingImage(null);
+    }
+
+    scheduleFlush();
+  };
+
+  const sendNow = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    void flushQueue();
   };
 
   const onResolved = (resolved: boolean) => {
@@ -187,11 +264,10 @@ export function WianChat() {
   };
 
   const RESET_LIMIT = 3;
-  const RESET_WINDOW_MS = 60 * 60 * 1000; // 1h
+  const RESET_WINDOW_MS = 60 * 60 * 1000;
   const RESET_KEY = "wian_chat_resets_v1";
 
   const restart = () => {
-    // Rate limit: máx 3 resets por hora
     try {
       const raw = localStorage.getItem(RESET_KEY);
       const now = Date.now();
@@ -211,16 +287,20 @@ export function WianChat() {
       localStorage.setItem(RESET_KEY, JSON.stringify(recent));
     } catch {}
 
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    stopCountdown();
+    queueRef.current = { texts: [], image: null };
     localStorage.removeItem(STORAGE_KEY);
     setTicketId(null);
+    setImageUsed(false);
+    setPendingImage(null);
     setMessages([{ role: "ai", content: "Olá! Eu sou o Wian. Como posso ajudar?" }]);
     setPhase("chat");
-    setStars(0); setComment(""); setName(""); setEmail(""); setPhone(""); setExtra(""); setInput("");
+    setStars(0); setComment(""); setExtra(""); setInput("");
   };
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background/30">
         <AnimatePresence initial={false}>
           {messages.map((m, i) => (
@@ -239,17 +319,29 @@ export function WianChat() {
                     : "bg-muted text-foreground rounded-bl-md"
                 }`}
               >
+                {m.image && (
+                  <img src={m.image} alt="anexo" className="rounded-lg mb-2 max-h-48 object-contain" />
+                )}
                 {m.role === "ai" ? (
                   <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_strong]:font-semibold">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                   </div>
                 ) : (
-                  m.content
+                  m.content !== "(imagem)" && m.content
                 )}
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
+
+        {waitingSeconds > 0 && !loading && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center">
+            <div className="text-[11px] text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full">
+              Aguardando você terminar… respondo em {waitingSeconds}s ·{" "}
+              <button onClick={sendNow} className="text-primary underline">enviar agora</button>
+            </div>
+          </motion.div>
+        )}
 
         {loading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-end gap-2">
@@ -290,14 +382,10 @@ export function WianChat() {
         {phase === "collect-info" && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-2.5">
             <p className="text-sm font-medium">
-              {isAuthed
-                ? "Confirme seus dados para abrir o chamado:"
-                : "Para abrir seu chamado precisamos de algumas informações:"}
+              {isAuthed ? "Confirme seus dados para abrir o chamado:" : "Para abrir seu chamado precisamos de algumas informações:"}
             </p>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tópico do chamado*" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Tópico do chamado*" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="IA">IA / Atendimento automático</SelectItem>
                 <SelectItem value="WhatsApp">WhatsApp / Aquecimento</SelectItem>
@@ -335,10 +423,41 @@ export function WianChat() {
         )}
       </div>
 
-      {/* Input */}
       {(phase === "chat" || phase === "ask-resolved") && (
-        <div className="border-t border-border p-3 bg-background">
+        <div className="border-t border-border p-3 bg-background space-y-2">
+          {pendingImage && (
+            <div className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/40">
+              <img src={pendingImage} alt="preview" className="w-12 h-12 rounded object-cover" />
+              <div className="flex-1 text-xs text-muted-foreground flex items-center gap-1">
+                <ImageIcon className="w-3.5 h-3.5" /> Imagem anexada (1 por chamado)
+              </div>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setPendingImage(null)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
           <div className="flex gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleFile(f);
+                e.target.value = "";
+              }}
+            />
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              onClick={() => fileRef.current?.click()}
+              disabled={loading || imageUsed || !!pendingImage}
+              title={imageUsed ? "Limite de 1 imagem por chamado" : "Anexar imagem"}
+            >
+              <Paperclip className="w-4 h-4" />
+            </Button>
             <Input
               placeholder="Digite sua mensagem…"
               value={input}
@@ -346,7 +465,7 @@ export function WianChat() {
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
               disabled={loading}
             />
-            <Button onClick={send} disabled={loading || !input.trim()} size="icon">
+            <Button onClick={send} disabled={loading || (!input.trim() && !pendingImage)} size="icon">
               <Send className="w-4 h-4" />
             </Button>
           </div>

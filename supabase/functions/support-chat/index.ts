@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { ticketId: incomingTicketId, message, history = [], visitorSession } = body;
+    const { ticketId: incomingTicketId, message, history = [], visitorSession, imageDataUrl } = body;
     if (!message || typeof message !== "string") {
       return new Response(JSON.stringify({ error: "message required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -131,6 +131,7 @@ Deno.serve(async (req) => {
     // Persiste mensagem do usuário
     await sb.from("support_messages").insert({
       ticket_id: ticketId, role: "user", content: message,
+      metadata: imageDataUrl ? { has_image: true } : null,
     });
 
     // Busca semântica
@@ -193,10 +194,17 @@ Deno.serve(async (req) => {
     }
     if (!context) context = "\n(sem itens específicos da base — responda com cautela usando conhecimento geral sobre a Wiize)\n";
 
+    const userContent: any = imageDataUrl
+      ? [
+          { type: "text", text: message },
+          { type: "image_url", image_url: { url: imageDataUrl } },
+        ]
+      : message;
+
     const messages = [
       { role: "system", content: `${SYSTEM_BASE}\n\nCONTEXTO:${context}` },
       ...history.slice(-10).map((m: any) => ({ role: m.role === "ai" ? "assistant" : m.role, content: m.content })),
-      { role: "user", content: message },
+      { role: "user", content: userContent },
     ];
 
     if (!OPENAI_API_KEY) {
