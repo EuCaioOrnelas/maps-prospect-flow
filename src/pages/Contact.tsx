@@ -145,7 +145,7 @@ const Contact = () => {
 
             {/* Right Column - Typebot Chat */}
             <motion.div
-              className="relative order-1 lg:order-2 h-full"
+              className="relative order-1 lg:order-2 h-full max-h-[640px] lg:max-h-[720px]"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3, duration: 0.5 }}
