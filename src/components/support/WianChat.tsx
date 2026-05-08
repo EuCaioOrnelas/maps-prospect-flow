@@ -63,7 +63,7 @@ type TriageContext = {
 
 const STORAGE_KEY = "wian_chat_v4";
 const FORM_KEY = "wian_form_draft_v1";
-const RESPONSE_DELAY_MS = 1500; // pequena pausa para "digitando" (sem confirmação)
+const RESPONSE_DELAY_MS = 10000; // aguarda 10s após a última mensagem do user (reseta a cada nova mensagem); "digitando" aparece durante a espera
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const MAX_ATTACHMENTS_PER_SEND = 3;
 const TEXT_MIME_PREFIXES = ["text/"];
@@ -797,11 +797,13 @@ export function WianChat() {
 
         {phase === "collect-info" && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-2.5">
-            <p className="text-sm font-medium">
-              {isAuthed ? "Confirme seus dados para abrir o chamado:" : "Para abrir seu chamado precisamos de algumas informações:"}
-            </p>
-            <div className="rounded-lg border border-amber-300/40 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 px-3 py-2 text-[12px] text-amber-900 dark:text-amber-100 leading-relaxed">
-              ℹ️ <strong>Atenção:</strong> toda a conversa que você teve aqui com o Wian será enviada junto para a equipe de atendimento humano analisar o seu caso. Não precisa repetir tudo de novo — só complete os dados abaixo.
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">
+                {isAuthed ? "Confirme seus dados para abrir o chamado:" : "Para abrir seu chamado precisamos de algumas informações:"}
+              </p>
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                A conversa com o Wian será enviada junto — não precisa repetir tudo.
+              </p>
             </div>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger><SelectValue placeholder="Tópico do chamado*" /></SelectTrigger>
