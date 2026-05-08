@@ -144,7 +144,7 @@ export function WianChat() {
   };
 
   return (
-    <div className="flex flex-col h-[500px] sm:h-[560px]">
+    <div className="flex flex-col h-full min-h-[420px]">
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background/30">
         <AnimatePresence initial={false}>
