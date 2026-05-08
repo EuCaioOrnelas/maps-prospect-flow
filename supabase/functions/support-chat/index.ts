@@ -142,6 +142,29 @@ Deno.serve(async (req) => {
       faqResults = faqs ?? [];
     }
 
+    // Fallback por palavra-chave quando não há embeddings (ou nada bate)
+    if (faqResults.length === 0) {
+      const tokens = message
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s]/g, " ")
+        .split(/\s+/)
+        .filter((t) => t.length >= 4)
+        .slice(0, 6);
+      if (tokens.length) {
+        const orFilter = tokens
+          .flatMap((t) => [`title.ilike.%${t}%`, `content.ilike.%${t}%`])
+          .join(",");
+        const { data: kwFaqs } = await sb
+          .from("faqs")
+          .select("id, title, content")
+          .eq("active", true)
+          .or(orFilter)
+          .limit(4);
+        faqResults = (kwFaqs ?? []).map((f: any) => ({ ...f, similarity: 0.5 }));
+      }
+    }
+
     const topSim = Math.max(
       0,
       ...kbResults.map((k) => k.similarity || 0),
