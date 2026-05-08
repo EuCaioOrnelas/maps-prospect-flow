@@ -682,6 +682,38 @@ export function WianChat() {
           ))}
         </AnimatePresence>
 
+        {/* Coleta de nome (visitante) */}
+        {phase === "ask-name" && (
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="pl-9">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const n = name.trim();
+                if (n.length < 2) {
+                  toast({ title: "Me diz seu nome 🙂", description: "Pode ser só o primeiro nome.", variant: "destructive" });
+                  return;
+                }
+                const firstName = n.split(/\s+/)[0];
+                setMessages((prev) => [
+                  ...prev,
+                  { role: "user", content: n },
+                  { role: "ai", content: `Prazer, **${firstName}**! 🙌\n\nMe conta: em qual área você precisa de ajuda? Toque no menu abaixo 👇` },
+                ]);
+                setPhase("triage-menu");
+              }}
+              className="flex gap-2 max-w-sm"
+            >
+              <Input
+                placeholder="Seu nome"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+              />
+              <Button type="submit" size="sm">Enviar</Button>
+            </form>
+          </motion.div>
+        )}
+
         {/* Camada 1 — MENU (botão estilo WhatsApp) */}
         {phase === "triage-menu" && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start pl-9">
