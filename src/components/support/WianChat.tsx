@@ -165,17 +165,29 @@ export function WianChat() {
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setIsAuthed(true);
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("name, email, phone")
-        .eq("id", user.id)
-        .maybeSingle();
-      setName(profile?.name ?? "");
-      setEmail(profile?.email ?? user.email ?? "");
-      setPhone(profile?.phone ?? "");
+      if (user) {
+        setIsAuthed(true);
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("name, email, phone")
+          .eq("id", user.id)
+          .maybeSingle();
+        setName(profile?.name ?? "");
+        setEmail(profile?.email ?? user.email ?? "");
+        setPhone(profile?.phone ?? "");
+        return;
+      }
+      // Visitante sem nome → entra no fluxo "ask-name" (apenas no primeiro acesso)
+      const hadHistory = !!initial?.messages?.length;
+      const storedName = initial?.guestName;
+      if (storedName) {
+        setName(storedName);
+      } else if (!hadHistory) {
+        setMessages([ASK_NAME_MSG]);
+        setPhase("ask-name");
+      }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
