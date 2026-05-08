@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink } from "lucide-react";
+import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink, List, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TRIAGE_TREE, findCategory, findProblem, type Solution, type Category } from "./triageTree";
