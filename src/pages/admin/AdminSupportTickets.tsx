@@ -431,11 +431,13 @@ export default function AdminSupportTickets() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {statCards.map((s) => (
           <Card key={s.label} className="p-4">
             <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+            <p className={`text-2xl font-bold ${s.color}`}>
+              {s.value}{s.suffix && <span className="text-base font-medium opacity-70">{s.suffix}</span>}
+            </p>
           </Card>
         ))}
       </div>
