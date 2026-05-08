@@ -122,17 +122,30 @@ export default function AdminSupportTickets() {
   const [creatingManual, setCreatingManual] = useState(false);
 
   const fetchStats = async () => {
-    const [{ count: open }, { count: escalated }, { count: resolved }, { count: totalAll }, { data: ratings }] = await Promise.all([
+    const abandonedCutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const [
+      { count: open },
+      { count: escalated },
+      { count: resolved },
+      { count: totalAll },
+      { data: ratings },
+      { data: ratedTicketIds },
+      { count: closedTotal },
+    ] = await Promise.all([
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "open"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "escalated"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "resolved"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }),
       supabase.from("support_ratings").select("nps_score,stars"),
+      supabase.from("support_ratings").select("ticket_id"),
+      supabase.from("support_tickets").select("*", { count: "exact", head: true }).in("status", ["resolved", "closed"]),
     ]);
     const scores = (ratings || [])
       .map((r: any) => (r.nps_score != null ? r.nps_score : (r.stars != null ? r.stars * 2 : null)))
       .filter((n: number | null): n is number => n != null);
     const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+    const ratedIds = new Set((ratedTicketIds || []).map((r: any) => r.ticket_id));
+    const skippedRatings = Math.max(0, (closedTotal || 0) - ratedIds.size);
     setStats({
       open: open || 0,
       escalated: escalated || 0,
@@ -140,6 +153,7 @@ export default function AdminSupportTickets() {
       total: totalAll || 0,
       avgNps: avg,
       ratingsCount: scores.length,
+      skippedRatings,
     });
   };
 
