@@ -89,10 +89,17 @@ function saveState(s: { ticketId: string | null; messages: Msg[]; phase: Phase; 
   } catch {}
 }
 
+const GREETING_MSG: Msg = {
+  role: "ai",
+  content: "Olá! Eu sou o **Wian** 👋, atendente virtual da Wiize.\n\nToque no menu abaixo para selecionar a área onde precisa de ajuda.",
+};
+
 export function WianChat() {
   const initial = loadState();
   const [ticketId, setTicketId] = useState<string | null>(initial?.ticketId ?? null);
-  const [messages, setMessages] = useState<Msg[]>(initial?.messages ?? []);
+  const [messages, setMessages] = useState<Msg[]>(
+    initial?.messages?.length ? initial.messages : [GREETING_MSG]
+  );
   const [phase, setPhase] = useState<Phase>(initial?.phase ?? "triage-menu");
   const [triage, setTriage] = useState<TriageContext>(initial?.triage ?? {});
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
@@ -560,7 +567,7 @@ export function WianChat() {
     setTicketId(null);
     setPendingAttachments([]);
     setShowConfirmSend(false);
-    setMessages([]);
+    setMessages([GREETING_MSG]);
     setActiveCategory(null);
     setActiveSolution(null);
     setTriage({});
@@ -588,28 +595,15 @@ export function WianChat() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background/30">
         {/* Camada 1 — MENU (botão estilo WhatsApp) */}
         {phase === "triage-menu" && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-            <div className="flex items-end gap-2">
-              <AiAvatar />
-              <div className="bg-muted/40 text-foreground rounded-2xl rounded-bl-md px-3.5 py-2.5 text-sm leading-relaxed max-w-[78%] border border-border/40">
-                <p className="m-0">
-                  Olá! Eu sou o <strong className="font-semibold">Wian</strong> 👋, atendente virtual da Wiize.
-                </p>
-                <p className="m-0 mt-1 text-muted-foreground">
-                  Toque no menu abaixo para selecionar a área onde precisa de ajuda.
-                </p>
-              </div>
-            </div>
-            <div className="flex justify-start pl-9">
-              <button
-                onClick={() => setMenuOpen(true)}
-                className="group flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-card border border-primary/30 text-sm font-medium text-primary hover:bg-primary/5 hover:border-primary/50 transition-all shadow-sm"
-              >
-                <List className="w-4 h-4" />
-                Ver opções de atendimento
-                <ChevronRight className="w-4 h-4 opacity-60 group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            </div>
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start pl-9">
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="group flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-card border border-primary/30 text-sm font-medium text-primary hover:bg-primary/5 hover:border-primary/50 transition-all shadow-sm"
+            >
+              <List className="w-4 h-4" />
+              Ver opções de atendimento
+              <ChevronRight className="w-4 h-4 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+            </button>
           </motion.div>
         )}
 
