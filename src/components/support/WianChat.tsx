@@ -126,6 +126,22 @@ function splitAnswerIntoBubbles(answer: string): string[] {
   return out;
 }
 
+// Extrai o ID de um vídeo do YouTube a partir de várias formas de URL
+function extractYoutubeId(url: string): string | null {
+  try {
+    const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+    return m ? m[1] : null;
+  } catch { return null; }
+}
+
+// Encontra a primeira URL do YouTube no texto e retorna {id, urlOriginal}
+function findYoutube(content: string): { id: string; url: string } | null {
+  const m = content.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)[A-Za-z0-9_\-?=&]+|youtu\.be\/[A-Za-z0-9_\-?=&]+)/);
+  if (!m) return null;
+  const id = extractYoutubeId(m[0]);
+  return id ? { id, url: m[0] } : null;
+}
+
 export function WianChat() {
   const initial = loadState();
   const [ticketId, setTicketId] = useState<string | null>(initial?.ticketId ?? null);
