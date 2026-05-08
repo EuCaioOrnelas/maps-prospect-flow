@@ -72,7 +72,18 @@ export function WianChat() {
       const { data, error } = await supabase.functions.invoke("support-chat", {
         body: { ticketId, message: text, history: messages.slice(-8) },
       });
-      if (error) throw error;
+      // FunctionsHttpError carries the response body in `context`
+      if (error) {
+        let serverMsg = "";
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx && typeof ctx.json === "function") {
+            const j = await ctx.json();
+            serverMsg = j?.error || "";
+          }
+        } catch {}
+        throw new Error(serverMsg || error.message || "Falha ao contatar o atendimento.");
+      }
       if (data?.error) throw new Error(data.error);
       if (data?.ticketId) setTicketId(data.ticketId);
       setMessages((prev) => [...prev, { role: "ai", content: data.answer }]);
@@ -82,11 +93,21 @@ export function WianChat() {
         setPhase("ask-resolved");
       }
     } catch (e: any) {
+      const msg: string = e?.message || "";
+      const friendly = /cr[eé]dito|402/i.test(msg)
+        ? "O assistente está temporariamente indisponível. Já podemos encaminhar você para um humano."
+        : /429|rate/i.test(msg)
+        ? "Muitas mensagens em pouco tempo. Aguarde alguns segundos e tente novamente."
+        : msg || "Tente novamente em instantes.";
       toast({
         title: "Erro no atendimento",
-        description: e?.message || "Tente novamente em instantes.",
+        description: friendly,
         variant: "destructive",
       });
+      // Auto-fallback to human on credit/availability issues
+      if (/cr[eé]dito|402/i.test(msg)) {
+        setPhase("collect-info");
+      }
     } finally {
       setLoading(false);
     }
