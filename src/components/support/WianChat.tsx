@@ -242,7 +242,10 @@ export function WianChat() {
     setActiveCategory(null);
     setActiveSolution(null);
     setTriage({});
-    setMessages([]);
+    setMessages((prev) => [
+      ...prev,
+      { role: "ai", content: "Sem problema 👍 Toque no menu abaixo para escolher outra área de atendimento." },
+    ]);
     setPhase("triage-menu");
   };
 
