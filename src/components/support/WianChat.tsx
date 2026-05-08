@@ -167,8 +167,18 @@ function findYoutube(content: string): { id: string; url: string } | null {
   return id ? { id, url: m[0] } : null;
 }
 
+const TERMINAL_PHASES: Phase[] = ["done-resolved", "done-escalated"];
+
 export function WianChat() {
-  const initial = loadState();
+  const rawInitial = loadState();
+  // Se a sessão anterior já tinha terminado (chamado aberto ou resolvido), zera tudo ao voltar.
+  const initial = rawInitial && TERMINAL_PHASES.includes(rawInitial.phase) ? null : rawInitial;
+  if (rawInitial && !initial) {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(FORM_KEY);
+    } catch {}
+  }
   const [ticketId, setTicketId] = useState<string | null>(initial?.ticketId ?? null);
   const [messages, setMessages] = useState<Msg[]>(
     initial?.messages?.length ? initial.messages : [GREETING_MSG]
