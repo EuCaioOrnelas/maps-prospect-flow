@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { ticketId: incomingTicketId, message, history = [], visitorSession, imageDataUrl, triageContext } = body;
+    const { ticketId: incomingTicketId, message, history = [], visitorSession, imageDataUrl, triageContext, userName: providedName } = body;
     if (!message || typeof message !== "string") {
       return new Response(JSON.stringify({ error: "message required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
