@@ -17,6 +17,7 @@ import { ptBR } from "date-fns/locale";
 
 type Ticket = {
   id: string;
+  ticket_number: string | null;
   user_id: string | null;
   name: string | null;
   email: string | null;
@@ -100,7 +101,7 @@ export default function AdminSupportTickets() {
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
       if (search.trim()) {
         const s = `%${search.trim()}%`;
-        q = q.or(`name.ilike.${s},email.ilike.${s},phone.ilike.${s},category.ilike.${s},ai_summary.ilike.${s}`);
+        q = q.or(`name.ilike.${s},email.ilike.${s},phone.ilike.${s},category.ilike.${s},ai_summary.ilike.${s},ticket_number.ilike.${s}`);
       }
 
       const { data, error, count } = await q;
@@ -237,7 +238,7 @@ export default function AdminSupportTickets() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome, email, telefone, categoria..."
+              placeholder="Buscar por protocolo (WIZ-...), nome, email, telefone, categoria..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { setPage(0); fetchTickets(); } }}
@@ -289,6 +290,9 @@ export default function AdminSupportTickets() {
               ) : tickets.map((t) => (
                 <TableRow key={t.id} className="cursor-pointer hover:bg-muted/40" onClick={() => openTicket(t)}>
                   <TableCell>
+                    {t.ticket_number && (
+                      <div className="font-mono text-[11px] text-primary mb-0.5">{t.ticket_number}</div>
+                    )}
                     <div className="font-medium text-sm">{t.name || "—"}</div>
                     <div className="text-xs text-muted-foreground">{t.email || t.phone || "Visitante anônimo"}</div>
                   </TableCell>
@@ -328,7 +332,7 @@ export default function AdminSupportTickets() {
       <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Ticket #{selected?.id.slice(0, 8)}</SheetTitle>
+            <SheetTitle>{selected?.ticket_number || `Ticket #${selected?.id.slice(0, 8)}`}</SheetTitle>
           </SheetHeader>
 
           {selected && (

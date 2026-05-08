@@ -62,7 +62,8 @@ type TriageContext = {
 };
 
 const STORAGE_KEY = "wian_chat_v4";
-const RESPONSE_DELAY_MS = 10000;
+const FORM_KEY = "wian_form_draft_v1";
+const RESPONSE_DELAY_MS = 1500; // pequena pausa para "digitando" (sem confirmação)
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const MAX_ATTACHMENTS_PER_SEND = 3;
 const TEXT_MIME_PREFIXES = ["text/"];
@@ -135,16 +136,19 @@ export function WianChat() {
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [extra, setExtra] = useState("");
-  const [category, setCategory] = useState<string>("");
+  // Form fields — inicializa com rascunho persistido para não sumir entre re-renders
+  const formDraft = (() => {
+    try { return JSON.parse(localStorage.getItem(FORM_KEY) || "{}"); } catch { return {}; }
+  })();
+  const [name, setName] = useState(formDraft.name || "");
+  const [email, setEmail] = useState(formDraft.email || "");
+  const [phone, setPhone] = useState(formDraft.phone || "");
+  const [extra, setExtra] = useState(formDraft.extra || "");
+  const [category, setCategory] = useState<string>(formDraft.category || "");
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
   const [isAuthed, setIsAuthed] = useState(false);
-  const [waitingSeconds, setWaitingSeconds] = useState(0);
-  const [showConfirmSend, setShowConfirmSend] = useState(false);
+  const [ticketNumber, setTicketNumber] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -161,6 +165,14 @@ export function WianChat() {
     }));
     saveState({ ticketId, messages: lite, phase, triage, guestName: !isAuthed ? name : undefined });
   }, [ticketId, messages, phase, triage, isAuthed, name]);
+
+  // Persiste rascunho do formulário (nome, email, telefone, descrição, categoria) para
+  // não perder o que o usuário digitou caso o componente re-renderize.
+  useEffect(() => {
+    try {
+      localStorage.setItem(FORM_KEY, JSON.stringify({ name, email, phone, extra, category }));
+    } catch {}
+  }, [name, email, phone, extra, category]);
 
   useEffect(() => {
     (async () => {
@@ -192,7 +204,7 @@ export function WianChat() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading, phase, waitingSeconds, showConfirmSend, activeCategory, activeSolution]);
+  }, [messages, loading, phase, activeCategory, activeSolution]);
 
   useEffect(() => {
     const handler = () => restart();
@@ -347,26 +359,11 @@ export function WianChat() {
     }
   };
 
-  // ============== AI / DEBOUNCE ==============
-  const startCountdown = () => {
-    if (countdownRef.current) clearInterval(countdownRef.current);
-    setWaitingSeconds(Math.ceil(RESPONSE_DELAY_MS / 1000));
-    countdownRef.current = setInterval(() => {
-      setWaitingSeconds((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-  };
-  const stopCountdown = () => {
-    if (countdownRef.current) clearInterval(countdownRef.current);
-    countdownRef.current = null;
-    setWaitingSeconds(0);
-  };
-
+  // ============== AI ==============
   const flushQueue = async () => {
     const { texts, attachments } = queueRef.current;
     if (!texts.length && !attachments.length) return;
     queueRef.current = { texts: [], attachments: [] };
-    stopCountdown();
-    setShowConfirmSend(false);
     setLoading(true);
 
     let combined = texts.join("\n\n").trim();
@@ -464,9 +461,9 @@ export function WianChat() {
       { role: "user", content: text || "(anexo)", attachments: attachments.length ? attachments : undefined },
     ]);
 
-    setShowConfirmSend(true);
+    // Mostra "digitando" imediatamente e dispara após pequena pausa para agrupar mensagens consecutivas
+    setLoading(true);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    startCountdown();
     debounceRef.current = setTimeout(() => {
       void flushQueue();
     }, RESPONSE_DELAY_MS);
@@ -479,30 +476,6 @@ export function WianChat() {
     setInput("");
     setPendingAttachments([]);
     queueAndSchedule(text, atts);
-  };
-
-  const sendNow = () => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    void flushQueue();
-  };
-
-  const cancelQueue = () => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    stopCountdown();
-    setShowConfirmSend(false);
-    const drop = queueRef.current.texts.length + (queueRef.current.attachments.length ? 1 : 0);
-    if (drop > 0) {
-      setMessages((prev) => {
-        let removed = 0;
-        const out = [...prev];
-        while (removed < drop && out.length && out[out.length - 1].role === "user") {
-          out.pop();
-          removed++;
-        }
-        return out;
-      });
-    }
-    queueRef.current = { texts: [], attachments: [] };
   };
 
   const onResolved = (resolved: boolean) => {
@@ -571,7 +544,7 @@ export function WianChat() {
         setTicketId(tId);
       }
 
-      const { error } = await supabase.functions.invoke("support-escalate", {
+      const { data: escResp, error } = await supabase.functions.invoke("support-escalate", {
         body: {
           ticketId: tId,
           name: name.trim(),
@@ -582,6 +555,9 @@ export function WianChat() {
         },
       });
       if (error) throw error;
+      if (escResp?.ticketNumber) setTicketNumber(escResp.ticketNumber);
+      // Limpa rascunho do form depois que o chamado foi aberto com sucesso
+      try { localStorage.removeItem(FORM_KEY); } catch {}
       setPhase("done-escalated");
     } catch (e: any) {
       toast({ title: "Erro ao abrir chamado", description: e.message, variant: "destructive" });
@@ -615,18 +591,19 @@ export function WianChat() {
     } catch {}
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    stopCountdown();
     queueRef.current = { texts: [], attachments: [] };
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(FORM_KEY);
     setTicketId(null);
+    setTicketNumber(null);
     setPendingAttachments([]);
-    setShowConfirmSend(false);
     setMessages([GREETING_MSG]);
     setActiveCategory(null);
     setActiveSolution(null);
     setTriage({});
     setPhase("triage-menu");
     setStars(0); setComment(""); setExtra(""); setInput("");
+    setPhone(""); setCategory("");
   };
 
   const renderAttachment = (a: Attachment, key: number) => {
@@ -780,24 +757,7 @@ export function WianChat() {
           </motion.div>
         )}
 
-        {/* Confirmação de envio */}
-        {showConfirmSend && !loading && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center">
-            <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-foreground/80 flex items-center gap-3 flex-wrap">
-              <span>
-                Confirma o envio à IA? Respondo em <span className="font-semibold text-primary">{waitingSeconds}s</span> ou clique abaixo.
-              </span>
-              <div className="flex gap-1.5">
-                <Button size="sm" variant="default" className="h-7 px-2.5" onClick={sendNow}>
-                  <Check className="w-3.5 h-3.5 mr-1" /> Confirmar agora
-                </Button>
-                <Button size="sm" variant="ghost" className="h-7 px-2.5" onClick={cancelQueue}>
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {/* (confirmação removida — só "digitando" abaixo) */}
 
         {loading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-end gap-2">
@@ -840,6 +800,9 @@ export function WianChat() {
             <p className="text-sm font-medium">
               {isAuthed ? "Confirme seus dados para abrir o chamado:" : "Para abrir seu chamado precisamos de algumas informações:"}
             </p>
+            <div className="rounded-lg border border-amber-300/40 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 px-3 py-2 text-[12px] text-amber-900 dark:text-amber-100 leading-relaxed">
+              ℹ️ <strong>Atenção:</strong> toda a conversa que você teve aqui com o Wian será enviada junto para a equipe de atendimento humano analisar o seu caso. Não precisa repetir tudo de novo — só complete os dados abaixo.
+            </div>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger><SelectValue placeholder="Tópico do chamado*" /></SelectTrigger>
               <SelectContent>
@@ -857,7 +820,12 @@ export function WianChat() {
             <Input placeholder="Seu nome*" value={name} onChange={(e) => setName(e.target.value)} />
             <Input type="email" placeholder="Seu email*" value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input placeholder="Telefone (opcional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            <Textarea placeholder="Descreva sua dúvida ou problema (opcional)" value={extra} onChange={(e) => setExtra(e.target.value)} rows={3} />
+            <Textarea
+              placeholder="Descreva sua dúvida ou problema (opcional — a conversa acima já será enviada)"
+              value={extra}
+              onChange={(e) => setExtra(e.target.value)}
+              rows={3}
+            />
             <Button size="sm" onClick={submitEscalation} disabled={loading}>
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Abrir chamado
@@ -872,9 +840,18 @@ export function WianChat() {
         )}
 
         {phase === "done-escalated" && (
-          <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 text-center text-sm">
-            ✅ Chamado aberto! Nossa equipe entrará em contato pelo email informado em até 24h úteis.
-            <div className="mt-2"><button onClick={restart} className="text-primary underline">Novo atendimento</button></div>
+          <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 text-center text-sm space-y-2">
+            <div className="text-base">✅ Chamado aberto com sucesso!</div>
+            {ticketNumber && (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-primary/30">
+                <span className="text-xs text-muted-foreground">Nº de protocolo</span>
+                <span className="font-mono text-sm font-semibold text-primary">{ticketNumber}</span>
+              </div>
+            )}
+            <div className="text-xs text-muted-foreground">
+              Guarde este número para acompanhamento. Nossa equipe recebeu a conversa completa e entrará em contato pelo email informado em até <strong>24h úteis</strong>.
+            </div>
+            <div className="pt-1"><button onClick={restart} className="text-primary underline text-sm">Novo atendimento</button></div>
           </div>
         )}
       </div>

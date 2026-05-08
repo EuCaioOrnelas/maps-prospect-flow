@@ -4851,6 +4851,7 @@ export type Database = {
           resolved_at: string | null
           resolved_by: string | null
           status: string
+          ticket_number: string | null
           updated_at: string
           user_id: string | null
           visitor_session: string | null
@@ -4870,6 +4871,7 @@ export type Database = {
           resolved_at?: string | null
           resolved_by?: string | null
           status?: string
+          ticket_number?: string | null
           updated_at?: string
           user_id?: string | null
           visitor_session?: string | null
@@ -4889,6 +4891,7 @@ export type Database = {
           resolved_at?: string | null
           resolved_by?: string | null
           status?: string
+          ticket_number?: string | null
           updated_at?: string
           user_id?: string | null
           visitor_session?: string | null
