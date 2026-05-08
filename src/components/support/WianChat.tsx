@@ -217,7 +217,7 @@ export function WianChat() {
   const [category, setCategory] = useState<string>(formDraft.category || "");
   const [formErrors, setFormErrors] = useState<{ name?: string; email?: string; category?: string }>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [stars, setStars] = useState(0);
+  const [stars, setStars] = useState<number | null>(null);
   const [comment, setComment] = useState("");
   const [npsScore, setNpsScore] = useState<number | null>(null);
   const [npsRecommend, setNpsRecommend] = useState<number | null>(null);
