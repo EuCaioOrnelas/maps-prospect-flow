@@ -182,6 +182,7 @@ export function WianChat() {
   };
 
   const pickProblem = (sol: Solution) => {
+    setMenuOpen(false);
     setActiveSolution(sol);
     setTriage((t) => ({ ...t, subcategory: sol.title }));
 
