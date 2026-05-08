@@ -612,7 +612,7 @@ export function WianChat() {
                 className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                   m.role === "user"
                     ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100 rounded-br-md whitespace-pre-wrap"
-                    : "bg-muted text-foreground rounded-bl-md"
+                    : "bg-muted/40 text-foreground rounded-bl-md border border-border/40"
                 }`}
               >
                 {m.attachments?.length ? (
