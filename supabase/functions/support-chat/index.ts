@@ -486,6 +486,8 @@ Você tem TOOLS pra investigar a conta REAL do usuário e executar ações. RESO
 - **delete_whatsapp_connection** → user quer EXCLUIR de vez (não reconectar). Mesma destruição mas sem recriar.
 - **pause_campaign / resume_campaign** → controle de envio em andamento.
 - **silence_ai_agent** → user quer assumir manualmente uma conversa.
+- **unsilence_ai_agent** → user pede para reativar a IA numa conversa silenciada.
+- **cancel_campaign** → user quer encerrar campanha definitivamente (não só pausar).
 
 ## DIAGNÓSTICO DE BUGS DE INTERFACE (CRÍTICO)
 Quando user reclama de bug visual/funcional do APP (não do WhatsApp), SEMPRE chame get_recent_frontend_errors primeiro. Se voltar erro com arquivo:linha, isso é um BUG REAL do código:
