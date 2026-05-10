@@ -2,11 +2,10 @@ import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { motion } from "framer-motion";
 import { 
-  Clock, 
-  Zap,
+  Bot,
+  Clock,
   MessageCircle,
   ArrowLeft,
-  Bot,
   Sparkles,
   RotateCcw
 } from "lucide-react";
@@ -17,16 +16,16 @@ import wianAvatar from "@/assets/wian-avatar.png";
 
 const contactInfo = [
   {
-    icon: Clock,
-    title: "Horário de Suporte",
-    description: "Seg - Sex: 9h às 18h",
-    color: "text-blue-500",
-    bg: "bg-blue-500/10"
+    icon: Bot,
+    title: "Atendimento com o Wian 24/7",
+    description: "Assistente virtual disponível a qualquer hora para tirar dúvidas e resolver problemas comuns",
+    color: "text-primary",
+    bg: "bg-primary/10"
   },
   {
-    icon: Zap,
-    title: "Resposta Rápida",
-    description: "Respondemos em até 24h úteis",
+    icon: Clock,
+    title: "Suporte humano por chamado",
+    description: "Quando o Wian abre um chamado, nosso time responde em até 24h úteis (Seg–Sex, 9h às 18h)",
     color: "text-amber-500",
     bg: "bg-amber-500/10"
   }
@@ -88,10 +87,10 @@ const Contact = () => {
             transition={{ delay: 0.1, duration: 0.5 }}
           >
             <h1 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4 text-foreground">
-              Fale Conosco
+              Central de Atendimento
             </h1>
-            <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-lg mx-auto px-4">
-              Tem alguma dúvida ou sugestão? Adoraríamos ouvir você!
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-xl mx-auto px-4">
+              Converse com o <strong className="text-foreground">Wian</strong>, nosso assistente virtual, para resolver dúvidas na hora. Se precisar, ele abre um chamado para o nosso time humano.
             </p>
           </motion.div>
 
