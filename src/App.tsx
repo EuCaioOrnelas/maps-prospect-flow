@@ -118,6 +118,7 @@ const AdminOnboarding = lazyWithRetry(() => import("./pages/admin/AdminOnboardin
 const AdminSupportTickets = lazyWithRetry(() => import("./pages/admin/AdminSupportTickets"), "AdminSupportTickets");
 const AdminSupportMindIA = lazyWithRetry(() => import("./pages/admin/AdminSupportMindIA"), "AdminSupportMindIA");
 const AdminSupportFAQs = lazyWithRetry(() => import("./pages/admin/AdminSupportFAQs"), "AdminSupportFAQs");
+const AdminSupportIntelligence = lazyWithRetry(() => import("./pages/admin/AdminSupportIntelligence"), "AdminSupportIntelligence");
 
 // Partners - Admin (Programa de Parceiros)
 const AdminPartnersDashboard = lazyWithRetry(() => import("./pages/admin/AdminPartnersDashboard"), "AdminPartnersDashboard");
