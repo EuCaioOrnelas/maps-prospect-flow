@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
     let userEmail: string | null = null;
     let userName: string | null = null;
     let userPhone: string | null = null;
-    let customerType: "paid_client" | "registered_user" | "guest" = "guest";
+    let customerType: "paid_client" | "trial_user" | "guest" = "guest";
     let priority: "low" | "medium" | "high" = "low";
 
     const auth = req.headers.get("Authorization");
@@ -143,11 +143,11 @@ Deno.serve(async (req) => {
             customerType = "paid_client";
             priority = "high";
           } else {
-            customerType = "registered_user";
+            customerType = "trial_user";
             priority = "medium";
           }
         } else {
-          customerType = "registered_user";
+          customerType = "trial_user";
           priority = "medium";
         }
       }

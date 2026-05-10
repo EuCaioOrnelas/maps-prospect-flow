@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       .eq("id", ticketId)
       .maybeSingle();
 
-    let customerType: "paid_client" | "registered_user" | "guest" =
+    let customerType: "paid_client" | "trial_user" | "guest" =
       (existing?.customer_type as any) ?? "guest";
     let priority: "low" | "medium" | "high" =
       (existing?.priority as any) ?? "low";
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
           customerType = "paid_client";
           priority = "high";
         } else {
-          customerType = "registered_user";
+          customerType = "trial_user";
           priority = "medium";
         }
       }

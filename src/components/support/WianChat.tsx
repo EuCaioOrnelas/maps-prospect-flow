@@ -684,7 +684,7 @@ export function WianChat() {
             phone: phone.trim() || null,
             status: "open",
             priority: "medium",
-            customer_type: isAuthed ? "registered_user" : "guest",
+            customer_type: isAuthed ? "trial_user" : "guest",
           })
           .select("id")
           .single();
