@@ -1276,37 +1276,55 @@ export function WianChat() {
             </div>
           )}
           <div className="flex gap-2">
-            <input
-              ref={fileRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                const fs = Array.from(e.target.files ?? []);
-                if (fs.length) void addFiles(fs);
-                e.target.value = "";
-              }}
-            />
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              onClick={() => fileRef.current?.click()}
-              disabled={loading || pendingAttachments.length >= MAX_ATTACHMENTS_PER_SEND}
-              title="Anexar arquivo (ou cole com Ctrl+V)"
-            >
-              <Paperclip className="w-4 h-4" />
-            </Button>
-            <Input
-              placeholder="Digite, cole arquivos (Ctrl+V) ou anexe…"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-              disabled={loading}
-            />
-            <Button onClick={send} disabled={loading || (!input.trim() && pendingAttachments.length === 0)} size="icon">
-              <Send className="w-4 h-4" />
-            </Button>
+            {phase === "ask-name" ? (
+              <>
+                <Input
+                  placeholder="Seu nome"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submitName(); } }}
+                  autoFocus
+                  maxLength={60}
+                />
+                <Button onClick={submitName} disabled={name.trim().length < 2} size="icon">
+                  <Send className="w-4 h-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const fs = Array.from(e.target.files ?? []);
+                    if (fs.length) void addFiles(fs);
+                    e.target.value = "";
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={loading || pendingAttachments.length >= MAX_ATTACHMENTS_PER_SEND}
+                  title="Anexar arquivo (ou cole com Ctrl+V)"
+                >
+                  <Paperclip className="w-4 h-4" />
+                </Button>
+                <Input
+                  placeholder="Digite, cole arquivos (Ctrl+V) ou anexe…"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+                  disabled={loading}
+                />
+                <Button onClick={send} disabled={loading || (!input.trim() && pendingAttachments.length === 0)} size="icon">
+                  <Send className="w-4 h-4" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
