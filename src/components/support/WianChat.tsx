@@ -447,6 +447,7 @@ export function WianChat() {
     );
   };
 
+  const goBackToMenu = () => {
     setActiveCategory(null);
     setActiveSolution(null);
     setTriage({});
