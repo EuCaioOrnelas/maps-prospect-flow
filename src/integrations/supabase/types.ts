@@ -354,6 +354,7 @@ export type Database = {
       ai_logs: {
         Row: {
           confidence: number | null
+          cost_usd: number | null
           created_at: string
           id: string
           matched_faq_ids: string[] | null
@@ -366,6 +367,7 @@ export type Database = {
         }
         Insert: {
           confidence?: number | null
+          cost_usd?: number | null
           created_at?: string
           id?: string
           matched_faq_ids?: string[] | null
@@ -378,6 +380,7 @@ export type Database = {
         }
         Update: {
           confidence?: number | null
+          cost_usd?: number | null
           created_at?: string
           id?: string
           matched_faq_ids?: string[] | null
@@ -389,6 +392,13 @@ export type Database = {
           tokens_out?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "ai_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_cost_by_ticket"
+            referencedColumns: ["ticket_id"]
+          },
           {
             foreignKeyName: "ai_logs_ticket_id_fkey"
             columns: ["ticket_id"]
@@ -4798,6 +4808,13 @@ export type Database = {
             foreignKeyName: "support_messages_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
+            referencedRelation: "support_cost_by_ticket"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
             referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
@@ -4842,6 +4859,61 @@ export type Database = {
             foreignKeyName: "support_ratings_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
+            referencedRelation: "support_cost_by_ticket"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "support_ratings_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_ticket_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          from_phase: string | null
+          id: string
+          metadata: Json | null
+          ticket_id: string
+          to_phase: string
+          triggered_by: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          from_phase?: string | null
+          id?: string
+          metadata?: Json | null
+          ticket_id: string
+          to_phase: string
+          triggered_by?: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          from_phase?: string | null
+          id?: string
+          metadata?: Json | null
+          ticket_id?: string
+          to_phase?: string
+          triggered_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_events_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_cost_by_ticket"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "support_ticket_events_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
             referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
@@ -4883,6 +4955,13 @@ export type Database = {
             foreignKeyName: "support_ticket_history_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
+            referencedRelation: "support_cost_by_ticket"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "support_ticket_history_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
             referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
@@ -4893,19 +4972,23 @@ export type Database = {
           ai_confidence: number | null
           ai_summary: string | null
           category: string | null
+          conversation_summary: string | null
           created_at: string
           customer_type: string | null
           due_at: string | null
           email: string | null
+          frustration_score: number
           id: string
           internal_notes: string | null
           is_manual: boolean
           name: string | null
+          phase: string
           phone: string | null
           priority: string
           resolved_at: string | null
           resolved_by: string | null
           status: string
+          summary_message_count: number
           ticket_number: string | null
           updated_at: string
           user_id: string | null
@@ -4915,19 +4998,23 @@ export type Database = {
           ai_confidence?: number | null
           ai_summary?: string | null
           category?: string | null
+          conversation_summary?: string | null
           created_at?: string
           customer_type?: string | null
           due_at?: string | null
           email?: string | null
+          frustration_score?: number
           id?: string
           internal_notes?: string | null
           is_manual?: boolean
           name?: string | null
+          phase?: string
           phone?: string | null
           priority?: string
           resolved_at?: string | null
           resolved_by?: string | null
           status?: string
+          summary_message_count?: number
           ticket_number?: string | null
           updated_at?: string
           user_id?: string | null
@@ -4937,19 +5024,23 @@ export type Database = {
           ai_confidence?: number | null
           ai_summary?: string | null
           category?: string | null
+          conversation_summary?: string | null
           created_at?: string
           customer_type?: string | null
           due_at?: string | null
           email?: string | null
+          frustration_score?: number
           id?: string
           internal_notes?: string | null
           is_manual?: boolean
           name?: string | null
+          phase?: string
           phone?: string | null
           priority?: string
           resolved_at?: string | null
           resolved_by?: string | null
           status?: string
+          summary_message_count?: number
           ticket_number?: string | null
           updated_at?: string
           user_id?: string | null
@@ -6867,7 +6958,41 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      support_cost_by_category: {
+        Row: {
+          avg_cost_per_call: number | null
+          category: string | null
+          tickets: number | null
+          total_cost_usd: number | null
+        }
+        Relationships: []
+      }
+      support_cost_by_ticket: {
+        Row: {
+          ai_calls: number | null
+          category: string | null
+          created_at: string | null
+          customer_type: string | null
+          phase: string | null
+          ticket_id: string | null
+          ticket_number: string | null
+          total_cost_usd: number | null
+          total_tokens_in: number | null
+          total_tokens_out: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      support_cost_by_user: {
+        Row: {
+          tickets: number | null
+          total_cost_usd: number | null
+          total_tokens_in: number | null
+          total_tokens_out: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_update_searches_limit: {

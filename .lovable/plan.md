@@ -1,78 +1,111 @@
-# Sistema de Suporte IA Wiize — "Wian"
+# Evolução do Wian — 10 melhorias em 4 fases
 
-Esse é um projeto grande. Vou implementar em **5 fases sequenciais** para que você possa validar cada etapa antes de avançar. Em cada fase entrego algo funcional de ponta a ponta.
-
-> ⚠️ Antes de começar, preciso confirmar 2 coisas (responda no chat depois de aprovar este plano):
-> 1. **Embeddings com pgvector**: posso habilitar a extensão `vector` no Lovable Cloud? (necessário para busca semântica real do Mind IA)
-> 2. **Vídeos do FAQ**: prefere apenas URL externa (YouTube/Vimeo) ou também upload direto pro Storage? Upload consome storage e exige bucket dedicado.
+São muitas mudanças (banco, edge functions, painel admin, frontend). Para entregar com qualidade e você validar a cada etapa, proponho dividir em **4 fases sequenciais**. Cada fase é independente e já entrega valor.
 
 ---
 
-## Fase 1 — Banco de dados + Chat público "Wian" (substitui o Typebot)
+## Fase 1 — Fundação (state machine + frustração + memória + custo)
+*Base para tudo o que vem depois. Sem mexer em UI nova de admin.*
 
-**Banco (1 migration):**
-- `support_tickets` — id, user_id (nullable p/ visitantes), name, email, phone, status (open/in_progress/resolved/escalated/closed), priority, category, resolved_by (ai/human), ai_confidence, ai_summary, rating, rating_comment, created_at, updated_at
-- `support_messages` — ticket_id, role (user/ai/agent/system), content, metadata jsonb
-- `knowledge_base` — title, category, subtopic, tags[], pains (text), solution (rich text/html), guided_flow jsonb, severity, auto_escalate, min_confidence, embedding vector(1536), active
-- `faq_topics` — name, slug, order, icon, active
-- `faqs` — topic_id, title, content (html), video_url, tags[], order, active, embedding
-- `ai_logs` — ticket_id, query, matched_kb_ids[], confidence, model, tokens
-- `support_ratings` — ticket_id, stars, comment
-- `system_alerts` — type, message, count, period_start, resolved
-- RLS: usuário vê só seus tickets; admins veem tudo (`has_role admin`); FAQ público
+**Melhoria 1 — State Machine formal**
+- Novo enum `support_phase` em `support_tickets`:
+  `triage → faq_resolution → ai_investigating → ai_solution → waiting_user_confirmation → escalated → human_assigned → resolved → closed → rated`
+- Tabela `support_ticket_events` (audit log de transições, com timestamp e quem disparou)
+- `support-chat` e `support-escalate` passam a gravar transição em vez de apenas mexer em `status`
+- Frontend (`WianChat.tsx`) lê `phase` em vez de inferir estado por marcadores
 
-**Edge functions:**
-- `support-chat` (público) — busca semântica via pgvector + GPT-4o-mini + streaming, persiste mensagens, gera resumo, decide escalonamento
-- `support-embed` — gera embedding ao criar/editar KB ou FAQ (trigger via app)
+**Melhoria 2 — Frustration Score**
+- Nova função TS `computeFrustration(message, history)` no edge: detecta CAPS LOCK (>60% maiúsculas), palavrões (lista PT-BR), repetição (mesma palavra-chave em 3+ msgs), gatilhos ("já tentei", "não funciona", "péssimo", "ridículo", "horrível", "cancelar")
+- Coluna `frustration_score` (0–100) em `support_tickets`, atualizada a cada msg do usuário
+- Regra: score ≥ 60 → escala automática com prioridade `high` mesmo se for `trial_user`
+- Marcador `[ALTA_FRUSTRACAO]` aparece pro admin no card do ticket
 
-**Frontend público:**
-- Substituir iframe Typebot em `src/pages/Contact.tsx` pelo novo chat Wian
-- Novo componente `src/components/support/WianChat.tsx` — bolhas, avatar Wiize, "Wian está digitando…", scroll auto, persistência local + ticket no Supabase, fluxo "resolveu? → avaliação OU coletar nome/email/telefone → escalar"
-- Tom em PT-BR, objetivo, profissional
+**Melhoria 5 — Memory Summary progressivo**
+- Coluna `conversation_summary` em `support_tickets`
+- A cada 6 mensagens novas: chamada paralela ao gpt-4o-mini ("resuma em 3 bullets o que já foi tentado e descoberto")
+- `support-chat` envia: `summary` + **últimas 4** mensagens (em vez de 10 cruas) → economia de ~60% de token em conversas longas
 
-## Fase 2 — Admin: Tickets
+**Melhoria 7 — Cost Tracking (backend)**
+- Já temos `tokens_in/out` em `ai_logs`. Adicionar:
+  - Coluna `cost_usd` calculada (input $0.15/1M, output $0.60/1M para gpt-4o-mini)
+  - View `support_cost_by_ticket`, `support_cost_by_user`, `support_cost_by_category`
+- Dashboard fica para Fase 4
 
-- Nova entrada na sidebar `Admin → Suporte → Tickets`
-- `/admin/suporte/tickets` — tabela com filtros (status, prioridade, categoria, resolvido por IA, avaliação), busca (nome/email/conteúdo), paginação
-- `/admin/suporte/tickets/:id` — conversa completa, resumo IA, dados do usuário, ações: responder manualmente, mudar status, marcar resolvido, observações internas
+---
 
-## Fase 3 — Admin: Mind IA
+## Fase 2 — Inteligência (clustering + confiança semântica + tool mode básico)
 
-- `/admin/suporte/mind-ia` — CRUD de conhecimentos
-- Form com: título, categoria, subtópico, tags, prioridade, dores (textarea grande), solução (rich text), fluxo guiado (builder simples de perguntas condicionais), gravidade, escalar auto, score mínimo
-- Ao salvar → chama `support-embed` para gerar embedding
-- Lista com filtros, busca, ativar/desativar
+**Melhoria 3 — Bug Clustering / Detecção de incidentes**
+- Cron `support-incident-detector` (roda a cada 15 min)
+- Pega tickets das últimas 2h, agrupa por similaridade de embedding (threshold 0.75)
+- Se um cluster atinge ≥ 5 tickets distintos em janela curta → cria registro em `system_alerts` (`type: 'incident_suspected'`, `cluster_summary`, `affected_users`)
+- Badge vermelho na sidebar admin + banner no `/admin/suporte/tickets`
 
-## Fase 4 — Admin: FAQs (substitui FAQ atual)
+**Melhoria 9 — Confiança semântica ponderada**
+- Adicionar `success_rate` em `knowledge_base` (atualizada quando ticket resolvido cita aquele KB)
+- Score final = `similarity × 0.6 + category_match × 0.2 + historical_success × 0.2`
+- Threshold dinâmico por categoria (ex: cobrança exige 0.7, dúvida geral aceita 0.4)
 
-- `/admin/suporte/faqs` — gerenciar tópicos (drag-to-reorder) e FAQs dentro de cada
-- Seed inicial dos 13 tópicos listados (Plataforma, IA e Prospecção, WhatsApp e Disparos, etc.)
-- FAQ form: título, conteúdo rich text, URL de vídeo (e upload se confirmado), tags
-- Página pública `/ajuda/faq` consome essa nova base
-- Embedding automático → IA usa FAQs como contexto também
+**Melhoria 6 — Tool Mode (versão controlada)**
+- Adicionar function calling no `support-chat` com 3 tools seguras (read-only):
+  - `check_whatsapp_connection(user_id)` → status do número Evolution/Meta
+  - `check_subscription_status(user_id)` → plano, expiração, falhas de cobrança
+  - `get_recent_campaign_status(user_id)` → última campanha + erros
+- Resposta vira: "Verifiquei aqui — sua sessão WhatsApp X está desconectada desde ontem às 18h. Vou te ajudar a reconectar 👇"
+- Tools são **opt-in** no prompt (modelo decide quando chamar)
 
-## Fase 5 — Dashboard de métricas + Detecção de problemas sistêmicos
+---
 
-- `/admin/suporte/metricas` — KPIs (totais, % resolução IA, tempo médio resposta, avaliação média), gráficos (linha por período, barras por categoria, pizza resolvido IA vs humano), top dores, top erros
-- Cron job (edge function agendada): detecta N+ tickets com mesma categoria/dor em janela curta → cria `system_alerts` → badge na sidebar admin
+## Fase 3 — Autolearning + Humanização
+
+**Melhoria 4 — Autolearning (humano vira KB)**
+- No painel admin de tickets: botão **"Transformar em conhecimento"** quando ticket resolvido por humano
+- Modal: gpt-4o-mini lê transcrição → sugere `title`, `category`, `pains`, `solution`, `tags`
+- Admin revisa, ajusta e salva → `support-embed` gera embedding automaticamente
+- Métrica de "% tickets virando KB" no dashboard
+
+**Melhoria 8 — Humanização controlada (refino do prompt)**
+- Adicionar regras explícitas no system prompt:
+  - "Máximo 3 emojis na conversa inteira"
+  - "Nunca repita a mesma frase de transição 2x seguidas"
+  - "Se já cumprimentou, não cumprimente de novo"
+- Avaliação automática: a cada 50 tickets, rodar análise de "tom" (gpt-4o-mini classifica: muito_formal / equilibrado / muito_informal / prolixo) → ajuste fino do prompt
+
+---
+
+## Fase 4 — Dashboard Executivo (Melhoria 10 + 7 visual)
+
+Nova rota `/admin/suporte/inteligencia` com:
+
+**Painéis:**
+- KPIs topo: tickets/dia, % resolução IA, NPS médio, custo IA total mês, custo médio/ticket
+- **Módulo mais problemático** (categoria com mais tickets nos 30d)
+- **Bugs recorrentes** (clusters detectados)
+- **Onboarding mais difícil** (categoria com maior frustration_score médio)
+- **Categoria com pior NPS**
+- **Top 10 usuários com mais tickets** (sinal de churn)
+- **Risco de churn** (usuários com NPS ≤ 6 + frustration alto + ticket aberto)
+- **Custo IA vs humano** (gráfico comparativo)
+- **Resolução por token** (eficiência da IA por categoria)
+
+**Tech:** React Query + Recharts, paginação 20/página, lazy load.
 
 ---
 
 ## Detalhes técnicos
 
-- **Modelo IA**: `google/gemini-3-flash-preview` para chat (rápido/barato), `text-embedding-3-small` (1536d) para embeddings — via Lovable AI Gateway, sem chave manual
-- **Busca semântica**: função SQL `match_knowledge(query_embedding, threshold, count)` usando `<=>` do pgvector
-- **Stack respeitada**: tokens semânticos Tailwind, modais com `bg-black/70` (sem blur), B2B only, idempotente
-- **Sidebar admin**: nova seção "Suporte" com 4 itens (Tickets, Mind IA, FAQs, Métricas)
-- **Performance**: paginação 20/página, debounce 300ms na busca, React Query com cache, lazy load das páginas admin
+- Modelo continua `gpt-4o-mini` (memória do projeto). Tools usam function calling nativo OpenAI.
+- Migrações idempotentes (`IF NOT EXISTS`, `DROP POLICY IF EXISTS`).
+- RLS: tabelas novas (`support_ticket_events`, `system_alerts` se ainda não existir) → admin vê tudo via `is_current_user_admin()`, usuário vê só do próprio ticket.
+- Edge functions afetadas: `support-chat` (todas as fases), `support-escalate` (Fase 1), nova `support-incident-detector` (Fase 2), nova `support-kb-from-ticket` (Fase 3).
+- Sem breaking changes no frontend público — Wian continua funcionando durante migrações.
 
 ---
 
-## Confirmação
+## Como prosseguir
 
-Responda:
-- ✅ **"pode começar"** → executo Fase 1 (DB + chat Wian) e paro pra você validar
-- ✅ **"faz tudo de uma vez"** → executo todas as 5 fases em sequência (vai gerar muitos arquivos numa rodada só)
-- 🔧 Ou ajuste qualquer parte antes de eu começar
-
-E me confirme as 2 perguntas do topo (pgvector + upload de vídeo).
+Me responde com **uma das opções**:
+- **"toca Fase 1"** → começo agora pela fundação
+- **"faz tudo"** → executo as 4 fases em sequência (vai gerar muitos arquivos)
+- **"só X e Y"** → escolhe melhorias específicas (ex: "só 2, 3 e 10")
+- Ou peça ajustes no plano antes de começar

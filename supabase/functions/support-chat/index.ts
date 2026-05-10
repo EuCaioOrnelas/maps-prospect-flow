@@ -1,9 +1,5 @@
 // Wian — Wiize support AI chat (OpenAI gpt-4o-mini)
-// - Cria/usa um support ticket
-// - Faz busca semântica em KB + FAQs (pgvector via Lovable Embeddings)
-// - Chama OpenAI com prompt grounded
-// - Só escala para humano quando o modelo explicitamente diz "ESCALAR_HUMANO"
-// - Identifica cliente pagante / usuário cadastrado / visitante para priorização
+// Fase 1: state machine, frustration score, progressive summary, cost tracking
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -13,7 +9,6 @@ const corsHeaders = {
 };
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!; // só para embeddings
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -29,57 +24,47 @@ Sua missão é resolver dúvidas e problemas de clientes e usuários da Wiize co
 # Personalidade e tom (MUITO IMPORTANTE)
 - Fale como um humano experiente do suporte: caloroso, paciente, natural, próximo. Profissional, mas sem formalidade engessada.
 - Português brasileiro, frases curtas, sem jargão técnico desnecessário.
-- **Adapte o tom ao usuário**: se a pessoa está formal, você fica mais sóbrio; se está descontraída, brincando ou rindo ("kkk", "haha", "rsrs", emojis), você devolve com leveza ("kkk verdade", "haha boa", "rsrs"), sem forçar. Pode rir junto, brincar pontualmente, mas nunca às custas do usuário e nunca perdendo o foco em resolver o problema.
-- Demonstre empatia em 1 linha quando o usuário descrever um problema ("entendo, isso trava o trabalho mesmo", "imagino o estresse").
-- Emojis com moderação e contextualizados (👋 ✅ 🤔 🙂 🎉). Nunca encha a mensagem de emojis.
-- Markdown padrão (**negrito**, listas) é renderizado no chat.
+- **Adapte o tom ao usuário**: se a pessoa está formal, você fica mais sóbrio; se está descontraída ("kkk", "haha"), você devolve com leveza, sem forçar.
+- Demonstre empatia em 1 linha quando o usuário descrever um problema.
+- **Máximo 3 emojis na conversa toda.** Use com moderação (👋 ✅ 🤔 🙂 🎉).
+- Markdown padrão (**negrito**, listas) é renderizado.
 - NUNCA seja robótico. NUNCA termine toda resposta com "Isso resolveu?". Só pergunte se resolveu DEPOIS de entregar uma solução concreta acionável.
+- **Se já cumprimentou no histórico, NÃO cumprimente de novo.**
+- **Não repita a mesma frase de transição 2x seguidas.**
 
 # Como falar com o usuário (humanização)
-- Se você souber o **nome do usuário** (informado no bloco USUÁRIO), use o **primeiro nome** com naturalidade para criar conexão — sem exageros (1x na saudação, eventualmente em momentos-chave). Nunca repita o nome em toda mensagem.
-- Trate como conversa de WhatsApp entre pessoas, não e-mail formal.
-- Se o usuário agradecer ou elogiar, retribua com simpatia e siga.
+- Se você souber o **nome do usuário** (bloco USUÁRIO), use o **primeiro nome** com naturalidade — sem exageros (1x na saudação, eventualmente em momentos-chave). Nunca em toda mensagem.
+- Trate como conversa de WhatsApp, não e-mail formal.
 
 # Formatação das mensagens (MUITO IMPORTANTE)
-- Mensagens devem parecer um chat humano: **curtas e divididas em blocos**.
-- Cada bloco no máximo ~280 caracteres. Se a resposta for maior, **quebre em vários blocos** separados por **linha em branco** (\\n\\n).
-- Prefira **2 a 4 blocos curtos** em vez de um único parágrafo longo.
-- Listas numeradas ficam num único bloco. Antes da lista, use um bloco curto de intro (ex: "Tente isso:").
-- Não use cabeçalhos (##) nem tabelas grandes. Use **negrito** com moderação.
+- Mensagens curtas, divididas em blocos. Cada bloco no máximo ~280 caracteres.
+- Quebre em **2 a 4 blocos curtos** separados por linha em branco (\\n\\n) em vez de um parágrafo longo.
+- Listas numeradas em um único bloco. Antes da lista, bloco curto de intro.
+- Não use cabeçalhos (##) nem tabelas grandes.
 
-# Fluxo de atendimento (siga em ordem)
-1. **Entender** — Se a mensagem do usuário for vaga, faça 1-2 perguntas curtas para entender o contexto (o que ele tentou, em que tela, o que aconteceu, mensagem de erro). NÃO proponha solução ainda.
-2. **Confirmar** — Quando achar que entendeu, faça uma frase curta confirmando ("Entendi, então você quer X em Y, certo?") antes de propor a solução. Só pule se for trivial e óbvio.
-3. **Resolver** — Apresente a solução em passos claros (numerados se forem mais de 2 passos), baseada no CONTEXTO. Após a solução, pergunte se funcionou.
-4. **Tentar alternativa** — Se não funcionou, NÃO escale ainda. Faça perguntas de diagnóstico e proponha uma alternativa do CONTEXTO (até 2 alternativas).
-5. **Escalar** — Só escale para humano quando: (a) o usuário pedir explicitamente; (b) caso crítico (cobrança, conta bloqueada, perda de dados, bug confirmado); (c) você já tentou 2 alternativas sem sucesso; (d) tema fora do escopo Wiize; (e) faltam dados específicos no CONTEXTO E o usuário precisa de uma resposta exata.
+# Fluxo de atendimento
+1. **Entender** — Pergunta vaga? Faça 1-2 perguntas curtas de contexto. NÃO proponha solução ainda.
+2. **Confirmar** — "Entendi, então X em Y, certo?" antes de propor solução. Pule se óbvio.
+3. **Resolver** — Solução em passos numerados, baseada no CONTEXTO. Após, pergunte se funcionou.
+4. **Tentar alternativa** — Se não funcionou, NÃO escale ainda. Diagnóstico + alternativa (até 2x).
+5. **Escalar** — Só quando: (a) usuário pedir; (b) caso crítico (cobrança, conta bloqueada, perda de dados, bug); (c) 2 alternativas sem sucesso; (d) tema fora do escopo; (e) faltam dados específicos.
 
-# Marcadores obrigatórios (coloque SEMPRE no FINAL da resposta, em uma linha separada)
-- \`[INVESTIGANDO]\` — quando você está fazendo perguntas, confirmando, ou ainda coletando informações. NÃO pergunte se resolveu.
-- \`[SOLUCAO]\` — quando você acabou de entregar uma solução concreta acionável e quer saber se funcionou.
-- \`[ESCALAR_HUMANO]\` — quando precisar abrir chamado humano (responda APENAS este marcador, sem mais nada).
+# Marcadores obrigatórios (SEMPRE no FINAL, em linha separada)
+- \`[INVESTIGANDO]\` — perguntas/diagnóstico. NÃO pergunte se resolveu.
+- \`[SOLUCAO]\` — solução entregue, perguntando se funcionou.
+- \`[ESCALAR_HUMANO]\` — abrir chamado humano (responda APENAS este marcador).
 
-Esses marcadores serão removidos da mensagem antes de exibir ao usuário. NUNCA esqueça de incluir um.
+Esses marcadores serão removidos antes de exibir. NUNCA esqueça de incluir um.
 
-# Regras de veracidade (críticas)
-- NUNCA invente números, prazos, quantidades, valores, limites, nomes de recursos ou passos. Só cite específicos se LITERALMENTE no CONTEXTO.
-- Se não tem certeza absoluta, fale em termos gerais OU pergunte mais OU escale. Nunca chute.
+# Veracidade
+- NUNCA invente números, prazos, valores, limites, recursos. Só cite específicos se LITERAL no CONTEXTO.
+- Se não tem certeza, fale geral OU pergunte mais OU escale.
 - Não cite IDs internos nem "knowledge base".
 
-# Vídeos passo a passo (MUITO IMPORTANTE)
-- Se o item do CONTEXTO trouxer um campo "Vídeo passo a passo: <url>", inclua o link **na própria mensagem da solução** em uma linha separada, exatamente assim: \`📺 Vídeo passo a passo: <url>\` (cole a URL crua do YouTube — o chat detecta e embute automaticamente o player).
-- Sempre que houver vídeo, mande o link junto com 1-2 linhas curtas explicando ("Gravamos um vídeo rapidinho mostrando, dá uma olhada:") e em seguida pergunte se resolveu, como uma mensagem normal de chat.
-- Nunca invente URLs de vídeo. Só use o link exato que estiver no CONTEXTO.
-
-# Exemplos de bom comportamento
-Usuário: "não consigo aquecer meu número"
-Você: "Posso te ajudar 👋\\n\\nPra eu entender direito: o número já aparece conectado na sua lista, ou trava antes disso?\\n\\n[INVESTIGANDO]"
-
-Usuário: "kkkk deu certo, valeu!"
-Você: "kkk que bom, fico feliz! 🎉\\n\\nQualquer outra dúvida, é só chamar por aqui 🙂\\n\\n[SOLUCAO]"
-
-Usuário: "tá conectado mas não inicia"
-Você: "Entendi, João — número conectado mas o aquecimento não inicia.\\n\\n**Tente isso:**\\n\\n1. Vá em **Aquecimento**\\n2. Selecione o número\\n3. Clique em **Iniciar aquecimento**\\n\\nFuncionou? 🙂\\n\\n[SOLUCAO]"`;
+# Vídeos passo a passo
+- Se o item do CONTEXTO trouxer "Vídeo passo a passo: <url>", inclua na própria solução em linha separada: \`📺 Vídeo passo a passo: <url>\` (URL crua — o chat embute o player).
+- Sempre que houver vídeo, mande junto com 1-2 linhas curtas e em seguida pergunte se resolveu.
+- Nunca invente URLs. Só use o link exato do CONTEXTO.`;
 
 async function embed(text: string): Promise<number[] | null> {
   if (!OPENAI_API_KEY) return null;
@@ -92,6 +77,115 @@ async function embed(text: string): Promise<number[] | null> {
     if (!r.ok) return null;
     const j = await r.json();
     return j.data?.[0]?.embedding ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ============================================================
+// Frustration Score (0-100) — heurístico, sem IA
+// ============================================================
+const PALAVROES = [
+  "merda","porra","caralho","foda","fodeu","fodendo","puta","cu","buceta",
+  "bosta","desgraça","desgracado","cacete","piranha","babaca","otario","otário",
+  "idiota","imbecil","retardado","retardada","lixo","horrível","horrivel",
+  "péssimo","pessimo","ridículo","ridiculo","absurdo","decepcionante","vergonha"
+];
+const GATILHOS = [
+  "já tentei","ja tentei","nao funciona","não funciona","nada funciona",
+  "tá quebrado","ta quebrado","está quebrado","esta quebrado",
+  "quero cancelar","vou cancelar","cancelar minha conta","cancela minha conta",
+  "perdi tempo","perdendo tempo","sem paciência","sem paciencia",
+  "que demora","muito demorado","horrível","péssimo","ridículo",
+  "isso é um lixo","isso e um lixo","não aguento","nao aguento",
+  "dinheiro de volta","reembolso","procon","reclame aqui",
+];
+
+function computeFrustration(currentMsg: string, history: any[], previousScore: number): number {
+  let score = previousScore * 0.7; // decay leve a cada mensagem
+  const msg = (currentMsg || "").toLowerCase();
+  const msgRaw = currentMsg || "";
+
+  // 1. CAPS LOCK (>60% de letras maiúsculas e mensagem com 6+ letras)
+  const letters = msgRaw.replace(/[^a-zA-ZÀ-ÿ]/g, "");
+  if (letters.length >= 6) {
+    const upper = letters.replace(/[^A-ZÀ-Þ]/g, "").length;
+    if (upper / letters.length > 0.6) score += 25;
+  }
+
+  // 2. Palavrões
+  for (const p of PALAVROES) if (msg.includes(p)) { score += 20; break; }
+
+  // 3. Gatilhos de frustração
+  let gatilhoCount = 0;
+  for (const g of GATILHOS) if (msg.includes(g)) gatilhoCount++;
+  score += Math.min(gatilhoCount * 12, 30);
+
+  // 4. Pontuação excessiva (!!!, ???)
+  if (/[!?]{3,}/.test(msgRaw)) score += 10;
+
+  // 5. Repetição: mesma frase do usuário aparecendo nas últimas 3 mensagens dele
+  const userMsgs = history.filter((h) => h.role === "user").slice(-3).map((h) => (h.content || "").toLowerCase().slice(0, 100));
+  const cur = msg.slice(0, 100);
+  if (cur.length > 10 && userMsgs.filter((m) => m && (m.includes(cur.slice(0, 40)) || cur.includes(m.slice(0, 40)))).length >= 2) {
+    score += 15;
+  }
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+// ============================================================
+// Phase transition (state machine + audit)
+// ============================================================
+async function transitionPhase(sb: any, ticketId: string, fromPhase: string | null, toPhase: string, triggeredBy: string, metadata?: any) {
+  if (fromPhase === toPhase) return;
+  await sb.from("support_ticket_events").insert({
+    ticket_id: ticketId,
+    from_phase: fromPhase,
+    to_phase: toPhase,
+    triggered_by: triggeredBy,
+    metadata: metadata ?? null,
+  });
+}
+
+// ============================================================
+// Progressive summary (a cada 6 mensagens novas)
+// ============================================================
+async function maybeUpdateSummary(sb: any, ticketId: string, currentSummary: string | null, lastSummaryCount: number, totalMessages: number) {
+  if (totalMessages - lastSummaryCount < 6) return null;
+  // pega últimas 12 mensagens para resumir junto com o resumo anterior
+  const { data: msgs } = await sb
+    .from("support_messages")
+    .select("role, content, created_at")
+    .eq("ticket_id", ticketId)
+    .order("created_at", { ascending: true })
+    .limit(50);
+  if (!msgs || msgs.length === 0) return null;
+
+  const transcript = msgs.map((m: any) => `${m.role === "ai" ? "Wian" : m.role === "user" ? "Usuário" : m.role}: ${m.content}`).join("\n").slice(0, 6000);
+  const prompt = `${currentSummary ? `Resumo até agora:\n${currentSummary}\n\n` : ""}Transcrição completa:\n${transcript}\n\nGere um resumo objetivo em até 5 bullets curtos sobre: o problema do usuário, contexto técnico relevante, o que já foi tentado, o que ainda falta. Português direto, sem floreios.`;
+
+  try {
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.2,
+        max_tokens: 250,
+      }),
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const summary = j.choices?.[0]?.message?.content?.trim() || null;
+    if (summary) {
+      await sb.from("support_tickets").update({
+        conversation_summary: summary,
+        summary_message_count: totalMessages,
+      }).eq("id", ticketId);
+    }
+    return summary;
   } catch {
     return null;
   }
@@ -155,7 +249,9 @@ Deno.serve(async (req) => {
 
     // Garante o ticket
     let ticketId = incomingTicketId;
+    let currentTicket: any = null;
     if (!ticketId) {
+      const initialPhase = triageContext ? "ai_investigating" : "triage";
       const { data: t, error } = await sb.from("support_tickets").insert({
         user_id: userId,
         visitor_session: visitorSession ?? null,
@@ -165,16 +261,40 @@ Deno.serve(async (req) => {
         status: "open",
         priority,
         customer_type: customerType,
-      }).select("id").single();
+        phase: initialPhase,
+      }).select("*").single();
       if (error) throw error;
       ticketId = t.id;
+      currentTicket = t;
+      await transitionPhase(sb, ticketId, null, initialPhase, "system", { reason: triageContext ? "triage_failed" : "new_chat" });
+    } else {
+      const { data: t } = await sb.from("support_tickets").select("*").eq("id", ticketId).maybeSingle();
+      currentTicket = t;
     }
+
+    const previousFrustration = currentTicket?.frustration_score ?? 0;
+    const previousPhase = currentTicket?.phase ?? "triage";
 
     // Persiste mensagem do usuário
     await sb.from("support_messages").insert({
       ticket_id: ticketId, role: "user", content: message,
       metadata: imageDataUrl ? { has_image: true } : null,
     });
+
+    // Frustration score
+    const newFrustration = computeFrustration(message, history, previousFrustration);
+
+    // Total de mensagens (para summary)
+    const { count: totalMessages } = await sb
+      .from("support_messages")
+      .select("*", { count: "exact", head: true })
+      .eq("ticket_id", ticketId);
+
+    // Resumo progressivo (não bloqueia se falhar)
+    const lastSummaryCount = currentTicket?.summary_message_count ?? 0;
+    const conversationSummary = currentTicket?.conversation_summary ?? null;
+    const newSummary = await maybeUpdateSummary(sb, ticketId, conversationSummary, lastSummaryCount, totalMessages || 0);
+    const effectiveSummary = newSummary ?? conversationSummary;
 
     // Busca semântica
     const queryEmbedding = await embed(message);
@@ -188,7 +308,6 @@ Deno.serve(async (req) => {
       kbResults = kb ?? [];
       faqResults = faqs ?? [];
 
-      // Hidrata video_url (RPCs match_* podem não retornar todas as colunas)
       const ids = kbResults.map((k: any) => k.id).filter(Boolean);
       if (ids.length) {
         const { data: extra } = await sb
@@ -202,7 +321,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fallback por palavra-chave quando não há embeddings (ou nada bate)
     if (faqResults.length === 0) {
       const tokens = message
         .toLowerCase()
@@ -259,17 +377,23 @@ Deno.serve(async (req) => {
     let triageBlock = "";
     if (triageContext && typeof triageContext === "object") {
       const { category, subcategory, triedSolution, triedSteps } = triageContext as any;
-      triageBlock = `\n\n--- TRIAGEM JÁ FEITA (use isso, NÃO repita perguntas básicas) ---\nCategoria: ${category || "-"}\nSubcategoria: ${subcategory || "-"}\nSolução já apresentada ao usuário: ${triedSolution || "-"}\nPassos já tentados:\n${(triedSteps || []).map((s: string, i: number) => `${i + 1}. ${s}`).join("\n") || "-"}\n\nO usuário disse que isso NÃO resolveu. Faça perguntas de diagnóstico específicas (em qual passo travou, qual mensagem de erro apareceu) e proponha uma alternativa diferente da que já foi tentada. Se nada mais funcionar, escale.`;
+      triageBlock = `\n\n--- TRIAGEM JÁ FEITA (use isso, NÃO repita perguntas básicas) ---\nCategoria: ${category || "-"}\nSubcategoria: ${subcategory || "-"}\nSolução já apresentada: ${triedSolution || "-"}\nPassos já tentados:\n${(triedSteps || []).map((s: string, i: number) => `${i + 1}. ${s}`).join("\n") || "-"}\n\nO usuário disse que isso NÃO resolveu. Faça perguntas de diagnóstico específicas e proponha uma alternativa diferente. Se nada mais funcionar, escale.`;
     }
 
-    // Bloco USUÁRIO — usado pelo modelo para humanizar (tratar pelo nome) e priorizar
     const effectiveName = (userName || providedName || "").trim();
     const firstName = effectiveName ? effectiveName.split(/\s+/)[0] : "";
-    const userBlock = `\n\n--- USUÁRIO ---\nNome: ${effectiveName || "(desconhecido)"}\nPrimeiro nome: ${firstName || "(desconhecido)"}\nAutenticado: ${userId ? "sim" : "não"}\nTipo: ${customerType}\n\nUse o primeiro nome do usuário com naturalidade quando souber, especialmente na saudação e em momentos-chave (não em toda mensagem).`;
+    const userBlock = `\n\n--- USUÁRIO ---\nNome: ${effectiveName || "(desconhecido)"}\nPrimeiro nome: ${firstName || "(desconhecido)"}\nAutenticado: ${userId ? "sim" : "não"}\nTipo: ${customerType}\nNível de frustração detectado: ${newFrustration}/100${newFrustration >= 60 ? " ⚠️ ALTA — seja MAIS empático, vá direto ao ponto, evite perguntas extras." : ""}`;
+
+    const summaryBlock = effectiveSummary
+      ? `\n\n--- RESUMO DA CONVERSA ATÉ AGORA ---\n${effectiveSummary}\n(use este resumo + as últimas mensagens abaixo como contexto completo)`
+      : "";
+
+    // Se temos resumo, mandamos só últimas 4 mensagens; senão últimas 10 (comportamento antigo)
+    const historySize = effectiveSummary ? 4 : 10;
 
     const messages = [
-      { role: "system", content: `${SYSTEM_BASE}${userBlock}\n\nCONTEXTO:${context}${triageBlock}` },
-      ...history.slice(-10).map((m: any) => ({ role: m.role === "ai" ? "assistant" : m.role, content: m.content })),
+      { role: "system", content: `${SYSTEM_BASE}${userBlock}${summaryBlock}\n\nCONTEXTO:${context}${triageBlock}` },
+      ...history.slice(-historySize).map((m: any) => ({ role: m.role === "ai" ? "assistant" : m.role, content: m.content })),
       { role: "user", content: userContent },
     ];
 
@@ -317,18 +441,26 @@ Deno.serve(async (req) => {
       .replace(/^ESCALAR_HUMANO$/gm, "")
       .trim();
 
-    let shouldEscalate = mustEscalate || explicitEscalate;
-    let phase: "investigating" | "solution" | "escalated" = "investigating";
-    if (shouldEscalate) phase = "escalated";
-    else if (isSolution) phase = "solution";
+    // Frustration override: se score >= 60, força escalonamento mesmo sem o modelo pedir
+    const frustrationEscalate = newFrustration >= 60;
+    let shouldEscalate = mustEscalate || explicitEscalate || frustrationEscalate;
+
+    // Decide nova fase
+    let nextPhase: string;
+    if (shouldEscalate) nextPhase = "escalated";
+    else if (isSolution) nextPhase = "waiting_user_confirmation";
+    else if (isInvestigating) nextPhase = "ai_investigating";
+    else nextPhase = previousPhase;
 
     if (shouldEscalate) {
-      answer = "Esse caso precisa de uma análise mais detalhada da nossa equipe. Vou conectar você com um humano agora.";
+      answer = frustrationEscalate && !explicitEscalate
+        ? "Percebi que isso está sendo frustrante — desculpa. Vou conectar você com alguém da nossa equipe humana agora pra resolver direto."
+        : "Esse caso precisa de uma análise mais detalhada da nossa equipe. Vou conectar você com um humano agora.";
     }
 
     await sb.from("support_messages").insert({
       ticket_id: ticketId, role: "ai", content: answer,
-      metadata: { confidence: topSim, escalated: shouldEscalate, phase, kb_ids: kbResults.map((k) => k.id) },
+      metadata: { confidence: topSim, escalated: shouldEscalate, phase: nextPhase, kb_ids: kbResults.map((k) => k.id) },
     });
 
     await sb.from("ai_logs").insert({
@@ -341,16 +473,34 @@ Deno.serve(async (req) => {
       tokens_out: aiJson.usage?.completion_tokens ?? null,
     });
 
-    const update: any = { ai_confidence: topSim };
+    // Atualiza ticket: frustration, phase, priority (se virou alta), status
+    const update: any = {
+      ai_confidence: topSim,
+      frustration_score: newFrustration,
+      phase: nextPhase,
+    };
     if (shouldEscalate) update.status = "escalated";
+    if (newFrustration >= 60 && currentTicket?.priority !== "high") update.priority = "high";
+
     await sb.from("support_tickets").update(update).eq("id", ticketId);
+
+    // Audita transição se mudou
+    if (nextPhase !== previousPhase) {
+      await transitionPhase(sb, ticketId, previousPhase, nextPhase, "ai", {
+        confidence: topSim,
+        frustration_score: newFrustration,
+        frustration_escalate: frustrationEscalate,
+        explicit_escalate: explicitEscalate,
+      });
+    }
 
     return new Response(JSON.stringify({
       ticketId,
       answer,
       escalate: shouldEscalate,
-      phase,
+      phase: nextPhase,
       confidence: topSim,
+      frustration: newFrustration,
       user: userId ? {
         authenticated: true,
         name: userName,

@@ -27,9 +27,10 @@ Deno.serve(async (req) => {
     // Carrega ticket atual para preservar customer_type já definido
     const { data: existing } = await sb
       .from("support_tickets")
-      .select("customer_type, user_id, priority")
+      .select("customer_type, user_id, priority, phase")
       .eq("id", ticketId)
       .maybeSingle();
+    const previousPhase = existing?.phase ?? "ai_investigating";
 
     let customerType: "paid_client" | "trial_user" | "guest" =
       (existing?.customer_type as any) ?? "guest";
@@ -120,11 +121,21 @@ Deno.serve(async (req) => {
       ai_summary: summary,
       category,
       status: "escalated",
+      phase: "escalated",
       priority,
       internal_notes: internalNote,
       due_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
     }).eq("id", ticketId).select("ticket_number").maybeSingle();
     if (updErr) throw updErr;
+
+    // Audita transição de estado
+    await sb.from("support_ticket_events").insert({
+      ticket_id: ticketId,
+      from_phase: previousPhase,
+      to_phase: "escalated",
+      triggered_by: "user",
+      metadata: { reason: "manual_escalation_form", category, customer_type: customerType },
+    });
 
     if (extra) {
       await sb.from("support_messages").insert({
