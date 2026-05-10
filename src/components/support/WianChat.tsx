@@ -1285,6 +1285,7 @@ export function WianChat() {
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submitName(); } }}
                   autoFocus
                   maxLength={60}
+                  className="focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-border focus-visible:border-muted-foreground/40"
                 />
                 <Button onClick={submitName} disabled={name.trim().length < 2} size="icon">
                   <Send className="w-4 h-4" />
@@ -1319,6 +1320,7 @@ export function WianChat() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
                   disabled={loading}
+                  className="focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-border focus-visible:border-muted-foreground/40"
                 />
                 <Button onClick={send} disabled={loading || (!input.trim() && pendingAttachments.length === 0)} size="icon">
                   <Send className="w-4 h-4" />
