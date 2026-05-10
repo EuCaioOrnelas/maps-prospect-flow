@@ -670,6 +670,8 @@ const HANDLERS: Record<string, (ctx: Ctx, params: any) => Promise<any>> = {
   reconnect_whatsapp,
   delete_whatsapp_connection,
   silence_ai_agent,
+  unsilence_ai_agent,
+  cancel_campaign,
 };
 
 // =================================================================
