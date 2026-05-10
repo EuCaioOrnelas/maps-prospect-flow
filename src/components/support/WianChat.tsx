@@ -695,6 +695,7 @@ export function WianChat() {
             status: "open",
             priority: "medium",
             customer_type: isAuthed ? "trial_user" : "guest",
+            phase: "ai_investigating",
           })
           .select("id")
           .single();
