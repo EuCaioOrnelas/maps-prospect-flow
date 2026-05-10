@@ -902,7 +902,7 @@ export function WianChat() {
         {/* Coleta de nome agora acontece na barra de input inferior, no mesmo estilo do chat */}
 
         {/* Camada 1 — MENU (botão estilo WhatsApp) */}
-        {phase === "triage-menu" && (
+        {phase === "triage-menu" && !loading && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start pl-12">
             <button
               onClick={() => setMenuOpen(true)}
