@@ -312,13 +312,25 @@ Deno.serve(async (req) => {
       if (ids.length) {
         const { data: extra } = await sb
           .from("knowledge_base")
-          .select("id, video_url")
+          .select("id, video_url, success_rate, category")
           .in("id", ids);
         if (extra) {
-          const map = new Map(extra.map((e: any) => [e.id, e.video_url]));
-          kbResults = kbResults.map((k: any) => ({ ...k, video_url: map.get(k.id) ?? k.video_url ?? null }));
+          const map = new Map(extra.map((e: any) => [e.id, e]));
+          kbResults = kbResults.map((k: any) => {
+            const e: any = map.get(k.id) || {};
+            return { ...k, video_url: e.video_url ?? k.video_url ?? null, success_rate: e.success_rate ?? 0.5, kb_category: e.category ?? null };
+          });
         }
       }
+
+      // Weighted confidence: similarity*0.6 + category_match*0.2 + success*0.2
+      const triageCat = (triageContext as any)?.category?.toLowerCase?.() || "";
+      kbResults = kbResults.map((k: any) => {
+        const catMatch = triageCat && k.kb_category && k.kb_category.toLowerCase().includes(triageCat) ? 1 : 0;
+        const success = typeof k.success_rate === "number" ? k.success_rate : 0.5;
+        const weighted = (k.similarity || 0) * 0.6 + catMatch * 0.2 + success * 0.2;
+        return { ...k, weighted_score: weighted };
+      }).sort((a: any, b: any) => (b.weighted_score || 0) - (a.weighted_score || 0));
     }
 
     if (faqResults.length === 0) {
