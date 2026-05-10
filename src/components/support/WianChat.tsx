@@ -1507,16 +1507,31 @@ export function WianChat() {
           </DialogHeader>
           <div className="max-h-[min(85vh,720px)] overflow-y-auto py-1">
             {phase === "triage-submenu" && activeCategory
-              ? activeCategory.problems.map((p) => (
+              ? (
+                <>
+                  {activeCategory.problems.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => pickProblem(p)}
+                      className="w-full text-left px-5 py-3 hover:bg-muted/60 transition-colors flex items-center justify-between gap-3 border-b border-border/50 last:border-b-0"
+                    >
+                      <span className="text-sm font-medium text-foreground">{p.title}</span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                    </button>
+                  ))}
                   <button
-                    key={p.id}
-                    onClick={() => pickProblem(p)}
-                    className="w-full text-left px-5 py-3 hover:bg-muted/60 transition-colors flex items-center justify-between gap-3 border-b border-border/50 last:border-b-0"
+                    onClick={() => pickUsageHelp(activeCategory)}
+                    className="w-full text-left px-5 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3.5 border-t border-border/60 bg-muted/20"
                   >
-                    <span className="text-sm font-medium text-foreground">{p.title}</span>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <Lightbulb className="w-5 h-5 shrink-0 text-amber-500" strokeWidth={2} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">Tenho uma dúvida de uso</p>
+                      <p className="text-[11px] text-muted-foreground">Quero entender como funciona / como configurar</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0" />
                   </button>
-                ))
+                </>
+              )
               : TRIAGE_TREE.map((cat) => {
                   const Icon = CATEGORY_ICONS[cat.id] || HelpCircle;
                   const colorClass = CATEGORY_COLORS[cat.id] || "text-primary";
