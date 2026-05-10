@@ -887,7 +887,12 @@ export default function AdminSupportTickets() {
 
               {selected.ai_summary && (
                 <div className="rounded-lg border border-border bg-muted/30 p-3">
-                  <p className="text-xs font-semibold mb-1">Resumo gerado pela IA</p>
+                  <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                    <p className="text-xs font-semibold">Resumo gerado pela IA</p>
+                    <Button size="sm" variant="outline" onClick={suggestKb} className="h-7 text-xs">
+                      <Bot className="w-3 h-3 mr-1" /> Transformar em conhecimento
+                    </Button>
+                  </div>
                   <p className="text-sm whitespace-pre-wrap">{selected.ai_summary}</p>
                 </div>
               )}
