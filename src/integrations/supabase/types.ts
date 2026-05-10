@@ -1779,6 +1779,57 @@ export type Database = {
           },
         ]
       }
+      frontend_errors: {
+        Row: {
+          app_version: string | null
+          col_no: number | null
+          created_at: string
+          id: string
+          line_no: number | null
+          message: string
+          resolved: boolean
+          route: string | null
+          session_id: string | null
+          severity: string
+          source_file: string | null
+          stack: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          col_no?: number | null
+          created_at?: string
+          id?: string
+          line_no?: number | null
+          message: string
+          resolved?: boolean
+          route?: string | null
+          session_id?: string | null
+          severity?: string
+          source_file?: string | null
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          col_no?: number | null
+          created_at?: string
+          id?: string
+          line_no?: number | null
+          message?: string
+          resolved?: boolean
+          route?: string | null
+          session_id?: string | null
+          severity?: string
+          source_file?: string | null
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ignored_contacts: {
         Row: {
           campaign_id: string | null

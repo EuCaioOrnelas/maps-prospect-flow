@@ -2,6 +2,9 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { clearRuntimeCaches, installRuntimeRecovery } from "./lib/runtimeRecovery";
+import { installErrorReporter } from "./lib/errorReporter";
+
+installErrorReporter();
 
 // Cache bust version - increment to force cache clear on all clients
 const CACHE_VERSION = "2026-04-20-v3";

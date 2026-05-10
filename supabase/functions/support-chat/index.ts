@@ -25,9 +25,11 @@ const WIAN_TOOLS = [
   { type: "function", function: { name: "get_active_flows", description: "Lista de flows de WhatsApp do user: status, API, número.", parameters: { type: "object", properties: {} } } },
   { type: "function", function: { name: "get_ai_agents_status", description: "Agentes de IA configurados: nome, modelo, limites.", parameters: { type: "object", properties: {} } } },
   { type: "function", function: { name: "get_recent_errors", description: "Incidentes recentes em campanhas (erros de envio, números inválidos).", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_recent_frontend_errors", description: "Erros JavaScript que aconteceram no NAVEGADOR do usuário (com arquivo, linha, stack trace e rota). Use SEMPRE quando o user reclamar de tela travada, botão que não funciona, erro visual, página em branco, qualquer bug de interface.", parameters: { type: "object", properties: { limit: { type: "number" }, route: { type: "string", description: "Filtrar por rota específica, ex: /whatsapp" } } } } },
   { type: "function", function: { name: "pause_campaign", description: "Pausa uma campanha. SEM confirmed=true só retorna preview; com confirmed=true executa.", parameters: { type: "object", properties: { campaignId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["campaignId"] } } },
   { type: "function", function: { name: "resume_campaign", description: "Retoma uma campanha pausada. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { campaignId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["campaignId"] } } },
-  { type: "function", function: { name: "reconnect_whatsapp", description: "Marca um número Evolution para reconectar (usuário precisa ler QR depois). Mesmo padrão de confirmação.", parameters: { type: "object", properties: { numberId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["numberId"] } } },
+  { type: "function", function: { name: "reconnect_whatsapp", description: "RESET TOTAL de um número Evolution: desconecta, deleta a instância antiga (com cascade), recria com o MESMO telefone e gera nova instância pra QR. Use quando user diz 'não consigo conectar', 'instance travada', 'QR não aparece'. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { numberId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["numberId"] } } },
+  { type: "function", function: { name: "delete_whatsapp_connection", description: "Exclui DEFINITIVAMENTE um número (sem recriar). Apaga campanhas vinculadas, desconecta e remove a linha. Retorna lista de cuidados pro user reconfigurar manualmente. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { numberId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["numberId"] } } },
   { type: "function", function: { name: "silence_ai_agent", description: "Silencia o agente IA em uma conversa específica. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { conversationId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["conversationId"] } } },
 ];
 
@@ -464,14 +466,45 @@ Deno.serve(async (req) => {
     const toolsEnabled = !!userId;
     const toolsBlock = toolsEnabled
       ? `\n\n--- FERRAMENTAS DISPONÍVEIS ---
-Você tem acesso a TOOLS para investigar a conta REAL do usuário (números, campanhas, leads, plano, etc.) e executar AÇÕES SIMPLES (pausar/retomar campanha, reconectar número, silenciar agente).
+Você tem TOOLS pra investigar a conta REAL do usuário e executar ações. RESOLVA AUTONOMAMENTE sempre que possível — só escale humano em último caso.
 
-REGRAS de uso de tools:
-- Use tools para DIAGNOSTICAR antes de responder. Ex: user reclama "campanha não dispara" → primeiro chame get_active_campaigns, identifique a campanha, depois get_campaign_details, depois get_whatsapp_connections.
-- NUNCA invente dados. Se você não chamou a tool, NÃO afirme estado da conta.
-- Para AÇÕES (pause_campaign, resume_campaign, reconnect_whatsapp, silence_ai_agent): chame SEM \`confirmed\` primeiro. A tool retornará { requires_confirmation, summary }. Apresente o summary ao user e PERGUNTE se confirma. Só re-chame com confirmed=true depois que o user confirmar EXPLICITAMENTE no chat.
-- Telefones nas tools vêm mascarados; é normal.
-- Após executar uma ação, confirme o resultado em 1 frase curta.`
+## REGRAS DE OURO
+1. **DIAGNOSTIQUE ANTES DE RESPONDER**: pra qualquer reclamação concreta, chame as tools relevantes ANTES de propor solução.
+   - "campanha não envia" → get_active_campaigns + get_campaign_details + get_whatsapp_connections + get_warming_status
+   - "não consigo conectar número" / "QR não aparece" → get_whatsapp_connections (identifica o número travado)
+   - "tela travada" / "botão não funciona" / "página em branco" → get_recent_frontend_errors PRIMEIRO
+   - "agente respondendo errado" → get_ai_agents_status
+   - "leads sumiram" → get_crm_summary + get_recent_leads
+2. **NUNCA INVENTE** dados. Se não chamou tool, não afirme estado da conta.
+3. **AÇÕES (mutações)**: chame SEM confirmed primeiro → mostre o summary retornado → aguarde "sim/confirmo" do user → só então re-chame com confirmed:true.
+4. Telefones nas tools vêm mascarados; é normal.
+
+## QUANDO USAR CADA AÇÃO
+- **reconnect_whatsapp** → user diz "não consigo conectar", "instance travou", "QR sumiu", "diz que está conectado mas não envia". É reset destrutivo: deleta campanhas vinculadas e recria. Sempre alerte no summary.
+- **delete_whatsapp_connection** → user quer EXCLUIR de vez (não reconectar). Mesma destruição mas sem recriar.
+- **pause_campaign / resume_campaign** → controle de envio em andamento.
+- **silence_ai_agent** → user quer assumir manualmente uma conversa.
+
+## DIAGNÓSTICO DE BUGS DE INTERFACE (CRÍTICO)
+Quando user reclama de bug visual/funcional do APP (não do WhatsApp), SEMPRE chame get_recent_frontend_errors primeiro. Se voltar erro com arquivo:linha, isso é um BUG REAL do código:
+- Tente orientar workaround se possível (recarregar página, limpar cache).
+- Se não houver workaround claro, escale com [ESCALAR_HUMANO] e na MESMA mensagem inclua um bloco de diagnóstico assim:
+  \`\`\`
+  🐛 Bug detectado no código:
+  • Mensagem: <erro.mensagem>
+  • Arquivo: <erro.arquivo>:<erro.linha>
+  • Rota: <erro.rota>
+  • Ocorreu em: <data>
+  \`\`\`
+  Esse bloco aparece no histórico do humano, ajudando ele a identificar o arquivo exato.
+
+## ESCALADA — ÚLTIMO RECURSO
+Só use [ESCALAR_HUMANO] quando:
+(a) usuário pedir explicitamente humano;
+(b) bug de código confirmado por get_recent_frontend_errors (use bloco de diagnóstico acima);
+(c) cobrança/billing/conta bloqueada que tools não resolvem;
+(d) 2+ tentativas suas falharam de verdade.
+Antes de escalar, SEMPRE chame as tools relevantes pra colher contexto e incluir no resumo.`
       : "";
 
     const messages: any[] = [

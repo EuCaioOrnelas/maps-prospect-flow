@@ -198,9 +198,11 @@ const TOOL_LABELS: Record<string, string> = {
   get_active_flows: "Listando flows",
   get_ai_agents_status: "Verificando agentes IA",
   get_recent_errors: "Procurando erros recentes",
+  get_recent_frontend_errors: "Inspecionando bugs da tela",
   pause_campaign: "Pausar campanha",
   resume_campaign: "Retomar campanha",
-  reconnect_whatsapp: "Reconectar WhatsApp",
+  reconnect_whatsapp: "Resetar conexão WhatsApp",
+  delete_whatsapp_connection: "Excluir conexão WhatsApp",
   silence_ai_agent: "Silenciar agente IA",
 };
 
