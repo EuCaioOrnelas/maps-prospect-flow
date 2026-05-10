@@ -408,6 +408,21 @@ export function WianChat() {
     setPhase("chat");
   };
 
+  const openTicketDirect = () => {
+    setMenuOpen(false);
+    setActiveCategory(null);
+    setActiveSolution(null);
+    setCategory("Outro");
+    respondAfterTyping(
+      { role: "user", content: "Quero abrir um chamado direto com o time" },
+      [{
+        role: "ai",
+        content: "Claro! Vou abrir um chamado para o nosso time humano. Preencha os dados abaixo 👇",
+      }],
+      () => setPhase("collect-info"),
+    );
+  };
+
   const goBackToMenu = () => {
     setActiveCategory(null);
     setActiveSolution(null);
@@ -1255,6 +1270,19 @@ export function WianChat() {
               )}
             </div>
           )}
+          {(phase === "chat" || phase === "ask-resolved") && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={openTicketDirect}
+                className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+                title="Pular o chat e abrir um chamado direto com o time humano"
+              >
+                <Headphones className="w-3 h-3" />
+                Abrir chamado direto com o time
+              </button>
+            </div>
+          )}
           {pendingAttachments.length > 0 && (
             <div className="flex flex-wrap gap-2 p-2 rounded-lg border border-border bg-muted/40">
               {pendingAttachments.map((a, idx) => (
@@ -1381,6 +1409,19 @@ export function WianChat() {
                     </button>
                   );
                 })}
+            {phase === "triage-menu" && (
+              <button
+                onClick={openTicketDirect}
+                className="w-full text-left px-5 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3.5 border-t border-border/60 bg-muted/20"
+              >
+                <Headphones className="w-5 h-5 shrink-0 text-primary" strokeWidth={2} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">Falar direto com o time</p>
+                  <p className="text-[11px] text-muted-foreground">Pular triagem e abrir um chamado humano</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+              </button>
+            )}
           </div>
           {phase === "triage-submenu" && (
             <div className="px-5 py-3 border-t border-border bg-muted/30">
