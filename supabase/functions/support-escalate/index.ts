@@ -27,9 +27,10 @@ Deno.serve(async (req) => {
     // Carrega ticket atual para preservar customer_type já definido
     const { data: existing } = await sb
       .from("support_tickets")
-      .select("customer_type, user_id, priority")
+      .select("customer_type, user_id, priority, phase")
       .eq("id", ticketId)
       .maybeSingle();
+    const previousPhase = existing?.phase ?? "ai_investigating";
 
     let customerType: "paid_client" | "trial_user" | "guest" =
       (existing?.customer_type as any) ?? "guest";
