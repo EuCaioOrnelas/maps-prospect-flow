@@ -916,7 +916,7 @@ export function WianChat() {
         )}
 
         {/* Camada 2 — SUBMENU (botão estilo WhatsApp) */}
-        {phase === "triage-submenu" && activeCategory && (
+        {phase === "triage-submenu" && activeCategory && !loading && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
             <div className="flex justify-start pl-12">
               <button
