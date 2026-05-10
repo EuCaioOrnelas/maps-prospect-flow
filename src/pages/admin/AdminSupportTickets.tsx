@@ -141,6 +141,61 @@ export default function AdminSupportTickets() {
   const [manualSummary, setManualSummary] = useState("");
   const [creatingManual, setCreatingManual] = useState(false);
 
+  // KB autolearning modal
+  const [kbModalOpen, setKbModalOpen] = useState(false);
+  const [kbLoading, setKbLoading] = useState(false);
+  const [kbSaving, setKbSaving] = useState(false);
+  const [kbForm, setKbForm] = useState({ title: "", category: "", pains: "", solution: "", tags: "" });
+
+  const suggestKb = async () => {
+    if (!selected) return;
+    setKbModalOpen(true);
+    setKbLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("support-kb-suggest", { body: { ticketId: selected.id } });
+      if (error) throw error;
+      const s = data?.suggestion || {};
+      setKbForm({
+        title: s.title || "",
+        category: s.category || selected.category || "",
+        pains: s.pains || "",
+        solution: s.solution || "",
+        tags: Array.isArray(s.tags) ? s.tags.join(", ") : "",
+      });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Erro ao sugerir", description: String(e?.message || e) });
+      setKbModalOpen(false);
+    } finally {
+      setKbLoading(false);
+    }
+  };
+
+  const saveKb = async () => {
+    if (!kbForm.title || !kbForm.solution) {
+      toast({ variant: "destructive", title: "Campos obrigatórios", description: "Título e solução são obrigatórios." });
+      return;
+    }
+    setKbSaving(true);
+    try {
+      const tagsArr = kbForm.tags.split(",").map((t) => t.trim()).filter(Boolean);
+      const { error } = await supabase.from("knowledge_base").insert({
+        title: kbForm.title,
+        category: kbForm.category || null,
+        pains: kbForm.pains || null,
+        solution: kbForm.solution,
+        tags: tagsArr,
+        active: true,
+      });
+      if (error) throw error;
+      toast({ title: "Adicionado à base", description: "Wian já pode usar esse conhecimento." });
+      setKbModalOpen(false);
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Erro ao salvar", description: String(e?.message || e) });
+    } finally {
+      setKbSaving(false);
+    }
+  };
+
   const fetchStats = async () => {
     const [
       { count: open },
