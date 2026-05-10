@@ -136,6 +136,7 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Tickets", url: "/admin/suporte/tickets", icon: MessageSquare as any },
       { title: "Mind IA", url: "/admin/suporte/mind-ia", icon: Bot },
       { title: "FAQs", url: "/admin/suporte/faqs", icon: HelpCircle as any },
+      { title: "Inteligência", url: "/admin/suporte/inteligencia", icon: TrendingUp },
     ],
   },
   {

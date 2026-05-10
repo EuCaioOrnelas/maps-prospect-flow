@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Search, RefreshCw, HelpCircle, Mail, Phone, User, Tag, CreditCard,
   ExternalLink, Plus, Paperclip, X, Image as ImageIcon, Clock, Star, UserPlus, AlertTriangle,
-  Inbox, CheckCircle2, Ticket as TicketIcon, SkipForward, Gauge,
+  Inbox, CheckCircle2, Ticket as TicketIcon, SkipForward, Gauge, Bot,
 } from "lucide-react";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -40,6 +40,8 @@ type Ticket = {
   resolved_at: string | null;
   due_at: string | null;
   is_manual: boolean | null;
+  frustration_score: number | null;
+  phase: string | null;
 };
 
 type Message = {
@@ -138,6 +140,61 @@ export default function AdminSupportTickets() {
   const [manualPriority, setManualPriority] = useState("medium");
   const [manualSummary, setManualSummary] = useState("");
   const [creatingManual, setCreatingManual] = useState(false);
+
+  // KB autolearning modal
+  const [kbModalOpen, setKbModalOpen] = useState(false);
+  const [kbLoading, setKbLoading] = useState(false);
+  const [kbSaving, setKbSaving] = useState(false);
+  const [kbForm, setKbForm] = useState({ title: "", category: "", pains: "", solution: "", tags: "" });
+
+  const suggestKb = async () => {
+    if (!selected) return;
+    setKbModalOpen(true);
+    setKbLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("support-kb-suggest", { body: { ticketId: selected.id } });
+      if (error) throw error;
+      const s = data?.suggestion || {};
+      setKbForm({
+        title: s.title || "",
+        category: s.category || selected.category || "",
+        pains: s.pains || "",
+        solution: s.solution || "",
+        tags: Array.isArray(s.tags) ? s.tags.join(", ") : "",
+      });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Erro ao sugerir", description: String(e?.message || e) });
+      setKbModalOpen(false);
+    } finally {
+      setKbLoading(false);
+    }
+  };
+
+  const saveKb = async () => {
+    if (!kbForm.title || !kbForm.solution) {
+      toast({ variant: "destructive", title: "Campos obrigatórios", description: "Título e solução são obrigatórios." });
+      return;
+    }
+    setKbSaving(true);
+    try {
+      const tagsArr = kbForm.tags.split(",").map((t) => t.trim()).filter(Boolean);
+      const { error } = await supabase.from("knowledge_base").insert({
+        title: kbForm.title,
+        category: kbForm.category || null,
+        pains: kbForm.pains || null,
+        solution: kbForm.solution,
+        tags: tagsArr,
+        active: true,
+      });
+      if (error) throw error;
+      toast({ title: "Adicionado à base", description: "Wian já pode usar esse conhecimento." });
+      setKbModalOpen(false);
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Erro ao salvar", description: String(e?.message || e) });
+    } finally {
+      setKbSaving(false);
+    }
+  };
 
   const fetchStats = async () => {
     const [
@@ -603,7 +660,16 @@ export default function AdminSupportTickets() {
                       <span className="text-xs text-muted-foreground">Sem avaliação</span>
                     )}
                   </TableCell>
-                  <TableCell><span className={`text-xs px-2 py-0.5 rounded-md ${PRIORITY_COLORS[t.priority] || ""}`}>{PRIORITY_LABELS[t.priority] || t.priority}</span></TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className={`text-xs px-2 py-0.5 rounded-md ${PRIORITY_COLORS[t.priority] || ""}`}>{PRIORITY_LABELS[t.priority] || t.priority}</span>
+                      {typeof t.frustration_score === "number" && t.frustration_score >= 40 && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1 ${t.frustration_score >= 60 ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`} title={`Frustração ${t.frustration_score}/100`}>
+                          <Gauge className="w-3 h-3" /> {t.frustration_score}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-xs">{(() => { const r = responseTime(t); return r ? <span className={`font-medium ${r.color}`}>{r.label}</span> : <span className="text-muted-foreground">—</span>; })()}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(t.created_at), { addSuffix: true, locale: ptBR })}</TableCell>
                 </TableRow>
@@ -630,7 +696,12 @@ export default function AdminSupportTickets() {
               {selected?.ticket_number || `Ticket #${selected?.id.slice(0, 8)}`}
               {selected && <Badge variant="outline" className={STATUS_COLORS[selected.status] || ""}>{selected.status}</Badge>}
               {selected?.is_manual && <Badge variant="outline" className="bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/30">Manual</Badge>}
-              
+              {selected?.phase && <Badge variant="outline" className="text-[10px]">{selected.phase}</Badge>}
+              {typeof selected?.frustration_score === "number" && selected.frustration_score >= 40 && (
+                <Badge variant="outline" className={`gap-1 ${selected.frustration_score >= 60 ? "bg-destructive/10 text-destructive border-destructive/30" : "bg-warning/10 text-warning border-warning/30"}`}>
+                  <Gauge className="w-3 h-3" /> Frustração {selected.frustration_score}/100
+                </Badge>
+              )}
             </DialogTitle>
             <DialogDescription>
               Detalhes do chamado, contato do solicitante e histórico completo da conversa.
@@ -816,7 +887,12 @@ export default function AdminSupportTickets() {
 
               {selected.ai_summary && (
                 <div className="rounded-lg border border-border bg-muted/30 p-3">
-                  <p className="text-xs font-semibold mb-1">Resumo gerado pela IA</p>
+                  <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                    <p className="text-xs font-semibold">Resumo gerado pela IA</p>
+                    <Button size="sm" variant="outline" onClick={suggestKb} className="h-7 text-xs">
+                      <Bot className="w-3 h-3 mr-1" /> Transformar em conhecimento
+                    </Button>
+                  </div>
                   <p className="text-sm whitespace-pre-wrap">{selected.ai_summary}</p>
                 </div>
               )}
@@ -1003,6 +1079,55 @@ export default function AdminSupportTickets() {
             <Button onClick={createManualTicket} disabled={creatingManual}>
               {creatingManual && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Criar ticket
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* KB autolearning modal */}
+      <Dialog open={kbModalOpen} onOpenChange={(o) => !o && setKbModalOpen(false)}>
+        <DialogContent className="max-w-2xl bg-background max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bot className="w-5 h-5 text-primary" /> Transformar em conhecimento
+            </DialogTitle>
+            <DialogDescription>
+              A IA analisou o ticket e sugeriu uma entrada para a base. Revise e salve.
+            </DialogDescription>
+          </DialogHeader>
+          {kbLoading ? (
+            <div className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Título *</label>
+                <Input value={kbForm.title} onChange={(e) => setKbForm({ ...kbForm, title: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Categoria</label>
+                  <Input value={kbForm.category} onChange={(e) => setKbForm({ ...kbForm, category: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Tags (vírgula)</label>
+                  <Input value={kbForm.tags} onChange={(e) => setKbForm({ ...kbForm, tags: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Dores do cliente</label>
+                <Textarea rows={2} value={kbForm.pains} onChange={(e) => setKbForm({ ...kbForm, pains: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Solução *</label>
+                <Textarea rows={8} value={kbForm.solution} onChange={(e) => setKbForm({ ...kbForm, solution: e.target.value })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setKbModalOpen(false)}>Cancelar</Button>
+            <Button onClick={saveKb} disabled={kbSaving || kbLoading}>
+              {kbSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Salvar na base
             </Button>
           </DialogFooter>
         </DialogContent>

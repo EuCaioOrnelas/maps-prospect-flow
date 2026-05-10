@@ -364,6 +364,7 @@ export type Database = {
           ticket_id: string | null
           tokens_in: number | null
           tokens_out: number | null
+          was_helpful: boolean | null
         }
         Insert: {
           confidence?: number | null
@@ -377,6 +378,7 @@ export type Database = {
           ticket_id?: string | null
           tokens_in?: number | null
           tokens_out?: number | null
+          was_helpful?: boolean | null
         }
         Update: {
           confidence?: number | null
@@ -390,6 +392,7 @@ export type Database = {
           ticket_id?: string | null
           tokens_in?: number | null
           tokens_out?: number | null
+          was_helpful?: boolean | null
         }
         Relationships: [
           {
@@ -1830,14 +1833,18 @@ export type Database = {
           embedding: string | null
           guided_flow: Json | null
           id: string
+          last_used_at: string | null
           min_confidence: number | null
           pains: string | null
           priority: string | null
           severity: string | null
           solution: string | null
           subtopic: string | null
+          success_rate: number
+          successful_uses: number
           tags: string[] | null
           title: string
+          total_uses: number
           updated_at: string
           video_url: string | null
         }
@@ -1849,14 +1856,18 @@ export type Database = {
           embedding?: string | null
           guided_flow?: Json | null
           id?: string
+          last_used_at?: string | null
           min_confidence?: number | null
           pains?: string | null
           priority?: string | null
           severity?: string | null
           solution?: string | null
           subtopic?: string | null
+          success_rate?: number
+          successful_uses?: number
           tags?: string[] | null
           title: string
+          total_uses?: number
           updated_at?: string
           video_url?: string | null
         }
@@ -1868,14 +1879,18 @@ export type Database = {
           embedding?: string | null
           guided_flow?: Json | null
           id?: string
+          last_used_at?: string | null
           min_confidence?: number | null
           pains?: string | null
           priority?: string | null
           severity?: string | null
           solution?: string | null
           subtopic?: string | null
+          success_rate?: number
+          successful_uses?: number
           tags?: string[] | null
           title?: string
+          total_uses?: number
           updated_at?: string
           video_url?: string | null
         }
@@ -4778,6 +4793,54 @@ export type Database = {
         }
         Relationships: []
       }
+      support_incidents: {
+        Row: {
+          affected_users: number
+          category: string | null
+          created_at: string
+          description: string | null
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          sample_ticket_ids: string[] | null
+          signature: string | null
+          status: string
+          ticket_count: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          affected_users?: number
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          sample_ticket_ids?: string[] | null
+          signature?: string | null
+          status?: string
+          ticket_count?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          affected_users?: number
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          sample_ticket_ids?: string[] | null
+          signature?: string | null
+          status?: string
+          ticket_count?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       support_messages: {
         Row: {
           content: string
@@ -4786,6 +4849,7 @@ export type Database = {
           metadata: Json | null
           role: string
           ticket_id: string
+          was_helpful: boolean | null
         }
         Insert: {
           content: string
@@ -4794,6 +4858,7 @@ export type Database = {
           metadata?: Json | null
           role: string
           ticket_id: string
+          was_helpful?: boolean | null
         }
         Update: {
           content?: string
@@ -4802,6 +4867,7 @@ export type Database = {
           metadata?: Json | null
           role?: string
           ticket_id?: string
+          was_helpful?: boolean | null
         }
         Relationships: [
           {
