@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Search, RefreshCw, HelpCircle, Mail, Phone, User, Tag, CreditCard,
   ExternalLink, Plus, Paperclip, X, Image as ImageIcon, Clock, Star, UserPlus, AlertTriangle,
-  Inbox, CheckCircle2, Ticket as TicketIcon, SkipForward, Gauge,
+  Inbox, CheckCircle2, Ticket as TicketIcon, SkipForward, Gauge, Bot,
 } from "lucide-react";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
