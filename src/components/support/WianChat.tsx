@@ -952,23 +952,42 @@ export function WianChat() {
               className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {m.role === "ai" && <AiAvatar />}
-              <div
-                className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-md whitespace-pre-wrap"
-                    : "bg-muted/40 text-foreground rounded-bl-md border border-border/40"
-                }`}
-              >
-                {m.attachments?.length ? (
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {m.attachments.map(renderAttachment)}
+              <div className={`flex flex-col gap-2 max-w-[78%] ${m.role === "user" ? "items-end" : "items-start"}`}>
+                {m.role === "ai" && m.toolCalls?.length ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {m.toolCalls.map((tc, ti) => (
+                      <ToolCallChip key={ti} call={tc} />
+                    ))}
                   </div>
                 ) : null}
-                {m.role === "ai" ? (
-                  <AiBubbleContent content={m.content} />
-                ) : (
-                  m.content !== "(anexo)" && m.content
-                )}
+                <div
+                  className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                    m.role === "user"
+                      ? "bg-primary text-primary-foreground rounded-br-md whitespace-pre-wrap"
+                      : "bg-muted/40 text-foreground rounded-bl-md border border-border/40"
+                  }`}
+                >
+                  {m.attachments?.length ? (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {m.attachments.map(renderAttachment)}
+                    </div>
+                  ) : null}
+                  {m.role === "ai" ? (
+                    <AiBubbleContent content={m.content} />
+                  ) : (
+                    m.content !== "(anexo)" && m.content
+                  )}
+                </div>
+                {m.role === "ai" && m.pendingAction ? (
+                  <div className="flex flex-wrap gap-2 pt-0.5">
+                    <Button size="sm" variant="default" onClick={() => confirmPendingAction(i, m.pendingAction!)}>
+                      <Check className="w-3.5 h-3.5 mr-1" /> Confirmar ação
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => cancelPendingAction(i)}>
+                      <X className="w-3.5 h-3.5 mr-1" /> Cancelar
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             </motion.div>
           ))}
