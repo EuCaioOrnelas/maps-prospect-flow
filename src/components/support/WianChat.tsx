@@ -741,7 +741,7 @@ export function WianChat() {
     }
   };
 
-  const RESET_LIMIT = 3;
+  const RESET_LIMIT = 9999; // TODO: voltar para 3 após testes
   const RESET_WINDOW_MS = 60 * 60 * 1000;
   const RESET_KEY = "wian_chat_resets_v1";
 
