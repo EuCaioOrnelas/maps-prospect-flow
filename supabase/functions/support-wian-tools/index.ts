@@ -645,7 +645,7 @@ Deno.serve(async (req) => {
 
     let result: any;
     try {
-      result = await handler({ sb, userId }, params);
+      result = await handler({ sb, userId, authHeader }, params);
       await audit(userId, tool, params, !result?.error, result?.error);
     } catch (e: any) {
       await audit(userId, tool, params, false, e?.message);
