@@ -826,7 +826,42 @@ export function WianChat() {
     );
   };
 
-  const showInputBar = phase === "chat" || phase === "ask-resolved";
+  const showInputBar = phase === "chat" || phase === "ask-resolved" || phase === "ask-name";
+
+  // Valida nome: apenas letras (com acentos), espaços, hífen e apóstrofo.
+  // Rejeita números, símbolos, frases longas e palavras típicas de problema.
+  const validateName = (raw: string): { ok: boolean; reason?: string } => {
+    const n = raw.trim();
+    if (n.length < 2) return { ok: false, reason: "Digite seu nome (mínimo 2 letras)." };
+    if (n.length > 60) return { ok: false, reason: "Nome muito longo. Use apenas seu nome." };
+    if (!/^[\p{L}][\p{L}\s'.\-]*$/u.test(n)) {
+      return { ok: false, reason: "Use apenas letras no nome (sem números ou símbolos)." };
+    }
+    const words = n.split(/\s+/);
+    if (words.length > 5) return { ok: false, reason: "Digite apenas seu nome, não a sua dúvida." };
+    const lower = n.toLowerCase();
+    const blocked = ["erro", "problema", "não consigo", "nao consigo", "ajuda", "bug", "falha", "dúvida", "duvida", "preciso", "quero", "como ", "porque", "por que"];
+    if (blocked.some((k) => lower.includes(k))) {
+      return { ok: false, reason: "Aqui é só seu nome 🙂. Você poderá descrever o problema no próximo passo." };
+    }
+    return { ok: true };
+  };
+
+  const submitName = () => {
+    const n = name.trim();
+    const v = validateName(n);
+    if (!v.ok) {
+      toast({ title: "Nome inválido", description: v.reason, variant: "destructive" });
+      return;
+    }
+    const firstName = n.split(/\s+/)[0];
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", content: n },
+      { role: "ai", content: `Prazer, **${firstName}**! 🙌\n\nMe conta: em qual área você precisa de ajuda? Toque no menu abaixo 👇` },
+    ]);
+    setPhase("triage-menu");
+  };
 
   return (
     <div className="flex flex-col h-full min-h-0" onPaste={handlePaste}>
