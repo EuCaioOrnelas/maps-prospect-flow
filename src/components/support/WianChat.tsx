@@ -425,7 +425,28 @@ export function WianChat() {
     );
   };
 
-  const goBackToMenu = () => {
+  // "Tenho uma dúvida sobre como usar X" — pula direto pro chat com a IA, sem solução guiada.
+  const pickUsageHelp = (cat: Category) => {
+    setMenuOpen(false);
+    setActiveCategory(cat);
+    setActiveSolution(null);
+    const subTitle = `Dúvida sobre como usar ${cat.label}`;
+    setTriage({
+      category: cat.label,
+      subcategory: subTitle,
+      triedSolution: "[Dúvida de uso]",
+      triedSteps: [],
+    });
+    respondAfterTyping(
+      { role: "user", content: subTitle },
+      [{
+        role: "ai",
+        content: `Claro! Me conta com mais detalhes a sua dúvida sobre **${cat.label}** — o que você está tentando fazer, em qual tela está, e o que não está claro. Vou te explicar passo a passo. 🙂`,
+      }],
+      () => setPhase("chat"),
+    );
+  };
+
     setActiveCategory(null);
     setActiveSolution(null);
     setTriage({});
