@@ -1270,6 +1270,19 @@ export function WianChat() {
               )}
             </div>
           )}
+          {(phase === "chat" || phase === "ask-resolved") && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={openTicketDirect}
+                className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+                title="Pular o chat e abrir um chamado direto com o time humano"
+              >
+                <Headphones className="w-3 h-3" />
+                Abrir chamado direto com o time
+              </button>
+            </div>
+          )}
           {pendingAttachments.length > 0 && (
             <div className="flex flex-wrap gap-2 p-2 rounded-lg border border-border bg-muted/40">
               {pendingAttachments.map((a, idx) => (
