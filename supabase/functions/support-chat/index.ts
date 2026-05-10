@@ -456,8 +456,26 @@ Deno.serve(async (req) => {
     // Se temos resumo, mandamos só últimas 4 mensagens; senão últimas 10 (comportamento antigo)
     const historySize = effectiveSummary ? 4 : 10;
 
-    const messages = [
-      { role: "system", content: `${SYSTEM_BASE}${userBlock}${summaryBlock}\n\nCONTEXTO:${context}${triageBlock}` },
+    // Knowledge específico da categoria de triagem
+    const triageCat = (triageContext as any)?.category || "";
+    const kbBlock = WIAN_KB[triageCat] ? `\n\n--- CONHECIMENTO DO PRODUTO (${triageCat}) ---\n${WIAN_KB[triageCat]}` : "";
+
+    // Tools só para usuários autenticados
+    const toolsEnabled = !!userId;
+    const toolsBlock = toolsEnabled
+      ? `\n\n--- FERRAMENTAS DISPONÍVEIS ---
+Você tem acesso a TOOLS para investigar a conta REAL do usuário (números, campanhas, leads, plano, etc.) e executar AÇÕES SIMPLES (pausar/retomar campanha, reconectar número, silenciar agente).
+
+REGRAS de uso de tools:
+- Use tools para DIAGNOSTICAR antes de responder. Ex: user reclama "campanha não dispara" → primeiro chame get_active_campaigns, identifique a campanha, depois get_campaign_details, depois get_whatsapp_connections.
+- NUNCA invente dados. Se você não chamou a tool, NÃO afirme estado da conta.
+- Para AÇÕES (pause_campaign, resume_campaign, reconnect_whatsapp, silence_ai_agent): chame SEM \`confirmed\` primeiro. A tool retornará { requires_confirmation, summary }. Apresente o summary ao user e PERGUNTE se confirma. Só re-chame com confirmed=true depois que o user confirmar EXPLICITAMENTE no chat.
+- Telefones nas tools vêm mascarados; é normal.
+- Após executar uma ação, confirme o resultado em 1 frase curta.`
+      : "";
+
+    const messages: any[] = [
+      { role: "system", content: `${SYSTEM_BASE}${userBlock}${summaryBlock}\n\nCONTEXTO:${context}${kbBlock}${triageBlock}${toolsBlock}` },
       ...history.slice(-historySize).map((m: any) => ({ role: m.role === "ai" ? "assistant" : m.role, content: m.content })),
       { role: "user", content: userContent },
     ];
@@ -468,31 +486,82 @@ Deno.serve(async (req) => {
       });
     }
 
-    const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages,
-        temperature: 0.3,
-      }),
-    });
-
-    if (aiRes.status === 429) {
-      return new Response(JSON.stringify({ error: "Muitas requisições. Tente novamente em instantes." }), {
-        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (!aiRes.ok) {
-      const t = await aiRes.text();
-      console.error("OpenAI error", aiRes.status, t);
-      return new Response(JSON.stringify({ error: "Falha no provedor de IA." }), {
-        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Se o frontend está enviando uma confirmação de ação, injetamos como
+    // se o assistant tivesse acabado de re-chamar a tool com confirmed:true.
+    if (toolsEnabled && confirmedAction?.tool && confirmedAction?.params) {
+      const toolResult = await callWianTool(auth || "", confirmedAction.tool, { ...confirmedAction.params, confirmed: true });
+      messages.push({
+        role: "system",
+        content: `Ação '${confirmedAction.tool}' acabou de ser executada com confirmação do usuário. Resultado: ${JSON.stringify(toolResult)}. Confirme o resultado ao user em 1-2 frases curtas e pergunte se precisa de mais algo. Inclua [SOLUCAO] no final.`,
       });
     }
 
-    const aiJson = await aiRes.json();
-    let answer: string = aiJson.choices?.[0]?.message?.content?.trim() || "";
+    // ================== Tool-calling loop ==================
+    const collectedToolCalls: Array<{ name: string; status: "running" | "done" | "error"; summary?: string; pending?: any }> = [];
+    let aiJson: any = null;
+    let answer = "";
+    const MAX_TOOL_ROUNDS = 5;
+
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages,
+          temperature: 0.3,
+          ...(toolsEnabled ? { tools: WIAN_TOOLS, tool_choice: "auto", parallel_tool_calls: true } : {}),
+        }),
+      });
+
+      if (aiRes.status === 429) {
+        return new Response(JSON.stringify({ error: "Muitas requisições. Tente novamente em instantes." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!aiRes.ok) {
+        const t = await aiRes.text();
+        console.error("OpenAI error", aiRes.status, t);
+        return new Response(JSON.stringify({ error: "Falha no provedor de IA." }), {
+          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      aiJson = await aiRes.json();
+      const choice = aiJson.choices?.[0];
+      const msg = choice?.message;
+      const toolCalls = msg?.tool_calls || [];
+
+      if (toolCalls.length && toolsEnabled) {
+        // Adiciona a mensagem do assistant (com os tool_calls) ao histórico
+        messages.push(msg);
+        // Executa cada tool em paralelo
+        const results = await Promise.all(
+          toolCalls.map(async (tc: any) => {
+            const name = tc.function?.name;
+            let params: any = {};
+            try { params = JSON.parse(tc.function?.arguments || "{}"); } catch { params = {}; }
+            collectedToolCalls.push({ name, status: "running" });
+            const r = await callWianTool(auth || "", name, params);
+            const last = collectedToolCalls[collectedToolCalls.length - 1];
+            if (r?.error) { last.status = "error"; last.summary = r.error; }
+            else if (r?.requires_confirmation) {
+              last.status = "done";
+              last.summary = r.summary;
+              last.pending = { tool: r.action, params: r.action_params };
+            } else { last.status = "done"; }
+            return { tool_call_id: tc.id, role: "tool", name, content: JSON.stringify(r) };
+          }),
+        );
+        messages.push(...results);
+        continue; // Próxima rodada com os resultados das tools
+      }
+
+      // Sem tool_calls → resposta final
+      answer = msg?.content?.trim() || "";
+      break;
+    }
+
 
     const rawAnswer = answer;
     const explicitEscalate = /\[ESCALAR_HUMANO\]|^ESCALAR_HUMANO$/m.test(rawAnswer);
