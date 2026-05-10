@@ -12,6 +12,59 @@ const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+// =============== WIAN TOOLS (function calling) ===============
+// Schema enviado ao OpenAI; só é incluído quando o user está autenticado.
+const WIAN_TOOLS = [
+  { type: "function", function: { name: "get_account_overview", description: "Plano, créditos, status do trial, dados básicos da conta.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_whatsapp_connections", description: "Lista todos os números conectados (Evolution e Meta WABA), status, último envio, expiração de token.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_warming_status", description: "Status de aquecimento dos números: nível, mensagens hoje, limite, erros.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_active_campaigns", description: "Últimas campanhas: status, total/enviados/falhas, agendamento.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_campaign_details", description: "Detalhes de UMA campanha + incidentes recentes.", parameters: { type: "object", properties: { campaignId: { type: "string" } }, required: ["campaignId"] } } },
+  { type: "function", function: { name: "get_crm_summary", description: "Resumo do CRM: total leads, leads sem follow-up 7d, distribuição por estágio, score médio.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_recent_leads", description: "Últimos leads: contato, empresa, score, telefone mascarado.", parameters: { type: "object", properties: { limit: { type: "number" } } } } },
+  { type: "function", function: { name: "get_active_flows", description: "Lista de flows de WhatsApp do user: status, API, número.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_ai_agents_status", description: "Agentes de IA configurados: nome, modelo, limites.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_recent_errors", description: "Incidentes recentes em campanhas (erros de envio, números inválidos).", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "pause_campaign", description: "Pausa uma campanha. SEM confirmed=true só retorna preview; com confirmed=true executa.", parameters: { type: "object", properties: { campaignId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["campaignId"] } } },
+  { type: "function", function: { name: "resume_campaign", description: "Retoma uma campanha pausada. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { campaignId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["campaignId"] } } },
+  { type: "function", function: { name: "reconnect_whatsapp", description: "Marca um número Evolution para reconectar (usuário precisa ler QR depois). Mesmo padrão de confirmação.", parameters: { type: "object", properties: { numberId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["numberId"] } } },
+  { type: "function", function: { name: "silence_ai_agent", description: "Silencia o agente IA em uma conversa específica. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { conversationId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["conversationId"] } } },
+];
+
+// Knowledge compacto por categoria de triagem — injetado no prompt.
+const WIAN_KB: Record<string, string> = {
+  campanhas: "CAMPANHAS: disparo via Meta (Outbound) ou CRM (Relational). Status: pending→running→paused/completed/failed. DDI 55 obrigatório. Delays de segurança automáticos. Pode pausar/retomar a qualquer momento.",
+  conexoes: "CONEXÕES: 2 APIs — Evolution (aquecimento, QR Code) e Meta WABA (campanhas+chat, OAuth). Tokens Meta podem expirar; reconectar pelo painel WhatsApp→Conexões.",
+  aquecimento: "AQUECIMENTO: cresce por nível (1→hot). Limite diário reseta 08:00. Forçar volume = risco de ban. Se sessão Evolution cair, aquecimento para.",
+  crm: "CRM: Kanban progressivo, leads só avançam. Estágio 'Prospectado' protegido. Score 0-1000 recalculado por evento. Tags centralizadas em Configurações.",
+  ia_agents: "IA AGENTS: agente é silenciado quando humano responde (handoff). Limite/dia varia por aquecimento. Modelo padrão gpt-4o-mini.",
+  chat: "CHAT: inbox unificado por WABA. Mídias: imagem 5MB, vídeo 16MB. Humano respondendo silencia o agente IA naquela conversa.",
+  flows: "FLOWS: builder visual com nós (mensagem, IA, dados, espera). 3 gerações por IA/dia. Filtro por WABA. Sem dead-ends na geração IA.",
+  oportunidades: "OPORTUNIDADES: 1 busca = 3 créditos = ~60 leads. Perfil da empresa OBRIGATÓRIO. Score adapta por nicho. Outreach IA monta msg em 4 parágrafos.",
+  conta: "CONTA: Auth Supabase nativo (email/senha + Google). Reset de senha exige email validado. Google Drive/Calendar via OAuth próprio.",
+  financeiro: "BILLING: planos Start/Growth/Enterprise (UI), Stripe (cartão internacional) ou Asaas (PIX/cartão BR). Trial 7 dias. Cobrança é em 'Oportunidades'. Cancelamento via portal.",
+  cancelamento: "CANCELAMENTO: feito no portal Conta→Assinatura→Cancelar (com formulário de feedback). Plano segue ativo até fim do período pago.",
+};
+
+async function callWianTool(authHeader: string, tool: string, params: any) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/support-wian-tools`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": authHeader,
+        "apikey": Deno.env.get("SUPABASE_ANON_KEY") || "",
+      },
+      body: JSON.stringify({ tool, params }),
+    });
+    const j = await res.json();
+    if (!res.ok) return { error: j?.error || `tool_http_${res.status}` };
+    return j.result ?? j;
+  } catch (e: any) {
+    return { error: e?.message || "tool_fetch_error" };
+  }
+}
+
 const SYSTEM_BASE = `Você é **Wian**, o atendente virtual oficial da **Wiize** — uma plataforma B2B brasileira de prospecção de leads, aquecimento e automação de WhatsApp, campanhas (Evolution + Meta Cloud), CRM Kanban com scoring, chat com IA e Flow Builder, com planos Start, Growth e Enterprise.
 
 Sua missão é resolver dúvidas e problemas de clientes e usuários da Wiize com agilidade, clareza e simpatia, e só passar o caso para um humano quando realmente for necessário.
