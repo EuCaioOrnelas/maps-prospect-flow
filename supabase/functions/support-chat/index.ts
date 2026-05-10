@@ -628,6 +628,10 @@ REGRAS de uso de tools:
       });
     }
 
+    // Pending action: se alguma tool retornou requires_confirmation, expomos pro front
+    const pendingAction = collectedToolCalls.find((t) => t.pending)?.pending || null;
+    const toolCallsView = collectedToolCalls.map((t) => ({ name: t.name, status: t.status, summary: t.summary }));
+
     return new Response(JSON.stringify({
       ticketId,
       answer,
@@ -635,6 +639,8 @@ REGRAS de uso de tools:
       phase: nextPhase,
       confidence: topSim,
       frustration: newFrustration,
+      toolCalls: toolCallsView,
+      pendingAction,
       user: userId ? {
         authenticated: true,
         name: userName,
