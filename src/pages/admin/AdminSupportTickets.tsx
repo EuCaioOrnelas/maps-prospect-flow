@@ -1083,6 +1083,55 @@ export default function AdminSupportTickets() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* KB autolearning modal */}
+      <Dialog open={kbModalOpen} onOpenChange={(o) => !o && setKbModalOpen(false)}>
+        <DialogContent className="max-w-2xl bg-background max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bot className="w-5 h-5 text-primary" /> Transformar em conhecimento
+            </DialogTitle>
+            <DialogDescription>
+              A IA analisou o ticket e sugeriu uma entrada para a base. Revise e salve.
+            </DialogDescription>
+          </DialogHeader>
+          {kbLoading ? (
+            <div className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Título *</label>
+                <Input value={kbForm.title} onChange={(e) => setKbForm({ ...kbForm, title: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Categoria</label>
+                  <Input value={kbForm.category} onChange={(e) => setKbForm({ ...kbForm, category: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Tags (vírgula)</label>
+                  <Input value={kbForm.tags} onChange={(e) => setKbForm({ ...kbForm, tags: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Dores do cliente</label>
+                <Textarea rows={2} value={kbForm.pains} onChange={(e) => setKbForm({ ...kbForm, pains: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Solução *</label>
+                <Textarea rows={8} value={kbForm.solution} onChange={(e) => setKbForm({ ...kbForm, solution: e.target.value })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setKbModalOpen(false)}>Cancelar</Button>
+            <Button onClick={saveKb} disabled={kbSaving || kbLoading}>
+              {kbSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Salvar na base
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
