@@ -87,10 +87,10 @@ const Contact = () => {
             transition={{ delay: 0.1, duration: 0.5 }}
           >
             <h1 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4 text-foreground">
-              Fale Conosco
+              Central de Atendimento
             </h1>
-            <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-lg mx-auto px-4">
-              Tem alguma dúvida ou sugestão? Adoraríamos ouvir você!
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-xl mx-auto px-4">
+              Converse com o <strong className="text-foreground">Wian</strong>, nosso assistente virtual, para resolver dúvidas na hora. Se precisar, ele abre um chamado para o nosso time humano.
             </p>
           </motion.div>
 
