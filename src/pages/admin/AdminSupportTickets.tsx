@@ -40,6 +40,8 @@ type Ticket = {
   resolved_at: string | null;
   due_at: string | null;
   is_manual: boolean | null;
+  frustration_score: number | null;
+  phase: string | null;
 };
 
 type Message = {
