@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink, List, ChevronRight, Megaphone, MessageSquare, Building2, Bot, LayoutGrid, GitBranch, CreditCard, Package, BarChart3, Headphones, HelpCircle, AlertCircle } from "lucide-react";
+import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink, List, ChevronRight, Megaphone, MessageSquare, Building2, Bot, LayoutGrid, GitBranch, CreditCard, Package, BarChart3, Headphones, HelpCircle, AlertCircle, Wrench, CheckCircle2, XCircle, Loader, Lightbulb } from "lucide-react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -185,6 +185,52 @@ function findYoutube(content: string): { id: string; url: string } | null {
 }
 
 const TERMINAL_PHASES: Phase[] = ["done-resolved", "done-escalated"];
+
+// Mapa de tools para rótulo amigável + ícone
+const TOOL_LABELS: Record<string, string> = {
+  get_account_overview: "Verificando conta",
+  get_whatsapp_connections: "Checando conexões WhatsApp",
+  get_warming_status: "Verificando aquecimento",
+  get_active_campaigns: "Lendo campanhas",
+  get_campaign_details: "Detalhando campanha",
+  get_crm_summary: "Analisando CRM",
+  get_recent_leads: "Buscando leads recentes",
+  get_active_flows: "Listando flows",
+  get_ai_agents_status: "Verificando agentes IA",
+  get_recent_errors: "Procurando erros recentes",
+  pause_campaign: "Pausar campanha",
+  resume_campaign: "Retomar campanha",
+  reconnect_whatsapp: "Reconectar WhatsApp",
+  silence_ai_agent: "Silenciar agente IA",
+};
+
+function ToolCallChip({ call }: { call: ToolCallView }) {
+  const label = TOOL_LABELS[call.name] || call.name;
+  const isErr = call.status === "error";
+  const isRun = call.status === "running";
+  return (
+    <div
+      className={`inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-full border ${
+        isErr
+          ? "bg-destructive/10 text-destructive border-destructive/30"
+          : isRun
+          ? "bg-primary/5 text-primary border-primary/20"
+          : "bg-muted/60 text-muted-foreground border-border"
+      }`}
+      title={call.summary || ""}
+    >
+      {isRun ? (
+        <Loader className="w-3 h-3 animate-spin" />
+      ) : isErr ? (
+        <XCircle className="w-3 h-3" />
+      ) : (
+        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+      )}
+      <Wrench className="w-3 h-3 opacity-60" />
+      <span className="font-medium">{label}</span>
+    </div>
+  );
+}
 
 export function WianChat() {
   const rawInitial = loadState();
@@ -425,6 +471,28 @@ export function WianChat() {
     );
   };
 
+  // "Tenho uma dúvida sobre como usar X" — pula direto pro chat com a IA, sem solução guiada.
+  const pickUsageHelp = (cat: Category) => {
+    setMenuOpen(false);
+    setActiveCategory(cat);
+    setActiveSolution(null);
+    const subTitle = `Dúvida sobre como usar ${cat.label}`;
+    setTriage({
+      category: cat.label,
+      subcategory: subTitle,
+      triedSolution: "[Dúvida de uso]",
+      triedSteps: [],
+    });
+    respondAfterTyping(
+      { role: "user", content: subTitle },
+      [{
+        role: "ai",
+        content: `Claro! Me conta com mais detalhes a sua dúvida sobre **${cat.label}** — o que você está tentando fazer, em qual tela está, e o que não está claro. Vou te explicar passo a passo. 🙂`,
+      }],
+      () => setPhase("chat"),
+    );
+  };
+
   const goBackToMenu = () => {
     setActiveCategory(null);
     setActiveSolution(null);
@@ -489,13 +557,15 @@ export function WianChat() {
   };
 
   // ============== AI ==============
-  const flushQueue = async () => {
+  const flushQueue = async (opts?: { confirmedAction?: PendingAction; userBubbleText?: string }) => {
     const { texts, attachments } = queueRef.current;
-    if (!texts.length && !attachments.length) return;
+    const isConfirmFlow = !!opts?.confirmedAction;
+    if (!isConfirmFlow && !texts.length && !attachments.length) return;
     queueRef.current = { texts: [], attachments: [] };
     setLoading(true);
 
     let combined = texts.join("\n\n").trim();
+    if (isConfirmFlow && !combined) combined = opts?.userBubbleText || "Confirmado.";
     const imageAttachment = attachments.find((a) => a.type.startsWith("image/") && a.dataUrl);
     const textAttachments = attachments.filter((a) => a.textContent);
     const otherAttachments = attachments.filter((a) => !a.type.startsWith("image/") && !a.textContent);
@@ -516,6 +586,7 @@ export function WianChat() {
           imageDataUrl: imageAttachment?.dataUrl ?? null,
           triageContext: triage,
           userName: name || null,
+          confirmedAction: opts?.confirmedAction || null,
         },
       });
       if (error) {
@@ -532,21 +603,33 @@ export function WianChat() {
       if (data?.error) throw new Error(data.error);
       if (data?.ticketId) setTicketId(data.ticketId);
 
+      const toolCalls: ToolCallView[] | undefined = Array.isArray(data?.toolCalls) && data.toolCalls.length ? data.toolCalls : undefined;
+      const pendingAction: PendingAction | undefined = data?.pendingAction || undefined;
+
       // Quebra em vários balões curtos para parecer mais humano (estilo WhatsApp)
       const bubbles = splitAnswerIntoBubbles(data.answer || "");
       if (bubbles.length === 0) {
-        setMessages((prev) => [...prev, { role: "ai", content: data.answer || "" }]);
+        setMessages((prev) => [...prev, { role: "ai", content: data.answer || "", toolCalls, pendingAction }]);
       } else {
-        // Adiciona o primeiro imediatamente; agenda os próximos com pequena pausa "digitando"
-        // Adiciona o primeiro imediatamente; agenda os próximos com pausa "digitando" entre cada um
-        setMessages((prev) => [...prev, { role: "ai", content: bubbles[0] }]);
+        // Primeiro balão recebe os chips de tool calls; último recebe o pendingAction (se houver).
+        const onlyOne = bubbles.length === 1;
+        setMessages((prev) => [...prev, {
+          role: "ai",
+          content: bubbles[0],
+          toolCalls,
+          pendingAction: onlyOne ? pendingAction : undefined,
+        }]);
         for (let i = 1; i < bubbles.length; i++) {
           const baseDelay = 600 + (i - 1) * 1400;
-          // Mostra o "digitando" um pouco antes de aparecer o próximo balão
+          const isLast = i === bubbles.length - 1;
           setTimeout(() => setLoading(true), baseDelay);
           setTimeout(() => {
             setLoading(false);
-            setMessages((prev) => [...prev, { role: "ai", content: bubbles[i] }]);
+            setMessages((prev) => [...prev, {
+              role: "ai",
+              content: bubbles[i],
+              pendingAction: isLast ? pendingAction : undefined,
+            }]);
           }, baseDelay + 800);
         }
       }
@@ -569,8 +652,10 @@ export function WianChat() {
           };
           setCategory(map[triage.category] || "Outro");
         }
-      } else if (data.phase === "solution") {
-        setPhase("ask-resolved");
+      } else if (data.phase === "solution" || data.phase === "waiting_user_confirmation") {
+        // Só pede "funcionou?" se não houver ação pendente aguardando confirmação
+        if (!pendingAction) setPhase("ask-resolved");
+        else setPhase("chat");
       } else {
         setPhase("chat");
       }
@@ -600,6 +685,25 @@ export function WianChat() {
     debounceRef.current = setTimeout(() => {
       void flushQueue();
     }, RESPONSE_DELAY_MS);
+  };
+
+  // Confirmar ação pendente (ex: pause_campaign) — envia confirmedAction para o backend
+  const confirmPendingAction = (msgIndex: number, action: PendingAction) => {
+    // Remove o pendingAction da bolha pra não duplicar botões
+    setMessages((prev) => prev.map((m, i) => i === msgIndex ? { ...m, pendingAction: undefined } : m));
+    setMessages((prev) => [...prev, { role: "user", content: "✅ Confirmar" }]);
+    setLoading(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    void flushQueue({ confirmedAction: action, userBubbleText: "Confirmar a ação." });
+  };
+
+  const cancelPendingAction = (msgIndex: number) => {
+    setMessages((prev) => prev.map((m, i) => i === msgIndex ? { ...m, pendingAction: undefined } : m));
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", content: "❌ Cancelar" },
+      { role: "ai", content: "Sem problema — não vou executar a ação. Posso ajudar com mais alguma coisa? 🙂" },
+    ]);
   };
 
   const send = () => {
@@ -894,23 +998,42 @@ export function WianChat() {
               className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {m.role === "ai" && <AiAvatar />}
-              <div
-                className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-md whitespace-pre-wrap"
-                    : "bg-muted/40 text-foreground rounded-bl-md border border-border/40"
-                }`}
-              >
-                {m.attachments?.length ? (
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {m.attachments.map(renderAttachment)}
+              <div className={`flex flex-col gap-2 max-w-[78%] ${m.role === "user" ? "items-end" : "items-start"}`}>
+                {m.role === "ai" && m.toolCalls?.length ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {m.toolCalls.map((tc, ti) => (
+                      <ToolCallChip key={ti} call={tc} />
+                    ))}
                   </div>
                 ) : null}
-                {m.role === "ai" ? (
-                  <AiBubbleContent content={m.content} />
-                ) : (
-                  m.content !== "(anexo)" && m.content
-                )}
+                <div
+                  className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                    m.role === "user"
+                      ? "bg-primary text-primary-foreground rounded-br-md whitespace-pre-wrap"
+                      : "bg-muted/40 text-foreground rounded-bl-md border border-border/40"
+                  }`}
+                >
+                  {m.attachments?.length ? (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {m.attachments.map(renderAttachment)}
+                    </div>
+                  ) : null}
+                  {m.role === "ai" ? (
+                    <AiBubbleContent content={m.content} />
+                  ) : (
+                    m.content !== "(anexo)" && m.content
+                  )}
+                </div>
+                {m.role === "ai" && m.pendingAction ? (
+                  <div className="flex flex-wrap gap-2 pt-0.5">
+                    <Button size="sm" variant="default" onClick={() => confirmPendingAction(i, m.pendingAction!)}>
+                      <Check className="w-3.5 h-3.5 mr-1" /> Confirmar ação
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => cancelPendingAction(i)}>
+                      <X className="w-3.5 h-3.5 mr-1" /> Cancelar
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             </motion.div>
           ))}
@@ -1384,16 +1507,31 @@ export function WianChat() {
           </DialogHeader>
           <div className="max-h-[min(85vh,720px)] overflow-y-auto py-1">
             {phase === "triage-submenu" && activeCategory
-              ? activeCategory.problems.map((p) => (
+              ? (
+                <>
+                  {activeCategory.problems.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => pickProblem(p)}
+                      className="w-full text-left px-5 py-3 hover:bg-muted/60 transition-colors flex items-center justify-between gap-3 border-b border-border/50 last:border-b-0"
+                    >
+                      <span className="text-sm font-medium text-foreground">{p.title}</span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                    </button>
+                  ))}
                   <button
-                    key={p.id}
-                    onClick={() => pickProblem(p)}
-                    className="w-full text-left px-5 py-3 hover:bg-muted/60 transition-colors flex items-center justify-between gap-3 border-b border-border/50 last:border-b-0"
+                    onClick={() => pickUsageHelp(activeCategory)}
+                    className="w-full text-left px-5 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3.5 border-t border-border/60 bg-muted/20"
                   >
-                    <span className="text-sm font-medium text-foreground">{p.title}</span>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <Lightbulb className="w-5 h-5 shrink-0 text-amber-500" strokeWidth={2} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">Tenho uma dúvida de uso</p>
+                      <p className="text-[11px] text-muted-foreground">Quero entender como funciona / como configurar</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0" />
                   </button>
-                ))
+                </>
+              )
               : TRIAGE_TREE.map((cat) => {
                   const Icon = CATEGORY_ICONS[cat.id] || HelpCircle;
                   const colorClass = CATEGORY_COLORS[cat.id] || "text-primary";
