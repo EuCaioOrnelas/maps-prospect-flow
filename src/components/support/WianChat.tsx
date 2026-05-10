@@ -1279,7 +1279,7 @@ export function WianChat() {
             {phase === "ask-name" ? (
               <>
                 <Input
-                  placeholder="Seu nome"
+                  placeholder="Digite seu nome abaixo"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submitName(); } }}
