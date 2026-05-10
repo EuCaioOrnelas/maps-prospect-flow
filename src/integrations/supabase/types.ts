@@ -7022,6 +7022,36 @@ export type Database = {
         }
         Relationships: []
       }
+      wian_tool_calls: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          params: Json
+          success: boolean
+          tool: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          params?: Json
+          success?: boolean
+          tool: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          params?: Json
+          success?: boolean
+          tool?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       support_cost_by_category: {
