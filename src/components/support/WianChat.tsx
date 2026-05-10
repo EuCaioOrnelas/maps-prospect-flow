@@ -620,7 +620,17 @@ export function WianChat() {
       await supabase.from("support_messages").insert({ ticket_id: ticketId, role: "user", content: ratingMsg });
       // Só marca como resolvido se a IA realmente resolveu (não em escalonamento humano).
       if (!wasEscalated) {
-        await supabase.from("support_tickets").update({ status: "resolved", resolved_by: "ai", resolved_at: new Date().toISOString() }).eq("id", ticketId);
+        await supabase.from("support_tickets").update({ status: "resolved", phase: "rated", resolved_by: "ai", resolved_at: new Date().toISOString() }).eq("id", ticketId);
+        await supabase.from("support_ticket_events").insert({
+          ticket_id: ticketId, from_phase: "waiting_user_confirmation", to_phase: "rated",
+          triggered_by: "user", metadata: { stars, has_comment: !!comment.trim() },
+        });
+      } else {
+        await supabase.from("support_tickets").update({ phase: "rated" }).eq("id", ticketId);
+        await supabase.from("support_ticket_events").insert({
+          ticket_id: ticketId, from_phase: "escalated", to_phase: "rated",
+          triggered_by: "user", metadata: { stars, has_comment: !!comment.trim() },
+        });
       }
       setPhase("nps");
     } catch (e: any) {
