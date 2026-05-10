@@ -408,6 +408,21 @@ export function WianChat() {
     setPhase("chat");
   };
 
+  const openTicketDirect = () => {
+    setMenuOpen(false);
+    setActiveCategory(null);
+    setActiveSolution(null);
+    setCategory("Outro");
+    respondAfterTyping(
+      { role: "user", content: "Quero abrir um chamado direto com o time" },
+      [{
+        role: "ai",
+        content: "Claro! Vou abrir um chamado para o nosso time humano. Preencha os dados abaixo 👇",
+      }],
+      () => setPhase("collect-info"),
+    );
+  };
+
   const goBackToMenu = () => {
     setActiveCategory(null);
     setActiveSolution(null);
