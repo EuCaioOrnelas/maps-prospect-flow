@@ -186,6 +186,52 @@ function findYoutube(content: string): { id: string; url: string } | null {
 
 const TERMINAL_PHASES: Phase[] = ["done-resolved", "done-escalated"];
 
+// Mapa de tools para rótulo amigável + ícone
+const TOOL_LABELS: Record<string, string> = {
+  get_account_overview: "Verificando conta",
+  get_whatsapp_connections: "Checando conexões WhatsApp",
+  get_warming_status: "Verificando aquecimento",
+  get_active_campaigns: "Lendo campanhas",
+  get_campaign_details: "Detalhando campanha",
+  get_crm_summary: "Analisando CRM",
+  get_recent_leads: "Buscando leads recentes",
+  get_active_flows: "Listando flows",
+  get_ai_agents_status: "Verificando agentes IA",
+  get_recent_errors: "Procurando erros recentes",
+  pause_campaign: "Pausar campanha",
+  resume_campaign: "Retomar campanha",
+  reconnect_whatsapp: "Reconectar WhatsApp",
+  silence_ai_agent: "Silenciar agente IA",
+};
+
+function ToolCallChip({ call }: { call: ToolCallView }) {
+  const label = TOOL_LABELS[call.name] || call.name;
+  const isErr = call.status === "error";
+  const isRun = call.status === "running";
+  return (
+    <div
+      className={`inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-full border ${
+        isErr
+          ? "bg-destructive/10 text-destructive border-destructive/30"
+          : isRun
+          ? "bg-primary/5 text-primary border-primary/20"
+          : "bg-muted/60 text-muted-foreground border-border"
+      }`}
+      title={call.summary || ""}
+    >
+      {isRun ? (
+        <Loader className="w-3 h-3 animate-spin" />
+      ) : isErr ? (
+        <XCircle className="w-3 h-3" />
+      ) : (
+        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+      )}
+      <Wrench className="w-3 h-3 opacity-60" />
+      <span className="font-medium">{label}</span>
+    </div>
+  );
+}
+
 export function WianChat() {
   const rawInitial = loadState();
   // Se a sessão anterior já tinha terminado (chamado aberto ou resolvido), zera tudo ao voltar.
