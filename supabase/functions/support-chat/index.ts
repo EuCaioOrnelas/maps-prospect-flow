@@ -357,7 +357,7 @@ Deno.serve(async (req) => {
 
     const topSim = Math.max(
       0,
-      ...kbResults.map((k) => k.similarity || 0),
+      ...kbResults.map((k) => k.weighted_score || k.similarity || 0),
       ...faqResults.map((f) => f.similarity || 0),
     );
 
