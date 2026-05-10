@@ -46,7 +46,11 @@ async function audit(
   }
 }
 
-type Ctx = { userId: string; sb: ReturnType<typeof createClient> };
+type Ctx = {
+  userId: string;
+  sb: ReturnType<typeof createClient>;
+  authHeader: string;
+};
 
 // =================================================================
 // Tool handlers (READ)
