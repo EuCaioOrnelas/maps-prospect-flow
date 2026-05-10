@@ -605,7 +605,16 @@ export default function AdminSupportTickets() {
                       <span className="text-xs text-muted-foreground">Sem avaliação</span>
                     )}
                   </TableCell>
-                  <TableCell><span className={`text-xs px-2 py-0.5 rounded-md ${PRIORITY_COLORS[t.priority] || ""}`}>{PRIORITY_LABELS[t.priority] || t.priority}</span></TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className={`text-xs px-2 py-0.5 rounded-md ${PRIORITY_COLORS[t.priority] || ""}`}>{PRIORITY_LABELS[t.priority] || t.priority}</span>
+                      {typeof t.frustration_score === "number" && t.frustration_score >= 40 && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1 ${t.frustration_score >= 60 ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`} title={`Frustração ${t.frustration_score}/100`}>
+                          <Gauge className="w-3 h-3" /> {t.frustration_score}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-xs">{(() => { const r = responseTime(t); return r ? <span className={`font-medium ${r.color}`}>{r.label}</span> : <span className="text-muted-foreground">—</span>; })()}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(t.created_at), { addSuffix: true, locale: ptBR })}</TableCell>
                 </TableRow>
