@@ -1,111 +1,137 @@
-# Evolução do Wian — 10 melhorias em 4 fases
 
-São muitas mudanças (banco, edge functions, painel admin, frontend). Para entregar com qualidade e você validar a cada etapa, proponho dividir em **4 fases sequenciais**. Cada fase é independente e já entrega valor.
+# Wian Inteligente: Tool-calling + Conhecimento total da plataforma
 
----
+Transforma o Wian de um chatbot de FAQ em um **agente real com acesso aos dados da conta do usuário** (somente logados) e **conhecimento profundo de cada módulo da Wiize**. O fluxo de triagem (menu → categoria → subproblema) continua exatamente como está hoje — o salto acontece **depois** que o usuário cai no chat aberto com o Wian.
 
-## Fase 1 — Fundação (state machine + frustração + memória + custo)
-*Base para tudo o que vem depois. Sem mexer em UI nova de admin.*
+## Princípios
 
-**Melhoria 1 — State Machine formal**
-- Novo enum `support_phase` em `support_tickets`:
-  `triage → faq_resolution → ai_investigating → ai_solution → waiting_user_confirmation → escalated → human_assigned → resolved → closed → rated`
-- Tabela `support_ticket_events` (audit log de transições, com timestamp e quem disparou)
-- `support-chat` e `support-escalate` passam a gravar transição em vez de apenas mexer em `status`
-- Frontend (`WianChat.tsx`) lê `phase` em vez de inferir estado por marcadores
+- **Triagem preservada**: usuário ainda passa pelo menu de categorias e soluções guiadas. O Wian ganha superpoderes apenas no chat livre (fase `chat`).
+- **Tools só para usuários autenticados**: visitantes (guest) continuam recebendo o Wian "FAQ-only" como hoje. Logados ganham o Wian "diagnóstico real".
+- **Leitura ampla, ações simples e sempre confirmadas**: Wian pode consultar quase tudo, mas qualquer ação que mude estado pede confirmação explícita do usuário no chat.
+- **Conhecimento total**: cada módulo (Warming, Campanhas, CRM, Flows, IA Agents, Billing, etc.) ganha entrada na base estática `wianKnowledge.ts` com regras, limites e fluxos resumidos.
+- **Nova opção em cada categoria**: "Dúvida sobre como usar" — leva direto ao Wian com contexto da categoria, sem passar pelos sub-problemas.
 
-**Melhoria 2 — Frustration Score**
-- Nova função TS `computeFrustration(message, history)` no edge: detecta CAPS LOCK (>60% maiúsculas), palavrões (lista PT-BR), repetição (mesma palavra-chave em 3+ msgs), gatilhos ("já tentei", "não funciona", "péssimo", "ridículo", "horrível", "cancelar")
-- Coluna `frustration_score` (0–100) em `support_tickets`, atualizada a cada msg do usuário
-- Regra: score ≥ 60 → escala automática com prioridade `high` mesmo se for `trial_user`
-- Marcador `[ALTA_FRUSTRACAO]` aparece pro admin no card do ticket
+## Mudanças por arquivo
 
-**Melhoria 5 — Memory Summary progressivo**
-- Coluna `conversation_summary` em `support_tickets`
-- A cada 6 mensagens novas: chamada paralela ao gpt-4o-mini ("resuma em 3 bullets o que já foi tentado e descoberto")
-- `support-chat` envia: `summary` + **últimas 4** mensagens (em vez de 10 cruas) → economia de ~60% de token em conversas longas
+### 1. Nova base de conhecimento estática
+**`src/components/support/wianKnowledge.ts`** (novo)
+- Objeto `WIAN_KNOWLEDGE` por módulo: `warming`, `campaigns`, `crm`, `flows`, `aiAgents`, `chat`, `billing`, `opportunities`, `dashboard`, `account`.
+- Cada entrada: `description`, `keyRules` (limites, DDI 55, planos), `commonFlows` (passo-a-passo de uso), `troubleshooting` (problemas frequentes), `relatedRoutes` (rotas internas).
+- Função `getKnowledgeForCategory(categoryId)` retorna o subset relevante para injetar no prompt sem estourar contexto.
 
-**Melhoria 7 — Cost Tracking (backend)**
-- Já temos `tokens_in/out` em `ai_logs`. Adicionar:
-  - Coluna `cost_usd` calculada (input $0.15/1M, output $0.60/1M para gpt-4o-mini)
-  - View `support_cost_by_ticket`, `support_cost_by_user`, `support_cost_by_category`
-- Dashboard fica para Fase 4
+### 2. Nova edge function: `support-wian-tools`
+**`supabase/functions/support-wian-tools/index.ts`** (novo)
+- Endpoint POST único que executa uma tool por chamada.
+- Valida JWT do usuário (cliente Supabase com auth header → `auth.getUser()`).
+- Roteia por `tool` (campo do body) entre handlers.
+- Cada handler usa **cliente com JWT do user** (RLS aplica) para leitura e ações simples.
+- Logs de auditoria em `wian_tool_calls` (user_id, tool, params, success, ts).
 
----
+**Tools implementadas:**
 
-## Fase 2 — Inteligência (clustering + confiança semântica + tool mode básico)
+| Tool | Tipo | O que faz |
+|---|---|---|
+| `get_account_overview` | leitura | Plano, créditos, validade, trial status |
+| `get_whatsapp_connections` | leitura | Números conectados, status, último heartbeat, tipo (Evolution/Meta) |
+| `get_warming_status` | leitura | Nível de aquecimento, msgs hoje, próximo limite |
+| `get_active_campaigns` | leitura | Últimas 10 campanhas, status, taxa de envio, erros |
+| `get_campaign_details` | leitura | Detalhes de uma campanha específica + últimos erros |
+| `get_crm_summary` | leitura | Total leads por estágio, leads sem follow-up |
+| `get_recent_leads` | leitura | Últimos 10 leads (nome, score, estágio, telefone mascarado) |
+| `get_active_flows` | leitura | Flows ativos, execuções recentes |
+| `get_ai_agents_status` | leitura | Agentes configurados, msgs enviadas hoje, silenciamentos |
+| `get_recent_errors` | leitura | Erros recentes (campanhas falhadas, tokens expirados, etc.) |
+| `reconnect_whatsapp` | ação | Dispara reconexão de um número (precisa `confirmed: true`) |
+| `pause_campaign` | ação | Pausa campanha (precisa `confirmed: true`) |
+| `resume_campaign` | ação | Retoma campanha (precisa `confirmed: true`) |
+| `silence_ai_agent` | ação | Silencia agente IA em uma conversa (precisa `confirmed: true`) |
 
-**Melhoria 3 — Bug Clustering / Detecção de incidentes**
-- Cron `support-incident-detector` (roda a cada 15 min)
-- Pega tickets das últimas 2h, agrupa por similaridade de embedding (threshold 0.75)
-- Se um cluster atinge ≥ 5 tickets distintos em janela curta → cria registro em `system_alerts` (`type: 'incident_suspected'`, `cluster_summary`, `affected_users`)
-- Badge vermelho na sidebar admin + banner no `/admin/suporte/tickets`
+**Padrão de ação**: primeira chamada sem `confirmed` retorna `{ requires_confirmation: true, summary: "..." }`. Wian mostra summary ao user e pede confirmação. Segunda chamada com `confirmed: true` executa.
 
-**Melhoria 9 — Confiança semântica ponderada**
-- Adicionar `success_rate` em `knowledge_base` (atualizada quando ticket resolvido cita aquele KB)
-- Score final = `similarity × 0.6 + category_match × 0.2 + historical_success × 0.2`
-- Threshold dinâmico por categoria (ex: cobrança exige 0.7, dúvida geral aceita 0.4)
+### 3. Migração de banco
+**`wian_tool_calls`** (auditoria, idempotente):
+```
+id uuid pk, user_id uuid, tool text, params jsonb,
+success bool, error text, created_at timestamptz
+```
+RLS: usuário lê só os próprios; service_role escreve.
 
-**Melhoria 6 — Tool Mode (versão controlada)**
-- Adicionar function calling no `support-chat` com 3 tools seguras (read-only):
-  - `check_whatsapp_connection(user_id)` → status do número Evolution/Meta
-  - `check_subscription_status(user_id)` → plano, expiração, falhas de cobrança
-  - `get_recent_campaign_status(user_id)` → última campanha + erros
-- Resposta vira: "Verifiquei aqui — sua sessão WhatsApp X está desconectada desde ontem às 18h. Vou te ajudar a reconectar 👇"
-- Tools são **opt-in** no prompt (modelo decide quando chamar)
+### 4. Atualização da `support-chat`
+**`supabase/functions/support-chat/index.ts`** (editar):
+- Adicionar bloco `TOOLS:` no system prompt listando tools disponíveis (apenas se `userId` presente).
+- Trocar OpenAI Chat Completions cru por `tools` nativo (function calling) com `parallel_tool_calls: true`.
+- Loop de tool-calling até `finish_reason !== "tool_calls"` (limite 5 iterações de segurança).
+- Cada tool chamada → `fetch` interno para `support-wian-tools` passando JWT do user.
+- Injetar conteúdo de `wianKnowledge.ts` (módulo da `triageContext.category`) no system prompt.
+- Manter modelo `gpt-4o-mini` (memória core) e marcadores `[INVESTIGANDO]/[SOLUCAO]/[ESCALAR_HUMANO]`.
 
----
+### 5. UI: opção "Dúvida sobre uso" em cada categoria
+**`src/components/support/triageTree.ts`** (editar):
+- Adicionar campo opcional `usageHelp?: { aiHint: string }` em `Category`.
+- Adicionar `usageHelp` para cada categoria (ex.: "User quer entender como usar campanhas").
 
-## Fase 3 — Autolearning + Humanização
+**`src/components/support/WianChat.tsx`** (editar):
+- Na Camada 2 (submenu de problemas), adicionar **primeiro item destacado**: "🤔 Tenho uma dúvida de uso" (visual diferente, com ícone HelpCircle).
+- Ao clicar, pula direto para `phase === "chat"` com mensagem inicial do Wian já contextualizada na categoria + `triedSolution: "[Dúvida de uso]"`.
 
-**Melhoria 4 — Autolearning (humano vira KB)**
-- No painel admin de tickets: botão **"Transformar em conhecimento"** quando ticket resolvido por humano
-- Modal: gpt-4o-mini lê transcrição → sugere `title`, `category`, `pains`, `solution`, `tags`
-- Admin revisa, ajusta e salva → `support-embed` gera embedding automaticamente
-- Métrica de "% tickets virando KB" no dashboard
+### 6. Renderização de tool calls no chat
+**`src/components/support/WianChat.tsx`** (editar):
+- Novo tipo de mensagem `Msg.toolCall?: { name, status, summary }`.
+- Renderiza inline na bolha do Wian: pequeno chip com ícone (Search/Wrench), nome humanizado da tool ("Consultando suas conexões..."), e estado (`running`/`done`/`error`).
+- Resultados de leitura ficam invisíveis (só Wian usa); ações pendentes mostram botões "Confirmar" / "Cancelar" inline.
 
-**Melhoria 8 — Humanização controlada (refino do prompt)**
-- Adicionar regras explícitas no system prompt:
-  - "Máximo 3 emojis na conversa inteira"
-  - "Nunca repita a mesma frase de transição 2x seguidas"
-  - "Se já cumprimentou, não cumprimente de novo"
-- Avaliação automática: a cada 50 tickets, rodar análise de "tom" (gpt-4o-mini classifica: muito_formal / equilibrado / muito_informal / prolixo) → ajuste fino do prompt
-
----
-
-## Fase 4 — Dashboard Executivo (Melhoria 10 + 7 visual)
-
-Nova rota `/admin/suporte/inteligencia` com:
-
-**Painéis:**
-- KPIs topo: tickets/dia, % resolução IA, NPS médio, custo IA total mês, custo médio/ticket
-- **Módulo mais problemático** (categoria com mais tickets nos 30d)
-- **Bugs recorrentes** (clusters detectados)
-- **Onboarding mais difícil** (categoria com maior frustration_score médio)
-- **Categoria com pior NPS**
-- **Top 10 usuários com mais tickets** (sinal de churn)
-- **Risco de churn** (usuários com NPS ≤ 6 + frustration alto + ticket aberto)
-- **Custo IA vs humano** (gráfico comparativo)
-- **Resolução por token** (eficiência da IA por categoria)
-
-**Tech:** React Query + Recharts, paginação 20/página, lazy load.
-
----
+### 7. Memória do projeto
+Adicionar `mem://features/support/wian-agent-tools` documentando: tools disponíveis, padrão de confirmação, gating por user logado, relação com `wianKnowledge.ts`.
 
 ## Detalhes técnicos
 
-- Modelo continua `gpt-4o-mini` (memória do projeto). Tools usam function calling nativo OpenAI.
-- Migrações idempotentes (`IF NOT EXISTS`, `DROP POLICY IF EXISTS`).
-- RLS: tabelas novas (`support_ticket_events`, `system_alerts` se ainda não existir) → admin vê tudo via `is_current_user_admin()`, usuário vê só do próprio ticket.
-- Edge functions afetadas: `support-chat` (todas as fases), `support-escalate` (Fase 1), nova `support-incident-detector` (Fase 2), nova `support-kb-from-ticket` (Fase 3).
-- Sem breaking changes no frontend público — Wian continua funcionando durante migrações.
+```text
+┌─ User chat (logado) ─┐
+│  WianChat.tsx        │ POST /functions/v1/support-chat
+└────────┬─────────────┘    {message, history, triageContext, userId}
+         │
+         ▼
+┌─ support-chat ────────────────────────────┐
+│  1. Carrega knowledge por categoria       │
+│  2. Monta prompt + tools (se userId)      │
+│  3. OpenAI gpt-4o-mini com function call  │
+│  4. Loop: chama tools até resposta final  │
+└────────┬──────────────────────────────────┘
+         │ fetch interno (JWT do user)
+         ▼
+┌─ support-wian-tools ──────────────────────┐
+│  Roteia tool → handler                    │
+│  Lê com cliente RLS-scoped                │
+│  Audita em wian_tool_calls                │
+└───────────────────────────────────────────┘
+```
 
----
+**Confirmação de ações** (exemplo `pause_campaign`):
+1. Wian → `pause_campaign({ campaignId: "abc" })`
+2. Tool retorna `{ requires_confirmation: true, summary: "Pausar campanha 'Black Friday' (1247 contatos pendentes)?" }`
+3. Wian mostra ao user: card com summary + botões.
+4. User clica "Confirmar" → frontend manda nova mensagem com flag `confirmedAction: { tool, params }` → support-chat injeta isso → Wian re-chama `pause_campaign({ campaignId: "abc", confirmed: true })`.
+5. Tool executa, retorna resultado, Wian confirma na conversa.
 
-## Como prosseguir
+**Custo estimado**: cada conversa de 5 trocas com 2 tool calls deve gerar ~3-5k tokens extras (gpt-4o-mini ≈ R$ 0,002 por conversa). Aceitável para suporte.
 
-Me responde com **uma das opções**:
-- **"toca Fase 1"** → começo agora pela fundação
-- **"faz tudo"** → executo as 4 fases em sequência (vai gerar muitos arquivos)
-- **"só X e Y"** → escolhe melhorias específicas (ex: "só 2, 3 e 10")
-- Ou peça ajustes no plano antes de começar
+**Segurança**:
+- Visitante (guest) → bloqueado de qualquer tool, prompt nem menciona tools.
+- RLS aplicada via JWT do user na cliente Supabase dentro da edge function.
+- Auditoria de toda tool call (incluindo falhas).
+- Telefones de leads mascarados na resposta (`+55 11 ****-1234`).
+- Ações destrutivas (delete, etc.) **não entram** nessa fase — só `pause/resume/reconnect/silence`.
+
+## Fora de escopo (intencional)
+- Não migra para Vercel AI SDK / Lovable AI Gateway agora (manteria mudança mínima na infra existente que usa OpenAI direto + memória core). Pode ser feito depois.
+- Não adiciona ações destrutivas (deletar lead, cancelar plano, etc.) — exigiria 2FA/captcha.
+- Não toca em flows de IA Agents do WhatsApp do usuário (sistema diferente).
+- Não muda fluxo do guest.
+
+## Ordem de execução
+1. Migration `wian_tool_calls` (aprovação prévia).
+2. `wianKnowledge.ts` (estático).
+3. Edge function `support-wian-tools` + deploy.
+4. Atualizar `support-chat` para function calling + carregar knowledge.
+5. Atualizar `triageTree.ts` + `WianChat.tsx` (opção "dúvida de uso" + render de tool calls + UI de confirmação).
+6. Salvar memória.

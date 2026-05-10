@@ -12,6 +12,59 @@ const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+// =============== WIAN TOOLS (function calling) ===============
+// Schema enviado ao OpenAI; só é incluído quando o user está autenticado.
+const WIAN_TOOLS = [
+  { type: "function", function: { name: "get_account_overview", description: "Plano, créditos, status do trial, dados básicos da conta.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_whatsapp_connections", description: "Lista todos os números conectados (Evolution e Meta WABA), status, último envio, expiração de token.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_warming_status", description: "Status de aquecimento dos números: nível, mensagens hoje, limite, erros.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_active_campaigns", description: "Últimas campanhas: status, total/enviados/falhas, agendamento.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_campaign_details", description: "Detalhes de UMA campanha + incidentes recentes.", parameters: { type: "object", properties: { campaignId: { type: "string" } }, required: ["campaignId"] } } },
+  { type: "function", function: { name: "get_crm_summary", description: "Resumo do CRM: total leads, leads sem follow-up 7d, distribuição por estágio, score médio.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_recent_leads", description: "Últimos leads: contato, empresa, score, telefone mascarado.", parameters: { type: "object", properties: { limit: { type: "number" } } } } },
+  { type: "function", function: { name: "get_active_flows", description: "Lista de flows de WhatsApp do user: status, API, número.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_ai_agents_status", description: "Agentes de IA configurados: nome, modelo, limites.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_recent_errors", description: "Incidentes recentes em campanhas (erros de envio, números inválidos).", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "pause_campaign", description: "Pausa uma campanha. SEM confirmed=true só retorna preview; com confirmed=true executa.", parameters: { type: "object", properties: { campaignId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["campaignId"] } } },
+  { type: "function", function: { name: "resume_campaign", description: "Retoma uma campanha pausada. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { campaignId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["campaignId"] } } },
+  { type: "function", function: { name: "reconnect_whatsapp", description: "Marca um número Evolution para reconectar (usuário precisa ler QR depois). Mesmo padrão de confirmação.", parameters: { type: "object", properties: { numberId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["numberId"] } } },
+  { type: "function", function: { name: "silence_ai_agent", description: "Silencia o agente IA em uma conversa específica. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { conversationId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["conversationId"] } } },
+];
+
+// Knowledge compacto por categoria de triagem — injetado no prompt.
+const WIAN_KB: Record<string, string> = {
+  campanhas: "CAMPANHAS: disparo via Meta (Outbound) ou CRM (Relational). Status: pending→running→paused/completed/failed. DDI 55 obrigatório. Delays de segurança automáticos. Pode pausar/retomar a qualquer momento.",
+  conexoes: "CONEXÕES: 2 APIs — Evolution (aquecimento, QR Code) e Meta WABA (campanhas+chat, OAuth). Tokens Meta podem expirar; reconectar pelo painel WhatsApp→Conexões.",
+  aquecimento: "AQUECIMENTO: cresce por nível (1→hot). Limite diário reseta 08:00. Forçar volume = risco de ban. Se sessão Evolution cair, aquecimento para.",
+  crm: "CRM: Kanban progressivo, leads só avançam. Estágio 'Prospectado' protegido. Score 0-1000 recalculado por evento. Tags centralizadas em Configurações.",
+  ia_agents: "IA AGENTS: agente é silenciado quando humano responde (handoff). Limite/dia varia por aquecimento. Modelo padrão gpt-4o-mini.",
+  chat: "CHAT: inbox unificado por WABA. Mídias: imagem 5MB, vídeo 16MB. Humano respondendo silencia o agente IA naquela conversa.",
+  flows: "FLOWS: builder visual com nós (mensagem, IA, dados, espera). 3 gerações por IA/dia. Filtro por WABA. Sem dead-ends na geração IA.",
+  oportunidades: "OPORTUNIDADES: 1 busca = 3 créditos = ~60 leads. Perfil da empresa OBRIGATÓRIO. Score adapta por nicho. Outreach IA monta msg em 4 parágrafos.",
+  conta: "CONTA: Auth Supabase nativo (email/senha + Google). Reset de senha exige email validado. Google Drive/Calendar via OAuth próprio.",
+  financeiro: "BILLING: planos Start/Growth/Enterprise (UI), Stripe (cartão internacional) ou Asaas (PIX/cartão BR). Trial 7 dias. Cobrança é em 'Oportunidades'. Cancelamento via portal.",
+  cancelamento: "CANCELAMENTO: feito no portal Conta→Assinatura→Cancelar (com formulário de feedback). Plano segue ativo até fim do período pago.",
+};
+
+async function callWianTool(authHeader: string, tool: string, params: any) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/support-wian-tools`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": authHeader,
+        "apikey": Deno.env.get("SUPABASE_ANON_KEY") || "",
+      },
+      body: JSON.stringify({ tool, params }),
+    });
+    const j = await res.json();
+    if (!res.ok) return { error: j?.error || `tool_http_${res.status}` };
+    return j.result ?? j;
+  } catch (e: any) {
+    return { error: e?.message || "tool_fetch_error" };
+  }
+}
+
 const SYSTEM_BASE = `Você é **Wian**, o atendente virtual oficial da **Wiize** — uma plataforma B2B brasileira de prospecção de leads, aquecimento e automação de WhatsApp, campanhas (Evolution + Meta Cloud), CRM Kanban com scoring, chat com IA e Flow Builder, com planos Start, Growth e Enterprise.
 
 Sua missão é resolver dúvidas e problemas de clientes e usuários da Wiize com agilidade, clareza e simpatia, e só passar o caso para um humano quando realmente for necessário.
@@ -196,7 +249,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { ticketId: incomingTicketId, message, history = [], visitorSession, imageDataUrl, triageContext, userName: providedName } = body;
+    const { ticketId: incomingTicketId, message, history = [], visitorSession, imageDataUrl, triageContext, userName: providedName, confirmedAction } = body;
     if (!message || typeof message !== "string") {
       return new Response(JSON.stringify({ error: "message required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -403,8 +456,26 @@ Deno.serve(async (req) => {
     // Se temos resumo, mandamos só últimas 4 mensagens; senão últimas 10 (comportamento antigo)
     const historySize = effectiveSummary ? 4 : 10;
 
-    const messages = [
-      { role: "system", content: `${SYSTEM_BASE}${userBlock}${summaryBlock}\n\nCONTEXTO:${context}${triageBlock}` },
+    // Knowledge específico da categoria de triagem
+    const triageCat = (triageContext as any)?.category || "";
+    const kbBlock = WIAN_KB[triageCat] ? `\n\n--- CONHECIMENTO DO PRODUTO (${triageCat}) ---\n${WIAN_KB[triageCat]}` : "";
+
+    // Tools só para usuários autenticados
+    const toolsEnabled = !!userId;
+    const toolsBlock = toolsEnabled
+      ? `\n\n--- FERRAMENTAS DISPONÍVEIS ---
+Você tem acesso a TOOLS para investigar a conta REAL do usuário (números, campanhas, leads, plano, etc.) e executar AÇÕES SIMPLES (pausar/retomar campanha, reconectar número, silenciar agente).
+
+REGRAS de uso de tools:
+- Use tools para DIAGNOSTICAR antes de responder. Ex: user reclama "campanha não dispara" → primeiro chame get_active_campaigns, identifique a campanha, depois get_campaign_details, depois get_whatsapp_connections.
+- NUNCA invente dados. Se você não chamou a tool, NÃO afirme estado da conta.
+- Para AÇÕES (pause_campaign, resume_campaign, reconnect_whatsapp, silence_ai_agent): chame SEM \`confirmed\` primeiro. A tool retornará { requires_confirmation, summary }. Apresente o summary ao user e PERGUNTE se confirma. Só re-chame com confirmed=true depois que o user confirmar EXPLICITAMENTE no chat.
+- Telefones nas tools vêm mascarados; é normal.
+- Após executar uma ação, confirme o resultado em 1 frase curta.`
+      : "";
+
+    const messages: any[] = [
+      { role: "system", content: `${SYSTEM_BASE}${userBlock}${summaryBlock}\n\nCONTEXTO:${context}${kbBlock}${triageBlock}${toolsBlock}` },
       ...history.slice(-historySize).map((m: any) => ({ role: m.role === "ai" ? "assistant" : m.role, content: m.content })),
       { role: "user", content: userContent },
     ];
@@ -415,31 +486,82 @@ Deno.serve(async (req) => {
       });
     }
 
-    const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages,
-        temperature: 0.3,
-      }),
-    });
-
-    if (aiRes.status === 429) {
-      return new Response(JSON.stringify({ error: "Muitas requisições. Tente novamente em instantes." }), {
-        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (!aiRes.ok) {
-      const t = await aiRes.text();
-      console.error("OpenAI error", aiRes.status, t);
-      return new Response(JSON.stringify({ error: "Falha no provedor de IA." }), {
-        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Se o frontend está enviando uma confirmação de ação, injetamos como
+    // se o assistant tivesse acabado de re-chamar a tool com confirmed:true.
+    if (toolsEnabled && confirmedAction?.tool && confirmedAction?.params) {
+      const toolResult = await callWianTool(auth || "", confirmedAction.tool, { ...confirmedAction.params, confirmed: true });
+      messages.push({
+        role: "system",
+        content: `Ação '${confirmedAction.tool}' acabou de ser executada com confirmação do usuário. Resultado: ${JSON.stringify(toolResult)}. Confirme o resultado ao user em 1-2 frases curtas e pergunte se precisa de mais algo. Inclua [SOLUCAO] no final.`,
       });
     }
 
-    const aiJson = await aiRes.json();
-    let answer: string = aiJson.choices?.[0]?.message?.content?.trim() || "";
+    // ================== Tool-calling loop ==================
+    const collectedToolCalls: Array<{ name: string; status: "running" | "done" | "error"; summary?: string; pending?: any }> = [];
+    let aiJson: any = null;
+    let answer = "";
+    const MAX_TOOL_ROUNDS = 5;
+
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages,
+          temperature: 0.3,
+          ...(toolsEnabled ? { tools: WIAN_TOOLS, tool_choice: "auto", parallel_tool_calls: true } : {}),
+        }),
+      });
+
+      if (aiRes.status === 429) {
+        return new Response(JSON.stringify({ error: "Muitas requisições. Tente novamente em instantes." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!aiRes.ok) {
+        const t = await aiRes.text();
+        console.error("OpenAI error", aiRes.status, t);
+        return new Response(JSON.stringify({ error: "Falha no provedor de IA." }), {
+          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      aiJson = await aiRes.json();
+      const choice = aiJson.choices?.[0];
+      const msg = choice?.message;
+      const toolCalls = msg?.tool_calls || [];
+
+      if (toolCalls.length && toolsEnabled) {
+        // Adiciona a mensagem do assistant (com os tool_calls) ao histórico
+        messages.push(msg);
+        // Executa cada tool em paralelo
+        const results = await Promise.all(
+          toolCalls.map(async (tc: any) => {
+            const name = tc.function?.name;
+            let params: any = {};
+            try { params = JSON.parse(tc.function?.arguments || "{}"); } catch { params = {}; }
+            collectedToolCalls.push({ name, status: "running" });
+            const r = await callWianTool(auth || "", name, params);
+            const last = collectedToolCalls[collectedToolCalls.length - 1];
+            if (r?.error) { last.status = "error"; last.summary = r.error; }
+            else if (r?.requires_confirmation) {
+              last.status = "done";
+              last.summary = r.summary;
+              last.pending = { tool: r.action, params: r.action_params };
+            } else { last.status = "done"; }
+            return { tool_call_id: tc.id, role: "tool", name, content: JSON.stringify(r) };
+          }),
+        );
+        messages.push(...results);
+        continue; // Próxima rodada com os resultados das tools
+      }
+
+      // Sem tool_calls → resposta final
+      answer = msg?.content?.trim() || "";
+      break;
+    }
+
 
     const rawAnswer = answer;
     const explicitEscalate = /\[ESCALAR_HUMANO\]|^ESCALAR_HUMANO$/m.test(rawAnswer);
@@ -506,6 +628,10 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Pending action: se alguma tool retornou requires_confirmation, expomos pro front
+    const pendingAction = collectedToolCalls.find((t) => t.pending)?.pending || null;
+    const toolCallsView = collectedToolCalls.map((t) => ({ name: t.name, status: t.status, summary: t.summary }));
+
     return new Response(JSON.stringify({
       ticketId,
       answer,
@@ -513,6 +639,8 @@ Deno.serve(async (req) => {
       phase: nextPhase,
       confidence: topSim,
       frustration: newFrustration,
+      toolCalls: toolCallsView,
+      pendingAction,
       user: userId ? {
         authenticated: true,
         name: userName,
