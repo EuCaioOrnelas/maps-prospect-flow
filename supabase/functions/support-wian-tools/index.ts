@@ -286,6 +286,37 @@ async function get_recent_errors({ sb }: Ctx) {
   };
 }
 
+// Lê erros JS reais que aconteceram no navegador do usuário.
+// Wian usa isso para identificar arquivo:linha do bug e montar
+// um diagnóstico pronto pra escalada humana.
+async function get_recent_frontend_errors(
+  { sb }: Ctx,
+  params?: { limit?: number; route?: string },
+) {
+  const lim = Math.min(params?.limit || 10, 25);
+  let q = sb
+    .from("frontend_errors")
+    .select("id, message, source_file, line_no, col_no, stack, route, created_at")
+    .order("created_at", { ascending: false })
+    .limit(lim);
+  if (params?.route) q = q.eq("route", params.route);
+  const { data, error } = await q;
+  if (error) return { error: error.message };
+  return {
+    errors: (data || []).map((e) => ({
+      id: e.id,
+      mensagem: e.message,
+      arquivo: e.source_file,
+      linha: e.line_no,
+      coluna: e.col_no,
+      rota: e.route,
+      ocorreu_em: e.created_at,
+      stack_resumido: (e.stack || "").split("\n").slice(0, 5).join("\n"),
+    })),
+    total: data?.length || 0,
+  };
+}
+
 // =================================================================
 // Tool handlers (ACTION) — exigem `confirmed: true`
 // =================================================================
@@ -340,34 +371,193 @@ async function resume_campaign({ sb }: Ctx, params: { campaignId: string; confir
   return { ok: true, info: `campanha "${c.name}" retomada` };
 }
 
+// Helper: chama outra edge function preservando o JWT do user
+async function callEdge(authHeader: string, fn: string, body: any) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader,
+        apikey: ANON_KEY,
+      },
+      body: JSON.stringify(body),
+    });
+    const txt = await r.text();
+    let j: any = null;
+    try { j = JSON.parse(txt); } catch { j = { raw: txt }; }
+    return { ok: r.ok, status: r.status, body: j };
+  } catch (e: any) {
+    return { ok: false, status: 0, body: { error: e?.message || "fetch_failed" } };
+  }
+}
+
+// RECONNECT: desconecta + deleta instância Evolution + remove linha + cria
+// nova linha com o mesmo telefone/nome + cria nova instância pra QR.
 async function reconnect_whatsapp(
-  { sb }: Ctx,
+  { sb, userId, authHeader }: Ctx,
   params: { numberId: string; confirmed?: boolean },
 ) {
   if (!params?.numberId) return { error: "numberId obrigatório" };
   const { data: n } = await sb
     .from("whatsapp_numbers")
-    .select("id, name, is_connected")
+    .select("id, name, phone_number, instance_name, api_tier")
     .eq("id", params.numberId)
     .maybeSingle();
   if (!n) return { error: "número não encontrado" };
+
+  const [{ count: campCount }, { count: warmCount }] = await Promise.all([
+    sb.from("whatsapp_campaigns").select("id", { count: "exact", head: true }).eq("whatsapp_number_id", n.id),
+    sb.from("warming_sessions").select("id", { count: "exact", head: true }).eq("whatsapp_number_id", n.id),
+  ]);
+
   if (!params.confirmed) {
+    const lines = [
+      `Reconectar "${n.name}" via reset completo:`,
+      `• Vou desconectar e excluir a instância antiga`,
+      `• Vou recriar com o MESMO telefone (${maskPhone(n.phone_number)})`,
+      `• Você lerá um novo QR Code logo depois`,
+      campCount ? `⚠️ ${campCount} campanha(s) vinculada(s) serão removida(s)` : null,
+      warmCount ? `⚠️ ${warmCount} sessão(ões) de aquecimento serão removida(s)` : null,
+    ].filter(Boolean);
     return {
       requires_confirmation: true,
       action: "reconnect_whatsapp",
       action_params: { numberId: n.id },
-      summary: `Reconectar o número "${n.name}"? (vai precisar ler o QR Code de novo)`,
+      summary: lines.join("\n"),
     };
   }
-  // Apenas marca como desconectado; o usuário lê o QR na tela de Conexões.
-  const { error } = await sb
+
+  const oldName = n.name;
+  const oldPhone = n.phone_number;
+  const oldTier = n.api_tier || "free";
+  const oldInstance = n.instance_name;
+
+  if (campCount && campCount > 0) {
+    const { error: cErr } = await sb
+      .from("whatsapp_campaigns")
+      .delete()
+      .eq("whatsapp_number_id", n.id);
+    if (cErr) return { error: `Falha ao limpar campanhas vinculadas: ${cErr.message}` };
+  }
+
+  const disc = await callEdge(authHeader, "evolution-disconnect", {
+    instanceName: oldInstance,
+    numberId: n.id,
+    deleteInstance: true,
+    cascadeDelete: true,
+  });
+  if (!disc.ok) {
+    return { error: `Falha ao remover instância antiga: ${disc.body?.error || disc.status}` };
+  }
+
+  const { data: created, error: insErr } = await sb
     .from("whatsapp_numbers")
-    .update({ is_connected: false })
-    .eq("id", n.id);
-  if (error) return { error: error.message };
+    .insert({
+      user_id: userId,
+      name: oldName,
+      phone_number: oldPhone,
+      api_tier: oldTier,
+      is_connected: false,
+    })
+    .select("id")
+    .single();
+  if (insErr || !created) {
+    return { error: `Falha ao recriar registro: ${insErr?.message}` };
+  }
+
+  const newInstanceName = `wiize_${created.id.replace(/-/g, "").slice(0, 16)}`;
+  const create = await callEdge(authHeader, "evolution-create-instance", {
+    numberId: created.id,
+    instanceName: newInstanceName,
+  });
+  if (!create.ok) {
+    return {
+      ok: true,
+      partial: true,
+      info: `Linha recriada mas a nova instância falhou. Vá em WhatsApp → Conexões e clique em Reconectar para gerar o QR. (detalhe: ${create.body?.error || create.status})`,
+      next_route: "/whatsapp",
+      new_number_id: created.id,
+    };
+  }
+
   return {
     ok: true,
-    info: `Número "${n.name}" pronto para reconectar. Vá em WhatsApp → Conexões e clique em Reconectar para ler o QR.`,
+    info: `"${oldName}" foi resetado. Abra WhatsApp → Conexões e leia o novo QR Code (válido por ~40 segundos).`,
+    next_route: "/whatsapp",
+    new_number_id: created.id,
+  };
+}
+
+// DELETE: remove campanhas vinculadas + desconecta + deleta instância +
+// cascade da linha. Retorna lista de cuidados pro user reconfigurar manualmente.
+async function delete_whatsapp_connection(
+  { sb, authHeader }: Ctx,
+  params: { numberId: string; confirmed?: boolean },
+) {
+  if (!params?.numberId) return { error: "numberId obrigatório" };
+  const { data: n } = await sb
+    .from("whatsapp_numbers")
+    .select("id, name, phone_number, instance_name")
+    .eq("id", params.numberId)
+    .maybeSingle();
+  if (!n) return { error: "número não encontrado" };
+
+  const [{ count: campCount }, { count: warmCount }, { count: agentCount }, { count: flowCount }] =
+    await Promise.all([
+      sb.from("whatsapp_campaigns").select("id", { count: "exact", head: true }).eq("whatsapp_number_id", n.id),
+      sb.from("warming_sessions").select("id", { count: "exact", head: true }).eq("whatsapp_number_id", n.id),
+      sb.from("ai_agents").select("id", { count: "exact", head: true }).eq("whatsapp_number_id", n.id),
+      sb.from("wa_automation_flows").select("id", { count: "exact", head: true }).eq("whatsapp_number_id", n.id),
+    ]);
+
+  if (!params.confirmed) {
+    const impacto = [
+      campCount ? `${campCount} campanha(s)` : null,
+      warmCount ? `${warmCount} aquecimento(s)` : null,
+      agentCount ? `${agentCount} agente(s) IA vinculado(s)` : null,
+      flowCount ? `${flowCount} flow(s)` : null,
+    ].filter(Boolean);
+    return {
+      requires_confirmation: true,
+      action: "delete_whatsapp_connection",
+      action_params: { numberId: n.id },
+      summary:
+        `Excluir DEFINITIVAMENTE "${n.name}" (${maskPhone(n.phone_number)})?\n` +
+        (impacto.length ? `Impacto: ${impacto.join(", ")} serão removidos junto.` : `Sem dependências vinculadas.`) +
+        `\nEssa ação é irreversível.`,
+    };
+  }
+
+  if (campCount && campCount > 0) {
+    const { error: cErr } = await sb
+      .from("whatsapp_campaigns")
+      .delete()
+      .eq("whatsapp_number_id", n.id);
+    if (cErr) return { error: `Falha ao limpar campanhas: ${cErr.message}` };
+  }
+
+  const disc = await callEdge(authHeader, "evolution-disconnect", {
+    instanceName: n.instance_name,
+    numberId: n.id,
+    deleteInstance: true,
+    cascadeDelete: true,
+  });
+  if (!disc.ok) {
+    return { error: `Falha ao excluir: ${disc.body?.error || disc.status}` };
+  }
+
+  const cuidados: string[] = [
+    "Verifique se algum agente IA usava esse número e revincule a outro",
+    "Confira flows ativos que apontavam para esse número",
+    "Se tinha aquecimento rodando, recrie em outro número",
+    "Campanhas agendadas vinculadas foram removidas — recrie se necessário",
+  ];
+
+  return {
+    ok: true,
+    info: `"${n.name}" excluído com sucesso.`,
+    cuidados,
     next_route: "/whatsapp",
   };
 }
@@ -385,7 +575,6 @@ async function silence_ai_agent(
       summary: `Silenciar o agente IA nessa conversa?`,
     };
   }
-  // Tenta atualizar flag conhecida; se a tabela mudar de schema, retorna info.
   const { error } = await sb
     .from("agent_conversations")
     .update({ ai_silenced: true })
@@ -405,9 +594,11 @@ const HANDLERS: Record<string, (ctx: Ctx, params: any) => Promise<any>> = {
   get_active_flows,
   get_ai_agents_status,
   get_recent_errors,
+  get_recent_frontend_errors,
   pause_campaign,
   resume_campaign,
   reconnect_whatsapp,
+  delete_whatsapp_connection,
   silence_ai_agent,
 };
 
