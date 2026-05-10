@@ -489,13 +489,15 @@ export function WianChat() {
   };
 
   // ============== AI ==============
-  const flushQueue = async () => {
+  const flushQueue = async (opts?: { confirmedAction?: PendingAction; userBubbleText?: string }) => {
     const { texts, attachments } = queueRef.current;
-    if (!texts.length && !attachments.length) return;
+    const isConfirmFlow = !!opts?.confirmedAction;
+    if (!isConfirmFlow && !texts.length && !attachments.length) return;
     queueRef.current = { texts: [], attachments: [] };
     setLoading(true);
 
     let combined = texts.join("\n\n").trim();
+    if (isConfirmFlow && !combined) combined = opts?.userBubbleText || "Confirmado.";
     const imageAttachment = attachments.find((a) => a.type.startsWith("image/") && a.dataUrl);
     const textAttachments = attachments.filter((a) => a.textContent);
     const otherAttachments = attachments.filter((a) => !a.type.startsWith("image/") && !a.textContent);
@@ -516,6 +518,7 @@ export function WianChat() {
           imageDataUrl: imageAttachment?.dataUrl ?? null,
           triageContext: triage,
           userName: name || null,
+          confirmedAction: opts?.confirmedAction || null,
         },
       });
       if (error) {
@@ -532,21 +535,33 @@ export function WianChat() {
       if (data?.error) throw new Error(data.error);
       if (data?.ticketId) setTicketId(data.ticketId);
 
+      const toolCalls: ToolCallView[] | undefined = Array.isArray(data?.toolCalls) && data.toolCalls.length ? data.toolCalls : undefined;
+      const pendingAction: PendingAction | undefined = data?.pendingAction || undefined;
+
       // Quebra em vários balões curtos para parecer mais humano (estilo WhatsApp)
       const bubbles = splitAnswerIntoBubbles(data.answer || "");
       if (bubbles.length === 0) {
-        setMessages((prev) => [...prev, { role: "ai", content: data.answer || "" }]);
+        setMessages((prev) => [...prev, { role: "ai", content: data.answer || "", toolCalls, pendingAction }]);
       } else {
-        // Adiciona o primeiro imediatamente; agenda os próximos com pequena pausa "digitando"
-        // Adiciona o primeiro imediatamente; agenda os próximos com pausa "digitando" entre cada um
-        setMessages((prev) => [...prev, { role: "ai", content: bubbles[0] }]);
+        // Primeiro balão recebe os chips de tool calls; último recebe o pendingAction (se houver).
+        const onlyOne = bubbles.length === 1;
+        setMessages((prev) => [...prev, {
+          role: "ai",
+          content: bubbles[0],
+          toolCalls,
+          pendingAction: onlyOne ? pendingAction : undefined,
+        }]);
         for (let i = 1; i < bubbles.length; i++) {
           const baseDelay = 600 + (i - 1) * 1400;
-          // Mostra o "digitando" um pouco antes de aparecer o próximo balão
+          const isLast = i === bubbles.length - 1;
           setTimeout(() => setLoading(true), baseDelay);
           setTimeout(() => {
             setLoading(false);
-            setMessages((prev) => [...prev, { role: "ai", content: bubbles[i] }]);
+            setMessages((prev) => [...prev, {
+              role: "ai",
+              content: bubbles[i],
+              pendingAction: isLast ? pendingAction : undefined,
+            }]);
           }, baseDelay + 800);
         }
       }
@@ -569,8 +584,10 @@ export function WianChat() {
           };
           setCategory(map[triage.category] || "Outro");
         }
-      } else if (data.phase === "solution") {
-        setPhase("ask-resolved");
+      } else if (data.phase === "solution" || data.phase === "waiting_user_confirmation") {
+        // Só pede "funcionou?" se não houver ação pendente aguardando confirmação
+        if (!pendingAction) setPhase("ask-resolved");
+        else setPhase("chat");
       } else {
         setPhase("chat");
       }
@@ -600,6 +617,25 @@ export function WianChat() {
     debounceRef.current = setTimeout(() => {
       void flushQueue();
     }, RESPONSE_DELAY_MS);
+  };
+
+  // Confirmar ação pendente (ex: pause_campaign) — envia confirmedAction para o backend
+  const confirmPendingAction = (msgIndex: number, action: PendingAction) => {
+    // Remove o pendingAction da bolha pra não duplicar botões
+    setMessages((prev) => prev.map((m, i) => i === msgIndex ? { ...m, pendingAction: undefined } : m));
+    setMessages((prev) => [...prev, { role: "user", content: "✅ Confirmar" }]);
+    setLoading(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    void flushQueue({ confirmedAction: action, userBubbleText: "Confirmar a ação." });
+  };
+
+  const cancelPendingAction = (msgIndex: number) => {
+    setMessages((prev) => prev.map((m, i) => i === msgIndex ? { ...m, pendingAction: undefined } : m));
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", content: "❌ Cancelar" },
+      { role: "ai", content: "Sem problema — não vou executar a ação. Posso ajudar com mais alguma coisa? 🙂" },
+    ]);
   };
 
   const send = () => {
