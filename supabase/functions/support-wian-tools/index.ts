@@ -566,6 +566,72 @@ async function delete_whatsapp_connection(
   };
 }
 
+async function cancel_campaign(
+  { sb }: Ctx,
+  params: { campaignId: string; confirmed?: boolean },
+) {
+  if (!params?.campaignId) return { error: "campaignId obrigatório" };
+  const { data: c } = await sb
+    .from("whatsapp_campaigns")
+    .select("id, name, status, total_leads, sent_count, failed_count")
+    .eq("id", params.campaignId)
+    .maybeSingle();
+  if (!c) return { error: "campanha não encontrada" };
+  if (c.status === "failed" || c.status === "completed") {
+    return { ok: true, info: `campanha "${c.name}" já está finalizada (${c.status})` };
+  }
+  const pendentes = (c.total_leads || 0) - (c.sent_count || 0) - (c.failed_count || 0);
+  if (!params.confirmed) {
+    return {
+      requires_confirmation: true,
+      action: "cancel_campaign",
+      action_params: { campaignId: c.id },
+      summary:
+        `Cancelar DEFINITIVAMENTE a campanha "${c.name}"?\n` +
+        `Status atual: ${c.status} • Enviados: ${c.sent_count || 0} • Pendentes: ${pendentes}\n` +
+        `Essa ação marca a campanha como "failed" e não pode ser retomada.`,
+    };
+  }
+  const { error } = await sb
+    .from("whatsapp_campaigns")
+    .update({ status: "failed", completed_at: new Date().toISOString() })
+    .eq("id", c.id);
+  if (error) return { error: error.message };
+  return { ok: true, info: `Campanha "${c.name}" cancelada definitivamente.` };
+}
+
+async function unsilence_ai_agent(
+  { sb }: Ctx,
+  params: { conversationId: string; confirmed?: boolean },
+) {
+  if (!params?.conversationId) return { error: "conversationId obrigatório" };
+  const { data: conv } = await sb
+    .from("agent_conversations")
+    .select("id, ai_silenced, contact_phone")
+    .eq("id", params.conversationId)
+    .maybeSingle();
+  if (!conv) return { error: "conversa não encontrada" };
+  if (!conv.ai_silenced) {
+    return { ok: true, info: "Agente já está ativo nessa conversa." };
+  }
+  if (!params.confirmed) {
+    return {
+      requires_confirmation: true,
+      action: "unsilence_ai_agent",
+      action_params: { conversationId: conv.id },
+      summary:
+        `Reativar o agente IA nessa conversa (${maskPhone(conv.contact_phone)})?\n` +
+        `O agente voltará a responder automaticamente as próximas mensagens.`,
+    };
+  }
+  const { error } = await sb
+    .from("agent_conversations")
+    .update({ ai_silenced: false })
+    .eq("id", conv.id);
+  if (error) return { error: error.message };
+  return { ok: true, info: "Agente IA reativado nessa conversa." };
+}
+
 async function silence_ai_agent(
   { sb }: Ctx,
   params: { conversationId: string; confirmed?: boolean },
@@ -604,6 +670,8 @@ const HANDLERS: Record<string, (ctx: Ctx, params: any) => Promise<any>> = {
   reconnect_whatsapp,
   delete_whatsapp_connection,
   silence_ai_agent,
+  unsilence_ai_agent,
+  cancel_campaign,
 };
 
 // =================================================================

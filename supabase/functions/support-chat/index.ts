@@ -31,6 +31,8 @@ const WIAN_TOOLS = [
   { type: "function", function: { name: "reconnect_whatsapp", description: "RESET TOTAL de um número Evolution: desconecta, deleta a instância antiga (com cascade), recria com o MESMO telefone e gera nova instância pra QR. Use quando user diz 'não consigo conectar', 'instance travada', 'QR não aparece'. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { numberId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["numberId"] } } },
   { type: "function", function: { name: "delete_whatsapp_connection", description: "Exclui DEFINITIVAMENTE um número (sem recriar). Apaga campanhas vinculadas, desconecta e remove a linha. Retorna lista de cuidados pro user reconfigurar manualmente. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { numberId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["numberId"] } } },
   { type: "function", function: { name: "silence_ai_agent", description: "Silencia o agente IA em uma conversa específica. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { conversationId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["conversationId"] } } },
+  { type: "function", function: { name: "unsilence_ai_agent", description: "Reativa o agente IA em uma conversa que estava silenciada. Use quando user diz 'reativar IA', 'voltar o bot', 'a IA parou de responder essa conversa'. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { conversationId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["conversationId"] } } },
+  { type: "function", function: { name: "cancel_campaign", description: "Cancela DEFINITIVAMENTE uma campanha (status=failed). Diferente de pause: não pode ser retomada. Use quando user quer parar de vez. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { campaignId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["campaignId"] } } },
 ];
 
 // Knowledge compacto por categoria de triagem — injetado no prompt.
@@ -484,6 +486,8 @@ Você tem TOOLS pra investigar a conta REAL do usuário e executar ações. RESO
 - **delete_whatsapp_connection** → user quer EXCLUIR de vez (não reconectar). Mesma destruição mas sem recriar.
 - **pause_campaign / resume_campaign** → controle de envio em andamento.
 - **silence_ai_agent** → user quer assumir manualmente uma conversa.
+- **unsilence_ai_agent** → user pede para reativar a IA numa conversa silenciada.
+- **cancel_campaign** → user quer encerrar campanha definitivamente (não só pausar).
 
 ## DIAGNÓSTICO DE BUGS DE INTERFACE (CRÍTICO)
 Quando user reclama de bug visual/funcional do APP (não do WhatsApp), SEMPRE chame get_recent_frontend_errors primeiro. Se voltar erro com arquivo:linha, isso é um BUG REAL do código:

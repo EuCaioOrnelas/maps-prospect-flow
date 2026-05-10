@@ -204,6 +204,8 @@ const TOOL_LABELS: Record<string, string> = {
   reconnect_whatsapp: "Resetar conexão WhatsApp",
   delete_whatsapp_connection: "Excluir conexão WhatsApp",
   silence_ai_agent: "Silenciar agente IA",
+  unsilence_ai_agent: "Reativar agente IA",
+  cancel_campaign: "Cancelar campanha",
 };
 
 function ToolCallChip({ call }: { call: ToolCallView }) {
