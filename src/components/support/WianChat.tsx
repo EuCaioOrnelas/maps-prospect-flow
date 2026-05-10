@@ -43,7 +43,9 @@ type Attachment = {
   textContent?: string;
 };
 
-type Msg = { role: "user" | "ai"; content: string; attachments?: Attachment[] };
+type ToolCallView = { name: string; status: "running" | "done" | "error"; summary?: string };
+type PendingAction = { tool: string; params: any };
+type Msg = { role: "user" | "ai"; content: string; attachments?: Attachment[]; toolCalls?: ToolCallView[]; pendingAction?: PendingAction };
 
 type Phase =
   | "ask-name"
