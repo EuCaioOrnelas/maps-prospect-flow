@@ -826,7 +826,42 @@ export function WianChat() {
     );
   };
 
-  const showInputBar = phase === "chat" || phase === "ask-resolved";
+  const showInputBar = phase === "chat" || phase === "ask-resolved" || phase === "ask-name";
+
+  // Valida nome: apenas letras (com acentos), espaços, hífen e apóstrofo.
+  // Rejeita números, símbolos, frases longas e palavras típicas de problema.
+  const validateName = (raw: string): { ok: boolean; reason?: string } => {
+    const n = raw.trim();
+    if (n.length < 2) return { ok: false, reason: "Digite seu nome (mínimo 2 letras)." };
+    if (n.length > 60) return { ok: false, reason: "Nome muito longo. Use apenas seu nome." };
+    if (!/^[\p{L}][\p{L}\s'.\-]*$/u.test(n)) {
+      return { ok: false, reason: "Use apenas letras no nome (sem números ou símbolos)." };
+    }
+    const words = n.split(/\s+/);
+    if (words.length > 5) return { ok: false, reason: "Digite apenas seu nome, não a sua dúvida." };
+    const lower = n.toLowerCase();
+    const blocked = ["erro", "problema", "não consigo", "nao consigo", "ajuda", "bug", "falha", "dúvida", "duvida", "preciso", "quero", "como ", "porque", "por que"];
+    if (blocked.some((k) => lower.includes(k))) {
+      return { ok: false, reason: "Aqui é só seu nome 🙂. Você poderá descrever o problema no próximo passo." };
+    }
+    return { ok: true };
+  };
+
+  const submitName = () => {
+    const n = name.trim();
+    const v = validateName(n);
+    if (!v.ok) {
+      toast({ title: "Nome inválido", description: v.reason, variant: "destructive" });
+      return;
+    }
+    const firstName = n.split(/\s+/)[0];
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", content: n },
+      { role: "ai", content: `Prazer, **${firstName}**! 🙌\n\nMe conta: em qual área você precisa de ajuda? Toque no menu abaixo 👇` },
+    ]);
+    setPhase("triage-menu");
+  };
 
   return (
     <div className="flex flex-col h-full min-h-0" onPaste={handlePaste}>
@@ -864,37 +899,7 @@ export function WianChat() {
           ))}
         </AnimatePresence>
 
-        {/* Coleta de nome (visitante) */}
-        {phase === "ask-name" && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="pl-12">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const n = name.trim();
-                if (n.length < 2) {
-                  toast({ title: "Me diz seu nome 🙂", description: "Pode ser só o primeiro nome.", variant: "destructive" });
-                  return;
-                }
-                const firstName = n.split(/\s+/)[0];
-                setMessages((prev) => [
-                  ...prev,
-                  { role: "user", content: n },
-                  { role: "ai", content: `Prazer, **${firstName}**! 🙌\n\nMe conta: em qual área você precisa de ajuda? Toque no menu abaixo 👇` },
-                ]);
-                setPhase("triage-menu");
-              }}
-              className="flex gap-2 max-w-sm"
-            >
-              <Input
-                placeholder="Seu nome"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoFocus
-              />
-              <Button type="submit" size="sm">Enviar</Button>
-            </form>
-          </motion.div>
-        )}
+        {/* Coleta de nome agora acontece na barra de input inferior, no mesmo estilo do chat */}
 
         {/* Camada 1 — MENU (botão estilo WhatsApp) */}
         {phase === "triage-menu" && (
@@ -1271,37 +1276,55 @@ export function WianChat() {
             </div>
           )}
           <div className="flex gap-2">
-            <input
-              ref={fileRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                const fs = Array.from(e.target.files ?? []);
-                if (fs.length) void addFiles(fs);
-                e.target.value = "";
-              }}
-            />
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              onClick={() => fileRef.current?.click()}
-              disabled={loading || pendingAttachments.length >= MAX_ATTACHMENTS_PER_SEND}
-              title="Anexar arquivo (ou cole com Ctrl+V)"
-            >
-              <Paperclip className="w-4 h-4" />
-            </Button>
-            <Input
-              placeholder="Digite, cole arquivos (Ctrl+V) ou anexe…"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-              disabled={loading}
-            />
-            <Button onClick={send} disabled={loading || (!input.trim() && pendingAttachments.length === 0)} size="icon">
-              <Send className="w-4 h-4" />
-            </Button>
+            {phase === "ask-name" ? (
+              <>
+                <Input
+                  placeholder="Seu nome"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submitName(); } }}
+                  autoFocus
+                  maxLength={60}
+                />
+                <Button onClick={submitName} disabled={name.trim().length < 2} size="icon">
+                  <Send className="w-4 h-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const fs = Array.from(e.target.files ?? []);
+                    if (fs.length) void addFiles(fs);
+                    e.target.value = "";
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={loading || pendingAttachments.length >= MAX_ATTACHMENTS_PER_SEND}
+                  title="Anexar arquivo (ou cole com Ctrl+V)"
+                >
+                  <Paperclip className="w-4 h-4" />
+                </Button>
+                <Input
+                  placeholder="Digite, cole arquivos (Ctrl+V) ou anexe…"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+                  disabled={loading}
+                />
+                <Button onClick={send} disabled={loading || (!input.trim() && pendingAttachments.length === 0)} size="icon">
+                  <Send className="w-4 h-4" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
