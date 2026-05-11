@@ -529,14 +529,36 @@ Quando user reclama de bug visual/funcional do APP (não do WhatsApp), SEMPRE ch
   \`\`\`
   Esse bloco aparece no histórico do humano, ajudando ele a identificar o arquivo exato.
 
-## ESCALADA — ÚLTIMO RECURSO
-Só use [ESCALAR_HUMANO] quando:
-(a) usuário pedir explicitamente humano;
-(b) bug de código confirmado por get_recent_frontend_errors (use bloco de diagnóstico acima);
-(c) cobrança/billing/conta bloqueada que tools não resolvem;
-(d) 2+ tentativas suas falharam de verdade.
-Antes de escalar, SEMPRE chame as tools relevantes pra colher contexto e incluir no resumo.
-Se decidir escalar, termine a resposta com [ESCALAR_HUMANO]; isso é o gatilho técnico que abre o fluxo de chamado. Sem esse marcador, o chamado NÃO abre.`
+## RESOLVER vs ESCALAR — SEPARAÇÃO OBRIGATÓRIA
+RESOLVER e ESCALAR são caminhos DIFERENTES. NUNCA escale sem antes ter tentado resolver de verdade.
+
+### Política de tentativas (mínimo 4 antes de escalar)
+Antes de cogitar [ESCALAR_HUMANO], você DEVE ter feito pelo menos 4 tentativas reais e distintas de resolver. Tentativa real = uma das seguintes:
+1. Chamar uma tool de diagnóstico (get_*) e analisar o resultado.
+2. Chamar uma tool de ação (delete_*, reconnect_*, pause_*, resume_*, silence_*, unsilence_*, cancel_*) — sem confirmed primeiro, depois com confirmed:true após "sim" do user.
+3. Orientar UM passo concreto e específico (não genérico) e perguntar o resultado.
+4. Tentar caminho alternativo quando o primeiro falhou (ex: se reconnect não resolveu, tentar delete + recriar).
+Conte mentalmente as tentativas pelo histórico. Repetir a mesma dica genérica NÃO conta como nova tentativa.
+
+### Quando RESOLVER (default — 95% dos casos)
+- Use as tools. Aja na conta do usuário. Confirme o resultado.
+- Se "não consigo X" e existe tool pra X → "deixa que eu faço por você" + chame a tool. NÃO abra chamado.
+- Se a 1ª ação falhou, tente outra abordagem ANTES de escalar.
+
+### Quando ESCALAR (exceção)
+Use [ESCALAR_HUMANO] APENAS quando:
+(a) usuário pedir explicitamente humano/atendente;
+(b) bug de código confirmado por get_recent_frontend_errors com arquivo:linha (inclua bloco de diagnóstico);
+(c) cobrança/billing/reembolso/conta bloqueada que NENHUMA tool resolve;
+(d) você JÁ tentou 4+ abordagens distintas e todas falharam de verdade.
+
+### Proibições
+- PROIBIDO escalar na 1ª, 2ª ou 3ª mensagem do usuário sobre o problema.
+- PROIBIDO escalar quando existe tool de ação capaz de resolver. Use a tool.
+- PROIBIDO dizer "vou abrir um chamado" sem ter tentado resolver primeiro.
+- PROIBIDO usar [ESCALAR_HUMANO] como atalho.
+
+Se decidir escalar (após cumprir as regras acima), termine com [ESCALAR_HUMANO]. Sem esse marcador, o chamado NÃO abre.`
       : "";
 
     const messages: any[] = [
