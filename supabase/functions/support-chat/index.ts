@@ -458,6 +458,7 @@ ${hasTriedSteps ? `Solução já apresentada: ${triedSolution || "-"}\nPassos j�
 REGRAS OBRIGATÓRIAS POR CAUSA DA TRIAGEM:
 1. NUNCA pergunte "qual tema?" ou "do que se trata?" — o tema JÁ É "${category}". Mantenha-se nele.
 2. NUNCA ofereça opções fora desse tema (ex: se categoria é "WhatsApp e conexões", não pergunte se é sobre leads/CRM/financeiro).
+   Exceção: se a mensagem atual citar excluir/remover/deletar número ou conexão WhatsApp, trate como problema de WhatsApp/conexões e use get_whatsapp_connections + ação apropriada.
 3. Se a mensagem do user for vaga ("não consigo gerar nada", "não funciona", "como faço"), interprete-a DENTRO de "${category}" e:
    a) Se autenticado: chame as tools relacionadas a "${category}" ANTES de perguntar (ex: categoria conexões → get_whatsapp_connections; campanhas → get_active_campaigns; aquecimento → get_warming_status).
    b) Só depois faça no MÁXIMO 1 pergunta curta e específica do tema.
