@@ -6,6 +6,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const FROM_ADDRESS = "no-reply@wiize.com.br";
+const SUPPORT_EMAIL = "suporte@wiize.com.br";
+
 type BroadcastUser = {
   id: string;
   email: string;
@@ -452,15 +455,16 @@ Deno.serve(async (req) => {
                 Authorization: `Bearer ${resendKey}`,
               },
               body: JSON.stringify({
-                from: "Wiize <no-reply@wiize.com.br>",
+                from: `Wiize <${FROM_ADDRESS}>`,
                 to: [targetUser.email],
                 subject,
                 html: content,
                 text: htmlToPlainText(content) || subject,
-                reply_to: "suporte@wiize.com.br",
+                reply_to: SUPPORT_EMAIL,
                 headers: {
                   "X-Entity-Ref-ID": `${batchId}_${targetUser.email}`,
-                  "List-Unsubscribe": `<mailto:suporte@wiize.com.br?subject=Remover%20${encodeURIComponent(targetUser.email)}%20dos%20emails%20Wiize>`,
+                  "List-Unsubscribe": `<mailto:${SUPPORT_EMAIL}?subject=Remover%20${encodeURIComponent(targetUser.email)}%20dos%20emails%20Wiize>`,
+                  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
                 },
               }),
             });
@@ -476,7 +480,7 @@ Deno.serve(async (req) => {
               body: JSON.stringify({
                 user_id: targetUser.id,
                 email_type: "ADMIN_BROADCAST",
-                payload: { subject, content, reply_to: "suporte@wiize.com.br" },
+                payload: { subject, content, reply_to: SUPPORT_EMAIL },
                 idempotency_key: idempotencyKey,
               }),
             });
