@@ -672,7 +672,7 @@ Se decidir escalar (após cumprir as regras acima), termine com [ESCALAR_HUMANO]
 
     // Frustration override: só força escalonamento se NÃO há intenção acionável por tool.
     // Se o usuário está pedindo uma ação que existe como tool, RESOLVER vem antes de escalar.
-    const frustrationEscalate = newFrustration >= 75 && !actionableIntent && !!userId === false ? true : (newFrustration >= 75 && !actionableIntent);
+    const frustrationEscalate = newFrustration >= 75 && !actionableIntent;
     let shouldEscalate = mustEscalate || explicitEscalate || frustrationEscalate;
 
     if (collectedToolCalls.some((t) => t.pending)) {
