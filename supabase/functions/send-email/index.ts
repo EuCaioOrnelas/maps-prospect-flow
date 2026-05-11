@@ -645,7 +645,6 @@ Deno.serve(async (req) => {
         ...(email_type === "ADMIN_BROADCAST"
           ? {
               "List-Unsubscribe": `<${unsubscribeMailto}>`,
-              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
             }
           : {}),
       },
