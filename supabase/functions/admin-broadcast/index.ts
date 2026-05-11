@@ -15,6 +15,25 @@ type BroadcastUser = {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/(p|div|h[1-6]|li|tr)>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n\s+/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 // ── Stripe helpers ──────────────────────────────────────────────────────────
 
 async function getChurnedEmailsFromStripe(stripeKey: string): Promise<Set<string>> {
@@ -399,6 +418,12 @@ Deno.serve(async (req) => {
                 to: [targetUser.email],
                 subject,
                 html: content,
+                text: htmlToPlainText(content) || subject,
+                reply_to: "suporte@wiize.com.br",
+                headers: {
+                  "X-Entity-Ref-ID": `${batchId}_${targetUser.email}`,
+                  "List-Unsubscribe": `<mailto:suporte@wiize.com.br?subject=Remover%20${encodeURIComponent(targetUser.email)}%20dos%20emails%20Wiize>`,
+                },
               }),
             });
           } else {
@@ -418,9 +443,19 @@ Deno.serve(async (req) => {
             });
           }
 
-          if (sendResponse.ok) return { ok: true as const, status: sendResponse.status };
+          const responseText = await sendResponse.text();
+          let responseJson: any = null;
+          try { responseJson = responseText ? JSON.parse(responseText) : null; } catch { /* keep raw text */ }
 
-          const errText = await sendResponse.text();
+          if (sendResponse.ok) {
+            const providerId = responseJson?.provider_id || responseJson?.id || null;
+            if (!providerId && !isStripeOnly) {
+              return { ok: false as const, status: 502, error: "send-email did not return provider_id" };
+            }
+            return { ok: true as const, status: sendResponse.status, provider_id: providerId };
+          }
+
+          const errText = responseText || JSON.stringify(responseJson || {});
           if ((sendResponse.status === 429 || sendResponse.status >= 500) && attempt < maxAttempts) {
             await sleep(700 * attempt);
             continue;
