@@ -607,7 +607,7 @@ const HelpCenterFAQ = () => {
                     <div key={i} className="border border-border/50 rounded-lg p-5 bg-card/50">
                       <span className="text-xs text-primary font-medium mb-1 block">{q.category}</span>
                       <h3 className="font-semibold text-base mb-2">{q.question}</h3>
-                      <p className="text-muted-foreground text-sm leading-relaxed">{q.answer}</p>
+                      <FaqAnswer className="text-sm">{q.answer}</FaqAnswer>
                     </div>
                   ))}
                 </>
