@@ -487,7 +487,7 @@ REGRAS OBRIGATÓRIAS POR CAUSA DA TRIAGEM:
       /\b(numero|whatsapp|conexao|conexoes|qr|instancia)\b/.test(normalizedMessage);
     // "consegue/pode fazer pra mim?" — pedido explícito de ação
     const askAgentToDo = /\b(consegue|pode|poderia|conseguiria|da pra voce|da pra vc|faz pra mim|faca pra mim|excluir pra mim|deletar pra mim|resolve pra mim)\b/.test(normalizedMessage);
-    const actionableIntent = destructiveWhatsappIntent || (askAgentToDo && toolsEnabledHint(userId));
+    const actionableIntent = destructiveWhatsappIntent || (askAgentToDo && !!userId);
     const intentBlock = destructiveWhatsappIntent || askAgentToDo
       ? `\n\n--- INTENÇÃO OPERACIONAL DETECTADA ---\nO usuário está pedindo AÇÃO direta na conta dele${askAgentToDo ? " (\"consegue fazer pra mim?\")" : ""}. NÃO escale para humano. NÃO abra chamado. Use as tools AGORA:\n1. Chame get_whatsapp_connections para identificar o número.\n2. Em seguida, com base na intenção:\n   - excluir/remover/deletar/apagar/desconectar de vez → delete_whatsapp_connection (sem confirmed primeiro → mostra summary → user confirma → re-chama com confirmed:true);\n   - recriar/resetar/reconectar para novo QR → reconnect_whatsapp (mesmo fluxo de confirmação);\n3. Se houver mais de uma conexão e não der para identificar o número, pergunte qual número antes de agir.\nNão responda com dica genérica nem abra chamado quando a tool resolve.`
       : "";
