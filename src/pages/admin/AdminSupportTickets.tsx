@@ -513,6 +513,51 @@ export default function AdminSupportTickets() {
     return Date.now() - last > 30 * 60 * 1000;
   };
 
+  // Horário de atendimento: Seg-Sex, 09:00–17:00 (8h úteis/dia)
+  const BUSINESS_START_HOUR = 9;
+  const BUSINESS_END_HOUR = 17;
+  const SLA_BUSINESS_HOURS = 24; // 24h úteis = 3 dias úteis
+
+  // Adiciona N horas úteis a uma data, respeitando 09–17 Seg-Sex
+  const addBusinessHours = (start: Date, hours: number): Date => {
+    let remaining = hours * 60 * 60 * 1000; // ms
+    const cursor = new Date(start.getTime());
+    while (remaining > 0) {
+      const day = cursor.getDay(); // 0=Dom, 6=Sab
+      // Pula final de semana → segunda 09:00
+      if (day === 0 || day === 6) {
+        cursor.setDate(cursor.getDate() + (day === 0 ? 1 : 2));
+        cursor.setHours(BUSINESS_START_HOUR, 0, 0, 0);
+        continue;
+      }
+      const startOfDay = new Date(cursor); startOfDay.setHours(BUSINESS_START_HOUR, 0, 0, 0);
+      const endOfDay = new Date(cursor); endOfDay.setHours(BUSINESS_END_HOUR, 0, 0, 0);
+      // Antes do expediente → pula pra 09:00 do mesmo dia
+      if (cursor.getTime() < startOfDay.getTime()) { cursor.setTime(startOfDay.getTime()); continue; }
+      // Após o expediente → próximo dia útil 09:00
+      if (cursor.getTime() >= endOfDay.getTime()) {
+        cursor.setDate(cursor.getDate() + 1);
+        cursor.setHours(BUSINESS_START_HOUR, 0, 0, 0);
+        continue;
+      }
+      const available = endOfDay.getTime() - cursor.getTime();
+      if (remaining <= available) {
+        cursor.setTime(cursor.getTime() + remaining);
+        remaining = 0;
+      } else {
+        remaining -= available;
+        cursor.setDate(cursor.getDate() + 1);
+        cursor.setHours(BUSINESS_START_HOUR, 0, 0, 0);
+      }
+    }
+    return cursor;
+  };
+
+  const computeDueAt = (t: Ticket): Date => {
+    if (t.due_at) return new Date(t.due_at);
+    return addBusinessHours(new Date(t.created_at), SLA_BUSINESS_HOURS);
+  };
+
   const responseTime = (t: Ticket) => {
     if (isAbandoned(t)) return null;
     // Se resolvido/fechado: mostra tempo total que levou pra resolver
@@ -525,22 +570,19 @@ export default function AdminSupportTickets() {
       const label = `Resolvido em ${formatDistanceStrict(new Date(t.created_at), new Date(t.resolved_at), { locale: ptBR })}`;
       return { label, color };
     }
-    // Aberto: mostra prazo de retorno (due_at)
-    if (t.due_at) {
-      const due = new Date(t.due_at);
-      const now = new Date();
-      const overdue = due.getTime() < now.getTime();
-      const label = overdue
-        ? `Atrasado ${formatDistanceStrict(due, now, { locale: ptBR })}`
-        : `Vence em ${formatDistanceStrict(now, due, { locale: ptBR })}`;
-      return { label, color: overdue ? "text-destructive" : "text-warning" };
-    }
-    return null;
+    // Aberto: mostra prazo de retorno (24h úteis a partir da criação)
+    const due = computeDueAt(t);
+    const now = new Date();
+    const overdue = due.getTime() < now.getTime();
+    const label = overdue
+      ? `Atrasado ${formatDistanceStrict(due, now, { locale: ptBR })}`
+      : `Vence em ${formatDistanceStrict(now, due, { locale: ptBR })}`;
+    return { label, color: overdue ? "text-destructive" : "text-warning" };
   };
 
   const dueBadge = (t: Ticket) => {
-    if (!t.due_at || t.status === "resolved" || t.status === "closed") return null;
-    const due = new Date(t.due_at);
+    if (t.status === "resolved" || t.status === "closed") return null;
+    const due = computeDueAt(t);
     const now = Date.now();
     const overdue = due.getTime() < now;
     return (
