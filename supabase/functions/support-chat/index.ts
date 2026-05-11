@@ -446,7 +446,19 @@ Deno.serve(async (req) => {
     let triageBlock = "";
     if (triageContext && typeof triageContext === "object") {
       const { category, subcategory, triedSolution, triedSteps } = triageContext as any;
-      triageBlock = `\n\n--- TRIAGEM JÁ FEITA (use isso, NÃO repita perguntas básicas) ---\nCategoria: ${category || "-"}\nSubcategoria: ${subcategory || "-"}\nSolução já apresentada: ${triedSolution || "-"}\nPassos já tentados:\n${(triedSteps || []).map((s: string, i: number) => `${i + 1}. ${s}`).join("\n") || "-"}\n\nO usuário disse que isso NÃO resolveu. Faça perguntas de diagnóstico específicas e proponha uma alternativa diferente. Se nada mais funcionar, escale.`;
+      const hasTriedSteps = Array.isArray(triedSteps) && triedSteps.length > 0;
+      triageBlock = `\n\n--- TRIAGEM JÁ FEITA (REGRA CRÍTICA: respeite isso) ---
+Categoria escolhida pelo usuário: ${category || "-"}
+Subcategoria: ${subcategory || "-"}
+${hasTriedSteps ? `Solução já apresentada: ${triedSolution || "-"}\nPassos já tentados:\n${triedSteps.map((s: string, i: number) => `${i + 1}. ${s}`).join("\n")}\n\nO usuário disse que isso NÃO resolveu. Faça diagnóstico específico e proponha alternativa diferente. Se nada funcionar, escale.` : `O usuário NÃO tentou uma solução pronta — caiu direto no chat com você dentro do tema "${category}".`}
+
+REGRAS OBRIGATÓRIAS POR CAUSA DA TRIAGEM:
+1. NUNCA pergunte "qual tema?" ou "do que se trata?" — o tema JÁ É "${category}". Mantenha-se nele.
+2. NUNCA ofereça opções fora desse tema (ex: se categoria é "WhatsApp e conexões", não pergunte se é sobre leads/CRM/financeiro).
+3. Se a mensagem do user for vaga ("não consigo gerar nada", "não funciona", "como faço"), interprete-a DENTRO de "${category}" e:
+   a) Se autenticado: chame as tools relacionadas a "${category}" ANTES de perguntar (ex: categoria conexões → get_whatsapp_connections; campanhas → get_active_campaigns; aquecimento → get_warming_status).
+   b) Só depois faça no MÁXIMO 1 pergunta curta e específica do tema.
+4. Faça UMA pergunta por vez. Não dispare 3 blocos de perguntas seguidos.`;
     }
 
     const effectiveName = (userName || providedName || "").trim();
