@@ -353,13 +353,13 @@ export default function AdminSupportIntelligence() {
               Incidentes detectados
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {activeIncidents.length} ativos · {incidents.length} no histórico
+              {activeIncidents.length} ativos · {incidents.length} no histórico · {tickets.filter(isEscalated).length} tickets escalados no período
             </p>
           </div>
         </div>
         {incidents.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">
-            Nenhum incidente. Rode o detector ou aguarde o cron diário.
+            Nenhum incidente agrupado ainda. O detector cria incidentes quando encontra 3+ chamados recentes com o mesmo padrão.
           </p>
         ) : (
           <div className="space-y-2">
