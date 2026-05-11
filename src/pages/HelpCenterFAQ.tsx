@@ -1,13 +1,19 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft, HelpCircle, Search, Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target, BarChart3, Plug, Wallet, Sparkles, Workflow } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { ArrowLeft, HelpCircle, Search, Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target, BarChart3, Plug, Wallet, Sparkles, Workflow, BookOpen, HelpCircle as HelpCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { SEO } from "@/components/SEO";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
-const categories = [
+const ICON_MAP: Record<string, any> = {
+  Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target,
+  BarChart3, Plug, Wallet, Sparkles, Workflow, BookOpen, HelpCircle: HelpCircleIcon,
+};
+
+const _legacyCategories = [
   {
     id: "plataforma",
     title: "Plataforma",
@@ -420,29 +426,69 @@ const categories = [
 const HelpCenterFAQ = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeCategory, setActiveCategory] = useState("plataforma");
+  const [activeCategory, setActiveCategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [categories, setCategories] = useState<Array<{ id: string; title: string; icon: any; questions: { question: string; answer: string }[] }>>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    void _legacyCategories;
+    (async () => {
+      const { data: topics } = await supabase
+        .from("faq_topics")
+        .select("id, slug, name, icon, sort_order, active")
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
+      const { data: faqs } = await supabase
+        .from("faqs")
+        .select("id, topic_id, title, content, sort_order, active")
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
+      const built = (topics ?? [])
+        .map((t: any) => {
+          const qs = (faqs ?? [])
+            .filter((f: any) => f.topic_id === t.id)
+            .map((f: any) => ({ question: f.title, answer: f.content }));
+          return {
+            id: t.slug,
+            title: t.name,
+            icon: ICON_MAP[t.icon ?? ""] ?? HelpCircleIcon,
+            questions: qs,
+          };
+        })
+        .filter((c) => c.questions.length > 0);
+      setCategories(built);
+      if (built.length && !activeCategory) {
+        setActiveCategory(built[0].id);
+      }
+      setLoading(false);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!categories.length) return;
     if (location.hash) {
       const hash = location.hash.replace("#", "");
-      const found = categories.find(c => c.id === hash);
-      if (found) {
-        setActiveCategory(hash);
-      }
+      const found = categories.find((c) => c.id === hash);
+      if (found) setActiveCategory(hash);
     }
-  }, [location.hash]);
+  }, [location.hash, categories]);
 
-  const activeData = categories.find(c => c.id === activeCategory);
+  const activeData = useMemo(
+    () => categories.find((c) => c.id === activeCategory),
+    [categories, activeCategory]
+  );
 
   const filteredQuestions = searchQuery.trim()
-    ? categories.flatMap(cat =>
+    ? categories.flatMap((cat) =>
         cat.questions
-          .filter(q =>
-            q.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            q.answer.toLowerCase().includes(searchQuery.toLowerCase())
+          .filter(
+            (q) =>
+              q.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              q.answer.toLowerCase().includes(searchQuery.toLowerCase())
           )
-          .map(q => ({ ...q, category: cat.title }))
+          .map((q) => ({ ...q, category: cat.title }))
       )
     : null;
 
