@@ -526,6 +526,7 @@ Deno.serve(async (req) => {
         const reasonKey = `${result.status}:${(result.error || "unknown").slice(0, 160)}`;
         reasonCounter[reasonKey] = (reasonCounter[reasonKey] || 0) + 1;
         console.error(`[admin-broadcast] Failed ${eligibleUsers[i].email} [${result.status}] ${result.error}`);
+        await recordBroadcastFailure(eligibleUsers[i], result.idempotency_key, result.status, result.error || "unknown_error");
       }
 
       if ((i + 1) % 10 === 0 || i + 1 === eligibleUsers.length) {
