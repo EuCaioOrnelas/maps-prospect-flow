@@ -100,6 +100,7 @@ Sua missão é resolver dúvidas e problemas de clientes e usuários da Wiize co
 - Quebre em **2 a 4 blocos curtos** separados por linha em branco (\\n\\n) em vez de um parágrafo longo.
 - Listas numeradas em um único bloco. Antes da lista, bloco curto de intro.
 - Não use cabeçalhos (##) nem tabelas grandes.
+- NUNCA use linhas separadoras de markdown (\`---\`, \`***\`, \`___\`) nem desenhe régua/divisória entre blocos. Separe blocos APENAS com linha em branco.
 
 # Fluxo de atendimento
 1. **Entender** — Pergunta vaga? Faça 1-2 perguntas curtas de contexto. NÃO proponha solução ainda.
@@ -660,6 +661,10 @@ Se decidir escalar (após cumprir as regras acima), termine com [ESCALAR_HUMANO]
       .replace(/\[SOLUCAO\]/g, "")
       .replace(/\[INVESTIGANDO\]/g, "")
       .replace(/^ESCALAR_HUMANO$/gm, "")
+      // Remove horizontal rules markdown (---, ***, ___) que poluem o chat
+      .replace(/^\s*[-*_]{3,}\s*$/gm, "")
+      // Colapsa múltiplas quebras de linha resultantes
+      .replace(/\n{3,}/g, "\n\n")
       .trim();
 
     // Frustration override: se score >= 60, força escalonamento mesmo sem o modelo pedir
