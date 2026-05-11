@@ -480,6 +480,14 @@ REGRAS OBRIGATÓRIAS POR CAUSA DA TRIAGEM:
     const triageCat = (triageContext as any)?.category || "";
     const kbBlock = WIAN_KB[triageCat] ? `\n\n--- CONHECIMENTO DO PRODUTO (${triageCat}) ---\n${WIAN_KB[triageCat]}` : "";
 
+    const normalizedMessage = message.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const destructiveWhatsappIntent =
+      /\b(excluir|deletar|remover|apagar|recriar|reconectar)\b/.test(normalizedMessage) &&
+      /\b(numero|whatsapp|conexao|conexoes|qr|instancia)\b/.test(normalizedMessage);
+    const intentBlock = destructiveWhatsappIntent
+      ? `\n\n--- INTENÇÃO OPERACIONAL DETECTADA ---\nO usuário está falando de excluir/recriar/reconectar número ou conexão WhatsApp. Se autenticado, você DEVE chamar get_whatsapp_connections agora. Depois:\n- intenção de excluir/remover/deletar/apagar de vez → delete_whatsapp_connection;\n- intenção de recriar/resetar/reconectar para novo QR → reconnect_whatsapp;\n- se houver mais de uma conexão e não der para identificar o número, pergunte qual número.\nNão responda com dica genérica de cache/navegador antes de usar as tools.`
+      : "";
+
     // Tools só para usuários autenticados
     const toolsEnabled = !!userId;
     const toolsBlock = toolsEnabled
@@ -532,7 +540,7 @@ Se decidir escalar, termine a resposta com [ESCALAR_HUMANO]; isso é o gatilho t
       : "";
 
     const messages: any[] = [
-      { role: "system", content: `${SYSTEM_BASE}${userBlock}${summaryBlock}\n\nCONTEXTO:${context}${kbBlock}${triageBlock}${toolsBlock}` },
+      { role: "system", content: `${SYSTEM_BASE}${userBlock}${summaryBlock}\n\nCONTEXTO:${context}${kbBlock}${triageBlock}${intentBlock}${toolsBlock}` },
       ...history.slice(-historySize).map((m: any) => ({ role: m.role === "ai" ? "assistant" : m.role, content: m.content })),
       { role: "user", content: userContent },
     ];
