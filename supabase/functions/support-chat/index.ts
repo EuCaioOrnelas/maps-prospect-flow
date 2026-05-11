@@ -670,8 +670,9 @@ Se decidir escalar (após cumprir as regras acima), termine com [ESCALAR_HUMANO]
       .replace(/\n{3,}/g, "\n\n")
       .trim();
 
-    // Frustration override: se score >= 60, força escalonamento mesmo sem o modelo pedir
-    const frustrationEscalate = newFrustration >= 60;
+    // Frustration override: só força escalonamento se NÃO há intenção acionável por tool.
+    // Se o usuário está pedindo uma ação que existe como tool, RESOLVER vem antes de escalar.
+    const frustrationEscalate = newFrustration >= 75 && !actionableIntent && !!userId === false ? true : (newFrustration >= 75 && !actionableIntent);
     let shouldEscalate = mustEscalate || explicitEscalate || frustrationEscalate;
 
     if (collectedToolCalls.some((t) => t.pending)) {
