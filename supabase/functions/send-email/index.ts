@@ -406,6 +406,25 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   AGENT_OBJECTIVE_COMPLETED: templateAgentObjectiveCompleted,
 };
 
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/(p|div|h[1-6]|li|tr)>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n\s+/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 // ─── Main handler ──────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -605,13 +624,21 @@ Deno.serve(async (req) => {
     // Send via Resend
     const fromName = (payload.from_name as string) || BRAND.name;
     const fromAddress = `${fromName} <no-reply@wiize.com.br>`;
-    const replyTo = payload.reply_to as string || undefined;
+    const replyTo = payload.reply_to as string || (email_type === "ADMIN_BROADCAST" ? "suporte@wiize.com.br" : undefined);
+    const entityRefId = String(logEntry?.id || idempotency_key || crypto.randomUUID());
 
     const resendPayload: any = {
       from: fromAddress,
       to: [toEmail],
       subject,
       html: trackedHtml,
+      text: htmlToPlainText(trackedHtml) || subject,
+      headers: {
+        "X-Entity-Ref-ID": entityRefId,
+        ...(email_type === "ADMIN_BROADCAST"
+          ? { "List-Unsubscribe": `<mailto:suporte@wiize.com.br?subject=Remover%20${encodeURIComponent(toEmail)}%20dos%20emails%20Wiize>` }
+          : {}),
+      },
     };
     if (replyTo) {
       resendPayload.reply_to = replyTo;
