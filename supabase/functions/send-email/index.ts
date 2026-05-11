@@ -629,9 +629,10 @@ Deno.serve(async (req) => {
 
     // Send via Resend
     const fromName = (payload.from_name as string) || BRAND.name;
-    const fromAddress = `${fromName} <no-reply@wiize.com.br>`;
-    const replyTo = payload.reply_to as string || (email_type === "ADMIN_BROADCAST" ? "suporte@wiize.com.br" : undefined);
+    const fromAddress = `${fromName} <${FROM_ADDRESS}>`;
+    const replyTo = payload.reply_to as string || (email_type === "ADMIN_BROADCAST" ? BRAND.replyTo : undefined);
     const entityRefId = String(logEntry?.id || idempotency_key || crypto.randomUUID());
+    const unsubscribeMailto = `mailto:${MAILTO_UNSUBSCRIBE}?subject=Remover%20${encodeURIComponent(toEmail)}%20dos%20emails%20Wiize`;
 
     const resendPayload: any = {
       from: fromAddress,
@@ -642,7 +643,10 @@ Deno.serve(async (req) => {
       headers: {
         "X-Entity-Ref-ID": entityRefId,
         ...(email_type === "ADMIN_BROADCAST"
-          ? { "List-Unsubscribe": `<mailto:suporte@wiize.com.br?subject=Remover%20${encodeURIComponent(toEmail)}%20dos%20emails%20Wiize>` }
+          ? {
+              "List-Unsubscribe": `<${unsubscribeMailto}>`,
+              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            }
           : {}),
       },
     };
