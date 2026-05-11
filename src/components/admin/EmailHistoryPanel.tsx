@@ -68,6 +68,20 @@ type GroupedEmail = {
   samplePayload: any;
 };
 
+type AdminEmailLogsResponse = {
+  logs?: EmailLog[];
+  count?: number;
+  error?: string;
+};
+
+async function invokeAdminEmailLogs(body: Record<string, unknown>): Promise<AdminEmailLogsResponse> {
+  const { data, error } = await supabase.functions.invoke("admin-email-logs", { body });
+  if (error) throw error;
+  const response = (data || {}) as AdminEmailLogsResponse;
+  if (response.error) throw new Error(response.error);
+  return response;
+}
+
 function emailTypeLabel(type: string): string {
   const map: Record<string, string> = {
     CAMPAIGN_SCHEDULED_STARTED: "Campanha Iniciada",
@@ -278,6 +292,7 @@ function RecipientDetailDialog({
 function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () => void }) {
   const [recipients, setRecipients] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchRecipient, setSearchRecipient] = useState("");
   const [selectedRecipient, setSelectedRecipient] = useState<EmailLog | null>(null);
   const [recipientDetailOpen, setRecipientDetailOpen] = useState(false);
@@ -286,33 +301,25 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
 
   const loadRecipients = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
-      let query = supabase
-        .from("email_logs")
-        .select("*", { count: "exact" })
-        .eq("email_type", group.email_type as any)
-        .order("created_at", { ascending: false }) as any;
-
-      if (group.batchKey) {
-        query = query.ilike("idempotency_key", `broadcast_${group.batchKey}_%`);
-      } else if (group.exactIdempotencyKey) {
-        query = query.eq("idempotency_key", group.exactIdempotencyKey);
-      } else if (group.subject && group.subject !== "Sem assunto") {
-        query = query.eq("subject", group.subject);
-      }
-
-      if (searchRecipient.trim()) {
-        query = query.ilike("to_email", `%${searchRecipient.trim()}%`);
-      }
-
-      query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-
-      const { data, error, count } = await query;
-      if (error) throw error;
-      setRecipients((data as unknown as EmailLog[]) || []);
-      setTotalCount(count || 0);
-    } catch (err) {
+      const response = await invokeAdminEmailLogs({
+        mode: "recipients",
+        email_type: group.email_type,
+        batch_key: group.batchKey,
+        exact_idempotency_key: group.exactIdempotencyKey,
+        subject: group.subject,
+        search_recipient: searchRecipient,
+        page,
+        page_size: PAGE_SIZE,
+      });
+      setRecipients(response.logs || []);
+      setTotalCount(response.count || 0);
+    } catch (err: any) {
       console.error("Error loading recipients:", err);
+      setLoadError(err.message || "Não foi possível carregar os destinatários.");
+      setRecipients([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
@@ -425,6 +432,11 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
       </div>
 
       <div className="rounded-xl border overflow-hidden">
+        {loadError && (
+          <div className="m-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive flex items-center gap-2">
+            <AlertTriangle size={14} /> {loadError}
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
