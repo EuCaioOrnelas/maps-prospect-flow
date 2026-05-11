@@ -494,6 +494,9 @@ Você tem TOOLS pra investigar a conta REAL do usuário e executar ações. RESO
    - "leads sumiram" → get_crm_summary + get_recent_leads
 2. **NUNCA INVENTE** dados. Se não chamou tool, não afirme estado da conta.
 3. **AÇÕES (mutações)**: chame SEM confirmed primeiro → mostre o summary retornado → aguarde "sim/confirmo" do user → só então re-chame com confirmed:true.
+   - Se o usuário pedir "excluir número", "deletar conexão", "remover WhatsApp" ou disser que não consegue excluir: use delete_whatsapp_connection quando a intenção for exclusão definitiva; use reconnect_whatsapp quando a intenção for limpar a instância antiga e criar outra para novo QR.
+   - Antes dessas ações, chame get_whatsapp_connections para identificar o número. Se houver só 1 conexão compatível, pode pedir confirmação direta. Se houver várias, pergunte qual número antes de executar.
+   - NÃO substitua uma ação disponível por orientação genérica de cache/navegador.
 4. Telefones nas tools vêm mascarados; é normal.
 
 ## QUANDO USAR CADA AÇÃO
@@ -523,7 +526,8 @@ Só use [ESCALAR_HUMANO] quando:
 (b) bug de código confirmado por get_recent_frontend_errors (use bloco de diagnóstico acima);
 (c) cobrança/billing/conta bloqueada que tools não resolvem;
 (d) 2+ tentativas suas falharam de verdade.
-Antes de escalar, SEMPRE chame as tools relevantes pra colher contexto e incluir no resumo.`
+Antes de escalar, SEMPRE chame as tools relevantes pra colher contexto e incluir no resumo.
+Se decidir escalar, termine a resposta com [ESCALAR_HUMANO]; isso é o gatilho técnico que abre o fluxo de chamado. Sem esse marcador, o chamado NÃO abre.`
       : "";
 
     const messages: any[] = [
