@@ -1355,7 +1355,7 @@ export function WianChat() {
             <div className="space-y-1">
               <p className="text-sm font-semibold text-foreground">Chat temporariamente bloqueado</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Você atingiu o limite de <strong>{RESET_LIMIT} reinícios por hora</strong>. Para evitar abusos e proteger
+                Você atingiu o limite de <strong>{RESET_LIMIT} reinícios a cada 10 minutos</strong>. Para evitar abusos e proteger
                 o atendimento, o chat será liberado automaticamente em{' '}
                 <strong className="text-foreground">
                   {Math.max(1, Math.ceil((blockedUntil - Date.now()) / 60000))} min
