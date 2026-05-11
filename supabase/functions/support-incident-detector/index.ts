@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
     const { data: tickets } = await sb
       .from("support_tickets")
@@ -43,16 +43,31 @@ Deno.serve(async (req) => {
       });
     }
 
+    const ticketIds = tickets.map((t: any) => t.id);
+    const { data: messages } = await sb
+      .from("support_messages")
+      .select("ticket_id, role, content, created_at")
+      .in("ticket_id", ticketIds)
+      .order("created_at", { ascending: false })
+      .limit(1000);
+
+    const messageTextByTicket = new Map<string, string>();
+    for (const m of messages || []) {
+      if (m.role !== "user") continue;
+      const current = messageTextByTicket.get(m.ticket_id) || "";
+      if (current.length < 1200) messageTextByTicket.set(m.ticket_id, `${current}\n${m.content || ""}`.slice(0, 1200));
+    }
+
     // Cluster: signature = category | top3 keywords
     const groups = new Map<string, { category: string; keywords: string[]; tickets: any[] }>();
     for (const t of tickets) {
       const cat = (t.category || "Outro").toLowerCase();
-      const ks = tokens(`${t.ai_summary || ""}`);
+      const ks = tokens(`${t.ai_summary || ""}\n${messageTextByTicket.get(t.id) || ""}`);
       const freq: Record<string, number> = {};
       for (const k of ks) freq[k] = (freq[k] || 0) + 1;
       const top = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k).sort();
-      if (top.length < 2) continue; // sem keywords suficientes não vira incidente
-      const sig = `${cat}|${top.join("+")}`;
+      if (top.length < 1 && cat === "outro") continue;
+      const sig = `${cat}|${top.length ? top.join("+") : "sem-detalhe"}`;
       const g = groups.get(sig) || { category: cat, keywords: top, tickets: [] };
       g.tickets.push(t);
       groups.set(sig, g);
@@ -61,7 +76,8 @@ Deno.serve(async (req) => {
     let created = 0;
     let updated = 0;
     for (const [sig, g] of groups) {
-      if (g.tickets.length < 3) continue; // mínimo 3 ocorrências
+      const minimum = g.keywords.length ? 2 : 3;
+      if (g.tickets.length < minimum) continue;
       const users = new Set(g.tickets.map((t) => t.user_id).filter(Boolean));
       const sample = g.tickets.slice(0, 5).map((t) => t.id);
       const lastSeen = g.tickets.map((t) => new Date(t.created_at).getTime()).reduce((a, b) => Math.max(a, b), 0);
