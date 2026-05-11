@@ -1,13 +1,19 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft, HelpCircle, Search, Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target, BarChart3, Plug, Wallet, Sparkles, Workflow } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { ArrowLeft, HelpCircle, Search, Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target, BarChart3, Plug, Wallet, Sparkles, Workflow, BookOpen, HelpCircle as HelpCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { SEO } from "@/components/SEO";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
-const categories = [
+const ICON_MAP: Record<string, any> = {
+  Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target,
+  BarChart3, Plug, Wallet, Sparkles, Workflow, BookOpen, HelpCircle: HelpCircleIcon,
+};
+
+const _legacyCategories = [
   {
     id: "plataforma",
     title: "Plataforma",
