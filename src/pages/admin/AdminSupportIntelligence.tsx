@@ -30,6 +30,7 @@ type Incident = {
 
 type CategoryStat = { category: string; tickets: number; open: number; resolved: number; escalated: number; avg_nps: number | null; avg_frustration: number };
 type ProblemUser = { user_id: string; name: string | null; email: string | null; tickets: number; open: number };
+type KbPerformance = { id: string; title: string; success_rate: number; total_uses: number; period_uses: number; last_used_at: string | null };
 type Ticket = {
   id: string;
   ticket_number: string | null;
@@ -41,7 +42,9 @@ type Ticket = {
   category: string | null;
   frustration_score: number | null;
   created_at: string;
+  updated_at: string;
   resolved_at: string | null;
+  resolved_by: string | null;
 };
 
 const RANGE_OPTIONS = [
@@ -68,8 +71,9 @@ export default function AdminSupportIntelligence() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ratingsByTicket, setRatingsByTicket] = useState<Map<string, number>>(new Map());
+  const [resolutionEventsByTicket, setResolutionEventsByTicket] = useState<Map<string, string>>(new Map());
   const [costUsd, setCostUsd] = useState(0);
-  const [topKb, setTopKb] = useState<{ id: string; title: string; success_rate: number; total_uses: number }[]>([]);
+  const [topKb, setTopKb] = useState<KbPerformance[]>([]);
 
   const sinceISO = useMemo(
     () => new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000).toISOString(),
@@ -79,10 +83,10 @@ export default function AdminSupportIntelligence() {
   const load = async () => {
     setLoading(true);
     try {
-      const [ticketsRes, incidentsRes, ratingsRes, costRes, kbRes] = await Promise.all([
+      const [ticketsRes, incidentsRes, ratingsRes, aiLogsRes, kbRes, aiMessagesRes, eventsRes] = await Promise.all([
         supabase
           .from("support_tickets")
-          .select("id, ticket_number, name, email, status, phase, priority, category, frustration_score, created_at, resolved_at, user_id")
+          .select("id, ticket_number, name, email, status, phase, priority, category, frustration_score, created_at, updated_at, resolved_at, resolved_by, user_id")
           .gte("created_at", sinceISO)
           .order("created_at", { ascending: false })
           .limit(2000),
@@ -97,14 +101,27 @@ export default function AdminSupportIntelligence() {
           .gte("created_at", sinceISO)
           .limit(2000),
         supabase
-          .from("support_cost_by_category")
-          .select("*")
-          .limit(50),
+          .from("ai_logs")
+          .select("cost_usd, matched_kb_ids, created_at")
+          .gte("created_at", sinceISO)
+          .limit(5000),
         supabase
           .from("knowledge_base")
-          .select("id, title, success_rate, total_uses")
-          .order("total_uses", { ascending: false })
-          .limit(8),
+          .select("id, title, success_rate, total_uses, last_used_at")
+          .limit(500),
+        supabase
+          .from("support_messages")
+          .select("metadata, created_at")
+          .eq("role", "ai")
+          .gte("created_at", sinceISO)
+          .limit(5000),
+        supabase
+          .from("support_ticket_events")
+          .select("ticket_id, to_phase, created_at")
+          .in("to_phase", ["resolved", "closed", "rated"])
+          .gte("created_at", sinceISO)
+          .order("created_at", { ascending: true })
+          .limit(5000),
       ]);
 
       const tk = (ticketsRes.data || []) as any[];
@@ -115,9 +132,31 @@ export default function AdminSupportIntelligence() {
         if (typeof r.nps_score === "number") rmap.set(r.ticket_id, r.nps_score);
       }
       setRatingsByTicket(rmap);
-      const total = ((costRes.data || []) as any[]).reduce((s, c) => s + Number(c.total_cost_usd || 0), 0);
+      const eventMap = new Map<string, string>();
+      for (const ev of (eventsRes.data || []) as any[]) {
+        if (!eventMap.has(ev.ticket_id)) eventMap.set(ev.ticket_id, ev.created_at);
+      }
+      setResolutionEventsByTicket(eventMap);
+
+      const logs = (aiLogsRes.data || []) as any[];
+      const total = logs.reduce((s, c) => s + Number(c.cost_usd || 0), 0);
       setCostUsd(total);
-      setTopKb(kbRes.data || []);
+
+      const usage = new Map<string, number>();
+      const bump = (ids: unknown) => {
+        if (!Array.isArray(ids)) return;
+        new Set(ids.filter(Boolean).map(String)).forEach((id) => usage.set(id, (usage.get(id) || 0) + 1));
+      };
+      logs.forEach((l) => bump(l.matched_kb_ids));
+      ((aiMessagesRes.data || []) as any[]).forEach((m) => bump(m.metadata?.kb_ids));
+      const kbRows = ((kbRes.data || []) as any[]) as KbPerformance[];
+      setTopKb(
+        kbRows
+          .map((k) => ({ ...k, period_uses: usage.get(k.id) || 0 }))
+          .filter((k) => k.period_uses > 0 || (k.total_uses || 0) > 0)
+          .sort((a, b) => (b.period_uses || b.total_uses || 0) - (a.period_uses || a.total_uses || 0))
+          .slice(0, 8),
+      );
     } catch (e: any) {
       console.error(e);
       toast({ variant: "destructive", title: "Erro ao carregar", description: String(e?.message || e) });
