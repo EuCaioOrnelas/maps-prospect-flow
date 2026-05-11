@@ -657,9 +657,9 @@ const HelpCenterFAQ = () => {
                           <h3 className="font-semibold text-lg sm:text-xl mb-3 text-foreground">
                             {q.question}
                           </h3>
-                          <p className="text-muted-foreground text-sm sm:text-base leading-relaxed border-l-2 border-primary/30 pl-4 ml-1">
-                            {q.answer}
-                          </p>
+                          <div className="border-l-2 border-primary/30 pl-4 ml-1">
+                            <FaqAnswer>{q.answer}</FaqAnswer>
+                          </div>
                         </div>
                       ))}
                     </div>
