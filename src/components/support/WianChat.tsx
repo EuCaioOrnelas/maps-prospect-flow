@@ -465,11 +465,12 @@ export function WianChat() {
     setActiveCategory(null);
     setActiveSolution(null);
     setCategory("Outro");
+    const firstName = name.trim() ? name.trim().split(/\s+/)[0] : "";
     respondAfterTyping(
       { role: "user", content: "Quero abrir um chamado direto com o time" },
       [{
         role: "ai",
-        content: "Claro! Vou abrir um chamado para o nosso time humano. Preencha os dados abaixo 👇",
+        content: `${firstName ? `Claro, **${firstName}**. ` : "Claro! "}Vou abrir um chamado para o nosso time humano. Preencha os dados abaixo 👇`,
       }],
       () => setPhase("collect-info"),
     );
@@ -491,7 +492,7 @@ export function WianChat() {
       { role: "user", content: subTitle },
       [{
         role: "ai",
-        content: `Claro! Me conta com mais detalhes a sua dúvida sobre **${cat.label}** — o que você está tentando fazer, em qual tela está, e o que não está claro. Vou te explicar passo a passo. 🙂`,
+        content: `${name.trim() ? `Claro, **${name.trim().split(/\s+/)[0]}**. ` : "Claro! "}Me conta com mais detalhes a sua dúvida sobre **${cat.label}** — o que você está tentando fazer, em qual tela está, e o que não está claro. Vou te explicar passo a passo. 🙂`,
       }],
       () => setPhase("chat"),
     );
@@ -543,6 +544,37 @@ export function WianChat() {
     const results = await Promise.all(slice.map(readFile));
     const ok = results.filter((a): a is Attachment => !!a);
     if (ok.length) setPendingAttachments((prev) => [...prev, ...ok]);
+  };
+
+  const inferTicketCategory = () => {
+    const map: Record<string, string> = {
+      "Campanhas e disparos": "Campanhas",
+      "WhatsApp e conexões": "WhatsApp",
+      "Meta API Oficial": "WhatsApp",
+      "IA e Agentes": "IA",
+      "CRM e Leads": "CRM",
+      "Fluxos e automações": "WhatsApp",
+      "Financeiro / Cobrança": "Financeiro",
+      "Planos e cancelamento": "Financeiro",
+      "Relatórios e métricas": "Operacional",
+      "Falar com suporte humano": "Outro",
+    };
+    return category || (triage.category ? map[triage.category] : "") || "Outro";
+  };
+
+  const autoOpenEscalation = async (resolvedTicketId: string, inferredCategory: string) => {
+    const { data: escResp, error } = await supabase.functions.invoke("support-escalate", {
+      body: { ticketId: resolvedTicketId, name: name.trim(), email: email.trim(), phone: phone.trim() || null, extra: null, category: inferredCategory },
+    });
+    if (error) throw error;
+    if (escResp?.ticketNumber) setTicketNumber(escResp.ticketNumber);
+    try { localStorage.removeItem(FORM_KEY); } catch {}
+    setWasEscalated(true);
+    setMessages((prev) => [...prev, {
+      role: "ai",
+      content: `✅ Pronto${name.trim() ? `, **${name.trim().split(/\s+/)[0]}**` : ""}! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nO time já recebeu o histórico completo da conversa. Antes de finalizar, como você avalia meu atendimento até aqui? ⭐`,
+    }]);
+    setPhase("rate");
   };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
@@ -639,22 +671,12 @@ export function WianChat() {
       }
 
       if (data.escalate) {
-        setPhase("collect-info");
-        // pré-seleciona categoria a partir da triagem
-        if (triage.category && !category) {
-          const map: Record<string, string> = {
-            "Campanhas e disparos": "Campanhas",
-            "WhatsApp e conexões": "WhatsApp",
-            "Meta API Oficial": "WhatsApp",
-            "IA e Agentes": "IA",
-            "CRM e Leads": "CRM",
-            "Fluxos e automações": "WhatsApp",
-            "Financeiro / Cobrança": "Financeiro",
-            "Planos e cancelamento": "Financeiro",
-            "Relatórios e métricas": "Operacional",
-            "Falar com suporte humano": "Outro",
-          };
-          setCategory(map[triage.category] || "Outro");
+        const inferredCategory = inferTicketCategory();
+        setCategory(inferredCategory);
+        if (data.ticketId && name.trim() && email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+          await autoOpenEscalation(data.ticketId, inferredCategory);
+        } else {
+          setPhase("collect-info");
         }
       } else if (data.phase === "solution" || data.phase === "waiting_user_confirmation") {
         // Só pede "funcionou?" se não houver ação pendente aguardando confirmação
@@ -726,7 +748,7 @@ export function WianChat() {
       setPhase("chat");
       setMessages((prev) => [
         ...prev,
-        { role: "ai", content: "Não funcionou? Me conta o que aconteceu (em qual passo travou, apareceu alguma mensagem de erro?) que eu tento outro caminho." },
+        { role: "ai", content: `${name.trim() ? `Entendi, **${name.trim().split(/\s+/)[0]}**. ` : "Entendi. "}Me conta o que aconteceu (em qual passo travou, apareceu alguma mensagem de erro?) que eu tento outro caminho.` },
       ]);
     }
   };

@@ -91,6 +91,8 @@ Sua missão é resolver dúvidas e problemas de clientes e usuários da Wiize co
 
 # Como falar com o usuário (humanização)
 - Se você souber o **nome do usuário** (bloco USUÁRIO), use o **primeiro nome** com naturalidade — sem exageros (1x na saudação, eventualmente em momentos-chave). Nunca em toda mensagem.
+- Em momentos de conexão emocional, frustração, confirmação de ação ou escalada, prefira chamar pelo primeiro nome quando disponível (ex.: "Entendi, Caio...").
+- Quando estiver se referindo diretamente ao cliente/lead/pessoa atendida, use o nome se ele estiver disponível. Não use "o lead" se houver nome.
 - Trate como conversa de WhatsApp, não e-mail formal.
 
 # Formatação das mensagens (MUITO IMPORTANTE)
@@ -109,13 +111,14 @@ Sua missão é resolver dúvidas e problemas de clientes e usuários da Wiize co
 # Marcadores obrigatórios (SEMPRE no FINAL, em linha separada)
 - \`[INVESTIGANDO]\` — perguntas/diagnóstico. NÃO pergunte se resolveu.
 - \`[SOLUCAO]\` — solução entregue, perguntando se funcionou.
-- \`[ESCALAR_HUMANO]\` — abrir chamado humano (responda APENAS este marcador).
+- \`[ESCALAR_HUMANO]\` — abrir chamado humano. Se usar este marcador, explique em 1 frase curta que vai acionar o time e deixe o marcador no final.
 
 Esses marcadores serão removidos antes de exibir. NUNCA esqueça de incluir um.
 
 # Veracidade
 - NUNCA invente números, prazos, valores, limites, recursos. Só cite específicos se LITERAL no CONTEXTO.
 - Se não tem certeza, fale geral OU pergunte mais OU escale.
+- NUNCA diga "vou abrir um chamado", "vou escalar", "vou conectar com humano" ou parecido sem terminar com \`[ESCALAR_HUMANO]\`.
 - Não cite IDs internos nem "knowledge base".
 
 # Vídeos passo a passo
@@ -455,6 +458,7 @@ ${hasTriedSteps ? `Solução já apresentada: ${triedSolution || "-"}\nPassos j�
 REGRAS OBRIGATÓRIAS POR CAUSA DA TRIAGEM:
 1. NUNCA pergunte "qual tema?" ou "do que se trata?" — o tema JÁ É "${category}". Mantenha-se nele.
 2. NUNCA ofereça opções fora desse tema (ex: se categoria é "WhatsApp e conexões", não pergunte se é sobre leads/CRM/financeiro).
+   Exceção: se a mensagem atual citar excluir/remover/deletar número ou conexão WhatsApp, trate como problema de WhatsApp/conexões e use get_whatsapp_connections + ação apropriada.
 3. Se a mensagem do user for vaga ("não consigo gerar nada", "não funciona", "como faço"), interprete-a DENTRO de "${category}" e:
    a) Se autenticado: chame as tools relacionadas a "${category}" ANTES de perguntar (ex: categoria conexões → get_whatsapp_connections; campanhas → get_active_campaigns; aquecimento → get_warming_status).
    b) Só depois faça no MÁXIMO 1 pergunta curta e específica do tema.
@@ -476,6 +480,14 @@ REGRAS OBRIGATÓRIAS POR CAUSA DA TRIAGEM:
     const triageCat = (triageContext as any)?.category || "";
     const kbBlock = WIAN_KB[triageCat] ? `\n\n--- CONHECIMENTO DO PRODUTO (${triageCat}) ---\n${WIAN_KB[triageCat]}` : "";
 
+    const normalizedMessage = message.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const destructiveWhatsappIntent =
+      /\b(excluir|deletar|remover|apagar|recriar|reconectar)\b/.test(normalizedMessage) &&
+      /\b(numero|whatsapp|conexao|conexoes|qr|instancia)\b/.test(normalizedMessage);
+    const intentBlock = destructiveWhatsappIntent
+      ? `\n\n--- INTENÇÃO OPERACIONAL DETECTADA ---\nO usuário está falando de excluir/recriar/reconectar número ou conexão WhatsApp. Se autenticado, você DEVE chamar get_whatsapp_connections agora. Depois:\n- intenção de excluir/remover/deletar/apagar de vez → delete_whatsapp_connection;\n- intenção de recriar/resetar/reconectar para novo QR → reconnect_whatsapp;\n- se houver mais de uma conexão e não der para identificar o número, pergunte qual número.\nNão responda com dica genérica de cache/navegador antes de usar as tools.`
+      : "";
+
     // Tools só para usuários autenticados
     const toolsEnabled = !!userId;
     const toolsBlock = toolsEnabled
@@ -491,6 +503,9 @@ Você tem TOOLS pra investigar a conta REAL do usuário e executar ações. RESO
    - "leads sumiram" → get_crm_summary + get_recent_leads
 2. **NUNCA INVENTE** dados. Se não chamou tool, não afirme estado da conta.
 3. **AÇÕES (mutações)**: chame SEM confirmed primeiro → mostre o summary retornado → aguarde "sim/confirmo" do user → só então re-chame com confirmed:true.
+   - Se o usuário pedir "excluir número", "deletar conexão", "remover WhatsApp" ou disser que não consegue excluir: use delete_whatsapp_connection quando a intenção for exclusão definitiva; use reconnect_whatsapp quando a intenção for limpar a instância antiga e criar outra para novo QR.
+   - Antes dessas ações, chame get_whatsapp_connections para identificar o número. Se houver só 1 conexão compatível, pode pedir confirmação direta. Se houver várias, pergunte qual número antes de executar.
+   - NÃO substitua uma ação disponível por orientação genérica de cache/navegador.
 4. Telefones nas tools vêm mascarados; é normal.
 
 ## QUANDO USAR CADA AÇÃO
@@ -520,11 +535,12 @@ Só use [ESCALAR_HUMANO] quando:
 (b) bug de código confirmado por get_recent_frontend_errors (use bloco de diagnóstico acima);
 (c) cobrança/billing/conta bloqueada que tools não resolvem;
 (d) 2+ tentativas suas falharam de verdade.
-Antes de escalar, SEMPRE chame as tools relevantes pra colher contexto e incluir no resumo.`
+Antes de escalar, SEMPRE chame as tools relevantes pra colher contexto e incluir no resumo.
+Se decidir escalar, termine a resposta com [ESCALAR_HUMANO]; isso é o gatilho técnico que abre o fluxo de chamado. Sem esse marcador, o chamado NÃO abre.`
       : "";
 
     const messages: any[] = [
-      { role: "system", content: `${SYSTEM_BASE}${userBlock}${summaryBlock}\n\nCONTEXTO:${context}${kbBlock}${triageBlock}${toolsBlock}` },
+      { role: "system", content: `${SYSTEM_BASE}${userBlock}${summaryBlock}\n\nCONTEXTO:${context}${kbBlock}${triageBlock}${intentBlock}${toolsBlock}` },
       ...history.slice(-historySize).map((m: any) => ({ role: m.role === "ai" ? "assistant" : m.role, content: m.content })),
       { role: "user", content: userContent },
     ];
@@ -590,15 +606,15 @@ Antes de escalar, SEMPRE chame as tools relevantes pra colher contexto e incluir
             const name = tc.function?.name;
             let params: any = {};
             try { params = JSON.parse(tc.function?.arguments || "{}"); } catch { params = {}; }
-            collectedToolCalls.push({ name, status: "running" });
+            const callView: { name: string; status: "running" | "done" | "error"; summary?: string; pending?: any } = { name, status: "running" };
+            collectedToolCalls.push(callView);
             const r = await callWianTool(auth || "", name, params);
-            const last = collectedToolCalls[collectedToolCalls.length - 1];
-            if (r?.error) { last.status = "error"; last.summary = r.error; }
+            if (r?.error) { callView.status = "error"; callView.summary = r.error; }
             else if (r?.requires_confirmation) {
-              last.status = "done";
-              last.summary = r.summary;
-              last.pending = { tool: r.action, params: r.action_params };
-            } else { last.status = "done"; }
+              callView.status = "done";
+              callView.summary = r.summary;
+              callView.pending = { tool: r.action, params: r.action_params };
+            } else { callView.status = "done"; }
             return { tool_call_id: tc.id, role: "tool", name, content: JSON.stringify(r) };
           }),
         );
@@ -628,6 +644,14 @@ Antes de escalar, SEMPRE chame as tools relevantes pra colher contexto e incluir
     const frustrationEscalate = newFrustration >= 60;
     let shouldEscalate = mustEscalate || explicitEscalate || frustrationEscalate;
 
+    if (collectedToolCalls.some((t) => t.pending)) {
+      shouldEscalate = false;
+      if (!answer || explicitEscalate) {
+        const pendingSummary = collectedToolCalls.find((t) => t.pending)?.summary || "Essa ação precisa da sua confirmação antes de eu executar.";
+        answer = `${firstName ? `${firstName}, ` : ""}${pendingSummary}\n\nSe estiver tudo certo, confirme abaixo que eu executo por aqui.`;
+      }
+    }
+
     // Decide nova fase
     let nextPhase: string;
     if (shouldEscalate) nextPhase = "escalated";
@@ -637,8 +661,8 @@ Antes de escalar, SEMPRE chame as tools relevantes pra colher contexto e incluir
 
     if (shouldEscalate) {
       answer = frustrationEscalate && !explicitEscalate
-        ? "Percebi que isso está sendo frustrante — desculpa. Vou conectar você com alguém da nossa equipe humana agora pra resolver direto."
-        : "Esse caso precisa de uma análise mais detalhada da nossa equipe. Vou conectar você com um humano agora.";
+        ? `${firstName ? `${firstName}, ` : ""}percebi que isso está sendo frustrante — desculpa. Vou abrir um chamado para nossa equipe humana continuar com todo o contexto.`
+        : `${firstName ? `${firstName}, ` : ""}esse caso precisa de uma análise mais detalhada. Vou abrir um chamado para o nosso time humano continuar com todo o contexto.`;
     }
 
     await sb.from("support_messages").insert({
