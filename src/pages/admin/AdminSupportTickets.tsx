@@ -515,14 +515,27 @@ export default function AdminSupportTickets() {
 
   const responseTime = (t: Ticket) => {
     if (isAbandoned(t)) return null;
-    const end = t.resolved_at ? new Date(t.resolved_at) : new Date();
-    const ms = end.getTime() - new Date(t.created_at).getTime();
-    const minutes = ms / 60000;
-    let color = "text-success";
-    if (minutes > 60 * 24) color = "text-destructive";
-    else if (minutes > 60 * 4) color = "text-warning";
-    else if (minutes > 30) color = "text-primary";
-    return { label: formatDistanceStrict(new Date(t.created_at), end, { locale: ptBR }), color };
+    // Se resolvido/fechado: mostra tempo total que levou pra resolver
+    if (t.resolved_at && (t.status === "resolved" || t.status === "closed")) {
+      const ms = new Date(t.resolved_at).getTime() - new Date(t.created_at).getTime();
+      const minutes = ms / 60000;
+      let color = "text-success";
+      if (minutes > 60 * 24) color = "text-destructive";
+      else if (minutes > 60 * 4) color = "text-warning";
+      const label = `Resolvido em ${formatDistanceStrict(new Date(t.created_at), new Date(t.resolved_at), { locale: ptBR })}`;
+      return { label, color };
+    }
+    // Aberto: mostra prazo de retorno (due_at)
+    if (t.due_at) {
+      const due = new Date(t.due_at);
+      const now = new Date();
+      const overdue = due.getTime() < now.getTime();
+      const label = overdue
+        ? `Atrasado ${formatDistanceStrict(due, now, { locale: ptBR })}`
+        : `Vence em ${formatDistanceStrict(now, due, { locale: ptBR })}`;
+      return { label, color: overdue ? "text-destructive" : "text-warning" };
+    }
+    return null;
   };
 
   const dueBadge = (t: Ticket) => {
