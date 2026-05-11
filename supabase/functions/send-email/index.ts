@@ -14,7 +14,12 @@ const BRAND = {
   url: "https://wiize.com.br",
   logo: "https://lqfqnqfeuneorxocybru.supabase.co/storage/v1/object/public/avatars/email/logo_wiize.png",
   from: "Wiize <no-reply@wiize.com.br>",
+  replyTo: "suporte@wiize.com.br",
+  address: "Wiize, São Paulo, SP, Brasil",
 };
+
+const FROM_ADDRESS = "no-reply@wiize.com.br";
+const MAILTO_UNSUBSCRIBE = "suporte@wiize.com.br";
 
 function baseLayout(title: string, body: string, preheader?: string): string {
   // Hidden preheader trick: shows in email client preview, invisible in body
@@ -191,9 +196,10 @@ function templateAdminBroadcast(payload: Record<string, unknown>): TemplateResul
 </td></tr>
 <!-- FOOTER FIXO -->
 <tr><td style="padding:20px 32px;background:#fafafa;text-align:center;border-top:1px solid #e4e4e7;">
-  <p style="margin:0 0 6px;font-size:12px;color:#a1a1aa;font-weight:600;">Este é um e-mail automático — por favor, não responda.</p>
+  <p style="margin:0 0 6px;font-size:12px;color:#71717a;font-weight:600;">Você está recebendo este e-mail porque tem conta ou demonstrou interesse na Wiize.</p>
   <p style="margin:0 0 4px;font-size:11px;color:#a1a1aa;">Enviado por <strong>${BRAND.name}</strong> • <a href="${BRAND.url}" style="color:${BRAND.color};text-decoration:none;">${BRAND.url.replace('https://', '')}</a></p>
-  <p style="margin:0;font-size:11px;color:#a1a1aa;"><a href="${BRAND.url}/profile" style="color:${BRAND.color};text-decoration:none;">Gerenciar preferências de e-mail</a></p>
+  <p style="margin:0 0 4px;font-size:11px;color:#a1a1aa;">${BRAND.address}</p>
+  <p style="margin:0;font-size:11px;color:#a1a1aa;"><a href="${BRAND.url}/profile" style="color:${BRAND.color};text-decoration:none;">Gerenciar preferências de e-mail</a> • <a href="mailto:${MAILTO_UNSUBSCRIBE}?subject=Remover%20meu%20email%20da%20Wiize" style="color:${BRAND.color};text-decoration:none;">Descadastrar</a></p>
 </td></tr>
 </table>
 </td></tr>
