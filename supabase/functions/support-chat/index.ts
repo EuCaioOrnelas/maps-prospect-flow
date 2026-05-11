@@ -631,6 +631,10 @@ Se decidir escalar, termine a resposta com [ESCALAR_HUMANO]; isso é o gatilho t
       .replace(/^ESCALAR_HUMANO$/gm, "")
       .trim();
 
+    // Frustration override: se score >= 60, força escalonamento mesmo sem o modelo pedir
+    const frustrationEscalate = newFrustration >= 60;
+    let shouldEscalate = mustEscalate || explicitEscalate || frustrationEscalate;
+
     if (collectedToolCalls.some((t) => t.pending)) {
       shouldEscalate = false;
       if (!answer || explicitEscalate) {
@@ -638,10 +642,6 @@ Se decidir escalar, termine a resposta com [ESCALAR_HUMANO]; isso é o gatilho t
         answer = `${firstName ? `${firstName}, ` : ""}${pendingSummary}\n\nSe estiver tudo certo, confirme abaixo que eu executo por aqui.`;
       }
     }
-
-    // Frustration override: se score >= 60, força escalonamento mesmo sem o modelo pedir
-    const frustrationEscalate = newFrustration >= 60;
-    let shouldEscalate = mustEscalate || explicitEscalate || frustrationEscalate;
 
     // Decide nova fase
     let nextPhase: string;
