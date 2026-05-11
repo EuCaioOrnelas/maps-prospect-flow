@@ -207,17 +207,23 @@ export default function AdminSupportIntelligence() {
     const avgNps = npsList.length ? Math.round((npsList.reduce((a, b) => a + b, 0) / npsList.length) * 10) / 10 : null;
 
     // Tempo médio de resolução (h)
-    const resolvedWithTime = tickets.filter((t) => t.resolved_at && t.created_at);
+    const resolvedWithTime = tickets
+      .filter(isResolved)
+      .map((t) => {
+        const end = t.resolved_at || resolutionEventsByTicket.get(t.id) || (t.status === "resolved" || t.status === "closed" ? t.updated_at : null);
+        if (!end || !t.created_at) return null;
+        const ms = new Date(end).getTime() - new Date(t.created_at).getTime();
+        return Number.isFinite(ms) && ms >= 0 ? ms : null;
+      })
+      .filter((ms): ms is number => ms != null);
     const avgResolutionHours = resolvedWithTime.length
-      ? Math.round(
-          resolvedWithTime.reduce((s, t) => s + (new Date(t.resolved_at!).getTime() - new Date(t.created_at).getTime()), 0) /
-          resolvedWithTime.length / 3600000 * 10,
-        ) / 10
+      ? Math.round((resolvedWithTime.reduce((s, ms) => s + ms, 0) / resolvedWithTime.length / 3600000) * 10) / 10
       : null;
 
-    const aiRate = total > 0 ? Math.round((aiResolved / total) * 100) : 0;
+    const resolvable = resolved + escalated;
+    const aiRate = resolvable > 0 ? Math.round((aiResolved / resolvable) * 100) : 0;
     return { total, open, escalated, resolved, aiResolved, avgFrust, avgNps, avgResolutionHours, aiRate };
-  }, [tickets, ratingsByTicket]);
+  }, [tickets, ratingsByTicket, resolutionEventsByTicket]);
 
   const byCategory: CategoryStat[] = useMemo(() => {
     const map = new Map<string, CategoryStat>();
