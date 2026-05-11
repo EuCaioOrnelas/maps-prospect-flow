@@ -188,7 +188,6 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
         console.info("[AdminEmailTests] Broadcast test sent", sendResult);
         onBroadcastSent?.();
       } else {
-        // Client-side sending with progress
         const { eligible, skipped } = await getFilteredUserIds();
 
         if (eligible.length === 0) {
@@ -197,50 +196,26 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
           return;
         }
 
-        // For churned segment, delegate to admin-broadcast since we don't have user details
-        if (segment === "churned") {
-          const { data, error } = await supabase.functions.invoke("admin-broadcast", {
-            body: { subject: subject.trim(), content: buildBroadcastContent(htmlContent, false), segment, score_level: scoreLevel },
-          });
-          if (error) throw error;
-          const res = data as { sent?: number; failed?: number; skipped?: number };
-          setResult({ sent: res.sent || 0, failed: res.failed || 0, skipped: res.skipped || 0 });
-          toast({ title: `✅ Broadcast concluído: ${res.sent || 0} enviados` });
-          onBroadcastSent?.();
-          setSending(false);
-          setProgress(null);
-          return;
-        }
-
-        const batchTimestamp = Date.now();
-        let sent = 0, failed = 0;
         setProgress({ current: 0, total: eligible.length, startedAt: Date.now() });
 
-        for (let i = 0; i < eligible.length; i++) {
-          const u = eligible[i];
-          if (i > 0) await new Promise(r => setTimeout(r, 650));
+        const { data, error } = await supabase.functions.invoke("admin-broadcast", {
+          body: {
+            subject: subject.trim(),
+            content: buildBroadcastContent(htmlContent, false),
+            segment,
+            score_level: scoreLevel,
+          },
+        });
+        if (error) throw error;
 
-          try {
-            const { data: sendData, error: sendErr } = await supabase.functions.invoke("send-email", {
-              body: {
-                user_id: u.id,
-                email_type: "ADMIN_BROADCAST",
-                payload: { subject: subject.trim(), content: buildBroadcastContent(htmlContent, false) },
-                idempotency_key: `broadcast_${batchTimestamp}_${crypto.randomUUID()}_${u.id}`,
-              },
-            });
-            if (sendErr) throw sendErr;
-            validateSendEmailResult(sendData);
-            sent++;
-          } catch (err) {
-            console.error("[AdminEmailTests] Broadcast recipient failed", u.email, err);
-            failed++;
-          }
+        const res = data as { sent?: number; failed?: number; skipped?: number; error?: string };
+        if (res.error) throw new Error(res.error);
+        const sent = res.sent || 0;
+        const failed = res.failed || 0;
+        const skippedTotal = res.skipped ?? skipped;
 
-          setProgress(prev => prev ? { ...prev, current: i + 1 } : null);
-        }
-
-        setResult({ sent, failed, skipped });
+        setProgress({ current: eligible.length, total: eligible.length, startedAt: Date.now() });
+        setResult({ sent, failed, skipped: skippedTotal });
         toast({ title: `✅ Broadcast concluído: ${sent} enviados, ${failed} erros` });
         onBroadcastSent?.();
       }
