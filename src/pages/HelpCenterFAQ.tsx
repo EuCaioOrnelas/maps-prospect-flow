@@ -7,6 +7,29 @@ import { Logo } from "@/components/Logo";
 import { SEO } from "@/components/SEO";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
+const normalizeMd = (s: string) =>
+  (s ?? "")
+    .replace(/\\r\\n/g, "\n")
+    .replace(/\\n/g, "\n")
+    .replace(/\\t/g, "  ");
+
+const FaqAnswer = ({ children, className }: { children: string; className?: string }) => (
+  <div
+    className={cn(
+      "prose prose-sm sm:prose-base max-w-none text-muted-foreground",
+      "prose-p:my-2 prose-headings:text-foreground prose-strong:text-foreground prose-strong:font-semibold",
+      "prose-li:my-0.5 prose-ul:my-2 prose-ol:my-2",
+      "prose-a:text-primary hover:prose-a:underline",
+      "prose-code:text-foreground prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none",
+      className
+    )}
+  >
+    <ReactMarkdown remarkPlugins={[remarkGfm]}>{normalizeMd(children)}</ReactMarkdown>
+  </div>
+);
 
 const ICON_MAP: Record<string, any> = {
   Brain, MessageSquare, CreditCard, Shield, Flame, Bot, Target,
