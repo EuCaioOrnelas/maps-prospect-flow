@@ -325,7 +325,7 @@ export default function AdminSupportTickets() {
           : (t.email
               ? supabase.from("profiles").select("plan").ilike("email", t.email).maybeSingle()
               : Promise.resolve({ data: null } as any)),
-        supabase.from("support_ratings").select("*").eq("ticket_id", t.id).order("created_at", { ascending: false }).maybeSingle(),
+        supabase.from("support_ratings").select("*").eq("ticket_id", t.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       ]);
       if (msgErr) throw msgErr;
       setMessages((msgs as Message[]) || []);
