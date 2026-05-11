@@ -465,11 +465,12 @@ export function WianChat() {
     setActiveCategory(null);
     setActiveSolution(null);
     setCategory("Outro");
+    const firstName = name.trim() ? name.trim().split(/\s+/)[0] : "";
     respondAfterTyping(
       { role: "user", content: "Quero abrir um chamado direto com o time" },
       [{
         role: "ai",
-        content: "Claro! Vou abrir um chamado para o nosso time humano. Preencha os dados abaixo 👇",
+        content: `${firstName ? `Claro, **${firstName}**. ` : "Claro! "}Vou abrir um chamado para o nosso time humano. Preencha os dados abaixo 👇`,
       }],
       () => setPhase("collect-info"),
     );
@@ -491,7 +492,7 @@ export function WianChat() {
       { role: "user", content: subTitle },
       [{
         role: "ai",
-        content: `Claro! Me conta com mais detalhes a sua dúvida sobre **${cat.label}** — o que você está tentando fazer, em qual tela está, e o que não está claro. Vou te explicar passo a passo. 🙂`,
+        content: `${name.trim() ? `Claro, **${name.trim().split(/\s+/)[0]}**. ` : "Claro! "}Me conta com mais detalhes a sua dúvida sobre **${cat.label}** — o que você está tentando fazer, em qual tela está, e o que não está claro. Vou te explicar passo a passo. 🙂`,
       }],
       () => setPhase("chat"),
     );
@@ -747,7 +748,7 @@ export function WianChat() {
       setPhase("chat");
       setMessages((prev) => [
         ...prev,
-        { role: "ai", content: "Não funcionou? Me conta o que aconteceu (em qual passo travou, apareceu alguma mensagem de erro?) que eu tento outro caminho." },
+        { role: "ai", content: `${name.trim() ? `Entendi, **${name.trim().split(/\s+/)[0]}**. ` : "Entendi. "}Me conta o que aconteceu (em qual passo travou, apareceu alguma mensagem de erro?) que eu tento outro caminho.` },
       ]);
     }
   };
