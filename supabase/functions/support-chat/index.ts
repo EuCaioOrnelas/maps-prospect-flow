@@ -652,8 +652,8 @@ Se decidir escalar, termine a resposta com [ESCALAR_HUMANO]; isso é o gatilho t
 
     if (shouldEscalate) {
       answer = frustrationEscalate && !explicitEscalate
-        ? "Percebi que isso está sendo frustrante — desculpa. Vou conectar você com alguém da nossa equipe humana agora pra resolver direto."
-        : "Esse caso precisa de uma análise mais detalhada da nossa equipe. Vou conectar você com um humano agora.";
+        ? `${firstName ? `${firstName}, ` : ""}percebi que isso está sendo frustrante — desculpa. Vou abrir um chamado para nossa equipe humana continuar com todo o contexto.`
+        : `${firstName ? `${firstName}, ` : ""}esse caso precisa de uma análise mais detalhada. Vou abrir um chamado para o nosso time humano continuar com todo o contexto.`;
     }
 
     await sb.from("support_messages").insert({
