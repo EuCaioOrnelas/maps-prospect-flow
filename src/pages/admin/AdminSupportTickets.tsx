@@ -909,13 +909,13 @@ export default function AdminSupportTickets() {
                     <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[80%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
                         m.role === "user"
-                          ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100"
+                          ? "bg-primary text-primary-foreground"
                           : m.role === "ai"
-                            ? "bg-muted text-foreground"
-                            : "bg-primary/10 text-foreground border border-primary/30"
+                            ? "bg-muted text-foreground border border-border"
+                            : "bg-accent text-accent-foreground border border-border"
                       }`}>
-                        <div className="text-[10px] uppercase tracking-wide opacity-60 mb-1 flex items-center gap-1">
-                          {m.role}
+                        <div className={`text-[10px] uppercase tracking-wide mb-1 flex items-center gap-1 ${m.role === "user" ? "opacity-90" : "opacity-60"}`}>
+                          {m.role === "user" ? "Cliente" : m.role === "ai" ? "Wian (IA)" : m.role}
                           {m.metadata?.has_image && <ImageIcon className="w-3 h-3" />}
                         </div>
                         {m.content}
