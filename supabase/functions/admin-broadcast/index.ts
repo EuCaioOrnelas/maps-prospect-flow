@@ -464,7 +464,6 @@ Deno.serve(async (req) => {
                 headers: {
                   "X-Entity-Ref-ID": `${batchId}_${targetUser.email}`,
                   "List-Unsubscribe": `<mailto:${SUPPORT_EMAIL}?subject=Remover%20${encodeURIComponent(targetUser.email)}%20dos%20emails%20Wiize>`,
-                  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
                 },
               }),
             });
