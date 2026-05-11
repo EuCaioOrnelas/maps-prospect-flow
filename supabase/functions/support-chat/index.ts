@@ -483,10 +483,13 @@ REGRAS OBRIGATÓRIAS POR CAUSA DA TRIAGEM:
 
     const normalizedMessage = message.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const destructiveWhatsappIntent =
-      /\b(excluir|deletar|remover|apagar|recriar|reconectar)\b/.test(normalizedMessage) &&
+      /\b(excluir|deletar|remover|apagar|recriar|reconectar|desconectar|desconectarr)\b/.test(normalizedMessage) &&
       /\b(numero|whatsapp|conexao|conexoes|qr|instancia)\b/.test(normalizedMessage);
-    const intentBlock = destructiveWhatsappIntent
-      ? `\n\n--- INTENÇÃO OPERACIONAL DETECTADA ---\nO usuário está falando de excluir/recriar/reconectar número ou conexão WhatsApp. Se autenticado, você DEVE chamar get_whatsapp_connections agora. Depois:\n- intenção de excluir/remover/deletar/apagar de vez → delete_whatsapp_connection;\n- intenção de recriar/resetar/reconectar para novo QR → reconnect_whatsapp;\n- se houver mais de uma conexão e não der para identificar o número, pergunte qual número.\nNão responda com dica genérica de cache/navegador antes de usar as tools.`
+    // "consegue/pode fazer pra mim?" — pedido explícito de ação
+    const askAgentToDo = /\b(consegue|pode|poderia|conseguiria|da pra voce|da pra vc|faz pra mim|faca pra mim|excluir pra mim|deletar pra mim|resolve pra mim)\b/.test(normalizedMessage);
+    const actionableIntent = destructiveWhatsappIntent || (askAgentToDo && toolsEnabledHint(userId));
+    const intentBlock = destructiveWhatsappIntent || askAgentToDo
+      ? `\n\n--- INTENÇÃO OPERACIONAL DETECTADA ---\nO usuário está pedindo AÇÃO direta na conta dele${askAgentToDo ? " (\"consegue fazer pra mim?\")" : ""}. NÃO escale para humano. NÃO abra chamado. Use as tools AGORA:\n1. Chame get_whatsapp_connections para identificar o número.\n2. Em seguida, com base na intenção:\n   - excluir/remover/deletar/apagar/desconectar de vez → delete_whatsapp_connection (sem confirmed primeiro → mostra summary → user confirma → re-chama com confirmed:true);\n   - recriar/resetar/reconectar para novo QR → reconnect_whatsapp (mesmo fluxo de confirmação);\n3. Se houver mais de uma conexão e não der para identificar o número, pergunte qual número antes de agir.\nNão responda com dica genérica nem abra chamado quando a tool resolve.`
       : "";
 
     // Tools só para usuários autenticados
