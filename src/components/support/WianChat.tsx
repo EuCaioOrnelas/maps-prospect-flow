@@ -545,6 +545,37 @@ export function WianChat() {
     if (ok.length) setPendingAttachments((prev) => [...prev, ...ok]);
   };
 
+  const inferTicketCategory = () => {
+    const map: Record<string, string> = {
+      "Campanhas e disparos": "Campanhas",
+      "WhatsApp e conexões": "WhatsApp",
+      "Meta API Oficial": "WhatsApp",
+      "IA e Agentes": "IA",
+      "CRM e Leads": "CRM",
+      "Fluxos e automações": "WhatsApp",
+      "Financeiro / Cobrança": "Financeiro",
+      "Planos e cancelamento": "Financeiro",
+      "Relatórios e métricas": "Operacional",
+      "Falar com suporte humano": "Outro",
+    };
+    return category || (triage.category ? map[triage.category] : "") || "Outro";
+  };
+
+  const autoOpenEscalation = async (resolvedTicketId: string, inferredCategory: string) => {
+    const { data: escResp, error } = await supabase.functions.invoke("support-escalate", {
+      body: { ticketId: resolvedTicketId, name: name.trim(), email: email.trim(), phone: phone.trim() || null, extra: null, category: inferredCategory },
+    });
+    if (error) throw error;
+    if (escResp?.ticketNumber) setTicketNumber(escResp.ticketNumber);
+    try { localStorage.removeItem(FORM_KEY); } catch {}
+    setWasEscalated(true);
+    setMessages((prev) => [...prev, {
+      role: "ai",
+      content: `✅ Pronto${name.trim() ? `, **${name.trim().split(/\s+/)[0]}**` : ""}! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nO time já recebeu o histórico completo da conversa. Antes de finalizar, como você avalia meu atendimento até aqui? ⭐`,
+    }]);
+    setPhase("rate");
+  };
+
   const handlePaste = async (e: React.ClipboardEvent) => {
     const items = Array.from(e.clipboardData?.items ?? []);
     const files: File[] = [];
