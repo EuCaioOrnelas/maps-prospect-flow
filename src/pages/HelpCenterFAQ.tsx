@@ -540,7 +540,36 @@ const HelpCenterFAQ = () => {
             </div>
           </div>
 
-          {filteredQuestions ? (
+          {loading ? (
+            <div className="flex flex-col md:flex-row gap-6 lg:gap-8 animate-pulse">
+              <aside className="md:w-64 lg:w-72 shrink-0">
+                <div className="h-3 w-16 bg-muted rounded mb-3 ml-3" />
+                <nav className="flex md:flex-col gap-1">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="h-10 bg-muted/60 rounded-lg" />
+                  ))}
+                </nav>
+              </aside>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-8 pb-5 border-b border-border/50">
+                  <div className="h-6 w-6 bg-muted rounded" />
+                  <div className="h-8 w-56 bg-muted rounded" />
+                </div>
+                <div className="space-y-8">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i}>
+                      <div className="h-5 w-3/4 bg-muted rounded mb-3" />
+                      <div className="border-l-2 border-primary/20 pl-4 ml-1 space-y-2">
+                        <div className="h-3 w-full bg-muted/70 rounded" />
+                        <div className="h-3 w-11/12 bg-muted/70 rounded" />
+                        <div className="h-3 w-2/3 bg-muted/70 rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : filteredQuestions ? (
             <div className="max-w-3xl mx-auto space-y-4">
               {filteredQuestions.length === 0 ? (
                 <p className="text-center text-muted-foreground py-12">
