@@ -888,8 +888,8 @@ export function WianChat() {
     }
   };
 
-  const RESET_LIMIT = 9999; // TODO: voltar para 3 após testes
-  const RESET_WINDOW_MS = 60 * 60 * 1000;
+  const RESET_LIMIT = 3;
+  const RESET_WINDOW_MS = 10 * 60 * 1000;
   const RESET_KEY = "wian_chat_resets_v1";
 
   const [blockedUntil, setBlockedUntil] = useState<number | null>(null);
@@ -1355,7 +1355,7 @@ export function WianChat() {
             <div className="space-y-1">
               <p className="text-sm font-semibold text-foreground">Chat temporariamente bloqueado</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Você atingiu o limite de <strong>{RESET_LIMIT} reinícios por hora</strong>. Para evitar abusos e proteger
+                Você atingiu o limite de <strong>{RESET_LIMIT} reinícios a cada 10 minutos</strong>. Para evitar abusos e proteger
                 o atendimento, o chat será liberado automaticamente em{' '}
                 <strong className="text-foreground">
                   {Math.max(1, Math.ceil((blockedUntil - Date.now()) / 60000))} min
