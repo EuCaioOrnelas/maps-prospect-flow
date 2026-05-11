@@ -598,15 +598,15 @@ Se decidir escalar, termine a resposta com [ESCALAR_HUMANO]; isso é o gatilho t
             const name = tc.function?.name;
             let params: any = {};
             try { params = JSON.parse(tc.function?.arguments || "{}"); } catch { params = {}; }
-            collectedToolCalls.push({ name, status: "running" });
+            const callView: { name: string; status: "running" | "done" | "error"; summary?: string; pending?: any } = { name, status: "running" };
+            collectedToolCalls.push(callView);
             const r = await callWianTool(auth || "", name, params);
-            const last = collectedToolCalls[collectedToolCalls.length - 1];
-            if (r?.error) { last.status = "error"; last.summary = r.error; }
+            if (r?.error) { callView.status = "error"; callView.summary = r.error; }
             else if (r?.requires_confirmation) {
-              last.status = "done";
-              last.summary = r.summary;
-              last.pending = { tool: r.action, params: r.action_params };
-            } else { last.status = "done"; }
+              callView.status = "done";
+              callView.summary = r.summary;
+              callView.pending = { tool: r.action, params: r.action_params };
+            } else { callView.status = "done"; }
             return { tool_call_id: tc.id, role: "tool", name, content: JSON.stringify(r) };
           }),
         );
