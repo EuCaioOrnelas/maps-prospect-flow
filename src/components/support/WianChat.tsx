@@ -670,22 +670,12 @@ export function WianChat() {
       }
 
       if (data.escalate) {
-        setPhase("collect-info");
-        // pré-seleciona categoria a partir da triagem
-        if (triage.category && !category) {
-          const map: Record<string, string> = {
-            "Campanhas e disparos": "Campanhas",
-            "WhatsApp e conexões": "WhatsApp",
-            "Meta API Oficial": "WhatsApp",
-            "IA e Agentes": "IA",
-            "CRM e Leads": "CRM",
-            "Fluxos e automações": "WhatsApp",
-            "Financeiro / Cobrança": "Financeiro",
-            "Planos e cancelamento": "Financeiro",
-            "Relatórios e métricas": "Operacional",
-            "Falar com suporte humano": "Outro",
-          };
-          setCategory(map[triage.category] || "Outro");
+        const inferredCategory = inferTicketCategory();
+        setCategory(inferredCategory);
+        if (data.ticketId && name.trim() && email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+          await autoOpenEscalation(data.ticketId, inferredCategory);
+        } else {
+          setPhase("collect-info");
         }
       } else if (data.phase === "solution" || data.phase === "waiting_user_confirmation") {
         // Só pede "funcionou?" se não houver ação pendente aguardando confirmação
