@@ -67,6 +67,32 @@ function BroadcastTab() {
       }
 
       let sent = 0, skipped = 0, errors = 0;
+      const canUseBackendBroadcast = targetPlan !== "checkout_abandoned";
+
+      if (canUseBackendBroadcast) {
+        const segment = targetPlan === "free" ? "free_only" : targetPlan;
+        const { data, error } = await supabase.functions.invoke("admin-broadcast", {
+          body: {
+            subject,
+            content,
+            segment: segment === "all" ? "all" : segment,
+            score_level: "all",
+          },
+        });
+
+        if (error) throw error;
+        const backendResult = data as { sent?: number; failed?: number; skipped?: number; error?: string };
+        if (backendResult.error) throw new Error(backendResult.error);
+
+        setResult({
+          sent: backendResult.sent || 0,
+          skipped: backendResult.skipped || 0,
+          errors: backendResult.failed || 0,
+        });
+        toast({ title: `Broadcast enviado: ${backendResult.sent || 0} emails` });
+        return;
+      }
+
       const batchTimestamp = Date.now();
 
       for (let i = 0; i < usersToSend.length; i++) {
