@@ -484,17 +484,18 @@ function TestTab({ onEmailSent }: { onEmailSent?: () => void }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
-      const { error } = await supabase.functions.invoke("send-email", {
+      const { data, error } = await supabase.functions.invoke("send-email", {
         body: {
           user_id: user.id,
           email_type: emailType,
           payload,
-          idempotency_key: `test_${emailType}_${Date.now()}`,
+          idempotency_key: `test_${emailType}_${user.id}_${Date.now()}_${crypto.randomUUID()}`,
           override_email: TARGET_EMAIL,
         },
       });
 
       if (error) throw error;
+      validateSendEmailResult(data);
 
       setTestResults((prev) => ({ ...prev, [emailType]: "success" }));
       toast({ title: `✅ Email "${emailType}" enviado para ${TARGET_EMAIL}` });
