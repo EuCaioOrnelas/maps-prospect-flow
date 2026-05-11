@@ -15,6 +15,26 @@ import { EmailHistoryPanel } from "@/components/admin/EmailHistoryPanel";
 
 const TARGET_EMAIL = "caiowiize@gmail.com";
 
+type SendEmailResult = {
+  success?: boolean;
+  duplicate?: boolean;
+  id?: string;
+  provider_id?: string;
+  error?: string;
+  details?: unknown;
+};
+
+const validateSendEmailResult = (data: unknown): SendEmailResult => {
+  const result = (data || {}) as SendEmailResult;
+  if (result.duplicate) {
+    throw new Error("Este envio foi ignorado por duplicidade. Tente novamente em alguns segundos.");
+  }
+  if (!result.success || !result.provider_id) {
+    throw new Error(result.error || "O servidor não confirmou o envio do e-mail.");
+  }
+  return result;
+};
+
 const EMAIL_TYPES = [
   {
     type: "CAMPAIGN_SCHEDULED_STARTED",
@@ -210,17 +230,20 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
       if (!user) throw new Error("Não autenticado");
 
       if (isTest) {
-        const { error } = await supabase.functions.invoke("send-email", {
+        const { data, error } = await supabase.functions.invoke("send-email", {
           body: {
             user_id: user.id,
             email_type: "ADMIN_BROADCAST",
             payload: { subject: `[TESTE] ${subject.trim()}`, content: htmlContent },
-            idempotency_key: `test_compose_${Date.now()}`,
+            idempotency_key: `test_compose_${user.id}_${Date.now()}_${crypto.randomUUID()}`,
             override_email: TARGET_EMAIL,
           },
         });
         if (error) throw error;
+        const sendResult = validateSendEmailResult(data);
         toast({ title: `✅ Teste enviado para ${TARGET_EMAIL}` });
+        setResult({ sent: 1, failed: 0, skipped: 0 });
+        console.info("[AdminEmailTests] Broadcast test sent", sendResult);
         onBroadcastSent?.();
       } else {
         // Client-side sending with progress
@@ -256,15 +279,17 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
           if (i > 0) await new Promise(r => setTimeout(r, 650));
 
           try {
-            const { error: sendErr } = await supabase.functions.invoke("send-email", {
+            const { data: sendData, error: sendErr } = await supabase.functions.invoke("send-email", {
               body: {
                 user_id: u.id,
                 email_type: "ADMIN_BROADCAST",
                 payload: { subject: subject.trim(), content: htmlContent },
-                idempotency_key: `broadcast_${batchTimestamp}_${u.id}`,
+                idempotency_key: `broadcast_${batchTimestamp}_${crypto.randomUUID()}_${u.id}`,
               },
             });
-            if (sendErr) { failed++; } else { sent++; }
+            if (sendErr) throw sendErr;
+            validateSendEmailResult(sendData);
+            sent++;
           } catch { failed++; }
 
           setProgress(prev => prev ? { ...prev, current: i + 1 } : null);
@@ -459,17 +484,18 @@ function TestTab({ onEmailSent }: { onEmailSent?: () => void }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
-      const { error } = await supabase.functions.invoke("send-email", {
+      const { data, error } = await supabase.functions.invoke("send-email", {
         body: {
           user_id: user.id,
           email_type: emailType,
           payload,
-          idempotency_key: `test_${emailType}_${Date.now()}`,
+          idempotency_key: `test_${emailType}_${user.id}_${Date.now()}_${crypto.randomUUID()}`,
           override_email: TARGET_EMAIL,
         },
       });
 
       if (error) throw error;
+      validateSendEmailResult(data);
 
       setTestResults((prev) => ({ ...prev, [emailType]: "success" }));
       toast({ title: `✅ Email "${emailType}" enviado para ${TARGET_EMAIL}` });
