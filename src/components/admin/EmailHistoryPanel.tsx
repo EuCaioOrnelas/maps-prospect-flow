@@ -538,6 +538,7 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
 export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
   const [allLogs, setAllLogs] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
@@ -545,28 +546,25 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
 
   const loadLogs = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
-      let query = supabase.from("email_logs").select("*").order("created_at", { ascending: false }).limit(1000);
-
-      if (typeFilter !== "all") {
-        query = query.eq("email_type", typeFilter as any);
-      }
-
-      if (dateFrom) {
-        query = query.gte("created_at", dateFrom.toISOString());
-      }
-
+      let dateToIso: string | null = null;
       if (dateTo) {
         const endOfDay = new Date(dateTo);
         endOfDay.setHours(23, 59, 59, 999);
-        query = query.lte("created_at", endOfDay.toISOString());
+        dateToIso = endOfDay.toISOString();
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      setAllLogs((data as unknown as EmailLog[]) || []);
-    } catch (err) {
+      const response = await invokeAdminEmailLogs({
+        mode: "list",
+        type_filter: typeFilter,
+        date_from: dateFrom ? dateFrom.toISOString() : null,
+        date_to: dateToIso,
+      });
+      setAllLogs(response.logs || []);
+    } catch (err: any) {
       console.error("Error loading logs:", err);
+      setLoadError(err.message || "Não foi possível carregar o histórico de e-mails.");
       setAllLogs([]);
     } finally {
       setLoading(false);
@@ -736,6 +734,12 @@ export function EmailHistoryPanel({ refreshKey }: { refreshKey?: number }) {
           ? `${grouped.length} email(s) · ${allLogs.length.toLocaleString("pt-BR")} envio(s) no total`
           : "Nenhum email encontrado"}
       </p>
+
+      {loadError && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive flex items-center gap-2">
+          <AlertTriangle size={14} /> {loadError}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-12">
