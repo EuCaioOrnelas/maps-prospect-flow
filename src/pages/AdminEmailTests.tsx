@@ -18,6 +18,8 @@ const TARGET_EMAIL = "caiowiize@gmail.com";
 type SendEmailResult = {
   success?: boolean;
   duplicate?: boolean;
+  skipped?: boolean;
+  reason?: string;
   id?: string;
   provider_id?: string;
   error?: string;
@@ -28,6 +30,9 @@ const validateSendEmailResult = (data: unknown): SendEmailResult => {
   const result = (data || {}) as SendEmailResult;
   if (result.duplicate) {
     throw new Error("Este envio foi ignorado por duplicidade. Tente novamente em alguns segundos.");
+  }
+  if (result.skipped) {
+    throw new Error(`Envio ignorado pelo servidor: ${result.reason || "sem motivo informado"}.`);
   }
   if (!result.success || !result.provider_id) {
     throw new Error(result.error || "O servidor não confirmou o envio do e-mail.");
@@ -108,6 +113,17 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
   };
 
   const getEditorContent = () => editorRef.current?.innerHTML || "";
+
+  const buildBroadcastContent = (htmlContent: string, isTest: boolean) => {
+    const stamp = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+    return `
+      ${isTest ? `<p style="margin:0 0 12px;color:#3f3f46;font-size:13px;">Teste de entrega gerado em ${stamp}.</p>` : ""}
+      ${htmlContent}
+      <p style="margin:24px 0 0;color:#71717a;font-size:12px;line-height:1.6;border-top:1px solid #e4e4e7;padding-top:14px;">
+        Identificador do envio: ${crypto.randomUUID()}
+      </p>
+    `;
+  };
 
   const getPlansForSegment = (): string[] => {
     switch (segment) {
@@ -230,11 +246,12 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
       if (!user) throw new Error("Não autenticado");
 
       if (isTest) {
+        const preparedContent = buildBroadcastContent(htmlContent, true);
         const { data, error } = await supabase.functions.invoke("send-email", {
           body: {
             user_id: user.id,
             email_type: "ADMIN_BROADCAST",
-            payload: { subject: `[TESTE] ${subject.trim()}`, content: htmlContent },
+            payload: { subject: `[TESTE ${new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" })}] ${subject.trim()}`, content: preparedContent },
             idempotency_key: `test_compose_${user.id}_${Date.now()}_${crypto.randomUUID()}`,
             override_email: TARGET_EMAIL,
           },
@@ -258,7 +275,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
         // For churned segment, delegate to admin-broadcast since we don't have user details
         if (segment === "churned") {
           const { data, error } = await supabase.functions.invoke("admin-broadcast", {
-            body: { subject: subject.trim(), content: htmlContent, segment, score_level: scoreLevel },
+            body: { subject: subject.trim(), content: buildBroadcastContent(htmlContent, false), segment, score_level: scoreLevel },
           });
           if (error) throw error;
           const res = data as { sent?: number; failed?: number; skipped?: number };
@@ -283,14 +300,17 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
               body: {
                 user_id: u.id,
                 email_type: "ADMIN_BROADCAST",
-                payload: { subject: subject.trim(), content: htmlContent },
+                payload: { subject: subject.trim(), content: buildBroadcastContent(htmlContent, false) },
                 idempotency_key: `broadcast_${batchTimestamp}_${crypto.randomUUID()}_${u.id}`,
               },
             });
             if (sendErr) throw sendErr;
             validateSendEmailResult(sendData);
             sent++;
-          } catch { failed++; }
+          } catch (err) {
+            console.error("[AdminEmailTests] Broadcast recipient failed", u.email, err);
+            failed++;
+          }
 
           setProgress(prev => prev ? { ...prev, current: i + 1 } : null);
         }
