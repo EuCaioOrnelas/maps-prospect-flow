@@ -660,6 +660,10 @@ Se decidir escalar (após cumprir as regras acima), termine com [ESCALAR_HUMANO]
       .replace(/\[SOLUCAO\]/g, "")
       .replace(/\[INVESTIGANDO\]/g, "")
       .replace(/^ESCALAR_HUMANO$/gm, "")
+      // Remove horizontal rules markdown (---, ***, ___) que poluem o chat
+      .replace(/^\s*[-*_]{3,}\s*$/gm, "")
+      // Colapsa múltiplas quebras de linha resultantes
+      .replace(/\n{3,}/g, "\n\n")
       .trim();
 
     // Frustration override: se score >= 60, força escalonamento mesmo sem o modelo pedir
