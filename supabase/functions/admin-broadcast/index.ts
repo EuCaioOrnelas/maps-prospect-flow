@@ -306,10 +306,18 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") || "";
+
+    if (!supabaseUrl || !serviceRoleKey || !supabaseAnonKey) {
+      console.error("[admin-broadcast] Missing backend environment variables");
+      return new Response(JSON.stringify({ error: "Server configuration error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
@@ -396,10 +404,40 @@ Deno.serve(async (req) => {
     const batchId = `broadcast_${batchTimestamp}`;
 
     const resendKey = Deno.env.get("RESEND_API_KEY") || "";
+    if (!resendKey) {
+      console.error("[admin-broadcast] RESEND_API_KEY not configured");
+      return new Response(JSON.stringify({ error: "Email service is not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const recordBroadcastFailure = async (targetUser: BroadcastUser, idempotencyKey: string, status: number, error: string) => {
+      if (targetUser.id.startsWith("stripe_")) return;
+
+      const serializedError = JSON.stringify({ source: "admin-broadcast", status, message: error });
+      const { error: logError } = await supabase
+        .from("email_logs")
+        .upsert({
+          user_id: targetUser.id,
+          to_email: targetUser.email,
+          email_type: "ADMIN_BROADCAST",
+          status: "failed",
+          subject,
+          payload: { subject, content },
+          error_message: serializedError,
+          idempotency_key: idempotencyKey,
+        }, { onConflict: "idempotency_key" });
+
+      if (logError) {
+        console.error("[admin-broadcast] Failed to record broadcast failure:", logError);
+      }
+    };
 
     const sendWithRetry = async (targetUser: BroadcastUser) => {
       const isStripeOnly = targetUser.id.startsWith("stripe_");
       const maxAttempts = 3;
+      const idempotencyKey = `${batchId}_${targetUser.id}`;
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
@@ -432,13 +470,14 @@ Deno.serve(async (req) => {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                apikey: supabaseAnonKey,
                 Authorization: `Bearer ${serviceRoleKey}`,
               },
               body: JSON.stringify({
                 user_id: targetUser.id,
                 email_type: "ADMIN_BROADCAST",
-                payload: { subject, content },
-                idempotency_key: `${batchId}_${targetUser.id}`,
+                payload: { subject, content, reply_to: "suporte@wiize.com.br" },
+                idempotency_key: idempotencyKey,
               }),
             });
           }
@@ -450,7 +489,7 @@ Deno.serve(async (req) => {
           if (sendResponse.ok) {
             const providerId = responseJson?.provider_id || responseJson?.id || null;
             if (!providerId && !isStripeOnly) {
-              return { ok: false as const, status: 502, error: "send-email did not return provider_id" };
+              return { ok: false as const, status: 502, error: "send-email did not return provider_id", idempotency_key: idempotencyKey };
             }
             return { ok: true as const, status: sendResponse.status, provider_id: providerId };
           }
@@ -460,13 +499,13 @@ Deno.serve(async (req) => {
             await sleep(700 * attempt);
             continue;
           }
-          return { ok: false as const, status: sendResponse.status, error: errText || "unknown_error" };
+          return { ok: false as const, status: sendResponse.status, error: errText || "unknown_error", idempotency_key: idempotencyKey };
         } catch (err) {
           if (attempt < maxAttempts) { await sleep(700 * attempt); continue; }
-          return { ok: false as const, status: 0, error: err instanceof Error ? err.message : String(err) };
+          return { ok: false as const, status: 0, error: err instanceof Error ? err.message : String(err), idempotency_key: idempotencyKey };
         }
       }
-      return { ok: false as const, status: 0, error: "retry_exhausted" };
+      return { ok: false as const, status: 0, error: "retry_exhausted", idempotency_key: idempotencyKey };
     };
 
     // Process broadcast SYNCHRONOUSLY (more reliable than waitUntil)
