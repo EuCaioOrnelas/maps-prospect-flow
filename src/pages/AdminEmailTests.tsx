@@ -15,6 +15,26 @@ import { EmailHistoryPanel } from "@/components/admin/EmailHistoryPanel";
 
 const TARGET_EMAIL = "caiowiize@gmail.com";
 
+type SendEmailResult = {
+  success?: boolean;
+  duplicate?: boolean;
+  id?: string;
+  provider_id?: string;
+  error?: string;
+  details?: unknown;
+};
+
+const validateSendEmailResult = (data: unknown): SendEmailResult => {
+  const result = (data || {}) as SendEmailResult;
+  if (result.duplicate) {
+    throw new Error("Este envio foi ignorado por duplicidade. Tente novamente em alguns segundos.");
+  }
+  if (!result.success || !result.provider_id) {
+    throw new Error(result.error || "O servidor não confirmou o envio do e-mail.");
+  }
+  return result;
+};
+
 const EMAIL_TYPES = [
   {
     type: "CAMPAIGN_SCHEDULED_STARTED",
