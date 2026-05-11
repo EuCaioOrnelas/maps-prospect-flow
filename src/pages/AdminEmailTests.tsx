@@ -133,7 +133,7 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
     const res = data as { queued?: number; skipped?: number; error?: string };
     if (res.error) throw new Error(res.error);
     const eligibleCount = res.queued || 0;
-    return { eligible, skipped };
+    return {
       eligible: Array.from({ length: eligibleCount }, (_, i) => ({ id: `preview-${i}` })),
       skipped: res.skipped || 0,
     };
