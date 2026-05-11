@@ -125,93 +125,18 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
     `;
   };
 
-  const getPlansForSegment = (): string[] => {
-    switch (segment) {
-      case "free_only": return ["free"];
-      case "paid_only": return ["start", "growth", "scale"];
-      case "start": return ["start"];
-      case "growth": return ["growth"];
-      case "scale": return ["scale"];
-      default: return ["free", "start", "growth", "scale"];
-    }
-  };
-
-  const batchInQuery = async (
-    table: string,
-    selectCols: string,
-    filterCol: string,
-    filterValues: string[],
-    extraFilters?: (q: any) => any
-  ): Promise<any[]> => {
-    const CHUNK = 500;
-    const results: any[] = [];
-    for (let i = 0; i < filterValues.length; i += CHUNK) {
-      const chunk = filterValues.slice(i, i + CHUNK);
-      let query = (supabase.from(table as any) as any).select(selectCols).in(filterCol, chunk);
-      if (extraFilters) query = extraFilters(query);
-      const { data } = await query;
-      if (data) results.push(...data);
-    }
-    return results;
-  };
-
   const getFilteredUserIds = async (): Promise<{ eligible: any[]; skipped: number }> => {
-    // For churned segment, use admin-broadcast dry_run (queries Stripe API)
-    if (segment === "churned") {
-      const { data, error } = await supabase.functions.invoke("admin-broadcast", {
-        body: { segment: "churned", score_level: scoreLevel, dry_run: true },
-      });
-      if (error) throw error;
-      const res = data as { queued: number; skipped: number };
-      // Return fake eligible array with correct length for count display
-      return {
-        eligible: Array.from({ length: res.queued || 0 }, (_, i) => ({ id: `churned-${i}` })),
-        skipped: res.skipped || 0,
-      };
-    }
-
-    let filteredUsers: any[] = [];
-    const plans = getPlansForSegment();
-    const PAGE = 1000;
-    let page = 0;
-    let hasMore = true;
-    while (hasMore) {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, email, name, plan")
-        .in("plan", plans)
-        .eq("is_blocked", false)
-        .range(page * PAGE, (page + 1) * PAGE - 1);
-      if (error) throw error;
-      if (data) filteredUsers.push(...data);
-      hasMore = (data?.length || 0) === PAGE;
-      page++;
-    }
-
-    if (filteredUsers.length === 0) return { eligible: [], skipped: 0 };
-
-    if (scoreLevel !== "all") {
-      const userIds = filteredUsers.map(u => u.id);
-      const scores = await batchInQuery(
-        "user_scores", "user_id, score_label", "user_id", userIds,
-        (q: any) => q.eq("score_label", scoreLevel)
-      );
-      const scoredIds = new Set(scores.map(s => s.user_id));
-      filteredUsers = filteredUsers.filter(u => scoredIds.has(u.id));
-    }
-
-    const userIds = filteredUsers.map(u => u.id);
-    const prefs = await batchInQuery(
-      "email_preferences", "user_id, marketing_enabled", "user_id", userIds
-    );
-
-    const optedOutIds = new Set(
-      prefs.filter(p => p.marketing_enabled === false).map(p => p.user_id)
-    );
-
-    const eligible = filteredUsers.filter(u => !optedOutIds.has(u.id));
-    const skipped = filteredUsers.length - eligible.length;
-    return { eligible, skipped };
+    const { data, error } = await supabase.functions.invoke("admin-broadcast", {
+      body: { segment, score_level: scoreLevel, dry_run: true },
+    });
+    if (error) throw error;
+    const res = data as { queued?: number; skipped?: number; error?: string };
+    if (res.error) throw new Error(res.error);
+    const eligibleCount = res.queued || 0;
+    return {
+      eligible: Array.from({ length: eligibleCount }, (_, i) => ({ id: `preview-${i}` })),
+      skipped: res.skipped || 0,
+    };
   };
 
   const handleCountPreview = async () => {
@@ -263,7 +188,6 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
         console.info("[AdminEmailTests] Broadcast test sent", sendResult);
         onBroadcastSent?.();
       } else {
-        // Client-side sending with progress
         const { eligible, skipped } = await getFilteredUserIds();
 
         if (eligible.length === 0) {
@@ -272,50 +196,26 @@ function ComposeTab({ onBroadcastSent }: { onBroadcastSent?: () => void }) {
           return;
         }
 
-        // For churned segment, delegate to admin-broadcast since we don't have user details
-        if (segment === "churned") {
-          const { data, error } = await supabase.functions.invoke("admin-broadcast", {
-            body: { subject: subject.trim(), content: buildBroadcastContent(htmlContent, false), segment, score_level: scoreLevel },
-          });
-          if (error) throw error;
-          const res = data as { sent?: number; failed?: number; skipped?: number };
-          setResult({ sent: res.sent || 0, failed: res.failed || 0, skipped: res.skipped || 0 });
-          toast({ title: `✅ Broadcast concluído: ${res.sent || 0} enviados` });
-          onBroadcastSent?.();
-          setSending(false);
-          setProgress(null);
-          return;
-        }
-
-        const batchTimestamp = Date.now();
-        let sent = 0, failed = 0;
         setProgress({ current: 0, total: eligible.length, startedAt: Date.now() });
 
-        for (let i = 0; i < eligible.length; i++) {
-          const u = eligible[i];
-          if (i > 0) await new Promise(r => setTimeout(r, 650));
+        const { data, error } = await supabase.functions.invoke("admin-broadcast", {
+          body: {
+            subject: subject.trim(),
+            content: buildBroadcastContent(htmlContent, false),
+            segment,
+            score_level: scoreLevel,
+          },
+        });
+        if (error) throw error;
 
-          try {
-            const { data: sendData, error: sendErr } = await supabase.functions.invoke("send-email", {
-              body: {
-                user_id: u.id,
-                email_type: "ADMIN_BROADCAST",
-                payload: { subject: subject.trim(), content: buildBroadcastContent(htmlContent, false) },
-                idempotency_key: `broadcast_${batchTimestamp}_${crypto.randomUUID()}_${u.id}`,
-              },
-            });
-            if (sendErr) throw sendErr;
-            validateSendEmailResult(sendData);
-            sent++;
-          } catch (err) {
-            console.error("[AdminEmailTests] Broadcast recipient failed", u.email, err);
-            failed++;
-          }
+        const res = data as { sent?: number; failed?: number; skipped?: number; error?: string };
+        if (res.error) throw new Error(res.error);
+        const sent = res.sent || 0;
+        const failed = res.failed || 0;
+        const skippedTotal = res.skipped ?? skipped;
 
-          setProgress(prev => prev ? { ...prev, current: i + 1 } : null);
-        }
-
-        setResult({ sent, failed, skipped });
+        setProgress({ current: eligible.length, total: eligible.length, startedAt: Date.now() });
+        setResult({ sent, failed, skipped: skippedTotal });
         toast({ title: `✅ Broadcast concluído: ${sent} enviados, ${failed} erros` });
         onBroadcastSent?.();
       }
