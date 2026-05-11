@@ -551,7 +551,8 @@ export default function AdminSupportIntelligence() {
               <TableHeader>
                 <TableRow className="bg-muted/30">
                   <TableHead>Artigo</TableHead>
-                  <TableHead className="text-right">Usos</TableHead>
+                  <TableHead className="text-right">Usos no período</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
                   <TableHead className="text-right">Taxa de sucesso</TableHead>
                 </TableRow>
               </TableHeader>
@@ -561,6 +562,7 @@ export default function AdminSupportIntelligence() {
                   return (
                     <TableRow key={k.id}>
                       <TableCell className="text-sm">{k.title}</TableCell>
+                      <TableCell className="text-right text-sm font-medium">{k.period_uses}</TableCell>
                       <TableCell className="text-right text-sm text-muted-foreground">{k.total_uses}</TableCell>
                       <TableCell className={`text-right text-sm font-medium ${sr >= 70 ? "text-success" : sr >= 40 ? "text-warning" : "text-destructive"}`}>
                         {sr}%
