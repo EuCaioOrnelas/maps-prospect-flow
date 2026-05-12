@@ -4,6 +4,7 @@ import { faqJsonLd } from "@/components/landing/FAQSection";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
+import { DemoScrollSection } from "@/components/landing/DemoScrollSection";
 import { Footer } from "@/components/landing/Footer";
 import { useLandingPageTracking } from "@/hooks/useLandingPageTracking";
 import { LandingPageSkeleton } from "@/components/landing/LandingPageSkeleton";
@@ -132,6 +133,7 @@ const Index = () => {
         <div className="relative z-10">
           <Navbar onSignupClick={trackSignupClick} />
           <HeroSection onSignupClick={trackSignupClick} />
+          <DemoScrollSection onSignupClick={trackSignupClick} />
           <TrustedBySection />
 
           <Suspense fallback={<SectionFallback />}>
