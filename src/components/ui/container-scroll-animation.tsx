@@ -20,20 +20,20 @@ export const ContainerScroll = ({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const scaleDimensions = (): [number, number] => (isMobile ? [0.7, 0.9] : [1.05, 1]);
+  const scaleDimensions = (): [number, number] => (isMobile ? [0.75, 0.95] : [1.08, 1]);
 
-  const rotate = useTransform(scrollYProgress, [0, 1], [20, 0]);
+  const rotate = useTransform(scrollYProgress, [0, 1], [25, 0]);
   const scale = useTransform(scrollYProgress, [0, 1], scaleDimensions());
-  const translate = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const translate = useTransform(scrollYProgress, [0, 1], [0, -80]);
 
   return (
     <div
-      className="h-[42rem] md:h-[58rem] flex items-center justify-center relative px-2 md:px-20"
+      className="h-[40rem] md:h-[55rem] flex items-center justify-center relative px-2 md:px-8"
       ref={containerRef}
     >
       <div
-        className="py-6 md:py-16 w-full relative"
-        style={{ perspective: "1000px" }}
+        className="py-6 md:py-12 w-full relative"
+        style={{ perspective: "1200px" }}
       >
         <Header translate={translate} titleComponent={titleComponent} />
         <Card rotate={rotate} translate={translate} scale={scale}>
@@ -46,7 +46,7 @@ export const ContainerScroll = ({
 
 export const Header = ({ translate, titleComponent }: any) => {
   return (
-    <motion.div style={{ translateY: translate }} className="div max-w-5xl mx-auto text-center">
+    <motion.div style={{ translateY: translate }} className="max-w-5xl mx-auto text-center">
       {titleComponent}
     </motion.div>
   );
@@ -67,12 +67,13 @@ export const Card = ({
       style={{
         rotateX: rotate,
         scale,
+        transformOrigin: "center top",
         boxShadow:
-          "0 0 #0000004d, 0 9px 20px #0000004a, 0 37px 37px #00000042, 0 84px 50px #00000026, 0 149px 60px #0000000a, 0 233px 65px #00000003",
+          "0 20px 40px -20px hsl(var(--foreground) / 0.12), 0 8px 20px -10px hsl(var(--foreground) / 0.08)",
       }}
-      className="max-w-5xl -mt-12 mx-auto h-[30rem] md:h-[40rem] w-full border-4 border-[#6C6C6C] p-2 md:p-6 bg-[#222222] rounded-[30px] shadow-2xl"
+      className="max-w-[90rem] -mt-8 mx-auto h-[26rem] md:h-[40rem] w-full border border-border/60 p-1.5 md:p-3 bg-card rounded-[24px]"
     >
-      <div className="h-full w-full overflow-hidden rounded-2xl bg-background md:rounded-2xl md:p-4">
+      <div className="h-full w-full overflow-hidden rounded-2xl bg-background">
         {children}
       </div>
     </motion.div>
