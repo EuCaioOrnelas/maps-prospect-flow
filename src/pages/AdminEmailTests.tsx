@@ -481,21 +481,19 @@ function TestTab({ onEmailSent }: { onEmailSent?: () => void }) {
 function LogsTab() {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadLogs = async () => {
     setLoading(true);
-    setLoadError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-email-logs", {
-        body: { mode: "list", type_filter: "all" },
-      });
+      const { data, error } = await supabase
+        .from("email_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
       if (error) throw error;
-      const response = (data || {}) as { logs?: any[]; error?: string };
-      if (response.error) throw new Error(response.error);
-      setLogs((response.logs || []).slice(0, 50));
-    } catch (err: any) {
-      setLoadError(err.message || "Não foi possível carregar os logs.");
+      setLogs(data || []);
+    } catch {
       setLogs([]);
     } finally {
       setLoading(false);
@@ -510,12 +508,6 @@ function LogsTab() {
           {loading ? <Loader2 size={14} className="animate-spin" /> : "Carregar logs"}
         </Button>
       </div>
-
-      {loadError && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
-          {loadError}
-        </div>
-      )}
 
       {logs.length > 0 && (
         <div className="overflow-x-auto rounded-lg border">
