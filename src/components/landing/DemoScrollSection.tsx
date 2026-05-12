@@ -38,9 +38,6 @@ export const DemoScrollSection = ({ onSignupClick }: { onSignupClick?: () => voi
                 <br />
                 <span className="text-shimmer-highlight">EM AÇÃO</span>
               </h2>
-              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto font-medium">
-                Da captação ao fechamento — tudo em uma única plataforma com IA.
-              </p>
             </div>
           }
         >
