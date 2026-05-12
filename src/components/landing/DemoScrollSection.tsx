@@ -8,15 +8,8 @@ export const DemoScrollSection = ({ onSignupClick }: { onSignupClick?: () => voi
   const [open, setOpen] = useState(false);
 
   return (
-    <section className="relative bg-background overflow-hidden">
-      {/* Background — mesmo padrão do Hero (bolinhas + glow) */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(180deg, hsl(var(--background) / 0.92) 0%, hsl(var(--background) / 0.72) 58%, hsl(var(--background) / 0.28) 100%)",
-        }}
-      />
+    <section className="relative overflow-hidden -mt-12 md:-mt-20">
+      {/* Bolinhas + glow — sem gradiente sólido para unificar com o Hero */}
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.14]"
         style={{
