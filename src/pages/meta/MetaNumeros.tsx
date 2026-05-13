@@ -1,112 +1,202 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MetaLayout } from "@/components/meta/MetaLayout";
 import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Plus, RefreshCw, Trash2, CheckCircle2, AlertTriangle, Phone, Loader2, Plug, ShieldCheck,
+  Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2,
 } from "lucide-react";
-import { NumbersManager } from "@/components/whatsapp/NumbersManager";
-import { useWhatsAppNumbers, type WhatsAppNumber } from "@/hooks/useWhatsAppNumbers";
+import { MetaManualSetup } from "@/components/meta-campaigns/MetaManualSetup";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-const DAILY_LIMIT_PER_NUMBER = 200;
+export interface WabaConnection {
+  id: string;
+  waba_id: string;
+  phone_number_id: string;
+  business_name: string | null;
+  display_phone_number: string | null;
+  access_token: string;
+  status: string | null;
+  nickname: string | null;
+}
+
+const META_PLAN_LIMITS: Record<string, number> = {
+  free: 1, trial: 1, start: 2, growth: 5, scale: 10,
+};
 
 export default function MetaNumeros() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
-  const { numbers, loading, fetchNumbers, maxNumbers } = useWhatsAppNumbers();
 
-  // Tier por número (puxado de whatsapp_numbers.api_tier)
-  const [tiers, setTiers] = useState<Record<string, string>>({});
-  const [managerOpen, setManagerOpen] = useState(false);
+  const [connections, setConnections] = useState<WabaConnection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expiredTokenIds, setExpiredTokenIds] = useState<Set<string>>(new Set());
+  const [showExpiredAlert, setShowExpiredAlert] = useState(false);
+
+  const [editingConn, setEditingConn] = useState<WabaConnection | null>(null);
+  const [editNickname, setEditNickname] = useState("");
+  const [editToken, setEditToken] = useState("");
+  const [showTokenField, setShowTokenField] = useState(false);
+
+  const [showAddNumber, setShowAddNumber] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    const loadTiers = async () => {
-      if (!user || numbers.length === 0) return;
+  const userPlan = (profile?.plan || "free").toLowerCase();
+  const maxMetaConnections = META_PLAN_LIMITS[userPlan] ?? 1;
+  const reachedConnectionLimit = connections.length >= maxMetaConnections;
+  const expiredConnections = connections.filter((c) => expiredTokenIds.has(c.id));
+  const hasExpired = expiredConnections.length > 0;
+
+  const validateConnectionToken = useCallback(async (conn: WabaConnection) => {
+    const session = await supabase.auth.getSession();
+    const accessToken = session.data.session?.access_token;
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-fetch-templates`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: JSON.stringify({ waba_id: conn.waba_id, access_token: conn.access_token }),
+    });
+    const rawText = await response.text();
+    let payload: any = null;
+    try { payload = rawText ? JSON.parse(rawText) : null; } catch { payload = null; }
+    const details = payload?.details?.error;
+    return payload?.token_expired === true || details?.code === 190 || details?.error_subcode === 463;
+  }, []);
+
+  const validateTokens = useCallback(async (conns: WabaConnection[]) => {
+    const results = await Promise.all(conns.map(async (c) => {
+      try { return (await validateConnectionToken(c)) ? c.id : null; } catch { return null; }
+    }));
+    setExpiredTokenIds(new Set(results.filter(Boolean) as string[]));
+  }, [validateConnectionToken]);
+
+  const loadConnections = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
       const { data } = await supabase
-        .from("whatsapp_numbers")
-        .select("id, api_tier")
+        .from("user_waba_connections")
+        .select("*")
         .eq("user_id", user.id);
-      if (data) {
-        const m: Record<string, string> = {};
-        data.forEach((n: any) => { m[n.id] = n.api_tier || "free"; });
-        setTiers(m);
+      const conns = (data || []) as unknown as WabaConnection[];
+      setConnections(conns);
+      if (conns.length) validateTokens(conns);
+      else setExpiredTokenIds(new Set());
+    } finally {
+      setLoading(false);
+    }
+  }, [user, validateTokens]);
+
+  useEffect(() => { loadConnections(); }, [loadConnections]);
+
+  const handleConnectionSaved = (connection: WabaConnection) => {
+    setConnections((prev) => {
+      const idx = prev.findIndex((c) => c.id === connection.id);
+      if (idx >= 0) { const u = [...prev]; u[idx] = connection; return u; }
+      return [...prev, connection];
+    });
+    setExpiredTokenIds((prev) => { const n = new Set(prev); n.delete(connection.id); return n; });
+    setShowAddNumber(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingConn) return;
+    try {
+      const updates: Record<string, any> = { nickname: editNickname || null };
+      if (showTokenField && editToken.trim()) updates.access_token = editToken.trim();
+      await supabase.from("user_waba_connections").update(updates).eq("id", editingConn.id);
+
+      const updated = {
+        ...editingConn,
+        nickname: editNickname || null,
+        ...(showTokenField && editToken.trim() ? { access_token: editToken.trim() } : {}),
+      };
+      setConnections((prev) => prev.map((c) => (c.id === editingConn.id ? updated : c)));
+
+      if (showTokenField && editToken.trim()) {
+        const stillExpired = await validateConnectionToken(updated);
+        setExpiredTokenIds((prev) => {
+          const n = new Set(prev);
+          stillExpired ? n.add(editingConn.id) : n.delete(editingConn.id);
+          return n;
+        });
+        if (!stillExpired) toast({ title: "Token atualizado com sucesso!" });
+      } else {
+        toast({ title: "Número atualizado!" });
       }
-    };
-    loadTiers();
-  }, [user?.id, numbers.length]);
-
-  const handleSync = async (n: WhatsAppNumber) => {
-    setSyncingId(n.id);
-    try {
-      const { error } = await supabase.functions.invoke("sync-whatsapp-number", {
-        body: { number_id: n.id },
-      });
-      if (error) throw error;
-      toast({ title: "Sincronização iniciada", description: "Estamos puxando o histórico do período offline." });
-      fetchNumbers();
-    } catch (e: any) {
-      // Fallback: apenas atualizar last_health_check
-      await supabase
-        .from("whatsapp_numbers")
-        .update({ last_health_check_at: new Date().toISOString() })
-        .eq("id", n.id);
-      toast({
-        title: "Sincronização agendada",
-        description: "O sistema vai recuperar as mensagens do período offline em segundo plano.",
-      });
-      fetchNumbers();
-    } finally {
-      setSyncingId(null);
+      setEditingConn(null);
+      setShowTokenField(false);
+      setEditToken("");
+    } catch {
+      toast({ title: "Erro ao salvar", variant: "destructive" });
     }
   };
 
-  const handleReconnect = (n: WhatsAppNumber) => {
-    // Abre o NumbersManager para mostrar QR de reconexão
-    setManagerOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!pendingDeleteId) return;
-    setDeletingId(pendingDeleteId);
+  const handleDeleteConnection = async (connId: string) => {
+    setDeleting(true);
     try {
-      const { error } = await supabase.from("whatsapp_numbers").delete().eq("id", pendingDeleteId);
+      await Promise.allSettled([
+        supabase.from("chat_messages").delete().in(
+          "conversation_id",
+          (await supabase.from("chat_conversations").select("id").eq("waba_connection_id", connId)).data?.map((c: any) => c.id) || []
+        ),
+      ]);
+      await Promise.allSettled([
+        supabase.from("chat_conversations").delete().eq("waba_connection_id", connId),
+        (supabase as any).from("meta_campaigns").delete().eq("connection_id", connId),
+      ]);
+      const { error } = await supabase.from("user_waba_connections").delete().eq("id", connId);
       if (error) throw error;
-      toast({ title: "Número removido" });
-      fetchNumbers();
-    } catch (e: any) {
-      toast({ title: "Erro ao remover", description: e.message, variant: "destructive" });
-    } finally {
-      setDeletingId(null);
+      setConnections((prev) => prev.filter((c) => c.id !== connId));
+      setExpiredTokenIds((prev) => { const n = new Set(prev); n.delete(connId); return n; });
       setPendingDeleteId(null);
+      setEditingConn(null);
+      toast({ title: "Número removido!", description: "A conexão foi excluída permanentemente." });
+    } catch (err: any) {
+      toast({ title: "Erro ao remover", description: err?.message || "Tente novamente", variant: "destructive" });
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const tierLabel = (t: string) => {
-    const map: Record<string, string> = { free: "Free", trial: "Trial", basic: "Basic", premium: "Premium", enterprise: "Enterprise" };
-    return map[t?.toLowerCase()] ?? t ?? "Free";
-  };
+  const maskSecret = (token: string) => (!token || token.length < 12) ? "••••••••" : token.slice(0, 8) + "••••••••••••";
 
   return (
-    <MetaLayout title="Números & WABA" description="Gerencie números conectados, tier e uso real puxado da Meta.">
+    <MetaLayout title="Números & WABA" description="Gerencie os números do WhatsApp Business conectados via Meta Cloud API.">
       <MetaPageHeader
         title="Números & WABA"
-        description="Status de conexão, tier e limite de envios sincronizados com a Meta. Clique em um card para configurar."
+        description="Conecte, edite e gerencie os tokens dos seus números oficiais da Meta."
         actions={
-          <Button size="sm" onClick={() => setManagerOpen(true)}>
-            <Plug size={14} className="mr-1.5" /> Conectar via Embedded Signup
+          <Button
+            size="sm"
+            onClick={() => {
+              if (reachedConnectionLimit) {
+                toast({
+                  title: "Limite de números atingido",
+                  description: `Seu plano permite até ${maxMetaConnections} ${maxMetaConnections === 1 ? "número conectado" : "números conectados"}. Faça upgrade para adicionar mais.`,
+                  variant: "destructive",
+                });
+                return;
+              }
+              setShowAddNumber(true);
+            }}
+            disabled={reachedConnectionLimit}
+          >
+            <Plus size={14} className="mr-1.5" /> Adicionar número
           </Button>
         }
       />
@@ -115,142 +205,257 @@ export default function MetaNumeros() {
         <div className="flex items-center justify-center py-20 text-muted-foreground">
           <Loader2 className="animate-spin mr-2" size={16} /> Carregando números…
         </div>
+      ) : connections.length === 0 ? (
+        <MetaManualSetup onConnectionSaved={handleConnectionSaved} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {numbers.map((n) => {
-            const usagePct = (n.daily_sent_count / DAILY_LIMIT_PER_NUMBER) * 100;
-            const connected = n.is_connected;
-            return (
-              <Card
-                key={n.id}
-                onClick={() => setManagerOpen(true)}
-                className="p-5 border-border/60 hover:border-foreground/30 transition-colors cursor-pointer"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Phone size={14} className="text-muted-foreground shrink-0" />
-                      <p className="font-semibold text-foreground truncate">{n.name}</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 font-mono">
-                      {n.phone_number || "Aguardando conexão"}
-                    </p>
-                  </div>
-                  {connected ? (
-                    <Badge className="bg-emerald-500/15 text-emerald-600 border-0">
-                      <CheckCircle2 size={10} className="mr-1" /> Conectado
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-amber-500/15 text-amber-600 border-0">
-                      <AlertTriangle size={10} className="mr-1" /> Desconectado
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="rounded-md bg-muted/40 p-2 mb-3">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Tier</p>
-                  <p className="text-sm font-medium mt-0.5">{tierLabel(tiers[n.id] || "free")}</p>
-                </div>
-
-                <div className="mb-4">
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-muted-foreground">Uso diário (Meta)</span>
-                    <span className="tabular-nums font-medium">
-                      {n.daily_sent_count.toLocaleString("pt-BR")} / {DAILY_LIMIT_PER_NUMBER.toLocaleString("pt-BR")}
-                    </span>
-                  </div>
-                  <Progress value={Math.min(usagePct, 100)} className="h-1.5" />
-                </div>
-
-                <div className="flex items-center gap-1 border-t border-border/60 pt-3"
-                  onClick={(e) => e.stopPropagation()}>
-                  {!connected && (
-                    <>
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs"
-                        onClick={() => handleReconnect(n)}>
-                        <RefreshCw size={12} className="mr-1" /> Reconectar
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs"
-                        disabled={syncingId === n.id}
-                        onClick={() => handleSync(n)}>
-                        {syncingId === n.id ? (
-                          <Loader2 size={12} className="mr-1 animate-spin" />
-                        ) : (
-                          <RefreshCw size={12} className="mr-1" />
-                        )}
-                        Sincronizar
-                      </Button>
-                    </>
-                  )}
-                  {connected && (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground px-1">
-                      <ShieldCheck size={11} className="text-emerald-500" />
-                      Operacional
-                    </span>
-                  )}
-                  <Button variant="ghost" size="sm"
-                    className="h-7 w-7 p-0 text-rose-500 hover:text-rose-600 ml-auto"
-                    onClick={() => setPendingDeleteId(n.id)}>
-                    <Trash2 size={12} />
-                  </Button>
-                </div>
-              </Card>
-            );
-          })}
-
-          {/* Add new card */}
-          <button
-            onClick={() => setManagerOpen(true)}
-            disabled={numbers.length >= maxNumbers}
-            className="rounded-[var(--radius-card)] border-2 border-dashed border-border/60 hover:border-primary/60 hover:bg-primary/5 transition-colors p-5 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary min-h-[260px] disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-              <Plus size={18} />
+        <div className="space-y-6">
+          {hasExpired && (
+            <div className="flex items-start gap-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-5 shadow-sm">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/15">
+                <ShieldAlert size={20} className="text-destructive" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-base text-destructive">
+                  {expiredConnections.length === 1 ? "1 token expirado" : `${expiredConnections.length} tokens expirados`}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {expiredConnections.map(c => c.nickname || c.display_phone_number || c.phone_number_id).join(", ")} — o token de acesso expirou. Clique em editar para atualizar.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-3 gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"
+                  onClick={() => setShowExpiredAlert(true)}
+                >
+                  <Info size={12} /> Como resolver
+                </Button>
+              </div>
             </div>
-            <p className="text-sm font-medium">Conectar novo número</p>
-            <p className="text-xs">
-              {numbers.length >= maxNumbers
-                ? `Limite do plano atingido (${maxNumbers})`
-                : "Embedded Signup oficial Meta"}
-            </p>
-          </button>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {connections.map((conn) => {
+              const isExpired = expiredTokenIds.has(conn.id);
+              return (
+                <div
+                  key={conn.id}
+                  className={`flex items-center justify-between rounded-xl border p-4 transition-colors ${
+                    isExpired ? "border-destructive/40 bg-destructive/5" : "border-border hover:bg-muted/20"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                      isExpired ? "bg-destructive/10" : "bg-primary/10"
+                    }`}>
+                      {isExpired ? (
+                        <AlertTriangle size={14} className="text-destructive" />
+                      ) : (
+                        <Phone size={14} className="text-primary" />
+                      )}
+                    </div>
+                    <div className="truncate">
+                      <p className="font-medium text-sm truncate">
+                        {conn.nickname || conn.display_phone_number || conn.phone_number_id}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {conn.business_name || conn.waba_id}
+                      </p>
+                      {isExpired && (
+                        <p className="mt-1 text-[11px] font-medium text-destructive">
+                          Atualize o token para voltar a carregar templates e enviar mensagens.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={() => {
+                        setEditingConn(conn);
+                        setEditNickname(conn.nickname || "");
+                        setEditToken("");
+                        setShowTokenField(isExpired);
+                      }}
+                    >
+                      <Pencil size={13} className="text-muted-foreground" />
+                    </Button>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                      isExpired ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+                    }`}>
+                      {isExpired ? "Expirado" : "Ativo"}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="text-xs text-muted-foreground">
+            {connections.length}/{maxMetaConnections} números do plano {userPlan}
+          </div>
+
+          <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5">
+            <Info size={18} className="text-primary mt-0.5 shrink-0" />
+            <div className="text-sm">
+              <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
+              <p className="text-muted-foreground mt-0.5">
+                A API Oficial só permite o envio de templates pré-aprovados para contatos que já <strong>interagiram com seu número</strong> ou que deram <strong>opt-in explícito</strong>. Cada número tem seu próprio limite definido pela Meta com base na <strong>qualidade e tier</strong>.
+              </p>
+              <a
+                href="https://developers.facebook.com/docs/whatsapp/messaging-limits"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline flex items-center gap-1 mt-1 text-xs"
+              >
+                <ExternalLink size={10} /> Ver limites de envio da Meta
+              </a>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* NumbersManager (reaproveitado do Relacionamento) — popups, opt-in, warnings, QR */}
-      <NumbersManager
-        numbers={numbers}
-        onNumbersChange={() => fetchNumbers()}
-        maxNumbers={maxNumbers}
-        onConnect={() => fetchNumbers()}
-        forceOpen={managerOpen}
-        onClose={() => setManagerOpen(false)}
-        hideButtons
-      />
+      {/* Edit Dialog */}
+      <Dialog open={!!editingConn} onOpenChange={(o) => { if (!o) { setEditingConn(null); setShowTokenField(false); setEditToken(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Detalhes do Número
+              {editingConn && expiredTokenIds.has(editingConn.id) && (
+                <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-destructive/10 text-destructive flex items-center gap-1">
+                  <AlertTriangle size={10} /> Token expirado
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {editingConn && (
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <DetailRow label="Phone Number ID" value={editingConn.phone_number_id} />
+                <DetailRow label="WABA ID" value={editingConn.waba_id} />
+                <DetailRow label="Número" value={editingConn.display_phone_number || "N/A"} />
+                <DetailRow label="Empresa" value={editingConn.business_name || "N/A"} />
+                <div>
+                  <p className="text-[11px] text-muted-foreground">Access Token</p>
+                  <p className="text-sm font-mono truncate">{maskSecret(editingConn.access_token)}</p>
+                </div>
+              </div>
 
-      {/* Confirmação de exclusão */}
-      <AlertDialog open={!!pendingDeleteId} onOpenChange={(o) => !o && setPendingDeleteId(null)}>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Apelido do número</label>
+                <Input value={editNickname} onChange={(e) => setEditNickname(e.target.value)} placeholder="Ex: Atendimento, Vendas..." />
+              </div>
+
+              {!showTokenField ? (
+                <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground hover:text-foreground" onClick={() => setShowTokenField(true)}>
+                  <Pencil size={11} /> Atualizar token de acesso
+                </Button>
+              ) : (
+                <div className="space-y-2 p-3 rounded-lg border border-accent/30 bg-accent/5">
+                  <label className="text-sm font-medium flex items-center gap-1.5">
+                    <ShieldAlert size={13} className="text-accent-foreground" />
+                    Novo Access Token
+                  </label>
+                  <Textarea value={editToken} onChange={(e) => setEditToken(e.target.value)} placeholder="Cole aqui o novo token permanente..." className="font-mono text-xs min-h-[60px]" />
+                  <p className="text-[11px] text-muted-foreground">
+                    Use um token de <strong>System User</strong> para evitar expirações.{" "}
+                    <a href="https://business.facebook.com/settings/system-users" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                      Gerar token permanente →
+                    </a>
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button onClick={handleSaveEdit} className="flex-1">Salvar</Button>
+                <Button variant="destructive" size="icon" onClick={() => setPendingDeleteId(editingConn.id)}>
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!pendingDeleteId} onOpenChange={(open) => !open && !deleting && setPendingDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir este número?</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle size={18} className="text-destructive" />
+              Excluir este número?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Todas as campanhas vinculadas a esse número serão interrompidas e o histórico de envios continuará disponível.
-              Essa ação não pode ser desfeita.
+              Esta ação é permanente. Todas as conversas, mensagens e campanhas vinculadas a este número serão removidas e não poderão ser recuperadas.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmDelete}
-              disabled={!!deletingId}
-              className="bg-rose-600 hover:bg-rose-700"
+              disabled={deleting}
+              onClick={(e) => { e.preventDefault(); if (pendingDeleteId) handleDeleteConnection(pendingDeleteId); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deletingId ? <Loader2 className="animate-spin mr-1.5" size={14} /> : null}
-              Excluir
+              {deleting ? <Loader2 size={14} className="animate-spin mr-2" /> : <Trash2 size={14} className="mr-2" />}
+              {deleting ? "Excluindo..." : "Excluir definitivamente"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Expired Token Help */}
+      <Dialog open={showExpiredAlert} onOpenChange={setShowExpiredAlert}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldAlert size={18} className="text-destructive" />
+              Token de acesso expirado
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              {expiredConnections.map((c) => (
+                <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg bg-destructive/5 border border-destructive/20">
+                  <AlertTriangle size={14} className="text-destructive shrink-0" />
+                  <span className="text-sm font-medium">{c.nickname || c.display_phone_number || c.phone_number_id}</span>
+                  {c.business_name && <span className="text-xs text-muted-foreground">({c.business_name})</span>}
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              O token de acesso {expiredConnections.length === 1 ? "deste número" : "destes números"} expirou. Para evitar isso, gere um <strong>token permanente</strong> usando um Usuário do Sistema no Meta Business Suite.
+            </p>
+            <Button onClick={() => setShowExpiredAlert(false)} className="w-full">Entendi</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Number Dialog */}
+      <Dialog open={showAddNumber} onOpenChange={setShowAddNumber}>
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] p-0 flex flex-col overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-3 border-b border-border shrink-0">
+            <DialogTitle>Adicionar Número</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <MetaManualSetup
+              embedded
+              onConnectionSaved={(conn) => {
+                if (conn) handleConnectionSaved(conn);
+                else setShowAddNumber(false);
+              }}
+              isAddingExtra
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </MetaLayout>
   );
 }
+
+const DetailRow = ({ label, value }: { label: string; value: string }) => (
+  <div>
+    <p className="text-[11px] text-muted-foreground">{label}</p>
+    <p className="text-sm font-mono truncate">{value}</p>
+  </div>
+);
