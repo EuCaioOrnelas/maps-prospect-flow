@@ -70,7 +70,8 @@ export default function MetaCampanhas() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  
+  const [currentPage, setCurrentPage] = useState(1);
+
 
   const loadCampaigns = async () => {
     if (!user) return;
