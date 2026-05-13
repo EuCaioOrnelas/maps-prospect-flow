@@ -351,6 +351,8 @@ function emptyData(): Omit<MetaDashboardData, "loading"> {
   return {
     totalCost: 0, prevTotalCost: 0,
     messagesSent: 0, prevMessagesSent: 0,
+    messagesFailed: 0, prevMessagesFailed: 0,
+    deliveryRate: 0, prevDeliveryRate: 0,
     conversationsStarted: 0, prevConversationsStarted: 0,
     conversationsReopened: 0, prevConversationsReopened: 0,
     leadsInFunnel: 0, prevLeadsInFunnel: 0,
