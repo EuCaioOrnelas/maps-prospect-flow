@@ -81,7 +81,7 @@ export default function MetaCampanhas() {
       .select("id,name,status,total_leads,sent_count,failed_count,total_responses,created_at,whatsapp_number_id,messages")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(24);
+      .limit(500);
     const rows = (data as CampaignRow[]) || [];
     setCampaigns(rows);
 
