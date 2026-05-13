@@ -354,38 +354,30 @@ function ChartHeader({ title, subtitle }: { title: string; subtitle: string }) {
 function DateRangeBar({
   start, end, onStart, onEnd,
 }: { start: Date; end: Date; onStart: (d: Date) => void; onEnd: (d: Date) => void; }) {
+  const [open, setOpen] = useState(false);
+  const label = `${format(start, "dd MMM yyyy", { locale: ptBR })} — ${format(end, "dd MMM yyyy", { locale: ptBR })}`;
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="h-9 text-xs border-border/60 gap-1.5">
             <CalendarIcon size={13} />
-            Início: {format(start, "dd MMM yyyy", { locale: ptBR })}
+            {label}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
-            mode="single"
-            selected={start}
-            onSelect={(d) => d && onStart(d)}
-            initialFocus
-            className={cn("p-3 pointer-events-auto")}
-          />
-        </PopoverContent>
-      </Popover>
-
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="h-9 text-xs border-border/60 gap-1.5">
-            <CalendarIcon size={13} />
-            Fim: {format(end, "dd MMM yyyy", { locale: ptBR })}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={end}
-            onSelect={(d) => d && onEnd(d)}
+            mode="range"
+            numberOfMonths={2}
+            defaultMonth={subDays(end, 30)}
+            selected={{ from: start, to: end }}
+            onSelect={(r: any) => {
+              if (r?.from) onStart(r.from);
+              if (r?.to) {
+                onEnd(r.to);
+                setOpen(false);
+              }
+            }}
             initialFocus
             className={cn("p-3 pointer-events-auto")}
           />
