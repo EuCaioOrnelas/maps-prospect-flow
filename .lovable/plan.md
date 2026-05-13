@@ -1,91 +1,65 @@
-# Plano: Módulo Meta Platforms
+## Plano: Migração Relacionamento → Meta Platform
 
-Criar nova categoria **Meta Platforms** no sidebar principal da plataforma (não admin) com módulo enterprise completo de operação WhatsApp Cloud API integrado ao CRM existente.
+Vou reutilizar os componentes que já funcionam em `src/pages/WhatsAppCampaign.tsx` e `src/components/whatsapp/*` dentro das páginas Meta, ao invés de reescrevê-los. Isso preserva toda a lógica de backend (Supabase, edge functions, drafts, balance, realtime, opt-in, disclaimers) que já está validada em produção.
 
-## Escopo
+### 1. Templates (`/meta/templates`)
+- Substituir o conteúdo mockado atual de `MetaTemplates.tsx` por uma versão funcional baseada na **etapa "messages" do WhatsAppCampaign** (componente `FirstMessageTemplate` + `MessageVariations`), exibida como **biblioteca de templates** (lista persistida).
+- Criar tabela nova `meta_template_categories` (id, user_id, name, color) para **categorias personalizadas Wiize**.
+- Adicionar coluna `category_id` (nullable) em `meta_templates` (ou criar tabela `meta_user_templates` se ainda não existir — vou checar antes).
+- UI:
+  - Header com botão "Nova categoria" (dialog simples) e "Novo template".
+  - **Filtro de categoria** em chips no topo (Todos + categorias do usuário).
+  - Cards de template mantêm o visual atual da `MetaTemplates`, com badge da categoria interna Wiize (cor personalizada).
+- Mantém o sync com Meta e o badge de status (approved / pending / rejected).
 
-### 1. Sidebar
-- Adicionar categoria "Meta Platforms" em `src/components/layout/AppSidebar.tsx` com ícone `MessageSquareCode` (Lucide — moderno, mensagens+API)
-- Submenu com 8 itens linkando para `/meta/*`
+### 2. Criação de Campanha (`/meta/campanhas` → "+ Nova campanha")
+- Trocar o `Sheet` atual `CampaignEditor` (mock) por um wizard completo idêntico ao do WhatsAppCampaign, em um `Sheet` em tela cheia:
+  1. **Seleção do Template** (consome a biblioteca do passo 1, com filtro por categoria).
+  2. **Seleção de Leads** — reutiliza `<LeadSelector />`.
+  3. **Configurações** — reutiliza `<CampaignSettings />` (delays, pausa inteligente, agendamento).
+  4. **Resumo** — reutiliza `<CampaignSummary />`.
+  5. **Execução** — reutiliza `<CampaignProgress />` + `<RealtimeMonitor />`.
+- Reaproveitar hooks: `useWhatsAppNumbers`, `useCampaignBalance`, `useCampaignDrafts`, `useCampaignRealtime`, `useAutoScoreTracking`.
+- Reaproveitar modais: `DisclaimerModal`, `WarmingWarningModal`, `UpgradeModal`, `FreeTrialLimitModal`, opt-in alerts.
+- A listagem de campanhas no topo continua a mesma UI (cards), mas alimentada pela tabela `whatsapp_campaigns` real (mesmo backend que Relacionamento).
 
-### 2. Rotas (em `src/App.tsx`)
-```
-/meta                    → MetaDashboard
-/meta/campanhas          → MetaCampanhas
-/meta/templates          → MetaTemplates
-/meta/numeros            → MetaNumeros
-/meta/reabertura         → MetaReabertura
-/meta/custos             → MetaCustos
-/meta/qualidade          → MetaQualidade
-/meta/configuracoes      → MetaConfiguracoes
-```
-Todas dentro do layout autenticado existente.
+### 3. Números (`/meta/numeros`)
+- Manter o **visual atual** da página Meta Números (grid de cards minimalista).
+- Cada card mostra: **Nome**, **Número**, **Tier**, **Uso/Limite (puxado da Meta API via hook existente)**.
+- **Remover**: badge "Quality rating".
+- **Botões**:
+  - "Reconectar" → só aparece quando o número está **desconectado**.
+  - "Sincronizar" → só aparece quando desconectado, dispara o sync do período offline (reutiliza a função do `NumbersManager`).
+  - "Excluir" → mantém `AlertDialog` de confirmação (com lista de campanhas afetadas, igual ao Relacionamento).
+- **Clique no card** → abre o painel/dialog de configuração do número idêntico ao de Relacionamento (`NumbersManager` em modo `forceOpen`), reaproveitando popups, warnings e o aviso de **opt-in**.
+- O botão "Conectar via Embedded Signup" passa a abrir o fluxo de adicionar número do `NumbersManager`.
 
-### 3. Páginas (`src/pages/meta/`)
+### Migração de banco
+- Apenas adicionar suporte a categorias internas (1 tabela + 1 coluna). Sem mexer em estrutura existente.
 
-**MetaDashboard.tsx** — Cockpit
-- Header: seletor período (DateRange) + filtros (campanha, número, usuário, status, pipeline, origem) + botões "Nova Campanha" / "Novo Template"
-- Grid de 13 KPI cards com sparkline (recharts) e delta % vs período anterior
-- Gráficos: linha custo/dia, barras mensagens vs respostas, funil CRM 7 etapas, heatmap horários, pizza categorias templates, barras custo por campanha
-- Tabela performance campanhas (sortable, paginada, busca)
-- Painel "Insights de IA" — cards com bullets
+### Arquivos
+**Editar**
+- `src/pages/meta/MetaTemplates.tsx` (refazer com dados reais + categorias)
+- `src/pages/meta/MetaCampanhas.tsx` (substituir editor mockado pelo wizard real)
+- `src/pages/meta/MetaNumeros.tsx` (refazer com dados reais + reuso do NumbersManager)
 
-**MetaCampanhas.tsx**
-- Lista de campanhas (cards/tabela) com ações: criar, pausar, duplicar, arquivar, agendar
-- Drawer de criação/edição com todos os campos (nome, WABA, template, pipeline, etapa, horário, limite, delay, prioridade, estratégia)
-- Visualização do fluxo (template → resposta → janela 24h → IA → handoff humano) em diagrama horizontal
-- Aba IA: prompt, tom, CTA, limite chars, diagnóstico, nicho
-- Aba Métricas: custo, taxa resposta, CPL, CPO, tempo médio, leads ativos
+**Criar**
+- `src/components/meta/MetaTemplateCategoryDialog.tsx`
+- `src/components/meta/MetaCampaignWizard.tsx` (orquestrador que reusa os componentes whatsapp/*)
+- `src/components/meta/MetaNumberCard.tsx` (card limpo + handlers)
 
-**MetaTemplates.tsx**
-- Grid de templates com filtros por categoria interna (abertura fria, follow-up, reabertura, confirmação, reunião, proposta, recuperação, nurture)
-- Botões: criar, editar, sincronizar Meta, duplicar, arquivar
-- Editor (drawer/dialog): preview WhatsApp em tempo real, variáveis, contador chars, categoria Meta, idioma, CTA buttons, quick replies
-- Status: aprovado/rejeitado, motivo, score qualidade
+**Reusar sem alterar**
+- `src/components/whatsapp/LeadSelector.tsx`
+- `src/components/whatsapp/CampaignSettings.tsx`
+- `src/components/whatsapp/CampaignSummary.tsx`
+- `src/components/whatsapp/CampaignProgress.tsx`
+- `src/components/whatsapp/NumbersManager.tsx`
+- `src/components/whatsapp/RealtimeMonitor.tsx`
+- Modais: `DisclaimerModal`, `WarmingWarningModal`, `UpgradeModal`, `FreeTrialLimitModal`
 
-**MetaNumeros.tsx**
-- Cards por número: nome, número, status, quality rating (badge), tier, msgs disponíveis, limite diário, verificado
-- Ações: conectar (Embedded Signup), reconectar, remover, sincronizar templates, ver webhook
+### Fora de escopo (não vou tocar)
+- A página `WhatsAppCampaign` original — segue funcionando para compatibilidade durante a transição. Se quiser depois eu removo do sidebar.
+- Lógica de envio / Edge Functions / RLS já existentes (sem mudanças).
 
-**MetaReabertura.tsx**
-- Lista de automações de reabertura (>24h)
-- Criação com: template de reabertura, tempo reengajamento, follow-up, lembrete reunião, confirmação proposta
-- 4 cards de exemplo: Confirmar reunião, Retomar contato, Enviar proposta, Lembrete comercial
-
-**MetaCustos.tsx**
-- KPIs: custo total, por campanha, número, template, categoria, lead respondido, oportunidade
-- Gráficos: evolução custos (linha), comparação campanhas (barras), custo×conversão (scatter), ROI por campanha
-- Simulador interativo: inputs (qtd leads, tipo template, taxa resposta) → outputs calculados
-
-**MetaQualidade.tsx**
-- KPIs/badges: quality rating, templates reprovados, bloqueios, taxa denúncias, taxa bloqueio, health score, status WABA
-- Lista de alertas com severidade: risco limitação, queda qualidade, spam, campanha problemática
-
-**MetaConfiguracoes.tsx**
-- Tabs: Webhooks, API Tokens, Limites, Timezone, Delays, Automações, Regras IA, Fallback humano, Janela 24h, Regras reabertura, Notificações
-
-### 4. Componentes compartilhados (`src/components/meta/`)
-- `MetaPageHeader.tsx` — header padrão (título, descrição, ações)
-- `MetaKpiCard.tsx` — card KPI com sparkline + delta
-- `MetaInsightCard.tsx` — card de insight IA
-- `MetaFilterBar.tsx` — barra de filtros reutilizável
-- `MetaEmptyState.tsx` — estados vazios consistentes
-
-### 5. Dados
-**Mock-only nesta entrega.** Sem migrations/edge functions. Estrutura preparada para integração futura com APIs Meta Cloud já existentes no projeto. Comentários `// TODO: integrar com tabela X` onde aplicável.
-
-## Design
-- Tokens semânticos Tailwind (`bg-card`, `border-border`, `text-foreground`, etc.) — sem cores hardcoded
-- Cards `rounded-[var(--radius-card)]`, sombras leves, bordas discretas
-- Recharts para gráficos (já no projeto)
-- Skeletons para loading
-- Totalmente responsivo, dark mode nativo
-- Tipografia e espaçamento alinhados ao restante (Hubspot/Linear/Vercel-like)
-
-## Fora de escopo
-- Integrações reais com Meta Cloud API (já existem edge functions; não serão tocadas)
-- Mudanças no CRM/banco
-- Embedded Signup funcional (apenas UI)
-
-## Entrega
-~15-18 arquivos novos + 2 edições (AppSidebar, App.tsx). Sem mudanças de DB/backend.
+### Próximo passo
+Começo pela migração de Templates (banco + UI), depois Números, depois o wizard de Campanhas.
