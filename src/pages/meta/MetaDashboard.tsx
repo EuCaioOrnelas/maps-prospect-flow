@@ -148,12 +148,12 @@ export default function MetaDashboard() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
                     <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => fmtBRL(v)} width={60} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => fmtBRLp(v)} width={70} />
                     <RTooltip
                       contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, color: "hsl(var(--foreground))" }}
                       labelStyle={{ color: "hsl(var(--foreground))" }}
                       itemStyle={{ color: "hsl(var(--foreground))" }}
-                      formatter={(v: number) => [fmtBRL(v), "Custo"]}
+                      formatter={(v: number) => [fmtBRLp(v), "Custo"]}
                     />
                     <Area type="monotone" dataKey="cost" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#costGrad)" />
                   </AreaChart>
