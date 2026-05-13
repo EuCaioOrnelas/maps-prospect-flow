@@ -271,7 +271,7 @@ function Metric({
   icon: Icon, label, value, valueClass = "",
 }: { icon: any; label: string; value: string; valueClass?: string }) {
   return (
-    <div className="rounded-md bg-muted/40 px-2 py-1.5">
+    <div className="rounded-lg bg-muted/40 px-2.5 py-2 border border-border/40">
       <div className="flex items-center gap-1 text-muted-foreground mb-0.5">
         <Icon size={10} />
         <p className="text-[10px] uppercase tracking-wider truncate">{label}</p>
