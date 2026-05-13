@@ -106,8 +106,10 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
   const costPerMsg = META_PRICING_BR[selectedCategory] ?? META_PRICING_BR.MARKETING;
 
   const sim = useMemo(() => {
-    const totalCost = leads * costPerMsg;
-    const respondents = (leads * taxa) / 100;
+    const leadsN = typeof leads === "number" ? leads : 0;
+    const taxaN = typeof taxa === "number" ? taxa : 0;
+    const totalCost = leadsN * costPerMsg;
+    const respondents = (leadsN * taxaN) / 100;
     const cpr = respondents > 0 ? totalCost / respondents : 0;
     const opps = respondents * 0.12;
     const cpo = opps > 0 ? totalCost / opps : 0;
