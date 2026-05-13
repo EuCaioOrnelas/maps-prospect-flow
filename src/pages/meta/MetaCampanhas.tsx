@@ -117,6 +117,14 @@ export default function MetaCampanhas() {
     });
   }, [campaigns, search, statusFilter, dateRange]);
 
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, dateRange]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCampaigns.length / ITEMS_PER_PAGE));
+  const pagedCampaigns = useMemo(
+    () => filteredCampaigns.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE),
+    [filteredCampaigns, currentPage]
+  );
+
   // KPI: custo médio por campanha
   const avgCostPerCampaign = useMemo(() => {
     if (!filteredCampaigns.length) return 0;
