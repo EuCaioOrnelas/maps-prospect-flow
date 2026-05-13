@@ -39,6 +39,10 @@ export interface MetaDashboardData {
   prevResponseRate: number;
   costPerResponse: number;
   prevCostPerResponse: number;
+  deliveryRate: number;
+  prevDeliveryRate: number;
+  messagesFailed: number;
+  prevMessagesFailed: number;
   opportunities: number;
   prevOpportunities: number;
   pipelineEstimated: number;
@@ -111,7 +115,7 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
         prevChatInboundRes,
       ] = await Promise.all([
         supabase.from("whatsapp_campaigns").select("id,name,status,sent_count,failed_count,total_responses,total_leads,created_at").eq("user_id", uid).gte("created_at", startISO).lte("created_at", endISO).order("created_at", { ascending: false }),
-        supabase.from("whatsapp_campaigns").select("sent_count,total_responses,created_at").eq("user_id", uid).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
+        supabase.from("whatsapp_campaigns").select("sent_count,failed_count,total_responses,created_at").eq("user_id", uid).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
         supabase.from("leads").select("id,first_message_sent,has_responded,pipeline_stage_id,estimated_value,opportunity_level,created_at,responded_at").eq("user_id", uid).gte("created_at", startISO).lte("created_at", endISO),
         supabase.from("leads").select("id,estimated_value,opportunity_level,first_message_sent,created_at").eq("user_id", uid).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("user_id", uid).eq("has_responded", true).gte("responded_at", startISO).lte("responded_at", endISO),
@@ -138,11 +142,15 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
       })) as MetaCampaignRow[];
 
       const messagesSent = campaigns.reduce((s, c) => s + c.sent, 0);
+      const messagesFailed = campaigns.reduce((s, c) => s + c.failed, 0);
       const totalCost = messagesSent * META_COST_PER_MSG;
       const responses = campaigns.reduce((s, c) => s + c.replies, 0);
+      const deliveryRate = messagesSent > 0 ? ((messagesSent - messagesFailed) / messagesSent) * 100 : 0;
 
       const prevSent = (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.sent_count || 0), 0);
+      const prevFailed = (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.failed_count || 0), 0);
       const prevResponses = (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.total_responses || 0), 0);
+      const prevDeliveryRate = prevSent > 0 ? ((prevSent - prevFailed) / prevSent) * 100 : 0;
 
       const leadsRows = leadsRes.data || [];
       const leadsInFunnel = leadsRes.count ?? leadsRows.length;
@@ -312,6 +320,8 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
       setData({
         totalCost, prevTotalCost: prevSent * META_COST_PER_MSG,
         messagesSent, prevMessagesSent: prevSent,
+        messagesFailed, prevMessagesFailed: prevFailed,
+        deliveryRate, prevDeliveryRate,
         conversationsStarted, prevConversationsStarted,
         conversationsReopened, prevConversationsReopened,
         leadsInFunnel, prevLeadsInFunnel,
@@ -341,6 +351,8 @@ function emptyData(): Omit<MetaDashboardData, "loading"> {
   return {
     totalCost: 0, prevTotalCost: 0,
     messagesSent: 0, prevMessagesSent: 0,
+    messagesFailed: 0, prevMessagesFailed: 0,
+    deliveryRate: 0, prevDeliveryRate: 0,
     conversationsStarted: 0, prevConversationsStarted: 0,
     conversationsReopened: 0, prevConversationsReopened: 0,
     leadsInFunnel: 0, prevLeadsInFunnel: 0,
