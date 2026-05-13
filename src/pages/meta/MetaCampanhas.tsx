@@ -352,7 +352,7 @@ export default function MetaCampanhas() {
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{fmtN(c.total_leads)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmtN(c.sent_count)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-emerald-500">{fmtN(responses)}</TableCell>
+                      <TableCell className="text-right tabular-nums text-foreground">{fmtN(responses)}</TableCell>
                       <TableCell className={cn("text-right tabular-nums", c.failed_count > 0 && "text-amber-500")}>{fmtN(c.failed_count)}</TableCell>
                       <TableCell className="text-right tabular-nums">{sendRate.toFixed(0)}%</TableCell>
                       <TableCell className="text-right tabular-nums">{fmtBRL(cost)}</TableCell>
