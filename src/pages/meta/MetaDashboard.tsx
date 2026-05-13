@@ -8,7 +8,7 @@ import { MetaKpiCard } from "@/components/meta/MetaKpiCard";
 import { MetaInsightCard } from "@/components/meta/MetaInsightCard";
 import { MetaCustosPanel } from "@/components/meta/MetaCustosPanel";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
@@ -401,7 +401,7 @@ function DateRangeBar({
                 month: "space-y-4 w-[260px]",
                 caption_label: "text-sm font-semibold text-popover-foreground",
                 head_cell: "text-muted-foreground rounded-md w-9 font-medium text-[0.78rem]",
-                day: cn(buttonDateClass, "h-9 w-9 p-0 text-sm font-medium aria-selected:opacity-100"),
+                day: cn(buttonVariants({ variant: "ghost" }), "h-9 w-9 p-0 text-sm font-medium aria-selected:opacity-100"),
                 day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
                 day_range_middle: "aria-selected:bg-primary/90 aria-selected:text-primary-foreground",
                 day_outside: "day-outside text-muted-foreground/55 aria-selected:bg-primary/45 aria-selected:text-primary-foreground aria-selected:opacity-100",
