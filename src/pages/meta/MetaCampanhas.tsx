@@ -12,8 +12,15 @@ import {
 import {
   Plus, MoreHorizontal, ArrowRight, MessageSquare, Reply, Bot, UserCheck,
   Search, Tag, Loader2, Sparkles, Users, Send, MessageCircle, DollarSign,
-  AlertCircle, Percent, Smartphone, FileText, TrendingUp,
+  AlertCircle, Percent, Smartphone, FileText, TrendingUp, Calendar as CalendarIcon, X,
 } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
