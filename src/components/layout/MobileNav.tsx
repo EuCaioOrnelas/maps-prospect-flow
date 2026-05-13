@@ -213,7 +213,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                     {openSection === "campanhas" && (
                       <div className="flex flex-col">
                         <SubLink to="/whatsapp" icon={Send} label="Prospecção" />
-                        <SubLink to="/meta-campaigns" icon={Handshake} label="Relacionamento" />
+                        
                       </div>
                     )}
                   </>

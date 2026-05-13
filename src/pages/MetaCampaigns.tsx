@@ -152,14 +152,14 @@ const MetaCampaigns = () => {
           <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold">Relacionamento</h1>
+                <h1 className="text-3xl font-bold">Campanha de Mensagem</h1>
                 <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 text-[10px] sm:text-xs font-semibold gap-1">
                   <FlaskConical className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   BETA
                 </Badge>
               </div>
               <p className="text-muted-foreground mt-1 max-w-3xl">
-                Comunicação de mensagens inbound com leads que já deram opt-in, utilizando canais oficiais da Meta Platforms.
+                Envie campanhas via Meta Cloud API usando <strong>templates pré-aprovados</strong> pela Meta. Funciona inclusive para <strong>leads frios</strong>, desde que o template tenha sido aprovado. O <strong>custo das mensagens é cobrado à parte pela Meta</strong>, conforme a tabela oficial por país e categoria do template.
               </p>
             </div>
             <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => navigate("/meta-api-guide")}>
@@ -187,11 +187,11 @@ const MetaCampaigns = () => {
               <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
                 <FlaskConical className="w-5 h-5 text-amber-500" />
               </div>
-              <DialogTitle className="text-xl">Relacionamento em Versão Beta</DialogTitle>
+              <DialogTitle className="text-xl">Campanha de Mensagem em Versão Beta</DialogTitle>
             </div>
             <DialogDescription className="text-left space-y-3 pt-2">
               <p>
-                O sistema de <strong>Relacionamento</strong> está atualmente em versão <span className="text-amber-500 font-semibold">beta</span> e pode apresentar alguns bugs ou comportamentos inesperados.
+                O sistema de <strong>Campanha de Mensagem</strong> está atualmente em versão <span className="text-amber-500 font-semibold">beta</span> e pode apresentar alguns bugs ou comportamentos inesperados.
               </p>
               <p>
                 Estamos trabalhando constantemente para melhorar a experiência. Caso encontre algum problema, por favor nos informe pelo suporte.
