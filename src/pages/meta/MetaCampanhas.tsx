@@ -35,6 +35,7 @@ interface CampaignRow {
 
 // Custo médio estimado por mensagem enviada via Meta Cloud (BRL)
 const COST_PER_MESSAGE = 0.12;
+const fmtN = (n: number) => n.toLocaleString("pt-BR");
 const fmtBRL = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
