@@ -320,6 +320,8 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
       setData({
         totalCost, prevTotalCost: prevSent * META_COST_PER_MSG,
         messagesSent, prevMessagesSent: prevSent,
+        messagesFailed, prevMessagesFailed: prevFailed,
+        deliveryRate, prevDeliveryRate,
         conversationsStarted, prevConversationsStarted,
         conversationsReopened, prevConversationsReopened,
         leadsInFunnel, prevLeadsInFunnel,
