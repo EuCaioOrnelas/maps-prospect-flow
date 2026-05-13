@@ -1,6 +1,11 @@
 // Cria Subscription no Stripe com 7 dias de trial.
 // Recebe payment_method_id (do Stripe Elements) + dados do cliente.
 // Retorna subscriptionId. Cobrança automática mensal após 7 dias.
+//
+// IDEMPOTÊNCIA: antes de criar, busca todos os customers no Stripe pelo
+// email e cancela qualquer subscription em trial/ativa órfã (de tentativas
+// anteriores que falharam ou foram repetidas). Isso evita cobrança duplicada
+// quando o usuário tenta o cadastro mais de uma vez.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
@@ -12,7 +17,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Mapping plan → monthly price ID (trial vira mensal automático)
 const PLAN_TO_MONTHLY_PRICE: Record<string, string> = {
   start: "price_1TLZi1K8CM0R6xMMDOg3MSTp",
   growth: "price_1TLZlSK8CM0R6xMMFtvROCby",
@@ -28,6 +32,33 @@ const PLAN_NAMES: Record<string, string> = {
 const log = (step: string, details?: unknown) => {
   console.log(`[CREATE-STRIPE-TRIAL] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
+
+// Cancela QUALQUER subscription em trialing/active de qualquer customer com
+// este email no Stripe. Usado tanto no create (para limpar órfãs antes de
+// criar a nova) quanto no cancel-trial-subscription.
+async function cancelAllOrphanTrialsForEmail(stripe: Stripe, email: string): Promise<string[]> {
+  const cancelled: string[] = [];
+  try {
+    const customers = await stripe.customers.list({ email, limit: 100 });
+    for (const c of customers.data) {
+      const subs = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 100 });
+      for (const s of subs.data) {
+        if (s.status === "trialing" || s.status === "active" || s.status === "past_due") {
+          try {
+            await stripe.subscriptions.cancel(s.id);
+            cancelled.push(s.id);
+            log("Cancelled orphan sub", { customer: c.id, sub: s.id, status: s.status });
+          } catch (e) {
+            log("Failed to cancel orphan sub", { sub: s.id, error: String(e) });
+          }
+        }
+      }
+    }
+  } catch (e) {
+    log("Failed to sweep customers by email", { email, error: String(e) });
+  }
+  return cancelled;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -52,6 +83,16 @@ serve(async (req) => {
     if (!priceId || !planName) throw new Error(`Invalid plan: ${planKey}`);
 
     log("Request", { planKey, email: customerData.email });
+
+    // 0. IDEMPOTÊNCIA — limpa qualquer subscription órfã do mesmo email
+    // antes de criar a nova (evita 2-3 trials simultâneas se o usuário
+    // refizer o cadastro).
+    if (customerData.email) {
+      const cleaned = await cancelAllOrphanTrialsForEmail(stripe, customerData.email);
+      if (cleaned.length > 0) {
+        log("Cleaned orphan trials before creating new one", { count: cleaned.length, ids: cleaned });
+      }
+    }
 
     // 1. Create Stripe customer
     const customer = await stripe.customers.create({
@@ -95,14 +136,12 @@ serve(async (req) => {
 
     log("Subscription created", { id: subscription.id, status: subscription.status });
 
-    // Trial subscriptions usually return pending_setup_intent (no immediate charge)
     const setupIntent = subscription.pending_setup_intent as Stripe.SetupIntent | null;
 
     const trialEnd = subscription.trial_end
       ? new Date(subscription.trial_end * 1000).toISOString()
       : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Get card details for display
     let cardLast4 = "";
     let cardBrand = "CARD";
     try {
