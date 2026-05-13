@@ -57,7 +57,7 @@ export default function MetaCampanhas() {
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
   const [numberMap, setNumberMap] = useState<Record<string, { phone: string; label: string | null }>>({});
   const [loading, setLoading] = useState(true);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  
 
   const loadCampaigns = async () => {
     if (!user) return;
