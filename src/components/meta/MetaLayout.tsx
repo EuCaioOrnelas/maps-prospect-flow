@@ -17,7 +17,7 @@ export function MetaLayout({ children, title, description }: MetaLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
+      <div className="h-screen flex w-full bg-background relative overflow-hidden">
         <BackgroundGlow />
         <SEO title={`${title} | Wiize Meta Platforms`} description={description} />
         <AppSidebar profile={profile} />
