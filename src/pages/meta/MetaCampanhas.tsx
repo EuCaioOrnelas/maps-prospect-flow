@@ -12,8 +12,15 @@ import {
 import {
   Plus, MoreHorizontal, ArrowRight, MessageSquare, Reply, Bot, UserCheck,
   Search, Tag, Loader2, Sparkles, Users, Send, MessageCircle, DollarSign,
-  AlertCircle, Percent, Smartphone, FileText, TrendingUp,
+  AlertCircle, Percent, Smartphone, FileText, TrendingUp, Calendar as CalendarIcon, X,
 } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +64,9 @@ export default function MetaCampanhas() {
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
   const [numberMap, setNumberMap] = useState<Record<string, { phone: string; label: string | null }>>({});
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   
 
   const loadCampaigns = async () => {
@@ -86,17 +96,40 @@ export default function MetaCampanhas() {
 
   useEffect(() => { loadCampaigns(); }, [user?.id]);
 
+  // Filtros (busca, status, intervalo de datas)
+  const filteredCampaigns = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const from = dateRange?.from ? new Date(dateRange.from).setHours(0, 0, 0, 0) : null;
+    const to = dateRange?.to ? new Date(dateRange.to).setHours(23, 59, 59, 999) : (from ? new Date(dateRange!.from!).setHours(23, 59, 59, 999) : null);
+    return campaigns.filter((c) => {
+      if (q && !c.name.toLowerCase().includes(q)) return false;
+      if (statusFilter !== "all" && c.status !== statusFilter) return false;
+      if (from !== null) {
+        const t = new Date(c.created_at).getTime();
+        if (t < from) return false;
+        if (to !== null && t > to) return false;
+      }
+      return true;
+    });
+  }, [campaigns, search, statusFilter, dateRange]);
+
   // KPI: custo médio por campanha
   const avgCostPerCampaign = useMemo(() => {
-    if (!campaigns.length) return 0;
-    const total = campaigns.reduce((s, c) => s + (c.sent_count || 0) * COST_PER_MESSAGE, 0);
-    return total / campaigns.length;
-  }, [campaigns]);
+    if (!filteredCampaigns.length) return 0;
+    const total = filteredCampaigns.reduce((s, c) => s + (c.sent_count || 0) * COST_PER_MESSAGE, 0);
+    return total / filteredCampaigns.length;
+  }, [filteredCampaigns]);
 
   const totalSpent = useMemo(
-    () => campaigns.reduce((s, c) => s + (c.sent_count || 0) * COST_PER_MESSAGE, 0),
-    [campaigns]
+    () => filteredCampaigns.reduce((s, c) => s + (c.sent_count || 0) * COST_PER_MESSAGE, 0),
+    [filteredCampaigns]
   );
+
+  const statusOptions = useMemo(() => {
+    const s = new Set<string>();
+    campaigns.forEach((c) => s.add(c.status));
+    return Array.from(s);
+  }, [campaigns]);
 
   const startNewCampaign = () => {
     sessionStorage.setItem(
@@ -123,8 +156,8 @@ export default function MetaCampanhas() {
       {/* KPIs */}
       {!loading && campaigns.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <KpiTile icon={MessageSquare} label="Campanhas" value={fmtN(campaigns.length)} />
-          <KpiTile icon={Send} label="Total enviado" value={fmtN(campaigns.reduce((s, c) => s + (c.sent_count || 0), 0))} />
+          <KpiTile icon={MessageSquare} label="Campanhas" value={fmtN(filteredCampaigns.length)} />
+          <KpiTile icon={Send} label="Total enviado" value={fmtN(filteredCampaigns.reduce((s, c) => s + (c.sent_count || 0), 0))} />
           <KpiTile icon={DollarSign} label="Custo total" value={fmtBRL(totalSpent)} />
           <KpiTile icon={TrendingUp} label="Custo médio / campanha" value={fmtBRL(avgCostPerCampaign)} />
         </div>
@@ -144,69 +177,152 @@ export default function MetaCampanhas() {
           </Button>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {campaigns.map((c) => {
-            const s = STATUS_LABEL[c.status] ?? { label: c.status, tone: "outline" as const };
-            const responses = c.total_responses ?? 0;
-            const cost = (c.sent_count || 0) * COST_PER_MESSAGE;
-            const sendRate = c.total_leads > 0 ? (c.sent_count / c.total_leads) * 100 : 0;
-            const num = c.whatsapp_number_id ? numberMap[c.whatsapp_number_id] : null;
-            const numberLabel = num ? (num.label || num.phone) : "—";
-            const firstMsg = Array.isArray(c.messages) ? (c.messages[0] as string) : "";
-            const templatePreview = firstMsg
-              ? firstMsg.split("\n")[0].slice(0, 38) + (firstMsg.length > 38 ? "…" : "")
-              : "—";
-
-            return (
-              <Card
-                key={c.id}
-                onClick={() => openCampaign(c.id)}
-                className="group p-5 border-border/60 hover:border-foreground/40 hover:shadow-sm transition-all cursor-pointer"
-              >
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">{c.name}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Criada em {new Date(c.created_at).toLocaleDateString("pt-BR")}
-                    </p>
-                  </div>
-                  <Badge variant={s.tone}>{s.label}</Badge>
-                </div>
-
-                {/* Metrics grid */}
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  <Metric icon={Users} label="Leads" value={fmtN(c.total_leads)} />
-                  <Metric icon={Send} label="Enviados" value={fmtN(c.sent_count)} />
-                  <Metric icon={MessageCircle} label="Respostas" value={fmtN(responses)} valueClass="text-emerald-500" />
-                  <Metric icon={DollarSign} label="Custo" value={fmtBRL(cost)} />
-                  <Metric icon={AlertCircle} label="Erros" value={fmtN(c.failed_count)} valueClass={c.failed_count > 0 ? "text-amber-500" : ""} />
-                  <Metric icon={Percent} label="Taxa envio" value={`${sendRate.toFixed(0)}%`} />
-                </div>
-
-                {/* Meta info: número | template — divisor centralizado, textos alinhados à esquerda em cada metade */}
-                <div className="grid grid-cols-2 items-center border-t border-border/60 pt-3 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5 min-w-0 pr-3 border-r border-border/60">
-                    <Smartphone size={12} className="shrink-0" />
-                    <span className="truncate">{numberLabel}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 min-w-0 pl-3">
-                    <FileText size={12} className="shrink-0" />
-                    <span className="truncate" title={firstMsg}>{templatePreview}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1 border-t border-border/60 pt-3 mt-3" onClick={(e) => e.stopPropagation()}>
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => openCampaign(c.id)}>
-                    Abrir <ArrowRight size={12} className="ml-1" />
+        <Card className="border-border/60 overflow-hidden">
+          {/* Toolbar de filtros */}
+          <div className="flex flex-col gap-3 p-4 border-b border-border/60 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative w-full md:w-64">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar por nome…"
+                  className="pl-8 h-9"
+                />
+              </div>
+              <div className="flex items-center gap-1 flex-wrap">
+                <Chip active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>Todas</Chip>
+                {statusOptions.map((st) => (
+                  <Chip key={st} active={statusFilter === st} onClick={() => setStatusFilter(st)}>
+                    {STATUS_LABEL[st]?.label ?? st}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn("h-9 justify-start text-left font-normal gap-2", !dateRange && "text-muted-foreground")}
+                  >
+                    <CalendarIcon size={14} />
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "dd MMM", { locale: ptBR })} –{" "}
+                          {format(dateRange.to, "dd MMM yyyy", { locale: ptBR })}
+                        </>
+                      ) : (
+                        format(dateRange.from, "dd MMM yyyy", { locale: ptBR })
+                      )
+                    ) : (
+                      <span>Filtrar por data</span>
+                    )}
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 ml-auto">
-                    <MoreHorizontal size={14} />
-                  </Button>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="range"
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={2}
+                    locale={ptBR}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              {(dateRange || statusFilter !== "all" || search) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 px-2 text-muted-foreground"
+                  onClick={() => { setDateRange(undefined); setStatusFilter("all"); setSearch(""); }}
+                >
+                  <X size={14} className="mr-1" /> Limpar
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Tabela */}
+          {filteredCampaigns.length === 0 ? (
+            <div className="py-16 text-center text-sm text-muted-foreground">
+              Nenhuma campanha encontrada com os filtros atuais.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[28%]">Campanha</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Número</TableHead>
+                  <TableHead className="text-right">Leads</TableHead>
+                  <TableHead className="text-right">Enviados</TableHead>
+                  <TableHead className="text-right">Respostas</TableHead>
+                  <TableHead className="text-right">Erros</TableHead>
+                  <TableHead className="text-right">Taxa</TableHead>
+                  <TableHead className="text-right">Custo</TableHead>
+                  <TableHead>Criada em</TableHead>
+                  <TableHead className="w-[40px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCampaigns.map((c) => {
+                  const s = STATUS_LABEL[c.status] ?? { label: c.status, tone: "outline" as const };
+                  const responses = c.total_responses ?? 0;
+                  const cost = (c.sent_count || 0) * COST_PER_MESSAGE;
+                  const sendRate = c.total_leads > 0 ? (c.sent_count / c.total_leads) * 100 : 0;
+                  const num = c.whatsapp_number_id ? numberMap[c.whatsapp_number_id] : null;
+                  const numberLabel = num ? (num.label || num.phone) : "—";
+                  const firstMsg = Array.isArray(c.messages) ? (c.messages[0] as string) : "";
+
+                  return (
+                    <TableRow
+                      key={c.id}
+                      onClick={() => openCampaign(c.id)}
+                      className="cursor-pointer"
+                    >
+                      <TableCell className="py-3">
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground truncate">{c.name}</p>
+                          {firstMsg && (
+                            <p className="text-xs text-muted-foreground truncate max-w-[280px]" title={firstMsg}>
+                              {firstMsg.split("\n")[0]}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell><Badge variant={s.tone}>{s.label}</Badge></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground min-w-0">
+                          <Smartphone size={12} className="shrink-0" />
+                          <span className="truncate max-w-[140px]">{numberLabel}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtN(c.total_leads)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtN(c.sent_count)}</TableCell>
+                      <TableCell className="text-right tabular-nums text-emerald-500">{fmtN(responses)}</TableCell>
+                      <TableCell className={cn("text-right tabular-nums", c.failed_count > 0 && "text-amber-500")}>{fmtN(c.failed_count)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{sendRate.toFixed(0)}%</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtBRL(cost)}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                        {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                          <MoreHorizontal size={14} />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </Card>
       )}
 
       {/* Fluxo da campanha */}
