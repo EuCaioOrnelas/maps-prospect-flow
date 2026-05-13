@@ -752,7 +752,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
         <div className="text-sm">
           <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
           <p className="text-muted-foreground mt-0.5">
-            Usa templates pré-aprovados pela Meta. Funciona apenas para contatos que já interagiram com seu número ou fizeram opt-in. Não funciona para leads frios, para isso use a Prospecção.
+            Usa <strong>templates pré-aprovados</strong> pela Meta e funciona inclusive para <strong>leads frios</strong>, desde que o template tenha sido aprovado. O <strong>custo de cada mensagem é cobrado à parte pela Meta</strong>, conforme a tabela oficial por país e categoria do template (marketing, utilidade, autenticação).
           </p>
           <a
             href="https://developers.facebook.com/docs/whatsapp/overview"
