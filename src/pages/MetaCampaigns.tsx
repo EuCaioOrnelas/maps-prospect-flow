@@ -187,11 +187,11 @@ const MetaCampaigns = () => {
               <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
                 <FlaskConical className="w-5 h-5 text-amber-500" />
               </div>
-              <DialogTitle className="text-xl">Relacionamento em Versão Beta</DialogTitle>
+              <DialogTitle className="text-xl">Campanha de Mensagem em Versão Beta</DialogTitle>
             </div>
             <DialogDescription className="text-left space-y-3 pt-2">
               <p>
-                O sistema de <strong>Relacionamento</strong> está atualmente em versão <span className="text-amber-500 font-semibold">beta</span> e pode apresentar alguns bugs ou comportamentos inesperados.
+                O sistema de <strong>Campanha de Mensagem</strong> está atualmente em versão <span className="text-amber-500 font-semibold">beta</span> e pode apresentar alguns bugs ou comportamentos inesperados.
               </p>
               <p>
                 Estamos trabalhando constantemente para melhorar a experiência. Caso encontre algum problema, por favor nos informe pelo suporte.
