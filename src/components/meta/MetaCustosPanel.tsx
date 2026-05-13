@@ -280,12 +280,12 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
 
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Quantidade de leads</Label>
-              <Input type="number" value={leads} min={0} onChange={(e) => setLeads(Math.max(0, Number(e.target.value) || 0))} />
+              <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
             </div>
 
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Taxa de resposta estimada (%)</Label>
-              <Input type="number" value={taxa} min={0} max={100} onChange={(e) => setTaxa(Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
+              <Input type="number" value={taxa} min={0} max={100} placeholder="Ex.: 20" onChange={(e) => setTaxa(e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
             </div>
           </div>
 
