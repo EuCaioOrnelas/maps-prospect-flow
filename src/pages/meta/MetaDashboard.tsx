@@ -24,7 +24,7 @@ import {
 import {
   DollarSign, MessageSquare, MessagesSquare, RotateCcw, Users, Reply,
   Percent, Briefcase, TrendingUp, Sparkles, Plus, FileText, Search,
-  LayoutDashboard, Wallet, Calendar as CalendarIcon,
+  LayoutDashboard, Wallet, Calendar as CalendarIcon, CheckCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMetaDashboard } from "@/hooks/useMetaDashboard";
