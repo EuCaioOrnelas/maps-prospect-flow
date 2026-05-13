@@ -5,10 +5,12 @@ import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { MetaKpiCard } from "@/components/meta/MetaKpiCard";
 import { MetaInsightCard } from "@/components/meta/MetaInsightCard";
 import { MetaFilterBar } from "@/components/meta/MetaFilterBar";
+import { MetaCustosPanel } from "@/components/meta/MetaCustosPanel";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -19,7 +21,7 @@ import {
 import {
   DollarSign, MessageSquare, MessagesSquare, RotateCcw, Users, Reply,
   Percent, Target, Calendar as CalendarIcon, Briefcase, TrendingUp,
-  Sparkles, Plus, FileText, Search,
+  Sparkles, Plus, FileText, Search, LayoutDashboard, Wallet,
 } from "lucide-react";
 import {
   dailyCost, funnelData, templateCategories, campaignsPerformance, insights, heatmap,
