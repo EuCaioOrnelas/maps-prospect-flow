@@ -13,7 +13,7 @@ import {
   Plus, MoreHorizontal, ArrowRight, MessageSquare, Reply, Bot, UserCheck,
   Search, Tag, Loader2, Sparkles, Users, Send, MessageCircle, DollarSign,
   AlertCircle, Percent, Smartphone, FileText, TrendingUp, Calendar as CalendarIcon, X,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Copy, Check,
 } from "lucide-react";
 
 const ITEMS_PER_PAGE = 10;
