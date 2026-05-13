@@ -159,7 +159,7 @@ const MetaCampaigns = () => {
                 </Badge>
               </div>
               <p className="text-muted-foreground mt-1 max-w-3xl">
-                Comunicação de mensagens inbound com leads que já deram opt-in, utilizando canais oficiais da Meta Platforms.
+                Disparo de mensagens via WhatsApp Cloud API com templates pré-aprovados pela Meta, utilizando canais oficiais da Meta Platforms.
               </p>
             </div>
             <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => navigate("/meta-api-guide")}>
