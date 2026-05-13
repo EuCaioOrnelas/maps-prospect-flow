@@ -64,6 +64,9 @@ export default function MetaCampanhas() {
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
   const [numberMap, setNumberMap] = useState<Record<string, { phone: string; label: string | null }>>({});
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   
 
   const loadCampaigns = async () => {
