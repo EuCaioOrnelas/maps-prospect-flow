@@ -114,7 +114,7 @@ export default function MetaCampanhas() {
         title="Campanhas"
         description="Crie campanhas a partir dos seus templates Wiize e acompanhe envios, respostas, custo e ROI em tempo real."
         actions={
-          <Button size="sm" onClick={() => setPickerOpen(true)}>
+          <Button size="sm" onClick={startNewCampaign}>
             <Plus size={14} className="mr-1.5" /> Nova campanha
           </Button>
         }
