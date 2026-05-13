@@ -42,18 +42,14 @@ const PRESETS = [
   { label: "90 dias", days: 90 },
 ];
 
-// Calcula variação % vs período anterior, evitando ruído quando a base é muito
-// pequena (ex.: 1 → 16 daria 1500%, o que não é uma comparação útil).
-function deltaPct(curr: number, prev: number, opts?: { minBase?: number }): number | undefined {
+// Variação % real vs período anterior. Só suprime quando não há base de
+// comparação (prev = 0) — qualquer valor calculado é exibido como está.
+function deltaPct(curr: number, prev: number): number | undefined {
   if (prev === undefined || prev === null) return undefined;
   if (prev <= 0) return undefined;
-  const minBase = opts?.minBase ?? 3;
-  // Base muito baixa → comparação não é estatisticamente significativa
-  if (prev < minBase && Math.abs(curr - prev) >= prev) return undefined;
   const pct = ((curr - prev) / prev) * 100;
   if (!isFinite(pct)) return undefined;
-  // Limita a faixa exibida para evitar números absurdos
-  return Math.max(-300, Math.min(300, pct));
+  return pct;
 }
 
 export default function MetaDashboard() {
