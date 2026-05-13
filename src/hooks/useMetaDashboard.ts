@@ -39,6 +39,10 @@ export interface MetaDashboardData {
   prevResponseRate: number;
   costPerResponse: number;
   prevCostPerResponse: number;
+  deliveryRate: number;
+  prevDeliveryRate: number;
+  messagesFailed: number;
+  prevMessagesFailed: number;
   opportunities: number;
   prevOpportunities: number;
   pipelineEstimated: number;
