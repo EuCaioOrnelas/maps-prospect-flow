@@ -179,7 +179,7 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
         { stage: "Captados", value: captados },
         { stage: "Analisados", value: analisados },
         { stage: "Enviados", value: enviados },
-        { stage: "Respondidos", value: respondidos },
+        { stage: "Respondeu", value: respondidos },
         { stage: "Oportunidades", value: opportunities },
       ];
 
