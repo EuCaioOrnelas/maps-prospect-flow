@@ -229,21 +229,26 @@ export default function MetaCampanhas() {
                     onSelect={setDateRange}
                     numberOfMonths={2}
                     locale={ptBR}
+                    showOutsideDays={false}
                     initialFocus
                     className="p-3 pointer-events-auto"
                     classNames={{
+                      caption_label: "text-sm font-medium text-foreground",
+                      nav_button:
+                        "h-7 w-7 rounded-full border border-border bg-background p-0 text-foreground opacity-100 hover:bg-muted hover:text-foreground",
+                      head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
                       cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
-                      day: "h-9 w-9 p-0 font-normal text-foreground rounded-md hover:bg-muted aria-selected:opacity-100 transition-colors",
+                      day: "h-9 w-9 p-0 font-normal text-foreground rounded-md hover:bg-muted hover:text-foreground aria-selected:opacity-100 transition-colors",
                       day_selected:
-                        "!bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground",
+                        "bg-transparent text-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground",
                       day_range_start:
-                        "!bg-primary !text-primary-foreground rounded-md",
+                        "!bg-primary !text-primary-foreground rounded-md hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
                       day_range_end:
-                        "!bg-primary !text-primary-foreground rounded-md",
+                        "!bg-primary !text-primary-foreground rounded-md hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
                       day_range_middle:
-                        "!bg-primary/10 !text-foreground hover:!bg-primary/20 rounded-none",
-                      day_today: "ring-1 ring-primary/40",
-                      day_outside: "!text-muted-foreground/40 aria-selected:!bg-transparent",
+                        "!bg-transparent !text-foreground hover:!bg-muted rounded-md",
+                      day_today: "border border-primary/50 text-foreground",
+                      day_outside: "text-muted-foreground/30 opacity-0 pointer-events-none",
                       day_disabled: "!text-muted-foreground/30",
                     }}
                   />
@@ -270,28 +275,32 @@ export default function MetaCampanhas() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="hover:bg-transparent border-border/60">
-                  <TableHead className="w-[28%] border-r border-border/40">Campanha</TableHead>
-                  <TableHead className="border-r border-border/40">Status</TableHead>
-                  <TableHead className="border-r border-border/40">
+                <TableRow className="hover:bg-transparent border-border/60 bg-muted/20">
+                  <TableHead className="w-[28%]">
+                    <span className="inline-flex items-center gap-1.5"><MessageSquare size={12} /> Campanha</span>
+                  </TableHead>
+                  <TableHead>
+                    <span className="inline-flex items-center gap-1.5"><Tag size={12} /> Status</span>
+                  </TableHead>
+                  <TableHead>
                     <span className="inline-flex items-center gap-1.5"><Smartphone size={12} /> Número</span>
                   </TableHead>
-                  <TableHead className="text-right border-r border-border/40">
+                  <TableHead className="text-right">
                     <span className="inline-flex items-center gap-1.5"><Users size={12} /> Leads</span>
                   </TableHead>
-                  <TableHead className="text-right border-r border-border/40">
+                  <TableHead className="text-right">
                     <span className="inline-flex items-center gap-1.5"><Send size={12} /> Enviados</span>
                   </TableHead>
-                  <TableHead className="text-right border-r border-border/40">
+                  <TableHead className="text-right">
                     <span className="inline-flex items-center gap-1.5"><Reply size={12} /> Respostas</span>
                   </TableHead>
-                  <TableHead className="text-right border-r border-border/40">
+                  <TableHead className="text-right">
                     <span className="inline-flex items-center gap-1.5"><AlertCircle size={12} /> Erros</span>
                   </TableHead>
-                  <TableHead className="text-right border-r border-border/40">
+                  <TableHead className="text-right">
                     <span className="inline-flex items-center gap-1.5"><Percent size={12} /> Taxa</span>
                   </TableHead>
-                  <TableHead className="text-right border-r border-border/40">
+                  <TableHead className="text-right">
                     <span className="inline-flex items-center gap-1.5"><DollarSign size={12} /> Custo</span>
                   </TableHead>
                   <TableHead className="w-[40px]"></TableHead>
@@ -310,9 +319,9 @@ export default function MetaCampanhas() {
                     <TableRow
                       key={c.id}
                       onClick={() => openCampaign(c.id)}
-                      className="cursor-pointer border-border/40"
+                      className="cursor-pointer border-border/50 hover:bg-muted/30"
                     >
-                      <TableCell className="py-3 border-r border-border/40">
+                      <TableCell className="py-3">
                         <div className="min-w-0 max-w-[260px]">
                           <p className="font-medium text-foreground truncate" title={c.name}>{c.name}</p>
                           <p className="text-[11px] text-muted-foreground mt-0.5 inline-flex items-center gap-1">
@@ -321,19 +330,19 @@ export default function MetaCampanhas() {
                           </p>
                         </div>
                       </TableCell>
-                      <TableCell className="border-r border-border/40"><Badge variant={s.tone}>{s.label}</Badge></TableCell>
-                      <TableCell className="border-r border-border/40">
+                      <TableCell><Badge variant={s.tone}>{s.label}</Badge></TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-1.5 text-sm text-muted-foreground min-w-0">
                           <Smartphone size={12} className="shrink-0" />
                           <span className="truncate max-w-[140px]">{numberLabel}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums border-r border-border/40">{fmtN(c.total_leads)}</TableCell>
-                      <TableCell className="text-right tabular-nums border-r border-border/40">{fmtN(c.sent_count)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-emerald-500 border-r border-border/40">{fmtN(responses)}</TableCell>
-                      <TableCell className={cn("text-right tabular-nums border-r border-border/40", c.failed_count > 0 && "text-amber-500")}>{fmtN(c.failed_count)}</TableCell>
-                      <TableCell className="text-right tabular-nums border-r border-border/40">{sendRate.toFixed(0)}%</TableCell>
-                      <TableCell className="text-right tabular-nums border-r border-border/40">{fmtBRL(cost)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtN(c.total_leads)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtN(c.sent_count)}</TableCell>
+                      <TableCell className="text-right tabular-nums text-emerald-500">{fmtN(responses)}</TableCell>
+                      <TableCell className={cn("text-right tabular-nums", c.failed_count > 0 && "text-amber-500")}>{fmtN(c.failed_count)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{sendRate.toFixed(0)}%</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtBRL(cost)}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                           <MoreHorizontal size={14} />
