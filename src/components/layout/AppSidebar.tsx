@@ -77,11 +77,11 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const currentPath = location.pathname;
 
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
-  const isOnCampaignsPage = currentPath === "/whatsapp" || currentPath === "/meta-campaigns";
+  const isOnCampaignsPage = currentPath === "/whatsapp";
   const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
   const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
   const isOnAutomationPage = currentPath === "/agents" || currentPath.startsWith("/fluxos") || currentPath === "/warming";
-  const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/");
+  const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/") || currentPath === "/meta-campaigns";
 
   // Watch body class to force expand and select active submenu during guided tour
   useEffect(() => {
