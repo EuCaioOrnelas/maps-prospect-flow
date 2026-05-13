@@ -83,6 +83,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
   const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
   const isOnAutomationPage = currentPath === "/agents" || currentPath.startsWith("/fluxos") || currentPath === "/warming";
+  const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/");
 
   // Watch body class to force expand and select active submenu during guided tour
   useEffect(() => {
@@ -193,6 +194,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     }
   };
 
+  const handleMetaClick = () => {
+    if (isExpanded) {
+      setIsMetaOpen(!isMetaOpen);
+    }
+  };
+
   // Reset reports submenu when sidebar closes
   const handleMouseLeave = () => {
     if (tourForceOpen) return; // don't collapse while tour is driving the sidebar
@@ -202,6 +209,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     setIsOpportunitiesOpen(false);
     setIsCrmOpen(false);
     setIsAutomationOpen(false);
+    setIsMetaOpen(false);
   };
 
   const showUpgrade = profile?.plan !== 'scale';
