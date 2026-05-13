@@ -580,8 +580,59 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               )}
             </li>
             )}
-          </ul>
-        </nav>
+
+            {/* Meta Platforms */}
+            <li>
+              <SidebarNavItem
+                title="Meta Platforms"
+                icon={MessageSquareCode}
+                onClick={handleMetaClick}
+                isActive={isOnMetaPage}
+                isExpanded={isExpanded}
+                hasSubmenu
+                isSubmenuOpen={isMetaOpen}
+                tooltip="Meta Platforms"
+              />
+              {isExpanded && (
+                <div
+                  className={cn(
+                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                    isMetaOpen ? "max-h-[420px] opacity-100 mt-1" : "max-h-0 opacity-0"
+                  )}
+                >
+                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full">
+                    {[
+                      { title: "Dashboard", url: "/meta", icon: LayoutDashboardIcon },
+                      { title: "Campanhas", url: "/meta/campanhas", icon: MegaphoneIcon },
+                      { title: "Templates", url: "/meta/templates", icon: FileText },
+                      { title: "Números & WABA", url: "/meta/numeros", icon: Phone },
+                      { title: "Reabertura", url: "/meta/reabertura", icon: RotateCcw },
+                      { title: "Custos", url: "/meta/custos", icon: DollarSignIcon },
+                      { title: "Qualidade", url: "/meta/qualidade", icon: ShieldCheck },
+                      { title: "Configurações", url: "/meta/configuracoes", icon: SettingsIcon },
+                    ].map((item) => {
+                      const active = item.url === "/meta" ? currentPath === "/meta" : currentPath === item.url;
+                      return (
+                        <li key={item.url}>
+                          <Link
+                            to={item.url}
+                            className={cn(
+                              "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
+                              active
+                                ? "bg-sidebar-accent/60 text-primary font-medium"
+                                : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                            )}
+                          >
+                            <item.icon size={18} className="shrink-0" />
+                            <span className="whitespace-nowrap truncate text-sm">{item.title}</span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </li>
 
 
         {/* Bottom navigation */}
