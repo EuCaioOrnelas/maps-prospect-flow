@@ -10,8 +10,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Plus, Pause, Copy, Archive, Play, MoreHorizontal, ArrowRight,
-  MessageSquare, Reply, Bot, UserCheck, Search, Tag, Loader2, Sparkles,
+  Plus, MoreHorizontal, ArrowRight, MessageSquare, Reply, Bot, UserCheck,
+  Search, Tag, Loader2, Sparkles, Users, Send, MessageCircle, DollarSign,
+  AlertCircle, Percent, Smartphone, FileText, TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,9 +29,15 @@ interface CampaignRow {
   failed_count: number;
   total_responses: number | null;
   created_at: string;
+  whatsapp_number_id: string | null;
+  messages: any;
 }
 
+// Custo médio estimado por mensagem enviada via Meta Cloud (BRL)
+const COST_PER_MESSAGE = 0.12;
 const fmtN = (n: number) => n.toLocaleString("pt-BR");
+const fmtBRL = (n: number) =>
+  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
 const STATUS_LABEL: Record<string, { label: string; tone: "default" | "secondary" | "outline" }> = {
   running: { label: "Ativa", tone: "default" },
@@ -48,6 +55,7 @@ export default function MetaCampanhas() {
   const navigate = useNavigate();
 
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
+  const [numberMap, setNumberMap] = useState<Record<string, { phone: string; label: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -56,20 +64,44 @@ export default function MetaCampanhas() {
     setLoading(true);
     const { data } = await supabase
       .from("whatsapp_campaigns")
-      .select("id,name,status,total_leads,sent_count,failed_count,total_responses,created_at")
+      .select("id,name,status,total_leads,sent_count,failed_count,total_responses,created_at,whatsapp_number_id,messages")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(24);
-    setCampaigns((data as CampaignRow[]) || []);
+    const rows = (data as CampaignRow[]) || [];
+    setCampaigns(rows);
+
+    const numIds = Array.from(new Set(rows.map(r => r.whatsapp_number_id).filter(Boolean))) as string[];
+    if (numIds.length) {
+      const { data: nums } = await supabase
+        .from("whatsapp_numbers")
+        .select("id,phone_number,label")
+        .in("id", numIds);
+      const map: Record<string, { phone: string; label: string | null }> = {};
+      (nums || []).forEach((n: any) => { map[n.id] = { phone: n.phone_number, label: n.label }; });
+      setNumberMap(map);
+    }
     setLoading(false);
   };
 
   useEffect(() => { loadCampaigns(); }, [user?.id]);
 
+  // KPI: custo médio por campanha
+  const avgCostPerCampaign = useMemo(() => {
+    if (!campaigns.length) return 0;
+    const total = campaigns.reduce((s, c) => s + (c.sent_count || 0) * COST_PER_MESSAGE, 0);
+    return total / campaigns.length;
+  }, [campaigns]);
+
+  const totalSpent = useMemo(
+    () => campaigns.reduce((s, c) => s + (c.sent_count || 0) * COST_PER_MESSAGE, 0),
+    [campaigns]
+  );
+
   const handleStartFromTemplate = (tpl: Template | null) => {
-    // Pré-popula a campanha existente via sessionStorage (suportado por WhatsAppCampaign)
+    // Pré-popula a campanha de Relacionamento (Meta) via sessionStorage
     sessionStorage.setItem(
-      "wa_campaign_preset",
+      "meta_campaign_preset",
       JSON.stringify({
         campaignName: tpl ? `Campanha · ${tpl.name}` : "",
         firstMessage: tpl?.body ?? "",
@@ -78,20 +110,32 @@ export default function MetaCampanhas() {
       })
     );
     setPickerOpen(false);
-    navigate("/whatsapp");
+    navigate("/meta-campaigns");
   };
 
+  const openCampaign = (_id: string) => navigate("/meta-campaigns");
+
   return (
-    <MetaLayout title="Campanhas" description="Crie, agende e monitore campanhas outbound integradas ao seu CRM.">
+    <MetaLayout title="Campanhas" description="Crie, agende e monitore campanhas de relacionamento via Meta Cloud API.">
       <MetaPageHeader
         title="Campanhas"
-        description="Crie campanhas a partir dos seus templates Wiize e acompanhe envios, respostas e ROI em tempo real."
+        description="Crie campanhas a partir dos seus templates Wiize e acompanhe envios, respostas, custo e ROI em tempo real."
         actions={
           <Button size="sm" onClick={() => setPickerOpen(true)}>
             <Plus size={14} className="mr-1.5" /> Nova campanha
           </Button>
         }
       />
+
+      {/* KPIs */}
+      {!loading && campaigns.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <KpiTile icon={MessageSquare} label="Campanhas" value={fmtN(campaigns.length)} />
+          <KpiTile icon={Send} label="Total enviado" value={fmtN(campaigns.reduce((s, c) => s + (c.sent_count || 0), 0))} />
+          <KpiTile icon={DollarSign} label="Custo total" value={fmtBRL(totalSpent)} />
+          <KpiTile icon={TrendingUp} label="Custo médio / campanha" value={fmtBRL(avgCostPerCampaign)} />
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
@@ -111,11 +155,24 @@ export default function MetaCampanhas() {
           {campaigns.map((c) => {
             const s = STATUS_LABEL[c.status] ?? { label: c.status, tone: "outline" as const };
             const responses = c.total_responses ?? 0;
+            const cost = (c.sent_count || 0) * COST_PER_MESSAGE;
+            const sendRate = c.total_leads > 0 ? (c.sent_count / c.total_leads) * 100 : 0;
+            const num = c.whatsapp_number_id ? numberMap[c.whatsapp_number_id] : null;
+            const numberLabel = num ? (num.label || num.phone) : "—";
+            const firstMsg = Array.isArray(c.messages) ? (c.messages[0] as string) : "";
+            const templatePreview = firstMsg
+              ? firstMsg.split("\n")[0].slice(0, 38) + (firstMsg.length > 38 ? "…" : "")
+              : "—";
+
             return (
-              <Card key={c.id} className="p-5 border-border/60 hover:border-border transition-colors">
+              <Card
+                key={c.id}
+                onClick={() => openCampaign(c.id)}
+                className="group p-5 border-border/60 hover:border-foreground/40 hover:shadow-sm transition-all cursor-pointer"
+              >
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{c.name}</h3>
+                    <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">{c.name}</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Criada em {new Date(c.created_at).toLocaleDateString("pt-BR")}
                     </p>
@@ -123,25 +180,31 @@ export default function MetaCampanhas() {
                   <Badge variant={s.tone}>{s.label}</Badge>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-center mb-4">
-                  <div className="rounded-md bg-muted/40 p-2">
-                    <p className="text-[10px] uppercase text-muted-foreground tracking-wider">Leads</p>
-                    <p className="text-sm font-semibold tabular-nums">{fmtN(c.total_leads)}</p>
+                {/* Meta info: número e template usados */}
+                <div className="flex flex-col gap-1.5 mb-3 text-xs">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Smartphone size={12} className="shrink-0" />
+                    <span className="truncate">{numberLabel}</span>
                   </div>
-                  <div className="rounded-md bg-muted/40 p-2">
-                    <p className="text-[10px] uppercase text-muted-foreground tracking-wider">Enviados</p>
-                    <p className="text-sm font-semibold tabular-nums">{fmtN(c.sent_count)}</p>
-                  </div>
-                  <div className="rounded-md bg-muted/40 p-2">
-                    <p className="text-[10px] uppercase text-muted-foreground tracking-wider">Respostas</p>
-                    <p className="text-sm font-semibold tabular-nums text-emerald-500">{fmtN(responses)}</p>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <FileText size={12} className="shrink-0" />
+                    <span className="truncate" title={firstMsg}>{templatePreview}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 border-t border-border/60 pt-3">
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs"
-                    onClick={() => navigate("/whatsapp")}>
-                    Abrir
+                {/* Metrics grid */}
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  <Metric icon={Users} label="Leads" value={fmtN(c.total_leads)} />
+                  <Metric icon={Send} label="Enviados" value={fmtN(c.sent_count)} />
+                  <Metric icon={MessageCircle} label="Respostas" value={fmtN(responses)} valueClass="text-emerald-500" />
+                  <Metric icon={DollarSign} label="Custo" value={fmtBRL(cost)} />
+                  <Metric icon={AlertCircle} label="Erros" value={fmtN(c.failed_count)} valueClass={c.failed_count > 0 ? "text-amber-500" : ""} />
+                  <Metric icon={Percent} label="Taxa envio" value={`${sendRate.toFixed(0)}%`} />
+                </div>
+
+                <div className="flex items-center gap-1 border-t border-border/60 pt-3" onClick={(e) => e.stopPropagation()}>
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => openCampaign(c.id)}>
+                    Abrir <ArrowRight size={12} className="ml-1" />
                   </Button>
                   <Button variant="ghost" size="sm" className="h-7 w-7 p-0 ml-auto">
                     <MoreHorizontal size={14} />
@@ -161,13 +224,13 @@ export default function MetaCampanhas() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           {[
-            { icon: MessageSquare, title: "Template Wiize", desc: "Template selecionado é enviado ao lead" },
-            { icon: Reply, title: "Aguarda resposta", desc: "Janela de 24h é aberta ao responder" },
-            { icon: Bot, title: "IA personaliza", desc: "Mensagem gerada por IA é enviada automaticamente" },
-            { icon: UserCheck, title: "Handoff humano", desc: "Lead transferido para inbox do operador" },
+            { icon: MessageSquare, title: "Template Wiize", desc: "Template aprovado é enviado ao lead pela Meta Cloud API." },
+            { icon: Reply, title: "Lead responde", desc: "A resposta abre a janela de 24h e habilita o próximo passo." },
+            { icon: Bot, title: "IA envia CTA", desc: "Mensagem gerada por IA é enviada como CTA para validar interesse." },
+            { icon: UserCheck, title: "Handoff humano", desc: "Quando o lead demonstra interesse, o operador assume na inbox." },
           ].map((s, i) => (
             <div key={s.title} className="relative">
-              <div className="rounded-xl border border-border/60 p-4 bg-card">
+              <div className="rounded-xl border border-border/60 p-4 bg-card h-full">
                 <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-2">
                   <s.icon size={16} />
                 </div>
@@ -189,6 +252,32 @@ export default function MetaCampanhas() {
         onSelect={handleStartFromTemplate}
       />
     </MetaLayout>
+  );
+}
+
+function KpiTile({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+  return (
+    <Card className="p-4 border-border/60">
+      <div className="flex items-center gap-2 text-muted-foreground mb-1.5">
+        <Icon size={13} />
+        <span className="text-[11px] uppercase tracking-wider">{label}</span>
+      </div>
+      <p className="text-lg font-semibold tabular-nums text-foreground">{value}</p>
+    </Card>
+  );
+}
+
+function Metric({
+  icon: Icon, label, value, valueClass = "",
+}: { icon: any; label: string; value: string; valueClass?: string }) {
+  return (
+    <div className="rounded-md bg-muted/40 px-2 py-1.5">
+      <div className="flex items-center gap-1 text-muted-foreground mb-0.5">
+        <Icon size={10} />
+        <p className="text-[10px] uppercase tracking-wider truncate">{label}</p>
+      </div>
+      <p className={`text-sm font-semibold tabular-nums ${valueClass}`}>{value}</p>
+    </div>
   );
 }
 
