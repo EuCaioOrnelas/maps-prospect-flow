@@ -313,6 +313,12 @@ export default function MetaDashboard() {
           ))}
         </div>
       </div>
+        </TabsContent>
+
+        <TabsContent value="custos" className="mt-0">
+          <MetaCustosPanel />
+        </TabsContent>
+      </Tabs>
     </MetaLayout>
   );
 }
