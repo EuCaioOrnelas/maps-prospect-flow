@@ -139,7 +139,7 @@ export default function MetaCampanhas() {
           <MessageSquare className="mx-auto mb-3 text-muted-foreground" size={28} />
           <p className="font-medium">Nenhuma campanha ainda</p>
           <p className="text-sm text-muted-foreground mt-1">Crie sua primeira campanha a partir de um template.</p>
-          <Button className="mt-4" size="sm" onClick={() => setPickerOpen(true)}>
+          <Button className="mt-4" size="sm" onClick={startNewCampaign}>
             <Plus size={14} className="mr-1.5" /> Nova campanha
           </Button>
         </Card>
