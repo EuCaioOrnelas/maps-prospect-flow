@@ -661,6 +661,57 @@ function Metric({
   );
 }
 
+function CopyableId({ id }: { id: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/20 p-3 flex items-center gap-2">
+      <code className="text-xs font-mono text-muted-foreground break-all flex-1 min-w-0">{id}</code>
+      <Button variant="ghost" size="sm" className="h-7 px-2 shrink-0" onClick={handleCopy}>
+        {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+        <span className="text-[11px]">{copied ? "Copiado" : "Copiar"}</span>
+      </Button>
+    </div>
+  );
+}
+
+function PendingNumbersSection({ campaign }: { campaign: CampaignRow }) {
+  const leads = Array.isArray(campaign.leads) ? campaign.leads : [];
+  const idx = campaign.current_lead_index ?? 0;
+  const pendingPhones: string[] = leads.slice(idx).map((l: any) => l?.phone).filter(Boolean);
+  const failedCount = campaign.failed_count ?? 0;
+  // Best effort: failed phones are not stored individually; show pending only.
+  if (pendingPhones.length === 0 && failedCount === 0) return null;
+  return (
+    <section>
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 inline-flex items-center gap-1.5">
+        <AlertCircle size={12} /> Envios pendentes / com erro
+      </h4>
+      <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2">
+        <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1"><Loader2 size={10} /> Pendentes: <span className="text-foreground font-semibold tabular-nums">{pendingPhones.length}</span></span>
+          <span className="inline-flex items-center gap-1"><AlertCircle size={10} /> Erros: <span className={`font-semibold tabular-nums ${failedCount > 0 ? "text-amber-500" : "text-foreground"}`}>{failedCount}</span></span>
+        </div>
+        {pendingPhones.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pt-1">
+            {pendingPhones.map((p, i) => (
+              <code key={i} className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-background border border-border/60 text-muted-foreground">
+                {p}
+              </code>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function TemplatePickerDialog({
   open, onClose, onSelect,
 }: {
