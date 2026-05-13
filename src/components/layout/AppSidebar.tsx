@@ -77,11 +77,11 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const currentPath = location.pathname;
 
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
-  const isOnCampaignsPage = currentPath === "/whatsapp" || currentPath === "/meta-campaigns";
+  const isOnCampaignsPage = currentPath === "/whatsapp";
   const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
   const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
   const isOnAutomationPage = currentPath === "/agents" || currentPath.startsWith("/fluxos") || currentPath === "/warming";
-  const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/");
+  const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/") || currentPath === "/meta-campaigns";
 
   // Watch body class to force expand and select active submenu during guided tour
   useEffect(() => {
@@ -366,6 +366,57 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
             )}
 
+            {/* Meta Platform */}
+            <li>
+              <SidebarNavItem
+                title="Meta Platform"
+                icon={MetaIcon as any}
+                onClick={handleMetaClick}
+                isActive={isOnMetaPage}
+                isExpanded={isExpanded}
+                hasSubmenu
+                isSubmenuOpen={isMetaOpen}
+                tooltip="Meta Platform"
+              />
+              {isExpanded && (
+                <div
+                  className={cn(
+                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                    isMetaOpen ? "max-h-[420px] opacity-100 mt-1" : "max-h-0 opacity-0"
+                  )}
+                >
+                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full">
+                    {[
+                      { title: "Dashboard", url: "/meta", icon: LayoutDashboardIcon },
+                      { title: "Campanhas", url: "/meta/campanhas", icon: MegaphoneIcon },
+                      { title: "Templates", url: "/meta/templates", icon: FileText },
+                      { title: "Números & WABA", url: "/meta/numeros", icon: Phone },
+                      { title: "Reabertura", url: "/meta/reabertura", icon: RotateCcw },
+                      { title: "Configurações", url: "/meta/configuracoes", icon: SettingsIcon },
+                    ].map((item) => {
+                      const active = item.url === "/meta" ? currentPath === "/meta" : currentPath === item.url;
+                      return (
+                        <li key={item.url}>
+                          <Link
+                            to={item.url}
+                            className={cn(
+                              "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
+                              active
+                                ? "bg-sidebar-accent/60 text-primary font-medium"
+                                : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                            )}
+                          >
+                            <item.icon size={18} className="shrink-0" />
+                            <span className="whitespace-nowrap truncate text-sm">{item.title}</span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </li>
+
             {/* Campanhas with submenu */}
             {can("campaigns") && (
             <li data-tour="sidebar-campanhas">
@@ -565,56 +616,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
             )}
 
-            {/* Meta Platform */}
-            <li>
-              <SidebarNavItem
-                title="Meta Platform"
-                icon={MetaIcon as any}
-                onClick={handleMetaClick}
-                isActive={isOnMetaPage}
-                isExpanded={isExpanded}
-                hasSubmenu
-                isSubmenuOpen={isMetaOpen}
-                tooltip="Meta Platform"
-              />
-              {isExpanded && (
-                <div
-                  className={cn(
-                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                    isMetaOpen ? "max-h-[420px] opacity-100 mt-1" : "max-h-0 opacity-0"
-                  )}
-                >
-                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full">
-                    {[
-                      { title: "Dashboard", url: "/meta", icon: LayoutDashboardIcon },
-                      { title: "Campanhas", url: "/meta/campanhas", icon: MegaphoneIcon },
-                      { title: "Templates", url: "/meta/templates", icon: FileText },
-                      { title: "Números & WABA", url: "/meta/numeros", icon: Phone },
-                      { title: "Reabertura", url: "/meta/reabertura", icon: RotateCcw },
-                      { title: "Configurações", url: "/meta/configuracoes", icon: SettingsIcon },
-                    ].map((item) => {
-                      const active = item.url === "/meta" ? currentPath === "/meta" : currentPath === item.url;
-                      return (
-                        <li key={item.url}>
-                          <Link
-                            to={item.url}
-                            className={cn(
-                              "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
-                              active
-                                ? "bg-sidebar-accent/60 text-primary font-medium"
-                                : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                            )}
-                          >
-                            <item.icon size={18} className="shrink-0" />
-                            <span className="whitespace-nowrap truncate text-sm">{item.title}</span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-            </li>
           </ul>
         </nav>
 

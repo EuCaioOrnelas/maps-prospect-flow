@@ -57,7 +57,7 @@ export default function MetaCampanhas() {
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
   const [numberMap, setNumberMap] = useState<Record<string, { phone: string; label: string | null }>>({});
   const [loading, setLoading] = useState(true);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  
 
   const loadCampaigns = async () => {
     if (!user) return;
@@ -98,18 +98,11 @@ export default function MetaCampanhas() {
     [campaigns]
   );
 
-  const handleStartFromTemplate = (tpl: Template | null) => {
-    // Pré-popula a campanha de Relacionamento (Meta) via sessionStorage
+  const startNewCampaign = () => {
     sessionStorage.setItem(
       "meta_campaign_preset",
-      JSON.stringify({
-        campaignName: tpl ? `Campanha · ${tpl.name}` : "",
-        firstMessage: tpl?.body ?? "",
-        templateId: tpl?.id ?? null,
-        source: "meta_platform",
-      })
+      JSON.stringify({ source: "meta_platform" })
     );
-    setPickerOpen(false);
     navigate("/meta-campaigns");
   };
 
@@ -121,7 +114,7 @@ export default function MetaCampanhas() {
         title="Campanhas"
         description="Crie campanhas a partir dos seus templates Wiize e acompanhe envios, respostas, custo e ROI em tempo real."
         actions={
-          <Button size="sm" onClick={() => setPickerOpen(true)}>
+          <Button size="sm" onClick={startNewCampaign}>
             <Plus size={14} className="mr-1.5" /> Nova campanha
           </Button>
         }
@@ -146,7 +139,7 @@ export default function MetaCampanhas() {
           <MessageSquare className="mx-auto mb-3 text-muted-foreground" size={28} />
           <p className="font-medium">Nenhuma campanha ainda</p>
           <p className="text-sm text-muted-foreground mt-1">Crie sua primeira campanha a partir de um template.</p>
-          <Button className="mt-4" size="sm" onClick={() => setPickerOpen(true)}>
+          <Button className="mt-4" size="sm" onClick={startNewCampaign}>
             <Plus size={14} className="mr-1.5" /> Nova campanha
           </Button>
         </Card>
@@ -245,12 +238,6 @@ export default function MetaCampanhas() {
         </div>
       </Card>
 
-      {/* Template picker dialog */}
-      <TemplatePickerDialog
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        onSelect={handleStartFromTemplate}
-      />
     </MetaLayout>
   );
 }
