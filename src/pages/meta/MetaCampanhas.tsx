@@ -238,12 +238,6 @@ export default function MetaCampanhas() {
         </div>
       </Card>
 
-      {/* Template picker dialog */}
-      <TemplatePickerDialog
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        onSelect={handleStartFromTemplate}
-      />
     </MetaLayout>
   );
 }
