@@ -222,7 +222,7 @@ export default function MetaCampanhas() {
                     )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
+                <PopoverContent className="w-auto p-0 border-border/60 shadow-lg bg-popover" align="end">
                   <Calendar
                     mode="range"
                     selected={dateRange}
@@ -230,7 +230,17 @@ export default function MetaCampanhas() {
                     numberOfMonths={2}
                     locale={ptBR}
                     initialFocus
-                    className={cn("p-3 pointer-events-auto")}
+                    className="p-3 pointer-events-auto"
+                    classNames={{
+                      cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-primary/10 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md [&:has(.day-range-start)]:rounded-l-md [&:has(.day-range-end)]:rounded-r-md",
+                      day_selected:
+                        "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-md",
+                      day_range_start: "day-range-start !bg-primary !text-primary-foreground rounded-l-md rounded-r-none",
+                      day_range_end: "day-range-end !bg-primary !text-primary-foreground rounded-r-md rounded-l-none",
+                      day_range_middle: "!bg-transparent !text-foreground hover:!bg-primary/15 rounded-none",
+                      day_today: "ring-1 ring-primary/40 text-foreground",
+                      day_outside: "text-muted-foreground/40 aria-selected:!bg-transparent aria-selected:!text-muted-foreground/40",
+                    }}
                   />
                 </PopoverContent>
               </Popover>
