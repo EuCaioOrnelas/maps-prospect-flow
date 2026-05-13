@@ -602,31 +602,27 @@ function CampaignDetailsDialog({
               </div>
             </section>
 
-            {/* Mensagens enviadas */}
+            {/* Template usado */}
             {messagesList.length > 0 && (
               <section>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 inline-flex items-center gap-1.5">
-                  <MessageSquare size={12} /> Mensagem{messagesList.length > 1 ? "ns" : ""} ({messagesList.length})
+                  <MessageSquare size={12} /> Template usado
                 </h4>
-                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                  {messagesList.map((m, i) => (
-                    <div key={i} className="rounded-lg border border-border/60 bg-muted/20 p-3">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Variação {i + 1}</p>
-                      <p className="text-sm whitespace-pre-wrap text-foreground">{m}</p>
-                    </div>
-                  ))}
+                <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                  <p className="text-sm whitespace-pre-wrap text-foreground">{messagesList[0]}</p>
                 </div>
               </section>
             )}
 
+            {/* Números pendentes / não enviados */}
+            <PendingNumbersSection campaign={c} />
+
             {/* Identificadores */}
             <section>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 inline-flex items-center gap-1.5">
-                <FileText size={12} /> Identificadores
+                <FileText size={12} /> Identificador
               </h4>
-              <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-xs font-mono text-muted-foreground break-all">
-                {c.id}
-              </div>
+              <CopyableId id={c.id} />
             </section>
 
             <div className="flex justify-end pt-2 border-t border-border/60">
