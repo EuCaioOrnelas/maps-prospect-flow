@@ -380,7 +380,13 @@ export default function MetaCampanhas() {
                       <TableCell className="text-right tabular-nums">{sendRate.toFixed(0)}%</TableCell>
                       <TableCell className="text-right tabular-nums">{fmtBRL(cost)}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={() => setDetailsCampaign(c)}
+                          title="Ver detalhes"
+                        >
                           <MoreHorizontal size={14} />
                         </Button>
                       </TableCell>
