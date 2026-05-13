@@ -180,18 +180,6 @@ export default function MetaCampanhas() {
                   <Badge variant={s.tone}>{s.label}</Badge>
                 </div>
 
-                {/* Meta info: número e template usados */}
-                <div className="flex flex-col gap-1.5 mb-3 text-xs">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Smartphone size={12} className="shrink-0" />
-                    <span className="truncate">{numberLabel}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <FileText size={12} className="shrink-0" />
-                    <span className="truncate" title={firstMsg}>{templatePreview}</span>
-                  </div>
-                </div>
-
                 {/* Metrics grid */}
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   <Metric icon={Users} label="Leads" value={fmtN(c.total_leads)} />
@@ -202,7 +190,20 @@ export default function MetaCampanhas() {
                   <Metric icon={Percent} label="Taxa envio" value={`${sendRate.toFixed(0)}%`} />
                 </div>
 
-                <div className="flex items-center gap-1 border-t border-border/60 pt-3" onClick={(e) => e.stopPropagation()}>
+                {/* Meta info: número (esq) | template (dir) */}
+                <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <Smartphone size={12} className="shrink-0" />
+                    <span className="truncate">{numberLabel}</span>
+                  </div>
+                  <span className="h-3.5 w-px bg-border shrink-0" />
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
+                    <FileText size={12} className="shrink-0" />
+                    <span className="truncate text-right" title={firstMsg}>{templatePreview}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 border-t border-border/60 pt-3 mt-3" onClick={(e) => e.stopPropagation()}>
                   <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => openCampaign(c.id)}>
                     Abrir <ArrowRight size={12} className="ml-1" />
                   </Button>
