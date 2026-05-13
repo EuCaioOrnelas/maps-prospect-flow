@@ -403,6 +403,8 @@ function DateRangeBar({
                 head_cell: "text-muted-foreground rounded-md w-9 font-medium text-[0.78rem]",
                 day: cn(buttonVariants({ variant: "ghost" }), "h-9 w-9 p-0 text-sm font-medium aria-selected:opacity-100"),
                 day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                day_range_start: "day-range-start bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                day_range_end: "day-range-end bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
                 day_range_middle: "aria-selected:bg-primary/90 aria-selected:text-primary-foreground",
                 day_outside: "day-outside text-muted-foreground/55 aria-selected:bg-primary/45 aria-selected:text-primary-foreground aria-selected:opacity-100",
                 day_today: "bg-secondary text-secondary-foreground",
