@@ -29,9 +29,14 @@ interface CampaignRow {
   failed_count: number;
   total_responses: number | null;
   created_at: string;
+  whatsapp_number_id: string | null;
+  messages: any;
 }
 
-const fmtN = (n: number) => n.toLocaleString("pt-BR");
+// Custo médio estimado por mensagem enviada via Meta Cloud (BRL)
+const COST_PER_MESSAGE = 0.12;
+const fmtBRL = (n: number) =>
+  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
 const STATUS_LABEL: Record<string, { label: string; tone: "default" | "secondary" | "outline" }> = {
   running: { label: "Ativa", tone: "default" },
