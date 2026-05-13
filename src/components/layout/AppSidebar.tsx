@@ -633,7 +633,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 </div>
               )}
             </li>
-
+          </ul>
+        </nav>
 
         {/* Bottom navigation */}
         <div className="py-4 border-t border-sidebar-border">
