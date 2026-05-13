@@ -333,8 +333,9 @@ export default function MetaDashboard() {
           </div>
         </TabsContent>
 
-        <TabsContent value="custos" className="mt-0">
-          <MetaCustosPanel />
+        <TabsContent value="custos" className="space-y-4 mt-0">
+          <DateRangeBar start={start} end={end} onStart={setStart} onEnd={setEnd} />
+          <MetaCustosPanel data={data} />
         </TabsContent>
       </Tabs>
     </MetaLayout>
