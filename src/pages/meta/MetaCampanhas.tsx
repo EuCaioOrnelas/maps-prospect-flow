@@ -249,21 +249,44 @@ export default function MetaCampanhas() {
                       nav_button:
                         "h-7 w-7 rounded-full border border-border bg-background p-0 text-foreground opacity-100 hover:bg-muted hover:text-foreground",
                       head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-                      cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+                      cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-primary/10 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
                       day: "h-9 w-9 p-0 font-normal text-foreground rounded-md hover:bg-muted hover:text-foreground aria-selected:opacity-100 transition-colors",
                       day_selected:
                         "bg-transparent text-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground",
                       day_range_start:
-                        "!bg-primary !text-primary-foreground rounded-md hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
+                        "day-range-start !bg-primary !text-primary-foreground rounded-md hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
                       day_range_end:
-                        "!bg-primary !text-primary-foreground rounded-md hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
+                        "day-range-end !bg-primary !text-primary-foreground rounded-md hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
                       day_range_middle:
-                        "!bg-transparent !text-foreground hover:!bg-muted rounded-md",
+                        "!bg-transparent !text-foreground hover:!bg-primary/20 rounded-none",
                       day_today: "border border-primary/50 text-foreground",
                       day_outside: "text-muted-foreground/30 opacity-0 pointer-events-none",
                       day_disabled: "!text-muted-foreground/30",
                     }}
                   />
+                  <div className="flex items-center justify-end gap-1.5 px-3 py-2 border-t border-border/60 bg-muted/20">
+                    {[
+                      { label: "7 dias", days: 7 },
+                      { label: "30 dias", days: 30 },
+                      { label: "60 dias", days: 60 },
+                      { label: "90 dias", days: 90 },
+                    ].map((q) => (
+                      <Button
+                        key={q.days}
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2.5 text-xs"
+                        onClick={() => {
+                          const to = new Date();
+                          const from = new Date();
+                          from.setDate(to.getDate() - (q.days - 1));
+                          setDateRange({ from, to });
+                        }}
+                      >
+                        {q.label}
+                      </Button>
+                    ))}
+                  </div>
                 </PopoverContent>
               </Popover>
               {(dateRange || statusFilter !== "all" || search) && (
