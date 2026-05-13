@@ -136,6 +136,32 @@ serve(async (req) => {
 
     log("Subscription created", { id: subscription.id, status: subscription.status });
 
+    // 3. PÓS-CRIAÇÃO SWEEP — cobre race condition (2 abas paralelas):
+    // se entre o sweep inicial e este momento alguma OUTRA subscription
+    // foi criada para este email (em outro customer), cancela todas
+    // exceto a que acabamos de criar.
+    if (customerData.email) {
+      try {
+        const customers = await stripe.customers.list({ email: customerData.email, limit: 100 });
+        for (const c of customers.data) {
+          const subs = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 100 });
+          for (const s of subs.data) {
+            if (s.id === subscription.id) continue;
+            if (s.status === "trialing" || s.status === "active" || s.status === "past_due") {
+              try {
+                await stripe.subscriptions.cancel(s.id);
+                log("Post-create sweep cancelled racing sub", { sub: s.id, customer: c.id });
+              } catch (e) {
+                log("Post-create sweep failed", { sub: s.id, error: String(e) });
+              }
+            }
+          }
+        }
+      } catch (e) {
+        log("Post-create sweep error (non-fatal)", { error: String(e) });
+      }
+    }
+
     const setupIntent = subscription.pending_setup_intent as Stripe.SetupIntent | null;
 
     const trialEnd = subscription.trial_end
