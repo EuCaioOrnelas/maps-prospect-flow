@@ -22,6 +22,15 @@ import {
   Trophy,
   MessageCircle,
   Workflow,
+  MessageSquareCode,
+  LayoutDashboard as LayoutDashboardIcon,
+  Megaphone as MegaphoneIcon,
+  FileText,
+  Phone,
+  RotateCcw,
+  DollarSign as DollarSignIcon,
+  ShieldCheck,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
