@@ -78,7 +78,7 @@ export default function MetaCampanhas() {
       })
     );
     setPickerOpen(false);
-    navigate("/campanhas");
+    navigate("/whatsapp");
   };
 
   return (
@@ -140,7 +140,7 @@ export default function MetaCampanhas() {
 
                 <div className="flex items-center gap-1 border-t border-border/60 pt-3">
                   <Button variant="ghost" size="sm" className="h-7 px-2 text-xs"
-                    onClick={() => navigate("/campanhas")}>
+                    onClick={() => navigate("/whatsapp")}>
                     Abrir
                   </Button>
                   <Button variant="ghost" size="sm" className="h-7 w-7 p-0 ml-auto">
