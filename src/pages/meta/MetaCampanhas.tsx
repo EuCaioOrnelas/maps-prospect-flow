@@ -41,6 +41,8 @@ interface CampaignRow {
   created_at: string;
   whatsapp_number_id: string | null;
   messages: any;
+  leads: any;
+  current_lead_index: number | null;
 }
 
 // Custo médio estimado por mensagem enviada via Meta Cloud (BRL)
