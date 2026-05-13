@@ -59,8 +59,8 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
   const [tplLoading, setTplLoading] = useState(false);
   const [selectedTplId, setSelectedTplId] = useState<string>("__manual__");
   const [tipoManual, setTipoManual] = useState<keyof typeof META_PRICING_BR>("MARKETING");
-  const [leads, setLeads] = useState(1000);
-  const [taxa, setTaxa] = useState(20);
+  const [leads, setLeads] = useState<number | "">("");
+  const [taxa, setTaxa] = useState<number | "">("");
 
   // Carrega templates reais da primeira WABA conectada
   useEffect(() => {
@@ -106,8 +106,10 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
   const costPerMsg = META_PRICING_BR[selectedCategory] ?? META_PRICING_BR.MARKETING;
 
   const sim = useMemo(() => {
-    const totalCost = leads * costPerMsg;
-    const respondents = (leads * taxa) / 100;
+    const leadsN = typeof leads === "number" ? leads : 0;
+    const taxaN = typeof taxa === "number" ? taxa : 0;
+    const totalCost = leadsN * costPerMsg;
+    const respondents = (leadsN * taxaN) / 100;
     const cpr = respondents > 0 ? totalCost / respondents : 0;
     const opps = respondents * 0.12;
     const cpo = opps > 0 ? totalCost / opps : 0;
@@ -278,12 +280,12 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
 
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Quantidade de leads</Label>
-              <Input type="number" value={leads} min={0} onChange={(e) => setLeads(Math.max(0, Number(e.target.value) || 0))} />
+              <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
             </div>
 
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Taxa de resposta estimada (%)</Label>
-              <Input type="number" value={taxa} min={0} max={100} onChange={(e) => setTaxa(Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
+              <Input type="number" value={taxa} min={0} max={100} placeholder="Ex.: 20" onChange={(e) => setTaxa(e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
             </div>
           </div>
 
