@@ -184,6 +184,15 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
       const conversationsStarted = Object.keys(convFirst).length;
       const conversationsReopened = Math.round(conversationsStarted * 0.25);
 
+      const prevInbound = prevChatInboundRes.data || [];
+      const prevConvFirst: Record<string, string> = {};
+      prevInbound.forEach((m: any) => {
+        const cid = m.conversation_id;
+        if (!prevConvFirst[cid] || m.created_at < prevConvFirst[cid]) prevConvFirst[cid] = m.created_at;
+      });
+      const prevConversationsStarted = Object.keys(prevConvFirst).length;
+      const prevConversationsReopened = Math.round(prevConversationsStarted * 0.25);
+
       const captados = leadsInFunnel;
       const analisados = leadsRows.filter((l: any) => l.opportunity_level).length || Math.round(captados * 0.7);
       const enviados = leadsRows.filter((l: any) => l.first_message_sent).length;
@@ -195,6 +204,12 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
         { stage: "Respondeu", value: respondidos },
         { stage: "Oportunidades", value: opportunities },
       ];
+
+      const prevLeadsRows = prevLeadsRes.data || [];
+      const prevOpportunities = prevLeadsRows.filter((l: any) =>
+        ["alto", "alta", "high", "muito_alto"].includes((l.opportunity_level || "").toLowerCase())
+      ).length;
+      const prevPipelineEstimated = prevLeadsRows.reduce((s: number, l: any) => s + Number(l.estimated_value || 0), 0);
 
       const cats = categoriesRes.data || [];
       const tpls = templatesRes.data || [];
@@ -229,7 +244,34 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
       const costPerResponse = responses > 0 ? totalCost / responses : 0;
       const prevCostPerResponse = prevResponses > 0 ? (prevSent * META_COST_PER_MSG) / prevResponses : 0;
       const roiProjected = totalCost > 0 ? pipelineEstimated / totalCost : 0;
-      const prevRoiProjected = (prevSent * META_COST_PER_MSG) > 0 ? (prevDealsValue / (prevSent * META_COST_PER_MSG)) : 0;
+      const prevPrevCost = prevSent * META_COST_PER_MSG;
+      const prevRoiProjected = prevPrevCost > 0 ? prevPipelineEstimated / prevPrevCost : 0;
+
+      // Build per-day sparks aligned to daily array
+      const dayKeys = Object.keys(days).sort();
+      const sparkLeadsCreated = dayKeys.map((k) => leadsRows.filter((l: any) => (l.created_at || "").slice(0, 10) === k).length);
+      const sparkLeadsAnswered = dayKeys.map((k) => leadsRows.filter((l: any) => l.has_responded && (l.responded_at || "").slice(0, 10) === k).length);
+      const sparkOpps = dayKeys.map((k) => leadsRows.filter((l: any) => (l.created_at || "").slice(0, 10) === k && ["alto", "alta", "high", "muito_alto"].includes((l.opportunity_level || "").toLowerCase())).length);
+      const sparkPipeline = dayKeys.map((k) => leadsRows.filter((l: any) => (l.created_at || "").slice(0, 10) === k).reduce((s: number, l: any) => s + Number(l.estimated_value || 0), 0));
+      const sparkConvStarted = dayKeys.map((k) => Object.values(convFirst).filter((d) => d.slice(0, 10) === k).length);
+      const sparkConvReopened = sparkConvStarted.map((v) => Math.round(v * 0.25));
+      const sparkRate = daily.map((d) => d.messages > 0 ? (d.responses / d.messages) * 100 : 0);
+      const sparkCPR = daily.map((d) => d.responses > 0 ? d.cost / d.responses : 0);
+      const sparkROI = daily.map((d, i) => d.cost > 0 ? (sparkPipeline[i] || 0) / d.cost : 0);
+
+      const sparks = {
+        cost: daily.map((d) => d.cost),
+        messages: daily.map((d) => d.messages),
+        conversationsStarted: sparkConvStarted,
+        conversationsReopened: sparkConvReopened,
+        leadsInFunnel: sparkLeadsCreated,
+        leadsAnswered: sparkLeadsAnswered,
+        responseRate: sparkRate,
+        costPerResponse: sparkCPR,
+        opportunities: sparkOpps,
+        pipelineEstimated: sparkPipeline,
+        roiProjected: sparkROI,
+      };
 
       const insights: MetaDashboardData["insights"] = [];
       let bestHour = -1, bestVal = 0;
@@ -270,16 +312,17 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
       setData({
         totalCost, prevTotalCost: prevSent * META_COST_PER_MSG,
         messagesSent, prevMessagesSent: prevSent,
-        conversationsStarted, prevConversationsStarted: 0,
-        conversationsReopened, prevConversationsReopened: 0,
+        conversationsStarted, prevConversationsStarted,
+        conversationsReopened, prevConversationsReopened,
         leadsInFunnel, prevLeadsInFunnel,
         leadsAnswered, prevLeadsAnswered,
         responseRate, prevResponseRate,
         costPerResponse, prevCostPerResponse,
-        opportunities, prevOpportunities: 0,
-        pipelineEstimated, prevPipelineEstimated: prevDealsValue,
+        opportunities, prevOpportunities,
+        pipelineEstimated, prevPipelineEstimated,
         roiProjected, prevRoiProjected,
         daily,
+        sparks,
         funnel,
         templateCategories,
         heatmap,
@@ -307,6 +350,12 @@ function emptyData(): Omit<MetaDashboardData, "loading"> {
     opportunities: 0, prevOpportunities: 0,
     pipelineEstimated: 0, prevPipelineEstimated: 0,
     roiProjected: 0, prevRoiProjected: 0,
-    daily: [], funnel: [], templateCategories: [], heatmap: [], campaigns: [], insights: [],
+    daily: [],
+    sparks: {
+      cost: [], messages: [], conversationsStarted: [], conversationsReopened: [],
+      leadsInFunnel: [], leadsAnswered: [], responseRate: [], costPerResponse: [],
+      opportunities: [], pipelineEstimated: [], roiProjected: [],
+    },
+    funnel: [], templateCategories: [], heatmap: [], campaigns: [], insights: [],
   };
 }
