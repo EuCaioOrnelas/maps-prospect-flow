@@ -190,14 +190,13 @@ export default function MetaCampanhas() {
                   <Metric icon={Percent} label="Taxa envio" value={`${sendRate.toFixed(0)}%`} />
                 </div>
 
-                {/* Meta info: número | template — ambos alinhados à esquerda */}
-                <div className="flex items-center gap-3 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5 min-w-0 max-w-[45%]">
+                {/* Meta info: número | template — divisor centralizado, textos alinhados à esquerda em cada metade */}
+                <div className="grid grid-cols-2 items-center border-t border-border/60 pt-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 min-w-0 pr-3 border-r border-border/60">
                     <Smartphone size={12} className="shrink-0" />
                     <span className="truncate">{numberLabel}</span>
                   </div>
-                  <span className="h-3.5 w-px bg-border shrink-0" />
-                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 min-w-0 pl-3">
                     <FileText size={12} className="shrink-0" />
                     <span className="truncate" title={firstMsg}>{templatePreview}</span>
                   </div>
@@ -272,7 +271,7 @@ function Metric({
   icon: Icon, label, value, valueClass = "",
 }: { icon: any; label: string; value: string; valueClass?: string }) {
   return (
-    <div className="rounded-md bg-muted/40 px-2 py-1.5">
+    <div className="rounded-lg bg-muted/40 px-2.5 py-2 border border-border/40">
       <div className="flex items-center gap-1 text-muted-foreground mb-0.5">
         <Icon size={10} />
         <p className="text-[10px] uppercase tracking-wider truncate">{label}</p>

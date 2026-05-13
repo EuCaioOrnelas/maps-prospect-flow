@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { format, subDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { MetaLayout } from "@/components/meta/MetaLayout";
 import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { MetaKpiCard } from "@/components/meta/MetaKpiCard";
 import { MetaInsightCard } from "@/components/meta/MetaInsightCard";
-import { MetaFilterBar } from "@/components/meta/MetaFilterBar";
 import { MetaCustosPanel } from "@/components/meta/MetaCustosPanel";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -20,42 +23,51 @@ import {
 } from "recharts";
 import {
   DollarSign, MessageSquare, MessagesSquare, RotateCcw, Users, Reply,
-  Percent, Target, Calendar as CalendarIcon, Briefcase, TrendingUp,
-  Sparkles, Plus, FileText, Search, LayoutDashboard, Wallet,
+  Percent, Briefcase, TrendingUp, Sparkles, Plus, FileText, Search,
+  LayoutDashboard, Wallet, Calendar as CalendarIcon,
 } from "lucide-react";
-import {
-  dailyCost, funnelData, templateCategories, campaignsPerformance, insights, heatmap,
-} from "@/components/meta/mockData";
+import { cn } from "@/lib/utils";
+import { useMetaDashboard } from "@/hooks/useMetaDashboard";
 
 const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 const fmtN = (n: number) => n.toLocaleString("pt-BR");
 
-const KPIS = [
-  { label: "Gasto Meta", value: fmtBRL(2486), delta: 12.4, accent: "primary" as const, icon: <DollarSign size={14} /> },
-  { label: "Mensagens enviadas", value: fmtN(4860), delta: 8.2, accent: "violet" as const, icon: <MessageSquare size={14} /> },
-  { label: "Conversas iniciadas", value: fmtN(1106), delta: 14.1, accent: "emerald" as const, icon: <MessagesSquare size={14} /> },
-  { label: "Conversas reabertas", value: fmtN(421), delta: -3.2, accent: "amber" as const, icon: <RotateCcw size={14} /> },
-  { label: "Leads no funil CRM", value: fmtN(3120), delta: 5.6, accent: "primary" as const, icon: <Users size={14} /> },
-  { label: "Leads respondidos", value: fmtN(728), delta: 11.0, accent: "emerald" as const, icon: <Reply size={14} /> },
-  { label: "Taxa de resposta", value: "23.3%", delta: 2.4, accent: "violet" as const, icon: <Percent size={14} /> },
-  { label: "Custo por resposta", value: fmtBRL(3.41), delta: -6.8, accent: "primary" as const, icon: <DollarSign size={14} /> },
-  { label: "Custo por oportunidade", value: fmtBRL(28), delta: -4.2, accent: "amber" as const, icon: <Target size={14} /> },
-  { label: "Reuniões geradas", value: fmtN(168), delta: 18.0, accent: "emerald" as const, icon: <CalendarIcon size={14} /> },
-  { label: "Oportunidades", value: fmtN(89), delta: 9.4, accent: "violet" as const, icon: <Briefcase size={14} /> },
-  { label: "Pipeline estimado", value: fmtBRL(412000), delta: 14.7, accent: "primary" as const, icon: <TrendingUp size={14} /> },
-  { label: "ROI estimado", value: "5.2x", delta: 7.8, accent: "emerald" as const, icon: <Sparkles size={14} /> },
+const PRESETS = [
+  { label: "7 dias", days: 7 },
+  { label: "30 dias", days: 30 },
+  { label: "90 dias", days: 90 },
 ];
 
+function deltaPct(curr: number, prev: number): number | undefined {
+  if (!prev) return undefined;
+  return ((curr - prev) / prev) * 100;
+}
+
 export default function MetaDashboard() {
-  const [period, setPeriod] = useState("30");
-  const [campaign, setCampaign] = useState("all");
-  const [numero, setNumero] = useState("all");
-  const [status, setStatus] = useState("all");
+  const [end, setEnd] = useState<Date>(new Date());
+  const [start, setStart] = useState<Date>(subDays(new Date(), 30));
   const [search, setSearch] = useState("");
 
-  const filteredCampaigns = campaignsPerformance.filter((c) =>
+  const range = useMemo(() => ({ start, end }), [start, end]);
+  const data = useMetaDashboard(range);
+
+  const filteredCampaigns = data.campaigns.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const kpis = useMemo(() => [
+    { label: "Gasto Meta", value: fmtBRL(data.totalCost), delta: deltaPct(data.totalCost, data.prevTotalCost), accent: "primary" as const, icon: <DollarSign size={14} /> },
+    { label: "Mensagens enviadas", value: fmtN(data.messagesSent), delta: deltaPct(data.messagesSent, data.prevMessagesSent), accent: "violet" as const, icon: <MessageSquare size={14} /> },
+    { label: "Conversas iniciadas", value: fmtN(data.conversationsStarted), accent: "emerald" as const, icon: <MessagesSquare size={14} /> },
+    { label: "Conversas reabertas", value: fmtN(data.conversationsReopened), accent: "amber" as const, icon: <RotateCcw size={14} /> },
+    { label: "Leads no funil", value: fmtN(data.leadsInFunnel), delta: deltaPct(data.leadsInFunnel, data.prevLeadsInFunnel), accent: "primary" as const, icon: <Users size={14} /> },
+    { label: "Leads respondidos", value: fmtN(data.leadsAnswered), delta: deltaPct(data.leadsAnswered, data.prevLeadsAnswered), accent: "emerald" as const, icon: <Reply size={14} /> },
+    { label: "Taxa de resposta", value: `${data.responseRate.toFixed(1)}%`, delta: deltaPct(data.responseRate, data.prevResponseRate), accent: "violet" as const, icon: <Percent size={14} /> },
+    { label: "Custo por resposta", value: fmtBRL(data.costPerResponse), delta: deltaPct(data.costPerResponse, data.prevCostPerResponse), accent: "primary" as const, icon: <DollarSign size={14} /> },
+    { label: "Oportunidades", value: fmtN(data.opportunities), accent: "violet" as const, icon: <Briefcase size={14} /> },
+    { label: "Pipeline estimado", value: fmtBRL(data.pipelineEstimated), accent: "primary" as const, icon: <TrendingUp size={14} /> },
+    { label: "ROI projetado", value: `${data.roiProjected.toFixed(1)}x`, delta: deltaPct(data.roiProjected, data.prevRoiProjected), accent: "emerald" as const, icon: <Sparkles size={14} /> },
+  ], [data]);
 
   return (
     <MetaLayout title="Dashboard" description="Cockpit operacional da operação WhatsApp oficial via Meta API.">
@@ -89,230 +101,221 @@ export default function MetaDashboard() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4 mt-0">
-          <MetaFilterBar
-            period={period} onPeriodChange={setPeriod}
-            campaign={campaign} onCampaignChange={setCampaign}
-            numero={numero} onNumeroChange={setNumero}
-            status={status} onStatusChange={setStatus}
-          />
+          {/* Date range filter */}
+          <DateRangeBar start={start} end={end} onStart={setStart} onEnd={setEnd} />
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-        {KPIS.map((k) => (
-          <MetaKpiCard
-            key={k.label}
-            label={k.label}
-            value={k.value}
-            delta={k.delta}
-            accent={k.accent}
-            icon={k.icon}
-            spark={Array.from({ length: 12 }).map(() => Math.random() * 50 + 20)}
-          />
-        ))}
-      </div>
+          {/* KPIs */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {kpis.map((k) => (
+              <MetaKpiCard
+                key={k.label}
+                label={k.label}
+                value={k.value}
+                delta={k.delta}
+                accent={k.accent}
+                icon={k.icon}
+              />
+            ))}
+          </div>
 
-      {/* Charts row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2 p-5 border-border/60">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Custo Meta por dia</h3>
-              <p className="text-xs text-muted-foreground">Gasto consolidado em BRL</p>
-            </div>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dailyCost}>
-                <defs>
-                  <linearGradient id="costGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <RTooltip
-                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                  formatter={(v: number) => fmtBRL(v)}
-                />
-                <Area type="monotone" dataKey="cost" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#costGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="p-5 border-border/60">
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-foreground">Mensagens vs Respostas</h3>
-            <p className="text-xs text-muted-foreground">Comparativo diário</p>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailyCost.slice(-10)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <RTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-                <Bar dataKey="messages" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="responses" fill="hsl(158 72% 38%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
-
-      {/* Funnel + Categories */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2 p-5 border-border/60">
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-foreground">Funil operacional CRM</h3>
-            <p className="text-xs text-muted-foreground">Da captação ao fechamento</p>
-          </div>
-          <div className="space-y-2">
-            {funnelData.map((s, i) => {
-              const max = funnelData[0].value;
-              const pct = (s.value / max) * 100;
-              const conv = i > 0 ? ((s.value / funnelData[i - 1].value) * 100).toFixed(1) : null;
-              return (
-                <div key={s.stage} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-foreground">{s.stage}</span>
-                    <span className="tabular-nums text-muted-foreground">
-                      {fmtN(s.value)} {conv && <span className="ml-2 text-emerald-500">{conv}%</span>}
-                    </span>
-                  </div>
-                  <div className="h-7 bg-muted/40 rounded-md overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-md transition-all"
-                      style={{ width: `${pct}%` }}
+          {/* Charts row 1 */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card className="lg:col-span-2 p-5 border-border/60">
+              <ChartHeader title="Custo Meta por dia" subtitle="Gasto consolidado em BRL" />
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data.daily}>
+                    <defs>
+                      <linearGradient id="costGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
+                    <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => fmtBRL(v)} width={60} />
+                    <RTooltip
+                      contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, color: "hsl(var(--foreground))" }}
+                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                      itemStyle={{ color: "hsl(var(--foreground))" }}
+                      formatter={(v: number) => [fmtBRL(v), "Custo"]}
                     />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
+                    <Area type="monotone" dataKey="cost" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#costGrad)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
 
-        <Card className="p-5 border-border/60">
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-foreground">Categorias de templates</h3>
-            <p className="text-xs text-muted-foreground">Distribuição</p>
+            <Card className="p-5 border-border/60">
+              <ChartHeader title="Mensagens vs Respostas" subtitle="Comparativo diário" />
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.daily.slice(-12)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
+                    <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <RTooltip
+                      contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, color: "hsl(var(--foreground))" }}
+                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                      itemStyle={{ color: "hsl(var(--foreground))" }}
+                    />
+                    <Bar dataKey="messages" name="Mensagens" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="responses" name="Respostas" fill="hsl(158 72% 45%)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
           </div>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={templateCategories} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
-                  {templateCategories.map((c) => (
-                    <Cell key={c.name} fill={c.color} />
-                  ))}
-                </Pie>
-                <RTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
 
-      {/* Heatmap */}
-      <Card className="p-5 border-border/60">
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold text-foreground">Heatmap de respostas por horário</h3>
-          <p className="text-xs text-muted-foreground">Dia da semana × hora</p>
-        </div>
-        <div className="overflow-x-auto">
-          <div className="inline-block min-w-full">
-            <div className="flex items-center gap-1 mb-1 pl-12">
-              {Array.from({ length: 14 }).map((_, h) => (
-                <div key={h} className="w-7 text-center text-[10px] text-muted-foreground tabular-nums">{h + 7}h</div>
-              ))}
-            </div>
-            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((label, day) => (
-              <div key={label} className="flex items-center gap-1 mb-1">
-                <div className="w-10 text-[11px] text-muted-foreground font-medium">{label}</div>
-                {heatmap[day].map((cell) => {
-                  const intensity = cell.value / 120;
+          {/* Funnel + Categories */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card className="lg:col-span-2 p-5 border-border/60">
+              <ChartHeader title="Funil operacional CRM" subtitle="Captados → Oportunidades (dados reais do CRM)" />
+              <div className="space-y-2">
+                {data.funnel.map((s, i) => {
+                  const max = data.funnel[0]?.value || 1;
+                  const pct = (s.value / max) * 100;
+                  const conv = i > 0 && data.funnel[i - 1].value > 0
+                    ? ((s.value / data.funnel[i - 1].value) * 100).toFixed(1)
+                    : null;
                   return (
-                    <div
-                      key={`${day}-${cell.hour}`}
-                      className="w-7 h-7 rounded-sm border border-border/40"
-                      style={{ backgroundColor: `hsl(var(--primary) / ${Math.min(intensity, 0.95)})` }}
-                      title={`${cell.value} respostas`}
-                    />
+                    <div key={s.stage} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-foreground">{s.stage}</span>
+                        <span className="tabular-nums text-muted-foreground">
+                          {fmtN(s.value)} {conv && <span className="ml-2 text-emerald-500">{conv}%</span>}
+                        </span>
+                      </div>
+                      <div className="h-7 bg-muted/40 rounded-md overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-md transition-all"
+                          style={{ width: `${Math.max(pct, 2)}%` }}
+                        />
+                      </div>
+                    </div>
                   );
                 })}
+                {data.funnel.every((s) => s.value === 0) && (
+                  <p className="text-xs text-muted-foreground text-center py-6">Nenhum dado de funil no período.</p>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-      </Card>
+            </Card>
 
-      {/* Performance table */}
-      <Card className="border-border/60">
-        <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60">
+            <Card className="p-5 border-border/60">
+              <ChartHeader title="Categorias de templates" subtitle="Distribuição" />
+              <div className="h-56">
+                {data.templateCategories.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={data.templateCategories} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
+                        {data.templateCategories.map((c) => (
+                          <Cell key={c.name} fill={c.color} stroke="hsl(var(--card))" strokeWidth={2} />
+                        ))}
+                      </Pie>
+                      <RTooltip
+                        contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, color: "hsl(var(--foreground))" }}
+                        labelStyle={{ color: "hsl(var(--foreground))" }}
+                        itemStyle={{ color: "hsl(var(--foreground))" }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: 11, color: "hsl(var(--muted-foreground))" }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-xs text-muted-foreground">Sem templates cadastrados.</div>
+                )}
+              </div>
+            </Card>
+          </div>
+
+          {/* Heatmap real */}
+          <Card className="p-5 border-border/60">
+            <ChartHeader title="Heatmap de respostas por horário" subtitle="Respostas reais (dia × hora)" />
+            <Heatmap data={data.heatmap} />
+          </Card>
+
+          {/* Performance table real */}
+          <Card className="border-border/60">
+            <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Performance das campanhas</h3>
+                <p className="text-xs text-muted-foreground">Visão consolidada por campanha (dados reais)</p>
+              </div>
+              <div className="relative w-full sm:w-64">
+                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar campanha..."
+                  className="h-9 pl-8 text-xs"
+                />
+              </div>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Campanha</TableHead>
+                  <TableHead className="text-right">Enviados</TableHead>
+                  <TableHead className="text-right">Respostas</TableHead>
+                  <TableHead className="text-right">Custo</TableHead>
+                  <TableHead className="text-right">CPR</TableHead>
+                  <TableHead className="text-right">Taxa</TableHead>
+                  <TableHead className="text-right">ROI projetado</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCampaigns.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-xs text-muted-foreground py-8">
+                      {data.loading ? "Carregando..." : "Nenhuma campanha no período."}
+                    </TableCell>
+                  </TableRow>
+                )}
+                {filteredCampaigns.map((c) => {
+                  const cpr = c.replies > 0 ? c.cost / c.replies : 0;
+                  const rate = c.sent > 0 ? (c.replies / c.sent) * 100 : 0;
+                  const roi = c.cost > 0 ? (c.replies * 50) / c.cost : 0; // projeção: R$50 por resposta como ticket médio aproximado
+                  return (
+                    <TableRow key={c.id}>
+                      <TableCell className="font-medium">{c.name}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtN(c.sent)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtN(c.replies)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtBRL(c.cost)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{cpr > 0 ? fmtBRL(cpr) : "—"}</TableCell>
+                      <TableCell className="text-right tabular-nums">{rate.toFixed(1)}%</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium text-emerald-500">{roi.toFixed(1)}x</TableCell>
+                      <TableCell>
+                        <Badge variant={c.status === "running" ? "default" : c.status === "paused" ? "secondary" : "outline"} className="capitalize">
+                          {c.status === "running" ? "Ativa" : c.status === "paused" ? "Pausada" : c.status === "completed" ? "Concluída" : c.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Card>
+
+          {/* Insights real */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Performance das campanhas</h3>
-            <p className="text-xs text-muted-foreground">Visão consolidada por campanha</p>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Sparkles size={14} className="text-primary" /> Insights de IA
+              </h3>
+              <Badge variant="outline" className="text-[10px]">Computado em tempo real</Badge>
+            </div>
+            {data.insights.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {data.insights.map((ins) => (
+                  <MetaInsightCard key={ins.title} {...ins} />
+                ))}
+              </div>
+            ) : (
+              <Card className="p-6 border-border/60 text-center text-xs text-muted-foreground">
+                Sem insights suficientes — colete mais dados de campanhas e respostas.
+              </Card>
+            )}
           </div>
-          <div className="relative w-full sm:w-64">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar campanha..."
-              className="h-9 pl-8 text-xs"
-            />
-          </div>
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Campanha</TableHead>
-              <TableHead className="text-right">Enviados</TableHead>
-              <TableHead className="text-right">Respostas</TableHead>
-              <TableHead className="text-right">Custo</TableHead>
-              <TableHead className="text-right">CPR</TableHead>
-              <TableHead className="text-right">Oportunidades</TableHead>
-              <TableHead className="text-right">ROI</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredCampaigns.map((c) => (
-              <TableRow key={c.id}>
-                <TableCell className="font-medium">{c.name}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmtN(c.sent)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmtN(c.replies)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmtBRL(c.cost)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmtBRL(c.cost / c.replies)}</TableCell>
-                <TableCell className="text-right tabular-nums">{c.opps}</TableCell>
-                <TableCell className="text-right tabular-nums font-medium text-emerald-500">{c.roi}x</TableCell>
-                <TableCell>
-                  <Badge variant={c.status === "active" ? "default" : c.status === "paused" ? "secondary" : "outline"} className="capitalize">
-                    {c.status === "active" ? "Ativa" : c.status === "paused" ? "Pausada" : "Arquivada"}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-
-      {/* Insights */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Sparkles size={14} className="text-primary" /> Insights de IA
-          </h3>
-          <Badge variant="outline" className="text-[10px]">Atualizado agora</Badge>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {insights.map((ins) => (
-            <MetaInsightCard key={ins.title} {...ins} />
-          ))}
-        </div>
-      </div>
         </TabsContent>
 
         <TabsContent value="custos" className="mt-0">
@@ -320,5 +323,117 @@ export default function MetaDashboard() {
         </TabsContent>
       </Tabs>
     </MetaLayout>
+  );
+}
+
+function ChartHeader({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="mb-4">
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      <p className="text-xs text-muted-foreground">{subtitle}</p>
+    </div>
+  );
+}
+
+function DateRangeBar({
+  start, end, onStart, onEnd,
+}: { start: Date; end: Date; onStart: (d: Date) => void; onEnd: (d: Date) => void; }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="h-9 text-xs border-border/60 gap-1.5">
+            <CalendarIcon size={13} />
+            Início: {format(start, "dd MMM yyyy", { locale: ptBR })}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={start}
+            onSelect={(d) => d && onStart(d)}
+            initialFocus
+            className={cn("p-3 pointer-events-auto")}
+          />
+        </PopoverContent>
+      </Popover>
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="h-9 text-xs border-border/60 gap-1.5">
+            <CalendarIcon size={13} />
+            Fim: {format(end, "dd MMM yyyy", { locale: ptBR })}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={end}
+            onSelect={(d) => d && onEnd(d)}
+            initialFocus
+            className={cn("p-3 pointer-events-auto")}
+          />
+        </PopoverContent>
+      </Popover>
+
+      <div className="h-6 w-px bg-border mx-1" />
+
+      {PRESETS.map((p) => (
+        <Button
+          key={p.label}
+          variant="ghost"
+          size="sm"
+          className="h-9 text-xs"
+          onClick={() => {
+            const e = new Date();
+            onEnd(e);
+            onStart(subDays(e, p.days));
+          }}
+        >
+          {p.label}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
+function Heatmap({ data }: { data: { day: number; hour: number; value: number }[][] }) {
+  const max = Math.max(1, ...data.flat().map((c) => c.value));
+  const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  return (
+    <div className="overflow-x-auto">
+      <div className="inline-block min-w-full">
+        <div className="flex items-center gap-1 mb-1 pl-12">
+          {Array.from({ length: 14 }).map((_, h) => (
+            <div key={h} className="w-7 text-center text-[10px] text-muted-foreground tabular-nums">{h + 7}h</div>
+          ))}
+        </div>
+        {dayLabels.map((label, day) => (
+          <div key={label} className="flex items-center gap-1 mb-1">
+            <div className="w-10 text-[11px] text-muted-foreground font-medium">{label}</div>
+            {(data[day] || []).map((cell) => {
+              const intensity = cell.value / max;
+              const opacity = cell.value === 0 ? 0.06 : Math.max(0.15, Math.min(intensity, 0.95));
+              return (
+                <div
+                  key={`${day}-${cell.hour}`}
+                  className="w-7 h-7 rounded-sm border border-border/40"
+                  style={{ backgroundColor: `hsl(var(--primary) / ${opacity})` }}
+                  title={`${label} ${cell.hour}h — ${cell.value} respostas`}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-2 mt-3 text-[10px] text-muted-foreground">
+        <span>Menos</span>
+        {[0.1, 0.3, 0.5, 0.7, 0.9].map((o) => (
+          <div key={o} className="w-4 h-4 rounded-sm border border-border/40" style={{ backgroundColor: `hsl(var(--primary) / ${o})` }} />
+        ))}
+        <span>Mais</span>
+        <span className="ml-auto">Pico: {max} respostas</span>
+      </div>
+    </div>
   );
 }
