@@ -159,7 +159,7 @@ const MetaCampaigns = () => {
                 </Badge>
               </div>
               <p className="text-muted-foreground mt-1 max-w-3xl">
-                Envie campanhas via Meta Cloud API usando <strong>templates pré-aprovados</strong> pela Meta. Funciona inclusive para <strong>leads frios</strong>, desde que o template tenha sido aprovado. O <strong>custo das mensagens é cobrado à parte pela Meta</strong>, conforme a tabela oficial por país e categoria do template.
+                Comunicação de mensagens inbound com leads que já deram opt-in, utilizando canais oficiais da Meta Platforms.
               </p>
             </div>
             <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => navigate("/meta-api-guide")}>
