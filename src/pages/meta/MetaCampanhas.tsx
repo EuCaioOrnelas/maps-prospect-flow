@@ -96,17 +96,40 @@ export default function MetaCampanhas() {
 
   useEffect(() => { loadCampaigns(); }, [user?.id]);
 
+  // Filtros (busca, status, intervalo de datas)
+  const filteredCampaigns = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const from = dateRange?.from ? new Date(dateRange.from).setHours(0, 0, 0, 0) : null;
+    const to = dateRange?.to ? new Date(dateRange.to).setHours(23, 59, 59, 999) : (from ? new Date(dateRange!.from!).setHours(23, 59, 59, 999) : null);
+    return campaigns.filter((c) => {
+      if (q && !c.name.toLowerCase().includes(q)) return false;
+      if (statusFilter !== "all" && c.status !== statusFilter) return false;
+      if (from !== null) {
+        const t = new Date(c.created_at).getTime();
+        if (t < from) return false;
+        if (to !== null && t > to) return false;
+      }
+      return true;
+    });
+  }, [campaigns, search, statusFilter, dateRange]);
+
   // KPI: custo médio por campanha
   const avgCostPerCampaign = useMemo(() => {
-    if (!campaigns.length) return 0;
-    const total = campaigns.reduce((s, c) => s + (c.sent_count || 0) * COST_PER_MESSAGE, 0);
-    return total / campaigns.length;
-  }, [campaigns]);
+    if (!filteredCampaigns.length) return 0;
+    const total = filteredCampaigns.reduce((s, c) => s + (c.sent_count || 0) * COST_PER_MESSAGE, 0);
+    return total / filteredCampaigns.length;
+  }, [filteredCampaigns]);
 
   const totalSpent = useMemo(
-    () => campaigns.reduce((s, c) => s + (c.sent_count || 0) * COST_PER_MESSAGE, 0),
-    [campaigns]
+    () => filteredCampaigns.reduce((s, c) => s + (c.sent_count || 0) * COST_PER_MESSAGE, 0),
+    [filteredCampaigns]
   );
+
+  const statusOptions = useMemo(() => {
+    const s = new Set<string>();
+    campaigns.forEach((c) => s.add(c.status));
+    return Array.from(s);
+  }, [campaigns]);
 
   const startNewCampaign = () => {
     sessionStorage.setItem(
