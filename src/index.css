@@ -166,14 +166,14 @@
     --whatsapp-read: 199 89% 48%;
     --whatsapp-quote: 158 37% 90%;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 25% 14%;
-    --sidebar-primary: 158 72% 32%;
+    --sidebar-background: 220 18% 6%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 158 72% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 158 50% 94%;
-    --sidebar-accent-foreground: 220 25% 14%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 158 72% 32%;
+    --sidebar-accent: 220 14% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 14% 16%;
+    --sidebar-ring: 158 72% 38%;
 
     --chart-1: 158 72% 32%;
     --chart-2: 170 65% 30%;
