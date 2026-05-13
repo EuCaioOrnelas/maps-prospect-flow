@@ -78,12 +78,23 @@ export default function MetaDashboard() {
         }
       />
 
-      <MetaFilterBar
-        period={period} onPeriodChange={setPeriod}
-        campaign={campaign} onCampaignChange={setCampaign}
-        numero={numero} onNumeroChange={setNumero}
-        status={status} onStatusChange={setStatus}
-      />
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList className="bg-muted/40 border border-border/60 p-1 h-9">
+          <TabsTrigger value="overview" className="text-xs gap-1.5 data-[state=active]:bg-background">
+            <LayoutDashboard size={13} /> Visão geral
+          </TabsTrigger>
+          <TabsTrigger value="custos" className="text-xs gap-1.5 data-[state=active]:bg-background">
+            <Wallet size={13} /> Custos & Consumo
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4 mt-0">
+          <MetaFilterBar
+            period={period} onPeriodChange={setPeriod}
+            campaign={campaign} onCampaignChange={setCampaign}
+            numero={numero} onNumeroChange={setNumero}
+            status={status} onStatusChange={setStatus}
+          />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
