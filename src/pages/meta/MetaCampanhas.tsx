@@ -319,13 +319,14 @@ export default function MetaCampanhas() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCampaigns.map((c) => {
+                {pagedCampaigns.map((c) => {
                   const s = STATUS_LABEL[c.status] ?? { label: c.status, tone: "outline" as const };
                   const responses = c.total_responses ?? 0;
                   const cost = (c.sent_count || 0) * COST_PER_MESSAGE;
                   const sendRate = c.total_leads > 0 ? (c.sent_count / c.total_leads) * 100 : 0;
                   const num = c.whatsapp_number_id ? numberMap[c.whatsapp_number_id] : null;
-                  const numberLabel = num ? (num.label || num.phone) : "—";
+                  const phoneTail = num?.phone ? `•••• ${num.phone.replace(/\D/g, "").slice(-4)}` : "—";
+                  const numberLabel = num ? (num.label ? `${num.label} · ${phoneTail}` : phoneTail) : "—";
 
                   return (
                     <TableRow
