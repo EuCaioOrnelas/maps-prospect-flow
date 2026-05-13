@@ -86,6 +86,16 @@ const WhatsAppAutomations = lazyWithRetry(() => import("./pages/WhatsAppAutomati
 const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEditor"), "WhatsAppFlowEditor");
 const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "CreateFlowAI");
 
+// Meta Platforms module
+const MetaDashboard = lazyWithRetry(() => import("./pages/meta/MetaDashboard"), "MetaDashboard");
+const MetaCampanhas = lazyWithRetry(() => import("./pages/meta/MetaCampanhas"), "MetaCampanhas");
+const MetaTemplates = lazyWithRetry(() => import("./pages/meta/MetaTemplates"), "MetaTemplates");
+const MetaNumeros = lazyWithRetry(() => import("./pages/meta/MetaNumeros"), "MetaNumeros");
+const MetaReabertura = lazyWithRetry(() => import("./pages/meta/MetaReabertura"), "MetaReabertura");
+const MetaCustos = lazyWithRetry(() => import("./pages/meta/MetaCustos"), "MetaCustos");
+const MetaQualidade = lazyWithRetry(() => import("./pages/meta/MetaQualidade"), "MetaQualidade");
+const MetaConfiguracoes = lazyWithRetry(() => import("./pages/meta/MetaConfiguracoes"), "MetaConfiguracoes");
+
 const EnterpriseContact = lazyWithRetry(() => import("./pages/EnterpriseContact"), "EnterpriseContact");
 const TrialExpired = lazyWithRetry(() => import("./pages/TrialExpired"), "TrialExpired");
 const ManageSubscription = lazyWithRetry(() => import("./pages/ManageSubscription"), "ManageSubscription");
@@ -257,6 +267,15 @@ const App = () => (
                 <Route path="/warming" element={<ProtectedRoute><Warming /></ProtectedRoute>} />
                 <Route path="/warming/reports" element={<ProtectedRoute><WarmingReports /></ProtectedRoute>} />
                 <Route path="/consultoria" element={<ProtectedRoute><Consultoria /></ProtectedRoute>} />
+                {/* Meta Platforms */}
+                <Route path="/meta" element={<ProtectedRoute><MetaDashboard /></ProtectedRoute>} />
+                <Route path="/meta/campanhas" element={<ProtectedRoute><MetaCampanhas /></ProtectedRoute>} />
+                <Route path="/meta/templates" element={<ProtectedRoute><MetaTemplates /></ProtectedRoute>} />
+                <Route path="/meta/numeros" element={<ProtectedRoute><MetaNumeros /></ProtectedRoute>} />
+                <Route path="/meta/reabertura" element={<ProtectedRoute><MetaReabertura /></ProtectedRoute>} />
+                <Route path="/meta/custos" element={<ProtectedRoute><MetaCustos /></ProtectedRoute>} />
+                <Route path="/meta/qualidade" element={<ProtectedRoute><MetaQualidade /></ProtectedRoute>} />
+                <Route path="/meta/configuracoes" element={<ProtectedRoute><MetaConfiguracoes /></ProtectedRoute>} />
                 <Route path="/cancellation-feedback" element={<ProtectedRoute><CancellationFeedback /></ProtectedRoute>} />
                 <Route path="/thank-you" element={<LightThemeWrapper><ThankYou /></LightThemeWrapper>} />
                 <Route path="/shared-report/:token" element={<LightThemeWrapper><SharedReport /></LightThemeWrapper>} />
