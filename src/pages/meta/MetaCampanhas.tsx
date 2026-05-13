@@ -13,7 +13,7 @@ import {
   Plus, MoreHorizontal, ArrowRight, MessageSquare, Reply, Bot, UserCheck,
   Search, Tag, Loader2, Sparkles, Users, Send, MessageCircle, DollarSign,
   AlertCircle, Percent, Smartphone, FileText, TrendingUp, Calendar as CalendarIcon, X,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Copy, Check,
 } from "lucide-react";
 
 const ITEMS_PER_PAGE = 10;
@@ -41,6 +41,8 @@ interface CampaignRow {
   created_at: string;
   whatsapp_number_id: string | null;
   messages: any;
+  leads: any;
+  current_lead_index: number | null;
 }
 
 // Custo médio estimado por mensagem enviada via Meta Cloud (BRL)
@@ -78,7 +80,7 @@ export default function MetaCampanhas() {
     setLoading(true);
     const { data } = await supabase
       .from("whatsapp_campaigns")
-      .select("id,name,status,total_leads,sent_count,failed_count,total_responses,created_at,whatsapp_number_id,messages")
+      .select("id,name,status,total_leads,sent_count,failed_count,total_responses,created_at,whatsapp_number_id,messages,leads,current_lead_index")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(500);
@@ -600,31 +602,27 @@ function CampaignDetailsDialog({
               </div>
             </section>
 
-            {/* Mensagens enviadas */}
+            {/* Template usado */}
             {messagesList.length > 0 && (
               <section>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 inline-flex items-center gap-1.5">
-                  <MessageSquare size={12} /> Mensagem{messagesList.length > 1 ? "ns" : ""} ({messagesList.length})
+                  <MessageSquare size={12} /> Template usado
                 </h4>
-                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                  {messagesList.map((m, i) => (
-                    <div key={i} className="rounded-lg border border-border/60 bg-muted/20 p-3">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Variação {i + 1}</p>
-                      <p className="text-sm whitespace-pre-wrap text-foreground">{m}</p>
-                    </div>
-                  ))}
+                <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                  <p className="text-sm whitespace-pre-wrap text-foreground">{messagesList[0]}</p>
                 </div>
               </section>
             )}
 
+            {/* Números pendentes / não enviados */}
+            <PendingNumbersSection campaign={c} />
+
             {/* Identificadores */}
             <section>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 inline-flex items-center gap-1.5">
-                <FileText size={12} /> Identificadores
+                <FileText size={12} /> Identificador
               </h4>
-              <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-xs font-mono text-muted-foreground break-all">
-                {c.id}
-              </div>
+              <CopyableId id={c.id} />
             </section>
 
             <div className="flex justify-end pt-2 border-t border-border/60">
@@ -660,6 +658,57 @@ function Metric({
       </div>
       <p className={`text-sm font-semibold tabular-nums ${valueClass}`}>{value}</p>
     </div>
+  );
+}
+
+function CopyableId({ id }: { id: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/20 p-3 flex items-center gap-2">
+      <code className="text-xs font-mono text-muted-foreground break-all flex-1 min-w-0">{id}</code>
+      <Button variant="ghost" size="sm" className="h-7 px-2 shrink-0" onClick={handleCopy}>
+        {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+        <span className="text-[11px]">{copied ? "Copiado" : "Copiar"}</span>
+      </Button>
+    </div>
+  );
+}
+
+function PendingNumbersSection({ campaign }: { campaign: CampaignRow }) {
+  const leads = Array.isArray(campaign.leads) ? campaign.leads : [];
+  const idx = campaign.current_lead_index ?? 0;
+  const pendingPhones: string[] = leads.slice(idx).map((l: any) => l?.phone).filter(Boolean);
+  const failedCount = campaign.failed_count ?? 0;
+  // Best effort: failed phones are not stored individually; show pending only.
+  if (pendingPhones.length === 0 && failedCount === 0) return null;
+  return (
+    <section>
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 inline-flex items-center gap-1.5">
+        <AlertCircle size={12} /> Envios pendentes / com erro
+      </h4>
+      <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2">
+        <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1"><Loader2 size={10} /> Pendentes: <span className="text-foreground font-semibold tabular-nums">{pendingPhones.length}</span></span>
+          <span className="inline-flex items-center gap-1"><AlertCircle size={10} /> Erros: <span className={`font-semibold tabular-nums ${failedCount > 0 ? "text-amber-500" : "text-foreground"}`}>{failedCount}</span></span>
+        </div>
+        {pendingPhones.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pt-1">
+            {pendingPhones.map((p, i) => (
+              <code key={i} className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-background border border-border/60 text-muted-foreground">
+                {p}
+              </code>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
