@@ -142,11 +142,15 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
       })) as MetaCampaignRow[];
 
       const messagesSent = campaigns.reduce((s, c) => s + c.sent, 0);
+      const messagesFailed = campaigns.reduce((s, c) => s + c.failed, 0);
       const totalCost = messagesSent * META_COST_PER_MSG;
       const responses = campaigns.reduce((s, c) => s + c.replies, 0);
+      const deliveryRate = messagesSent > 0 ? ((messagesSent - messagesFailed) / messagesSent) * 100 : 0;
 
       const prevSent = (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.sent_count || 0), 0);
+      const prevFailed = (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.failed_count || 0), 0);
       const prevResponses = (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.total_responses || 0), 0);
+      const prevDeliveryRate = prevSent > 0 ? ((prevSent - prevFailed) / prevSent) * 100 : 0;
 
       const leadsRows = leadsRes.data || [];
       const leadsInFunnel = leadsRes.count ?? leadsRows.length;
