@@ -13,7 +13,10 @@ import {
   Plus, MoreHorizontal, ArrowRight, MessageSquare, Reply, Bot, UserCheck,
   Search, Tag, Loader2, Sparkles, Users, Send, MessageCircle, DollarSign,
   AlertCircle, Percent, Smartphone, FileText, TrendingUp, Calendar as CalendarIcon, X,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
+
+const ITEMS_PER_PAGE = 10;
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -67,7 +70,8 @@ export default function MetaCampanhas() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  
+  const [currentPage, setCurrentPage] = useState(1);
+
 
   const loadCampaigns = async () => {
     if (!user) return;
@@ -77,7 +81,7 @@ export default function MetaCampanhas() {
       .select("id,name,status,total_leads,sent_count,failed_count,total_responses,created_at,whatsapp_number_id,messages")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(24);
+      .limit(500);
     const rows = (data as CampaignRow[]) || [];
     setCampaigns(rows);
 
@@ -112,6 +116,14 @@ export default function MetaCampanhas() {
       return true;
     });
   }, [campaigns, search, statusFilter, dateRange]);
+
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, dateRange]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCampaigns.length / ITEMS_PER_PAGE));
+  const pagedCampaigns = useMemo(
+    () => filteredCampaigns.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE),
+    [filteredCampaigns, currentPage]
+  );
 
   // KPI: custo médio por campanha
   const avgCostPerCampaign = useMemo(() => {
@@ -307,13 +319,14 @@ export default function MetaCampanhas() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCampaigns.map((c) => {
+                {pagedCampaigns.map((c) => {
                   const s = STATUS_LABEL[c.status] ?? { label: c.status, tone: "outline" as const };
                   const responses = c.total_responses ?? 0;
                   const cost = (c.sent_count || 0) * COST_PER_MESSAGE;
                   const sendRate = c.total_leads > 0 ? (c.sent_count / c.total_leads) * 100 : 0;
                   const num = c.whatsapp_number_id ? numberMap[c.whatsapp_number_id] : null;
-                  const numberLabel = num ? (num.label || num.phone) : "—";
+                  const phoneTail = num?.phone ? `•••• ${num.phone.replace(/\D/g, "").slice(-4)}` : "—";
+                  const numberLabel = num ? (num.label ? `${num.label} · ${phoneTail}` : phoneTail) : "—";
 
                   return (
                     <TableRow
@@ -339,7 +352,7 @@ export default function MetaCampanhas() {
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{fmtN(c.total_leads)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmtN(c.sent_count)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-emerald-500">{fmtN(responses)}</TableCell>
+                      <TableCell className="text-right tabular-nums text-foreground">{fmtN(responses)}</TableCell>
                       <TableCell className={cn("text-right tabular-nums", c.failed_count > 0 && "text-amber-500")}>{fmtN(c.failed_count)}</TableCell>
                       <TableCell className="text-right tabular-nums">{sendRate.toFixed(0)}%</TableCell>
                       <TableCell className="text-right tabular-nums">{fmtBRL(cost)}</TableCell>
@@ -353,6 +366,58 @@ export default function MetaCampanhas() {
                 })}
               </TableBody>
             </Table>
+          )}
+
+          {filteredCampaigns.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-border/60">
+              <span className="text-xs text-muted-foreground">
+                {filteredCampaigns.length.toLocaleString("pt-BR")} campanha(s) — Página {currentPage.toLocaleString("pt-BR")} de {totalPages.toLocaleString("pt-BR")}
+              </span>
+              <div className="flex items-center gap-1 flex-wrap justify-center">
+                <Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="h-8 px-2 text-xs">
+                  <ChevronLeft size={14} /><ChevronLeft size={14} className="-ml-2" />
+                </Button>
+                <Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="h-8 px-2">
+                  <ChevronLeft size={16} />
+                </Button>
+                {(() => {
+                  const pages: (number | "ellipsis-start" | "ellipsis-end")[] = [];
+                  if (totalPages <= 7) {
+                    for (let i = 1; i <= totalPages; i++) pages.push(i);
+                  } else {
+                    pages.push(1);
+                    if (currentPage > 4) pages.push("ellipsis-start");
+                    const start = Math.max(2, currentPage - 2);
+                    const end = Math.min(totalPages - 1, currentPage + 2);
+                    for (let i = start; i <= end; i++) pages.push(i);
+                    if (currentPage < totalPages - 3) pages.push("ellipsis-end");
+                    pages.push(totalPages);
+                  }
+                  return pages.map((p, idx) => {
+                    if (p === "ellipsis-start" || p === "ellipsis-end") {
+                      return <span key={`${p}-${idx}`} className="px-1 text-muted-foreground text-xs select-none">…</span>;
+                    }
+                    return (
+                      <Button
+                        key={`page-${p}-${idx}`}
+                        size="sm"
+                        variant={p === currentPage ? "default" : "outline"}
+                        onClick={() => setCurrentPage(p)}
+                        className="h-8 min-w-[2rem] px-2 text-xs"
+                      >
+                        {p.toLocaleString("pt-BR")}
+                      </Button>
+                    );
+                  });
+                })()}
+                <Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="h-8 px-2">
+                  <ChevronRight size={16} />
+                </Button>
+                <Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)} className="h-8 px-2 text-xs">
+                  <ChevronRight size={14} /><ChevronRight size={14} className="-ml-2" />
+                </Button>
+              </div>
+            </div>
           )}
         </Card>
       )}
