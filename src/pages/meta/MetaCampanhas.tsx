@@ -232,14 +232,19 @@ export default function MetaCampanhas() {
                     initialFocus
                     className="p-3 pointer-events-auto"
                     classNames={{
-                      cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-primary/10 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md [&:has(.day-range-start)]:rounded-l-md [&:has(.day-range-end)]:rounded-r-md",
+                      cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+                      day: "h-9 w-9 p-0 font-normal text-foreground rounded-md hover:bg-muted aria-selected:opacity-100 transition-colors",
                       day_selected:
-                        "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-md",
-                      day_range_start: "day-range-start !bg-primary !text-primary-foreground rounded-l-md rounded-r-none",
-                      day_range_end: "day-range-end !bg-primary !text-primary-foreground rounded-r-md rounded-l-none",
-                      day_range_middle: "!bg-transparent !text-foreground hover:!bg-primary/15 rounded-none",
-                      day_today: "ring-1 ring-primary/40 text-foreground",
-                      day_outside: "text-muted-foreground/40 aria-selected:!bg-transparent aria-selected:!text-muted-foreground/40",
+                        "!bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground",
+                      day_range_start:
+                        "!bg-primary !text-primary-foreground rounded-md",
+                      day_range_end:
+                        "!bg-primary !text-primary-foreground rounded-md",
+                      day_range_middle:
+                        "!bg-primary/10 !text-foreground hover:!bg-primary/20 rounded-none",
+                      day_today: "ring-1 ring-primary/40",
+                      day_outside: "!text-muted-foreground/40 aria-selected:!bg-transparent",
+                      day_disabled: "!text-muted-foreground/30",
                     }}
                   />
                 </PopoverContent>
