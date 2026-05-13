@@ -301,7 +301,7 @@ export default function MetaNumeros() {
             <div className="text-sm">
               <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
               <p className="text-muted-foreground mt-0.5">
-                A API Oficial só permite o envio de templates pré-aprovados para contatos que já <strong>interagiram com seu número</strong> ou que deram <strong>opt-in explícito</strong>. Cada número tem seu próprio limite definido pela Meta com base na <strong>qualidade e tier</strong>.
+                As campanhas via Meta Cloud API funcionam inclusive para <strong>leads frios</strong>, desde que sejam enviadas usando <strong>templates pré-aprovados</strong> pela Meta. O <strong>custo de cada mensagem é cobrado à parte pela Meta</strong>, conforme a tabela oficial por país e categoria do template (marketing, utilidade, autenticação). Cada número tem seu próprio limite de envio definido pela Meta com base na <strong>qualidade e tier</strong>.
               </p>
               <a
                 href="https://developers.facebook.com/docs/whatsapp/messaging-limits"
