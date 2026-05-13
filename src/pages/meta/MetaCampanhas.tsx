@@ -10,8 +10,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Plus, Pause, Copy, Archive, Play, MoreHorizontal, ArrowRight,
-  MessageSquare, Reply, Bot, UserCheck, Search, Tag, Loader2, Sparkles,
+  Plus, MoreHorizontal, ArrowRight, MessageSquare, Reply, Bot, UserCheck,
+  Search, Tag, Loader2, Sparkles, Users, Send, MessageCircle, DollarSign,
+  AlertCircle, Percent, Smartphone, FileText, TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
