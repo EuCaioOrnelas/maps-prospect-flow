@@ -46,6 +46,19 @@ export interface MetaDashboardData {
   roiProjected: number;
   prevRoiProjected: number;
   daily: { day: string; cost: number; messages: number; responses: number }[];
+  sparks: {
+    cost: number[];
+    messages: number[];
+    conversationsStarted: number[];
+    conversationsReopened: number[];
+    leadsInFunnel: number[];
+    leadsAnswered: number[];
+    responseRate: number[];
+    costPerResponse: number[];
+    opportunities: number[];
+    pipelineEstimated: number[];
+    roiProjected: number[];
+  };
   funnel: { stage: string; value: number }[];
   templateCategories: { name: string; value: number; color: string }[];
   heatmap: { day: number; hour: number; value: number }[][];
