@@ -98,18 +98,11 @@ export default function MetaCampanhas() {
     [campaigns]
   );
 
-  const handleStartFromTemplate = (tpl: Template | null) => {
-    // Pré-popula a campanha de Relacionamento (Meta) via sessionStorage
+  const startNewCampaign = () => {
     sessionStorage.setItem(
       "meta_campaign_preset",
-      JSON.stringify({
-        campaignName: tpl ? `Campanha · ${tpl.name}` : "",
-        firstMessage: tpl?.body ?? "",
-        templateId: tpl?.id ?? null,
-        source: "meta_platform",
-      })
+      JSON.stringify({ source: "meta_platform" })
     );
-    setPickerOpen(false);
     navigate("/meta-campaigns");
   };
 
