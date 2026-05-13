@@ -271,8 +271,6 @@ const App = () => (
                 <Route path="/meta/templates" element={<ProtectedRoute><MetaTemplates /></ProtectedRoute>} />
                 <Route path="/meta/numeros" element={<ProtectedRoute><MetaNumeros /></ProtectedRoute>} />
                 <Route path="/meta/reabertura" element={<ProtectedRoute><MetaReabertura /></ProtectedRoute>} />
-                <Route path="/meta/custos" element={<ProtectedRoute><MetaCustos /></ProtectedRoute>} />
-                <Route path="/meta/qualidade" element={<ProtectedRoute><MetaQualidade /></ProtectedRoute>} />
                 <Route path="/meta/configuracoes" element={<ProtectedRoute><MetaConfiguracoes /></ProtectedRoute>} />
                 <Route path="/cancellation-feedback" element={<ProtectedRoute><CancellationFeedback /></ProtectedRoute>} />
                 <Route path="/thank-you" element={<LightThemeWrapper><ThankYou /></LightThemeWrapper>} />
