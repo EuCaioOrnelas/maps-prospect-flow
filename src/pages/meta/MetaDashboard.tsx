@@ -65,17 +65,18 @@ export default function MetaDashboard() {
   );
 
   const kpis = useMemo(() => [
-    { label: "Gasto Meta", value: fmtBRL(data.totalCost), raw: data.totalCost, delta: deltaPct(data.totalCost, data.prevTotalCost), accent: "primary" as const, icon: <DollarSign size={14} />, spark: data.sparks.cost },
+    { label: "Leads totais", value: fmtN(data.leadsInFunnel), raw: data.leadsInFunnel, delta: deltaPct(data.leadsInFunnel, data.prevLeadsInFunnel), accent: "primary" as const, icon: <Users size={14} />, spark: data.sparks.leadsInFunnel },
     { label: "Mensagens enviadas", value: fmtN(data.messagesSent), raw: data.messagesSent, delta: deltaPct(data.messagesSent, data.prevMessagesSent), accent: "violet" as const, icon: <MessageSquare size={14} />, spark: data.sparks.messages },
+    { label: "Taxa de entrega", value: `${data.deliveryRate.toFixed(1)}%`, raw: data.deliveryRate, delta: deltaPct(data.deliveryRate, data.prevDeliveryRate), accent: "emerald" as const, icon: <CheckCheck size={14} />, spark: data.sparks.messages },
     { label: "Conversas iniciadas", value: fmtN(data.conversationsStarted), raw: data.conversationsStarted, delta: deltaPct(data.conversationsStarted, data.prevConversationsStarted), accent: "emerald" as const, icon: <MessagesSquare size={14} />, spark: data.sparks.conversationsStarted },
     { label: "Conversas reabertas", value: fmtN(data.conversationsReopened), raw: data.conversationsReopened, delta: deltaPct(data.conversationsReopened, data.prevConversationsReopened), accent: "amber" as const, icon: <RotateCcw size={14} />, spark: data.sparks.conversationsReopened },
-    { label: "Leads no funil", value: fmtN(data.leadsInFunnel), raw: data.leadsInFunnel, delta: deltaPct(data.leadsInFunnel, data.prevLeadsInFunnel), accent: "primary" as const, icon: <Users size={14} />, spark: data.sparks.leadsInFunnel },
     { label: "Leads respondidos", value: fmtN(data.leadsAnswered), raw: data.leadsAnswered, delta: deltaPct(data.leadsAnswered, data.prevLeadsAnswered), accent: "emerald" as const, icon: <Reply size={14} />, spark: data.sparks.leadsAnswered },
     { label: "Taxa de resposta", value: `${data.responseRate.toFixed(1)}%`, raw: data.responseRate, delta: deltaPct(data.responseRate, data.prevResponseRate), accent: "violet" as const, icon: <Percent size={14} />, spark: data.sparks.responseRate },
-    { label: "Custo por resposta", value: fmtBRL(data.costPerResponse), raw: data.costPerResponse, delta: deltaPct(data.costPerResponse, data.prevCostPerResponse), accent: "primary" as const, icon: <DollarSign size={14} />, spark: data.sparks.costPerResponse },
     { label: "Oportunidades", value: fmtN(data.opportunities), raw: data.opportunities, delta: deltaPct(data.opportunities, data.prevOpportunities), accent: "violet" as const, icon: <Briefcase size={14} />, spark: data.sparks.opportunities },
-    { label: "Pipeline estimado", value: fmtBRL(data.pipelineEstimated), raw: data.pipelineEstimated, delta: deltaPct(data.pipelineEstimated, data.prevPipelineEstimated), accent: "primary" as const, icon: <TrendingUp size={14} />, spark: data.sparks.pipelineEstimated },
+    { label: "Custo Meta", value: fmtBRLp(data.totalCost), raw: data.totalCost, delta: deltaPct(data.totalCost, data.prevTotalCost), accent: "primary" as const, icon: <DollarSign size={14} />, spark: data.sparks.cost },
     { label: "ROI projetado", value: `${data.roiProjected.toFixed(1)}x`, raw: data.roiProjected, delta: deltaPct(data.roiProjected, data.prevRoiProjected), accent: "emerald" as const, icon: <Sparkles size={14} />, spark: data.sparks.roiProjected },
+    { label: "Pipeline estimado", value: fmtBRL(data.pipelineEstimated), raw: data.pipelineEstimated, delta: deltaPct(data.pipelineEstimated, data.prevPipelineEstimated), accent: "primary" as const, icon: <TrendingUp size={14} />, spark: data.sparks.pipelineEstimated },
+    { label: "Custo por resposta", value: fmtBRLp(data.costPerResponse), raw: data.costPerResponse, delta: deltaPct(data.costPerResponse, data.prevCostPerResponse), accent: "primary" as const, icon: <DollarSign size={14} />, spark: data.sparks.costPerResponse },
   ], [data]);
 
   return (
