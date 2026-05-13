@@ -30,6 +30,10 @@ import { cn } from "@/lib/utils";
 import { useMetaDashboard } from "@/hooks/useMetaDashboard";
 
 const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const fmtBRLp = (n: number) =>
+  n >= 1
+    ? n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
+    : n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n: number) => n.toLocaleString("pt-BR");
 
 const PRESETS = [
@@ -38,9 +42,18 @@ const PRESETS = [
   { label: "90 dias", days: 90 },
 ];
 
-function deltaPct(curr: number, prev: number): number | undefined {
-  if (!prev) return undefined;
-  return ((curr - prev) / prev) * 100;
+// Calcula variação % vs período anterior, evitando ruído quando a base é muito
+// pequena (ex.: 1 → 16 daria 1500%, o que não é uma comparação útil).
+function deltaPct(curr: number, prev: number, opts?: { minBase?: number }): number | undefined {
+  if (prev === undefined || prev === null) return undefined;
+  if (prev <= 0) return undefined;
+  const minBase = opts?.minBase ?? 3;
+  // Base muito baixa → comparação não é estatisticamente significativa
+  if (prev < minBase && Math.abs(curr - prev) >= prev) return undefined;
+  const pct = ((curr - prev) / prev) * 100;
+  if (!isFinite(pct)) return undefined;
+  // Limita a faixa exibida para evitar números absurdos
+  return Math.max(-300, Math.min(300, pct));
 }
 
 export default function MetaDashboard() {
