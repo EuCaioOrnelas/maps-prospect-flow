@@ -156,16 +156,6 @@ export default function MetaCampanhas() {
       {/* KPIs */}
       {!loading && campaigns.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <KpiTile icon={MessageSquare} label="Campanhas" value={fmtN(campaigns.length)} />
-          <KpiTile icon={Send} label="Total enviado" value={fmtN(campaigns.reduce((s, c) => s + (c.sent_count || 0), 0))} />
-          <KpiTile icon={DollarSign} label="Custo total" value={fmtBRL(totalSpent)} />
-          <KpiTile icon={TrendingUp} label="Custo médio / campanha" value={fmtBRL(avgCostPerCampaign)} />
-        </div>
-      )}
-
-      {/* KPIs */}
-      {!loading && campaigns.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KpiTile icon={MessageSquare} label="Campanhas" value={fmtN(filteredCampaigns.length)} />
           <KpiTile icon={Send} label="Total enviado" value={fmtN(filteredCampaigns.reduce((s, c) => s + (c.sent_count || 0), 0))} />
           <KpiTile icon={DollarSign} label="Custo total" value={fmtBRL(totalSpent)} />
