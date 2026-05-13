@@ -480,7 +480,160 @@ export default function MetaCampanhas() {
         </div>
       </Card>
 
+      <CampaignDetailsDialog
+        campaign={detailsCampaign}
+        numberMap={numberMap}
+        onClose={() => setDetailsCampaign(null)}
+      />
     </MetaLayout>
+  );
+}
+
+function CampaignDetailsDialog({
+  campaign,
+  numberMap,
+  onClose,
+}: {
+  campaign: CampaignRow | null;
+  numberMap: Record<string, { phone: string; label: string | null }>;
+  onClose: () => void;
+}) {
+  const open = !!campaign;
+  const c = campaign;
+  const s = c ? STATUS_LABEL[c.status] ?? { label: c.status, tone: "outline" as const } : null;
+  const responses = c?.total_responses ?? 0;
+  const sent = c?.sent_count ?? 0;
+  const failed = c?.failed_count ?? 0;
+  const total = c?.total_leads ?? 0;
+  const pending = Math.max(0, total - sent - failed);
+  const cost = sent * COST_PER_MESSAGE;
+  const sendRate = total > 0 ? (sent / total) * 100 : 0;
+  const responseRate = sent > 0 ? (responses / sent) * 100 : 0;
+  const failRate = total > 0 ? (failed / total) * 100 : 0;
+  const num = c?.whatsapp_number_id ? numberMap[c.whatsapp_number_id] : null;
+  const phoneFull = num?.phone ? num.phone : "—";
+
+  // messages may be array of {body, ...} or { items: [...] } or string
+  const messagesList: string[] = (() => {
+    if (!c?.messages) return [];
+    const m = c.messages;
+    if (Array.isArray(m)) return m.map((x: any) => (typeof x === "string" ? x : x?.body ?? x?.text ?? JSON.stringify(x)));
+    if (typeof m === "string") return [m];
+    if (m?.items && Array.isArray(m.items)) return m.items.map((x: any) => (typeof x === "string" ? x : x?.body ?? x?.text ?? JSON.stringify(x)));
+    if (m?.body) return [m.body];
+    return [];
+  })();
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
+        {c && (
+          <>
+            <DialogHeader>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <DialogTitle className="truncate" title={c.name}>{c.name}</DialogTitle>
+                  <DialogDescription className="inline-flex items-center gap-1.5 mt-1">
+                    <CalendarIcon size={12} />
+                    Criada em {format(new Date(c.created_at), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
+                  </DialogDescription>
+                </div>
+                {s && <Badge variant={s.tone} className="shrink-0">{s.label}</Badge>}
+              </div>
+            </DialogHeader>
+
+            {/* Resumo de envio */}
+            <section>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 inline-flex items-center gap-1.5">
+                <Send size={12} /> Relatório de envio
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Metric icon={Users} label="Leads" value={fmtN(total)} />
+                <Metric icon={Send} label="Enviados" value={fmtN(sent)} />
+                <Metric icon={Reply} label="Respostas" value={fmtN(responses)} />
+                <Metric icon={AlertCircle} label="Erros" value={fmtN(failed)} valueClass={failed > 0 ? "text-amber-500" : ""} />
+                <Metric icon={Percent} label="Taxa de envio" value={`${sendRate.toFixed(1)}%`} />
+                <Metric icon={Percent} label="Taxa de resposta" value={`${responseRate.toFixed(1)}%`} />
+                <Metric icon={Percent} label="Taxa de erro" value={`${failRate.toFixed(1)}%`} />
+                <Metric icon={DollarSign} label="Custo total" value={fmtBRL(cost)} />
+              </div>
+              {pending > 0 && (
+                <p className="text-[11px] text-muted-foreground mt-2 inline-flex items-center gap-1">
+                  <Loader2 size={10} /> {fmtN(pending)} ainda em fila/processamento
+                </p>
+              )}
+            </section>
+
+            {/* Progresso visual */}
+            <section>
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
+                <span>Progresso</span>
+                <span>{fmtN(sent + failed)} / {fmtN(total)}</span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden flex">
+                <div className="h-full bg-primary" style={{ width: `${total ? (sent / total) * 100 : 0}%` }} />
+                <div className="h-full bg-amber-500" style={{ width: `${total ? (failed / total) * 100 : 0}%` }} />
+              </div>
+              <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-1.5">
+                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-primary" /> Enviado</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-amber-500" /> Erro</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-muted-foreground/30" /> Pendente</span>
+              </div>
+            </section>
+
+            {/* Canal */}
+            <section>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 inline-flex items-center gap-1.5">
+                <Smartphone size={12} /> Canal de envio
+              </h4>
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Número</span>
+                  <span className="font-medium tabular-nums">{phoneFull}</span>
+                </div>
+                {num?.label && (
+                  <div className="flex items-center justify-between gap-3 mt-1">
+                    <span className="text-muted-foreground">Identificação</span>
+                    <span className="font-medium">{num.label}</span>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* Mensagens enviadas */}
+            {messagesList.length > 0 && (
+              <section>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 inline-flex items-center gap-1.5">
+                  <MessageSquare size={12} /> Mensagem{messagesList.length > 1 ? "ns" : ""} ({messagesList.length})
+                </h4>
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  {messagesList.map((m, i) => (
+                    <div key={i} className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Variação {i + 1}</p>
+                      <p className="text-sm whitespace-pre-wrap text-foreground">{m}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Identificadores */}
+            <section>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 inline-flex items-center gap-1.5">
+                <FileText size={12} /> Identificadores
+              </h4>
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-xs font-mono text-muted-foreground break-all">
+                {c.id}
+              </div>
+            </section>
+
+            <div className="flex justify-end pt-2 border-t border-border/60">
+              <Button variant="outline" size="sm" onClick={onClose}>Fechar</Button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
