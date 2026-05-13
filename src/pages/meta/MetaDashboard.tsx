@@ -114,6 +114,8 @@ export default function MetaDashboard() {
                 delta={k.delta}
                 accent={k.accent}
                 icon={k.icon}
+                spark={k.spark}
+                empty={!k.raw}
               />
             ))}
           </div>
