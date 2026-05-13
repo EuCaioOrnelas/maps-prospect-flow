@@ -92,8 +92,6 @@ const MetaCampanhas = lazyWithRetry(() => import("./pages/meta/MetaCampanhas"), 
 const MetaTemplates = lazyWithRetry(() => import("./pages/meta/MetaTemplates"), "MetaTemplates");
 const MetaNumeros = lazyWithRetry(() => import("./pages/meta/MetaNumeros"), "MetaNumeros");
 const MetaReabertura = lazyWithRetry(() => import("./pages/meta/MetaReabertura"), "MetaReabertura");
-const MetaCustos = lazyWithRetry(() => import("./pages/meta/MetaCustos"), "MetaCustos");
-const MetaQualidade = lazyWithRetry(() => import("./pages/meta/MetaQualidade"), "MetaQualidade");
 const MetaConfiguracoes = lazyWithRetry(() => import("./pages/meta/MetaConfiguracoes"), "MetaConfiguracoes");
 
 const EnterpriseContact = lazyWithRetry(() => import("./pages/EnterpriseContact"), "EnterpriseContact");
@@ -273,8 +271,6 @@ const App = () => (
                 <Route path="/meta/templates" element={<ProtectedRoute><MetaTemplates /></ProtectedRoute>} />
                 <Route path="/meta/numeros" element={<ProtectedRoute><MetaNumeros /></ProtectedRoute>} />
                 <Route path="/meta/reabertura" element={<ProtectedRoute><MetaReabertura /></ProtectedRoute>} />
-                <Route path="/meta/custos" element={<ProtectedRoute><MetaCustos /></ProtectedRoute>} />
-                <Route path="/meta/qualidade" element={<ProtectedRoute><MetaQualidade /></ProtectedRoute>} />
                 <Route path="/meta/configuracoes" element={<ProtectedRoute><MetaConfiguracoes /></ProtectedRoute>} />
                 <Route path="/cancellation-feedback" element={<ProtectedRoute><CancellationFeedback /></ProtectedRoute>} />
                 <Route path="/thank-you" element={<LightThemeWrapper><ThankYou /></LightThemeWrapper>} />

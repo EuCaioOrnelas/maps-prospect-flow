@@ -1,6 +1,4 @@
 import { useState, useMemo } from "react";
-import { MetaLayout } from "@/components/meta/MetaLayout";
-import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { MetaKpiCard } from "@/components/meta/MetaKpiCard";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,7 +13,7 @@ import { dailyCost, campaignsPerformance } from "@/components/meta/mockData";
 
 const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 });
 
-export default function MetaCustos() {
+export function MetaCustosPanel() {
   const [leads, setLeads] = useState(1000);
   const [tipo, setTipo] = useState("MARKETING");
   const [taxa, setTaxa] = useState(20);
@@ -31,9 +29,7 @@ export default function MetaCustos() {
   }, [leads, tipo, taxa]);
 
   return (
-    <MetaLayout title="Custos & Consumo" description="Controle financeiro completo da operação Meta.">
-      <MetaPageHeader title="Custos & Consumo" description="Acompanhe custo total, ROI e simule cenários antes de disparar." />
-
+    <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <MetaKpiCard label="Custo total" value={fmtBRL(2486)} delta={12} icon={<DollarSign size={14} />} accent="primary" />
         <MetaKpiCard label="Por campanha" value={fmtBRL(621)} delta={-3} icon={<DollarSign size={14} />} />
@@ -51,7 +47,7 @@ export default function MetaCustos() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={dailyCost}>
                 <defs>
-                  <linearGradient id="costGrad2" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="custosPanelGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
                     <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
@@ -60,7 +56,7 @@ export default function MetaCustos() {
                 <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
                 <RTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-                <Area type="monotone" dataKey="cost" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#costGrad2)" />
+                <Area type="monotone" dataKey="cost" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#custosPanelGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -100,7 +96,6 @@ export default function MetaCustos() {
         </Card>
       </div>
 
-      {/* Simulator */}
       <Card className="p-5 border-border/60">
         <div className="flex items-start gap-3 mb-5">
           <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
@@ -143,7 +138,7 @@ export default function MetaCustos() {
           </div>
         </div>
       </Card>
-    </MetaLayout>
+    </div>
   );
 }
 

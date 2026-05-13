@@ -5,10 +5,12 @@ import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { MetaKpiCard } from "@/components/meta/MetaKpiCard";
 import { MetaInsightCard } from "@/components/meta/MetaInsightCard";
 import { MetaFilterBar } from "@/components/meta/MetaFilterBar";
+import { MetaCustosPanel } from "@/components/meta/MetaCustosPanel";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -19,7 +21,7 @@ import {
 import {
   DollarSign, MessageSquare, MessagesSquare, RotateCcw, Users, Reply,
   Percent, Target, Calendar as CalendarIcon, Briefcase, TrendingUp,
-  Sparkles, Plus, FileText, Search,
+  Sparkles, Plus, FileText, Search, LayoutDashboard, Wallet,
 } from "lucide-react";
 import {
   dailyCost, funnelData, templateCategories, campaignsPerformance, insights, heatmap,
@@ -76,12 +78,23 @@ export default function MetaDashboard() {
         }
       />
 
-      <MetaFilterBar
-        period={period} onPeriodChange={setPeriod}
-        campaign={campaign} onCampaignChange={setCampaign}
-        numero={numero} onNumeroChange={setNumero}
-        status={status} onStatusChange={setStatus}
-      />
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList className="bg-muted/40 border border-border/60 p-1 h-9">
+          <TabsTrigger value="overview" className="text-xs gap-1.5 data-[state=active]:bg-background">
+            <LayoutDashboard size={13} /> Visão geral
+          </TabsTrigger>
+          <TabsTrigger value="custos" className="text-xs gap-1.5 data-[state=active]:bg-background">
+            <Wallet size={13} /> Custos & Consumo
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4 mt-0">
+          <MetaFilterBar
+            period={period} onPeriodChange={setPeriod}
+            campaign={campaign} onCampaignChange={setCampaign}
+            numero={numero} onNumeroChange={setNumero}
+            status={status} onStatusChange={setStatus}
+          />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -300,6 +313,12 @@ export default function MetaDashboard() {
           ))}
         </div>
       </div>
+        </TabsContent>
+
+        <TabsContent value="custos" className="mt-0">
+          <MetaCustosPanel />
+        </TabsContent>
+      </Tabs>
     </MetaLayout>
   );
 }
