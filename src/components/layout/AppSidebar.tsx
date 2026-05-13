@@ -607,8 +607,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       { title: "Templates", url: "/meta/templates", icon: FileText },
                       { title: "Números & WABA", url: "/meta/numeros", icon: Phone },
                       { title: "Reabertura", url: "/meta/reabertura", icon: RotateCcw },
-                      { title: "Custos", url: "/meta/custos", icon: DollarSignIcon },
-                      { title: "Qualidade", url: "/meta/qualidade", icon: ShieldCheck },
                       { title: "Configurações", url: "/meta/configuracoes", icon: SettingsIcon },
                     ].map((item) => {
                       const active = item.url === "/meta" ? currentPath === "/meta" : currentPath === item.url;
