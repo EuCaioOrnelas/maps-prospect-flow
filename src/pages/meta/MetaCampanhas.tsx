@@ -80,7 +80,7 @@ export default function MetaCampanhas() {
     setLoading(true);
     const { data } = await supabase
       .from("whatsapp_campaigns")
-      .select("id,name,status,total_leads,sent_count,failed_count,total_responses,created_at,whatsapp_number_id,messages")
+      .select("id,name,status,total_leads,sent_count,failed_count,total_responses,created_at,whatsapp_number_id,messages,leads,current_lead_index")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(500);
