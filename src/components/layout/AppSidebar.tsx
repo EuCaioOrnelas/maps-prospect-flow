@@ -581,17 +581,17 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
             )}
 
-            {/* Meta Platforms */}
+            {/* Meta Platform */}
             <li>
               <SidebarNavItem
-                title="Meta Platforms"
-                icon={MessageSquareCode}
+                title="Meta Platform"
+                icon={MetaIcon as any}
                 onClick={handleMetaClick}
                 isActive={isOnMetaPage}
                 isExpanded={isExpanded}
                 hasSubmenu
                 isSubmenuOpen={isMetaOpen}
-                tooltip="Meta Platforms"
+                tooltip="Meta Platform"
               />
               {isExpanded && (
                 <div
