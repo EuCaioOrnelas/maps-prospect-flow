@@ -355,32 +355,65 @@ function DateRangeBar({
   start, end, onStart, onEnd,
 }: { start: Date; end: Date; onStart: (d: Date) => void; onEnd: (d: Date) => void; }) {
   const [open, setOpen] = useState(false);
+  const [draftStart, setDraftStart] = useState(start);
+  const [draftEnd, setDraftEnd] = useState(end);
   const label = `${format(start, "dd MMM yyyy", { locale: ptBR })} — ${format(end, "dd MMM yyyy", { locale: ptBR })}`;
+  const applyRange = () => {
+    const nextStart = draftStart <= draftEnd ? draftStart : draftEnd;
+    const nextEnd = draftStart <= draftEnd ? draftEnd : draftStart;
+    onStart(nextStart);
+    onEnd(nextEnd);
+    setOpen(false);
+  };
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (next) {
+            setDraftStart(start);
+            setDraftEnd(end);
+          }
+        }}
+      >
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="h-9 text-xs border-border/60 gap-1.5">
             <CalendarIcon size={13} />
             {label}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="range"
-            numberOfMonths={2}
-            defaultMonth={subDays(end, 30)}
-            selected={{ from: start, to: end }}
-            onSelect={(r: any) => {
-              if (r?.from) onStart(r.from);
-              if (r?.to) {
-                onEnd(r.to);
-                setOpen(false);
-              }
-            }}
-            initialFocus
-            className={cn("p-3 pointer-events-auto")}
-          />
+        <PopoverContent className="w-auto overflow-hidden rounded-2xl border-border/70 bg-popover p-0 shadow-xl" align="start">
+          <div className="p-3">
+            <Calendar
+              mode="range"
+              numberOfMonths={2}
+              defaultMonth={draftStart}
+              selected={{ from: draftStart, to: draftEnd }}
+              onSelect={(r: any) => {
+                if (r?.from) setDraftStart(r.from);
+                if (r?.to) setDraftEnd(r.to);
+              }}
+              initialFocus
+              className={cn("p-0 pointer-events-auto")}
+              classNames={{
+                months: "flex flex-col sm:flex-row gap-4 sm:gap-5",
+                month: "space-y-4 w-[260px]",
+                caption_label: "text-sm font-semibold text-popover-foreground",
+                head_cell: "text-muted-foreground rounded-md w-9 font-medium text-[0.78rem]",
+                day: cn(buttonDateClass, "h-9 w-9 p-0 text-sm font-medium aria-selected:opacity-100"),
+                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                day_range_middle: "aria-selected:bg-primary/90 aria-selected:text-primary-foreground",
+                day_outside: "day-outside text-muted-foreground/55 aria-selected:bg-primary/45 aria-selected:text-primary-foreground aria-selected:opacity-100",
+                day_today: "bg-secondary text-secondary-foreground",
+              }}
+            />
+          </div>
+          <div className="border-t border-border/70 bg-secondary/35 p-3">
+            <Button size="sm" className="h-9 w-full rounded-lg text-xs" onClick={applyRange}>
+              Aplicar
+            </Button>
+          </div>
         </PopoverContent>
       </Popover>
 
