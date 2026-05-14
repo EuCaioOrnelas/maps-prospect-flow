@@ -367,31 +367,25 @@ export const NumbersManager = ({
             const isDefinitelyDisconnected = response.data?.connected === false;
             
             if (isDefinitelyDisconnected) {
-              if (number.instance_name) {
+              // Auto-remove the number entirely (Evolution + DB cascade) when it drops
+              try {
                 await supabase.functions.invoke('evolution-disconnect', {
-                  body: { instanceName: number.instance_name, numberId: number.id, deleteInstance: true },
+                  body: {
+                    instanceName: number.instance_name || null,
+                    numberId: number.id,
+                    deleteInstance: true,
+                    cascadeDelete: true,
+                  },
                 });
+              } catch (e) {
+                console.error('Auto-delete on disconnect failed:', e);
               }
 
-              await supabase
-                .from('whatsapp_numbers')
-                .update({ 
-                  is_connected: false,
-                  phone_number: null,
-                  instance_name: null,
-                  updated_at: new Date().toISOString()
-                })
-                .eq('id', number.id);
-
-              onNumbersChange(numbers.map(n => 
-                n.id === number.id 
-                  ? { ...n, is_connected: false, phone_number: null, instance_name: null } 
-                  : n
-              ));
+              onNumbersChange(numbers.filter(n => n.id !== number.id));
 
               toast({
-                title: "Conexão perdida",
-                description: `O número "${number.name}" foi desconectado`,
+                title: "Número removido",
+                description: `"${number.name}" caiu e foi removido automaticamente`,
                 variant: "destructive",
               });
             } else if (!isReallyConnected) {
@@ -1153,31 +1147,6 @@ export const NumbersManager = ({
                         )}
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex gap-2">
-                        {!number.is_connected ? (
-                          <Button 
-                            size="sm" 
-                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => openConnectDialog(number.id)}
-                          >
-                            <Wifi size={14} className="mr-1" />
-                            Conectar
-                          </Button>
-                        ) : (
-                          <>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="flex-1"
-                              onClick={() => confirmDelete(number.id)}
-                            >
-                              <WifiOff size={14} className="mr-1" />
-                              Desconectar
-                            </Button>
-                          </>
-                        )}
-                      </div>
                     </div>
                   );
                 })}
