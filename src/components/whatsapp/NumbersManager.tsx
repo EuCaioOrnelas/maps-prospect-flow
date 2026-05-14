@@ -1153,31 +1153,6 @@ export const NumbersManager = ({
                         )}
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex gap-2">
-                        {!number.is_connected ? (
-                          <Button 
-                            size="sm" 
-                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => openConnectDialog(number.id)}
-                          >
-                            <Wifi size={14} className="mr-1" />
-                            Conectar
-                          </Button>
-                        ) : (
-                          <>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="flex-1"
-                              onClick={() => confirmDelete(number.id)}
-                            >
-                              <WifiOff size={14} className="mr-1" />
-                              Desconectar
-                            </Button>
-                          </>
-                        )}
-                      </div>
                     </div>
                   );
                 })}
