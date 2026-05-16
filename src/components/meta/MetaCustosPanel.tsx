@@ -253,38 +253,12 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
           <div className="lg:col-span-5 p-5 lg:border-r border-border/60 space-y-4">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">Configuração</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5 min-w-0">
-                  <Label className="text-xs text-muted-foreground">Template</Label>
-                  <Select value={selectedTplId} onValueChange={setSelectedTplId}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={tplLoading ? "Carregando…" : "Selecione"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__manual__">Manual</SelectItem>
-                      {tplLoading && (
-                        <div className="px-2 py-1.5 text-xs text-muted-foreground inline-flex items-center gap-2">
-                          <Loader2 size={12} className="animate-spin" /> Carregando…
-                        </div>
-                      )}
-                      {!tplLoading && templates.length === 0 && (
-                        <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum template aprovado.</div>
-                      )}
-                      {templates.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          <span className="truncate">{t.name}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5 min-w-0">
                   <Label className="text-xs text-muted-foreground">Categoria</Label>
                   <Select
-                    value={selectedTplId === "__manual__" ? tipoManual : (selectedTpl?.category?.toUpperCase() || "MARKETING")}
+                    value={tipoManual}
                     onValueChange={(v) => setTipoManual(v as keyof typeof META_PRICING_BR)}
-                    disabled={selectedTplId !== "__manual__"}
                   >
                     <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -297,12 +271,12 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                 </div>
 
                 <div className="space-y-1.5 min-w-0">
-                  <Label className="text-xs text-muted-foreground">Quantidade de leads</Label>
+                  <Label className="text-xs text-muted-foreground">Leads</Label>
                   <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
                 </div>
 
                 <div className="space-y-1.5 min-w-0">
-                  <Label className="text-xs text-muted-foreground">Taxa resposta (%)</Label>
+                  <Label className="text-xs text-muted-foreground">Resposta (%)</Label>
                   <Input type="number" value={taxa} min={0} max={100} placeholder="Ex.: 20" onChange={(e) => setTaxa(e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
                 </div>
               </div>
@@ -311,9 +285,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
             <div className="rounded-lg border border-border/40 bg-muted/30 px-3 py-2.5 text-[11px] text-muted-foreground flex items-start gap-2">
               <Info size={12} className="mt-0.5 shrink-0 text-primary" />
               <span>
-                {selectedTpl
-                  ? <>Categoria <span className="font-medium text-foreground">{selectedTpl.category}</span> · custo Meta <span className="font-medium text-foreground">{fmtBRL(costPerMsg)}/msg</span></>
-                  : <>Custo aplicado: <span className="font-medium text-foreground">{fmtBRL(costPerMsg)}/msg</span> (categoria {selectedCategory}).</>}
+                Custo aplicado: <span className="font-medium text-foreground">{fmtBRL(costPerMsg)}/msg</span> (categoria {selectedCategory}).
               </span>
             </div>
           </div>
@@ -328,7 +300,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
               <div className="relative flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
                       <DollarSign size={16} />
                     </div>
                     <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Custo total Meta</p>
@@ -344,27 +316,27 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
               </div>
             </div>
 
-            {/* Cards secundários — com ícones */}
+            {/* Cards secundários — ícones uniformes */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <SimResult
                 icon={<MessageSquare size={14} />}
                 label="Respondentes"
                 value={fmtN(Math.round(sim.respondents))}
-                accent="primary"
+                accent="emerald"
                 hint="Leads × Taxa de resposta. Quantos leads efetivamente responderam à mensagem."
               />
               <SimResult
                 icon={<Target size={14} />}
                 label="Custo / resposta"
                 value={fmtBRL(sim.cpr)}
-                accent="violet"
+                accent="emerald"
                 hint="Custo total ÷ Respondentes. Investimento médio por lead que respondeu."
               />
               <SimResult
                 icon={<Briefcase size={14} />}
                 label="Custo / oportunidade"
                 value={fmtBRL(sim.cpo)}
-                accent="amber"
+                accent="emerald"
                 hint="Considera que ~12% dos respondentes viram oportunidades reais (média B2B). Custo total ÷ oportunidades estimadas."
               />
             </div>
@@ -394,12 +366,11 @@ function EmptyChart({ label }: { label: string }) {
 }
 
 function SimResult({ label, value, accent = "default", hint, icon }: { label: string; value: string; accent?: string; hint?: string; icon?: React.ReactNode }) {
-  const accentClass =
-    accent === "primary" ? "text-primary" :
-    accent === "emerald" ? "text-emerald-500" :
-    accent === "violet" ? "text-violet-500" :
-    accent === "amber" ? "text-amber-500" : "text-foreground";
   const iconBg =
+    accent === "primary" ? "bg-primary/10 text-primary" :
+    accent === "emerald" ? "bg-emerald-500/10 text-emerald-500" :
+    accent === "violet" ? "bg-violet-500/10 text-violet-500" :
+    accent === "amber" ? "bg-amber-500/10 text-amber-500" : "bg-muted text-foreground";
     accent === "primary" ? "bg-primary/10 text-primary" :
     accent === "emerald" ? "bg-emerald-500/10 text-emerald-500" :
     accent === "violet" ? "bg-violet-500/10 text-violet-500" :
@@ -424,7 +395,7 @@ function SimResult({ label, value, accent = "default", hint, icon }: { label: st
           </Tooltip>
         )}
       </div>
-      <p className={`text-lg font-semibold mt-1.5 tabular-nums ${accentClass}`}>{value}</p>
+      <p className="text-lg font-semibold mt-1.5 tabular-nums text-foreground">{value}</p>
     </div>
   );
 }
