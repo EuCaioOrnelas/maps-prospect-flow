@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer,
   Tooltip as RTooltip, XAxis, YAxis,
 } from "recharts";
-import { DollarSign, Target, TrendingUp, Calculator, MessageSquare, Sparkles, Briefcase, Loader2 } from "lucide-react";
+import { DollarSign, Target, TrendingUp, Calculator, MessageSquare, Sparkles, Briefcase, Loader2, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { MetaDashboardData } from "@/hooks/useMetaDashboard";
@@ -123,12 +124,12 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
   const prevCostPerOpportunity = data.prevOpportunities > 0 ? data.prevTotalCost / data.prevOpportunities : 0;
 
   const kpis = [
-    { label: "Custo Meta total", value: fmtBRLp(data.totalCost), raw: data.totalCost, delta: deltaPct(data.totalCost, data.prevTotalCost), accent: "primary" as const, icon: <DollarSign size={14} />, spark: data.sparks.cost },
-    { label: "Custo / mensagem", value: fmtBRL(costPerMessage), raw: costPerMessage, delta: deltaPct(costPerMessage, prevCostPerMessage), accent: "primary" as const, icon: <MessageSquare size={14} /> },
-    { label: "Custo / resposta", value: fmtBRL(data.costPerResponse), raw: data.costPerResponse, delta: deltaPct(data.costPerResponse, data.prevCostPerResponse), accent: "emerald" as const, icon: <Target size={14} />, spark: data.sparks.costPerResponse },
-    { label: "Custo / oportunidade", value: fmtBRL(costPerOpportunity), raw: costPerOpportunity, delta: deltaPct(costPerOpportunity, prevCostPerOpportunity), accent: "violet" as const, icon: <Briefcase size={14} /> },
-    { label: "Pipeline estimado", value: fmtBRLp(data.pipelineEstimated), raw: data.pipelineEstimated, delta: deltaPct(data.pipelineEstimated, data.prevPipelineEstimated), accent: "primary" as const, icon: <TrendingUp size={14} />, spark: data.sparks.pipelineEstimated },
-    { label: "ROI projetado", value: `${data.roiProjected.toFixed(1)}x`, raw: data.roiProjected, delta: deltaPct(data.roiProjected, data.prevRoiProjected), accent: "emerald" as const, icon: <Sparkles size={14} />, spark: data.sparks.roiProjected },
+    { label: "Custo Meta total", value: fmtBRLp(data.totalCost), raw: data.totalCost, delta: deltaPct(data.totalCost, data.prevTotalCost), accent: "primary" as const, icon: <DollarSign size={14} />, spark: data.sparks.cost, hint: "Soma do gasto Meta no período (mensagens × preço por categoria)." },
+    { label: "Custo / mensagem", value: fmtBRL(costPerMessage), raw: costPerMessage, delta: deltaPct(costPerMessage, prevCostPerMessage), accent: "primary" as const, icon: <MessageSquare size={14} />, hint: "Custo médio por mensagem enviada (Custo Meta total ÷ Mensagens enviadas)." },
+    { label: "Custo / resposta", value: fmtBRL(data.costPerResponse), raw: data.costPerResponse, delta: deltaPct(data.costPerResponse, data.prevCostPerResponse), accent: "emerald" as const, icon: <Target size={14} />, spark: data.sparks.costPerResponse, hint: "Custo Meta total ÷ Respostas recebidas. Mostra quanto custa cada lead que efetivamente respondeu." },
+    { label: "Custo / oportunidade", value: fmtBRL(costPerOpportunity), raw: costPerOpportunity, delta: deltaPct(costPerOpportunity, prevCostPerOpportunity), accent: "violet" as const, icon: <Briefcase size={14} />, hint: "Custo Meta total ÷ Oportunidades (leads classificados como alto potencial pelo CRM). Indica quanto você gasta em mídia para gerar um lead realmente quente." },
+    { label: "Pipeline estimado", value: fmtBRLp(data.pipelineEstimated), raw: data.pipelineEstimated, delta: deltaPct(data.pipelineEstimated, data.prevPipelineEstimated), accent: "primary" as const, icon: <TrendingUp size={14} />, spark: data.sparks.pipelineEstimated, hint: "Soma do valor estimado de todos os leads do período." },
+    { label: "ROI projetado", value: `${data.roiProjected.toFixed(1)}x`, raw: data.roiProjected, delta: deltaPct(data.roiProjected, data.prevRoiProjected), accent: "emerald" as const, icon: <Sparkles size={14} />, spark: data.sparks.roiProjected, hint: "Pipeline estimado ÷ Custo Meta total. Quantas vezes o valor potencial supera o investimento." },
   ];
 
   // Comparação por campanha (top 8 por custo)
@@ -138,21 +139,41 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
     .slice(0, 8)
     .map((c) => ({ name: c.name.length > 22 ? c.name.slice(0, 22) + "…" : c.name, cost: c.cost, replies: c.replies }));
 
+  const currentYear = new Date().getFullYear();
+
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="space-y-4">
       {/* KPIs — 3 por linha, 2 linhas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {kpis.map((k) => (
-          <MetaKpiCard
-            key={k.label}
-            label={k.label}
-            value={k.value}
-            delta={k.delta}
-            accent={k.accent}
-            icon={k.icon}
-            spark={k.spark}
-            empty={!k.raw}
-          />
+          <div key={k.label} className="relative">
+            <MetaKpiCard
+              label={k.label}
+              value={k.value}
+              delta={k.delta}
+              accent={k.accent}
+              icon={k.icon}
+              spark={k.spark}
+              empty={!k.raw}
+            />
+            {k.hint && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="absolute top-3 right-3 text-muted-foreground/60 hover:text-foreground transition-colors"
+                    aria-label={`Como é calculado: ${k.label}`}
+                  >
+                    <Info size={13} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                  {k.hint}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         ))}
       </div>
 
@@ -223,81 +244,88 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
             </div>
           </div>
           <Badge variant="outline" className="text-[10px] gap-1">
-            <DollarSign size={10} /> Tabela Meta BR 2025
+            <DollarSign size={10} /> Tabela Meta BR {currentYear}
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Template</Label>
-              <Select value={selectedTplId} onValueChange={setSelectedTplId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={tplLoading ? "Carregando templates…" : "Selecione um template"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__manual__">Custo manual por categoria</SelectItem>
-                  {tplLoading && (
-                    <div className="px-2 py-1.5 text-xs text-muted-foreground inline-flex items-center gap-2">
-                      <Loader2 size={12} className="animate-spin" /> Carregando…
-                    </div>
-                  )}
-                  {!tplLoading && templates.length === 0 && (
-                    <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                      Nenhum template aprovado encontrado.
-                    </div>
-                  )}
-                  {templates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name} · <span className="text-muted-foreground">{t.category}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedTpl ? (
-                <p className="text-[11px] text-muted-foreground">
-                  Categoria <span className="font-medium text-foreground">{selectedTpl.category}</span> · custo Meta {fmtBRL(costPerMsg)}/msg
-                </p>
-              ) : (
-                <p className="text-[11px] text-muted-foreground">Custo médio interno: {fmtBRL(META_COST_PER_MSG)}/msg.</p>
-              )}
-            </div>
-
-            {selectedTplId === "__manual__" && (
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Categoria do template</Label>
-                <Select value={tipoManual} onValueChange={(v) => setTipoManual(v as keyof typeof META_PRICING_BR)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MARKETING">Marketing — {fmtBRL(META_PRICING_BR.MARKETING)}/msg</SelectItem>
-                    <SelectItem value="UTILITY">Utility — {fmtBRL(META_PRICING_BR.UTILITY)}/msg</SelectItem>
-                    <SelectItem value="AUTHENTICATION">Authentication — {fmtBRL(META_PRICING_BR.AUTHENTICATION)}/msg</SelectItem>
-                    <SelectItem value="SERVICE">Service — Grátis</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Quantidade de leads</Label>
-              <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Taxa de resposta estimada (%)</Label>
-              <Input type="number" value={taxa} min={0} max={100} placeholder="Ex.: 20" onChange={(e) => setTaxa(e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
-            </div>
+        {/* Inputs em linha — ocupam 100% sem esticar verticalmente */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Template</Label>
+            <Select value={selectedTplId} onValueChange={setSelectedTplId}>
+              <SelectTrigger>
+                <SelectValue placeholder={tplLoading ? "Carregando templates…" : "Selecione um template"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__manual__">Custo manual por categoria</SelectItem>
+                {tplLoading && (
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground inline-flex items-center gap-2">
+                    <Loader2 size={12} className="animate-spin" /> Carregando…
+                  </div>
+                )}
+                {!tplLoading && templates.length === 0 && (
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                    Nenhum template aprovado encontrado.
+                  </div>
+                )}
+                {templates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name} · <span className="text-muted-foreground">{t.category}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <SimResult label="Custo total Meta" value={fmtBRL(sim.totalCost)} accent="primary" />
-            <SimResult label="Respondentes" value={fmtN(Math.round(sim.respondents))} />
-            <SimResult label="Custo / resposta" value={fmtBRL(sim.cpr)} accent="emerald" />
-            <SimResult label="Custo / oportunidade" value={fmtBRL(sim.cpo)} accent="violet" />
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Categoria do template</Label>
+            <Select
+              value={selectedTplId === "__manual__" ? tipoManual : (selectedTpl?.category?.toUpperCase() || "MARKETING")}
+              onValueChange={(v) => setTipoManual(v as keyof typeof META_PRICING_BR)}
+              disabled={selectedTplId !== "__manual__"}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MARKETING">Marketing — {fmtBRL(META_PRICING_BR.MARKETING)}/msg</SelectItem>
+                <SelectItem value="UTILITY">Utility — {fmtBRL(META_PRICING_BR.UTILITY)}/msg</SelectItem>
+                <SelectItem value="AUTHENTICATION">Authentication — {fmtBRL(META_PRICING_BR.AUTHENTICATION)}/msg</SelectItem>
+                <SelectItem value="SERVICE">Service — Grátis</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Quantidade de leads</Label>
+            <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Taxa de resposta estimada (%)</Label>
+            <Input type="number" value={taxa} min={0} max={100} placeholder="Ex.: 20" onChange={(e) => setTaxa(e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
+          </div>
+        </div>
+
+        <p className="text-[11px] text-muted-foreground mt-3">
+          {selectedTpl
+            ? <>Categoria <span className="font-medium text-foreground">{selectedTpl.category}</span> · custo Meta {fmtBRL(costPerMsg)}/msg</>
+            : <>Custo médio interno: {fmtBRL(META_COST_PER_MSG)}/msg.</>}
+        </p>
+
+        {/* Resultados — 4 cards compactos em linha, altura natural */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+          <SimResult label="Custo total Meta" value={fmtBRL(sim.totalCost)} accent="primary" />
+          <SimResult label="Respondentes" value={fmtN(Math.round(sim.respondents))} />
+          <SimResult label="Custo / resposta" value={fmtBRL(sim.cpr)} accent="emerald" />
+          <SimResult
+            label="Custo / oportunidade"
+            value={fmtBRL(sim.cpo)}
+            accent="violet"
+            hint="Considera que ~12% dos respondentes viram oportunidades reais (média B2B). Custo total ÷ oportunidades estimadas."
+          />
         </div>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }
 
@@ -318,15 +346,27 @@ function EmptyChart({ label }: { label: string }) {
   );
 }
 
-function SimResult({ label, value, accent = "default" }: { label: string; value: string; accent?: string }) {
+function SimResult({ label, value, accent = "default", hint }: { label: string; value: string; accent?: string; hint?: string }) {
   const accentClass =
     accent === "primary" ? "text-primary" :
     accent === "emerald" ? "text-emerald-500" :
     accent === "violet" ? "text-violet-500" : "text-foreground";
   return (
-    <div className="rounded-lg bg-muted/40 p-4 border border-border/40">
-      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className={`text-xl font-semibold mt-1 tabular-nums ${accentClass}`}>{value}</p>
+    <div className="relative rounded-lg bg-muted/40 px-3 py-2.5 border border-border/40">
+      <div className="flex items-center gap-1.5">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{label}</p>
+        {hint && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className="text-muted-foreground/60 hover:text-foreground" aria-label="Como é calculado">
+                <Info size={11} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">{hint}</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+      <p className={`text-base font-semibold mt-0.5 tabular-nums ${accentClass}`}>{value}</p>
     </div>
   );
 }

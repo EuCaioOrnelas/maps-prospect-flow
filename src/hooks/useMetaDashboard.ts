@@ -190,7 +190,6 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
         if (!convFirst[cid] || m.created_at < convFirst[cid]) convFirst[cid] = m.created_at;
       });
       const conversationsStarted = Object.keys(convFirst).length;
-      const conversationsReopened = Math.round(conversationsStarted * 0.25);
 
       const prevInbound = prevChatInboundRes.data || [];
       const prevConvFirst: Record<string, string> = {};
@@ -199,7 +198,25 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
         if (!prevConvFirst[cid] || m.created_at < prevConvFirst[cid]) prevConvFirst[cid] = m.created_at;
       });
       const prevConversationsStarted = Object.keys(prevConvFirst).length;
-      const prevConversationsReopened = Math.round(prevConversationsStarted * 0.25);
+
+      // Reabertas REAIS: conversas que receberam inbound no período mas foram criadas ANTES dele
+      const allConvIds = Array.from(new Set([...Object.keys(convFirst), ...Object.keys(prevConvFirst)]));
+      const convCreatedMap: Record<string, string> = {};
+      if (allConvIds.length > 0) {
+        const { data: convsMeta } = await supabase
+          .from("chat_conversations")
+          .select("id,created_at")
+          .in("id", allConvIds);
+        (convsMeta || []).forEach((c: any) => { convCreatedMap[c.id] = c.created_at; });
+      }
+      const conversationsReopened = Object.keys(convFirst).filter((cid) => {
+        const created = convCreatedMap[cid];
+        return created && new Date(created) < range.start;
+      }).length;
+      const prevConversationsReopened = Object.keys(prevConvFirst).filter((cid) => {
+        const created = convCreatedMap[cid];
+        return created && new Date(created) < prevStart;
+      }).length;
 
       const captados = leadsInFunnel;
       const analisados = leadsRows.filter((l: any) => l.opportunity_level).length || Math.round(captados * 0.7);
@@ -262,7 +279,10 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
       const sparkOpps = dayKeys.map((k) => leadsRows.filter((l: any) => (l.created_at || "").slice(0, 10) === k && ["alto", "alta", "high", "muito_alto"].includes((l.opportunity_level || "").toLowerCase())).length);
       const sparkPipeline = dayKeys.map((k) => leadsRows.filter((l: any) => (l.created_at || "").slice(0, 10) === k).reduce((s: number, l: any) => s + Number(l.estimated_value || 0), 0));
       const sparkConvStarted = dayKeys.map((k) => Object.values(convFirst).filter((d) => d.slice(0, 10) === k).length);
-      const sparkConvReopened = sparkConvStarted.map((v) => Math.round(v * 0.25));
+      const reopenedDates = Object.entries(convFirst)
+        .filter(([cid]) => convCreatedMap[cid] && new Date(convCreatedMap[cid]) < range.start)
+        .map(([, d]) => d.slice(0, 10));
+      const sparkConvReopened = dayKeys.map((k) => reopenedDates.filter((d) => d === k).length);
       const sparkRate = daily.map((d) => d.messages > 0 ? (d.responses / d.messages) * 100 : 0);
       const sparkCPR = daily.map((d) => d.responses > 0 ? d.cost / d.responses : 0);
       const sparkROI = daily.map((d, i) => d.cost > 0 ? (sparkPipeline[i] || 0) / d.cost : 0);
