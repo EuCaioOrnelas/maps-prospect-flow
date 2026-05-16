@@ -253,38 +253,12 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
           <div className="lg:col-span-5 p-5 lg:border-r border-border/60 space-y-4">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">Configuração</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5 min-w-0">
-                  <Label className="text-xs text-muted-foreground">Template</Label>
-                  <Select value={selectedTplId} onValueChange={setSelectedTplId}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={tplLoading ? "Carregando…" : "Selecione"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__manual__">Manual</SelectItem>
-                      {tplLoading && (
-                        <div className="px-2 py-1.5 text-xs text-muted-foreground inline-flex items-center gap-2">
-                          <Loader2 size={12} className="animate-spin" /> Carregando…
-                        </div>
-                      )}
-                      {!tplLoading && templates.length === 0 && (
-                        <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum template aprovado.</div>
-                      )}
-                      {templates.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          <span className="truncate">{t.name}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5 min-w-0">
                   <Label className="text-xs text-muted-foreground">Categoria</Label>
                   <Select
-                    value={selectedTplId === "__manual__" ? tipoManual : (selectedTpl?.category?.toUpperCase() || "MARKETING")}
+                    value={tipoManual}
                     onValueChange={(v) => setTipoManual(v as keyof typeof META_PRICING_BR)}
-                    disabled={selectedTplId !== "__manual__"}
                   >
                     <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -297,12 +271,12 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                 </div>
 
                 <div className="space-y-1.5 min-w-0">
-                  <Label className="text-xs text-muted-foreground">Quantidade de leads</Label>
+                  <Label className="text-xs text-muted-foreground">Leads</Label>
                   <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
                 </div>
 
                 <div className="space-y-1.5 min-w-0">
-                  <Label className="text-xs text-muted-foreground">Taxa resposta (%)</Label>
+                  <Label className="text-xs text-muted-foreground">Resposta (%)</Label>
                   <Input type="number" value={taxa} min={0} max={100} placeholder="Ex.: 20" onChange={(e) => setTaxa(e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
                 </div>
               </div>
