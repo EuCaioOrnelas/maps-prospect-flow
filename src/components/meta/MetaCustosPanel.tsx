@@ -288,10 +288,10 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                   >
                     <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="MARKETING">Marketing — {fmtBRL(META_PRICING_BR.MARKETING)}/msg</SelectItem>
-                      <SelectItem value="UTILITY">Utility — {fmtBRL(META_PRICING_BR.UTILITY)}/msg</SelectItem>
-                      <SelectItem value="AUTHENTICATION">Authentication — {fmtBRL(META_PRICING_BR.AUTHENTICATION)}/msg</SelectItem>
-                      <SelectItem value="SERVICE">Service — Grátis</SelectItem>
+                      <SelectItem value="MARKETING">Marketing</SelectItem>
+                      <SelectItem value="UTILITY">Utilidade</SelectItem>
+                      <SelectItem value="AUTHENTICATION">Autenticação</SelectItem>
+                      <SelectItem value="SERVICE">Serviço</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
