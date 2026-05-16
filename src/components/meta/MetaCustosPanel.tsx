@@ -132,6 +132,13 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
     { label: "ROI projetado", value: `${data.roiProjected.toFixed(1)}x`, raw: data.roiProjected, delta: deltaPct(data.roiProjected, data.prevRoiProjected), accent: "emerald" as const, icon: <Sparkles size={14} />, spark: data.sparks.roiProjected, hint: "Pipeline estimado ÷ Custo Meta total. Quantas vezes o valor potencial supera o investimento." },
   ];
 
+  // Comparação por campanha (top 8 por custo)
+  const campaignsBar = [...data.campaigns]
+    .filter((c) => c.cost > 0)
+    .sort((a, b) => b.cost - a.cost)
+    .slice(0, 8)
+    .map((c) => ({ name: c.name.length > 22 ? c.name.slice(0, 22) + "…" : c.name, cost: c.cost, replies: c.replies }));
+
   const currentYear = new Date().getFullYear();
 
   return (
@@ -237,7 +244,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
             </div>
           </div>
           <Badge variant="outline" className="text-[10px] gap-1">
-            <DollarSign size={10} /> Tabela Meta BR 2025
+            <DollarSign size={10} /> Tabela Meta BR {currentYear}
           </Badge>
         </div>
 
@@ -332,15 +339,27 @@ function EmptyChart({ label }: { label: string }) {
   );
 }
 
-function SimResult({ label, value, accent = "default" }: { label: string; value: string; accent?: string }) {
+function SimResult({ label, value, accent = "default", hint }: { label: string; value: string; accent?: string; hint?: string }) {
   const accentClass =
     accent === "primary" ? "text-primary" :
     accent === "emerald" ? "text-emerald-500" :
     accent === "violet" ? "text-violet-500" : "text-foreground";
   return (
-    <div className="rounded-lg bg-muted/40 p-4 border border-border/40">
-      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className={`text-xl font-semibold mt-1 tabular-nums ${accentClass}`}>{value}</p>
+    <div className="relative rounded-lg bg-muted/40 px-3 py-2.5 border border-border/40">
+      <div className="flex items-center gap-1.5">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{label}</p>
+        {hint && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className="text-muted-foreground/60 hover:text-foreground" aria-label="Como é calculado">
+                <Info size={11} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">{hint}</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+      <p className={`text-base font-semibold mt-0.5 tabular-nums ${accentClass}`}>{value}</p>
     </div>
   );
 }
