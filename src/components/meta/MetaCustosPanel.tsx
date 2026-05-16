@@ -253,7 +253,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
           <div className="lg:col-span-5 p-5 lg:border-r border-border/60 space-y-4">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">Configuração</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-4">
                 <div className="space-y-1.5 min-w-0">
                   <Label className="text-xs text-muted-foreground">Categoria</Label>
                   <Select
@@ -270,14 +270,16 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                   </Select>
                 </div>
 
-                <div className="space-y-1.5 min-w-0">
-                  <Label className="text-xs text-muted-foreground">Leads</Label>
-                  <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5 min-w-0">
+                    <Label className="text-xs text-muted-foreground">Leads</Label>
+                    <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
+                  </div>
 
-                <div className="space-y-1.5 min-w-0">
-                  <Label className="text-xs text-muted-foreground">Resposta (%)</Label>
-                  <Input type="number" value={taxa} min={0} max={100} placeholder="Ex.: 20" onChange={(e) => setTaxa(e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
+                  <div className="space-y-1.5 min-w-0">
+                    <Label className="text-xs text-muted-foreground">Taxa de resposta (%)</Label>
+                    <Input type="number" value={taxa} min={0} max={100} placeholder="Ex.: 20" onChange={(e) => setTaxa(e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -303,7 +305,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                     <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-sm">
                       <DollarSign size={16} />
                     </div>
-                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Custo total Meta</p>
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Custo projetado Meta</p>
                   </div>
                   <p className="text-3xl font-bold tabular-nums text-primary mt-3">{fmtBRL(sim.totalCost)}</p>
                   <p className="text-[11px] text-muted-foreground mt-1">
