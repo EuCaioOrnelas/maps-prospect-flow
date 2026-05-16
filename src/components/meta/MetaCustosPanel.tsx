@@ -366,12 +366,11 @@ function EmptyChart({ label }: { label: string }) {
 }
 
 function SimResult({ label, value, accent = "default", hint, icon }: { label: string; value: string; accent?: string; hint?: string; icon?: React.ReactNode }) {
-  const accentClass =
-    accent === "primary" ? "text-primary" :
-    accent === "emerald" ? "text-emerald-500" :
-    accent === "violet" ? "text-violet-500" :
-    accent === "amber" ? "text-amber-500" : "text-foreground";
   const iconBg =
+    accent === "primary" ? "bg-primary/10 text-primary" :
+    accent === "emerald" ? "bg-emerald-500/10 text-emerald-500" :
+    accent === "violet" ? "bg-violet-500/10 text-violet-500" :
+    accent === "amber" ? "bg-amber-500/10 text-amber-500" : "bg-muted text-foreground";
     accent === "primary" ? "bg-primary/10 text-primary" :
     accent === "emerald" ? "bg-emerald-500/10 text-emerald-500" :
     accent === "violet" ? "bg-violet-500/10 text-violet-500" :
