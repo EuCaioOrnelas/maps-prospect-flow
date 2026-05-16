@@ -261,7 +261,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                       <SelectValue placeholder={tplLoading ? "Carregando…" : "Selecione"} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__manual__">Custo manual por categoria</SelectItem>
+                      <SelectItem value="__manual__">Manual</SelectItem>
                       {tplLoading && (
                         <div className="px-2 py-1.5 text-xs text-muted-foreground inline-flex items-center gap-2">
                           <Loader2 size={12} className="animate-spin" /> Carregando…
@@ -272,7 +272,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                       )}
                       {templates.map((t) => (
                         <SelectItem key={t.id} value={t.id}>
-                          {t.name} · <span className="text-muted-foreground">{t.category}</span>
+                          <span className="truncate">{t.name}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
