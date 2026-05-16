@@ -261,7 +261,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                       <SelectValue placeholder={tplLoading ? "Carregando…" : "Selecione"} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__manual__">Custo manual por categoria</SelectItem>
+                      <SelectItem value="__manual__">Manual</SelectItem>
                       {tplLoading && (
                         <div className="px-2 py-1.5 text-xs text-muted-foreground inline-flex items-center gap-2">
                           <Loader2 size={12} className="animate-spin" /> Carregando…
@@ -272,7 +272,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                       )}
                       {templates.map((t) => (
                         <SelectItem key={t.id} value={t.id}>
-                          {t.name} · <span className="text-muted-foreground">{t.category}</span>
+                          <span className="truncate">{t.name}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -288,10 +288,10 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                   >
                     <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="MARKETING">Marketing — {fmtBRL(META_PRICING_BR.MARKETING)}/msg</SelectItem>
-                      <SelectItem value="UTILITY">Utility — {fmtBRL(META_PRICING_BR.UTILITY)}/msg</SelectItem>
-                      <SelectItem value="AUTHENTICATION">Authentication — {fmtBRL(META_PRICING_BR.AUTHENTICATION)}/msg</SelectItem>
-                      <SelectItem value="SERVICE">Service — Grátis</SelectItem>
+                      <SelectItem value="MARKETING">Marketing</SelectItem>
+                      <SelectItem value="UTILITY">Utilidade</SelectItem>
+                      <SelectItem value="AUTHENTICATION">Autenticação</SelectItem>
+                      <SelectItem value="SERVICE">Serviço</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -338,7 +338,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                     {fmtN(typeof leads === "number" ? leads : 0)} mensagens × {fmtBRL(costPerMsg)}
                   </p>
                 </div>
-                <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 shrink-0">
+                <Badge className="text-[10px] gap-1 border-0 bg-emerald-500 text-white hover:bg-emerald-500 shadow-sm shrink-0">
                   <TrendingUp size={10} /> Estimativa
                 </Badge>
               </div>
