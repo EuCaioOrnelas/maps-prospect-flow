@@ -232,96 +232,143 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
       </div>
 
       {/* Simulador com templates reais */}
-      <Card className="p-5 border-border/60">
-        <div className="flex items-start justify-between gap-3 mb-5 flex-wrap">
+      <Card className="overflow-hidden border-border/60">
+        <div className="p-5 border-b border-border/60 flex items-start justify-between gap-3 flex-wrap bg-muted/20">
           <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Calculator size={18} />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground">Simulador de custos Meta</h3>
-              <p className="text-xs text-muted-foreground">Estime custo, CPR e CPO usando preços oficiais Meta (BR) por categoria de template.</p>
+              <p className="text-xs text-muted-foreground">Estime custo, CPR e CPO com preços oficiais Meta (BR) por categoria de template.</p>
             </div>
           </div>
-          <Badge variant="outline" className="text-[10px] gap-1">
+          <Badge variant="outline" className="text-[10px] gap-1 shrink-0">
             <DollarSign size={10} /> Tabela Meta BR {currentYear}
           </Badge>
         </div>
 
-        {/* Inputs em linha — ocupam 100% sem esticar verticalmente */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Template</Label>
-            <Select value={selectedTplId} onValueChange={setSelectedTplId}>
-              <SelectTrigger>
-                <SelectValue placeholder={tplLoading ? "Carregando templates…" : "Selecione um template"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__manual__">Custo manual por categoria</SelectItem>
-                {tplLoading && (
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground inline-flex items-center gap-2">
-                    <Loader2 size={12} className="animate-spin" /> Carregando…
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
+          {/* Coluna de configuração */}
+          <div className="lg:col-span-5 p-5 lg:border-r border-border/60 space-y-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">Configuração</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5 min-w-0">
+                  <Label className="text-xs text-muted-foreground">Template</Label>
+                  <Select value={selectedTplId} onValueChange={setSelectedTplId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={tplLoading ? "Carregando…" : "Selecione"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__manual__">Custo manual por categoria</SelectItem>
+                      {tplLoading && (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground inline-flex items-center gap-2">
+                          <Loader2 size={12} className="animate-spin" /> Carregando…
+                        </div>
+                      )}
+                      {!tplLoading && templates.length === 0 && (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum template aprovado.</div>
+                      )}
+                      {templates.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.name} · <span className="text-muted-foreground">{t.category}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5 min-w-0">
+                  <Label className="text-xs text-muted-foreground">Categoria</Label>
+                  <Select
+                    value={selectedTplId === "__manual__" ? tipoManual : (selectedTpl?.category?.toUpperCase() || "MARKETING")}
+                    onValueChange={(v) => setTipoManual(v as keyof typeof META_PRICING_BR)}
+                    disabled={selectedTplId !== "__manual__"}
+                  >
+                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MARKETING">Marketing — {fmtBRL(META_PRICING_BR.MARKETING)}/msg</SelectItem>
+                      <SelectItem value="UTILITY">Utility — {fmtBRL(META_PRICING_BR.UTILITY)}/msg</SelectItem>
+                      <SelectItem value="AUTHENTICATION">Authentication — {fmtBRL(META_PRICING_BR.AUTHENTICATION)}/msg</SelectItem>
+                      <SelectItem value="SERVICE">Service — Grátis</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5 min-w-0">
+                  <Label className="text-xs text-muted-foreground">Quantidade de leads</Label>
+                  <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
+                </div>
+
+                <div className="space-y-1.5 min-w-0">
+                  <Label className="text-xs text-muted-foreground">Taxa resposta (%)</Label>
+                  <Input type="number" value={taxa} min={0} max={100} placeholder="Ex.: 20" onChange={(e) => setTaxa(e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border/40 bg-muted/30 px-3 py-2.5 text-[11px] text-muted-foreground flex items-start gap-2">
+              <Info size={12} className="mt-0.5 shrink-0 text-primary" />
+              <span>
+                {selectedTpl
+                  ? <>Categoria <span className="font-medium text-foreground">{selectedTpl.category}</span> · custo Meta <span className="font-medium text-foreground">{fmtBRL(costPerMsg)}/msg</span></>
+                  : <>Custo aplicado: <span className="font-medium text-foreground">{fmtBRL(costPerMsg)}/msg</span> (categoria {selectedCategory}).</>}
+              </span>
+            </div>
+          </div>
+
+          {/* Coluna de resultados */}
+          <div className="lg:col-span-7 p-5 bg-gradient-to-br from-muted/10 to-transparent">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">Resultado da simulação</p>
+
+            {/* Hero card — Custo total Meta */}
+            <div className="relative overflow-hidden rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 via-emerald-500/8 to-transparent p-5 mb-3">
+              <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-emerald-500/15 blur-2xl pointer-events-none" />
+              <div className="relative flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                      <DollarSign size={16} />
+                    </div>
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Custo total Meta</p>
                   </div>
-                )}
-                {!tplLoading && templates.length === 0 && (
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                    Nenhum template aprovado encontrado.
-                  </div>
-                )}
-                {templates.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name} · <span className="text-muted-foreground">{t.category}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  <p className="text-3xl font-bold tabular-nums text-emerald-500 mt-3">{fmtBRL(sim.totalCost)}</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {fmtN(typeof leads === "number" ? leads : 0)} mensagens × {fmtBRL(costPerMsg)}
+                  </p>
+                </div>
+                <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 shrink-0">
+                  <TrendingUp size={10} /> Estimativa
+                </Badge>
+              </div>
+            </div>
+
+            {/* Cards secundários — com ícones */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <SimResult
+                icon={<MessageSquare size={14} />}
+                label="Respondentes"
+                value={fmtN(Math.round(sim.respondents))}
+                accent="primary"
+                hint="Leads × Taxa de resposta. Quantos leads efetivamente responderam à mensagem."
+              />
+              <SimResult
+                icon={<Target size={14} />}
+                label="Custo / resposta"
+                value={fmtBRL(sim.cpr)}
+                accent="violet"
+                hint="Custo total ÷ Respondentes. Investimento médio por lead que respondeu."
+              />
+              <SimResult
+                icon={<Briefcase size={14} />}
+                label="Custo / oportunidade"
+                value={fmtBRL(sim.cpo)}
+                accent="amber"
+                hint="Considera que ~12% dos respondentes viram oportunidades reais (média B2B). Custo total ÷ oportunidades estimadas."
+              />
+            </div>
           </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Categoria do template</Label>
-            <Select
-              value={selectedTplId === "__manual__" ? tipoManual : (selectedTpl?.category?.toUpperCase() || "MARKETING")}
-              onValueChange={(v) => setTipoManual(v as keyof typeof META_PRICING_BR)}
-              disabled={selectedTplId !== "__manual__"}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MARKETING">Marketing — {fmtBRL(META_PRICING_BR.MARKETING)}/msg</SelectItem>
-                <SelectItem value="UTILITY">Utility — {fmtBRL(META_PRICING_BR.UTILITY)}/msg</SelectItem>
-                <SelectItem value="AUTHENTICATION">Authentication — {fmtBRL(META_PRICING_BR.AUTHENTICATION)}/msg</SelectItem>
-                <SelectItem value="SERVICE">Service — Grátis</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Quantidade de leads</Label>
-            <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Taxa de resposta estimada (%)</Label>
-            <Input type="number" value={taxa} min={0} max={100} placeholder="Ex.: 20" onChange={(e) => setTaxa(e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
-          </div>
-        </div>
-
-        <p className="text-[11px] text-muted-foreground mt-3">
-          {selectedTpl
-            ? <>Categoria <span className="font-medium text-foreground">{selectedTpl.category}</span> · custo Meta {fmtBRL(costPerMsg)}/msg</>
-            : <>Custo médio interno: {fmtBRL(META_COST_PER_MSG)}/msg.</>}
-        </p>
-
-        {/* Resultados — 4 cards compactos em linha, altura natural */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
-          <SimResult label="Custo total Meta" value={fmtBRL(sim.totalCost)} accent="primary" />
-          <SimResult label="Respondentes" value={fmtN(Math.round(sim.respondents))} />
-          <SimResult label="Custo / resposta" value={fmtBRL(sim.cpr)} accent="emerald" />
-          <SimResult
-            label="Custo / oportunidade"
-            value={fmtBRL(sim.cpo)}
-            accent="violet"
-            hint="Considera que ~12% dos respondentes viram oportunidades reais (média B2B). Custo total ÷ oportunidades estimadas."
-          />
         </div>
       </Card>
     </div>
@@ -346,19 +393,30 @@ function EmptyChart({ label }: { label: string }) {
   );
 }
 
-function SimResult({ label, value, accent = "default", hint }: { label: string; value: string; accent?: string; hint?: string }) {
+function SimResult({ label, value, accent = "default", hint, icon }: { label: string; value: string; accent?: string; hint?: string; icon?: React.ReactNode }) {
   const accentClass =
     accent === "primary" ? "text-primary" :
     accent === "emerald" ? "text-emerald-500" :
-    accent === "violet" ? "text-violet-500" : "text-foreground";
+    accent === "violet" ? "text-violet-500" :
+    accent === "amber" ? "text-amber-500" : "text-foreground";
+  const iconBg =
+    accent === "primary" ? "bg-primary/10 text-primary" :
+    accent === "emerald" ? "bg-emerald-500/10 text-emerald-500" :
+    accent === "violet" ? "bg-violet-500/10 text-violet-500" :
+    accent === "amber" ? "bg-amber-500/10 text-amber-500" : "bg-muted text-foreground";
   return (
-    <div className="relative rounded-lg bg-muted/40 px-3 py-2.5 border border-border/40">
-      <div className="flex items-center gap-1.5">
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{label}</p>
+    <div className="relative rounded-lg bg-card border border-border/60 px-3.5 py-3 hover:border-border transition-colors">
+      <div className="flex items-center gap-2">
+        {icon && (
+          <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 ${iconBg}`}>
+            {icon}
+          </div>
+        )}
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate flex-1">{label}</p>
         {hint && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <button type="button" className="text-muted-foreground/60 hover:text-foreground" aria-label="Como é calculado">
+              <button type="button" className="text-muted-foreground/60 hover:text-foreground shrink-0" aria-label="Como é calculado">
                 <Info size={11} />
               </button>
             </TooltipTrigger>
@@ -366,7 +424,7 @@ function SimResult({ label, value, accent = "default", hint }: { label: string; 
           </Tooltip>
         )}
       </div>
-      <p className={`text-base font-semibold mt-0.5 tabular-nums ${accentClass}`}>{value}</p>
+      <p className={`text-lg font-semibold mt-1.5 tabular-nums ${accentClass}`}>{value}</p>
     </div>
   );
 }
