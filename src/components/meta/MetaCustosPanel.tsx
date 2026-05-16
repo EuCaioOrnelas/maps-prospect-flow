@@ -124,36 +124,49 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
   const prevCostPerOpportunity = data.prevOpportunities > 0 ? data.prevTotalCost / data.prevOpportunities : 0;
 
   const kpis = [
-    { label: "Custo Meta total", value: fmtBRLp(data.totalCost), raw: data.totalCost, delta: deltaPct(data.totalCost, data.prevTotalCost), accent: "primary" as const, icon: <DollarSign size={14} />, spark: data.sparks.cost },
-    { label: "Custo / mensagem", value: fmtBRL(costPerMessage), raw: costPerMessage, delta: deltaPct(costPerMessage, prevCostPerMessage), accent: "primary" as const, icon: <MessageSquare size={14} /> },
-    { label: "Custo / resposta", value: fmtBRL(data.costPerResponse), raw: data.costPerResponse, delta: deltaPct(data.costPerResponse, data.prevCostPerResponse), accent: "emerald" as const, icon: <Target size={14} />, spark: data.sparks.costPerResponse },
-    { label: "Custo / oportunidade", value: fmtBRL(costPerOpportunity), raw: costPerOpportunity, delta: deltaPct(costPerOpportunity, prevCostPerOpportunity), accent: "violet" as const, icon: <Briefcase size={14} /> },
-    { label: "Pipeline estimado", value: fmtBRLp(data.pipelineEstimated), raw: data.pipelineEstimated, delta: deltaPct(data.pipelineEstimated, data.prevPipelineEstimated), accent: "primary" as const, icon: <TrendingUp size={14} />, spark: data.sparks.pipelineEstimated },
-    { label: "ROI projetado", value: `${data.roiProjected.toFixed(1)}x`, raw: data.roiProjected, delta: deltaPct(data.roiProjected, data.prevRoiProjected), accent: "emerald" as const, icon: <Sparkles size={14} />, spark: data.sparks.roiProjected },
+    { label: "Custo Meta total", value: fmtBRLp(data.totalCost), raw: data.totalCost, delta: deltaPct(data.totalCost, data.prevTotalCost), accent: "primary" as const, icon: <DollarSign size={14} />, spark: data.sparks.cost, hint: "Soma do gasto Meta no período (mensagens × preço por categoria)." },
+    { label: "Custo / mensagem", value: fmtBRL(costPerMessage), raw: costPerMessage, delta: deltaPct(costPerMessage, prevCostPerMessage), accent: "primary" as const, icon: <MessageSquare size={14} />, hint: "Custo médio por mensagem enviada (Custo Meta total ÷ Mensagens enviadas)." },
+    { label: "Custo / resposta", value: fmtBRL(data.costPerResponse), raw: data.costPerResponse, delta: deltaPct(data.costPerResponse, data.prevCostPerResponse), accent: "emerald" as const, icon: <Target size={14} />, spark: data.sparks.costPerResponse, hint: "Custo Meta total ÷ Respostas recebidas. Mostra quanto custa cada lead que efetivamente respondeu." },
+    { label: "Custo / oportunidade", value: fmtBRL(costPerOpportunity), raw: costPerOpportunity, delta: deltaPct(costPerOpportunity, prevCostPerOpportunity), accent: "violet" as const, icon: <Briefcase size={14} />, hint: "Custo Meta total ÷ Oportunidades (leads classificados como alto potencial pelo CRM). Indica quanto você gasta em mídia para gerar um lead realmente quente." },
+    { label: "Pipeline estimado", value: fmtBRLp(data.pipelineEstimated), raw: data.pipelineEstimated, delta: deltaPct(data.pipelineEstimated, data.prevPipelineEstimated), accent: "primary" as const, icon: <TrendingUp size={14} />, spark: data.sparks.pipelineEstimated, hint: "Soma do valor estimado de todos os leads do período." },
+    { label: "ROI projetado", value: `${data.roiProjected.toFixed(1)}x`, raw: data.roiProjected, delta: deltaPct(data.roiProjected, data.prevRoiProjected), accent: "emerald" as const, icon: <Sparkles size={14} />, spark: data.sparks.roiProjected, hint: "Pipeline estimado ÷ Custo Meta total. Quantas vezes o valor potencial supera o investimento." },
   ];
 
-  // Comparação por campanha (top 8 por custo)
-  const campaignsBar = [...data.campaigns]
-    .filter((c) => c.cost > 0)
-    .sort((a, b) => b.cost - a.cost)
-    .slice(0, 8)
-    .map((c) => ({ name: c.name.length > 22 ? c.name.slice(0, 22) + "…" : c.name, cost: c.cost, replies: c.replies }));
+  const currentYear = new Date().getFullYear();
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="space-y-4">
       {/* KPIs — 3 por linha, 2 linhas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {kpis.map((k) => (
-          <MetaKpiCard
-            key={k.label}
-            label={k.label}
-            value={k.value}
-            delta={k.delta}
-            accent={k.accent}
-            icon={k.icon}
-            spark={k.spark}
-            empty={!k.raw}
-          />
+          <div key={k.label} className="relative">
+            <MetaKpiCard
+              label={k.label}
+              value={k.value}
+              delta={k.delta}
+              accent={k.accent}
+              icon={k.icon}
+              spark={k.spark}
+              empty={!k.raw}
+            />
+            {k.hint && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="absolute top-3 right-3 text-muted-foreground/60 hover:text-foreground transition-colors"
+                    aria-label={`Como é calculado: ${k.label}`}
+                  >
+                    <Info size={13} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                  {k.hint}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         ))}
       </div>
 
