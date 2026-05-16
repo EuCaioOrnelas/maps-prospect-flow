@@ -305,7 +305,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                     <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-sm">
                       <DollarSign size={16} />
                     </div>
-                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Custo total Meta</p>
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Custo projetado Meta</p>
                   </div>
                   <p className="text-3xl font-bold tabular-nums text-primary mt-3">{fmtBRL(sim.totalCost)}</p>
                   <p className="text-[11px] text-muted-foreground mt-1">
