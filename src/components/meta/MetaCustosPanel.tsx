@@ -33,13 +33,13 @@ function deltaPct(curr: number, prev: number): number | undefined {
   return pct;
 }
 
-// Preços oficiais Meta para Brasil (BRL por conversa entregue, atualizado 2025)
-// Fonte: https://developers.facebook.com/docs/whatsapp/pricing/
+// Preços oficiais Meta para Brasil — modelo PER-MESSAGE (vigente desde 01/07/2025)
+// Fonte: https://developers.facebook.com/docs/whatsapp/pricing (rate card BRL 2026)
 const META_PRICING_BR: Record<string, number> = {
-  MARKETING: 0.2475,
-  UTILITY: 0.0825,
-  AUTHENTICATION: 0.0825,
-  SERVICE: 0,
+  MARKETING: 0.50,       // R$ 0,45 – R$ 0,55 por mensagem entregue
+  UTILITY: 0.175,        // R$ 0,15 – R$ 0,20
+  AUTHENTICATION: 0.225, // R$ 0,20 – R$ 0,25
+  SERVICE: 0,            // Mensagens de serviço dentro da CSW = grátis
 };
 
 interface MetaTemplate {
