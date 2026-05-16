@@ -393,19 +393,30 @@ function EmptyChart({ label }: { label: string }) {
   );
 }
 
-function SimResult({ label, value, accent = "default", hint }: { label: string; value: string; accent?: string; hint?: string }) {
+function SimResult({ label, value, accent = "default", hint, icon }: { label: string; value: string; accent?: string; hint?: string; icon?: React.ReactNode }) {
   const accentClass =
     accent === "primary" ? "text-primary" :
     accent === "emerald" ? "text-emerald-500" :
-    accent === "violet" ? "text-violet-500" : "text-foreground";
+    accent === "violet" ? "text-violet-500" :
+    accent === "amber" ? "text-amber-500" : "text-foreground";
+  const iconBg =
+    accent === "primary" ? "bg-primary/10 text-primary" :
+    accent === "emerald" ? "bg-emerald-500/10 text-emerald-500" :
+    accent === "violet" ? "bg-violet-500/10 text-violet-500" :
+    accent === "amber" ? "bg-amber-500/10 text-amber-500" : "bg-muted text-foreground";
   return (
-    <div className="relative rounded-lg bg-muted/40 px-3 py-2.5 border border-border/40">
-      <div className="flex items-center gap-1.5">
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{label}</p>
+    <div className="relative rounded-lg bg-card border border-border/60 px-3.5 py-3 hover:border-border transition-colors">
+      <div className="flex items-center gap-2">
+        {icon && (
+          <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 ${iconBg}`}>
+            {icon}
+          </div>
+        )}
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate flex-1">{label}</p>
         {hint && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <button type="button" className="text-muted-foreground/60 hover:text-foreground" aria-label="Como é calculado">
+              <button type="button" className="text-muted-foreground/60 hover:text-foreground shrink-0" aria-label="Como é calculado">
                 <Info size={11} />
               </button>
             </TooltipTrigger>
@@ -413,7 +424,7 @@ function SimResult({ label, value, accent = "default", hint }: { label: string; 
           </Tooltip>
         )}
       </div>
-      <p className={`text-base font-semibold mt-0.5 tabular-nums ${accentClass}`}>{value}</p>
+      <p className={`text-lg font-semibold mt-1.5 tabular-nums ${accentClass}`}>{value}</p>
     </div>
   );
 }
