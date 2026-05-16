@@ -21,22 +21,42 @@ export default function AdminUsuarios() {
   const [providerFilter, setProviderFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<"active" | "archived" | "all">("active");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [totals, setTotals] = useState<{ active: number; archived: number }>({ active: 0, archived: 0 });
 
   const loadUsers = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("profiles")
-      .select("*, is_custom_subscription, custom_subscription_id, is_archived, archived_at")
-      .order("created_at", { ascending: false })
-      .limit(500);
-    setUsers(data || []);
+
+    // Fetch ALL profiles in pages of 1000 (Supabase max per request)
+    const pageSize = 1000;
+    let from = 0;
+    let all: any[] = [];
+    while (true) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*, is_custom_subscription, custom_subscription_id, is_archived, archived_at")
+        .order("created_at", { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (error || !data || data.length === 0) break;
+      all = all.concat(data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+
+    // Accurate totals via count queries (independent of fetched rows)
+    const [{ count: activeCnt }, { count: archivedCnt }] = await Promise.all([
+      supabase.from("profiles").select("id", { count: "exact", head: true }).or("is_archived.is.null,is_archived.eq.false"),
+      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_archived", true),
+    ]);
+    setTotals({ active: activeCnt || 0, archived: archivedCnt || 0 });
+
+    setUsers(all);
     setLoading(false);
   };
 
   useEffect(() => { loadUsers(); }, []);
 
-  const archivedCount = useMemo(() => users.filter(u => u.is_archived).length, [users]);
-  const activeCount = useMemo(() => users.filter(u => !u.is_archived).length, [users]);
+  const archivedCount = totals.archived;
+  const activeCount = totals.active;
 
   const filtered = useMemo(() => {
     return users.filter(u => {
