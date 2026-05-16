@@ -295,22 +295,22 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">Resultado da simulação</p>
 
             {/* Hero card — Custo total Meta */}
-            <div className="relative overflow-hidden rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 via-emerald-500/8 to-transparent p-5 mb-3">
-              <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-emerald-500/15 blur-2xl pointer-events-none" />
+            <div className="relative overflow-hidden rounded-xl border border-primary/30 bg-gradient-to-br from-primary/15 via-primary/8 to-transparent p-5 mb-3">
+              <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-primary/15 blur-2xl pointer-events-none" />
               <div className="relative flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-sm">
                       <DollarSign size={16} />
                     </div>
                     <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Custo total Meta</p>
                   </div>
-                  <p className="text-3xl font-bold tabular-nums text-emerald-500 mt-3">{fmtBRL(sim.totalCost)}</p>
+                  <p className="text-3xl font-bold tabular-nums text-primary mt-3">{fmtBRL(sim.totalCost)}</p>
                   <p className="text-[11px] text-muted-foreground mt-1">
                     {fmtN(typeof leads === "number" ? leads : 0)} mensagens × {fmtBRL(costPerMsg)}
                   </p>
                 </div>
-                <Badge className="text-[10px] gap-1 border-0 bg-emerald-500 text-white hover:bg-emerald-500 shadow-sm shrink-0">
+                <Badge className="text-[10px] gap-1 border-0 bg-primary text-primary-foreground hover:bg-primary shadow-sm shrink-0">
                   <TrendingUp size={10} /> Estimativa
                 </Badge>
               </div>
