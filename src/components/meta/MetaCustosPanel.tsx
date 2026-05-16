@@ -285,9 +285,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
             <div className="rounded-lg border border-border/40 bg-muted/30 px-3 py-2.5 text-[11px] text-muted-foreground flex items-start gap-2">
               <Info size={12} className="mt-0.5 shrink-0 text-primary" />
               <span>
-                {selectedTpl
-                  ? <>Categoria <span className="font-medium text-foreground">{selectedTpl.category}</span> · custo Meta <span className="font-medium text-foreground">{fmtBRL(costPerMsg)}/msg</span></>
-                  : <>Custo aplicado: <span className="font-medium text-foreground">{fmtBRL(costPerMsg)}/msg</span> (categoria {selectedCategory}).</>}
+                Custo aplicado: <span className="font-medium text-foreground">{fmtBRL(costPerMsg)}/msg</span> (categoria {selectedCategory}).
               </span>
             </div>
           </div>
@@ -302,7 +300,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
               <div className="relative flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
                       <DollarSign size={16} />
                     </div>
                     <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Custo total Meta</p>
@@ -318,27 +316,27 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
               </div>
             </div>
 
-            {/* Cards secundários — com ícones */}
+            {/* Cards secundários — ícones uniformes */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <SimResult
                 icon={<MessageSquare size={14} />}
                 label="Respondentes"
                 value={fmtN(Math.round(sim.respondents))}
-                accent="primary"
+                accent="emerald"
                 hint="Leads × Taxa de resposta. Quantos leads efetivamente responderam à mensagem."
               />
               <SimResult
                 icon={<Target size={14} />}
                 label="Custo / resposta"
                 value={fmtBRL(sim.cpr)}
-                accent="violet"
+                accent="emerald"
                 hint="Custo total ÷ Respondentes. Investimento médio por lead que respondeu."
               />
               <SimResult
                 icon={<Briefcase size={14} />}
                 label="Custo / oportunidade"
                 value={fmtBRL(sim.cpo)}
-                accent="amber"
+                accent="emerald"
                 hint="Considera que ~12% dos respondentes viram oportunidades reais (média B2B). Custo total ÷ oportunidades estimadas."
               />
             </div>
