@@ -395,7 +395,7 @@ function SimResult({ label, value, accent = "default", hint, icon }: { label: st
           </Tooltip>
         )}
       </div>
-      <p className={`text-lg font-semibold mt-1.5 tabular-nums ${accentClass}`}>{value}</p>
+      <p className="text-lg font-semibold mt-1.5 tabular-nums text-foreground">{value}</p>
     </div>
   );
 }
