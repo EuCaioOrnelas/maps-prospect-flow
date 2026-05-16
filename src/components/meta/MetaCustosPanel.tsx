@@ -338,7 +338,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
                     {fmtN(typeof leads === "number" ? leads : 0)} mensagens × {fmtBRL(costPerMsg)}
                   </p>
                 </div>
-                <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 shrink-0">
+                <Badge className="text-[10px] gap-1 border-0 bg-emerald-500 text-white hover:bg-emerald-500 shadow-sm shrink-0">
                   <TrendingUp size={10} /> Estimativa
                 </Badge>
               </div>
