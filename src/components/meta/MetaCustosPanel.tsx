@@ -248,77 +248,84 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Template</Label>
-              <Select value={selectedTplId} onValueChange={setSelectedTplId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={tplLoading ? "Carregando templates…" : "Selecione um template"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__manual__">Custo manual por categoria</SelectItem>
-                  {tplLoading && (
-                    <div className="px-2 py-1.5 text-xs text-muted-foreground inline-flex items-center gap-2">
-                      <Loader2 size={12} className="animate-spin" /> Carregando…
-                    </div>
-                  )}
-                  {!tplLoading && templates.length === 0 && (
-                    <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                      Nenhum template aprovado encontrado.
-                    </div>
-                  )}
-                  {templates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name} · <span className="text-muted-foreground">{t.category}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedTpl ? (
-                <p className="text-[11px] text-muted-foreground">
-                  Categoria <span className="font-medium text-foreground">{selectedTpl.category}</span> · custo Meta {fmtBRL(costPerMsg)}/msg
-                </p>
-              ) : (
-                <p className="text-[11px] text-muted-foreground">Custo médio interno: {fmtBRL(META_COST_PER_MSG)}/msg.</p>
-              )}
-            </div>
-
-            {selectedTplId === "__manual__" && (
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Categoria do template</Label>
-                <Select value={tipoManual} onValueChange={(v) => setTipoManual(v as keyof typeof META_PRICING_BR)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MARKETING">Marketing — {fmtBRL(META_PRICING_BR.MARKETING)}/msg</SelectItem>
-                    <SelectItem value="UTILITY">Utility — {fmtBRL(META_PRICING_BR.UTILITY)}/msg</SelectItem>
-                    <SelectItem value="AUTHENTICATION">Authentication — {fmtBRL(META_PRICING_BR.AUTHENTICATION)}/msg</SelectItem>
-                    <SelectItem value="SERVICE">Service — Grátis</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Quantidade de leads</Label>
-              <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Taxa de resposta estimada (%)</Label>
-              <Input type="number" value={taxa} min={0} max={100} placeholder="Ex.: 20" onChange={(e) => setTaxa(e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
-            </div>
+        {/* Inputs em linha — ocupam 100% sem esticar verticalmente */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Template</Label>
+            <Select value={selectedTplId} onValueChange={setSelectedTplId}>
+              <SelectTrigger>
+                <SelectValue placeholder={tplLoading ? "Carregando templates…" : "Selecione um template"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__manual__">Custo manual por categoria</SelectItem>
+                {tplLoading && (
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground inline-flex items-center gap-2">
+                    <Loader2 size={12} className="animate-spin" /> Carregando…
+                  </div>
+                )}
+                {!tplLoading && templates.length === 0 && (
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                    Nenhum template aprovado encontrado.
+                  </div>
+                )}
+                {templates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name} · <span className="text-muted-foreground">{t.category}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <SimResult label="Custo total Meta" value={fmtBRL(sim.totalCost)} accent="primary" />
-            <SimResult label="Respondentes" value={fmtN(Math.round(sim.respondents))} />
-            <SimResult label="Custo / resposta" value={fmtBRL(sim.cpr)} accent="emerald" />
-            <SimResult label="Custo / oportunidade" value={fmtBRL(sim.cpo)} accent="violet" />
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Categoria do template</Label>
+            <Select
+              value={selectedTplId === "__manual__" ? tipoManual : (selectedTpl?.category?.toUpperCase() || "MARKETING")}
+              onValueChange={(v) => setTipoManual(v as keyof typeof META_PRICING_BR)}
+              disabled={selectedTplId !== "__manual__"}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MARKETING">Marketing — {fmtBRL(META_PRICING_BR.MARKETING)}/msg</SelectItem>
+                <SelectItem value="UTILITY">Utility — {fmtBRL(META_PRICING_BR.UTILITY)}/msg</SelectItem>
+                <SelectItem value="AUTHENTICATION">Authentication — {fmtBRL(META_PRICING_BR.AUTHENTICATION)}/msg</SelectItem>
+                <SelectItem value="SERVICE">Service — Grátis</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Quantidade de leads</Label>
+            <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Taxa de resposta estimada (%)</Label>
+            <Input type="number" value={taxa} min={0} max={100} placeholder="Ex.: 20" onChange={(e) => setTaxa(e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value) || 0)))} />
+          </div>
+        </div>
+
+        <p className="text-[11px] text-muted-foreground mt-3">
+          {selectedTpl
+            ? <>Categoria <span className="font-medium text-foreground">{selectedTpl.category}</span> · custo Meta {fmtBRL(costPerMsg)}/msg</>
+            : <>Custo médio interno: {fmtBRL(META_COST_PER_MSG)}/msg.</>}
+        </p>
+
+        {/* Resultados — 4 cards compactos em linha, altura natural */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+          <SimResult label="Custo total Meta" value={fmtBRL(sim.totalCost)} accent="primary" />
+          <SimResult label="Respondentes" value={fmtN(Math.round(sim.respondents))} />
+          <SimResult label="Custo / resposta" value={fmtBRL(sim.cpr)} accent="emerald" />
+          <SimResult
+            label="Custo / oportunidade"
+            value={fmtBRL(sim.cpo)}
+            accent="violet"
+            hint="Considera que ~12% dos respondentes viram oportunidades reais (média B2B). Custo total ÷ oportunidades estimadas."
+          />
         </div>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }
 
