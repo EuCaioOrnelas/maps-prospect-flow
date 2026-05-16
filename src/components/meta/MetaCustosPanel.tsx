@@ -255,17 +255,22 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">Configuração</p>
               <div className="space-y-4">
                 <div className="space-y-1.5 min-w-0">
-                  <Label className="text-xs text-muted-foreground">Categoria</Label>
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs text-muted-foreground">Categoria</Label>
+                    <span className="text-[11px] font-medium text-primary tabular-nums">
+                      {costPerMsg > 0 ? `${fmtBRL(costPerMsg)} / msg` : "Grátis"}
+                    </span>
+                  </div>
                   <Select
                     value={tipoManual}
                     onValueChange={(v) => setTipoManual(v as keyof typeof META_PRICING_BR)}
                   >
                     <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="MARKETING">Marketing</SelectItem>
-                      <SelectItem value="UTILITY">Utilidade</SelectItem>
-                      <SelectItem value="AUTHENTICATION">Autenticação</SelectItem>
-                      <SelectItem value="SERVICE">Serviço</SelectItem>
+                      <SelectItem value="MARKETING">Marketing · {fmtBRL(META_PRICING_BR.MARKETING)}</SelectItem>
+                      <SelectItem value="UTILITY">Utilidade · {fmtBRL(META_PRICING_BR.UTILITY)}</SelectItem>
+                      <SelectItem value="AUTHENTICATION">Autenticação · {fmtBRL(META_PRICING_BR.AUTHENTICATION)}</SelectItem>
+                      <SelectItem value="SERVICE">Serviço · Grátis</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
