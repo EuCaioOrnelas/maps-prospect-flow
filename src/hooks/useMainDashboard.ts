@@ -37,6 +37,7 @@ export interface DashboardMetrics {
   activeDays: number;
   monthlyBreakdown: MonthlyBreakdown[];
   leadsByDay: { date: string; count: number }[];
+  funnel: { stage: string; value: number }[];
 }
 
 export function useMainDashboard(periodDays: number): DashboardMetrics {
