@@ -356,9 +356,9 @@ function CategoryChip({
     <div className="group relative inline-flex">
       <button
         onClick={onClick}
-        className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-all ${
+        className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-all shrink-0 ${
           active
-            ? "bg-primary/15 text-primary border-primary/30"
+            ? "bg-primary text-primary-foreground border-primary shadow-sm"
             : "bg-background text-foreground border-border hover:border-primary/40"
         }`}
       >
