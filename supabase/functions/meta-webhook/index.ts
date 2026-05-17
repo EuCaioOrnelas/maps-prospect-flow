@@ -34,8 +34,26 @@ serve(async (req) => {
     try {
       const META_APP_SECRET = Deno.env.get('META_APP_SECRET') || '';
 
+      // ---------- Payload size guard (DoS protection) ----------
+      // Meta webhook payloads are typically <50KB. Hard cap at 1MB.
+      const MAX_PAYLOAD_BYTES = 1_048_576; // 1 MB
+      const contentLengthHeader = req.headers.get('content-length');
+      if (contentLengthHeader) {
+        const declared = parseInt(contentLengthHeader, 10);
+        if (Number.isFinite(declared) && declared > MAX_PAYLOAD_BYTES) {
+          console.warn('[meta-webhook] 🚫 Rejected — payload too large (declared)', declared);
+          return new Response('Payload Too Large', { status: 413, headers: corsHeaders });
+        }
+      }
+
       // Read raw body once for HMAC + parsing
       const rawBody = await req.text();
+
+      // Verify actual size (defense in depth — header could be missing/lying)
+      if (rawBody.length > MAX_PAYLOAD_BYTES) {
+        console.warn('[meta-webhook] 🚫 Rejected — payload too large (actual)', rawBody.length);
+        return new Response('Payload Too Large', { status: 413, headers: corsHeaders });
+      }
       const sigHeader = req.headers.get('x-hub-signature-256') || req.headers.get('X-Hub-Signature-256') || '';
       const reqIp = (req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || '').split(',')[0].trim();
       const reqUserAgent = req.headers.get('user-agent') || '';
