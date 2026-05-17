@@ -337,6 +337,28 @@ function ToggleRow({
   );
 }
 
+function ComplianceItem({
+  title,
+  desc,
+  icon: Icon,
+}: {
+  title: string;
+  desc: string;
+  icon: React.ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-background p-4">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+        <Icon className="h-4 w-4 text-primary" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm font-medium leading-tight">{title}</p>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
 function SecurityInfoRow({
   title,
   desc,
