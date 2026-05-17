@@ -21,6 +21,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { HexColorPicker } from "react-colorful";
 
 interface Category { id: string; name: string; color: string; }
 interface Template {
@@ -418,7 +419,7 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
 
       {/* Dialog categoria */}
       <Dialog open={catDialogOpen} onOpenChange={(o) => { setCatDialogOpen(o); if (!o) setEditingCat(null); }}>
-        <DialogContent>
+        <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingCat ? "Editar categoria" : "Nova categoria"}</DialogTitle></DialogHeader>
           <CategoryForm
             initial={editingCat}
@@ -558,22 +559,20 @@ function CategoryForm({
         </div>
 
         {(customOpen || !isPaletteColor) && (
-          <div className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-2">
+          <div className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-3">
             <p className="text-[11px] text-muted-foreground">Cor personalizada</p>
+            <div className="flex justify-center">
+              <HexColorPicker
+                color={/^#[0-9a-f]{6}$/i.test(color) ? color : "#000000"}
+                onChange={setColor}
+                style={{ width: "100%", maxWidth: 240, height: 160 }}
+              />
+            </div>
             <div className="flex items-center gap-2">
-              <label
-                className="relative h-9 w-9 shrink-0 rounded-md border border-border overflow-hidden cursor-pointer"
+              <span
+                className="h-9 w-9 shrink-0 rounded-md border border-border"
                 style={{ background: color }}
-                title="Abrir seletor de cores"
-              >
-                <input
-                  type="color"
-                  value={/^#[0-9a-f]{6}$/i.test(color) ? color : "#000000"}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  aria-label="Selecionar cor"
-                />
-              </label>
+              />
               <Input
                 value={color}
                 onChange={(e) => {
