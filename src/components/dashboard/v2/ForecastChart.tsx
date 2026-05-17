@@ -42,8 +42,8 @@ export function ForecastChart({
 
   const scenarios = [
     { name: 'Conservador', value: conservative, color: 'hsl(var(--muted-foreground) / 0.45)' },
-    { name: 'Realista', value: realistic, color: 'hsl(var(--primary) / 0.65)' },
-    { name: 'Agressivo', value: aggressive, color: 'hsl(var(--primary))' },
+    { name: 'Realista', value: realistic, color: 'hsl(var(--primary))' },
+    { name: 'Agressivo', value: aggressive, color: 'hsl(158, 64%, 28%)' },
   ];
 
   const hasData = totalSales > 0;
