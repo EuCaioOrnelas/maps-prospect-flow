@@ -2450,6 +2450,48 @@ export type Database = {
           },
         ]
       }
+      meta_user_settings: {
+        Row: {
+          created_at: string
+          id: string
+          notify_campaign_issues: boolean
+          notify_daily_summary: boolean
+          notify_number_disconnected: boolean
+          notify_quality_drop: boolean
+          security_audit_log: boolean
+          security_hmac_required: boolean
+          security_ip_allowlist: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notify_campaign_issues?: boolean
+          notify_daily_summary?: boolean
+          notify_number_disconnected?: boolean
+          notify_quality_drop?: boolean
+          security_audit_log?: boolean
+          security_hmac_required?: boolean
+          security_ip_allowlist?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notify_campaign_issues?: boolean
+          notify_daily_summary?: boolean
+          notify_number_disconnected?: boolean
+          notify_quality_drop?: boolean
+          security_audit_log?: boolean
+          security_hmac_required?: boolean
+          security_ip_allowlist?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       meta_webhook_events: {
         Row: {
           contact_name: string | null
