@@ -340,6 +340,111 @@ function templateAgentObjectiveCompleted(payload: Record<string, unknown>): Temp
   };
 }
 
+function templateMetaQualityDrop(payload: Record<string, unknown>): TemplateResult {
+  const phone = (payload.phone_number as string) || "Número desconhecido";
+  const businessName = (payload.business_name as string) || "";
+  const newQuality = String(payload.new_quality || "UNKNOWN").toUpperCase();
+  const oldQuality = payload.old_quality ? String(payload.old_quality).toUpperCase() : "";
+
+  const isRed = newQuality === "RED";
+  const accent = isRed ? "#ef4444" : "#f59e0b";
+  const bgSoft = isRed ? "#fef2f2" : "#fffbeb";
+  const txtSoft = isRed ? "#7f1d1d" : "#78350f";
+  const titleSoft = isRed ? "#991b1b" : "#92400e";
+  const label = isRed ? "Vermelho (Red)" : "Amarelo (Yellow)";
+
+  return {
+    subject: `Atenção: qualidade do número ${phone} caiu para ${label}`,
+    html: baseLayout(`Queda de qualidade Meta`, `
+      <h1 style="margin:0 0 12px;font-size:22px;color:#18181b;font-weight:700;">A qualidade do seu número WhatsApp Meta caiu</h1>
+      <p style="margin:0 0 20px;color:#3f3f46;font-size:15px;line-height:1.6;">
+        O número <strong>${phone}</strong>${businessName ? ` <span style="color:#a1a1aa;font-size:13px;">(${businessName})</span>` : ""}
+        teve o <strong>quality rating</strong> rebaixado pela Meta${oldQuality ? ` de <strong>${oldQuality}</strong>` : ""} para <strong style="color:${accent};">${label}</strong>.
+      </p>
+
+      <div style="margin:0 0 20px;padding:16px 18px;background:${bgSoft};border-left:4px solid ${accent};border-radius:6px;">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:${titleSoft};">O que isso significa?</p>
+        <p style="margin:0;font-size:13.5px;color:${txtSoft};line-height:1.65;">
+          A Meta avalia continuamente a qualidade dos seus envios com base em bloqueios, denúncias de spam e baixo engajamento. Quando o rating cai, seus limites de envio diários podem ser reduzidos e, se chegar a Red, há risco de o número ser <strong>banido temporariamente ou definitivamente</strong>.
+        </p>
+      </div>
+
+      <div style="margin:0 0 20px;padding:16px 18px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;">
+        <p style="margin:0 0 10px;font-size:14px;font-weight:600;color:#111827;">O que fazer agora</p>
+        <ol style="margin:0;padding-left:20px;font-size:13.5px;color:#374151;line-height:1.7;">
+          <li><strong>Pause campanhas em massa</strong> usando este número até a qualidade voltar a Green.</li>
+          <li>Revise seus templates — evite conteúdo promocional agressivo e use linguagem natural.</li>
+          <li>Envie apenas para contatos que <strong>realmente esperam</strong> sua mensagem (opt-in claro).</li>
+          <li>Priorize <strong>conversas 1:1 e respostas</strong> durante os próximos dias para recuperar reputação.</li>
+        </ol>
+      </div>
+
+      <div style="text-align:center;margin:24px 0 8px;">
+        <a href="${BRAND.url}/meta/configuracoes" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">Abrir configurações Meta</a>
+      </div>
+
+      <p style="margin:24px 0 0;font-size:12px;color:#71717a;line-height:1.6;border-top:1px solid #e4e4e7;padding-top:16px;">
+        Esse alerta é enviado automaticamente pela ${BRAND.name} sempre que a Meta sinaliza queda na qualidade de um dos seus números.
+      </p>
+    `, `Qualidade do número ${phone} caiu para ${label} — agir agora para evitar bloqueio`),
+  };
+}
+
+function templateMetaDailySummary(payload: Record<string, unknown>): TemplateResult {
+  const period = (payload.period as string) || new Date().toLocaleDateString("pt-BR");
+  const messagesSent = (payload.messages_sent as number) || 0;
+  const messagesDelivered = (payload.messages_delivered as number) || 0;
+  const messagesRead = (payload.messages_read as number) || 0;
+  const messagesFailed = (payload.messages_failed as number) || 0;
+  const inboundMessages = (payload.inbound_messages as number) || 0;
+  const activeNumbers = (payload.active_numbers as number) || 0;
+  const newConversations = (payload.new_conversations as number) || 0;
+
+  const deliveryRate = messagesSent > 0 ? Math.round((messagesDelivered / messagesSent) * 100) : 0;
+  const readRate = messagesDelivered > 0 ? Math.round((messagesRead / messagesDelivered) * 100) : 0;
+
+  return {
+    subject: `📊 Resumo diário Meta — ${period}`,
+    html: baseLayout(`Resumo Diário Meta`, `
+      <h1 style="margin:0 0 8px;font-size:22px;color:#18181b;font-weight:700;">Resumo diário da sua operação Meta</h1>
+      <p style="margin:0 0 20px;color:#71717a;font-size:13px;">${period}</p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
+        <tr>
+          <td width="33%" style="padding:14px;background:#f0fdf4;border-radius:8px 0 0 8px;text-align:center;">
+            <p style="margin:0;font-size:24px;font-weight:700;color:#166534;">${messagesSent}</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Enviadas</p>
+          </td>
+          <td width="33%" style="padding:14px;background:#eff6ff;text-align:center;">
+            <p style="margin:0;font-size:24px;font-weight:700;color:#1e40af;">${deliveryRate}%</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Entrega</p>
+          </td>
+          <td width="33%" style="padding:14px;background:#faf5ff;border-radius:0 8px 8px 0;text-align:center;">
+            <p style="margin:0;font-size:24px;font-weight:700;color:${BRAND.color};">${readRate}%</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#71717a;">Leitura</p>
+          </td>
+        </tr>
+      </table>
+
+      <div style="margin:0 0 20px;padding:16px 18px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;">
+        <p style="margin:0 0 10px;font-size:14px;font-weight:600;color:#111827;">Atividade do dia</p>
+        <p style="margin:0 0 6px;font-size:13.5px;color:#374151;line-height:1.7;">📥 <strong>${inboundMessages}</strong> mensagens recebidas</p>
+        <p style="margin:0 0 6px;font-size:13.5px;color:#374151;line-height:1.7;">💬 <strong>${newConversations}</strong> novas conversas</p>
+        <p style="margin:0 0 6px;font-size:13.5px;color:#374151;line-height:1.7;">📱 <strong>${activeNumbers}</strong> números Meta ativos</p>
+        ${messagesFailed > 0 ? `<p style="margin:0;font-size:13.5px;color:#991b1b;line-height:1.7;">⚠️ <strong>${messagesFailed}</strong> mensagens falharam no envio</p>` : ""}
+      </div>
+
+      <div style="text-align:center;margin:24px 0 8px;">
+        <a href="${BRAND.url}/dashboard" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">Ver dashboard completo</a>
+      </div>
+
+      <p style="margin:24px 0 0;font-size:12px;color:#71717a;line-height:1.6;border-top:1px solid #e4e4e7;padding-top:16px;">
+        Você está recebendo este resumo porque ativou notificações diárias Meta. Pode desativar a qualquer momento em Configurações Meta.
+      </p>
+    `, `Resumo diário Meta: ${messagesSent} enviadas, ${deliveryRate}% entrega, ${readRate}% leitura`),
+  };
+}
+
 function templateMetaNumberDisconnected(payload: Record<string, unknown>): TemplateResult {
   const phone = (payload.phone_number as string) || "Número desconhecido";
   const businessName = (payload.business_name as string) || "";
@@ -399,6 +504,8 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   WEEKLY_SUMMARY: templateWeeklySummary,
   NUMBER_DISCONNECTED: templateNumberDisconnected,
   META_NUMBER_DISCONNECTED: templateMetaNumberDisconnected,
+  META_QUALITY_DROP: templateMetaQualityDrop,
+  META_DAILY_SUMMARY: templateMetaDailySummary,
   CAMPAIGN_FAILED_TO_START: templateCampaignFailed,
   ADMIN_BROADCAST: templateAdminBroadcast,
   CAMPAIGN_COMPLETED: templateCampaignCompleted,
@@ -447,12 +554,14 @@ Deno.serve(async (req) => {
       payload = {},
       idempotency_key,
       override_email,
+      meta_pref_key,
     } = body as {
       user_id: string;
       email_type: string;
       payload?: Record<string, unknown>;
       idempotency_key?: string;
       override_email?: string;
+      meta_pref_key?: "notify_number_disconnected" | "notify_quality_drop" | "notify_daily_summary" | "notify_campaign_issues";
     };
 
     if (!user_id || !email_type) {
@@ -502,6 +611,26 @@ Deno.serve(async (req) => {
         JSON.stringify({ success: true, skipped: true, reason: "user_opted_out" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Meta-specific notification toggle (notify_number_disconnected, notify_quality_drop, etc.)
+    if (meta_pref_key) {
+      const { data: metaPrefs } = await supabase
+        .from("meta_user_settings")
+        .select(meta_pref_key)
+        .eq("user_id", user_id)
+        .maybeSingle();
+      const enabled = (metaPrefs as any)?.[meta_pref_key];
+      // Default: notify_daily_summary=false, others=true (matches table defaults)
+      const fallback = meta_pref_key === "notify_daily_summary" ? false : true;
+      const isOn = enabled === undefined || enabled === null ? fallback : enabled === true;
+      if (!isOn) {
+        console.log(`[send-email] User ${user_id} has ${meta_pref_key} disabled`);
+        return new Response(
+          JSON.stringify({ success: true, skipped: true, reason: `meta_pref_${meta_pref_key}_off` }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Generate email content
