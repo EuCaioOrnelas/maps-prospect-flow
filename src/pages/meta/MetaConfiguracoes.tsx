@@ -507,12 +507,12 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
           {eventsList.map((ev) => {
             const meta = EVENT_DETAILS[ev] ?? { label: ev, why: "Recomendado pela Meta.", required: true };
             return (
-              <div key={ev} className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-muted/20 hover:bg-muted/30 transition-colors">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                <div className="min-w-0 flex-1">
-                  <code className="text-xs font-mono font-semibold text-foreground break-all">{meta.label}</code>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{meta.why}</p>
+              <div key={ev} className="p-3 rounded-lg border border-border/60 bg-muted/20 hover:bg-muted/30 transition-colors">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <code className="text-xs font-mono font-semibold text-foreground break-all leading-none">{meta.label}</code>
                 </div>
+                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed pl-6">{meta.why}</p>
               </div>
             );
           })}
