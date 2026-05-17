@@ -78,6 +78,8 @@ export default function MetaCampanhas() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [detailsCampaign, setDetailsCampaign] = useState<CampaignRow | null>(null);
+  const webhookGate = useWebhookGate();
+  const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
 
   const loadCampaigns = async () => {
     if (!user) return;
