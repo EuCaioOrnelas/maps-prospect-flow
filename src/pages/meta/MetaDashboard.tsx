@@ -166,20 +166,24 @@ export default function MetaDashboard() {
                 return (
                   <div className="flex flex-col gap-5 mt-2 flex-1 justify-center">
                     {/* Totais lado a lado */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-                          <span className="w-2 h-2 rounded-full bg-primary" />
-                          Mensagens
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="rounded-lg border border-border/50 bg-muted/20 p-4 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <MessageSquare className="w-5 h-5 text-primary" />
                         </div>
-                        <div className="text-3xl font-semibold text-foreground tabular-nums">{fmtN(totalMsgs)}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-muted-foreground mb-0.5">Mensagens</div>
+                          <div className="text-2xl font-semibold text-foreground tabular-nums">{fmtN(totalMsgs)}</div>
+                        </div>
                       </div>
-                      <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-                          <span className="w-2 h-2 rounded-full" style={{ background: "hsl(150 50% 75%)" }} />
-                          Respostas
+                      <div className="rounded-lg border border-border/50 bg-muted/20 p-4 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(150 50% 75% / 0.25)" }}>
+                          <Reply className="w-5 h-5" style={{ color: "hsl(150 45% 45%)" }} />
                         </div>
-                        <div className="text-3xl font-semibold text-foreground tabular-nums">{fmtN(totalRes)}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-muted-foreground mb-0.5">Respostas</div>
+                          <div className="text-2xl font-semibold text-foreground tabular-nums">{fmtN(totalRes)}</div>
+                        </div>
                       </div>
                     </div>
 
