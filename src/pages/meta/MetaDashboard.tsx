@@ -194,18 +194,31 @@ export default function MetaDashboard() {
                     ? ((s.value / data.funnel[i - 1].value) * 100).toFixed(1)
                     : null;
                   return (
-                    <div key={s.stage} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-foreground">{s.stage}</span>
-                        <span className="tabular-nums text-muted-foreground">
-                          {fmtN(s.value)} {conv && <span className="ml-2 text-emerald-500">{conv}%</span>}
-                        </span>
+                    <div key={s.stage} className="flex items-center gap-3">
+                      {/* % à esquerda */}
+                      <div className="w-14 text-right shrink-0">
+                        {conv ? (
+                          <span className="text-xs font-semibold text-emerald-500 tabular-nums">{conv}%</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground tabular-nums">100%</span>
+                        )}
                       </div>
-                      <div className="h-7 bg-muted/40 rounded-md overflow-hidden">
+
+                      {/* Barra centralizada em formato funil */}
+                      <div className="flex-1 flex justify-center">
                         <div
-                          className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-md transition-all"
-                          style={{ width: `${Math.max(pct, 2)}%` }}
-                        />
+                          className="h-9 bg-gradient-to-r from-primary/70 via-primary to-primary/70 rounded-md flex items-center justify-center transition-all shadow-sm"
+                          style={{ width: `${Math.max(pct, 6)}%` }}
+                        >
+                          <span className="text-[11px] font-medium text-primary-foreground truncate px-2">
+                            {s.stage}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Número à direita */}
+                      <div className="w-16 text-left shrink-0">
+                        <span className="text-xs font-semibold text-foreground tabular-nums">{fmtN(s.value)}</span>
                       </div>
                     </div>
                   );
