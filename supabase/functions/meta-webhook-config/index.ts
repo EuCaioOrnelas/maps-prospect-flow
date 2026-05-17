@@ -11,9 +11,26 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
-const VERIFY_TOKEN = Deno.env.get("META_WEBHOOK_VERIFY_TOKEN") ?? "";
+const VERIFY_TOKEN = Deno.env.get("META_WEBHOOK_VERIFY_TOKEN") ?? "wiize-meta-webhook-2026";
 
-const CALLBACK_URL = `${SUPABASE_URL}/functions/v1/meta-webhook`;
+// Callback fixo no banco externo do usuário (projeto lqfqnqfeuneorxocybru).
+// Pode ser sobrescrito via env META_WEBHOOK_CALLBACK_URL.
+const CALLBACK_URL =
+  Deno.env.get("META_WEBHOOK_CALLBACK_URL") ??
+  "https://lqfqnqfeuneorxocybru.supabase.co/functions/v1/meta-webhook";
+
+// Lista canônica de eventos obrigatórios para o sistema funcionar (chat, campanhas, métricas).
+const REQUIRED_EVENTS = [
+  "messages",
+  "message_template_status_update",
+  "message_template_quality_update",
+  "account_update",
+  "account_review_update",
+  "phone_number_quality_update",
+  "phone_number_name_update",
+  "business_capability_update",
+  "security",
+];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
