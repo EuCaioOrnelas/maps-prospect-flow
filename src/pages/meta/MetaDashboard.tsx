@@ -189,30 +189,23 @@ export default function MetaDashboard() {
               {data.funnel.every((s) => s.value === 0) ? (
                 <p className="text-xs text-muted-foreground text-center py-6">Nenhum dado de funil no período.</p>
               ) : (
-                <div className="flex flex-col items-center gap-1.5">
+                <div className="flex flex-col items-center gap-3">
                   {data.funnel.map((s, i) => {
-                    const max = data.funnel[0]?.value || 1;
-                    const pct = Math.max((s.value / max) * 100, 14);
-                    const prev = i > 0 ? data.funnel[i - 1].value : null;
-                    const drop = prev !== null && prev > 0
-                      ? (((prev - s.value) / prev) * 100)
-                      : null;
+                    const base = data.funnel[0]?.value || 1;
+                    const pct = Math.max((s.value / base) * 100, 18);
+                    const convPct = i === 0 ? 100 : (s.value / base) * 100;
                     return (
                       <div key={s.stage} className="w-full flex flex-col items-center">
-                        {drop !== null && (
-                          <div className="text-[11px] text-muted-foreground tabular-nums my-1.5 flex items-center gap-1">
-                            <span className={drop > 0 ? "text-rose-500" : "text-emerald-500"}>
-                              {drop > 0 ? "↓" : "↑"} {Math.abs(drop).toFixed(1)}%
-                            </span>
-                          </div>
-                        )}
-                        <p className="text-xs font-medium text-muted-foreground mb-1.5">{s.stage}</p>
+                        <p className="text-sm font-semibold text-foreground mb-1.5">{s.stage}</p>
                         <div
-                          className="h-10 rounded-full bg-gradient-to-r from-primary/30 via-primary/40 to-primary/30 flex items-center justify-center transition-all shadow-sm"
+                          className="h-11 rounded-full bg-gradient-to-r from-primary via-primary/85 to-primary/55 flex items-center justify-center gap-2 transition-all shadow-sm px-4"
                           style={{ width: `${pct}%` }}
                         >
-                          <span className="text-sm font-semibold text-foreground tabular-nums">
+                          <span className="text-base font-bold text-primary-foreground tabular-nums">
                             {fmtN(s.value)}
+                          </span>
+                          <span className="text-xs font-medium text-primary-foreground/85 tabular-nums">
+                            · {convPct.toFixed(1)}%
                           </span>
                         </div>
                       </div>
