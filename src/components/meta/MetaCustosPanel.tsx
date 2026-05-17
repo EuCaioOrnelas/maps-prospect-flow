@@ -307,7 +307,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
               <div className="relative flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                       <DollarSign size={16} />
                     </div>
                     <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Custo projetado Meta</p>
