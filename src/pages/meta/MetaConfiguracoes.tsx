@@ -237,6 +237,56 @@ export default function MetaConfiguracoes() {
             </div>
           </Card>
 
+          <Card className="border-border/60 overflow-hidden">
+            <div className="p-5 border-b border-border/60 bg-muted/20">
+              <p className="text-sm font-semibold flex items-center gap-2">
+                <FileCheck2 className="h-4 w-4 text-primary" />
+                Compliance & proteção da sua operação
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Em linguagem simples: o que a Wiize faz para manter sua integração Meta segura, estável e em conformidade.
+              </p>
+            </div>
+            <div className="p-5 grid gap-4 sm:grid-cols-2">
+              <ComplianceItem
+                icon={Lock}
+                title="Ninguém consegue se passar pela Meta"
+                desc="Toda mensagem que chega no seu webhook é assinada digitalmente. Se a assinatura não bater, a Wiize rejeita antes de tocar nos seus dados — bloqueia tentativas de fraude e payloads falsos."
+              />
+              <ComplianceItem
+                icon={Shield}
+                title="Só a Meta consegue falar com você"
+                desc="Aceitamos apenas conexões vindas dos servidores oficiais da Meta (faixas de IP públicas da AS32934). Qualquer outra origem é barrada automaticamente."
+              />
+              <ComplianceItem
+                icon={FileCheck2}
+                title="Tudo fica registrado"
+                desc="Cada conexão, troca de token, disparo de campanha e evento de webhook é gravado num log de auditoria. Você consegue rastrear o que aconteceu, quando e por quê."
+              />
+              <ComplianceItem
+                icon={KeyRound}
+                title="Seus tokens ficam protegidos"
+                desc="Tokens da Meta são guardados criptografados no nosso backend e nunca expostos no navegador. Acesso é isolado por conta, então nenhum outro usuário enxerga seus dados."
+              />
+              <ComplianceItem
+                icon={ShieldCheck}
+                title="Conformidade com a política da Meta"
+                desc="Seguimos as regras oficiais da Cloud API: validação HMAC, allowlist de IPs e renovação proativa de tokens. Isso reduz o risco do seu número ser pausado ou bloqueado."
+              />
+              <ComplianceItem
+                icon={AlertTriangle}
+                title="Você é avisado se algo der errado"
+                desc="Quedas de qualidade, desconexões e falhas em campanhas disparam alertas automáticos por e-mail. Você age antes do problema virar perda de receita."
+              />
+            </div>
+            <div className="px-5 py-3 border-t border-border/60 bg-muted/20 flex items-center gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+              <p className="text-[11px] text-muted-foreground">
+                Todas as proteções acima são aplicadas automaticamente. Não exigem configuração e não podem ser desativadas.
+              </p>
+            </div>
+          </Card>
+
           <MetaSecurityActivity userId={user?.id} />
         </TabsContent>
       </Tabs>
