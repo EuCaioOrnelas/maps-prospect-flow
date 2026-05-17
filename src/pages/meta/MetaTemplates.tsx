@@ -5,12 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -18,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus, FolderPlus, Pencil, Trash2, Tag, Loader2, MessageSquare, Search,
+  ExternalLink, Check, ChevronDown, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +33,15 @@ const COLOR_PALETTE = [
   "#EF4444", "#EC4899", "#6366F1", "#14B8A6", "#64748B",
 ];
 
+const META_TEMPLATE_MANAGER_URL = "https://business.facebook.com/wa/manage/message-templates/";
+
+function openMetaTemplateManager(wabaId?: string | null) {
+  const url = wabaId
+    ? `${META_TEMPLATE_MANAGER_URL}?waba_id=${encodeURIComponent(wabaId)}`
+    : META_TEMPLATE_MANAGER_URL;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
 export default function MetaTemplates({ embedded = false }: { embedded?: boolean } = {}) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -43,24 +51,30 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all"); // 'all' | 'uncategorized' | catId
   const [search, setSearch] = useState("");
+  const [wabaId, setWabaId] = useState<string | null>(null);
 
-  // Dialog states
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editing, setEditing] = useState<Template | null>(null);
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [pendingDeleteTpl, setPendingDeleteTpl] = useState<Template | null>(null);
   const [pendingDeleteCat, setPendingDeleteCat] = useState<Category | null>(null);
+  const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
+  const [categoryFilterSearch, setCategoryFilterSearch] = useState("");
+
+  // Edição rápida de categoria por template
+  const [editingTplCat, setEditingTplCat] = useState<Template | null>(null);
+  const [tplCatPickerSearch, setTplCatPickerSearch] = useState("");
 
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const [{ data: cats }, { data: tpls }] = await Promise.all([
+    const [{ data: cats }, { data: tpls }, { data: conn }] = await Promise.all([
       supabase.from("wiize_template_categories").select("*").eq("user_id", user.id).order("name"),
       supabase.from("wiize_message_templates").select("*").eq("user_id", user.id).eq("archived", false).order("updated_at", { ascending: false }),
+      supabase.from("user_waba_connections").select("waba_id").eq("user_id", user.id).limit(1).maybeSingle(),
     ]);
     setCategories((cats as Category[]) || []);
     setTemplates((tpls as Template[]) || []);
+    setWabaId((conn as any)?.waba_id ?? null);
     setLoading(false);
   };
 
@@ -83,24 +97,19 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
     return m;
   }, [categories]);
 
-  const handleSaveTemplate = async (data: { name: string; body: string; language: string; category_id: string | null; }) => {
-    if (!user) return;
-    if (editing) {
-      const { error } = await supabase.from("wiize_message_templates")
-        .update({ ...data, updated_at: new Date().toISOString() })
-        .eq("id", editing.id);
-      if (error) return toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
-      toast({ title: "Template atualizado" });
-    } else {
-      const { error } = await supabase.from("wiize_message_templates")
-        .insert({ ...data, user_id: user.id });
-      if (error) return toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
-      toast({ title: "Template criado" });
-    }
-    setEditorOpen(false);
-    setEditing(null);
-    load();
-  };
+  const filteredCatOptions = useMemo(() => {
+    const s = categoryFilterSearch.trim().toLowerCase();
+    if (!s) return categories;
+    return categories.filter((c) => c.name.toLowerCase().includes(s));
+  }, [categories, categoryFilterSearch]);
+
+  const activeFilterLabel = useMemo(() => {
+    if (filter === "all") return "Todas as categorias";
+    if (filter === "uncategorized") return "Sem categoria";
+    return catById.get(filter)?.name ?? "Categoria";
+  }, [filter, catById]);
+
+  const activeFilterColor = filter !== "all" && filter !== "uncategorized" ? catById.get(filter)?.color : undefined;
 
   const handleDeleteTemplate = async () => {
     if (!pendingDeleteTpl) return;
@@ -108,6 +117,17 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
     if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
     toast({ title: "Template excluído" });
     setPendingDeleteTpl(null);
+    load();
+  };
+
+  const handleAssignCategory = async (tpl: Template, categoryId: string | null) => {
+    const { error } = await supabase.from("wiize_message_templates")
+      .update({ category_id: categoryId, updated_at: new Date().toISOString() })
+      .eq("id", tpl.id);
+    if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
+    toast({ title: "Categoria atualizada" });
+    setEditingTplCat(null);
+    setTplCatPickerSearch("");
     load();
   };
 
@@ -144,8 +164,8 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
   };
 
   const headerActions = (
-    <Button size="sm" onClick={() => { setEditing(null); setEditorOpen(true); }}>
-      <Plus size={14} className="mr-1.5" /> Novo template
+    <Button size="sm" onClick={() => openMetaTemplateManager(wabaId)}>
+      <ExternalLink size={14} className="mr-1.5" /> Novo template na Meta
     </Button>
   );
 
@@ -154,43 +174,95 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
       {!embedded && (
         <MetaPageHeader
           title="Templates"
-          description="Crie, organize e reutilize mensagens em suas campanhas Meta. Use categorias internas para manter tudo organizado."
+          description="Os templates são criados e aprovados diretamente no gerenciador da Meta. Aqui você organiza por categorias internas Wiize."
           actions={headerActions}
         />
       )}
 
-      {/* Filtros: chips de categoria + busca */}
+      {/* Filtros: dropdown de categoria + busca */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap py-1 -my-1 min-w-0 flex-1 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-            <CategoryChip active={filter === "all"} onClick={() => setFilter("all")}>
-              Todos <span className="ml-1.5 text-[10px] opacity-60">{templates.length}</span>
-            </CategoryChip>
-            <CategoryChip active={filter === "uncategorized"} onClick={() => setFilter("uncategorized")}>
-              Sem categoria
-            </CategoryChip>
-            {categories.map((c) => (
-              <CategoryChip
-                key={c.id}
-                active={filter === c.id}
-                color={c.color}
-                onClick={() => setFilter(c.id)}
-                onEdit={() => { setEditingCat(c); setCatDialogOpen(true); }}
-                onDelete={() => setPendingDeleteCat(c)}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Popover open={categoryFilterOpen} onOpenChange={(o) => { setCategoryFilterOpen(o); if (!o) setCategoryFilterSearch(""); }}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-9 gap-2 ${filter !== "all" ? "border-primary/40" : ""}`}
               >
-                {c.name}
-              </CategoryChip>
-            ))}
-            <button
-              type="button"
-              onClick={() => { setEditingCat(null); setCatDialogOpen(true); }}
-              title="Nova categoria"
-              aria-label="Nova categoria"
-              className="h-8 w-8 shrink-0 rounded-full border-2 border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 flex items-center justify-center transition-colors"
-            >
-              <Plus size={14} />
-            </button>
-          </div>
+                {activeFilterColor && (
+                  <span className="h-2 w-2 rounded-full" style={{ background: activeFilterColor }} />
+                )}
+                <Tag size={13} className="text-muted-foreground" />
+                <span className="text-xs font-medium">{activeFilterLabel}</span>
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                  {filter === "all"
+                    ? templates.length
+                    : filter === "uncategorized"
+                      ? templates.filter((t) => !t.category_id).length
+                      : templates.filter((t) => t.category_id === filter).length}
+                </Badge>
+                <ChevronDown size={13} className="text-muted-foreground" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72 p-0">
+              <div className="p-2 border-b border-border/60">
+                <div className="relative">
+                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={categoryFilterSearch}
+                    onChange={(e) => setCategoryFilterSearch(e.target.value)}
+                    placeholder="Buscar categoria…"
+                    className="h-8 pl-7 text-xs"
+                  />
+                </div>
+              </div>
+              <div className="max-h-72 overflow-y-auto py-1">
+                <CategoryRow
+                  active={filter === "all"}
+                  onClick={() => { setFilter("all"); setCategoryFilterOpen(false); }}
+                  label="Todas as categorias"
+                  count={templates.length}
+                />
+                <CategoryRow
+                  active={filter === "uncategorized"}
+                  onClick={() => { setFilter("uncategorized"); setCategoryFilterOpen(false); }}
+                  label="Sem categoria"
+                  count={templates.filter((t) => !t.category_id).length}
+                />
+                {filteredCatOptions.length > 0 && <div className="h-px bg-border/60 my-1" />}
+                {filteredCatOptions.map((c) => (
+                  <CategoryRow
+                    key={c.id}
+                    active={filter === c.id}
+                    onClick={() => { setFilter(c.id); setCategoryFilterOpen(false); }}
+                    label={c.name}
+                    color={c.color}
+                    count={templates.filter((t) => t.category_id === c.id).length}
+                    onEdit={() => { setCategoryFilterOpen(false); setEditingCat(c); setCatDialogOpen(true); }}
+                    onDelete={() => { setCategoryFilterOpen(false); setPendingDeleteCat(c); }}
+                  />
+                ))}
+                {categories.length > 0 && filteredCatOptions.length === 0 && (
+                  <p className="text-center text-xs text-muted-foreground py-4">Nenhuma categoria encontrada.</p>
+                )}
+              </div>
+              <div className="p-2 border-t border-border/60">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start h-8 text-xs"
+                  onClick={() => { setCategoryFilterOpen(false); setEditingCat(null); setCatDialogOpen(true); }}
+                >
+                  <FolderPlus size={13} className="mr-2" /> Nova categoria
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+          {filter !== "all" && (
+            <Button variant="ghost" size="sm" className="h-9 px-2 text-xs text-muted-foreground" onClick={() => setFilter("all")}>
+              <X size={12} className="mr-1" /> Limpar
+            </Button>
+          )}
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
@@ -218,11 +290,13 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
           <MessageSquare className="mx-auto mb-3 text-muted-foreground" size={28} />
           <p className="font-medium">Nenhum template encontrado</p>
           <p className="text-sm text-muted-foreground mt-1">
-            {templates.length === 0 ? "Crie seu primeiro template para começar." : "Ajuste o filtro ou a busca."}
+            {templates.length === 0
+              ? "Os templates aprovados na Meta aparecerão aqui automaticamente."
+              : "Ajuste o filtro ou a busca."}
           </p>
           {templates.length === 0 && (
-            <Button className="mt-4" size="sm" onClick={() => { setEditing(null); setEditorOpen(true); }}>
-              <Plus size={14} className="mr-1.5" /> Novo template
+            <Button className="mt-4" size="sm" onClick={() => openMetaTemplateManager(wabaId)}>
+              <ExternalLink size={14} className="mr-1.5" /> Criar template na Meta
             </Button>
           )}
         </Card>
@@ -239,16 +313,25 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
                       Atualizado {new Date(t.updated_at).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
-                  {cat ? (
-                    <Badge
-                      className="border-0 shrink-0"
-                      style={{ background: `${cat.color}22`, color: cat.color }}
-                    >
-                      <Tag size={10} className="mr-1" /> {cat.name}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="shrink-0 text-[10px]">Sem categoria</Badge>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setEditingTplCat(t); setTplCatPickerSearch(""); }}
+                    title="Alterar categoria"
+                    className="shrink-0"
+                  >
+                    {cat ? (
+                      <Badge
+                        className="border-0 hover:opacity-80 transition-opacity cursor-pointer"
+                        style={{ background: `${cat.color}22`, color: cat.color }}
+                      >
+                        <Tag size={10} className="mr-1" /> {cat.name}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] hover:border-primary/40 cursor-pointer">
+                        <Plus size={10} className="mr-1" /> Categoria
+                      </Badge>
+                    )}
+                  </button>
                 </div>
 
                 <div className="rounded-lg bg-muted/40 p-3 mb-3 border border-border/40">
@@ -260,8 +343,12 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
                 <div className="flex items-center gap-1 border-t border-border/60 pt-3">
                   <Badge variant="outline" className="text-[10px]">{t.language}</Badge>
                   <Button variant="ghost" size="sm" className="h-7 px-2 text-xs ml-auto"
-                    onClick={() => { setEditing(t); setEditorOpen(true); }}>
-                    <Pencil size={12} className="mr-1" /> Editar
+                    onClick={() => { setEditingTplCat(t); setTplCatPickerSearch(""); }}>
+                    <Tag size={12} className="mr-1" /> Categoria
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs"
+                    onClick={() => openMetaTemplateManager(wabaId)}>
+                    <ExternalLink size={12} className="mr-1" /> Editar na Meta
                   </Button>
                   <Button variant="ghost" size="sm"
                     className="h-7 w-7 p-0 text-rose-500 hover:text-rose-600"
@@ -275,18 +362,59 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
         </div>
       )}
 
-      {/* Editor de template */}
-      <Sheet open={editorOpen} onOpenChange={(o) => { setEditorOpen(o); if (!o) setEditing(null); }}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader><SheetTitle>{editing ? "Editar template" : "Novo template"}</SheetTitle></SheetHeader>
-          <TemplateEditor
-            initial={editing}
-            categories={categories}
-            onCancel={() => { setEditorOpen(false); setEditing(null); }}
-            onSave={handleSaveTemplate}
-          />
-        </SheetContent>
-      </Sheet>
+      {/* Dialog atribuir/alterar categoria de template */}
+      <Dialog open={!!editingTplCat} onOpenChange={(o) => { if (!o) { setEditingTplCat(null); setTplCatPickerSearch(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Categoria do template</DialogTitle>
+          </DialogHeader>
+          {editingTplCat && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Organize <span className="font-medium text-foreground">{editingTplCat.name}</span> com uma categoria interna Wiize.
+              </p>
+              <div className="relative">
+                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={tplCatPickerSearch}
+                  onChange={(e) => setTplCatPickerSearch(e.target.value)}
+                  placeholder="Buscar categoria…"
+                  className="h-9 pl-7 text-xs"
+                />
+              </div>
+              <div className="max-h-64 overflow-y-auto rounded-md border border-border/60 divide-y divide-border/40">
+                <CategoryRow
+                  active={!editingTplCat.category_id}
+                  onClick={() => handleAssignCategory(editingTplCat, null)}
+                  label="Sem categoria"
+                />
+                {categories
+                  .filter((c) => !tplCatPickerSearch.trim() || c.name.toLowerCase().includes(tplCatPickerSearch.trim().toLowerCase()))
+                  .map((c) => (
+                    <CategoryRow
+                      key={c.id}
+                      active={editingTplCat.category_id === c.id}
+                      onClick={() => handleAssignCategory(editingTplCat, c.id)}
+                      label={c.name}
+                      color={c.color}
+                    />
+                  ))}
+                {categories.length === 0 && (
+                  <p className="text-center text-xs text-muted-foreground py-4">Você ainda não tem categorias.</p>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => { setEditingTplCat(null); setEditingCat(null); setCatDialogOpen(true); }}
+              >
+                <FolderPlus size={13} className="mr-1.5" /> Criar nova categoria
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog categoria */}
       <Dialog open={catDialogOpen} onOpenChange={(o) => { setCatDialogOpen(o); if (!o) setEditingCat(null); }}>
@@ -304,15 +432,15 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
       <AlertDialog open={!!pendingDeleteTpl} onOpenChange={(o) => !o && setPendingDeleteTpl(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir template?</AlertDialogTitle>
+            <AlertDialogTitle>Remover template do Wiize?</AlertDialogTitle>
             <AlertDialogDescription>
-              "{pendingDeleteTpl?.name}" será removido permanentemente.
+              "{pendingDeleteTpl?.name}" será removido apenas do Wiize. O template aprovado na Meta não será afetado.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteTemplate} className="bg-rose-600 hover:bg-rose-700">
-              Excluir
+              Remover
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -340,128 +468,42 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
 
   if (embedded) return body;
   return (
-    <MetaLayout title="Templates" description="Biblioteca de mensagens reutilizáveis com categorias internas Wiize.">
+    <MetaLayout title="Templates" description="Biblioteca de templates aprovados na Meta, organizados por categorias internas Wiize.">
       {body}
     </MetaLayout>
   );
 }
 
-function CategoryChip({
-  active, children, onClick, color, onEdit, onDelete,
+function CategoryRow({
+  active, onClick, label, color, count, onEdit, onDelete,
 }: {
-  active: boolean; children: React.ReactNode; onClick: () => void;
-  color?: string; onEdit?: () => void; onDelete?: () => void;
+  active: boolean; onClick: () => void; label: string;
+  color?: string; count?: number; onEdit?: () => void; onDelete?: () => void;
 }) {
   return (
-    <div className="group relative inline-flex">
-      <button
-        onClick={onClick}
-        className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-all shrink-0 ${
-          active
-            ? "bg-primary text-primary-foreground border-primary shadow-sm"
-            : "bg-background text-foreground border-border hover:border-primary/40"
-        }`}
-      >
-        {color && <span className="h-2 w-2 rounded-full" style={{ background: color }} />}
-        {children}
+    <div className={`group flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors ${active ? "bg-primary/10" : "hover:bg-muted/60"}`}>
+      <button onClick={onClick} className="flex-1 flex items-center gap-2 min-w-0 text-left">
+        {color ? (
+          <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: color }} />
+        ) : (
+          <span className="h-2.5 w-2.5 rounded-full shrink-0 border border-border" />
+        )}
+        <span className={`text-xs truncate flex-1 ${active ? "font-semibold text-primary" : "text-foreground"}`}>{label}</span>
+        {typeof count === "number" && (
+          <span className="text-[10px] text-muted-foreground tabular-nums">{count}</span>
+        )}
+        {active && <Check size={12} className="text-primary shrink-0" />}
       </button>
       {onEdit && onDelete && (
-        <div className="absolute -top-1 -right-1 hidden group-hover:flex gap-0.5">
-          <button onClick={onEdit} className="h-4 w-4 rounded-full bg-background border border-border flex items-center justify-center hover:bg-accent">
-            <Pencil size={8} />
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={onEdit} className="h-6 w-6 rounded-md hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground">
+            <Pencil size={11} />
           </button>
-          <button onClick={onDelete} className="h-4 w-4 rounded-full bg-background border border-border flex items-center justify-center hover:bg-rose-500/20 text-rose-500">
-            <Trash2 size={8} />
+          <button onClick={onDelete} className="h-6 w-6 rounded-md hover:bg-rose-500/10 text-rose-500 flex items-center justify-center">
+            <Trash2 size={11} />
           </button>
         </div>
       )}
-    </div>
-  );
-}
-
-function TemplateEditor({
-  initial, categories, onSave, onCancel,
-}: {
-  initial: Template | null;
-  categories: Category[];
-  onSave: (d: { name: string; body: string; language: string; category_id: string | null; }) => void;
-  onCancel: () => void;
-}) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [body, setBody] = useState(initial?.body ?? "");
-  const [language, setLanguage] = useState(initial?.language ?? "pt_BR");
-  const [categoryId, setCategoryId] = useState<string>(initial?.category_id ?? "__none__");
-
-  const canSave = name.trim().length > 1 && body.trim().length > 5;
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-4">
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Nome interno</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="ex.: abertura_frio_v3" />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Categoria Wiize</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Sem categoria</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />
-                      {c.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Idioma</Label>
-            <Select value={language} onValueChange={setLanguage}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pt_BR">Português (BR)</SelectItem>
-                <SelectItem value="en">Inglês</SelectItem>
-                <SelectItem value="es">Espanhol</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Corpo da mensagem</Label>
-          <Textarea rows={8} value={body} onChange={(e) => setBody(e.target.value)}
-            placeholder="Olá {nome}, identifiquei oportunidades..." />
-          <p className="text-[10px] text-muted-foreground">
-            Use <code className="px-1 rounded bg-muted">{"{nome}"}</code> ou{" "}
-            <code className="px-1 rounded bg-muted">{"{{1}}"}</code> para variáveis.
-          </p>
-        </div>
-        <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
-          <Button variant="outline" size="sm" onClick={onCancel}>Cancelar</Button>
-          <Button size="sm" disabled={!canSave}
-            onClick={() => onSave({ name: name.trim(), body: body.trim(), language, category_id: categoryId === "__none__" ? null : categoryId })}>
-            {initial ? "Salvar alterações" : "Criar template"}
-          </Button>
-        </div>
-      </div>
-
-      <div>
-        <Label className="text-xs text-muted-foreground">Preview</Label>
-        <div className="mt-2 rounded-2xl border border-border/60 bg-[hsl(150_20%_96%)] dark:bg-zinc-900 p-4 min-h-[400px]">
-          <div className="flex justify-end">
-            <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-[hsl(120_60%_72%)] dark:bg-emerald-700 px-3 py-2 shadow-sm">
-              <p className="text-[13px] text-foreground/90 dark:text-white leading-relaxed whitespace-pre-wrap">
-                {body || "Comece a escrever para ver o preview…"}
-              </p>
-              <p className="text-[10px] text-foreground/50 dark:text-white/70 text-right mt-1">10:24 ✓✓</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
@@ -475,6 +517,8 @@ function CategoryForm({
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [color, setColor] = useState(initial?.color ?? COLOR_PALETTE[0]);
+  const [customOpen, setCustomOpen] = useState(false);
+  const isPaletteColor = COLOR_PALETTE.some((c) => c.toLowerCase() === color.toLowerCase());
   const canSave = name.trim().length > 1 && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color);
 
   return (
@@ -483,36 +527,62 @@ function CategoryForm({
         <Label className="text-xs text-muted-foreground">Nome</Label>
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Abertura fria" />
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <Label className="text-xs text-muted-foreground">Cor</Label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           {COLOR_PALETTE.map((c) => (
-            <button key={c} type="button" onClick={() => setColor(c)}
-              className={`h-7 w-7 rounded-full border-2 transition-all ${color.toLowerCase() === c.toLowerCase() ? "border-foreground scale-110" : "border-transparent"}`}
-              style={{ background: c }} />
-          ))}
-        </div>
-        <div className="flex items-center gap-2 pt-2">
-          <div className="relative h-9 w-9 shrink-0 rounded-md border border-border overflow-hidden" style={{ background: color }}>
-            <input
-              type="color"
-              value={/^#[0-9a-f]{6}$/i.test(color) ? color : "#000000"}
-              onChange={(e) => setColor(e.target.value)}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              aria-label="Selecionar cor"
+            <button
+              key={c}
+              type="button"
+              onClick={() => { setColor(c); setCustomOpen(false); }}
+              className={`h-8 w-8 rounded-full border-2 transition-all ${color.toLowerCase() === c.toLowerCase() ? "border-foreground scale-110" : "border-transparent hover:scale-105"}`}
+              style={{ background: c }}
             />
-          </div>
-          <Input
-            value={color}
-            onChange={(e) => {
-              let v = e.target.value.trim();
-              if (v && !v.startsWith("#")) v = "#" + v;
-              setColor(v);
-            }}
-            placeholder="#7C3AED"
-            className="h-9 font-mono text-xs uppercase"
-            maxLength={7}
-          />
+          ))}
+
+          {/* Cor personalizada via popover */}
+          <Popover open={customOpen} onOpenChange={setCustomOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                title="Cor personalizada"
+                aria-label="Cor personalizada"
+                className={`h-8 w-8 rounded-full border-2 border-dashed flex items-center justify-center transition-all ${!isPaletteColor ? "border-primary text-primary scale-110" : "border-border text-muted-foreground hover:border-primary hover:text-primary"}`}
+                style={!isPaletteColor ? { background: `${color}22` } : undefined}
+              >
+                {!isPaletteColor ? (
+                  <span className="h-3.5 w-3.5 rounded-full" style={{ background: color }} />
+                ) : (
+                  <Plus size={14} />
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 p-3 space-y-2">
+              <p className="text-[11px] text-muted-foreground">Escolha uma cor personalizada</p>
+              <div className="flex items-center gap-2">
+                <div className="relative h-9 w-9 shrink-0 rounded-md border border-border overflow-hidden" style={{ background: color }}>
+                  <input
+                    type="color"
+                    value={/^#[0-9a-f]{6}$/i.test(color) ? color : "#000000"}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    aria-label="Selecionar cor"
+                  />
+                </div>
+                <Input
+                  value={color}
+                  onChange={(e) => {
+                    let v = e.target.value.trim();
+                    if (v && !v.startsWith("#")) v = "#" + v;
+                    setColor(v);
+                  }}
+                  placeholder="#7C3AED"
+                  className="h-9 font-mono text-xs uppercase"
+                  maxLength={7}
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
       <DialogFooter>
