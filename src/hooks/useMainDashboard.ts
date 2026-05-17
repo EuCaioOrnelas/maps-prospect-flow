@@ -37,6 +37,7 @@ export interface DashboardMetrics {
   activeDays: number;
   monthlyBreakdown: MonthlyBreakdown[];
   leadsByDay: { date: string; count: number }[];
+  funnel: { stage: string; value: number }[];
 }
 
 export function useMainDashboard(periodDays: number): DashboardMetrics {
@@ -64,6 +65,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
     activeDays: 0,
     monthlyBreakdown: [] as MonthlyBreakdown[],
     leadsByDay: [] as { date: string; count: number }[],
+    funnel: [] as { stage: string; value: number }[],
   });
 
   useEffect(() => {
@@ -88,6 +90,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         numbersRes, warmingRes, incidentsRes, cplRes,
         allTimeSearchRes, profileRes,
         allTimeCampaignsRes,
+        leadsFunnelRes,
       ] = await Promise.all([
         supabase.from('search_history').select('results_count')
           .eq('user_id', user.id).gte('created_at', periodStart.toISOString()),
@@ -134,7 +137,12 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
           .select('sent_count, created_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: true }),
-      ]);
+        // Leads do CRM no período — fonte única para o funil operacional (alinhado com Meta)
+        supabase.from('leads')
+          .select('id, opportunity_level, first_message_sent, has_responded')
+          .eq('user_id', user.id)
+          .gte('created_at', periodStart.toISOString()),
+      ]) as any;
 
       const campaigns = campaignsCurrent.data || [];
       const prevCampaignData = campaignsPrev.data || [];
@@ -229,6 +237,23 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         .map(([date, count]) => ({ date, count }))
         .sort((a, b) => a.date.localeCompare(b.date));
 
+      // Funil operacional — mesma lógica do Meta, sobre TODOS os leads do CRM no período
+      const leadsFunnelRows: any[] = (leadsFunnelRes?.data as any[]) || [];
+      const captados = leadsFunnelRows.length;
+      const analisados = leadsFunnelRows.filter((l) => l.opportunity_level).length;
+      const enviados = leadsFunnelRows.filter((l) => l.first_message_sent).length;
+      const respondidos = leadsFunnelRows.filter((l) => l.has_responded).length;
+      const oportunidades = leadsFunnelRows.filter((l) =>
+        ["alto", "alta", "high", "muito_alto"].includes((l.opportunity_level || "").toLowerCase())
+      ).length;
+      const funnel = [
+        { stage: "Captados", value: captados },
+        { stage: "Analisados", value: analisados },
+        { stage: "Enviados", value: enviados },
+        { stage: "Respondeu", value: respondidos },
+        { stage: "Oportunidades", value: oportunidades },
+      ];
+
       setRawData({
         leadsProspected, prevLeadsProspected,
         messagesSent, prevMessagesSent,
@@ -247,6 +272,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         activeDays: activeDaysSet.size,
         monthlyBreakdown,
         leadsByDay,
+        funnel,
       });
     } catch (err) {
       console.error('Error fetching dashboard data:', err);

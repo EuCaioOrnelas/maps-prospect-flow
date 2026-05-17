@@ -41,9 +41,9 @@ export function ForecastChart({
   const aggressive = Math.round(totalSales * 1.5 * averageTicket);
 
   const scenarios = [
-    { name: 'Conservador', value: conservative, color: 'hsl(var(--muted-foreground))' },
-    { name: 'Realista', value: realistic, color: 'hsl(var(--primary))' },
-    { name: 'Agressivo', value: aggressive, color: 'hsl(160, 60%, 50%)' },
+    { name: 'Conservador', value: conservative, color: 'hsl(var(--muted-foreground) / 0.45)' },
+    { name: 'Realista', value: realistic, color: 'hsl(var(--primary) / 0.65)' },
+    { name: 'Agressivo', value: aggressive, color: 'hsl(var(--primary))' },
   ];
 
   const hasData = totalSales > 0;
