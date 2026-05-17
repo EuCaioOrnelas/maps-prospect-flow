@@ -559,38 +559,24 @@ function CategoryForm({
         </div>
 
         {(customOpen || !isPaletteColor) && (
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-primary">Cor personalizada</p>
-              <span
-                className="h-5 w-5 rounded-full border border-border shadow-sm"
-                style={{ background: color }}
-              />
-            </div>
-            <div className="flex justify-center rounded-lg bg-background p-3 border border-border/60">
-              <HexColorPicker
-                color={/^#[0-9a-f]{6}$/i.test(color) ? color : "#000000"}
-                onChange={setColor}
-                style={{ width: "100%", maxWidth: 220, height: 150 }}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className="h-9 w-9 shrink-0 rounded-md border border-border shadow-inner"
-                style={{ background: color }}
-              />
-              <Input
-                value={color}
-                onChange={(e) => {
-                  let v = e.target.value.trim();
-                  if (v && !v.startsWith("#")) v = "#" + v;
-                  setColor(v);
-                }}
-                placeholder="#7C3AED"
-                className="h-9 font-mono text-xs uppercase bg-background"
-                maxLength={7}
-              />
-            </div>
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-3">
+            <p className="text-xs font-medium text-primary">Cor personalizada</p>
+            <HexColorPicker
+              color={/^#[0-9a-f]{6}$/i.test(color) ? color : "#000000"}
+              onChange={setColor}
+              style={{ width: "100%", height: 140 }}
+            />
+            <Input
+              value={color}
+              onChange={(e) => {
+                let v = e.target.value.trim();
+                if (v && !v.startsWith("#")) v = "#" + v;
+                setColor(v);
+              }}
+              placeholder="#7C3AED"
+              className="h-9 font-mono text-xs uppercase bg-background"
+              maxLength={7}
+            />
           </div>
         )}
       </div>
