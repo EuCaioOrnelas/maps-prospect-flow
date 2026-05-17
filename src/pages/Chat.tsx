@@ -37,6 +37,12 @@ const Chat = () => {
   const [reconnectOpen, setReconnectOpen] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const chat = useChat();
+  const webhookGate = useWebhookGate();
+  const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!webhookGate.loading && webhookGate.blocked) setWebhookDialogOpen(true);
+  }, [webhookGate.loading, webhookGate.blocked]);
 
   useEffect(() => {
     if (!user) return;
