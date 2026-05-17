@@ -78,6 +78,15 @@ serve(async (req) => {
       const reqIp = (req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || '').split(',')[0].trim();
       const reqUserAgent = req.headers.get('user-agent') || '';
 
+      // ---------- Rate limit por IP (antes de qualquer trabalho pesado) ----------
+      if (reqIp && rlHit(`ip:${reqIp}`, RL_IP_MAX)) {
+        console.warn('[meta-webhook] 🚫 Rate limit IP', reqIp);
+        return new Response('Too Many Requests', {
+          status: 429,
+          headers: { ...corsHeaders, 'Retry-After': '60' },
+        });
+      }
+
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
       // ---------- Security helpers ----------
