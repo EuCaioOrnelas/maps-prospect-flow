@@ -176,7 +176,7 @@ export default function MetaDashboard() {
                       </div>
                       <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
                         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-1">
-                          <span className="w-2 h-2 rounded-full" style={{ background: "hsl(158, 64%, 28%)" }} />
+                          <span className="w-2 h-2 rounded-full" style={{ background: "hsl(var(--primary))" }} />
                           Respostas
                         </div>
                         <div className="text-xl font-semibold text-foreground tabular-nums">{fmtN(totalRes)}</div>
@@ -192,7 +192,7 @@ export default function MetaDashboard() {
                       <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all"
-                          style={{ width: `${Math.min(100, rate)}%`, background: "hsl(158, 64%, 28%)" }}
+                          style={{ width: `${Math.min(100, rate)}%`, background: "hsl(var(--primary))" }}
                         />
                       </div>
                     </div>
@@ -207,8 +207,8 @@ export default function MetaDashboard() {
                               <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                             </linearGradient>
                             <linearGradient id="resGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="hsl(158, 64%, 28%)" stopOpacity={0.4} />
-                              <stop offset="100%" stopColor="hsl(158, 64%, 28%)" stopOpacity={0} />
+                              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
@@ -220,7 +220,7 @@ export default function MetaDashboard() {
                             itemStyle={{ color: "hsl(var(--foreground))" }}
                           />
                           <Area type="monotone" dataKey="messages" name="Mensagens" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#msgGrad)" />
-                          <Area type="monotone" dataKey="responses" name="Respostas" stroke="hsl(158, 64%, 28%)" strokeWidth={2} fill="url(#resGrad)" />
+                          <Area type="monotone" dataKey="responses" name="Respostas" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#resGrad)" />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
