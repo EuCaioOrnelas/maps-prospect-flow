@@ -259,8 +259,8 @@ export default function MetaConfiguracoes() {
               ].map((item, idx) => {
                 const Icon = item.icon;
                 return (
-                  <AccordionItem key={idx} value={`compliance-${idx}`} className="border-b-0">
-                    <AccordionTrigger className="px-5 py-4 hover:no-underline">
+                  <AccordionItem key={idx} value={`compliance-${idx}`} className="border-b-0 group">
+                    <AccordionTrigger className="px-5 py-4 hover:no-underline focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 group-data-[state=open]:bg-muted/20 transition-colors rounded-none">
                       <div className="flex items-center gap-3 min-w-0 text-left">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                           <Icon className="h-4 w-4 text-primary" />
@@ -268,7 +268,7 @@ export default function MetaConfiguracoes() {
                         <p className="text-sm font-medium leading-tight">{item.title}</p>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-5 pb-4 pt-0">
+                    <AccordionContent className="px-5 pb-4 pt-1 group-data-[state=open]:bg-muted/20">
                       <p className="text-xs text-muted-foreground leading-relaxed pl-12">{item.desc}</p>
                     </AccordionContent>
                   </AccordionItem>
