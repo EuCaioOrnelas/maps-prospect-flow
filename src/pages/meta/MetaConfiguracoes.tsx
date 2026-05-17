@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { MetaLayout } from "@/components/meta/MetaLayout";
 import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, ShieldCheck, Loader2, Mail, Webhook, Copy, CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
+import { Bell, ShieldCheck, Loader2, Mail, Webhook, Copy, CheckCircle2, AlertTriangle, RefreshCw, XCircle, PlayCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
