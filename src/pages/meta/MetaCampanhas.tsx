@@ -29,6 +29,8 @@ import type { DateRange } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useWebhookGate } from "@/hooks/useWebhookGate";
+import { WebhookRequiredDialog } from "@/components/meta/WebhookRequiredDialog";
 
 interface Category { id: string; name: string; color: string; }
 interface Template { id: string; name: string; body: string; language: string; category_id: string | null; }
@@ -76,6 +78,8 @@ export default function MetaCampanhas() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [detailsCampaign, setDetailsCampaign] = useState<CampaignRow | null>(null);
+  const webhookGate = useWebhookGate();
+  const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
 
   const loadCampaigns = async () => {
     if (!user) return;
@@ -148,6 +152,10 @@ export default function MetaCampanhas() {
   }, [campaigns]);
 
   const startNewCampaign = () => {
+    if (webhookGate.blocked) {
+      setWebhookDialogOpen(true);
+      return;
+    }
     sessionStorage.setItem(
       "meta_campaign_preset",
       JSON.stringify({ source: "meta_platform" })
@@ -508,6 +516,12 @@ export default function MetaCampanhas() {
         campaign={detailsCampaign}
         numberMap={numberMap}
         onClose={() => setDetailsCampaign(null)}
+      />
+      <WebhookRequiredDialog
+        open={webhookDialogOpen}
+        onOpenChange={setWebhookDialogOpen}
+        pendingConnections={webhookGate.pendingConnections}
+        context="campaign"
       />
     </MetaLayout>
   );

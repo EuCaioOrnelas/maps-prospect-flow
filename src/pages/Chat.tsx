@@ -22,6 +22,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { MetaManualSetup } from "@/components/meta-campaigns/MetaManualSetup";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { useWebhookGate } from "@/hooks/useWebhookGate";
+import { WebhookRequiredDialog } from "@/components/meta/WebhookRequiredDialog";
 
 const Chat = () => {
   const { user } = useAuth();
@@ -35,6 +37,12 @@ const Chat = () => {
   const [reconnectOpen, setReconnectOpen] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const chat = useChat();
+  const webhookGate = useWebhookGate();
+  const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!webhookGate.loading && webhookGate.blocked) setWebhookDialogOpen(true);
+  }, [webhookGate.loading, webhookGate.blocked]);
 
   useEffect(() => {
     if (!user) return;
@@ -320,6 +328,13 @@ const Chat = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <WebhookRequiredDialog
+        open={webhookDialogOpen}
+        onOpenChange={setWebhookDialogOpen}
+        pendingConnections={webhookGate.pendingConnections}
+        context="chat"
+      />
     </SidebarProvider>
   );
 };
