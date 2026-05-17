@@ -313,8 +313,8 @@ const META_TESTS: MetaTestType[] = [
     label: "Número desconectado",
     desc: "Alerta de número Meta que perdeu conexão",
     icon: WifiOff,
-    iconColor: "text-rose-500",
-    iconBg: "bg-rose-500/10",
+    iconColor: "text-primary",
+    iconBg: "bg-primary/10",
     payload: { phone_number: "+55 11 90000-0000", business_name: "Empresa de Teste" },
   },
   {
@@ -322,8 +322,8 @@ const META_TESTS: MetaTestType[] = [
     label: "Queda de qualidade",
     desc: "Quality rating caiu para amarelo ou vermelho",
     icon: TrendingDown,
-    iconColor: "text-amber-500",
-    iconBg: "bg-amber-500/10",
+    iconColor: "text-primary",
+    iconBg: "bg-primary/10",
     payload: { phone_number: "+55 11 90000-0000", business_name: "Empresa de Teste", old_quality: "GREEN", new_quality: "YELLOW" },
   },
   {
@@ -331,8 +331,8 @@ const META_TESTS: MetaTestType[] = [
     label: "Problemas em campanhas",
     desc: "Falha no início ou alta taxa de erro",
     icon: Megaphone,
-    iconColor: "text-orange-500",
-    iconBg: "bg-orange-500/10",
+    iconColor: "text-primary",
+    iconBg: "bg-primary/10",
     payload: { campaign_name: "Campanha de Teste", reason: "Número não conectado ao WhatsApp Meta" },
   },
   {
