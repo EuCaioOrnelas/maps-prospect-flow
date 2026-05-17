@@ -237,6 +237,23 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         .map(([date, count]) => ({ date, count }))
         .sort((a, b) => a.date.localeCompare(b.date));
 
+      // Funil operacional — mesma lógica do Meta, sobre TODOS os leads do CRM no período
+      const leadsFunnelRows: any[] = (leadsFunnelRes?.data as any[]) || [];
+      const captados = leadsFunnelRows.length;
+      const analisados = leadsFunnelRows.filter((l) => l.opportunity_level).length;
+      const enviados = leadsFunnelRows.filter((l) => l.first_message_sent).length;
+      const respondidos = leadsFunnelRows.filter((l) => l.has_responded).length;
+      const oportunidades = leadsFunnelRows.filter((l) =>
+        ["alto", "alta", "high", "muito_alto"].includes((l.opportunity_level || "").toLowerCase())
+      ).length;
+      const funnel = [
+        { stage: "Captados", value: captados },
+        { stage: "Analisados", value: analisados },
+        { stage: "Enviados", value: enviados },
+        { stage: "Respondeu", value: respondidos },
+        { stage: "Oportunidades", value: oportunidades },
+      ];
+
       setRawData({
         leadsProspected, prevLeadsProspected,
         messagesSent, prevMessagesSent,
