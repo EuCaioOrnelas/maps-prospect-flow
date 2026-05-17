@@ -166,12 +166,24 @@ export default function MetaCampanhas() {
 
       <Tabs defaultValue="campanhas" className="space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <TabsList className="bg-muted/40 border border-border/60 p-1 h-9">
-            <TabsTrigger value="campanhas" className="text-xs gap-1.5 data-[state=active]:bg-background">
-              <Megaphone size={13} /> Campanhas
+          <TabsList className="bg-muted/40 border border-border/60 p-1 h-10">
+            <TabsTrigger
+              value="campanhas"
+              className="text-xs gap-2 pl-1.5 pr-3 data-[state=active]:bg-background group"
+            >
+              <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-muted/60 text-muted-foreground transition-colors group-data-[state=active]:bg-primary/15 group-data-[state=active]:text-primary">
+                <Megaphone size={14} />
+              </span>
+              Campanhas
             </TabsTrigger>
-            <TabsTrigger value="templates" className="text-xs gap-1.5 data-[state=active]:bg-background">
-              <FileText size={13} /> Templates
+            <TabsTrigger
+              value="templates"
+              className="text-xs gap-2 pl-1.5 pr-3 data-[state=active]:bg-background group"
+            >
+              <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-muted/60 text-muted-foreground transition-colors group-data-[state=active]:bg-primary/15 group-data-[state=active]:text-primary">
+                <FileText size={14} />
+              </span>
+              Templates
             </TabsTrigger>
           </TabsList>
         </div>
@@ -866,7 +878,7 @@ function Chip({
     <button
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-all ${
-        active ? "bg-foreground text-background border-foreground" : "bg-background text-foreground border-border hover:border-foreground/40"
+        active ? "bg-primary/15 text-primary border-primary/30" : "bg-background text-foreground border-border hover:border-primary/40"
       }`}
     >
       {color && <span className="h-2 w-2 rounded-full" style={{ background: color }} />}
