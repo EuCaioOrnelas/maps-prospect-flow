@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, ShieldCheck, Loader2, Mail, Webhook, Copy, CheckCircle2, AlertTriangle, RefreshCw, XCircle, PlayCircle } from "lucide-react";
+import { Bell, ShieldCheck, Loader2, Mail, Webhook, Copy, CheckCircle2, AlertTriangle, RefreshCw, XCircle, PlayCircle, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -283,6 +283,7 @@ function WebhookPanel() {
   const [validatingId, setValidatingId] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, ValidationState>>({});
   const [testingAll, setTestingAll] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -380,56 +381,77 @@ function WebhookPanel() {
       )}
 
       {/* PASSO A PASSO */}
-      <Card className="p-5 border-border/60 space-y-4">
-        <div className="pb-2 border-b border-border/60">
-          <p className="text-sm font-semibold">Passo a passo</p>
-          <p className="text-xs text-muted-foreground">Siga na ordem. Leva menos de 3 minutos.</p>
-        </div>
+      <Card className="p-5 border-border/60">
+        <button
+          type="button"
+          onClick={() => setGuideOpen((v) => !v)}
+          className="w-full flex items-center justify-between gap-3 text-left"
+          aria-expanded={guideOpen}
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">Passo a passo</p>
+            <p className="text-xs text-muted-foreground">
+              {guideOpen ? "Siga na ordem. Leva menos de 3 minutos." : "Clique para abrir o guia completo de configuração."}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] text-muted-foreground hidden sm:inline">
+              {guideOpen ? "Recolher" : "Expandir"}
+            </span>
+            <div className="h-7 w-7 rounded-full border border-border/60 bg-muted/30 flex items-center justify-center">
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${guideOpen ? "rotate-180" : ""}`} />
+            </div>
+          </div>
+        </button>
 
-        <Tabs defaultValue="guia" className="w-full">
-          <TabsList className="grid grid-cols-2 w-full max-w-xs">
-            <TabsTrigger value="guia">Guia escrito</TabsTrigger>
-            <TabsTrigger value="video">Vídeo</TabsTrigger>
-          </TabsList>
+        {guideOpen && (
+          <div className="mt-4 pt-4 border-t border-border/60">
+            <Tabs defaultValue="guia" className="w-full">
+              <TabsList className="grid grid-cols-2 w-full max-w-xs">
+                <TabsTrigger value="guia">Guia escrito</TabsTrigger>
+                <TabsTrigger value="video">Vídeo</TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="guia" className="mt-4">
-            <ol className="space-y-3">
-              {steps.map((s) => (
-                <li key={s.n} className="flex gap-3">
-                  <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">{s.n}</div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{s.t}</p>
-                    <p className="text-xs text-muted-foreground">{s.d}</p>
+              <TabsContent value="guia" className="mt-4">
+                <ol className="space-y-3">
+                  {steps.map((s) => (
+                    <li key={s.n} className="flex gap-3">
+                      <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">{s.n}</div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{s.t}</p>
+                        <p className="text-xs text-muted-foreground">{s.d}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </TabsContent>
+
+              <TabsContent value="video" className="mt-4">
+                {WEBHOOK_GUIDE_VIDEO_URL ? (
+                  <div className="relative w-full overflow-hidden rounded-lg border border-border/60 bg-muted/30" style={{ paddingTop: "56.25%" }}>
+                    <iframe
+                      src={WEBHOOK_GUIDE_VIDEO_URL}
+                      title="Passo a passo do webhook"
+                      className="absolute inset-0 h-full w-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
                   </div>
-                </li>
-              ))}
-            </ol>
-          </TabsContent>
-
-          <TabsContent value="video" className="mt-4">
-            {WEBHOOK_GUIDE_VIDEO_URL ? (
-              <div className="relative w-full overflow-hidden rounded-lg border border-border/60 bg-muted/30" style={{ paddingTop: "56.25%" }}>
-                <iframe
-                  src={WEBHOOK_GUIDE_VIDEO_URL}
-                  title="Passo a passo do webhook"
-                  className="absolute inset-0 h-full w-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            ) : (
-              <div className="relative w-full overflow-hidden rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center" style={{ paddingTop: "56.25%" }}>
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
-                  <PlayCircle className="h-10 w-10 text-muted-foreground/60" />
-                  <p className="text-sm font-medium">Vídeo em breve</p>
-                  <p className="text-xs text-muted-foreground max-w-sm">
-                    Estamos gravando o tutorial em vídeo da configuração do webhook. Enquanto isso, siga o guia escrito ao lado.
-                  </p>
-                </div>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                ) : (
+                  <div className="relative w-full overflow-hidden rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center" style={{ paddingTop: "56.25%" }}>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
+                      <PlayCircle className="h-10 w-10 text-muted-foreground/60" />
+                      <p className="text-sm font-medium">Vídeo em breve</p>
+                      <p className="text-xs text-muted-foreground max-w-sm">
+                        Estamos gravando o tutorial em vídeo da configuração do webhook. Enquanto isso, siga o guia escrito ao lado.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
       </Card>
 
       {/* CREDENCIAIS */}
