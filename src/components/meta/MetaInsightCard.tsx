@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { Sparkles, TrendingUp, AlertTriangle, Lightbulb } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 type InsightTone = "positive" | "neutral" | "warning" | "tip";
 
@@ -17,19 +16,12 @@ const iconMap = {
   tip: Lightbulb,
 };
 
-const toneClasses: Record<InsightTone, string> = {
-  positive: "text-emerald-500 bg-emerald-500/10",
-  neutral: "text-primary bg-primary/10",
-  warning: "text-amber-500 bg-amber-500/10",
-  tip: "text-violet-500 bg-violet-500/10",
-};
-
 export function MetaInsightCard({ tone = "neutral", title, description }: MetaInsightCardProps) {
   const Icon = iconMap[tone];
   return (
-    <Card className="p-4 border-border/60 hover:border-border transition-colors">
+    <Card className="p-4 border-border/40 hover:border-primary/20 hover:shadow-md hover:shadow-primary/[0.04] transition-all duration-300 rounded-2xl">
       <div className="flex items-start gap-3">
-        <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", toneClasses[tone])}>
+        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
           <Icon size={16} />
         </div>
         <div className="min-w-0">
