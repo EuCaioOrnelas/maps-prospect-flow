@@ -43,7 +43,7 @@ export default function MetaConfiguracoes() {
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [sendingTest, setSendingTest] = useState(false);
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [webhookStatus, setWebhookStatus] = useState<"ok" | "pending" | null>(null);
 
   useEffect(() => {
