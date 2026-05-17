@@ -26,10 +26,58 @@ export default function MetaReabertura({ embedded = false }: { embedded?: boolea
       )}
 
       {embedded && (
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">Fluxos de Reabertura</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Reengaje leads automaticamente após a janela de 24h do WhatsApp.</p>
+          </div>
           <Button size="sm"><Plus size={14} className="mr-1.5" /> Novo fluxo</Button>
         </div>
       )}
+
+      {/* Explicação: como funciona */}
+      <Card className="p-4 border-primary/20 bg-primary/5">
+        <div className="flex items-start gap-3">
+          <div className="h-9 w-9 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0">
+            <Info size={16} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Como funciona a Reabertura?</p>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              O WhatsApp só permite enviar mensagens livres por <strong className="text-foreground">24h após a última resposta do lead</strong>. Passado esse tempo, você só pode reabrir a conversa usando um <strong className="text-foreground">template aprovado pela Meta</strong>. Os fluxos de Reabertura automatizam esse processo: detectam o gatilho, esperam o tempo configurado e disparam o template certo — trazendo o lead de volta sem você precisar lembrar.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
+              <div className="flex items-start gap-2 rounded-md bg-background/60 border border-border/60 p-2.5">
+                <div className="h-6 w-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <Zap size={12} />
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold text-foreground">1. Gatilho</p>
+                  <p className="text-[11px] text-muted-foreground">Lead inativo, etapa do CRM, agendamento, etc.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2 rounded-md bg-background/60 border border-border/60 p-2.5">
+                <div className="h-6 w-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <Clock size={12} />
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold text-foreground">2. Espera</p>
+                  <p className="text-[11px] text-muted-foreground">Aguarda o tempo definido (ex.: 48h, 2h antes).</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2 rounded-md bg-background/60 border border-border/60 p-2.5">
+                <div className="h-6 w-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={12} />
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold text-foreground">3. Envio</p>
+                  <p className="text-[11px] text-muted-foreground">Dispara o template aprovado e reabre a janela.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Examples */}
       <div>
