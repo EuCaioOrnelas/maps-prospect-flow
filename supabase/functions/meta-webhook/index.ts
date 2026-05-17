@@ -32,9 +32,166 @@ serve(async (req) => {
   // ========== POST: Incoming events ==========
   if (req.method === 'POST') {
     try {
-      const body = await req.json();
-      console.log('[meta-webhook] Received:', JSON.stringify(body).substring(0, 500));
+      const META_APP_SECRET = Deno.env.get('META_APP_SECRET') || '';
+
+      // Read raw body once for HMAC + parsing
+      const rawBody = await req.text();
+      const sigHeader = req.headers.get('x-hub-signature-256') || req.headers.get('X-Hub-Signature-256') || '';
+      const reqIp = (req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || '').split(',')[0].trim();
+      const reqUserAgent = req.headers.get('user-agent') || '';
+
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+      // ---------- Security helpers ----------
+      async function hmacSha256Hex(secret: string, payload: string): Promise<string> {
+        const key = await crypto.subtle.importKey(
+          'raw', new TextEncoder().encode(secret),
+          { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+        );
+        const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
+        return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('');
+      }
+      function timingSafeEqual(a: string, b: string): boolean {
+        if (a.length !== b.length) return false;
+        let r = 0;
+        for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+        return r === 0;
+      }
+      // Meta / Facebook IPv4 ranges (AS32934 — public webhook origins)
+      const META_CIDRS: Array<[number, number]> = [
+        ['31.13.24.0', 21], ['31.13.64.0', 18], ['66.220.144.0', 20],
+        ['69.63.176.0', 20], ['69.171.224.0', 19], ['74.119.76.0', 22],
+        ['103.4.96.0', 22], ['129.134.0.0', 16], ['157.240.0.0', 16],
+        ['173.252.64.0', 18], ['179.60.192.0', 22], ['185.60.216.0', 22],
+        ['204.15.20.0', 22],
+      ].map(([ip, bits]) => {
+        const parts = (ip as string).split('.').map(Number);
+        const ipInt = ((parts[0] << 24) >>> 0) + (parts[1] << 16) + (parts[2] << 8) + parts[3];
+        return [ipInt, bits as number];
+      });
+      function ipInMetaRanges(ip: string): boolean {
+        if (!ip) return false;
+        const parts = ip.split('.').map(Number);
+        if (parts.length !== 4 || parts.some((p) => isNaN(p) || p < 0 || p > 255)) return false;
+        const ipInt = ((parts[0] << 24) >>> 0) + (parts[1] << 16) + (parts[2] << 8) + parts[3];
+        for (const [base, bits] of META_CIDRS) {
+          const mask = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0;
+          if ((ipInt & mask) === (base & mask)) return true;
+        }
+        return false;
+      }
+      async function logSecurityEvent(params: {
+        user_id: string | null;
+        action: string;
+        waba_id?: string | null;
+        extra?: Record<string, unknown>;
+      }) {
+        try {
+          await supabase.from('security_audit_log').insert({
+            user_id: params.user_id,
+            action: params.action,
+            resource_type: 'meta_webhook',
+            resource_id: params.waba_id || null,
+            ip_address: reqIp || null,
+            user_agent: reqUserAgent || null,
+            metadata: params.extra || {},
+          });
+        } catch (e) {
+          console.warn('[meta-webhook] audit log failed', (e as Error).message);
+        }
+      }
+
+      // Parse body (after capturing raw for HMAC)
+      let body: any;
+      try { body = JSON.parse(rawBody); } catch {
+        return new Response('Bad payload', { status: 400, headers: corsHeaders });
+      }
+      console.log('[meta-webhook] Received:', JSON.stringify(body).substring(0, 500));
+
+      // Resolve owner(s) from WABA id(s) to check per-user security toggles
+      const wabaIds = Array.from(new Set(
+        (body?.entry || []).map((e: any) => String(e?.id || '')).filter(Boolean)
+      ));
+      let ownerSettings: Array<{ user_id: string; security_hmac_required: boolean; security_ip_allowlist: boolean; security_audit_log: boolean; waba_id: string }> = [];
+      if (wabaIds.length) {
+        const { data: conns } = await supabase
+          .from('meta_connections')
+          .select('user_id, waba_id')
+          .in('waba_id', wabaIds);
+        const userIds = Array.from(new Set((conns || []).map((c: any) => c.user_id)));
+        if (userIds.length) {
+          const { data: settings } = await supabase
+            .from('meta_user_settings')
+            .select('user_id, security_hmac_required, security_ip_allowlist, security_audit_log')
+            .in('user_id', userIds);
+          const byUser = new Map((settings || []).map((s: any) => [s.user_id, s]));
+          ownerSettings = (conns || []).map((c: any) => ({
+            user_id: c.user_id,
+            waba_id: c.waba_id,
+            security_hmac_required: byUser.get(c.user_id)?.security_hmac_required ?? true,
+            security_ip_allowlist: byUser.get(c.user_id)?.security_ip_allowlist ?? true,
+            security_audit_log: byUser.get(c.user_id)?.security_audit_log ?? true,
+          }));
+        }
+      }
+      const anyRequiresHmac = ownerSettings.some((o) => o.security_hmac_required);
+      const anyRequiresIp = ownerSettings.some((o) => o.security_ip_allowlist);
+
+      // ---------- 1) HMAC validation ----------
+      let hmacStatus: 'verified' | 'missing' | 'invalid' | 'no_secret' = 'no_secret';
+      if (META_APP_SECRET) {
+        if (sigHeader) {
+          const expected = 'sha256=' + (await hmacSha256Hex(META_APP_SECRET, rawBody));
+          hmacStatus = timingSafeEqual(sigHeader, expected) ? 'verified' : 'invalid';
+        } else {
+          hmacStatus = 'missing';
+        }
+      }
+      if (hmacStatus === 'invalid' || (hmacStatus === 'missing' && anyRequiresHmac)) {
+        for (const o of ownerSettings) {
+          if (o.security_audit_log) {
+            await logSecurityEvent({
+              user_id: o.user_id, waba_id: o.waba_id,
+              action: hmacStatus === 'invalid' ? 'meta_webhook_rejected_hmac_invalid' : 'meta_webhook_rejected_hmac_missing',
+              extra: { reason: hmacStatus },
+            });
+          }
+        }
+        console.warn('[meta-webhook] 🚫 Rejected — HMAC', hmacStatus);
+        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+      }
+
+      // ---------- 2) IP allowlist (Meta CIDR ranges) ----------
+      const ipOk = !reqIp || ipInMetaRanges(reqIp);
+      if (!ipOk && anyRequiresIp) {
+        for (const o of ownerSettings) {
+          if (o.security_audit_log) {
+            await logSecurityEvent({
+              user_id: o.user_id, waba_id: o.waba_id,
+              action: 'meta_webhook_rejected_ip',
+              extra: { ip: reqIp },
+            });
+          }
+        }
+        console.warn('[meta-webhook] 🚫 Rejected — IP', reqIp);
+        return new Response('Forbidden', { status: 403, headers: corsHeaders });
+      }
+
+      // ---------- 3) Audit log accepted webhook ----------
+      for (const o of ownerSettings) {
+        if (o.security_audit_log) {
+          await logSecurityEvent({
+            user_id: o.user_id, waba_id: o.waba_id,
+            action: 'meta_webhook_accepted',
+            extra: {
+              hmac: hmacStatus,
+              ip_in_meta_range: ipOk,
+              fields: Array.from(new Set((body?.entry || []).flatMap((e: any) => (e?.changes || []).map((c: any) => c.field)))),
+            },
+          });
+        }
+      }
+
 
       // Helper: normalize Brazilian phone to E.164 for revenue scoring
       // Returns the digits-only normalized phone (no '+') or null when invalid
