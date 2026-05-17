@@ -339,11 +339,11 @@ function WebhookPanel() {
   }
 
   const steps = [
-    { n: 1, t: "Abra o Meta Business Manager", d: "Acesse business.facebook.com → Configurações do Negócio → Contas → Apps. Selecione o App vinculado à sua WhatsApp Business Account." },
+    { n: 1, t: "Abra o Meta Business Manager", d: "Acesse business.facebook.com, vá em Configurações do Negócio, Contas, Apps, e selecione o App vinculado à sua WhatsApp Business Account." },
     { n: 2, t: "Vá em Webhooks (WhatsApp)", d: "No menu lateral do app, abra Webhooks. No seletor de objeto, escolha WhatsApp Business Account e clique em Configurar (ou Editar, se já existir)." },
-    { n: 3, t: "Cole a Callback URL e o Verify Token", d: "Copie os dois valores do card Credenciais abaixo e cole nos campos correspondentes. Clique em Verificar e salvar — a Meta vai bater na URL e validar o token." },
-    { n: 4, t: "Inscreva todos os eventos obrigatórios", d: `Em Webhook fields → Subscribe, marque TODOS os ${Object.keys(EVENT_DETAILS).length} eventos listados abaixo. Sem isso, partes do sistema (Chat, Campanhas, Métricas, Taxa de Resposta, Taxa de Erro) não funcionam corretamente.` },
-    { n: 5, t: "Volte aqui e clique em Testar todos", d: "Disparamos um handshake real para cada número e confirmamos que a URL responde. Se algum falhar, fica vermelho — corrija e teste de novo. Quando todos ficarem verdes, Chat e Campanhas são liberados automaticamente." },
+    { n: 3, t: "Cole a Callback URL e o Verify Token", d: "Copie os dois valores do card Credenciais abaixo e cole nos campos correspondentes. Clique em Verificar e salvar. A Meta vai bater na URL e validar o token." },
+    { n: 4, t: "Inscreva todos os eventos obrigatórios", d: `Em Webhook fields, Subscribe, marque TODOS os ${Object.keys(EVENT_DETAILS).length} eventos listados abaixo. Sem isso, partes do sistema (Chat, Campanhas, Métricas, Taxa de Resposta, Taxa de Erro) não funcionam corretamente.` },
+    { n: 5, t: "Volte aqui e clique em Testar todos", d: "Disparamos um handshake real para cada número e confirmamos que a URL responde. Se algum falhar, fica vermelho. Corrija e teste de novo. Quando todos ficarem verdes, Chat e Campanhas são liberados automaticamente." },
   ];
 
   const allVerified = data.connections.length > 0 && data.connections.every((c) => !!c.webhook_verified_at);
