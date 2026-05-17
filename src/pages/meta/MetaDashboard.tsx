@@ -157,63 +157,44 @@ export default function MetaDashboard() {
               </div>
             </Card>
 
-            <Card className="p-5 border-border/60 flex flex-col">
+            <Card className="p-5 border-border/60 flex flex-col justify-between">
               <ChartHeader title="Mensagens vs Respostas" subtitle="Taxa de resposta no período" />
               {(() => {
                 const totalMsgs = data.daily.reduce((s, d) => s + (d.messages || 0), 0);
                 const totalRes = data.daily.reduce((s, d) => s + (d.responses || 0), 0);
                 const rate = totalMsgs > 0 ? (totalRes / totalMsgs) * 100 : 0;
                 return (
-                  <div className="flex flex-col gap-4 mt-1">
+                  <div className="flex flex-col gap-5 mt-2 flex-1 justify-center">
                     {/* Totais lado a lado */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
-                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-1">
+                      <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
                           <span className="w-2 h-2 rounded-full bg-primary" />
                           Mensagens
                         </div>
-                        <div className="text-xl font-semibold text-foreground tabular-nums">{fmtN(totalMsgs)}</div>
+                        <div className="text-3xl font-semibold text-foreground tabular-nums">{fmtN(totalMsgs)}</div>
                       </div>
-                      <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
-                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-1">
-                        <span className="w-2 h-2 rounded-full" style={{ background: "hsl(150 50% 75%)" }} />
+                      <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
+                          <span className="w-2 h-2 rounded-full" style={{ background: "hsl(150 50% 75%)" }} />
                           Respostas
                         </div>
-                        <div className="text-xl font-semibold text-foreground tabular-nums">{fmtN(totalRes)}</div>
+                        <div className="text-3xl font-semibold text-foreground tabular-nums">{fmtN(totalRes)}</div>
                       </div>
                     </div>
 
                     {/* Barra de taxa de resposta */}
                     <div>
                       <div className="flex items-baseline justify-between mb-1.5">
-                        <span className="text-[11px] text-muted-foreground">Taxa de resposta</span>
-                        <span className="text-sm font-semibold text-foreground tabular-nums">{rate.toFixed(1)}%</span>
+                        <span className="text-xs text-muted-foreground">Taxa de resposta</span>
+                        <span className="text-base font-semibold text-foreground tabular-nums">{rate.toFixed(1)}%</span>
                       </div>
-                      <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                      <div className="h-2.5 rounded-full bg-muted/40 overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{ width: `${Math.min(100, rate)}%`, background: "hsl(var(--primary))" }}
                         />
                       </div>
-                    </div>
-
-                    {/* Mini gráfico comparativo */}
-                    <div className="h-36 -mx-1">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data.daily} margin={{ top: 4, right: 4, left: 4, bottom: 0 }} barCategoryGap="10%" barGap={2}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
-                          <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={20} />
-                          <YAxis hide />
-                          <RTooltip
-                            cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }}
-                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, color: "hsl(var(--foreground))" }}
-                            labelStyle={{ color: "hsl(var(--foreground))" }}
-                            itemStyle={{ color: "hsl(var(--foreground))" }}
-                          />
-                          <Bar dataKey="messages" name="Mensagens" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} maxBarSize={18} minPointSize={2} />
-                          <Bar dataKey="responses" name="Respostas" fill="hsl(150 50% 75%)" radius={[3, 3, 0, 0]} maxBarSize={18} minPointSize={2} />
-                        </BarChart>
-                      </ResponsiveContainer>
                     </div>
                   </div>
                 );
