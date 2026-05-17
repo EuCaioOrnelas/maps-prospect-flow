@@ -421,21 +421,28 @@ function DateRangeBar({
 
       <div className="h-6 w-px bg-border mx-1" />
 
-      {PRESETS.map((p) => (
-        <Button
-          key={p.label}
-          variant="ghost"
-          size="sm"
-          className="h-9 text-xs"
-          onClick={() => {
-            const e = new Date();
-            onEnd(e);
-            onStart(subDays(e, p.days));
-          }}
-        >
-          {p.label}
-        </Button>
-      ))}
+      {PRESETS.map((p) => {
+        const currentDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        const isActive = currentDays === p.days;
+        return (
+          <Button
+            key={p.label}
+            variant={isActive ? "default" : "ghost"}
+            size="sm"
+            className={cn(
+              "h-9 text-xs",
+              isActive && "bg-primary text-primary-foreground hover:bg-primary/90"
+            )}
+            onClick={() => {
+              const e = new Date();
+              onEnd(e);
+              onStart(subDays(e, p.days));
+            }}
+          >
+            {p.label}
+          </Button>
+        );
+      })}
     </div>
   );
 }
