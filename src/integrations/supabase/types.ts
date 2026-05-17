@@ -6378,6 +6378,7 @@ export type Database = {
           updated_at: string
           user_id: string
           waba_id: string
+          webhook_verified_at: string | null
         }
         Insert: {
           access_token: string
@@ -6393,6 +6394,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           waba_id: string
+          webhook_verified_at?: string | null
         }
         Update: {
           access_token?: string
@@ -6408,6 +6410,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           waba_id?: string
+          webhook_verified_at?: string | null
         }
         Relationships: []
       }
