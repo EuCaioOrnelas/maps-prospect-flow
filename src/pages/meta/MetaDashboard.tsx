@@ -202,9 +202,9 @@ export default function MetaDashboard() {
                   <div className="flex flex-col items-center gap-3">
                     {data.funnel.map((s, i) => {
                       const base = data.funnel[0]?.value || 1;
-                      // Largura proporcional ao número de Captados (base do funil).
-                      // Mínimo de 14% só para o texto caber sem quebrar.
-                      const widthPct = i === 0 ? 100 : Math.max((s.value / base) * 100, 14);
+                      // Largura estritamente proporcional aos Captados — Oportunidades (20)
+                      // sempre será mais larga que Enviados (6). Min 4% só pra desenhar a pílula.
+                      const widthPct = i === 0 ? 100 : Math.max((s.value / base) * 100, 4);
                       const convPct = i === 0 ? 100 : (s.value / base) * 100;
                       const hint = FUNNEL_HINTS[s.stage] ?? `Total de ${s.stage.toLowerCase()} no período.`;
                       return (
