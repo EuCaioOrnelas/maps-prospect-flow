@@ -418,12 +418,10 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
         </button>
 
         {guideOpen && (
-          <div className="px-5 pb-5 pt-1 border-t border-border/60 bg-muted/10">
-            <div className="pt-4">
-        {guideOpen && (
-          <div className="mt-4 pt-4 border-t border-border/60">
+          <div className="px-5 pb-5 pt-4 border-t border-border/60 bg-muted/10">
             <Tabs defaultValue="guia" className="w-full">
               <TabsList className="grid grid-cols-2 w-full max-w-xs">
+
                 <TabsTrigger value="guia">Guia escrito</TabsTrigger>
                 <TabsTrigger value="video">Vídeo</TabsTrigger>
               </TabsList>
