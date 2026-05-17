@@ -145,81 +145,113 @@ export default function MetaConfiguracoes() {
 
 
         <TabsContent value="notifications" className="mt-5 space-y-4">
-          <Card className="p-5 border-border/60 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-border/60">
-              <div>
-                <p className="text-sm font-semibold">Alertas por e-mail</p>
-                <p className="text-xs text-muted-foreground">
-                  Os alertas são enviados para <strong>{user?.email}</strong>.
+          <Card className="border-border/60 overflow-hidden">
+            <div className="flex items-start justify-between gap-4 p-5 border-b border-border/60 bg-muted/20">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-primary" />
+                  Alertas por e-mail
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enviados para <strong className="text-foreground">{user?.email}</strong>. Você controla cada tipo individualmente.
                 </p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={sendTestEmail}
-                disabled={sendingTest}
-                className="gap-2"
+                onClick={() => setTestDialogOpen(true)}
+                className="gap-2 shrink-0"
               >
-                {sendingTest ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
-                Enviar teste
+                <FlaskConical className="h-3.5 w-3.5" />
+                Testar alertas
               </Button>
             </div>
-            <ToggleRow
-              title="Número desconectado"
-              desc="Avisar quando um número WhatsApp Meta perder a conexão (token expirado, etc.)"
-              checked={settings.notify_number_disconnected}
-              onChange={(v) => updateSetting("notify_number_disconnected", v)}
-            />
-            <ToggleRow
-              title="Queda de qualidade do número"
-              desc="Avisar quando o quality rating de um número cair (amarelo ou vermelho)"
-              checked={settings.notify_quality_drop}
-              onChange={(v) => updateSetting("notify_quality_drop", v)}
-            />
-            <ToggleRow
-              title="Problemas em campanhas"
-              desc="Falhas no início, pausas inesperadas ou alta taxa de erro nos disparos"
-              checked={settings.notify_campaign_issues}
-              onChange={(v) => updateSetting("notify_campaign_issues", v)}
-            />
-            <ToggleRow
-              title="Resumo diário"
-              desc="Receba todo dia às 18h um resumo das mensagens enviadas, lidas e respondidas"
-              checked={settings.notify_daily_summary}
-              onChange={(v) => updateSetting("notify_daily_summary", v)}
-            />
+            <div className="divide-y divide-border/60">
+              <ToggleRow
+                icon={WifiOff}
+                iconColor="text-rose-500"
+                iconBg="bg-rose-500/10"
+                title="Número desconectado"
+                desc="Avisar quando um número WhatsApp Meta perder a conexão (token expirado, etc.)"
+                checked={settings.notify_number_disconnected}
+                onChange={(v) => updateSetting("notify_number_disconnected", v)}
+              />
+              <ToggleRow
+                icon={TrendingDown}
+                iconColor="text-amber-500"
+                iconBg="bg-amber-500/10"
+                title="Queda de qualidade do número"
+                desc="Avisar quando o quality rating de um número cair (amarelo ou vermelho)"
+                checked={settings.notify_quality_drop}
+                onChange={(v) => updateSetting("notify_quality_drop", v)}
+              />
+              <ToggleRow
+                icon={Megaphone}
+                iconColor="text-orange-500"
+                iconBg="bg-orange-500/10"
+                title="Problemas em campanhas"
+                desc="Falhas no início, pausas inesperadas ou alta taxa de erro nos disparos"
+                checked={settings.notify_campaign_issues}
+                onChange={(v) => updateSetting("notify_campaign_issues", v)}
+              />
+              <ToggleRow
+                icon={BarChart3}
+                iconColor="text-primary"
+                iconBg="bg-primary/10"
+                title="Resumo diário"
+                desc="Receba todo dia às 18h um resumo das mensagens enviadas, lidas e respondidas"
+                checked={settings.notify_daily_summary}
+                onChange={(v) => updateSetting("notify_daily_summary", v)}
+              />
+            </div>
           </Card>
         </TabsContent>
 
         <TabsContent value="security" className="mt-5 space-y-4">
-          <Card className="p-5 border-border/60 space-y-3">
-            <div className="pb-2 border-b border-border/60">
-              <p className="text-sm font-semibold">Proteções da integração Meta</p>
-              <p className="text-xs text-muted-foreground">
+          <Card className="border-border/60 overflow-hidden">
+            <div className="p-5 border-b border-border/60 bg-muted/20">
+              <p className="text-sm font-semibold flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                Proteções da integração Meta
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
                 Recomendamos manter todas ativas. Elas protegem sua operação contra acessos indevidos.
               </p>
             </div>
-            <ToggleRow
-              title="Validação de assinatura (HMAC)"
-              desc="Rejeitar webhooks que não vierem assinados pela Meta. Bloqueia payloads falsificados."
-              checked={settings.security_hmac_required}
-              onChange={(v) => updateSetting("security_hmac_required", v)}
-            />
-            <ToggleRow
-              title="Allowlist de IPs da Meta"
-              desc="Aceitar callbacks apenas de IPs oficiais da Meta. Bloqueia origens desconhecidas."
-              checked={settings.security_ip_allowlist}
-              onChange={(v) => updateSetting("security_ip_allowlist", v)}
-            />
-            <ToggleRow
-              title="Registro de auditoria"
-              desc="Registrar toda alteração crítica (conexões, tokens, campanhas) para consulta posterior."
-              checked={settings.security_audit_log}
-              onChange={(v) => updateSetting("security_audit_log", v)}
-            />
+            <div className="divide-y divide-border/60">
+              <ToggleRow
+                icon={Lock}
+                iconColor="text-emerald-500"
+                iconBg="bg-emerald-500/10"
+                title="Validação de assinatura (HMAC)"
+                desc="Rejeitar webhooks que não vierem assinados pela Meta. Bloqueia payloads falsificados."
+                checked={settings.security_hmac_required}
+                onChange={(v) => updateSetting("security_hmac_required", v)}
+              />
+              <ToggleRow
+                icon={Shield}
+                iconColor="text-sky-500"
+                iconBg="bg-sky-500/10"
+                title="Allowlist de IPs da Meta"
+                desc="Aceitar callbacks apenas de IPs oficiais da Meta. Bloqueia origens desconhecidas."
+                checked={settings.security_ip_allowlist}
+                onChange={(v) => updateSetting("security_ip_allowlist", v)}
+              />
+              <ToggleRow
+                icon={FileCheck2}
+                iconColor="text-violet-500"
+                iconBg="bg-violet-500/10"
+                title="Registro de auditoria"
+                desc="Registrar toda alteração crítica (conexões, tokens, campanhas) para consulta posterior."
+                checked={settings.security_audit_log}
+                onChange={(v) => updateSetting("security_audit_log", v)}
+              />
+            </div>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <MetaTestEmailsDialog open={testDialogOpen} onOpenChange={setTestDialogOpen} userId={user?.id} userEmail={user?.email} />
 
       {saving && (
         <div className="fixed bottom-4 right-4 flex items-center gap-2 text-xs text-muted-foreground bg-background/95 border border-border/60 rounded-md px-3 py-1.5 shadow">
