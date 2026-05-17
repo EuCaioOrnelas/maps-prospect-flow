@@ -113,6 +113,14 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
 
   const handleSaveCategory = async (data: { name: string; color: string; }) => {
     if (!user) return;
+    const normalizedName = data.name.trim().toLowerCase();
+    const duplicate = categories.some(
+      (c) => c.name.trim().toLowerCase() === normalizedName && c.id !== editingCat?.id
+    );
+    if (duplicate) {
+      toast({ title: "Categoria duplicada", description: "Já existe uma categoria com esse nome.", variant: "destructive" });
+      return;
+    }
     if (editingCat) {
       const { error } = await supabase.from("wiize_template_categories").update(data).eq("id", editingCat.id);
       if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
