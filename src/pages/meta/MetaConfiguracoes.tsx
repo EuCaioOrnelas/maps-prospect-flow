@@ -377,22 +377,56 @@ function WebhookPanel() {
       )}
 
       {/* PASSO A PASSO */}
-      <Card className="p-5 border-border/60 space-y-3">
+      <Card className="p-5 border-border/60 space-y-4">
         <div className="pb-2 border-b border-border/60">
           <p className="text-sm font-semibold">Passo a passo</p>
           <p className="text-xs text-muted-foreground">Siga na ordem. Leva menos de 3 minutos.</p>
         </div>
-        <ol className="space-y-3">
-          {steps.map((s) => (
-            <li key={s.n} className="flex gap-3">
-              <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">{s.n}</div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium">{s.t}</p>
-                <p className="text-xs text-muted-foreground">{s.d}</p>
+
+        <Tabs defaultValue="guia" className="w-full">
+          <TabsList className="grid grid-cols-2 w-full max-w-xs">
+            <TabsTrigger value="guia">Guia escrito</TabsTrigger>
+            <TabsTrigger value="video">Vídeo</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="guia" className="mt-4">
+            <ol className="space-y-3">
+              {steps.map((s) => (
+                <li key={s.n} className="flex gap-3">
+                  <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">{s.n}</div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{s.t}</p>
+                    <p className="text-xs text-muted-foreground">{s.d}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </TabsContent>
+
+          <TabsContent value="video" className="mt-4">
+            {WEBHOOK_GUIDE_VIDEO_URL ? (
+              <div className="relative w-full overflow-hidden rounded-lg border border-border/60 bg-muted/30" style={{ paddingTop: "56.25%" }}>
+                <iframe
+                  src={WEBHOOK_GUIDE_VIDEO_URL}
+                  title="Passo a passo do webhook"
+                  className="absolute inset-0 h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
               </div>
-            </li>
-          ))}
-        </ol>
+            ) : (
+              <div className="relative w-full overflow-hidden rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center" style={{ paddingTop: "56.25%" }}>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
+                  <PlayCircle className="h-10 w-10 text-muted-foreground/60" />
+                  <p className="text-sm font-medium">Vídeo em breve</p>
+                  <p className="text-xs text-muted-foreground max-w-sm">
+                    Estamos gravando o tutorial em vídeo da configuração do webhook. Enquanto isso, siga o guia escrito ao lado.
+                  </p>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </Card>
 
       {/* CREDENCIAIS */}
@@ -407,27 +441,34 @@ function WebhookPanel() {
       </Card>
 
       {/* EVENTOS OBRIGATÓRIOS */}
-      <Card className="p-5 border-border/60 space-y-3">
-        <div className="pb-2 border-b border-border/60">
-          <p className="text-sm font-semibold">Eventos obrigatórios — marcar TODOS na Meta</p>
-          <p className="text-xs text-muted-foreground">
-            Cada evento abaixo é necessário para uma funcionalidade do sistema. Sem inscrever todos, partes do produto deixam de funcionar.
-          </p>
+      <Card className="p-5 border-border/60 space-y-4">
+        <div className="flex items-start justify-between gap-3 pb-3 border-b border-border/60">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">Eventos obrigatórios</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Marque TODOS os eventos abaixo em Webhook fields, Subscribe. Cada um habilita uma parte do sistema.
+            </p>
+          </div>
+          <Badge variant="secondary" className="shrink-0 font-mono text-[11px]">
+            {eventsList.length} eventos
+          </Badge>
         </div>
-        <div className="grid gap-2">
+
+        <div className="grid gap-2 sm:grid-cols-2">
           {eventsList.map((ev) => {
             const meta = EVENT_DETAILS[ev] ?? { label: ev, why: "Recomendado pela Meta.", required: true };
             return (
-              <div key={ev} className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-muted/20">
+              <div key={ev} className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-muted/20 hover:bg-muted/30 transition-colors">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                <div className="min-w-0">
-                  <code className="text-xs font-mono font-semibold text-foreground">{meta.label}</code>
-                  <p className="text-xs text-muted-foreground mt-0.5">{meta.why}</p>
+                <div className="min-w-0 flex-1">
+                  <code className="text-xs font-mono font-semibold text-foreground break-all">{meta.label}</code>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{meta.why}</p>
                 </div>
               </div>
             );
           })}
         </div>
+
         <div className="rounded-md bg-amber-500/5 border border-amber-500/20 p-3 text-xs text-amber-700 dark:text-amber-400 flex items-start gap-2">
           <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
           <span>Faltou marcar algum? A Meta não envia o evento e o sistema não consegue exibir taxa de resposta, taxa de erro, quality rating, status de templates nem mensagens recebidas no Chat.</span>
