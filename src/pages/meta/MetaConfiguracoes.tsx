@@ -34,6 +34,8 @@ const DEFAULTS: Settings = {
 
 export default function MetaConfiguracoes() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const defaultTab = (searchParams.get("tab") === "notifications" || searchParams.get("tab") === "security") ? searchParams.get("tab")! : "webhook";
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
