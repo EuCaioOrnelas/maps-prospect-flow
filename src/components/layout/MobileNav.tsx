@@ -46,6 +46,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
   const { trialDaysRemaining, isTrialing, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
   const can = (key: FeatureKey) => isAdmin || profileHasFeature(authProfile as any, key);
+  const canEvolution = isAdmin || isLegacyEvolutionUser(authProfile as any);
 
   const isFreePlan = !profile?.plan || profile.plan === "free";
   const showTrialIndicator = isTrialing && trialDaysRemaining > 0;
