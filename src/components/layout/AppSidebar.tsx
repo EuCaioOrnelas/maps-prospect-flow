@@ -41,6 +41,7 @@ import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDia
 import { SidebarNavItem } from "./SidebarNavItem";
 import logoIconNew from "@/assets/logo-icon-new.png";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
+import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
 
 interface AppSidebarProps {
   profile?: {
