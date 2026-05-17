@@ -507,6 +507,10 @@ export default function MetaCampanhas() {
         <TabsContent value="templates" className="space-y-4 mt-0">
           <MetaTemplates embedded />
         </TabsContent>
+
+        <TabsContent value="reabertura" className="space-y-4 mt-0">
+          <MetaReabertura embedded />
+        </TabsContent>
       </Tabs>
 
       <CampaignDetailsDialog
