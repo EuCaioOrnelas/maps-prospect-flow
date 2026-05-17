@@ -152,6 +152,10 @@ export default function MetaCampanhas() {
   }, [campaigns]);
 
   const startNewCampaign = () => {
+    if (webhookGate.blocked) {
+      setWebhookDialogOpen(true);
+      return;
+    }
     sessionStorage.setItem(
       "meta_campaign_preset",
       JSON.stringify({ source: "meta_platform" })
