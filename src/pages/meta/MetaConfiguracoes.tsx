@@ -267,20 +267,193 @@ function ToggleRow({
   desc,
   checked,
   onChange,
+  icon: Icon,
+  iconColor = "text-primary",
+  iconBg = "bg-primary/10",
 }: {
   title: string;
   desc: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  icon?: React.ComponentType<{ className?: string }>;
+  iconColor?: string;
+  iconBg?: string;
 }) {
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg border border-border/60">
-      <div className="min-w-0 pr-4">
-        <p className="text-sm font-medium">{title}</p>
-        <p className="text-xs text-muted-foreground">{desc}</p>
+    <div className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-muted/30 transition-colors">
+      <div className="flex items-start gap-3 min-w-0">
+        {Icon && (
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
+            <Icon className={`h-4 w-4 ${iconColor}`} />
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="text-sm font-medium leading-tight">{title}</p>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{desc}</p>
+        </div>
       </div>
-      <Switch checked={checked} onCheckedChange={onChange} />
+      <Switch checked={checked} onCheckedChange={onChange} className="shrink-0" />
     </div>
+  );
+}
+
+type MetaTestType = {
+  key: "META_NUMBER_DISCONNECTED" | "META_QUALITY_DROP" | "CAMPAIGN_FAILED_TO_START" | "META_DAILY_SUMMARY";
+  label: string;
+  desc: string;
+  icon: React.ComponentType<{ className?: string }>;
+  iconColor: string;
+  iconBg: string;
+  payload: Record<string, unknown>;
+};
+
+const META_TESTS: MetaTestType[] = [
+  {
+    key: "META_NUMBER_DISCONNECTED",
+    label: "Número desconectado",
+    desc: "Alerta de número Meta que perdeu conexão",
+    icon: WifiOff,
+    iconColor: "text-rose-500",
+    iconBg: "bg-rose-500/10",
+    payload: { phone_number: "+55 11 90000-0000", business_name: "Empresa de Teste" },
+  },
+  {
+    key: "META_QUALITY_DROP",
+    label: "Queda de qualidade",
+    desc: "Quality rating caiu para amarelo ou vermelho",
+    icon: TrendingDown,
+    iconColor: "text-amber-500",
+    iconBg: "bg-amber-500/10",
+    payload: { phone_number: "+55 11 90000-0000", business_name: "Empresa de Teste", old_quality: "GREEN", new_quality: "YELLOW" },
+  },
+  {
+    key: "CAMPAIGN_FAILED_TO_START",
+    label: "Problemas em campanhas",
+    desc: "Falha no início ou alta taxa de erro",
+    icon: Megaphone,
+    iconColor: "text-orange-500",
+    iconBg: "bg-orange-500/10",
+    payload: { campaign_name: "Campanha de Teste", reason: "Número não conectado ao WhatsApp Meta" },
+  },
+  {
+    key: "META_DAILY_SUMMARY",
+    label: "Resumo diário",
+    desc: "Resumo das últimas 24h da operação Meta",
+    icon: BarChart3,
+    iconColor: "text-primary",
+    iconBg: "bg-primary/10",
+    payload: {
+      period: new Date().toLocaleDateString("pt-BR"),
+      messages_sent: 342,
+      messages_delivered: 318,
+      messages_read: 251,
+      messages_failed: 4,
+      inbound_messages: 87,
+      active_numbers: 3,
+      new_conversations: 19,
+    },
+  },
+];
+
+function MetaTestEmailsDialog({
+  open,
+  onOpenChange,
+  userId,
+  userEmail,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  userId?: string;
+  userEmail?: string | null;
+}) {
+  const [statuses, setStatuses] = useState<Record<string, "idle" | "sending" | "success" | "error">>({});
+  const [sendingAll, setSendingAll] = useState(false);
+
+  const sendOne = async (t: MetaTestType) => {
+    if (!userId) return;
+    setStatuses((p) => ({ ...p, [t.key]: "sending" }));
+    const { error } = await supabase.functions.invoke("send-email", {
+      body: {
+        user_id: userId,
+        email_type: t.key,
+        payload: t.payload,
+        idempotency_key: `meta-test-${t.key}-${userId}-${Date.now()}`,
+      },
+    });
+    if (error) {
+      setStatuses((p) => ({ ...p, [t.key]: "error" }));
+      toast.error(`Falha ao enviar: ${t.label}`);
+    } else {
+      setStatuses((p) => ({ ...p, [t.key]: "success" }));
+      toast.success(`${t.label} enviado`);
+    }
+  };
+
+  const sendAll = async () => {
+    setSendingAll(true);
+    for (const t of META_TESTS) {
+      await sendOne(t);
+      await new Promise((r) => setTimeout(r, 600));
+    }
+    setSendingAll(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl bg-background border-border/60">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FlaskConical className="h-4 w-4 text-primary" />
+            Testar alertas Meta
+          </DialogTitle>
+          <DialogDescription>
+            Dispare cada alerta com dados de exemplo para <strong className="text-foreground">{userEmail}</strong>.
+            Use para conferir como cada e-mail chega na sua caixa.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="divide-y divide-border/60 rounded-lg border border-border/60 overflow-hidden">
+          {META_TESTS.map((t) => {
+            const status = statuses[t.key] || "idle";
+            return (
+              <div key={t.key} className="flex items-center justify-between gap-3 px-4 py-3 bg-card">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${t.iconBg}`}>
+                    <t.icon className={`h-4 w-4 ${t.iconColor}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium leading-tight">{t.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t.desc}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {status === "success" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                  {status === "error" && <XCircle className="h-4 w-4 text-destructive" />}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => sendOne(t)}
+                    disabled={status === "sending" || sendingAll}
+                    className="gap-1.5"
+                  >
+                    {status === "sending" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                    Enviar
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Fechar</Button>
+          <Button onClick={sendAll} disabled={sendingAll} className="gap-2">
+            {sendingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FlaskConical className="h-3.5 w-3.5" />}
+            Testar todos
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
