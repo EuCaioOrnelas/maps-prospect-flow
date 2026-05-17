@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { Sparkles, TrendingUp, AlertTriangle, Lightbulb } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 type InsightTone = "positive" | "neutral" | "warning" | "tip";
 
