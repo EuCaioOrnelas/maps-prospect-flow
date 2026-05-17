@@ -504,9 +504,14 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   WEEKLY_SUMMARY: templateWeeklySummary,
   NUMBER_DISCONNECTED: templateNumberDisconnected,
   META_NUMBER_DISCONNECTED: templateMetaNumberDisconnected,
+  META_QUALITY_DROP: templateMetaQualityDrop,
+  META_DAILY_SUMMARY: templateMetaDailySummary,
   CAMPAIGN_FAILED_TO_START: templateCampaignFailed,
   ADMIN_BROADCAST: templateAdminBroadcast,
   CAMPAIGN_COMPLETED: templateCampaignCompleted,
+  AGENT_HUMAN_HANDOFF: templateAgentHumanHandoff,
+  AGENT_OBJECTIVE_COMPLETED: templateAgentObjectiveCompleted,
+};
   AGENT_HUMAN_HANDOFF: templateAgentHumanHandoff,
   AGENT_OBJECTIVE_COMPLETED: templateAgentObjectiveCompleted,
 };
