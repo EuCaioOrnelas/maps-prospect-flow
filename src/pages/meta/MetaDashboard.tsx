@@ -210,8 +210,8 @@ export default function MetaDashboard() {
                             labelStyle={{ color: "hsl(var(--foreground))" }}
                             itemStyle={{ color: "hsl(var(--foreground))" }}
                           />
-                          <Bar dataKey="messages" name="Mensagens" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
-                          <Bar dataKey="responses" name="Respostas" fill="hsl(150 50% 75%)" radius={[3, 3, 0, 0]} />
+                          <Bar dataKey="messages" name="Mensagens" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} maxBarSize={18} minPointSize={2} />
+                          <Bar dataKey="responses" name="Respostas" fill="hsl(150 50% 75%)" radius={[3, 3, 0, 0]} maxBarSize={18} minPointSize={2} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
