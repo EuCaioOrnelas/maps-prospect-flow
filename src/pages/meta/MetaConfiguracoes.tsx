@@ -32,6 +32,9 @@ const DEFAULTS: Settings = {
   security_audit_log: true,
 };
 
+// Defina aqui a URL do vídeo (embed do YouTube/Vimeo/Loom). Deixe vazio para exibir o estado "Vídeo em breve".
+const WEBHOOK_GUIDE_VIDEO_URL = "";
+
 export default function MetaConfiguracoes() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
