@@ -540,50 +540,54 @@ function CategoryForm({
             />
           ))}
 
-          {/* Cor personalizada via popover */}
-          <Popover open={customOpen} onOpenChange={setCustomOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                title="Cor personalizada"
-                aria-label="Cor personalizada"
-                className={`h-8 w-8 rounded-full border-2 border-dashed flex items-center justify-center transition-all ${!isPaletteColor ? "border-primary text-primary scale-110" : "border-border text-muted-foreground hover:border-primary hover:text-primary"}`}
-                style={!isPaletteColor ? { background: `${color}22` } : undefined}
-              >
-                {!isPaletteColor ? (
-                  <span className="h-3.5 w-3.5 rounded-full" style={{ background: color }} />
-                ) : (
-                  <Plus size={14} />
-                )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-56 p-3 space-y-2">
-              <p className="text-[11px] text-muted-foreground">Escolha uma cor personalizada</p>
-              <div className="flex items-center gap-2">
-                <div className="relative h-9 w-9 shrink-0 rounded-md border border-border overflow-hidden" style={{ background: color }}>
-                  <input
-                    type="color"
-                    value={/^#[0-9a-f]{6}$/i.test(color) ? color : "#000000"}
-                    onChange={(e) => setColor(e.target.value)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    aria-label="Selecionar cor"
-                  />
-                </div>
-                <Input
-                  value={color}
-                  onChange={(e) => {
-                    let v = e.target.value.trim();
-                    if (v && !v.startsWith("#")) v = "#" + v;
-                    setColor(v);
-                  }}
-                  placeholder="#7C3AED"
-                  className="h-9 font-mono text-xs uppercase"
-                  maxLength={7}
-                />
-              </div>
-            </PopoverContent>
-          </Popover>
+          {/* Botão de cor personalizada (alterna painel inline) */}
+          <button
+            type="button"
+            onClick={() => setCustomOpen((v) => !v)}
+            title="Cor personalizada"
+            aria-label="Cor personalizada"
+            className={`h-8 w-8 rounded-full border-2 border-dashed flex items-center justify-center transition-all ${!isPaletteColor ? "border-primary text-primary scale-110" : "border-border text-muted-foreground hover:border-primary hover:text-primary"}`}
+            style={!isPaletteColor ? { background: `${color}22` } : undefined}
+          >
+            {!isPaletteColor ? (
+              <span className="h-3.5 w-3.5 rounded-full" style={{ background: color }} />
+            ) : (
+              <Plus size={14} />
+            )}
+          </button>
         </div>
+
+        {(customOpen || !isPaletteColor) && (
+          <div className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-2">
+            <p className="text-[11px] text-muted-foreground">Cor personalizada</p>
+            <div className="flex items-center gap-2">
+              <label
+                className="relative h-9 w-9 shrink-0 rounded-md border border-border overflow-hidden cursor-pointer"
+                style={{ background: color }}
+                title="Abrir seletor de cores"
+              >
+                <input
+                  type="color"
+                  value={/^#[0-9a-f]{6}$/i.test(color) ? color : "#000000"}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  aria-label="Selecionar cor"
+                />
+              </label>
+              <Input
+                value={color}
+                onChange={(e) => {
+                  let v = e.target.value.trim();
+                  if (v && !v.startsWith("#")) v = "#" + v;
+                  setColor(v);
+                }}
+                placeholder="#7C3AED"
+                className="h-9 font-mono text-xs uppercase"
+                maxLength={7}
+              />
+            </div>
+          </div>
+        )}
       </div>
       <DialogFooter>
         <Button variant="outline" size="sm" onClick={onCancel}>Cancelar</Button>
