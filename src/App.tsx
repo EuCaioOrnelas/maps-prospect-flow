@@ -91,7 +91,7 @@ const MetaDashboard = lazyWithRetry(() => import("./pages/meta/MetaDashboard"), 
 const MetaCampanhas = lazyWithRetry(() => import("./pages/meta/MetaCampanhas"), "MetaCampanhas");
 const MetaTemplates = lazyWithRetry(() => import("./pages/meta/MetaTemplates"), "MetaTemplates");
 const MetaNumeros = lazyWithRetry(() => import("./pages/meta/MetaNumeros"), "MetaNumeros");
-const MetaReabertura = lazyWithRetry(() => import("./pages/meta/MetaReabertura"), "MetaReabertura");
+
 const MetaConfiguracoes = lazyWithRetry(() => import("./pages/meta/MetaConfiguracoes"), "MetaConfiguracoes");
 
 const EnterpriseContact = lazyWithRetry(() => import("./pages/EnterpriseContact"), "EnterpriseContact");
