@@ -70,7 +70,7 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
     const [{ data: cats }, { data: tpls }, { data: conn }] = await Promise.all([
       supabase.from("wiize_template_categories").select("*").eq("user_id", user.id).order("name"),
       supabase.from("wiize_message_templates").select("*").eq("user_id", user.id).eq("archived", false).order("updated_at", { ascending: false }),
-      supabase.from("meta_whatsapp_connections").select("waba_id").eq("user_id", user.id).eq("status", "active").limit(1).maybeSingle(),
+      supabase.from("user_waba_connections").select("waba_id").eq("user_id", user.id).limit(1).maybeSingle(),
     ]);
     setCategories((cats as Category[]) || []);
     setTemplates((tpls as Template[]) || []);
