@@ -339,14 +339,17 @@ function WebhookPanel() {
   }
 
   const steps = [
-    { n: 1, t: "Abra o Meta Business Manager", d: "Acesse business.facebook.com e entre na sua conta. Vá em Configurações → Contas → Apps." },
-    { n: 2, t: "Selecione seu App da Meta", d: "Dentro do app, abra o menu lateral e clique em Webhooks. Escolha o objeto WhatsApp Business Account." },
-    { n: 3, t: "Cole a Callback URL e o Verify Token", d: "Copie os dois valores do card abaixo e cole nos campos correspondentes. Clique em Verificar e salvar." },
-    { n: 4, t: "Marque os eventos obrigatórios", d: "Em Webhook fields → Subscribe selecione: messages, message_template_status_update e account_update." },
-    { n: 5, t: "Volte aqui e clique em Testar todos os webhooks", d: "Vamos enviar um handshake real para validar cada número. Se algum falhar, ele fica em vermelho e você corrige e testa de novo." },
+    { n: 1, t: "Abra o Meta Business Manager", d: "Acesse business.facebook.com → Configurações do Negócio → Contas → Apps. Selecione o App vinculado à sua WhatsApp Business Account." },
+    { n: 2, t: "Vá em Webhooks (WhatsApp)", d: "No menu lateral do app, abra Webhooks. No seletor de objeto, escolha WhatsApp Business Account e clique em Configurar (ou Editar, se já existir)." },
+    { n: 3, t: "Cole a Callback URL e o Verify Token", d: "Copie os dois valores do card Credenciais abaixo e cole nos campos correspondentes. Clique em Verificar e salvar — a Meta vai bater na URL e validar o token." },
+    { n: 4, t: "Inscreva todos os eventos obrigatórios", d: `Em Webhook fields → Subscribe, marque TODOS os ${Object.keys(EVENT_DETAILS).length} eventos listados abaixo. Sem isso, partes do sistema (Chat, Campanhas, Métricas, Taxa de Resposta, Taxa de Erro) não funcionam corretamente.` },
+    { n: 5, t: "Volte aqui e clique em Testar todos", d: "Disparamos um handshake real para cada número e confirmamos que a URL responde. Se algum falhar, fica vermelho — corrija e teste de novo. Quando todos ficarem verdes, Chat e Campanhas são liberados automaticamente." },
   ];
 
   const allVerified = data.connections.length > 0 && data.connections.every((c) => !!c.webhook_verified_at);
+  const eventsList = data.required_events && data.required_events.length > 0
+    ? data.required_events
+    : Object.keys(EVENT_DETAILS);
 
   return (
     <div className="space-y-4">
@@ -365,8 +368,8 @@ function WebhookPanel() {
               </p>
               <p className="text-xs text-muted-foreground">
                 {allVerified
-                  ? "O Chat, as Campanhas e os Fluxos estão liberados."
-                  : "Enquanto houver número não validado, o Chat e as Campanhas ficam bloqueados."}
+                  ? "Chat, Campanhas, Fluxos e métricas do Dashboard estão liberados."
+                  : "Enquanto houver número não validado, Chat e Campanhas ficam bloqueados."}
               </p>
             </div>
           </div>
@@ -401,14 +404,33 @@ function WebhookPanel() {
 
         <Field label="Callback URL" value={data.callback_url} onCopy={() => copy("URL", data.callback_url)} />
         <Field label="Verify Token" value={data.verify_token} mono onCopy={() => copy("Token", data.verify_token)} />
+      </Card>
 
-        <div className="rounded-md bg-muted/40 border border-border/60 p-3 text-xs text-muted-foreground space-y-1.5">
-          <p className="font-medium text-foreground">Eventos para marcar (Subscribe):</p>
-          <ul className="list-disc list-inside space-y-0.5">
-            <li><code className="text-foreground">messages</code> — mensagens recebidas e status de envio</li>
-            <li><code className="text-foreground">message_template_status_update</code> — aprovação/rejeição de templates</li>
-            <li><code className="text-foreground">account_update</code> — quality rating e mudanças no número</li>
-          </ul>
+      {/* EVENTOS OBRIGATÓRIOS */}
+      <Card className="p-5 border-border/60 space-y-3">
+        <div className="pb-2 border-b border-border/60">
+          <p className="text-sm font-semibold">Eventos obrigatórios — marcar TODOS na Meta</p>
+          <p className="text-xs text-muted-foreground">
+            Cada evento abaixo é necessário para uma funcionalidade do sistema. Sem inscrever todos, partes do produto deixam de funcionar.
+          </p>
+        </div>
+        <div className="grid gap-2">
+          {eventsList.map((ev) => {
+            const meta = EVENT_DETAILS[ev] ?? { label: ev, why: "Recomendado pela Meta.", required: true };
+            return (
+              <div key={ev} className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-muted/20">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <code className="text-xs font-mono font-semibold text-foreground">{meta.label}</code>
+                  <p className="text-xs text-muted-foreground mt-0.5">{meta.why}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="rounded-md bg-amber-500/5 border border-amber-500/20 p-3 text-xs text-amber-700 dark:text-amber-400 flex items-start gap-2">
+          <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          <span>Faltou marcar algum? A Meta não envia o evento e o sistema não consegue exibir taxa de resposta, taxa de erro, quality rating, status de templates nem mensagens recebidas no Chat.</span>
         </div>
       </Card>
 
@@ -416,9 +438,9 @@ function WebhookPanel() {
       <Card className="p-5 border-border/60 space-y-3">
         <div className="flex items-start justify-between gap-3 pb-2 border-b border-border/60">
           <div>
-            <p className="text-sm font-semibold">Teste e validação</p>
+            <p className="text-sm font-semibold">Teste e validação por número</p>
             <p className="text-xs text-muted-foreground">
-              Confirmamos com um handshake real na Meta. Números com erro ficam em vermelho — corrija e teste de novo.
+              Disparamos um handshake real na Meta para cada número. Quando todos passarem, Chat e Campanhas são liberados automaticamente para esses números.
             </p>
           </div>
           {data.connections.length > 0 && (
