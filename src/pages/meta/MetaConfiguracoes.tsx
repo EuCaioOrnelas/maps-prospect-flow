@@ -156,7 +156,7 @@ export default function MetaConfiguracoes() {
         </TabsList>
 
         <TabsContent value="webhook" className="mt-5 space-y-4">
-          <WebhookPanel />
+          <WebhookPanel onStatusChange={setWebhookStatus} />
         </TabsContent>
 
 
