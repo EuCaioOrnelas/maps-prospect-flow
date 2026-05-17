@@ -17,8 +17,6 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MetaTemplates from "./MetaTemplates";
-import MetaReabertura from "./MetaReabertura";
-import { RotateCcw } from "lucide-react";
 
 const ITEMS_PER_PAGE = 10;
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
