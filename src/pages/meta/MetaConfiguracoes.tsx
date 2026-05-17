@@ -249,6 +249,7 @@ function ToggleRow({
 type WebhookData = {
   callback_url: string;
   verify_token: string;
+  required_events?: string[];
   connections: Array<{
     id: string;
     display_phone_number: string | null;
@@ -257,6 +258,19 @@ type WebhookData = {
     webhook_verified_at: string | null;
   }>;
 };
+
+const EVENT_DETAILS: Record<string, { label: string; why: string; required: boolean }> = {
+  messages: { label: "messages", why: "Receber mensagens no Chat, disparar fluxos, atualizar status de envio (enviado/entregue/lido/falha) e contar taxa de resposta.", required: true },
+  message_template_status_update: { label: "message_template_status_update", why: "Saber quando um template é aprovado/rejeitado pela Meta. Sem isso as campanhas não sabem o status dos templates.", required: true },
+  message_template_quality_update: { label: "message_template_quality_update", why: "Detectar queda de qualidade do template e bloquear envios em massa antes de tomar ban.", required: true },
+  account_update: { label: "account_update", why: "Mudanças críticas da WABA (capacidade, limites, alertas). Necessário para alertas e métricas do dashboard.", required: true },
+  account_review_update: { label: "account_review_update", why: "Alertas quando a Meta inicia revisão da sua conta (risco de bloqueio).", required: true },
+  phone_number_quality_update: { label: "phone_number_quality_update", why: "Alerta de queda de quality rating do número (verde→amarelo→vermelho). Usado nas notificações e na taxa de erro do dashboard.", required: true },
+  phone_number_name_update: { label: "phone_number_name_update", why: "Mudanças no display name do número (aprovação/rejeição).", required: true },
+  business_capability_update: { label: "business_capability_update", why: "Aumentos/reduções do tier de mensagens (1k/10k/100k/ilimitado) — usado no dashboard.", required: true },
+  security: { label: "security", why: "Eventos de segurança da conta (2FA, troca de PIN). Recomendado pela Meta.", required: true },
+};
+
 
 type ValidationState = { status: "idle" | "ok" | "error"; detail?: string };
 
