@@ -314,7 +314,12 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
       toast.error("Falha ao carregar configuração do webhook");
       return;
     }
-    setData(res as WebhookData);
+    const payload = res as WebhookData;
+    setData(payload);
+    if (onStatusChange) {
+      if (payload.connections.length === 0) onStatusChange(null);
+      else onStatusChange(payload.connections.every((c) => !!c.webhook_verified_at) ? "ok" : "pending");
+    }
   };
 
   useEffect(() => { load(); }, []);
