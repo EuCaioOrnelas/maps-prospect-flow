@@ -355,6 +355,13 @@ serve(async (req) => {
         for (const change of changes) {
           const field = change.field;
           const value = change.value;
+
+          // ---------- Rate limit por evento (WABA + tipo) ----------
+          if (rlHit(`evt:${wabaId}:${field}`, RL_EVENT_MAX)) {
+            console.warn(`[meta-webhook] 🚫 Rate limit evento ${field} em WABA ${wabaId} — descartando`);
+            continue;
+          }
+
           console.log(`[meta-webhook] WABA ${wabaId} | field: ${field}`);
 
           if (field === 'messages') {
