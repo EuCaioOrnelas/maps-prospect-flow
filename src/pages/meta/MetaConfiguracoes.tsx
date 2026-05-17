@@ -1,151 +1,234 @@
+import { useEffect, useState } from "react";
 import { MetaLayout } from "@/components/meta/MetaLayout";
 import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Webhook, Key, Clock, Bot, Bell, ShieldCheck } from "lucide-react";
+import { Bell, ShieldCheck, Loader2, Mail } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+
+type Settings = {
+  notify_number_disconnected: boolean;
+  notify_quality_drop: boolean;
+  notify_daily_summary: boolean;
+  notify_campaign_issues: boolean;
+  security_hmac_required: boolean;
+  security_ip_allowlist: boolean;
+  security_audit_log: boolean;
+};
+
+const DEFAULTS: Settings = {
+  notify_number_disconnected: true,
+  notify_quality_drop: true,
+  notify_daily_summary: false,
+  notify_campaign_issues: true,
+  security_hmac_required: true,
+  security_ip_allowlist: true,
+  security_audit_log: true,
+};
 
 export default function MetaConfiguracoes() {
-  return (
-    <MetaLayout title="Configurações" description="Gestão geral da operação Meta.">
-      <MetaPageHeader title="Configurações Gerais" description="Webhooks, tokens, automações e regras IA da operação." />
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<Settings>(DEFAULTS);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
 
-      <Tabs defaultValue="webhooks">
-        <TabsList className="flex-wrap h-auto bg-muted/40">
-          <TabsTrigger value="webhooks"><Webhook size={13} className="mr-1.5" />Webhooks</TabsTrigger>
-          <TabsTrigger value="tokens"><Key size={13} className="mr-1.5" />API Tokens</TabsTrigger>
-          <TabsTrigger value="limits"><Clock size={13} className="mr-1.5" />Limites & Delays</TabsTrigger>
-          <TabsTrigger value="ai"><Bot size={13} className="mr-1.5" />Regras IA</TabsTrigger>
-          <TabsTrigger value="notifications"><Bell size={13} className="mr-1.5" />Notificações</TabsTrigger>
-          <TabsTrigger value="security"><ShieldCheck size={13} className="mr-1.5" />Segurança</TabsTrigger>
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("meta_user_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data) {
+        setSettings({
+          notify_number_disconnected: data.notify_number_disconnected,
+          notify_quality_drop: data.notify_quality_drop,
+          notify_daily_summary: data.notify_daily_summary,
+          notify_campaign_issues: data.notify_campaign_issues,
+          security_hmac_required: data.security_hmac_required,
+          security_ip_allowlist: data.security_ip_allowlist,
+          security_audit_log: data.security_audit_log,
+        });
+      }
+      setLoading(false);
+    })();
+  }, [user]);
+
+  const updateSetting = async (key: keyof Settings, value: boolean) => {
+    if (!user) return;
+    const next = { ...settings, [key]: value };
+    setSettings(next);
+    setSaving(true);
+    const { error } = await supabase
+      .from("meta_user_settings")
+      .upsert({ user_id: user.id, ...next }, { onConflict: "user_id" });
+    setSaving(false);
+    if (error) {
+      toast.error("Erro ao salvar preferência");
+      setSettings(settings);
+    } else {
+      toast.success("Preferência salva");
+    }
+  };
+
+  const sendTestEmail = async () => {
+    if (!user) return;
+    setSendingTest(true);
+    const { error } = await supabase.functions.invoke("send-email", {
+      body: {
+        user_id: user.id,
+        email_type: "META_NUMBER_DISCONNECTED",
+        payload: {
+          phone_number: "+55 11 90000-0000",
+          business_name: "E-mail de teste",
+        },
+        idempotency_key: `meta-test-${user.id}-${Date.now()}`,
+      },
+    });
+    setSendingTest(false);
+    if (error) toast.error("Falha ao enviar e-mail de teste");
+    else toast.success("E-mail de teste enviado! Verifique sua caixa de entrada.");
+  };
+
+  if (loading) {
+    return (
+      <MetaLayout title="Configurações" description="Preferências da operação Meta.">
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </MetaLayout>
+    );
+  }
+
+  return (
+    <MetaLayout title="Configurações" description="Preferências da operação Meta.">
+      <MetaPageHeader
+        title="Configurações"
+        description="Escolha quais alertas receber por e-mail e as regras de segurança da sua operação Meta."
+      />
+
+      <Tabs defaultValue="notifications">
+        <TabsList className="bg-muted/40">
+          <TabsTrigger value="notifications">
+            <Bell size={13} className="mr-1.5" />
+            Notificações
+          </TabsTrigger>
+          <TabsTrigger value="security">
+            <ShieldCheck size={13} className="mr-1.5" />
+            Segurança
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="webhooks" className="mt-5">
-          <Card className="p-5 border-border/60 space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold mb-1">Endpoint de Webhook</h3>
-              <p className="text-xs text-muted-foreground mb-3">URL configurada na Meta App Dashboard para receber eventos.</p>
-              <Input value="https://api.wiize.app/meta/webhook" readOnly className="font-mono text-xs" />
-            </div>
-            <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border/60">
-              <Field label="Verify Token"><Input type="password" placeholder="••••••••••" /></Field>
-              <Field label="Versão da API"><Input defaultValue="v21.0" /></Field>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg border border-border/60">
+        <TabsContent value="notifications" className="mt-5 space-y-4">
+          <Card className="p-5 border-border/60 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-border/60">
               <div>
-                <p className="text-sm font-medium">Validar assinatura HMAC</p>
-                <p className="text-xs text-muted-foreground">Recomendado em produção</p>
+                <p className="text-sm font-semibold">Alertas por e-mail</p>
+                <p className="text-xs text-muted-foreground">
+                  Os alertas são enviados para <strong>{user?.email}</strong>.
+                </p>
               </div>
-              <Switch defaultChecked />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={sendTestEmail}
+                disabled={sendingTest}
+                className="gap-2"
+              >
+                {sendingTest ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                Enviar teste
+              </Button>
             </div>
+            <ToggleRow
+              title="Número desconectado"
+              desc="Avisar quando um número WhatsApp Meta perder a conexão (token expirado, etc.)"
+              checked={settings.notify_number_disconnected}
+              onChange={(v) => updateSetting("notify_number_disconnected", v)}
+            />
+            <ToggleRow
+              title="Queda de qualidade do número"
+              desc="Avisar quando o quality rating de um número cair (amarelo ou vermelho)"
+              checked={settings.notify_quality_drop}
+              onChange={(v) => updateSetting("notify_quality_drop", v)}
+            />
+            <ToggleRow
+              title="Problemas em campanhas"
+              desc="Falhas no início, pausas inesperadas ou alta taxa de erro nos disparos"
+              checked={settings.notify_campaign_issues}
+              onChange={(v) => updateSetting("notify_campaign_issues", v)}
+            />
+            <ToggleRow
+              title="Resumo diário"
+              desc="Receba todo dia às 18h um resumo das mensagens enviadas, lidas e respondidas"
+              checked={settings.notify_daily_summary}
+              onChange={(v) => updateSetting("notify_daily_summary", v)}
+            />
           </Card>
         </TabsContent>
 
-        <TabsContent value="tokens" className="mt-5">
-          <Card className="p-5 border-border/60 space-y-4">
-            <Field label="Access Token Permanente"><Input type="password" placeholder="EAAG..." /></Field>
-            <Field label="App Secret"><Input type="password" placeholder="••••••••••" /></Field>
-            <Field label="Business Account ID"><Input placeholder="1234567890" /></Field>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" size="sm">Testar conexão</Button>
-              <Button size="sm">Salvar</Button>
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="limits" className="mt-5">
-          <Card className="p-5 border-border/60 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Limite global diário"><Input type="number" defaultValue={5000} /></Field>
-              <Field label="Timezone">
-                <Select defaultValue="brt"><SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="brt">America/Sao_Paulo (BRT)</SelectItem>
-                    <SelectItem value="utc">UTC</SelectItem>
-                  </SelectContent></Select>
-              </Field>
-              <Field label="Delay mínimo entre envios (s)"><Input type="number" defaultValue={30} /></Field>
-              <Field label="Delay máximo entre envios (s)"><Input type="number" defaultValue={120} /></Field>
-              <Field label="Janela 24h fallback">
-                <Select defaultValue="template"><SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="template">Usar template aprovado</SelectItem>
-                    <SelectItem value="silent">Apenas registrar e aguardar</SelectItem>
-                  </SelectContent></Select>
-              </Field>
-              <Field label="Tentativas em caso de falha"><Input type="number" defaultValue={3} /></Field>
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="ai" className="mt-5">
-          <Card className="p-5 border-border/60 space-y-4">
-            <Field label="Prompt global da IA">
-              <Textarea
-                rows={5}
-                defaultValue="Você é um SDR consultivo da Wiize. Mantenha tom profissional e objetivo. Personalize com diagnóstico do lead. Nunca prometa resultados."
-              />
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Modelo">
-                <Select defaultValue="gpt-4o-mini"><SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="gpt-4o-mini">GPT-4o-mini</SelectItem>
-                  </SelectContent></Select>
-              </Field>
-              <Field label="Temperatura"><Input type="number" step="0.1" defaultValue={0.7} /></Field>
-            </div>
-            <div className="space-y-3">
-              <ToggleRow title="Handoff humano automático" desc="Transferir lead para inbox após resposta positiva" defaultChecked />
-              <ToggleRow title="Diagnóstico automático" desc="IA pesquisa o lead antes de personalizar" defaultChecked />
-              <ToggleRow title="Bloqueio em fim de semana" desc="Não enviar mensagens sábado/domingo" />
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="notifications" className="mt-5">
+        <TabsContent value="security" className="mt-5 space-y-4">
           <Card className="p-5 border-border/60 space-y-3">
-            <ToggleRow title="Alerta de queda de qualidade" desc="Notificar quando quality rating cair" defaultChecked />
-            <ToggleRow title="Alerta de bloqueio de número" desc="E-mail e push quando número for bloqueado" defaultChecked />
-            <ToggleRow title="Resumo diário operacional" desc="Receba às 18h o resumo do dia" defaultChecked />
-            <ToggleRow title="Alerta de campanha problemática" desc="ROI abaixo de 1.5x ou CPR acima do esperado" />
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="security" className="mt-5">
-          <Card className="p-5 border-border/60 space-y-3">
-            <ToggleRow title="Validação HMAC obrigatória" desc="Webhooks rejeitam payloads sem assinatura válida" defaultChecked />
-            <ToggleRow title="IP allowlist Meta" desc="Aceitar callbacks somente de IPs oficiais Meta" defaultChecked />
-            <ToggleRow title="Audit log de configurações" desc="Registrar toda alteração crítica" defaultChecked />
+            <div className="pb-2 border-b border-border/60">
+              <p className="text-sm font-semibold">Proteções da integração Meta</p>
+              <p className="text-xs text-muted-foreground">
+                Recomendamos manter todas ativas. Elas protegem sua operação contra acessos indevidos.
+              </p>
+            </div>
+            <ToggleRow
+              title="Validação de assinatura (HMAC)"
+              desc="Rejeitar webhooks que não vierem assinados pela Meta. Bloqueia payloads falsificados."
+              checked={settings.security_hmac_required}
+              onChange={(v) => updateSetting("security_hmac_required", v)}
+            />
+            <ToggleRow
+              title="Allowlist de IPs da Meta"
+              desc="Aceitar callbacks apenas de IPs oficiais da Meta. Bloqueia origens desconhecidas."
+              checked={settings.security_ip_allowlist}
+              onChange={(v) => updateSetting("security_ip_allowlist", v)}
+            />
+            <ToggleRow
+              title="Registro de auditoria"
+              desc="Registrar toda alteração crítica (conexões, tokens, campanhas) para consulta posterior."
+              checked={settings.security_audit_log}
+              onChange={(v) => updateSetting("security_audit_log", v)}
+            />
           </Card>
         </TabsContent>
       </Tabs>
+
+      {saving && (
+        <div className="fixed bottom-4 right-4 flex items-center gap-2 text-xs text-muted-foreground bg-background/95 border border-border/60 rounded-md px-3 py-1.5 shadow">
+          <Loader2 className="h-3 w-3 animate-spin" /> Salvando…
+        </div>
+      )}
     </MetaLayout>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
-      {children}
-    </div>
-  );
-}
-
-function ToggleRow({ title, desc, defaultChecked }: { title: string; desc: string; defaultChecked?: boolean }) {
+function ToggleRow({
+  title,
+  desc,
+  checked,
+  onChange,
+}: {
+  title: string;
+  desc: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <div className="flex items-center justify-between p-3 rounded-lg border border-border/60">
-      <div className="min-w-0">
+      <div className="min-w-0 pr-4">
         <p className="text-sm font-medium">{title}</p>
         <p className="text-xs text-muted-foreground">{desc}</p>
       </div>
-      <Switch defaultChecked={defaultChecked} />
+      <Switch checked={checked} onCheckedChange={onChange} />
     </div>
   );
 }
