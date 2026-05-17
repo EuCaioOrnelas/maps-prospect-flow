@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Filter } from "lucide-react";
+import { Filter, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
 
 interface OperationalFunnelProps {
   leadsProspected: number;
@@ -13,38 +12,49 @@ interface OperationalFunnelProps {
 interface FunnelStep {
   label: string;
   value: number;
-  tooltip: string;
+  hint: string;
 }
 
-export function OperationalFunnel({ leadsProspected, messagesSent, totalResponses, opportunitiesGenerated }: OperationalFunnelProps) {
+const fmtN = (n: number) => n.toLocaleString("pt-BR");
+
+export function OperationalFunnel({
+  leadsProspected,
+  messagesSent,
+  totalResponses,
+  opportunitiesGenerated,
+}: OperationalFunnelProps) {
   const qualifiedRate = 0.34;
   const qualified = Math.round(leadsProspected * qualifiedRate);
 
   const steps: FunnelStep[] = [
-    { label: "Leads Captados", value: leadsProspected, tooltip: "Total de leads encontrados pela plataforma" },
-    { label: "Qualificados IA", value: qualified, tooltip: "Leads que passaram pelo score de qualificação" },
-    { label: "Mensagens Enviadas", value: messagesSent, tooltip: "Mensagens enviadas via campanhas" },
-    { label: "Responderam", value: totalResponses, tooltip: "Leads que responderam às mensagens (WhatsApp + Meta API)" },
-    { label: "Oportunidades Geradas", value: opportunitiesGenerated, tooltip: "Oportunidades geradas no período (mesma lógica do cockpit)" },
+    {
+      label: "Leads Captados",
+      value: leadsProspected,
+      hint: "Total de leads encontrados pela plataforma no período. É a base (100%) do funil.",
+    },
+    {
+      label: "Qualificados IA",
+      value: qualified,
+      hint: "Leads que passaram pelo score de qualificação da IA. % calculada sobre Captados.",
+    },
+    {
+      label: "Mensagens Enviadas",
+      value: messagesSent,
+      hint: "Mensagens enviadas via campanhas (WhatsApp + Meta API). % calculada sobre Captados.",
+    },
+    {
+      label: "Responderam",
+      value: totalResponses,
+      hint: "Leads que responderam às mensagens enviadas. % calculada sobre Captados.",
+    },
+    {
+      label: "Oportunidades Geradas",
+      value: opportunitiesGenerated,
+      hint: "Oportunidades geradas no período (mesma lógica do cockpit). % calculada sobre Captados.",
+    },
   ];
 
-  const maxVal = Math.max(...steps.map(s => s.value), 1);
-
-  if (leadsProspected === 0 && messagesSent === 0) {
-    return (
-      <Card className="border-border/40 rounded-2xl h-full flex flex-col">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Filter size={16} className="text-primary" />
-            Funil Operacional
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-muted-foreground/60">Sem dados para exibir o funil</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const empty = leadsProspected === 0 && messagesSent === 0;
 
   return (
     <Card className="border-border/40 rounded-2xl h-full flex flex-col">
@@ -54,51 +64,68 @@ export function OperationalFunnel({ leadsProspected, messagesSent, totalResponse
           Funil Operacional
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col justify-center space-y-1.5 pb-4">
-        <TooltipProvider>
-          {steps.map((step, i) => {
-            const widthPct = Math.max((step.value / maxVal) * 100, 8);
-            const convRate = i > 0 && steps[i - 1].value > 0
-              ? ((step.value / steps[i - 1].value) * 100).toFixed(1)
-              : null;
-
-            return (
-              <div key={step.label}>
-                {i > 0 && convRate && (
-                  <div className="flex justify-center py-0.5">
-                    <span className="text-[9px] text-muted-foreground/40 font-medium">
-                      ↓ {convRate}%
-                    </span>
-                  </div>
-                )}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex flex-col items-center group cursor-help gap-1">
-                      <span className="text-xs text-muted-foreground truncate">
-                        {step.label}
-                      </span>
+      <CardContent className="flex-1 flex flex-col justify-center pb-4">
+        {empty ? (
+          <p className="text-sm text-muted-foreground/60 text-center">Sem dados para exibir o funil</p>
+        ) : (
+          <TooltipProvider delayDuration={150}>
+            <div className="flex flex-col items-center gap-2.5">
+              {(() => {
+                const base = steps[0]?.value || 1;
+                const nonZero = steps.filter((s) => s.value > 0).map((s) => s.value);
+                const minVal = nonZero.length ? Math.min(...nonZero) : 1;
+                const MIN_PCT = 16;
+                const range = Math.max(base - minVal, 1);
+                return steps.map((s) => {
+                  const convPct = (s.value / base) * 100;
+                  let widthPct: number;
+                  if (s.value <= 0) widthPct = MIN_PCT;
+                  else if (s.value >= base) widthPct = 100;
+                  else widthPct = MIN_PCT + ((s.value - minVal) / range) * (100 - MIN_PCT);
+                  const isCompact = widthPct < 28;
+                  const numClass = isCompact ? "text-sm" : "text-base";
+                  const pctClass = isCompact ? "text-[10px]" : "text-[11px]";
+                  const padClass = isCompact ? "px-2.5" : "px-4";
+                  return (
+                    <div key={s.label} className="w-full flex flex-col items-center">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <p className="text-xs font-semibold text-foreground">{s.label}</p>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="text-muted-foreground/70 hover:text-foreground transition-colors"
+                              aria-label={`Como é calculado: ${s.label}`}
+                            >
+                              <Info size={11} />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                            {s.hint}
+                            <span className="block mt-1 text-muted-foreground">
+                              Base: <b>Leads Captados</b> ({fmtN(base)}).
+                            </span>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <div
-                        className={cn(
-                          "h-8 rounded-lg flex items-center justify-center transition-all duration-500 group-hover:shadow-sm",
-                          i === 0 ? "bg-primary/20" : "bg-primary/[0.08]",
-                          "group-hover:bg-primary/25"
-                        )}
-                        style={{ width: `${widthPct}%`, minWidth: '50px' }}
+                        className={`h-8 rounded-full bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center gap-1.5 transition-all ring-1 ring-primary/20 shadow-[0_1px_2px_rgba(0,0,0,0.06)] whitespace-nowrap ${padClass}`}
+                        style={{ width: `${widthPct}%` }}
                       >
-                        <span className="text-xs font-bold text-foreground">
-                          {step.value.toLocaleString('pt-BR')}
+                        <span className={`${numClass} font-bold text-white tabular-nums leading-none`}>
+                          {fmtN(s.value)}
+                        </span>
+                        <span className={`${pctClass} font-semibold text-white tabular-nums leading-none`}>
+                          · {convPct.toFixed(1)}%
                         </span>
                       </div>
                     </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">
-                    <p className="text-xs">{step.tooltip}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            );
-          })}
-        </TooltipProvider>
+                  );
+                });
+              })()}
+            </div>
+          </TooltipProvider>
+        )}
       </CardContent>
     </Card>
   );
