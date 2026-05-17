@@ -328,6 +328,13 @@ const Chat = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <WebhookRequiredDialog
+        open={webhookDialogOpen}
+        onOpenChange={setWebhookDialogOpen}
+        pendingConnections={webhookGate.pendingConnections}
+        context="chat"
+      />
     </SidebarProvider>
   );
 };
