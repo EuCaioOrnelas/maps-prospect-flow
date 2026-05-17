@@ -204,12 +204,7 @@ export default function MainDashboard() {
                   scoreSales={forecast.scoreSales}
                   scoreBuckets={forecast.scoreBuckets}
                 />
-                <OperationalFunnel
-                  leadsProspected={data.leadsProspected}
-                  messagesSent={data.messagesSent}
-                  totalResponses={data.totalResponses}
-                  opportunitiesGenerated={forecast.totalEstimatedSales}
-                />
+                <OperationalFunnel funnel={data.funnel} />
               </div>
 
               {/* 4 — Opportunity Radar */}
