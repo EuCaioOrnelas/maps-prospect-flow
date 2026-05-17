@@ -260,7 +260,7 @@ export default function MetaConfiguracoes() {
                 const Icon = item.icon;
                 return (
                   <AccordionItem key={idx} value={`compliance-${idx}`} className="border-b-0">
-                    <AccordionTrigger className="px-5 py-4 hover:no-underline focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0">
+                    <AccordionTrigger className="px-5 py-4 hover:no-underline outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&:focus-visible]:ring-0">
                       <div className="flex items-center gap-3 min-w-0 text-left">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                           <Icon className="h-4 w-4 text-primary" />
