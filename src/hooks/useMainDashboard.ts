@@ -272,6 +272,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         activeDays: activeDaysSet.size,
         monthlyBreakdown,
         leadsByDay,
+        funnel,
       });
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
