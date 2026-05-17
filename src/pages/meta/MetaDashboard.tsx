@@ -163,24 +163,75 @@ export default function MetaDashboard() {
               </div>
             </Card>
 
-            <Card className="p-5 border-border/60">
-              <ChartHeader title="Mensagens vs Respostas" subtitle="Comparativo diário" />
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.daily.slice(-12)}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
-                    <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                    <RTooltip
-                      contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, color: "hsl(var(--foreground))" }}
-                      labelStyle={{ color: "hsl(var(--foreground))" }}
-                      itemStyle={{ color: "hsl(var(--foreground))" }}
-                    />
-                    <Bar dataKey="messages" name="Mensagens" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="responses" name="Respostas" fill="hsl(158 72% 45%)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+            <Card className="p-5 border-border/60 flex flex-col">
+              <ChartHeader title="Mensagens vs Respostas" subtitle="Taxa de resposta no período" />
+              {(() => {
+                const totalMsgs = data.daily.reduce((s, d) => s + (d.messages || 0), 0);
+                const totalRes = data.daily.reduce((s, d) => s + (d.responses || 0), 0);
+                const rate = totalMsgs > 0 ? (totalRes / totalMsgs) * 100 : 0;
+                return (
+                  <div className="flex flex-col gap-4 mt-1">
+                    {/* Totais lado a lado */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-1">
+                          <span className="w-2 h-2 rounded-full bg-primary" />
+                          Mensagens
+                        </div>
+                        <div className="text-xl font-semibold text-foreground tabular-nums">{fmtN(totalMsgs)}</div>
+                      </div>
+                      <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-1">
+                          <span className="w-2 h-2 rounded-full" style={{ background: "hsl(158 72% 45%)" }} />
+                          Respostas
+                        </div>
+                        <div className="text-xl font-semibold text-foreground tabular-nums">{fmtN(totalRes)}</div>
+                      </div>
+                    </div>
+
+                    {/* Barra de taxa de resposta */}
+                    <div>
+                      <div className="flex items-baseline justify-between mb-1.5">
+                        <span className="text-[11px] text-muted-foreground">Taxa de resposta</span>
+                        <span className="text-sm font-semibold text-foreground tabular-nums">{rate.toFixed(1)}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${Math.min(100, rate)}%`, background: "hsl(158 72% 45%)" }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Mini gráfico comparativo */}
+                    <div className="h-28 -mx-1">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={data.daily} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="msgGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
+                              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="resGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="hsl(158 72% 45%)" stopOpacity={0.4} />
+                              <stop offset="100%" stopColor="hsl(158 72% 45%)" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="day" hide />
+                          <YAxis hide />
+                          <RTooltip
+                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, color: "hsl(var(--foreground))" }}
+                            labelStyle={{ color: "hsl(var(--foreground))" }}
+                            itemStyle={{ color: "hsl(var(--foreground))" }}
+                          />
+                          <Area type="monotone" dataKey="messages" name="Mensagens" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#msgGrad)" />
+                          <Area type="monotone" dataKey="responses" name="Respostas" stroke="hsl(158 72% 45%)" strokeWidth={2} fill="url(#resGrad)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                );
+              })()}
             </Card>
           </div>
 
