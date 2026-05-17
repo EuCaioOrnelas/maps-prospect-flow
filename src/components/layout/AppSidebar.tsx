@@ -406,7 +406,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                                 : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                             )}
                           >
-                            <item.icon size={18} className="shrink-0" />
+                            <span className={cn(
+                              "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                              active
+                                ? "bg-primary/15 text-primary"
+                                : "bg-sidebar-accent/40 text-sidebar-foreground/70 group-hover:bg-sidebar-accent/60"
+                            )}>
+                              <item.icon size={14} className="shrink-0" />
+                            </span>
                             <span className="whitespace-nowrap truncate text-sm">{item.title}</span>
                           </Link>
                         </li>
