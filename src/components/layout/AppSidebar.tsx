@@ -69,6 +69,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const { signOut, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
   const can = (key: FeatureKey) => isAdmin || profileHasFeature(authProfile as any, key);
+  const canEvolution = isAdmin || isLegacyEvolutionUser(authProfile as any);
   
   const { hasDisconnectedWarming, disconnectedNumbers } = useWarmingConnectionAlert();
   const { unreadCount: unreadAnnouncements, disconnectedNumbers: disconnectedNumberAlerts, dismissDisconnectionAlert } = useUnreadAnnouncements();
