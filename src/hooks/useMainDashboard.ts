@@ -136,7 +136,12 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
           .select('sent_count, created_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: true }),
-      ]);
+        // Leads do CRM no período — fonte única para o funil operacional (alinhado com Meta)
+        supabase.from('leads')
+          .select('id, opportunity_level, first_message_sent, has_responded')
+          .eq('user_id', user.id)
+          .gte('created_at', periodStart.toISOString()),
+      ]) as any;
 
       const campaigns = campaignsCurrent.data || [];
       const prevCampaignData = campaignsPrev.data || [];
