@@ -6,6 +6,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// ---------- Rate limiter (per-isolate, sliding window 60s) ----------
+// Limites generosos vs tráfego real da Meta (~poucos eventos/s), agressivos vs flood.
+const RL_WINDOW_MS = 60_000;
+const RL_IP_MAX = 240;            // requests/min por IP
+const RL_EVENT_MAX = 600;         // eventos/min por (waba_id|field)
+const rlBuckets = new Map<string, number[]>();
+function rlHit(key: string, max: number): boolean {
+  const now = Date.now();
+  const arr = rlBuckets.get(key) || [];
+  const fresh = arr.filter((t) => now - t < RL_WINDOW_MS);
+  fresh.push(now);
+  rlBuckets.set(key, fresh);
+  if (rlBuckets.size > 5000) {
+    for (const [k, v] of rlBuckets) {
+      if (!v.length || now - v[v.length - 1] > RL_WINDOW_MS) rlBuckets.delete(k);
+    }
+  }
+  return fresh.length > max;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -57,6 +77,15 @@ serve(async (req) => {
       const sigHeader = req.headers.get('x-hub-signature-256') || req.headers.get('X-Hub-Signature-256') || '';
       const reqIp = (req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || '').split(',')[0].trim();
       const reqUserAgent = req.headers.get('user-agent') || '';
+
+      // ---------- Rate limit por IP (antes de qualquer trabalho pesado) ----------
+      if (reqIp && rlHit(`ip:${reqIp}`, RL_IP_MAX)) {
+        console.warn('[meta-webhook] 🚫 Rate limit IP', reqIp);
+        return new Response('Too Many Requests', {
+          status: 429,
+          headers: { ...corsHeaders, 'Retry-After': '60' },
+        });
+      }
 
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -326,6 +355,13 @@ serve(async (req) => {
         for (const change of changes) {
           const field = change.field;
           const value = change.value;
+
+          // ---------- Rate limit por evento (WABA + tipo) ----------
+          if (rlHit(`evt:${wabaId}:${field}`, RL_EVENT_MAX)) {
+            console.warn(`[meta-webhook] 🚫 Rate limit evento ${field} em WABA ${wabaId} — descartando`);
+            continue;
+          }
+
           console.log(`[meta-webhook] WABA ${wabaId} | field: ${field}`);
 
           if (field === 'messages') {
