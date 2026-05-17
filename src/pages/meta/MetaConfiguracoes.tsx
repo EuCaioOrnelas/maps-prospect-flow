@@ -283,6 +283,7 @@ function WebhookPanel() {
   const [validatingId, setValidatingId] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, ValidationState>>({});
   const [testingAll, setTestingAll] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
