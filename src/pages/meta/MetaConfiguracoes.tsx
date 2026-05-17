@@ -296,7 +296,7 @@ const EVENT_DETAILS: Record<string, { label: string; why: string; required: bool
 
 type ValidationState = { status: "idle" | "ok" | "error"; detail?: string };
 
-function WebhookPanel() {
+function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending" | null) => void }) {
   const [data, setData] = useState<WebhookData | null>(null);
   const [loading, setLoading] = useState(true);
   const [validatingId, setValidatingId] = useState<string | null>(null);
