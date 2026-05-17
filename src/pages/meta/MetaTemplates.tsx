@@ -34,7 +34,7 @@ const COLOR_PALETTE = [
   "#EF4444", "#EC4899", "#6366F1", "#14B8A6", "#64748B",
 ];
 
-export default function MetaTemplates() {
+export default function MetaTemplates({ embedded = false }: { embedded?: boolean } = {}) {
   const { user } = useAuth();
   const { toast } = useToast();
 
