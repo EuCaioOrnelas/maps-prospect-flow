@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
+import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
 import { cn } from "@/lib/utils";
 
 interface MobileNavProps {
@@ -45,6 +46,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
   const { trialDaysRemaining, isTrialing, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
   const can = (key: FeatureKey) => isAdmin || profileHasFeature(authProfile as any, key);
+  const canEvolution = isAdmin || isLegacyEvolutionUser(authProfile as any);
 
   const isFreePlan = !profile?.plan || profile.plan === "free";
   const showTrialIndicator = isTrialing && trialDaysRemaining > 0;
@@ -206,8 +208,8 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                   </>
                 )}
 
-                {/* Campanha */}
-                {can("campaigns") && (
+                {/* Campanha — Evolution só para usuários legacy */}
+                {can("campaigns") && canEvolution && (
                   <>
                     <SectionHeader icon={Megaphone} label="Campanha" sectionKey="campanhas" />
                     {openSection === "campanhas" && (

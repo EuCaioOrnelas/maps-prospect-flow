@@ -41,6 +41,7 @@ import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDia
 import { SidebarNavItem } from "./SidebarNavItem";
 import logoIconNew from "@/assets/logo-icon-new.png";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
+import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
 
 interface AppSidebarProps {
   profile?: {
@@ -68,6 +69,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const { signOut, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
   const can = (key: FeatureKey) => isAdmin || profileHasFeature(authProfile as any, key);
+  const canEvolution = isAdmin || isLegacyEvolutionUser(authProfile as any);
   
   const { hasDisconnectedWarming, disconnectedNumbers } = useWarmingConnectionAlert();
   const { unreadCount: unreadAnnouncements, disconnectedNumbers: disconnectedNumberAlerts, dismissDisconnectionAlert } = useUnreadAnnouncements();
@@ -415,8 +417,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               )}
             </li>
 
-            {/* Campanhas with submenu */}
-            {can("campaigns") && (
+            {/* Campanhas with submenu — Evolution só para usuários legacy */}
+            {can("campaigns") && canEvolution && (
             <li data-tour="sidebar-campanhas">
               <SidebarNavItem
                 title="Campanha"
