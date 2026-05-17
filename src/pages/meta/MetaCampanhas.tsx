@@ -175,6 +175,9 @@ export default function MetaCampanhas() {
             <TabsTrigger value="templates" className="text-xs gap-1.5 data-[state=active]:bg-background">
               <FileText size={13} /> Templates
             </TabsTrigger>
+            <TabsTrigger value="reabertura" className="text-xs gap-1.5 data-[state=active]:bg-background">
+              <RotateCcw size={13} /> Reabertura
+            </TabsTrigger>
           </TabsList>
         </div>
 
