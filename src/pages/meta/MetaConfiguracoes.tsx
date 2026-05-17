@@ -169,8 +169,8 @@ export default function MetaConfiguracoes() {
             <div className="divide-y divide-border/60">
               <ToggleRow
                 icon={WifiOff}
-                iconColor="text-rose-500"
-                iconBg="bg-rose-500/10"
+                iconColor="text-primary"
+                iconBg="bg-primary/10"
                 title="Número desconectado"
                 desc="Avisar quando um número WhatsApp Meta perder a conexão (token expirado, etc.)"
                 checked={settings.notify_number_disconnected}
@@ -178,8 +178,8 @@ export default function MetaConfiguracoes() {
               />
               <ToggleRow
                 icon={TrendingDown}
-                iconColor="text-amber-500"
-                iconBg="bg-amber-500/10"
+                iconColor="text-primary"
+                iconBg="bg-primary/10"
                 title="Queda de qualidade do número"
                 desc="Avisar quando o quality rating de um número cair (amarelo ou vermelho)"
                 checked={settings.notify_quality_drop}
@@ -187,8 +187,8 @@ export default function MetaConfiguracoes() {
               />
               <ToggleRow
                 icon={Megaphone}
-                iconColor="text-orange-500"
-                iconBg="bg-orange-500/10"
+                iconColor="text-primary"
+                iconBg="bg-primary/10"
                 title="Problemas em campanhas"
                 desc="Falhas no início, pausas inesperadas ou alta taxa de erro nos disparos"
                 checked={settings.notify_campaign_issues}
@@ -221,8 +221,8 @@ export default function MetaConfiguracoes() {
             <div className="divide-y divide-border/60">
               <ToggleRow
                 icon={Lock}
-                iconColor="text-emerald-500"
-                iconBg="bg-emerald-500/10"
+                iconColor="text-primary"
+                iconBg="bg-primary/10"
                 title="Validação de assinatura (HMAC)"
                 desc="Rejeitar webhooks que não vierem assinados pela Meta. Bloqueia payloads falsificados."
                 checked={settings.security_hmac_required}
@@ -230,8 +230,8 @@ export default function MetaConfiguracoes() {
               />
               <ToggleRow
                 icon={Shield}
-                iconColor="text-sky-500"
-                iconBg="bg-sky-500/10"
+                iconColor="text-primary"
+                iconBg="bg-primary/10"
                 title="Allowlist de IPs da Meta"
                 desc="Aceitar callbacks apenas de IPs oficiais da Meta. Bloqueia origens desconhecidas."
                 checked={settings.security_ip_allowlist}
@@ -239,8 +239,8 @@ export default function MetaConfiguracoes() {
               />
               <ToggleRow
                 icon={FileCheck2}
-                iconColor="text-violet-500"
-                iconBg="bg-violet-500/10"
+                iconColor="text-primary"
+                iconBg="bg-primary/10"
                 title="Registro de auditoria"
                 desc="Registrar toda alteração crítica (conexões, tokens, campanhas) para consulta posterior."
                 checked={settings.security_audit_log}
@@ -313,8 +313,8 @@ const META_TESTS: MetaTestType[] = [
     label: "Número desconectado",
     desc: "Alerta de número Meta que perdeu conexão",
     icon: WifiOff,
-    iconColor: "text-rose-500",
-    iconBg: "bg-rose-500/10",
+    iconColor: "text-primary",
+    iconBg: "bg-primary/10",
     payload: { phone_number: "+55 11 90000-0000", business_name: "Empresa de Teste" },
   },
   {
@@ -322,8 +322,8 @@ const META_TESTS: MetaTestType[] = [
     label: "Queda de qualidade",
     desc: "Quality rating caiu para amarelo ou vermelho",
     icon: TrendingDown,
-    iconColor: "text-amber-500",
-    iconBg: "bg-amber-500/10",
+    iconColor: "text-primary",
+    iconBg: "bg-primary/10",
     payload: { phone_number: "+55 11 90000-0000", business_name: "Empresa de Teste", old_quality: "GREEN", new_quality: "YELLOW" },
   },
   {
@@ -331,8 +331,8 @@ const META_TESTS: MetaTestType[] = [
     label: "Problemas em campanhas",
     desc: "Falha no início ou alta taxa de erro",
     icon: Megaphone,
-    iconColor: "text-orange-500",
-    iconBg: "bg-orange-500/10",
+    iconColor: "text-primary",
+    iconBg: "bg-primary/10",
     payload: { campaign_name: "Campanha de Teste", reason: "Número não conectado ao WhatsApp Meta" },
   },
   {
