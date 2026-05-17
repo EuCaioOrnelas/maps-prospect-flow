@@ -108,9 +108,3 @@ export const templates = [
   { id: "t6", name: "recuperacao_lead", internal: "recuperação", metaCat: "MARKETING", lang: "pt_BR", status: "rejected", score: 0 },
 ];
 
-export const reaberturaFlows = [
-  { id: "r1", name: "Confirmar reunião", template: "confirma_reuniao", delay: "2h antes", active: true, sent: 124, opened: 98 },
-  { id: "r2", name: "Retomar contato", template: "reabertura_24h", delay: "48h", active: true, sent: 312, opened: 184 },
-  { id: "r3", name: "Enviar proposta", template: "lembrete_proposta", delay: "24h", active: false, sent: 0, opened: 0 },
-  { id: "r4", name: "Lembrete comercial", template: "followup_2_dias", delay: "72h", active: true, sent: 88, opened: 41 },
-];
