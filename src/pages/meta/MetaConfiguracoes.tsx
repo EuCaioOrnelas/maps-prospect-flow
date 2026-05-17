@@ -119,19 +119,19 @@ export default function MetaConfiguracoes() {
       <MetaPageHeader
         title="Configurações"
         description="Escolha quais alertas receber por e-mail e as regras de segurança da sua operação Meta."
-        actions={
+        titleBadge={
           webhookStatus ? (
             <div
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
                 webhookStatus === "ok"
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                   : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400"
               }`}
             >
               {webhookStatus === "ok" ? (
-                <CheckCircle2 className="h-3.5 w-3.5" />
+                <CheckCircle2 className="h-3 w-3" />
               ) : (
-                <AlertTriangle className="h-3.5 w-3.5" />
+                <AlertTriangle className="h-3 w-3" />
               )}
               <span>{webhookStatus === "ok" ? "Webhooks ativos" : "Webhook obrigatório pendente"}</span>
             </div>
