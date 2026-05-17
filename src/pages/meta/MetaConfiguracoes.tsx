@@ -86,24 +86,7 @@ export default function MetaConfiguracoes() {
     }
   };
 
-  const sendTestEmail = async () => {
-    if (!user) return;
-    setSendingTest(true);
-    const { error } = await supabase.functions.invoke("send-email", {
-      body: {
-        user_id: user.id,
-        email_type: "META_NUMBER_DISCONNECTED",
-        payload: {
-          phone_number: "+55 11 90000-0000",
-          business_name: "E-mail de teste",
-        },
-        idempotency_key: `meta-test-${user.id}-${Date.now()}`,
-      },
-    });
-    setSendingTest(false);
-    if (error) toast.error("Falha ao enviar e-mail de teste");
-    else toast.success("E-mail de teste enviado! Verifique sua caixa de entrada.");
-  };
+  // Test sending handled inside MetaTestEmailsDialog
 
   if (loading) {
     return (
