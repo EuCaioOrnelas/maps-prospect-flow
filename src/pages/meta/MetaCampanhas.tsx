@@ -29,6 +29,8 @@ import type { DateRange } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useWebhookGate } from "@/hooks/useWebhookGate";
+import { WebhookRequiredDialog } from "@/components/meta/WebhookRequiredDialog";
 
 interface Category { id: string; name: string; color: string; }
 interface Template { id: string; name: string; body: string; language: string; category_id: string | null; }
