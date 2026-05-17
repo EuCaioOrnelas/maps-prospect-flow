@@ -558,22 +558,20 @@ function CategoryForm({
         </div>
 
         {(customOpen || !isPaletteColor) && (
-          <div className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-2">
+          <div className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-3">
             <p className="text-[11px] text-muted-foreground">Cor personalizada</p>
+            <div className="flex justify-center">
+              <HexColorPicker
+                color={/^#[0-9a-f]{6}$/i.test(color) ? color : "#000000"}
+                onChange={setColor}
+                style={{ width: "100%", maxWidth: 240, height: 160 }}
+              />
+            </div>
             <div className="flex items-center gap-2">
-              <label
-                className="relative h-9 w-9 shrink-0 rounded-md border border-border overflow-hidden cursor-pointer"
+              <span
+                className="h-9 w-9 shrink-0 rounded-md border border-border"
                 style={{ background: color }}
-                title="Abrir seletor de cores"
-              >
-                <input
-                  type="color"
-                  value={/^#[0-9a-f]{6}$/i.test(color) ? color : "#000000"}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  aria-label="Selecionar cor"
-                />
-              </label>
+              />
               <Input
                 value={color}
                 onChange={(e) => {
