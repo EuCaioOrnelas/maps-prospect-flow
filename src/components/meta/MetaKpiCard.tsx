@@ -80,7 +80,7 @@ export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, to
           <span
             className={cn(
               "inline-flex items-center gap-0.5 font-semibold tabular-nums px-1.5 py-0.5 rounded-md text-[11px]",
-              positive && "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
+              positive && "text-primary bg-primary/10",
               negative && "text-rose-600 dark:text-rose-400 bg-rose-500/10",
               neutral && "text-muted-foreground bg-muted/60"
             )}
