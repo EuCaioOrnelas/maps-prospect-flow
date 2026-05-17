@@ -389,7 +389,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     {[
                       { title: "Dashboard", url: "/meta", icon: LayoutDashboardIcon },
                       { title: "Campanhas", url: "/meta/campanhas", icon: MegaphoneIcon },
-                      { title: "Templates", url: "/meta/templates", icon: FileText },
                       { title: "Números & WABA", url: "/meta/numeros", icon: Phone },
                       { title: "Reabertura", url: "/meta/reabertura", icon: RotateCcw },
                       { title: "Configurações", url: "/meta/configuracoes", icon: SettingsIcon },
