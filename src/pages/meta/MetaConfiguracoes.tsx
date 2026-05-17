@@ -248,6 +248,8 @@ export default function MetaConfiguracoes() {
               />
             </div>
           </Card>
+
+          <MetaSecurityActivity userId={user?.id} />
         </TabsContent>
       </Tabs>
 
@@ -354,6 +356,84 @@ const META_TESTS: MetaTestType[] = [
     },
   },
 ];
+
+function MetaSecurityActivity({ userId }: { userId?: string }) {
+  const [events, setEvents] = useState<Array<{ id: string; action: string; created_at: string; ip_address: string | null; metadata: any; resource_id: string | null }>>([]);
+  const [loading, setLoading] = useState(false);
+
+  const load = async () => {
+    if (!userId) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from("security_audit_log")
+      .select("id, action, created_at, ip_address, metadata, resource_id")
+      .eq("user_id", userId)
+      .eq("resource_type", "meta_webhook")
+      .order("created_at", { ascending: false })
+      .limit(15);
+    setEvents((data as any) || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [userId]);
+
+  const labelFor = (action: string) => {
+    if (action === "meta_webhook_accepted") return { label: "Webhook aceito", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10", Icon: CheckCircle2 };
+    if (action === "meta_webhook_rejected_hmac_invalid") return { label: "Assinatura HMAC inválida", color: "text-destructive", bg: "bg-destructive/10", Icon: XCircle };
+    if (action === "meta_webhook_rejected_hmac_missing") return { label: "Assinatura HMAC ausente", color: "text-destructive", bg: "bg-destructive/10", Icon: XCircle };
+    if (action === "meta_webhook_rejected_ip") return { label: "IP fora da allowlist Meta", color: "text-destructive", bg: "bg-destructive/10", Icon: XCircle };
+    return { label: action, color: "text-muted-foreground", bg: "bg-muted", Icon: AlertTriangle };
+  };
+
+  return (
+    <Card className="border-border/60 overflow-hidden">
+      <div className="flex items-center justify-between p-5 border-b border-border/60 bg-muted/20">
+        <div>
+          <p className="text-sm font-semibold flex items-center gap-2">
+            <ListChecks className="h-4 w-4 text-primary" />
+            Atividade de segurança
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Últimos 15 eventos registrados pelas suas proteções Meta (HMAC, IP allowlist, auditoria).
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={load} disabled={loading} className="gap-2 shrink-0">
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+          Atualizar
+        </Button>
+      </div>
+      {events.length === 0 ? (
+        <div className="p-8 text-center text-xs text-muted-foreground">
+          Nenhum evento registrado ainda. Eles aparecerão aqui assim que a Meta enviar webhooks para sua operação.
+        </div>
+      ) : (
+        <div className="divide-y divide-border/60">
+          {events.map((e) => {
+            const m = labelFor(e.action);
+            return (
+              <div key={e.id} className="flex items-center justify-between gap-3 px-5 py-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${m.bg}`}>
+                    <m.Icon className={`h-4 w-4 ${m.color}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-medium leading-tight ${m.color}`}>{m.label}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                      {new Date(e.created_at).toLocaleString("pt-BR")}
+                      {e.ip_address ? ` · IP ${e.ip_address}` : ""}
+                      {e.resource_id ? ` · WABA ${String(e.resource_id).slice(0, 8)}…` : ""}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 
 function MetaTestEmailsDialog({
   open,
