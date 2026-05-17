@@ -181,7 +181,10 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
       });
       const daily = Object.entries(days)
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([k, v]) => ({ day: k.slice(5), ...v }));
+        .map(([k, v]) => {
+          const [, mm, dd] = k.split('-');
+          return { day: `${dd}/${mm}`, ...v };
+        });
 
       const inbound = chatInboundRes.data || [];
       const convFirst: Record<string, string> = {};
