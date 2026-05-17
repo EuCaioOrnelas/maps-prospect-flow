@@ -5,7 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, ShieldCheck, Loader2, Mail } from "lucide-react";
+import { Bell, ShieldCheck, Loader2, Mail, Webhook, Copy, CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -113,8 +114,12 @@ export default function MetaConfiguracoes() {
         description="Escolha quais alertas receber por e-mail e as regras de segurança da sua operação Meta."
       />
 
-      <Tabs defaultValue="notifications">
+      <Tabs defaultValue="webhook">
         <TabsList className="bg-muted/40">
+          <TabsTrigger value="webhook">
+            <Webhook size={13} className="mr-1.5" />
+            Webhook
+          </TabsTrigger>
           <TabsTrigger value="notifications">
             <Bell size={13} className="mr-1.5" />
             Notificações
@@ -124,6 +129,11 @@ export default function MetaConfiguracoes() {
             Segurança
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="webhook" className="mt-5 space-y-4">
+          <WebhookPanel />
+        </TabsContent>
+
 
         <TabsContent value="notifications" className="mt-5 space-y-4">
           <Card className="p-5 border-border/60 space-y-3">
@@ -229,6 +239,149 @@ function ToggleRow({
         <p className="text-xs text-muted-foreground">{desc}</p>
       </div>
       <Switch checked={checked} onCheckedChange={onChange} />
+    </div>
+  );
+}
+
+type WebhookData = {
+  callback_url: string;
+  verify_token: string;
+  connections: Array<{
+    id: string;
+    display_phone_number: string | null;
+    business_name: string | null;
+    status: string;
+    webhook_verified_at: string | null;
+  }>;
+};
+
+function WebhookPanel() {
+  const [data, setData] = useState<WebhookData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [validatingId, setValidatingId] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    const { data: res, error } = await supabase.functions.invoke("meta-webhook-config", {
+      body: { action: "info" },
+    });
+    setLoading(false);
+    if (error) {
+      toast.error("Falha ao carregar configuração do webhook");
+      return;
+    }
+    setData(res as WebhookData);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const copy = async (label: string, value: string) => {
+    await navigator.clipboard.writeText(value);
+    toast.success(`${label} copiado`);
+  };
+
+  const validate = async (connectionId: string) => {
+    setValidatingId(connectionId);
+    const { data: res, error } = await supabase.functions.invoke("meta-webhook-config", {
+      body: { action: "validate", connection_id: connectionId },
+    });
+    setValidatingId(null);
+    if (error || !(res as any)?.ok) {
+      toast.error((res as any)?.detail ?? "Falha na validação do webhook");
+      return;
+    }
+    toast.success("Webhook validado com sucesso!");
+    load();
+  };
+
+  if (loading || !data) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card className="p-5 border-border/60 space-y-4">
+        <div className="pb-2 border-b border-border/60">
+          <p className="text-sm font-semibold">Configuração do Webhook Meta</p>
+          <p className="text-xs text-muted-foreground">
+            Cole estes valores em <strong>Meta Business Manager → Apps → Webhooks → WhatsApp Business Account</strong> para receber mensagens, status de templates e atualizações de conta.
+          </p>
+        </div>
+
+        <Field label="Callback URL" value={data.callback_url} onCopy={() => copy("URL", data.callback_url)} />
+        <Field label="Verify Token" value={data.verify_token} mono onCopy={() => copy("Token", data.verify_token)} />
+
+        <div className="rounded-md bg-muted/40 border border-border/60 p-3 text-xs text-muted-foreground space-y-1.5">
+          <p className="font-medium text-foreground">Eventos recomendados:</p>
+          <ul className="list-disc list-inside space-y-0.5">
+            <li><code className="text-foreground">messages</code> — mensagens recebidas e status de envio</li>
+            <li><code className="text-foreground">message_template_status_update</code> — aprovação/rejeição de templates</li>
+            <li><code className="text-foreground">account_update</code> — quality rating e mudanças no número</li>
+          </ul>
+        </div>
+      </Card>
+
+      <Card className="p-5 border-border/60 space-y-3">
+        <div className="pb-2 border-b border-border/60">
+          <p className="text-sm font-semibold">Status por número conectado</p>
+          <p className="text-xs text-muted-foreground">
+            Após configurar na Meta, clique em <strong>Validar</strong>. Sem isso o Chat e as Campanhas ficam bloqueados.
+          </p>
+        </div>
+
+        {data.connections.length === 0 ? (
+          <div className="text-center text-xs text-muted-foreground py-6">
+            Nenhum número Meta conectado ainda.
+          </div>
+        ) : (
+          data.connections.map((c) => {
+            const verified = !!c.webhook_verified_at;
+            return (
+              <div key={c.id} className="flex items-center justify-between p-3 rounded-lg border border-border/60">
+                <div className="min-w-0 pr-4">
+                  <p className="text-sm font-medium truncate">{c.display_phone_number ?? "—"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{c.business_name ?? "Sem nome"}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {verified ? (
+                    <Badge variant="secondary" className="gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                      <CheckCircle2 className="h-3 w-3" /> Validado
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20">
+                      <AlertTriangle className="h-3 w-3" /> Pendente
+                    </Badge>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => validate(c.id)} disabled={validatingId === c.id} className="gap-1.5">
+                    {validatingId === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                    {verified ? "Revalidar" : "Validar"}
+                  </Button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function Field({ label, value, mono, onCopy }: { label: string; value: string; mono?: boolean; onCopy: () => void }) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="flex items-center gap-2">
+        <code className={`flex-1 px-3 py-2 rounded-md bg-muted/40 border border-border/60 text-xs truncate ${mono ? "font-mono" : ""}`}>
+          {value || "—"}
+        </code>
+        <Button size="sm" variant="outline" onClick={onCopy} className="gap-1.5">
+          <Copy className="h-3 w-3" /> Copiar
+        </Button>
+      </div>
     </div>
   );
 }
