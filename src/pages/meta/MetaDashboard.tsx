@@ -200,45 +200,59 @@ export default function MetaDashboard() {
               ) : (
                 <TooltipProvider delayDuration={150}>
                   <div className="flex flex-col items-center gap-3">
-                    {data.funnel.map((s, i) => {
+                    {(() => {
                       const base = data.funnel[0]?.value || 1;
-                      // Largura proporcional aos Captados. minWidth garante que o conteúdo
-                      // (número + %) nunca seja escondido nas etapas menores.
-                      const widthPct = i === 0 ? 100 : Math.max((s.value / base) * 100, 2);
-                      const convPct = i === 0 ? 100 : (s.value / base) * 100;
-                      const hint = FUNNEL_HINTS[s.stage] ?? `Total de ${s.stage.toLowerCase()} no período.`;
-                      return (
-                        <div key={s.stage} className="w-full flex flex-col items-center">
-                          <div className="flex items-center gap-1.5 mb-1.5">
-                            <p className="text-sm font-semibold text-foreground">{s.stage}</p>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button type="button" className="text-muted-foreground/70 hover:text-foreground transition-colors" aria-label={`Como é calculado: ${s.stage}`}>
-                                  <Info size={12} />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
-                                {hint}
-                                <span className="block mt-1 text-muted-foreground">
-                                  % é calculada sobre <b>Captados</b> ({fmtN(base)}).
-                                </span>
-                              </TooltipContent>
-                            </Tooltip>
+                      const nonZero = data.funnel.filter((s) => s.value > 0).map((s) => s.value);
+                      const minVal = nonZero.length ? Math.min(...nonZero) : 1;
+                      // Escala não-linear: garante que o menor valor tenha largura suficiente
+                      // p/ exibir o texto, mas mantém a ordem proporcional (20 > 14 > 6).
+                      const MIN_PCT = 16; // largura mínima da menor barra
+                      const range = Math.max(base - minVal, 1);
+                      return data.funnel.map((s) => {
+                        const convPct = (s.value / base) * 100;
+                        let widthPct: number;
+                        if (s.value <= 0) widthPct = MIN_PCT;
+                        else if (s.value >= base) widthPct = 100;
+                        else widthPct = MIN_PCT + ((s.value - minVal) / range) * (100 - MIN_PCT);
+                        // Fonte adaptativa: barras pequenas usam tamanho menor p/ não estourar
+                        const isCompact = widthPct < 28;
+                        const numClass = isCompact ? "text-sm" : "text-base";
+                        const pctClass = isCompact ? "text-[10px]" : "text-[11px]";
+                        const padClass = isCompact ? "px-2.5" : "px-4";
+                        const hint = FUNNEL_HINTS[s.stage] ?? `Total de ${s.stage.toLowerCase()} no período.`;
+                        return (
+                          <div key={s.stage} className="w-full flex flex-col items-center">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <p className="text-sm font-semibold text-foreground">{s.stage}</p>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button type="button" className="text-muted-foreground/70 hover:text-foreground transition-colors" aria-label={`Como é calculado: ${s.stage}`}>
+                                    <Info size={12} />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                                  {hint}
+                                  <span className="block mt-1 text-muted-foreground">
+                                    % é calculada sobre <b>Captados</b> ({fmtN(base)}).
+                                  </span>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                            <div
+                              className={`h-11 rounded-full bg-gradient-to-r from-primary via-primary/85 to-primary/55 flex items-center justify-center gap-1.5 transition-all shadow-sm whitespace-nowrap ${padClass}`}
+                              style={{ width: `${widthPct}%` }}
+                            >
+                              <span className={`${numClass} font-bold text-white tabular-nums leading-none`}>
+                                {fmtN(s.value)}
+                              </span>
+                              <span className={`${pctClass} font-semibold text-white tabular-nums leading-none`}>
+                                · {convPct.toFixed(1)}%
+                              </span>
+                            </div>
                           </div>
-                          <div
-                            className="h-11 rounded-full bg-gradient-to-r from-primary via-primary/85 to-primary/55 flex items-center justify-center gap-1.5 transition-all shadow-sm px-4 whitespace-nowrap"
-                            style={{ width: `${widthPct}%`, minWidth: 110 }}
-                          >
-                            <span className="text-base font-bold text-white tabular-nums leading-none">
-                              {fmtN(s.value)}
-                            </span>
-                            <span className="text-[11px] font-semibold text-white tabular-nums leading-none">
-                              · {convPct.toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                 </TooltipProvider>
               )}
