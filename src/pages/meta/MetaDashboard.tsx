@@ -226,13 +226,13 @@ export default function MetaDashboard() {
                             </Tooltip>
                           </div>
                           <div
-                            className="h-11 rounded-full bg-gradient-to-r from-primary via-primary/85 to-primary/55 flex items-center justify-center gap-1.5 transition-all shadow-sm px-3 whitespace-nowrap overflow-visible"
-                            style={{ width: `${widthPct}%` }}
+                            className="h-11 rounded-full bg-gradient-to-r from-primary via-primary/85 to-primary/55 flex items-center justify-center gap-1.5 transition-all shadow-sm px-4 whitespace-nowrap"
+                            style={{ width: `${widthPct}%`, minWidth: 110 }}
                           >
                             <span className="text-base font-bold text-white tabular-nums leading-none">
                               {fmtN(s.value)}
                             </span>
-                            <span className="text-[11px] font-semibold text-white/90 tabular-nums leading-none">
+                            <span className="text-[11px] font-semibold text-white tabular-nums leading-none">
                               · {convPct.toFixed(1)}%
                             </span>
                           </div>
