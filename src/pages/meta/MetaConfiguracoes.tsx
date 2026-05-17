@@ -6,7 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, ShieldCheck, Loader2, Mail, Webhook, Copy, CheckCircle2, AlertTriangle, RefreshCw, XCircle, PlayCircle, ChevronDown, KeyRound, ListChecks } from "lucide-react";
+import { Bell, ShieldCheck, Loader2, Mail, Webhook, Copy, CheckCircle2, AlertTriangle, RefreshCw, XCircle, PlayCircle, ChevronDown, KeyRound, ListChecks, WifiOff, TrendingDown, Megaphone, BarChart3, Send, FlaskConical, Lock, Shield, FileCheck2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,7 +43,7 @@ export default function MetaConfiguracoes() {
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [sendingTest, setSendingTest] = useState(false);
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [webhookStatus, setWebhookStatus] = useState<"ok" | "pending" | null>(null);
 
   useEffect(() => {
@@ -85,24 +86,7 @@ export default function MetaConfiguracoes() {
     }
   };
 
-  const sendTestEmail = async () => {
-    if (!user) return;
-    setSendingTest(true);
-    const { error } = await supabase.functions.invoke("send-email", {
-      body: {
-        user_id: user.id,
-        email_type: "META_NUMBER_DISCONNECTED",
-        payload: {
-          phone_number: "+55 11 90000-0000",
-          business_name: "E-mail de teste",
-        },
-        idempotency_key: `meta-test-${user.id}-${Date.now()}`,
-      },
-    });
-    setSendingTest(false);
-    if (error) toast.error("Falha ao enviar e-mail de teste");
-    else toast.success("E-mail de teste enviado! Verifique sua caixa de entrada.");
-  };
+  // Test sending handled inside MetaTestEmailsDialog
 
   if (loading) {
     return (
@@ -161,81 +145,113 @@ export default function MetaConfiguracoes() {
 
 
         <TabsContent value="notifications" className="mt-5 space-y-4">
-          <Card className="p-5 border-border/60 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-border/60">
-              <div>
-                <p className="text-sm font-semibold">Alertas por e-mail</p>
-                <p className="text-xs text-muted-foreground">
-                  Os alertas são enviados para <strong>{user?.email}</strong>.
+          <Card className="border-border/60 overflow-hidden">
+            <div className="flex items-start justify-between gap-4 p-5 border-b border-border/60 bg-muted/20">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-primary" />
+                  Alertas por e-mail
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enviados para <strong className="text-foreground">{user?.email}</strong>. Você controla cada tipo individualmente.
                 </p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={sendTestEmail}
-                disabled={sendingTest}
-                className="gap-2"
+                onClick={() => setTestDialogOpen(true)}
+                className="gap-2 shrink-0"
               >
-                {sendingTest ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
-                Enviar teste
+                <FlaskConical className="h-3.5 w-3.5" />
+                Testar alertas
               </Button>
             </div>
-            <ToggleRow
-              title="Número desconectado"
-              desc="Avisar quando um número WhatsApp Meta perder a conexão (token expirado, etc.)"
-              checked={settings.notify_number_disconnected}
-              onChange={(v) => updateSetting("notify_number_disconnected", v)}
-            />
-            <ToggleRow
-              title="Queda de qualidade do número"
-              desc="Avisar quando o quality rating de um número cair (amarelo ou vermelho)"
-              checked={settings.notify_quality_drop}
-              onChange={(v) => updateSetting("notify_quality_drop", v)}
-            />
-            <ToggleRow
-              title="Problemas em campanhas"
-              desc="Falhas no início, pausas inesperadas ou alta taxa de erro nos disparos"
-              checked={settings.notify_campaign_issues}
-              onChange={(v) => updateSetting("notify_campaign_issues", v)}
-            />
-            <ToggleRow
-              title="Resumo diário"
-              desc="Receba todo dia às 18h um resumo das mensagens enviadas, lidas e respondidas"
-              checked={settings.notify_daily_summary}
-              onChange={(v) => updateSetting("notify_daily_summary", v)}
-            />
+            <div className="divide-y divide-border/60">
+              <ToggleRow
+                icon={WifiOff}
+                iconColor="text-rose-500"
+                iconBg="bg-rose-500/10"
+                title="Número desconectado"
+                desc="Avisar quando um número WhatsApp Meta perder a conexão (token expirado, etc.)"
+                checked={settings.notify_number_disconnected}
+                onChange={(v) => updateSetting("notify_number_disconnected", v)}
+              />
+              <ToggleRow
+                icon={TrendingDown}
+                iconColor="text-amber-500"
+                iconBg="bg-amber-500/10"
+                title="Queda de qualidade do número"
+                desc="Avisar quando o quality rating de um número cair (amarelo ou vermelho)"
+                checked={settings.notify_quality_drop}
+                onChange={(v) => updateSetting("notify_quality_drop", v)}
+              />
+              <ToggleRow
+                icon={Megaphone}
+                iconColor="text-orange-500"
+                iconBg="bg-orange-500/10"
+                title="Problemas em campanhas"
+                desc="Falhas no início, pausas inesperadas ou alta taxa de erro nos disparos"
+                checked={settings.notify_campaign_issues}
+                onChange={(v) => updateSetting("notify_campaign_issues", v)}
+              />
+              <ToggleRow
+                icon={BarChart3}
+                iconColor="text-primary"
+                iconBg="bg-primary/10"
+                title="Resumo diário"
+                desc="Receba todo dia às 18h um resumo das mensagens enviadas, lidas e respondidas"
+                checked={settings.notify_daily_summary}
+                onChange={(v) => updateSetting("notify_daily_summary", v)}
+              />
+            </div>
           </Card>
         </TabsContent>
 
         <TabsContent value="security" className="mt-5 space-y-4">
-          <Card className="p-5 border-border/60 space-y-3">
-            <div className="pb-2 border-b border-border/60">
-              <p className="text-sm font-semibold">Proteções da integração Meta</p>
-              <p className="text-xs text-muted-foreground">
+          <Card className="border-border/60 overflow-hidden">
+            <div className="p-5 border-b border-border/60 bg-muted/20">
+              <p className="text-sm font-semibold flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                Proteções da integração Meta
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
                 Recomendamos manter todas ativas. Elas protegem sua operação contra acessos indevidos.
               </p>
             </div>
-            <ToggleRow
-              title="Validação de assinatura (HMAC)"
-              desc="Rejeitar webhooks que não vierem assinados pela Meta. Bloqueia payloads falsificados."
-              checked={settings.security_hmac_required}
-              onChange={(v) => updateSetting("security_hmac_required", v)}
-            />
-            <ToggleRow
-              title="Allowlist de IPs da Meta"
-              desc="Aceitar callbacks apenas de IPs oficiais da Meta. Bloqueia origens desconhecidas."
-              checked={settings.security_ip_allowlist}
-              onChange={(v) => updateSetting("security_ip_allowlist", v)}
-            />
-            <ToggleRow
-              title="Registro de auditoria"
-              desc="Registrar toda alteração crítica (conexões, tokens, campanhas) para consulta posterior."
-              checked={settings.security_audit_log}
-              onChange={(v) => updateSetting("security_audit_log", v)}
-            />
+            <div className="divide-y divide-border/60">
+              <ToggleRow
+                icon={Lock}
+                iconColor="text-emerald-500"
+                iconBg="bg-emerald-500/10"
+                title="Validação de assinatura (HMAC)"
+                desc="Rejeitar webhooks que não vierem assinados pela Meta. Bloqueia payloads falsificados."
+                checked={settings.security_hmac_required}
+                onChange={(v) => updateSetting("security_hmac_required", v)}
+              />
+              <ToggleRow
+                icon={Shield}
+                iconColor="text-sky-500"
+                iconBg="bg-sky-500/10"
+                title="Allowlist de IPs da Meta"
+                desc="Aceitar callbacks apenas de IPs oficiais da Meta. Bloqueia origens desconhecidas."
+                checked={settings.security_ip_allowlist}
+                onChange={(v) => updateSetting("security_ip_allowlist", v)}
+              />
+              <ToggleRow
+                icon={FileCheck2}
+                iconColor="text-violet-500"
+                iconBg="bg-violet-500/10"
+                title="Registro de auditoria"
+                desc="Registrar toda alteração crítica (conexões, tokens, campanhas) para consulta posterior."
+                checked={settings.security_audit_log}
+                onChange={(v) => updateSetting("security_audit_log", v)}
+              />
+            </div>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <MetaTestEmailsDialog open={testDialogOpen} onOpenChange={setTestDialogOpen} userId={user?.id} userEmail={user?.email} />
 
       {saving && (
         <div className="fixed bottom-4 right-4 flex items-center gap-2 text-xs text-muted-foreground bg-background/95 border border-border/60 rounded-md px-3 py-1.5 shadow">
@@ -251,20 +267,193 @@ function ToggleRow({
   desc,
   checked,
   onChange,
+  icon: Icon,
+  iconColor = "text-primary",
+  iconBg = "bg-primary/10",
 }: {
   title: string;
   desc: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  icon?: React.ComponentType<{ className?: string }>;
+  iconColor?: string;
+  iconBg?: string;
 }) {
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg border border-border/60">
-      <div className="min-w-0 pr-4">
-        <p className="text-sm font-medium">{title}</p>
-        <p className="text-xs text-muted-foreground">{desc}</p>
+    <div className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-muted/30 transition-colors">
+      <div className="flex items-start gap-3 min-w-0">
+        {Icon && (
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
+            <Icon className={`h-4 w-4 ${iconColor}`} />
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="text-sm font-medium leading-tight">{title}</p>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{desc}</p>
+        </div>
       </div>
-      <Switch checked={checked} onCheckedChange={onChange} />
+      <Switch checked={checked} onCheckedChange={onChange} className="shrink-0" />
     </div>
+  );
+}
+
+type MetaTestType = {
+  key: "META_NUMBER_DISCONNECTED" | "META_QUALITY_DROP" | "CAMPAIGN_FAILED_TO_START" | "META_DAILY_SUMMARY";
+  label: string;
+  desc: string;
+  icon: React.ComponentType<{ className?: string }>;
+  iconColor: string;
+  iconBg: string;
+  payload: Record<string, unknown>;
+};
+
+const META_TESTS: MetaTestType[] = [
+  {
+    key: "META_NUMBER_DISCONNECTED",
+    label: "Número desconectado",
+    desc: "Alerta de número Meta que perdeu conexão",
+    icon: WifiOff,
+    iconColor: "text-rose-500",
+    iconBg: "bg-rose-500/10",
+    payload: { phone_number: "+55 11 90000-0000", business_name: "Empresa de Teste" },
+  },
+  {
+    key: "META_QUALITY_DROP",
+    label: "Queda de qualidade",
+    desc: "Quality rating caiu para amarelo ou vermelho",
+    icon: TrendingDown,
+    iconColor: "text-amber-500",
+    iconBg: "bg-amber-500/10",
+    payload: { phone_number: "+55 11 90000-0000", business_name: "Empresa de Teste", old_quality: "GREEN", new_quality: "YELLOW" },
+  },
+  {
+    key: "CAMPAIGN_FAILED_TO_START",
+    label: "Problemas em campanhas",
+    desc: "Falha no início ou alta taxa de erro",
+    icon: Megaphone,
+    iconColor: "text-orange-500",
+    iconBg: "bg-orange-500/10",
+    payload: { campaign_name: "Campanha de Teste", reason: "Número não conectado ao WhatsApp Meta" },
+  },
+  {
+    key: "META_DAILY_SUMMARY",
+    label: "Resumo diário",
+    desc: "Resumo das últimas 24h da operação Meta",
+    icon: BarChart3,
+    iconColor: "text-primary",
+    iconBg: "bg-primary/10",
+    payload: {
+      period: new Date().toLocaleDateString("pt-BR"),
+      messages_sent: 342,
+      messages_delivered: 318,
+      messages_read: 251,
+      messages_failed: 4,
+      inbound_messages: 87,
+      active_numbers: 3,
+      new_conversations: 19,
+    },
+  },
+];
+
+function MetaTestEmailsDialog({
+  open,
+  onOpenChange,
+  userId,
+  userEmail,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  userId?: string;
+  userEmail?: string | null;
+}) {
+  const [statuses, setStatuses] = useState<Record<string, "idle" | "sending" | "success" | "error">>({});
+  const [sendingAll, setSendingAll] = useState(false);
+
+  const sendOne = async (t: MetaTestType) => {
+    if (!userId) return;
+    setStatuses((p) => ({ ...p, [t.key]: "sending" }));
+    const { error } = await supabase.functions.invoke("send-email", {
+      body: {
+        user_id: userId,
+        email_type: t.key,
+        payload: t.payload,
+        idempotency_key: `meta-test-${t.key}-${userId}-${Date.now()}`,
+      },
+    });
+    if (error) {
+      setStatuses((p) => ({ ...p, [t.key]: "error" }));
+      toast.error(`Falha ao enviar: ${t.label}`);
+    } else {
+      setStatuses((p) => ({ ...p, [t.key]: "success" }));
+      toast.success(`${t.label} enviado`);
+    }
+  };
+
+  const sendAll = async () => {
+    setSendingAll(true);
+    for (const t of META_TESTS) {
+      await sendOne(t);
+      await new Promise((r) => setTimeout(r, 600));
+    }
+    setSendingAll(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl bg-background border-border/60">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FlaskConical className="h-4 w-4 text-primary" />
+            Testar alertas Meta
+          </DialogTitle>
+          <DialogDescription>
+            Dispare cada alerta com dados de exemplo para <strong className="text-foreground">{userEmail}</strong>.
+            Use para conferir como cada e-mail chega na sua caixa.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="divide-y divide-border/60 rounded-lg border border-border/60 overflow-hidden">
+          {META_TESTS.map((t) => {
+            const status = statuses[t.key] || "idle";
+            return (
+              <div key={t.key} className="flex items-center justify-between gap-3 px-4 py-3 bg-card">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${t.iconBg}`}>
+                    <t.icon className={`h-4 w-4 ${t.iconColor}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium leading-tight">{t.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t.desc}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {status === "success" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                  {status === "error" && <XCircle className="h-4 w-4 text-destructive" />}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => sendOne(t)}
+                    disabled={status === "sending" || sendingAll}
+                    className="gap-1.5"
+                  >
+                    {status === "sending" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                    Enviar
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Fechar</Button>
+          <Button onClick={sendAll} disabled={sendingAll} className="gap-2">
+            {sendingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FlaskConical className="h-3.5 w-3.5" />}
+            Testar todos
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
