@@ -176,7 +176,7 @@ export default function MetaDashboard() {
                       </div>
                       <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
                         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-1">
-                        <span className="w-2 h-2 rounded-full" style={{ background: "hsl(199 89% 48%)" }} />
+                        <span className="w-2 h-2 rounded-full" style={{ background: "hsl(150 50% 75%)" }} />
                           Respostas
                         </div>
                         <div className="text-xl font-semibold text-foreground tabular-nums">{fmtN(totalRes)}</div>
@@ -200,7 +200,7 @@ export default function MetaDashboard() {
                     {/* Mini gráfico comparativo */}
                     <div className="h-36 -mx-1">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data.daily} margin={{ top: 4, right: 4, left: 4, bottom: 0 }} barCategoryGap="20%">
+                        <BarChart data={data.daily} margin={{ top: 4, right: 4, left: 4, bottom: 0 }} barCategoryGap="10%" barGap={2}>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
                           <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={20} />
                           <YAxis hide />
@@ -211,7 +211,7 @@ export default function MetaDashboard() {
                             itemStyle={{ color: "hsl(var(--foreground))" }}
                           />
                           <Bar dataKey="messages" name="Mensagens" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
-                          <Bar dataKey="responses" name="Respostas" fill="hsl(199 89% 48%)" radius={[3, 3, 0, 0]} />
+                          <Bar dataKey="responses" name="Respostas" fill="hsl(150 50% 75%)" radius={[3, 3, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
