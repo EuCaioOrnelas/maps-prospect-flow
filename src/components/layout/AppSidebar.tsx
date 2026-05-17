@@ -417,8 +417,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               )}
             </li>
 
-            {/* Campanhas with submenu */}
-            {can("campaigns") && (
+            {/* Campanhas with submenu — Evolution só para usuários legacy */}
+            {can("campaigns") && canEvolution && (
             <li data-tour="sidebar-campanhas">
               <SidebarNavItem
                 title="Campanha"
