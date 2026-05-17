@@ -115,7 +115,7 @@ serve(async (req) => {
       let ownerSettings: Array<{ user_id: string; security_hmac_required: boolean; security_ip_allowlist: boolean; security_audit_log: boolean; waba_id: string }> = [];
       if (wabaIds.length) {
         const { data: conns } = await supabase
-          .from('meta_connections')
+          .from('user_waba_connections')
           .select('user_id, waba_id')
           .in('waba_id', wabaIds);
         const userIds = Array.from(new Set((conns || []).map((c: any) => c.user_id)));
