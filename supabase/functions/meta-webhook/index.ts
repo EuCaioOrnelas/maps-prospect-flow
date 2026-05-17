@@ -108,36 +108,21 @@ serve(async (req) => {
       }
       console.log('[meta-webhook] Received:', JSON.stringify(body).substring(0, 500));
 
-      // Resolve owner(s) from WABA id(s) to check per-user security toggles
+      // Resolve owner(s) from WABA id(s) for audit logging.
+      // Security (HMAC + IP allowlist + audit) is ALWAYS enforced — not user-configurable.
       const wabaIds = Array.from(new Set(
         (body?.entry || []).map((e: any) => String(e?.id || '')).filter(Boolean)
       ));
-      let ownerSettings: Array<{ user_id: string; security_hmac_required: boolean; security_ip_allowlist: boolean; security_audit_log: boolean; waba_id: string }> = [];
+      let ownerSettings: Array<{ user_id: string; waba_id: string }> = [];
       if (wabaIds.length) {
         const { data: conns } = await supabase
           .from('user_waba_connections')
           .select('user_id, waba_id')
           .in('waba_id', wabaIds);
-        const userIds = Array.from(new Set((conns || []).map((c: any) => c.user_id)));
-        if (userIds.length) {
-          const { data: settings } = await supabase
-            .from('meta_user_settings')
-            .select('user_id, security_hmac_required, security_ip_allowlist, security_audit_log')
-            .in('user_id', userIds);
-          const byUser = new Map((settings || []).map((s: any) => [s.user_id, s]));
-          ownerSettings = (conns || []).map((c: any) => ({
-            user_id: c.user_id,
-            waba_id: c.waba_id,
-            security_hmac_required: byUser.get(c.user_id)?.security_hmac_required ?? true,
-            security_ip_allowlist: byUser.get(c.user_id)?.security_ip_allowlist ?? true,
-            security_audit_log: byUser.get(c.user_id)?.security_audit_log ?? true,
-          }));
-        }
+        ownerSettings = (conns || []).map((c: any) => ({ user_id: c.user_id, waba_id: c.waba_id }));
       }
-      const anyRequiresHmac = ownerSettings.some((o) => o.security_hmac_required);
-      const anyRequiresIp = ownerSettings.some((o) => o.security_ip_allowlist);
 
-      // ---------- 1) HMAC validation ----------
+      // ---------- 1) HMAC validation (mandatory when app secret configured) ----------
       let hmacStatus: 'verified' | 'missing' | 'invalid' | 'no_secret' = 'no_secret';
       if (META_APP_SECRET) {
         if (sigHeader) {
@@ -147,49 +132,45 @@ serve(async (req) => {
           hmacStatus = 'missing';
         }
       }
-      if (hmacStatus === 'invalid' || (hmacStatus === 'missing' && anyRequiresHmac)) {
+      if (hmacStatus === 'invalid' || hmacStatus === 'missing') {
         for (const o of ownerSettings) {
-          if (o.security_audit_log) {
-            await logSecurityEvent({
-              user_id: o.user_id, waba_id: o.waba_id,
-              action: hmacStatus === 'invalid' ? 'meta_webhook_rejected_hmac_invalid' : 'meta_webhook_rejected_hmac_missing',
-              extra: { reason: hmacStatus },
-            });
-          }
+          await logSecurityEvent({
+            user_id: o.user_id, waba_id: o.waba_id,
+            action: hmacStatus === 'invalid' ? 'meta_webhook_rejected_hmac_invalid' : 'meta_webhook_rejected_hmac_missing',
+            extra: { reason: hmacStatus },
+          });
         }
         console.warn('[meta-webhook] 🚫 Rejected — HMAC', hmacStatus);
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+        if (META_APP_SECRET) {
+          return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+        }
       }
 
-      // ---------- 2) IP allowlist (Meta CIDR ranges) ----------
+      // ---------- 2) IP allowlist (Meta CIDR ranges) — always enforced ----------
       const ipOk = !reqIp || ipInMetaRanges(reqIp);
-      if (!ipOk && anyRequiresIp) {
+      if (!ipOk) {
         for (const o of ownerSettings) {
-          if (o.security_audit_log) {
-            await logSecurityEvent({
-              user_id: o.user_id, waba_id: o.waba_id,
-              action: 'meta_webhook_rejected_ip',
-              extra: { ip: reqIp },
-            });
-          }
+          await logSecurityEvent({
+            user_id: o.user_id, waba_id: o.waba_id,
+            action: 'meta_webhook_rejected_ip',
+            extra: { ip: reqIp },
+          });
         }
         console.warn('[meta-webhook] 🚫 Rejected — IP', reqIp);
         return new Response('Forbidden', { status: 403, headers: corsHeaders });
       }
 
-      // ---------- 3) Audit log accepted webhook ----------
+      // ---------- 3) Audit log accepted webhook (always) ----------
       for (const o of ownerSettings) {
-        if (o.security_audit_log) {
-          await logSecurityEvent({
-            user_id: o.user_id, waba_id: o.waba_id,
-            action: 'meta_webhook_accepted',
-            extra: {
-              hmac: hmacStatus,
-              ip_in_meta_range: ipOk,
-              fields: Array.from(new Set((body?.entry || []).flatMap((e: any) => (e?.changes || []).map((c: any) => c.field)))),
-            },
-          });
-        }
+        await logSecurityEvent({
+          user_id: o.user_id, waba_id: o.waba_id,
+          action: 'meta_webhook_accepted',
+          extra: {
+            hmac: hmacStatus,
+            ip_in_meta_range: ipOk,
+            fields: Array.from(new Set((body?.entry || []).flatMap((e: any) => (e?.changes || []).map((c: any) => c.field)))),
+          },
+        });
       }
 
 
