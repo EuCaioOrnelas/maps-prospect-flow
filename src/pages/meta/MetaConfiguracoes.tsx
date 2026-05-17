@@ -283,7 +283,7 @@ function ToggleRow({
     <div className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-muted/30 transition-colors">
       <div className="flex items-start gap-3 min-w-0">
         {Icon && (
-          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
             <Icon className={`h-4 w-4 ${iconColor}`} />
           </div>
         )}
@@ -418,7 +418,7 @@ function MetaTestEmailsDialog({
             return (
               <div key={t.key} className="flex items-center justify-between gap-3 px-4 py-3 bg-card">
                 <div className="flex items-start gap-3 min-w-0">
-                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${t.iconBg}`}>
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${t.iconBg}`}>
                     <t.icon className={`h-4 w-4 ${t.iconColor}`} />
                   </div>
                   <div className="min-w-0">
