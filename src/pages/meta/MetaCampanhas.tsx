@@ -166,24 +166,12 @@ export default function MetaCampanhas() {
 
       <Tabs defaultValue="campanhas" className="space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <TabsList className="bg-muted/40 border border-border/60 p-1 h-10">
-            <TabsTrigger
-              value="campanhas"
-              className="text-xs gap-2 pl-1.5 pr-3 data-[state=active]:bg-background group"
-            >
-              <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-muted/60 text-muted-foreground transition-colors group-data-[state=active]:bg-primary/15 group-data-[state=active]:text-primary">
-                <Megaphone size={14} />
-              </span>
-              Campanhas
+          <TabsList className="bg-muted/40 border border-border/60 p-1 h-9">
+            <TabsTrigger value="campanhas" className="text-xs gap-1.5 data-[state=active]:bg-background">
+              <Megaphone size={13} /> Campanhas
             </TabsTrigger>
-            <TabsTrigger
-              value="templates"
-              className="text-xs gap-2 pl-1.5 pr-3 data-[state=active]:bg-background group"
-            >
-              <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-muted/60 text-muted-foreground transition-colors group-data-[state=active]:bg-primary/15 group-data-[state=active]:text-primary">
-                <FileText size={14} />
-              </span>
-              Templates
+            <TabsTrigger value="templates" className="text-xs gap-1.5 data-[state=active]:bg-background">
+              <FileText size={13} /> Templates
             </TabsTrigger>
           </TabsList>
         </div>
@@ -672,11 +660,15 @@ function CampaignDetailsDialog({
 function KpiTile({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
     <Card className="p-4 border-border/60">
-      <div className="flex items-center gap-2 text-muted-foreground mb-1.5">
-        <Icon size={13} />
-        <span className="text-[11px] uppercase tracking-wider">{label}</span>
+      <div className="flex items-center gap-3">
+        <span className="w-9 h-9 rounded-lg flex items-center justify-center bg-primary/10 text-primary shrink-0">
+          <Icon size={16} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground truncate">{label}</p>
+          <p className="text-lg font-semibold tabular-nums text-foreground truncate">{value}</p>
+        </div>
       </div>
-      <p className="text-lg font-semibold tabular-nums text-foreground">{value}</p>
     </Card>
   );
 }
@@ -878,7 +870,7 @@ function Chip({
     <button
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-all ${
-        active ? "bg-primary/15 text-primary border-primary/30" : "bg-background text-foreground border-border hover:border-primary/40"
+        active ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background text-foreground border-border hover:border-primary/40"
       }`}
     >
       {color && <span className="h-2 w-2 rounded-full" style={{ background: color }} />}

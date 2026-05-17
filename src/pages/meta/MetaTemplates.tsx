@@ -113,6 +113,14 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
 
   const handleSaveCategory = async (data: { name: string; color: string; }) => {
     if (!user) return;
+    const normalizedName = data.name.trim().toLowerCase();
+    const duplicate = categories.some(
+      (c) => c.name.trim().toLowerCase() === normalizedName && c.id !== editingCat?.id
+    );
+    if (duplicate) {
+      toast({ title: "Categoria duplicada", description: "Já existe uma categoria com esse nome.", variant: "destructive" });
+      return;
+    }
     if (editingCat) {
       const { error } = await supabase.from("wiize_template_categories").update(data).eq("id", editingCat.id);
       if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -136,14 +144,9 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
   };
 
   const headerActions = (
-    <>
-      <Button variant="outline" size="sm" onClick={() => { setEditingCat(null); setCatDialogOpen(true); }}>
-        <FolderPlus size={14} className="mr-1.5" /> Nova categoria
-      </Button>
-      <Button size="sm" onClick={() => { setEditing(null); setEditorOpen(true); }}>
-        <Plus size={14} className="mr-1.5" /> Novo template
-      </Button>
-    </>
+    <Button size="sm" onClick={() => { setEditing(null); setEditorOpen(true); }}>
+      <Plus size={14} className="mr-1.5" /> Novo template
+    </Button>
   );
 
   const body = (
@@ -158,25 +161,36 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
 
       {/* Filtros: chips de categoria + busca */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <CategoryChip active={filter === "all"} onClick={() => setFilter("all")}>
-            Todos <span className="ml-1.5 text-[10px] opacity-60">{templates.length}</span>
-          </CategoryChip>
-          <CategoryChip active={filter === "uncategorized"} onClick={() => setFilter("uncategorized")}>
-            Sem categoria
-          </CategoryChip>
-          {categories.map((c) => (
-            <CategoryChip
-              key={c.id}
-              active={filter === c.id}
-              color={c.color}
-              onClick={() => setFilter(c.id)}
-              onEdit={() => { setEditingCat(c); setCatDialogOpen(true); }}
-              onDelete={() => setPendingDeleteCat(c)}
-            >
-              {c.name}
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap py-1 -my-1 min-w-0 flex-1 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+            <CategoryChip active={filter === "all"} onClick={() => setFilter("all")}>
+              Todos <span className="ml-1.5 text-[10px] opacity-60">{templates.length}</span>
             </CategoryChip>
-          ))}
+            <CategoryChip active={filter === "uncategorized"} onClick={() => setFilter("uncategorized")}>
+              Sem categoria
+            </CategoryChip>
+            {categories.map((c) => (
+              <CategoryChip
+                key={c.id}
+                active={filter === c.id}
+                color={c.color}
+                onClick={() => setFilter(c.id)}
+                onEdit={() => { setEditingCat(c); setCatDialogOpen(true); }}
+                onDelete={() => setPendingDeleteCat(c)}
+              >
+                {c.name}
+              </CategoryChip>
+            ))}
+            <button
+              type="button"
+              onClick={() => { setEditingCat(null); setCatDialogOpen(true); }}
+              title="Nova categoria"
+              aria-label="Nova categoria"
+              className="h-8 w-8 shrink-0 rounded-full border-2 border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 flex items-center justify-center transition-colors"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
@@ -342,9 +356,9 @@ function CategoryChip({
     <div className="group relative inline-flex">
       <button
         onClick={onClick}
-        className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-all ${
+        className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-all shrink-0 ${
           active
-            ? "bg-primary/15 text-primary border-primary/30"
+            ? "bg-primary text-primary-foreground border-primary shadow-sm"
             : "bg-background text-foreground border-border hover:border-primary/40"
         }`}
       >
@@ -461,7 +475,7 @@ function CategoryForm({
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [color, setColor] = useState(initial?.color ?? COLOR_PALETTE[0]);
-  const canSave = name.trim().length > 1;
+  const canSave = name.trim().length > 1 && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color);
 
   return (
     <div className="space-y-4">
@@ -474,9 +488,31 @@ function CategoryForm({
         <div className="flex flex-wrap gap-2">
           {COLOR_PALETTE.map((c) => (
             <button key={c} type="button" onClick={() => setColor(c)}
-              className={`h-7 w-7 rounded-full border-2 transition-all ${color === c ? "border-foreground scale-110" : "border-transparent"}`}
+              className={`h-7 w-7 rounded-full border-2 transition-all ${color.toLowerCase() === c.toLowerCase() ? "border-foreground scale-110" : "border-transparent"}`}
               style={{ background: c }} />
           ))}
+        </div>
+        <div className="flex items-center gap-2 pt-2">
+          <div className="relative h-9 w-9 shrink-0 rounded-md border border-border overflow-hidden" style={{ background: color }}>
+            <input
+              type="color"
+              value={/^#[0-9a-f]{6}$/i.test(color) ? color : "#000000"}
+              onChange={(e) => setColor(e.target.value)}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              aria-label="Selecionar cor"
+            />
+          </div>
+          <Input
+            value={color}
+            onChange={(e) => {
+              let v = e.target.value.trim();
+              if (v && !v.startsWith("#")) v = "#" + v;
+              setColor(v);
+            }}
+            placeholder="#7C3AED"
+            className="h-9 font-mono text-xs uppercase"
+            maxLength={7}
+          />
         </div>
       </div>
       <DialogFooter>
