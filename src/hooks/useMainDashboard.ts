@@ -65,6 +65,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
     activeDays: 0,
     monthlyBreakdown: [] as MonthlyBreakdown[],
     leadsByDay: [] as { date: string; count: number }[],
+    funnel: [] as { stage: string; value: number }[],
   });
 
   useEffect(() => {
