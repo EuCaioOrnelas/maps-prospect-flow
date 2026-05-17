@@ -162,12 +162,26 @@ export default function MetaCampanhas() {
       <MetaPageHeader
         title="Campanhas"
         description="Crie campanhas a partir dos seus templates Wiize e acompanhe envios, respostas, custo e ROI em tempo real."
-        actions={
-          <Button size="sm" onClick={startNewCampaign}>
-            <Plus size={14} className="mr-1.5" /> Nova campanha
-          </Button>
-        }
       />
+
+      <Tabs defaultValue="campanhas" className="space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <TabsList className="bg-muted/40 border border-border/60 p-1 h-9">
+            <TabsTrigger value="campanhas" className="text-xs gap-1.5 data-[state=active]:bg-background">
+              <Megaphone size={13} /> Campanhas
+            </TabsTrigger>
+            <TabsTrigger value="templates" className="text-xs gap-1.5 data-[state=active]:bg-background">
+              <FileText size={13} /> Templates
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="campanhas" className="space-y-4 mt-0">
+          <div className="flex justify-end">
+            <Button size="sm" onClick={startNewCampaign}>
+              <Plus size={14} className="mr-1.5" /> Nova campanha
+            </Button>
+          </div>
 
       {/* KPIs */}
       {!loading && campaigns.length > 0 && (
