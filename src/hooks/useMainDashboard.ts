@@ -90,6 +90,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         numbersRes, warmingRes, incidentsRes, cplRes,
         allTimeSearchRes, profileRes,
         allTimeCampaignsRes,
+        leadsFunnelRes,
       ] = await Promise.all([
         supabase.from('search_history').select('results_count')
           .eq('user_id', user.id).gte('created_at', periodStart.toISOString()),
