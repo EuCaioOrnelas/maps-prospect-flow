@@ -24,8 +24,9 @@ import {
 import {
   DollarSign, MessageSquare, MessagesSquare, RotateCcw, Users, Reply,
   Percent, Briefcase, TrendingUp, Sparkles, Plus, FileText, Search,
-  LayoutDashboard, Wallet, Calendar as CalendarIcon, CheckCheck,
+  LayoutDashboard, Wallet, Calendar as CalendarIcon, CheckCheck, Info,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useMetaDashboard } from "@/hooks/useMetaDashboard";
 
@@ -41,6 +42,14 @@ const PRESETS = [
   { label: "30 dias", days: 30 },
   { label: "90 dias", days: 90 },
 ];
+
+const FUNNEL_HINTS: Record<string, string> = {
+  Captados: "Total de leads que entraram no CRM no período. É a base (100%) do funil.",
+  Analisados: "Leads que tiveram seu potencial classificado pela IA (campo opportunity_level preenchido).",
+  Enviados: "Leads que receberam pelo menos uma mensagem (first_message_sent = true).",
+  Respondeu: "Leads que responderam pelo menos uma mensagem do nosso lado.",
+  Oportunidades: "Leads classificados como alto potencial pela IA (opportunity_level = alto/muito_alto).",
+};
 
 // Variação % real vs período anterior. Só suprime quando não há base de
 // comparação (prev = 0) — qualquer valor calculado é exibido como está.
@@ -189,29 +198,49 @@ export default function MetaDashboard() {
               {data.funnel.every((s) => s.value === 0) ? (
                 <p className="text-xs text-muted-foreground text-center py-6">Nenhum dado de funil no período.</p>
               ) : (
-                <div className="flex flex-col items-center gap-3">
-                  {data.funnel.map((s, i) => {
-                    const base = data.funnel[0]?.value || 1;
-                    const pct = Math.max((s.value / base) * 100, 18);
-                    const convPct = i === 0 ? 100 : (s.value / base) * 100;
-                    return (
-                      <div key={s.stage} className="w-full flex flex-col items-center">
-                        <p className="text-sm font-semibold text-foreground mb-1.5">{s.stage}</p>
-                        <div
-                          className="h-11 rounded-full bg-gradient-to-r from-primary via-primary/85 to-primary/55 flex items-center justify-center gap-2 transition-all shadow-sm px-4"
-                          style={{ width: `${pct}%` }}
-                        >
-                          <span className="text-base font-bold text-primary-foreground tabular-nums">
-                            {fmtN(s.value)}
-                          </span>
-                          <span className="text-xs font-medium text-primary-foreground/85 tabular-nums">
-                            · {convPct.toFixed(1)}%
-                          </span>
+                <TooltipProvider delayDuration={150}>
+                  <div className="flex flex-col items-center gap-3">
+                    {data.funnel.map((s, i) => {
+                      const base = data.funnel[0]?.value || 1;
+                      // Largura proporcional ao número de Captados (base do funil).
+                      // Mínimo de 14% só para o texto caber sem quebrar.
+                      const widthPct = i === 0 ? 100 : Math.max((s.value / base) * 100, 14);
+                      const convPct = i === 0 ? 100 : (s.value / base) * 100;
+                      const hint = FUNNEL_HINTS[s.stage] ?? `Total de ${s.stage.toLowerCase()} no período.`;
+                      return (
+                        <div key={s.stage} className="w-full flex flex-col items-center">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <p className="text-sm font-semibold text-foreground">{s.stage}</p>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button type="button" className="text-muted-foreground/70 hover:text-foreground transition-colors" aria-label={`Como é calculado: ${s.stage}`}>
+                                  <Info size={12} />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                                {hint}
+                                <span className="block mt-1 text-muted-foreground">
+                                  % é calculada sobre <b>Captados</b> ({fmtN(base)}).
+                                </span>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <div
+                            className="h-11 rounded-full bg-gradient-to-r from-primary via-primary/85 to-primary/55 flex items-center justify-center gap-1.5 transition-all shadow-sm px-4 whitespace-nowrap"
+                            style={{ width: `${widthPct}%`, minWidth: 120 }}
+                          >
+                            <span className="text-base font-bold text-primary-foreground tabular-nums leading-none">
+                              {fmtN(s.value)}
+                            </span>
+                            <span className="text-[11px] font-semibold text-white/90 tabular-nums leading-none">
+                              · {convPct.toFixed(1)}%
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                </TooltipProvider>
               )}
             </Card>
 
