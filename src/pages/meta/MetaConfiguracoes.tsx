@@ -470,9 +470,14 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
 
       {/* CREDENCIAIS */}
       <Card className="p-5 border-border/60 space-y-4">
-        <div className="pb-2 border-b border-border/60">
-          <p className="text-sm font-semibold">Credenciais do webhook</p>
-          <p className="text-xs text-muted-foreground">Cole estes valores na configuração do webhook na Meta.</p>
+        <div className="flex items-center gap-3 pb-3 border-b border-border/60">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <KeyRound className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">Credenciais do webhook</p>
+            <p className="text-xs text-muted-foreground">Cole estes valores na configuração do webhook na Meta.</p>
+          </div>
         </div>
 
         <Field label="Callback URL" value={data.callback_url} onCopy={() => copy("URL", data.callback_url)} />
@@ -482,11 +487,16 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
       {/* EVENTOS OBRIGATÓRIOS */}
       <Card className="p-5 border-border/60 space-y-4">
         <div className="flex items-start justify-between gap-3 pb-3 border-b border-border/60">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">Eventos obrigatórios</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Marque TODOS os eventos abaixo em Webhook fields, Subscribe. Cada um habilita uma parte do sistema.
-            </p>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <ListChecks className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Eventos obrigatórios</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Marque TODOS os eventos abaixo em Webhook fields, Subscribe. Cada um habilita uma parte do sistema.
+              </p>
+            </div>
           </div>
           <Badge variant="secondary" className="shrink-0 font-mono text-[11px]">
             {eventsList.length} eventos
@@ -516,12 +526,17 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
 
       {/* TESTE / VALIDAÇÃO */}
       <Card className="p-5 border-border/60 space-y-3">
-        <div className="flex items-start justify-between gap-3 pb-2 border-b border-border/60">
-          <div>
-            <p className="text-sm font-semibold">Teste e validação por número</p>
-            <p className="text-xs text-muted-foreground">
-              Disparamos um handshake real na Meta para cada número. Quando todos passarem, Chat e Campanhas são liberados automaticamente para esses números.
-            </p>
+        <div className="flex items-start justify-between gap-3 pb-3 border-b border-border/60">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <PlayCircle className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Teste e validação por número</p>
+              <p className="text-xs text-muted-foreground">
+                Disparamos um handshake real na Meta para cada número. Quando todos passarem, Chat e Campanhas são liberados automaticamente para esses números.
+              </p>
+            </div>
           </div>
           {data.connections.length > 0 && (
             <Button size="sm" onClick={testAll} disabled={testingAll || !!validatingId} className="gap-1.5 shrink-0">
