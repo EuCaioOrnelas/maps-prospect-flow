@@ -22,6 +22,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { MetaManualSetup } from "@/components/meta-campaigns/MetaManualSetup";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { useWebhookGate } from "@/hooks/useWebhookGate";
+import { WebhookRequiredDialog } from "@/components/meta/WebhookRequiredDialog";
 
 const Chat = () => {
   const { user } = useAuth();
