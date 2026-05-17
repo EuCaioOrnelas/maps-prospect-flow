@@ -202,9 +202,9 @@ export default function MetaDashboard() {
                   <div className="flex flex-col items-center gap-3">
                     {data.funnel.map((s, i) => {
                       const base = data.funnel[0]?.value || 1;
-                      // Largura estritamente proporcional aos Captados — Oportunidades (20)
-                      // sempre será mais larga que Enviados (6). Min 4% só pra desenhar a pílula.
-                      const widthPct = i === 0 ? 100 : Math.max((s.value / base) * 100, 4);
+                      // Largura proporcional aos Captados. minWidth garante que o conteúdo
+                      // (número + %) nunca seja escondido nas etapas menores.
+                      const widthPct = i === 0 ? 100 : Math.max((s.value / base) * 100, 2);
                       const convPct = i === 0 ? 100 : (s.value / base) * 100;
                       const hint = FUNNEL_HINTS[s.stage] ?? `Total de ${s.stage.toLowerCase()} no período.`;
                       return (
@@ -226,13 +226,13 @@ export default function MetaDashboard() {
                             </Tooltip>
                           </div>
                           <div
-                            className="h-11 rounded-full bg-gradient-to-r from-primary via-primary/85 to-primary/55 flex items-center justify-center gap-1.5 transition-all shadow-sm px-3 whitespace-nowrap overflow-visible"
-                            style={{ width: `${widthPct}%` }}
+                            className="h-11 rounded-full bg-gradient-to-r from-primary via-primary/85 to-primary/55 flex items-center justify-center gap-1.5 transition-all shadow-sm px-4 whitespace-nowrap"
+                            style={{ width: `${widthPct}%`, minWidth: 110 }}
                           >
                             <span className="text-base font-bold text-white tabular-nums leading-none">
                               {fmtN(s.value)}
                             </span>
-                            <span className="text-[11px] font-semibold text-white/90 tabular-nums leading-none">
+                            <span className="text-[11px] font-semibold text-white tabular-nums leading-none">
                               · {convPct.toFixed(1)}%
                             </span>
                           </div>
