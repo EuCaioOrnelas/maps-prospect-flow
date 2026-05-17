@@ -390,6 +390,41 @@ serve(async (req) => {
               message_content: JSON.stringify(value).substring(0, 1000),
               raw_payload: value,
             });
+
+            // === Quality drop notification (yellow / red) ===
+            if (field === 'phone_number_quality_update') {
+              const newQuality = String(value.new_quality_score || value.new_quality || '').toUpperCase();
+              const oldQuality = String(value.old_quality_score || value.old_quality || '').toUpperCase();
+              const displayPhone = value.display_phone_number || '';
+              if (newQuality === 'YELLOW' || newQuality === 'RED') {
+                const { data: wabaConn } = await supabase
+                  .from('user_waba_connections')
+                  .select('id, user_id, display_phone_number, business_name')
+                  .eq('waba_id', wabaId)
+                  .maybeSingle();
+                if (wabaConn) {
+                  const today = new Date().toISOString().slice(0, 10);
+                  try {
+                    await supabase.functions.invoke('send-email', {
+                      body: {
+                        user_id: wabaConn.user_id,
+                        email_type: 'META_QUALITY_DROP',
+                        idempotency_key: `meta-quality-${wabaConn.id}-${newQuality}-${today}`,
+                        meta_pref_key: 'notify_quality_drop',
+                        payload: {
+                          phone_number: displayPhone || wabaConn.display_phone_number,
+                          business_name: wabaConn.business_name,
+                          new_quality: newQuality,
+                          old_quality: oldQuality,
+                        },
+                      },
+                    });
+                  } catch (e) {
+                    console.error('[meta-webhook] quality email error:', e);
+                  }
+                }
+              }
+            }
           }
         }
       }
