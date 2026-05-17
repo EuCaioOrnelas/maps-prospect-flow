@@ -321,6 +321,13 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </>
+  );
+
+  if (embedded) return body;
+  return (
+    <MetaLayout title="Templates" description="Biblioteca de mensagens reutilizáveis com categorias internas Wiize.">
+      {body}
     </MetaLayout>
   );
 }
