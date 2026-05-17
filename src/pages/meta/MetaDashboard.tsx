@@ -186,47 +186,40 @@ export default function MetaDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card className="lg:col-span-2 p-5 border-border/60">
               <ChartHeader title="Funil operacional CRM" subtitle="Captados → Oportunidades (dados reais do CRM)" />
-              <div className="space-y-2">
-                {data.funnel.map((s, i) => {
-                  const max = data.funnel[0]?.value || 1;
-                  const pct = (s.value / max) * 100;
-                  const conv = i > 0 && data.funnel[i - 1].value > 0
-                    ? ((s.value / data.funnel[i - 1].value) * 100).toFixed(1)
-                    : null;
-                  return (
-                    <div key={s.stage} className="flex items-center gap-3">
-                      {/* % à esquerda */}
-                      <div className="w-14 text-right shrink-0">
-                        {conv ? (
-                          <span className="text-xs font-semibold text-emerald-500 tabular-nums">{conv}%</span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground tabular-nums">100%</span>
+              {data.funnel.every((s) => s.value === 0) ? (
+                <p className="text-xs text-muted-foreground text-center py-6">Nenhum dado de funil no período.</p>
+              ) : (
+                <div className="flex flex-col items-center gap-1.5">
+                  {data.funnel.map((s, i) => {
+                    const max = data.funnel[0]?.value || 1;
+                    const pct = Math.max((s.value / max) * 100, 14);
+                    const prev = i > 0 ? data.funnel[i - 1].value : null;
+                    const drop = prev !== null && prev > 0
+                      ? (((prev - s.value) / prev) * 100)
+                      : null;
+                    return (
+                      <div key={s.stage} className="w-full flex flex-col items-center">
+                        {drop !== null && (
+                          <div className="text-[11px] text-muted-foreground tabular-nums my-1.5 flex items-center gap-1">
+                            <span className={drop > 0 ? "text-rose-500" : "text-emerald-500"}>
+                              {drop > 0 ? "↓" : "↑"} {Math.abs(drop).toFixed(1)}%
+                            </span>
+                          </div>
                         )}
-                      </div>
-
-                      {/* Barra centralizada em formato funil */}
-                      <div className="flex-1 flex justify-center">
+                        <p className="text-xs font-medium text-muted-foreground mb-1.5">{s.stage}</p>
                         <div
-                          className="h-9 bg-gradient-to-r from-primary/70 via-primary to-primary/70 rounded-md flex items-center justify-center transition-all shadow-sm"
-                          style={{ width: `${Math.max(pct, 6)}%` }}
+                          className="h-10 rounded-full bg-gradient-to-r from-primary/30 via-primary/40 to-primary/30 flex items-center justify-center transition-all shadow-sm"
+                          style={{ width: `${pct}%` }}
                         >
-                          <span className="text-[11px] font-medium text-primary-foreground truncate px-2">
-                            {s.stage}
+                          <span className="text-sm font-semibold text-foreground tabular-nums">
+                            {fmtN(s.value)}
                           </span>
                         </div>
                       </div>
-
-                      {/* Número à direita */}
-                      <div className="w-16 text-left shrink-0">
-                        <span className="text-xs font-semibold text-foreground tabular-nums">{fmtN(s.value)}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-                {data.funnel.every((s) => s.value === 0) && (
-                  <p className="text-xs text-muted-foreground text-center py-6">Nenhum dado de funil no período.</p>
-                )}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </Card>
 
             <Card className="p-5 border-border/60">
