@@ -218,8 +218,9 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
         return created && new Date(created) < prevStart;
       }).length;
 
+      // Funil 100% real — sem fallback fabricado
       const captados = leadsInFunnel;
-      const analisados = leadsRows.filter((l: any) => l.opportunity_level).length || Math.round(captados * 0.7);
+      const analisados = leadsRows.filter((l: any) => l.opportunity_level).length;
       const enviados = leadsRows.filter((l: any) => l.first_message_sent).length;
       const respondidos = leadsAnswered;
       const funnel = [
