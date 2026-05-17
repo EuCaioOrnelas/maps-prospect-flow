@@ -239,7 +239,7 @@ export default function MetaDashboard() {
                               </Tooltip>
                             </div>
                             <div
-                              className={`h-11 rounded-full bg-gradient-to-r from-primary via-primary/85 to-primary/55 flex items-center justify-center gap-1.5 transition-all shadow-sm whitespace-nowrap ${padClass}`}
+                              className={`h-8 rounded-full bg-gradient-to-r from-primary via-primary/85 to-primary/55 flex items-center justify-center gap-1.5 transition-all shadow-sm whitespace-nowrap ${padClass}`}
                               style={{ width: `${widthPct}%` }}
                             >
                               <span className={`${numClass} font-bold text-white tabular-nums leading-none`}>
