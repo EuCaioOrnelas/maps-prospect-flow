@@ -215,36 +215,24 @@ export default function MetaConfiguracoes() {
                 Proteções da integração Meta
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Recomendamos manter todas ativas. Elas protegem sua operação contra acessos indevidos.
+                Todas as proteções abaixo estão sempre ativas e aplicadas pela Wiize. Não é possível desativá-las — elas garantem a integridade da sua operação Meta.
               </p>
             </div>
             <div className="divide-y divide-border/60">
-              <ToggleRow
+              <SecurityInfoRow
                 icon={Lock}
-                iconColor="text-primary"
-                iconBg="bg-primary/10"
                 title="Validação de assinatura (HMAC)"
-                desc="Rejeitar webhooks que não vierem assinados pela Meta. Bloqueia payloads falsificados."
-                checked={settings.security_hmac_required}
-                onChange={(v) => updateSetting("security_hmac_required", v)}
+                desc="Cada webhook recebido é verificado contra o app secret da Meta. Payloads não assinados ou falsificados são rejeitados automaticamente com 401."
               />
-              <ToggleRow
+              <SecurityInfoRow
                 icon={Shield}
-                iconColor="text-primary"
-                iconBg="bg-primary/10"
                 title="Allowlist de IPs da Meta"
-                desc="Aceitar callbacks apenas de IPs oficiais da Meta. Bloqueia origens desconhecidas."
-                checked={settings.security_ip_allowlist}
-                onChange={(v) => updateSetting("security_ip_allowlist", v)}
+                desc="Apenas callbacks originados das faixas oficiais IPv4 da Meta (AS32934) são aceitos. Origens desconhecidas recebem 403."
               />
-              <ToggleRow
+              <SecurityInfoRow
                 icon={FileCheck2}
-                iconColor="text-primary"
-                iconBg="bg-primary/10"
                 title="Registro de auditoria"
-                desc="Registrar toda alteração crítica (conexões, tokens, campanhas) para consulta posterior."
-                checked={settings.security_audit_log}
-                onChange={(v) => updateSetting("security_audit_log", v)}
+                desc="Toda alteração crítica (conexões, tokens, campanhas) e todo evento de webhook são gravados no log de auditoria para rastreabilidade."
               />
             </div>
           </Card>
