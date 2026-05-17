@@ -14,14 +14,22 @@ const examples = [
   { icon: Bell, title: "Lembrete comercial", desc: "Mantenha leads quentes com follow-ups inteligentes" },
 ];
 
-export default function MetaReabertura() {
-  return (
-    <MetaLayout title="Fluxos de Reabertura" description="Reengaje leads fora da janela de 24h com templates aprovados.">
-      <MetaPageHeader
-        title="Fluxos de Reabertura"
-        description="Automatize reaberturas de janela 24h usando templates aprovados Meta."
-        actions={<Button size="sm"><Plus size={14} className="mr-1.5" /> Novo fluxo</Button>}
-      />
+export default function MetaReabertura({ embedded = false }: { embedded?: boolean } = {}) {
+  const body = (
+    <>
+      {!embedded && (
+        <MetaPageHeader
+          title="Fluxos de Reabertura"
+          description="Automatize reaberturas de janela 24h usando templates aprovados Meta."
+          actions={<Button size="sm"><Plus size={14} className="mr-1.5" /> Novo fluxo</Button>}
+        />
+      )}
+
+      {embedded && (
+        <div className="flex justify-end">
+          <Button size="sm"><Plus size={14} className="mr-1.5" /> Novo fluxo</Button>
+        </div>
+      )}
 
       {/* Examples */}
       <div>
@@ -68,6 +76,13 @@ export default function MetaReabertura() {
           ))}
         </Card>
       </div>
+    </>
+  );
+
+  if (embedded) return <div className="space-y-6">{body}</div>;
+  return (
+    <MetaLayout title="Fluxos de Reabertura" description="Reengaje leads fora da janela de 24h com templates aprovados.">
+      {body}
     </MetaLayout>
   );
 }
