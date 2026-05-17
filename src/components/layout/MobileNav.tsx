@@ -208,8 +208,8 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                   </>
                 )}
 
-                {/* Campanha */}
-                {can("campaigns") && (
+                {/* Campanha — Evolution só para usuários legacy */}
+                {can("campaigns") && canEvolution && (
                   <>
                     <SectionHeader icon={Megaphone} label="Campanha" sectionKey="campanhas" />
                     {openSection === "campanhas" && (
