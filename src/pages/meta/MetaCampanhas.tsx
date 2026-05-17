@@ -660,11 +660,15 @@ function CampaignDetailsDialog({
 function KpiTile({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
     <Card className="p-4 border-border/60">
-      <div className="flex items-center gap-2 text-muted-foreground mb-1.5">
-        <Icon size={13} />
-        <span className="text-[11px] uppercase tracking-wider">{label}</span>
+      <div className="flex items-center gap-3">
+        <span className="w-9 h-9 rounded-lg flex items-center justify-center bg-primary/10 text-primary shrink-0">
+          <Icon size={16} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground truncate">{label}</p>
+          <p className="text-lg font-semibold tabular-nums text-foreground truncate">{value}</p>
+        </div>
       </div>
-      <p className="text-lg font-semibold tabular-nums text-foreground">{value}</p>
     </Card>
   );
 }
