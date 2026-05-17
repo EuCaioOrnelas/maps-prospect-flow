@@ -135,22 +135,26 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
     load();
   };
 
-  return (
-    <MetaLayout title="Templates" description="Biblioteca de mensagens reutilizáveis com categorias internas Wiize.">
-      <MetaPageHeader
-        title="Templates"
-        description="Crie, organize e reutilize mensagens em suas campanhas Meta. Use categorias internas para manter tudo organizado."
-        actions={
-          <>
-            <Button variant="outline" size="sm" onClick={() => { setEditingCat(null); setCatDialogOpen(true); }}>
-              <FolderPlus size={14} className="mr-1.5" /> Nova categoria
-            </Button>
-            <Button size="sm" onClick={() => { setEditing(null); setEditorOpen(true); }}>
-              <Plus size={14} className="mr-1.5" /> Novo template
-            </Button>
-          </>
-        }
-      />
+  const headerActions = (
+    <>
+      <Button variant="outline" size="sm" onClick={() => { setEditingCat(null); setCatDialogOpen(true); }}>
+        <FolderPlus size={14} className="mr-1.5" /> Nova categoria
+      </Button>
+      <Button size="sm" onClick={() => { setEditing(null); setEditorOpen(true); }}>
+        <Plus size={14} className="mr-1.5" /> Novo template
+      </Button>
+    </>
+  );
+
+  const body = (
+    <>
+      {!embedded && (
+        <MetaPageHeader
+          title="Templates"
+          description="Crie, organize e reutilize mensagens em suas campanhas Meta. Use categorias internas para manter tudo organizado."
+          actions={headerActions}
+        />
+      )}
 
       {/* Filtros: chips de categoria + busca */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -174,12 +178,19 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
             </CategoryChip>
           ))}
         </div>
-        <div className="relative w-full md:w-64">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar templates…" className="pl-8 h-9"
-          />
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search} onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar templates…" className="pl-8 h-9"
+            />
+          </div>
+          {embedded && (
+            <div className="flex items-center gap-2 shrink-0">
+              {headerActions}
+            </div>
+          )}
         </div>
       </div>
 
