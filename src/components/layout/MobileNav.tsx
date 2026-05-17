@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
+import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
 import { cn } from "@/lib/utils";
 
 interface MobileNavProps {
