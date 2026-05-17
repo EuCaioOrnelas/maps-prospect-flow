@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Calendar, MessageCircle, FileText, Bell } from "lucide-react";
+import { Plus, Calendar, MessageCircle, FileText, Bell, Info, Clock, CheckCircle2, Zap } from "lucide-react";
 import { reaberturaFlows } from "@/components/meta/mockData";
 
 const examples = [
