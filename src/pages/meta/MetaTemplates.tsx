@@ -144,14 +144,9 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
   };
 
   const headerActions = (
-    <>
-      <Button variant="outline" size="sm" onClick={() => { setEditingCat(null); setCatDialogOpen(true); }}>
-        <FolderPlus size={14} className="mr-1.5" /> Nova categoria
-      </Button>
-      <Button size="sm" onClick={() => { setEditing(null); setEditorOpen(true); }}>
-        <Plus size={14} className="mr-1.5" /> Novo template
-      </Button>
-    </>
+    <Button size="sm" onClick={() => { setEditing(null); setEditorOpen(true); }}>
+      <Plus size={14} className="mr-1.5" /> Novo template
+    </Button>
   );
 
   const body = (
@@ -166,25 +161,36 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
 
       {/* Filtros: chips de categoria + busca */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <CategoryChip active={filter === "all"} onClick={() => setFilter("all")}>
-            Todos <span className="ml-1.5 text-[10px] opacity-60">{templates.length}</span>
-          </CategoryChip>
-          <CategoryChip active={filter === "uncategorized"} onClick={() => setFilter("uncategorized")}>
-            Sem categoria
-          </CategoryChip>
-          {categories.map((c) => (
-            <CategoryChip
-              key={c.id}
-              active={filter === c.id}
-              color={c.color}
-              onClick={() => setFilter(c.id)}
-              onEdit={() => { setEditingCat(c); setCatDialogOpen(true); }}
-              onDelete={() => setPendingDeleteCat(c)}
-            >
-              {c.name}
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap py-1 -my-1 min-w-0 flex-1 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+            <CategoryChip active={filter === "all"} onClick={() => setFilter("all")}>
+              Todos <span className="ml-1.5 text-[10px] opacity-60">{templates.length}</span>
             </CategoryChip>
-          ))}
+            <CategoryChip active={filter === "uncategorized"} onClick={() => setFilter("uncategorized")}>
+              Sem categoria
+            </CategoryChip>
+            {categories.map((c) => (
+              <CategoryChip
+                key={c.id}
+                active={filter === c.id}
+                color={c.color}
+                onClick={() => setFilter(c.id)}
+                onEdit={() => { setEditingCat(c); setCatDialogOpen(true); }}
+                onDelete={() => setPendingDeleteCat(c)}
+              >
+                {c.name}
+              </CategoryChip>
+            ))}
+            <button
+              type="button"
+              onClick={() => { setEditingCat(null); setCatDialogOpen(true); }}
+              title="Nova categoria"
+              aria-label="Nova categoria"
+              className="h-8 w-8 shrink-0 rounded-full border-2 border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 flex items-center justify-center transition-colors"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
