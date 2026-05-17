@@ -62,37 +62,139 @@ serve(async (req) => {
       // Ensure connection belongs to user
       const { data: conn, error: connErr } = await admin
         .from("user_waba_connections")
-        .select("id, user_id")
+        .select("id, user_id, waba_id, access_token")
         .eq("id", connectionId)
         .maybeSingle();
       if (connErr || !conn || conn.user_id !== userId) {
         return json({ error: "connection not found" }, 404);
       }
 
+      // ---------- 1) Handshake real contra o webhook ----------
       const challenge = `lov-${crypto.randomUUID().slice(0, 12)}`;
-      const url = `${CALLBACK_URL}?hub.mode=subscribe&hub.verify_token=${encodeURIComponent(
+      const handshakeUrl = `${CALLBACK_URL}?hub.mode=subscribe&hub.verify_token=${encodeURIComponent(
         VERIFY_TOKEN
       )}&hub.challenge=${challenge}`;
 
-      let ok = false;
-      let detail = "";
+      let handshakeOk = false;
+      let handshakeDetail = "";
       try {
-        const r = await fetch(url, { method: "GET" });
+        const r = await fetch(handshakeUrl, { method: "GET" });
         const text = await r.text();
-        ok = r.status === 200 && text.trim() === challenge;
-        detail = ok ? "Handshake ok" : `status=${r.status} body=${text.slice(0, 80)}`;
+        handshakeOk = r.status === 200 && text.trim() === challenge;
+        handshakeDetail = handshakeOk ? "ok" : `status=${r.status} body=${text.slice(0, 80)}`;
       } catch (e) {
-        detail = `fetch error: ${(e as Error).message}`;
+        handshakeDetail = `fetch error: ${(e as Error).message}`;
       }
 
+      // ---------- 2) Verifica eventos inscritos na WABA via Graph API ----------
+      // Faz 1 GET para descobrir quais dos 9 eventos obrigatórios estão inscritos no número do usuário.
+      // Se algum estiver faltando, tenta inscrever automaticamente em 1 POST e re-verifica.
+      let subscribedEvents: string[] = [];
+      let missingEvents: string[] = [...REQUIRED_EVENTS];
+      let eventsDetail = "";
+      let eventsOk = false;
+
+      async function fetchSubscribedFields(): Promise<string[] | null> {
+        try {
+          const r = await fetch(
+            `https://graph.facebook.com/v21.0/${conn.waba_id}/subscribed_apps?access_token=${encodeURIComponent(conn.access_token)}`,
+            { method: "GET" }
+          );
+          const data = await r.json();
+          if (!r.ok) {
+            eventsDetail = `graph status=${r.status} ${JSON.stringify(data?.error || data).slice(0, 160)}`;
+            return null;
+          }
+          const apps: any[] = Array.isArray(data?.data) ? data.data : [];
+          // Une todos os subscribed_fields de qualquer app inscrito (normalmente é só o nosso).
+          const fields = new Set<string>();
+          for (const app of apps) {
+            const arr: any[] = Array.isArray(app?.subscribed_fields) ? app.subscribed_fields : [];
+            for (const f of arr) {
+              // pode vir como string ou objeto { name }
+              const name = typeof f === "string" ? f : f?.name;
+              if (name) fields.add(String(name));
+            }
+          }
+          return Array.from(fields);
+        } catch (e) {
+          eventsDetail = `graph fetch error: ${(e as Error).message}`;
+          return null;
+        }
+      }
+
+      if (!conn.access_token) {
+        eventsDetail = "Sem access_token salvo para esta conexão. Reconecte o número.";
+      } else {
+        let fields = await fetchSubscribedFields();
+
+        // Se algum dos 9 está faltando, tenta inscrever automaticamente e re-verifica.
+        if (fields) {
+          const present = new Set(fields);
+          const missing = REQUIRED_EVENTS.filter((e) => !present.has(e));
+          if (missing.length > 0) {
+            try {
+              await fetch(
+                `https://graph.facebook.com/v21.0/${conn.waba_id}/subscribed_apps`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    access_token: conn.access_token,
+                    subscribed_fields: REQUIRED_EVENTS,
+                  }),
+                }
+              );
+            } catch (_) { /* ignore — re-fetch valida abaixo */ }
+            fields = await fetchSubscribedFields();
+          }
+        }
+
+        if (fields) {
+          const present = new Set(fields);
+          subscribedEvents = REQUIRED_EVENTS.filter((e) => present.has(e));
+          missingEvents = REQUIRED_EVENTS.filter((e) => !present.has(e));
+          eventsOk = missingEvents.length === 0;
+          if (!eventsOk) {
+            eventsDetail = `Faltando ${missingEvents.length}/${REQUIRED_EVENTS.length}: ${missingEvents.join(", ")}`;
+          } else {
+            eventsDetail = `Todos os ${REQUIRED_EVENTS.length} eventos inscritos`;
+          }
+        }
+      }
+
+      const ok = handshakeOk && eventsOk;
+      const detail = ok
+        ? `Handshake ok + ${REQUIRED_EVENTS.length}/${REQUIRED_EVENTS.length} eventos inscritos`
+        : !handshakeOk
+          ? `Handshake falhou (${handshakeDetail})`
+          : eventsDetail || "Eventos não validados";
+
+      // Só marca como verificado se TUDO estiver ok
       if (ok) {
         await admin
           .from("user_waba_connections")
           .update({ webhook_verified_at: new Date().toISOString() })
           .eq("id", connectionId);
+      } else {
+        // Limpa marcação anterior — não queremos status "verde" se algo regrediu
+        await admin
+          .from("user_waba_connections")
+          .update({ webhook_verified_at: null })
+          .eq("id", connectionId);
       }
 
-      return json({ ok, detail });
+      return json({
+        ok,
+        detail,
+        handshake: { ok: handshakeOk, detail: handshakeDetail },
+        events: {
+          required: REQUIRED_EVENTS,
+          subscribed: subscribedEvents,
+          missing: missingEvents,
+          ok: eventsOk,
+        },
+      });
     }
 
     // -------- DEFAULT: return URL + token + connections list --------
