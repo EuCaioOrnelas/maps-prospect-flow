@@ -475,7 +475,7 @@ function CategoryForm({
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [color, setColor] = useState(initial?.color ?? COLOR_PALETTE[0]);
-  const canSave = name.trim().length > 1;
+  const canSave = name.trim().length > 1 && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color);
 
   return (
     <div className="space-y-4">
@@ -488,9 +488,31 @@ function CategoryForm({
         <div className="flex flex-wrap gap-2">
           {COLOR_PALETTE.map((c) => (
             <button key={c} type="button" onClick={() => setColor(c)}
-              className={`h-7 w-7 rounded-full border-2 transition-all ${color === c ? "border-foreground scale-110" : "border-transparent"}`}
+              className={`h-7 w-7 rounded-full border-2 transition-all ${color.toLowerCase() === c.toLowerCase() ? "border-foreground scale-110" : "border-transparent"}`}
               style={{ background: c }} />
           ))}
+        </div>
+        <div className="flex items-center gap-2 pt-2">
+          <div className="relative h-9 w-9 shrink-0 rounded-md border border-border overflow-hidden" style={{ background: color }}>
+            <input
+              type="color"
+              value={/^#[0-9a-f]{6}$/i.test(color) ? color : "#000000"}
+              onChange={(e) => setColor(e.target.value)}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              aria-label="Selecionar cor"
+            />
+          </div>
+          <Input
+            value={color}
+            onChange={(e) => {
+              let v = e.target.value.trim();
+              if (v && !v.startsWith("#")) v = "#" + v;
+              setColor(v);
+            }}
+            placeholder="#7C3AED"
+            className="h-9 font-mono text-xs uppercase"
+            maxLength={7}
+          />
         </div>
       </div>
       <DialogFooter>
