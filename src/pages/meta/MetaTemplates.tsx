@@ -418,7 +418,7 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
 
       {/* Dialog categoria */}
       <Dialog open={catDialogOpen} onOpenChange={(o) => { setCatDialogOpen(o); if (!o) setEditingCat(null); }}>
-        <DialogContent>
+        <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingCat ? "Editar categoria" : "Nova categoria"}</DialogTitle></DialogHeader>
           <CategoryForm
             initial={editingCat}
