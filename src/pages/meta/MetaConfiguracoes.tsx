@@ -248,6 +248,8 @@ export default function MetaConfiguracoes() {
               />
             </div>
           </Card>
+
+          <MetaSecurityActivity userId={user?.id} />
         </TabsContent>
       </Tabs>
 
