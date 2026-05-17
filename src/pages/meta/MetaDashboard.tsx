@@ -97,18 +97,11 @@ export default function MetaDashboard() {
         title="Meta Platforms"
         description="Visão completa de campanhas, custos, qualidade e CRM integrados."
         actions={
-          <>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/meta/templates">
-                <FileText size={14} className="mr-1.5" /> Novo template
-              </Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link to="/meta/campanhas">
-                <Plus size={14} className="mr-1.5" /> Nova campanha
-              </Link>
-            </Button>
-          </>
+          <Button asChild size="sm">
+            <Link to="/meta/campanhas">
+              <Plus size={14} className="mr-1.5" /> Nova campanha
+            </Link>
+          </Button>
         }
       />
 
