@@ -381,53 +381,45 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
 
   return (
     <div className="space-y-4">
-      {/* STATUS GERAL */}
-      {data.connections.length > 0 && (
-        <Card className={`p-4 border ${allVerified ? "border-emerald-500/30 bg-emerald-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
-          <div className="flex items-center gap-3">
-            {allVerified ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
-            )}
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">
-                {allVerified ? "Tudo certo — webhooks ativos" : "Webhook obrigatório pendente"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {allVerified
-                  ? "Chat, Campanhas, Fluxos e métricas do Dashboard estão liberados."
-                  : "Enquanto houver número não validado, Chat e Campanhas ficam bloqueados."}
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
-
       {/* PASSO A PASSO */}
-      <Card className="p-5 border-border/60">
+      <Card className="border-border/60 overflow-hidden">
         <button
           type="button"
           onClick={() => setGuideOpen((v) => !v)}
-          className="w-full flex items-center justify-between gap-3 text-left"
+          className="w-full flex items-center justify-between gap-4 p-5 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           aria-expanded={guideOpen}
         >
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">Passo a passo</p>
-            <p className="text-xs text-muted-foreground">
-              {guideOpen ? "Siga na ordem. Leva menos de 3 minutos." : "Clique para abrir o guia completo de configuração."}
-            </p>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Webhook className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold">Passo a passo de configuração</p>
+                <Badge variant="secondary" className="text-[10px] font-medium h-5 px-1.5">
+                  {Object.keys(EVENT_DETAILS).length} eventos
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {guideOpen
+                  ? "Siga na ordem. Leva menos de 3 minutos."
+                  : "Guia completo com print por print, vídeo e checklist dos eventos obrigatórios."}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] text-muted-foreground hidden sm:inline">
+          <div className="flex items-center gap-2.5 shrink-0">
+            <span className="text-xs font-medium text-muted-foreground hidden sm:inline">
               {guideOpen ? "Recolher" : "Expandir"}
             </span>
-            <div className="h-7 w-7 rounded-full border border-border/60 bg-muted/30 flex items-center justify-center">
-              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${guideOpen ? "rotate-180" : ""}`} />
+            <div className="h-8 w-8 rounded-full bg-muted/60 border border-border/60 flex items-center justify-center transition-colors group-hover:bg-muted">
+              <ChevronDown className={`h-4 w-4 text-foreground/70 transition-transform duration-300 ${guideOpen ? "rotate-180" : ""}`} />
             </div>
           </div>
         </button>
 
+        {guideOpen && (
+          <div className="px-5 pb-5 pt-1 border-t border-border/60 bg-muted/10">
+            <div className="pt-4">
         {guideOpen && (
           <div className="mt-4 pt-4 border-t border-border/60">
             <Tabs defaultValue="guia" className="w-full">
