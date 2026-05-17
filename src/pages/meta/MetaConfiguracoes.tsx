@@ -287,6 +287,34 @@ function ToggleRow({
   );
 }
 
+function SecurityInfoRow({
+  title,
+  desc,
+  icon: Icon,
+}: {
+  title: string;
+  desc: string;
+  icon: React.ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 px-5 py-4">
+      <div className="flex items-start gap-3 min-w-0">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+          <Icon className="h-4 w-4 text-primary" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium leading-tight">{title}</p>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{desc}</p>
+        </div>
+      </div>
+      <span className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-1">
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        Ativo
+      </span>
+    </div>
+  );
+}
+
 type MetaTestType = {
   key: "META_NUMBER_DISCONNECTED" | "META_QUALITY_DROP" | "CAMPAIGN_FAILED_TO_START" | "META_DAILY_SUMMARY";
   label: string;
