@@ -17,8 +17,6 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MetaTemplates from "./MetaTemplates";
-import MetaReabertura from "./MetaReabertura";
-import { RotateCcw } from "lucide-react";
 
 const ITEMS_PER_PAGE = 10;
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -174,9 +172,6 @@ export default function MetaCampanhas() {
             </TabsTrigger>
             <TabsTrigger value="templates" className="text-xs gap-1.5 data-[state=active]:bg-background">
               <FileText size={13} /> Templates
-            </TabsTrigger>
-            <TabsTrigger value="reabertura" className="text-xs gap-1.5 data-[state=active]:bg-background">
-              <RotateCcw size={13} /> Reabertura
             </TabsTrigger>
           </TabsList>
         </div>
@@ -506,10 +501,6 @@ export default function MetaCampanhas() {
 
         <TabsContent value="templates" className="space-y-4 mt-0">
           <MetaTemplates embedded />
-        </TabsContent>
-
-        <TabsContent value="reabertura" className="space-y-4 mt-0">
-          <MetaReabertura embedded />
         </TabsContent>
       </Tabs>
 
