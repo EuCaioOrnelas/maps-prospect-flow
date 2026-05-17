@@ -129,10 +129,11 @@ serve(async (req) => {
     }
 
     // Save campaign record
+    const campaignNameFinal = campaign_name || `Meta ${new Date().toISOString().split("T")[0]}`;
     await supabase.from("meta_campaigns").insert({
       user_id: user.id,
       connection_id: connection_id,
-      campaign_name: campaign_name || `Meta ${new Date().toISOString().split("T")[0]}`,
+      campaign_name: campaignNameFinal,
       template_name: template_name,
       template_language: template_language || "pt_BR",
       total_recipients: phone_numbers.length,
@@ -141,6 +142,34 @@ serve(async (req) => {
       status: "completed",
       error_details: errors.length > 0 ? errors.slice(0, 20) : null,
     });
+
+    // === Campaign issues notification ===
+    // Trigger when campaign fully fails or failure rate is high (>30% with >=5 recipients)
+    const failRate = phone_numbers.length > 0 ? failedCount / phone_numbers.length : 0;
+    const isProblematic =
+      (successCount === 0 && failedCount > 0) ||
+      (phone_numbers.length >= 5 && failRate > 0.3);
+    if (isProblematic) {
+      try {
+        await supabase.functions.invoke("send-email", {
+          body: {
+            user_id: user.id,
+            email_type: "CAMPAIGN_FAILED_TO_START",
+            idempotency_key: `meta-campaign-fail-${connection_id}-${Date.now()}`,
+            meta_pref_key: "notify_campaign_issues",
+            payload: {
+              campaign_name: campaignNameFinal,
+              total_contacts: phone_numbers.length,
+              failed_count: failedCount,
+              success_count: successCount,
+              error_sample: errors.slice(0, 3).join(" | "),
+            },
+          },
+        });
+      } catch (e) {
+        console.error("[meta-send-campaign] failure email error:", e);
+      }
+    }
 
     return new Response(
       JSON.stringify({
