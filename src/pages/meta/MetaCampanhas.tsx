@@ -517,6 +517,12 @@ export default function MetaCampanhas() {
         numberMap={numberMap}
         onClose={() => setDetailsCampaign(null)}
       />
+      <WebhookRequiredDialog
+        open={webhookDialogOpen}
+        onOpenChange={setWebhookDialogOpen}
+        pendingConnections={webhookGate.pendingConnections}
+        context="campaign"
+      />
     </MetaLayout>
   );
 }
