@@ -870,7 +870,7 @@ function Chip({
     <button
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-all ${
-        active ? "bg-primary/15 text-primary border-primary/30" : "bg-background text-foreground border-border hover:border-primary/40"
+        active ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background text-foreground border-border hover:border-primary/40"
       }`}
     >
       {color && <span className="h-2 w-2 rounded-full" style={{ background: color }} />}
