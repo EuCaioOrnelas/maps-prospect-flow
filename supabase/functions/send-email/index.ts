@@ -512,9 +512,6 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   AGENT_HUMAN_HANDOFF: templateAgentHumanHandoff,
   AGENT_OBJECTIVE_COMPLETED: templateAgentObjectiveCompleted,
 };
-  AGENT_HUMAN_HANDOFF: templateAgentHumanHandoff,
-  AGENT_OBJECTIVE_COMPLETED: templateAgentObjectiveCompleted,
-};
 
 function htmlToPlainText(html: string): string {
   return html
