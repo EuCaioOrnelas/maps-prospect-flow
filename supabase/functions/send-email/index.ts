@@ -557,12 +557,14 @@ Deno.serve(async (req) => {
       payload = {},
       idempotency_key,
       override_email,
+      meta_pref_key,
     } = body as {
       user_id: string;
       email_type: string;
       payload?: Record<string, unknown>;
       idempotency_key?: string;
       override_email?: string;
+      meta_pref_key?: "notify_number_disconnected" | "notify_quality_drop" | "notify_daily_summary" | "notify_campaign_issues";
     };
 
     if (!user_id || !email_type) {
@@ -612,6 +614,26 @@ Deno.serve(async (req) => {
         JSON.stringify({ success: true, skipped: true, reason: "user_opted_out" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Meta-specific notification toggle (notify_number_disconnected, notify_quality_drop, etc.)
+    if (meta_pref_key) {
+      const { data: metaPrefs } = await supabase
+        .from("meta_user_settings")
+        .select(meta_pref_key)
+        .eq("user_id", user_id)
+        .maybeSingle();
+      const enabled = (metaPrefs as any)?.[meta_pref_key];
+      // Default: notify_daily_summary=false, others=true (matches table defaults)
+      const fallback = meta_pref_key === "notify_daily_summary" ? false : true;
+      const isOn = enabled === undefined || enabled === null ? fallback : enabled === true;
+      if (!isOn) {
+        console.log(`[send-email] User ${user_id} has ${meta_pref_key} disabled`);
+        return new Response(
+          JSON.stringify({ success: true, skipped: true, reason: `meta_pref_${meta_pref_key}_off` }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Generate email content
