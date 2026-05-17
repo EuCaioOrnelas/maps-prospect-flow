@@ -198,7 +198,7 @@ export default function MetaDashboard() {
                     </div>
 
                     {/* Mini gráfico comparativo */}
-                    <div className="h-28 -mx-1">
+                    <div className="h-36 -mx-1">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={data.daily} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
                           <defs>
@@ -211,7 +211,8 @@ export default function MetaDashboard() {
                               <stop offset="100%" stopColor="hsl(158 72% 45%)" stopOpacity={0} />
                             </linearGradient>
                           </defs>
-                          <XAxis dataKey="day" hide />
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
+                          <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={20} />
                           <YAxis hide />
                           <RTooltip
                             contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, color: "hsl(var(--foreground))" }}
