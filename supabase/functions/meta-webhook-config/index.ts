@@ -105,6 +105,7 @@ serve(async (req) => {
     return json({
       callback_url: CALLBACK_URL,
       verify_token: VERIFY_TOKEN,
+      required_events: REQUIRED_EVENTS,
       connections: connections ?? [],
     });
   } catch (e) {
