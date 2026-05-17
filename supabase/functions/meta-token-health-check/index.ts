@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
             user_id: conn.user_id,
             email_type: "META_NUMBER_DISCONNECTED",
             idempotency_key: `meta-disconnect-${conn.id}-${today}`,
+            meta_pref_key: "notify_number_disconnected",
             payload: {
               phone_number: conn.display_phone_number,
               business_name: conn.business_name,
