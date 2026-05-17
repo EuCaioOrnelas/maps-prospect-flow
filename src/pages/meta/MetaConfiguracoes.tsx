@@ -258,10 +258,14 @@ type WebhookData = {
   }>;
 };
 
+type ValidationState = { status: "idle" | "ok" | "error"; detail?: string };
+
 function WebhookPanel() {
   const [data, setData] = useState<WebhookData | null>(null);
   const [loading, setLoading] = useState(true);
   const [validatingId, setValidatingId] = useState<string | null>(null);
+  const [results, setResults] = useState<Record<string, ValidationState>>({});
+  const [testingAll, setTestingAll] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -283,18 +287,33 @@ function WebhookPanel() {
     toast.success(`${label} copiado`);
   };
 
-  const validate = async (connectionId: string) => {
+  const validate = async (connectionId: string): Promise<boolean> => {
     setValidatingId(connectionId);
     const { data: res, error } = await supabase.functions.invoke("meta-webhook-config", {
       body: { action: "validate", connection_id: connectionId },
     });
     setValidatingId(null);
-    if (error || !(res as any)?.ok) {
-      toast.error((res as any)?.detail ?? "Falha na validação do webhook");
-      return;
+    const ok = !error && (res as any)?.ok;
+    const detail = (res as any)?.detail ?? error?.message ?? "Falha desconhecida";
+    setResults((r) => ({ ...r, [connectionId]: { status: ok ? "ok" : "error", detail } }));
+    return ok;
+  };
+
+  const testAll = async () => {
+    if (!data) return;
+    setTestingAll(true);
+    let okCount = 0;
+    for (const c of data.connections) {
+      const ok = await validate(c.id);
+      if (ok) okCount++;
     }
-    toast.success("Webhook validado com sucesso!");
-    load();
+    setTestingAll(false);
+    await load();
+    if (okCount === data.connections.length) {
+      toast.success(`Todos os ${okCount} webhooks validados!`);
+    } else {
+      toast.error(`${data.connections.length - okCount} webhook(s) com erro. Verifique a configuração na Meta e tente novamente.`);
+    }
   };
 
   if (loading || !data) {
@@ -305,21 +324,72 @@ function WebhookPanel() {
     );
   }
 
+  const steps = [
+    { n: 1, t: "Abra o Meta Business Manager", d: "Acesse business.facebook.com e entre na sua conta. Vá em Configurações → Contas → Apps." },
+    { n: 2, t: "Selecione seu App da Meta", d: "Dentro do app, abra o menu lateral e clique em Webhooks. Escolha o objeto WhatsApp Business Account." },
+    { n: 3, t: "Cole a Callback URL e o Verify Token", d: "Copie os dois valores do card abaixo e cole nos campos correspondentes. Clique em Verificar e salvar." },
+    { n: 4, t: "Marque os eventos obrigatórios", d: "Em Webhook fields → Subscribe selecione: messages, message_template_status_update e account_update." },
+    { n: 5, t: "Volte aqui e clique em Testar todos os webhooks", d: "Vamos enviar um handshake real para validar cada número. Se algum falhar, ele fica em vermelho e você corrige e testa de novo." },
+  ];
+
+  const allVerified = data.connections.length > 0 && data.connections.every((c) => !!c.webhook_verified_at);
+
   return (
     <div className="space-y-4">
+      {/* STATUS GERAL */}
+      {data.connections.length > 0 && (
+        <Card className={`p-4 border ${allVerified ? "border-emerald-500/30 bg-emerald-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+          <div className="flex items-center gap-3">
+            {allVerified ? (
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">
+                {allVerified ? "Tudo certo — webhooks ativos" : "Webhook obrigatório pendente"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {allVerified
+                  ? "O Chat, as Campanhas e os Fluxos estão liberados."
+                  : "Enquanto houver número não validado, o Chat e as Campanhas ficam bloqueados."}
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* PASSO A PASSO */}
+      <Card className="p-5 border-border/60 space-y-3">
+        <div className="pb-2 border-b border-border/60">
+          <p className="text-sm font-semibold">Passo a passo</p>
+          <p className="text-xs text-muted-foreground">Siga na ordem. Leva menos de 3 minutos.</p>
+        </div>
+        <ol className="space-y-3">
+          {steps.map((s) => (
+            <li key={s.n} className="flex gap-3">
+              <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">{s.n}</div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium">{s.t}</p>
+                <p className="text-xs text-muted-foreground">{s.d}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </Card>
+
+      {/* CREDENCIAIS */}
       <Card className="p-5 border-border/60 space-y-4">
         <div className="pb-2 border-b border-border/60">
-          <p className="text-sm font-semibold">Configuração do Webhook Meta</p>
-          <p className="text-xs text-muted-foreground">
-            Cole estes valores em <strong>Meta Business Manager → Apps → Webhooks → WhatsApp Business Account</strong> para receber mensagens, status de templates e atualizações de conta.
-          </p>
+          <p className="text-sm font-semibold">Credenciais do webhook</p>
+          <p className="text-xs text-muted-foreground">Cole estes valores na configuração do webhook na Meta.</p>
         </div>
 
         <Field label="Callback URL" value={data.callback_url} onCopy={() => copy("URL", data.callback_url)} />
         <Field label="Verify Token" value={data.verify_token} mono onCopy={() => copy("Token", data.verify_token)} />
 
         <div className="rounded-md bg-muted/40 border border-border/60 p-3 text-xs text-muted-foreground space-y-1.5">
-          <p className="font-medium text-foreground">Eventos recomendados:</p>
+          <p className="font-medium text-foreground">Eventos para marcar (Subscribe):</p>
           <ul className="list-disc list-inside space-y-0.5">
             <li><code className="text-foreground">messages</code> — mensagens recebidas e status de envio</li>
             <li><code className="text-foreground">message_template_status_update</code> — aprovação/rejeição de templates</li>
@@ -328,12 +398,21 @@ function WebhookPanel() {
         </div>
       </Card>
 
+      {/* TESTE / VALIDAÇÃO */}
       <Card className="p-5 border-border/60 space-y-3">
-        <div className="pb-2 border-b border-border/60">
-          <p className="text-sm font-semibold">Status por número conectado</p>
-          <p className="text-xs text-muted-foreground">
-            Após configurar na Meta, clique em <strong>Validar</strong>. Sem isso o Chat e as Campanhas ficam bloqueados.
-          </p>
+        <div className="flex items-start justify-between gap-3 pb-2 border-b border-border/60">
+          <div>
+            <p className="text-sm font-semibold">Teste e validação</p>
+            <p className="text-xs text-muted-foreground">
+              Confirmamos com um handshake real na Meta. Números com erro ficam em vermelho — corrija e teste de novo.
+            </p>
+          </div>
+          {data.connections.length > 0 && (
+            <Button size="sm" onClick={testAll} disabled={testingAll || !!validatingId} className="gap-1.5 shrink-0">
+              {testingAll ? <Loader2 className="h-3 w-3 animate-spin" /> : <PlayCircle className="h-3 w-3" />}
+              Testar todos
+            </Button>
+          )}
         </div>
 
         {data.connections.length === 0 ? (
@@ -343,27 +422,52 @@ function WebhookPanel() {
         ) : (
           data.connections.map((c) => {
             const verified = !!c.webhook_verified_at;
+            const r = results[c.id];
+            const errored = r?.status === "error";
+            const borderClass = errored
+              ? "border-destructive bg-destructive/5"
+              : r?.status === "ok" || verified
+                ? "border-emerald-500/30"
+                : "border-border/60";
             return (
-              <div key={c.id} className="flex items-center justify-between p-3 rounded-lg border border-border/60">
-                <div className="min-w-0 pr-4">
-                  <p className="text-sm font-medium truncate">{c.display_phone_number ?? "—"}</p>
-                  <p className="text-xs text-muted-foreground truncate">{c.business_name ?? "Sem nome"}</p>
+              <div key={c.id} className={`rounded-lg border p-3 space-y-2 transition-colors ${borderClass}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-sm font-medium truncate">{c.display_phone_number ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{c.business_name ?? "Sem nome"}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {errored ? (
+                      <Badge variant="secondary" className="gap-1 bg-destructive/10 text-destructive border-destructive/30">
+                        <XCircle className="h-3 w-3" /> Erro
+                      </Badge>
+                    ) : verified ? (
+                      <Badge variant="secondary" className="gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                        <CheckCircle2 className="h-3 w-3" /> Validado
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20">
+                        <AlertTriangle className="h-3 w-3" /> Pendente
+                      </Badge>
+                    )}
+                    <Button
+                      size="sm"
+                      variant={errored ? "destructive" : "outline"}
+                      onClick={async () => { await validate(c.id); load(); }}
+                      disabled={validatingId === c.id || testingAll}
+                      className="gap-1.5"
+                    >
+                      {validatingId === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                      {errored ? "Tentar de novo" : verified ? "Revalidar" : "Validar"}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {verified ? (
-                    <Badge variant="secondary" className="gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                      <CheckCircle2 className="h-3 w-3" /> Validado
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20">
-                      <AlertTriangle className="h-3 w-3" /> Pendente
-                    </Badge>
-                  )}
-                  <Button size="sm" variant="outline" onClick={() => validate(c.id)} disabled={validatingId === c.id} className="gap-1.5">
-                    {validatingId === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-                    {verified ? "Revalidar" : "Validar"}
-                  </Button>
-                </div>
+                {errored && r?.detail && (
+                  <p className="text-xs text-destructive flex items-start gap-1.5">
+                    <XCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                    <span className="break-all">{r.detail}</span>
+                  </p>
+                )}
               </div>
             );
           })
