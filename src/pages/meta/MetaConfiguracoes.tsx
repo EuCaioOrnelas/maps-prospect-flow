@@ -115,7 +115,7 @@ export default function MetaConfiguracoes() {
         description="Escolha quais alertas receber por e-mail e as regras de segurança da sua operação Meta."
       />
 
-      <SettingsTabs />
+      <ConfigTabs />
         <TabsList className="bg-muted/40">
           <TabsTrigger value="webhook">
             <Webhook size={13} className="mr-1.5" />
