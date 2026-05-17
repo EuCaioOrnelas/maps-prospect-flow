@@ -43,6 +43,14 @@ const PRESETS = [
   { label: "90 dias", days: 90 },
 ];
 
+const FUNNEL_HINTS: Record<string, string> = {
+  Captados: "Total de leads que entraram no CRM no período. É a base (100%) do funil.",
+  Analisados: "Leads que tiveram seu potencial classificado pela IA (campo opportunity_level preenchido).",
+  Enviados: "Leads que receberam pelo menos uma mensagem (first_message_sent = true).",
+  Respondeu: "Leads que responderam pelo menos uma mensagem do nosso lado.",
+  Oportunidades: "Leads classificados como alto potencial pela IA (opportunity_level = alto/muito_alto).",
+};
+
 // Variação % real vs período anterior. Só suprime quando não há base de
 // comparação (prev = 0) — qualquer valor calculado é exibido como está.
 function deltaPct(curr: number, prev: number): number | undefined {
