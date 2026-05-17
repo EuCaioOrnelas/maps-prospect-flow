@@ -372,21 +372,12 @@ function EmptyChart({ label }: { label: string }) {
   );
 }
 
-function SimResult({ label, value, accent = "default", hint, icon }: { label: string; value: string; accent?: string; hint?: string; icon?: React.ReactNode }) {
-  const iconBg =
-    accent === "primary" ? "bg-primary/10 text-primary" :
-    accent === "emerald" ? "bg-emerald-500/10 text-emerald-500" :
-    accent === "violet" ? "bg-violet-500/10 text-violet-500" :
-    accent === "amber" ? "bg-amber-500/10 text-amber-500" : "bg-muted text-foreground";
-    accent === "primary" ? "bg-primary/10 text-primary" :
-    accent === "emerald" ? "bg-emerald-500/10 text-emerald-500" :
-    accent === "violet" ? "bg-violet-500/10 text-violet-500" :
-    accent === "amber" ? "bg-amber-500/10 text-amber-500" : "bg-muted text-foreground";
+function SimResult({ label, value, hint, icon }: { label: string; value: string; accent?: string; hint?: string; icon?: React.ReactNode }) {
   return (
-    <div className="relative rounded-lg bg-card border border-border/60 px-3.5 py-3 hover:border-border transition-colors">
+    <div className="relative rounded-xl bg-card border border-border/40 px-3.5 py-3 hover:border-primary/20 hover:shadow-md hover:shadow-primary/[0.04] transition-all duration-300">
       <div className="flex items-center gap-2">
         {icon && (
-          <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 ${iconBg}`}>
+          <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
             {icon}
           </div>
         )}
