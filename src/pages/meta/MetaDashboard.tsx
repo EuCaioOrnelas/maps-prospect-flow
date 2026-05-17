@@ -96,13 +96,7 @@ export default function MetaDashboard() {
       <MetaPageHeader
         title="Meta Platforms"
         description="Visão completa de campanhas, custos, qualidade e CRM integrados."
-        actions={
-          <Button asChild size="sm">
-            <Link to="/meta/campanhas">
-              <Plus size={14} className="mr-1.5" /> Nova campanha
-            </Link>
-          </Button>
-        }
+        actions={null}
       />
 
       <Tabs defaultValue="overview" className="space-y-4">
