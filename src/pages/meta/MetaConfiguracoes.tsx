@@ -43,6 +43,7 @@ export default function MetaConfiguracoes() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
+  const [webhookStatus, setWebhookStatus] = useState<"ok" | "pending" | null>(null);
 
   useEffect(() => {
     if (!user) return;
