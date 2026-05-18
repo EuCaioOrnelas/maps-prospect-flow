@@ -268,7 +268,6 @@ export const PricingSection = () => {
         { label: "Qualifica, agenda e tira dúvidas sozinho", start: false, growth: true, scale: true },
         { label: "Aprende com cada conversa (memória contextual)", start: false, growth: true, scale: true },
         { label: "Múltiplos agentes para diferentes produtos / times", start: false, growth: false, scale: true },
-        { label: "Limite de mensagens por dia (controle de custo)", start: "—", growth: "Padrão", scale: "Elevado" },
         { label: "Testes e simulações antes de ativar", start: false, growth: true, scale: true },
       ],
     },
