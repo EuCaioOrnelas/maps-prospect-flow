@@ -187,8 +187,69 @@ export const PricingSection = () => {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; key: string; price: string } | null>(null);
   const [isAnnual, setIsAnnual] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const comparisonRef = useRef<HTMLDivElement>(null);
 
   const plans = isAnnual ? mainPlans.annual : mainPlans.monthly;
+
+  const handleShowComparison = () => {
+    setExpanded(true);
+    setTimeout(() => {
+      comparisonRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
+
+  // Comparison matrix: feature -> { start, growth, scale } where value is boolean or string
+  const comparisonGroups: Array<{
+    title: string;
+    rows: Array<{ label: string; start: boolean | string; growth: boolean | string; scale: boolean | string }>;
+  }> = [
+    {
+      title: "Geração e captura de leads",
+      rows: [
+        { label: "Oportunidades com alto potencial de fechamento", start: true, growth: true, scale: true },
+        { label: "Mensagens geradas por IA para iniciar conversas", start: true, growth: true, scale: true },
+        { label: "Disparos via WhatsApp e Meta", start: true, growth: true, scale: true },
+        { label: "Volume de oportunidades / mês", start: "1.000", growth: "3.000", scale: "Sob demanda" },
+      ],
+    },
+    {
+      title: "CRM e priorização",
+      rows: [
+        { label: "Gestão de contatos em um só lugar (CRM)", start: true, growth: true, scale: true },
+        { label: "Score — priorização por chance de fechamento", start: true, growth: true, scale: true },
+        { label: "Fluxos de vendas automatizados", start: false, growth: true, scale: true },
+      ],
+    },
+    {
+      title: "Automação e IA",
+      rows: [
+        { label: "Automação de atendimento", start: false, growth: true, scale: true },
+        { label: "Follow-up automático inteligente", start: false, growth: true, scale: true },
+        { label: "Agente de IA em conversas", start: false, growth: true, scale: true },
+        { label: "Operação totalmente automatizada", start: false, growth: true, scale: true },
+      ],
+    },
+    {
+      title: "Infraestrutura e suporte",
+      rows: [
+        { label: "Números WhatsApp conectados", start: "Até 2", growth: "Até 5", scale: "Ilimitados" },
+        { label: "Suporte", start: "Email", growth: "Prioritário", scale: "Gerente dedicado" },
+        { label: "Onboarding com especialista", start: false, growth: false, scale: true },
+        { label: "Estrutura personalizada", start: false, growth: false, scale: true },
+        { label: "Processamento com prioridade máxima", start: false, growth: false, scale: true },
+      ],
+    },
+  ];
+
+  const renderCell = (v: boolean | string) => {
+    if (typeof v === "string") return <span className="text-sm text-foreground">{v}</span>;
+    return v ? (
+      <Check size={18} className="text-primary mx-auto" />
+    ) : (
+      <X size={18} className="text-muted-foreground/40 mx-auto" />
+    );
+  };
 
   const handleCardCheckout = async (customerData: CustomerData) => {
     if (!selectedPlan) return;
