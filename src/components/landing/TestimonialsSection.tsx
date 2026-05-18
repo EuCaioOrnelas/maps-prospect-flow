@@ -68,7 +68,7 @@ const testimonials: Testimonial[] = [
     avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=96&h=96&fit=crop&crop=face",
   },
   {
-    text: "Encontrar oportunidades + gerar mensagens personalizadas + agente de IA para atender. Tudo integrado. Nunca foi tão fácil converter novos clientes.",
+    text: "SDR IA captando + diagnóstico automático + IA Closer atendendo. Tudo integrado. Nunca foi tão fácil converter novos clientes.",
     name: "Thiago S.",
     role: "Fundador",
     company: "Agência Impulso",
