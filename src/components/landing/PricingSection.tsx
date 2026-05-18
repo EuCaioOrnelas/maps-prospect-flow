@@ -203,7 +203,7 @@ export const PricingSection = () => {
   const comparisonGroups: Array<{
     title: string;
     icon: LucideIcon;
-    rows: Array<{ label: string; start: boolean | string; growth: boolean | string; scale: boolean | string }>;
+    rows: Array<{ label: React.ReactNode; start: boolean | string; growth: boolean | string; scale: boolean | string }>;
   }> = [
     {
       title: "Geração e captura de leads",
