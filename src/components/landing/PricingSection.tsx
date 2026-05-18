@@ -99,7 +99,7 @@ const mainPlans = {
         { text: "Automação de atendimento" },
         { text: "Follow-up automático inteligente" },
         { text: "IA Closer em conversas" },
-        { text: "Fluxos de Inteligência Operacional com IA" },
+        { text: "Fluxos Operacionais com IA" },
         { text: "Até 5 números conectados" },
         { text: "Suporte prioritário" },
         { text: "Operação totalmente automatizada", highlight: true },
