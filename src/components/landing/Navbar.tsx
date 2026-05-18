@@ -171,8 +171,8 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                   <a
                     key={link.href}
                     href={link.href}
-                    className="text-muted-foreground hover:text-foreground transition-colors py-2"
-                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-muted-foreground hover:text-foreground transition-colors py-2 cursor-pointer"
+                    onClick={(e) => handleNavLinkClick(e, link.href)}
                   >
                     {link.label}
                   </a>
