@@ -69,7 +69,7 @@ const mainPlans = {
       price: "296",
       anchorPrice: "592",
       opportunities: "1.000",
-      description: "Para times pequenos começando a prospectar — gere e valide oportunidades todos os dias",
+      description: "Para times pequenos começando a prospectar. Gere e valide oportunidades todos os dias.",
       features: [
         { text: "Oportunidades com alto potencial de fechamento" },
         { text: "Mensagens Geradas por IA para iniciar conversas" },
@@ -92,7 +92,7 @@ const mainPlans = {
       price: "696",
       anchorPrice: "1.392",
       opportunities: "3.000",
-      description: "Para times em crescimento — automatize, escale e converta leads no piloto automático",
+      description: "Para times em crescimento. Automatize, escale e converta leads no piloto automático.",
       features: [
         { text: "Tudo do Start (leads, CRM e disparos)", highlight: true },
         { text: "Priorize oportunidades com maior chance de fechamento (Score)" },
@@ -116,7 +116,7 @@ const mainPlans = {
       price: "246",
       anchorPrice: "592",
       opportunities: "1.000",
-      description: "Para times pequenos começando a prospectar — gere e valide oportunidades todos os dias",
+      description: "Para times pequenos começando a prospectar. Gere e valide oportunidades todos os dias.",
       features: [
         { text: "Oportunidades com alto potencial de fechamento" },
         { text: "Mensagens Geradas por IA para iniciar conversas" },
@@ -139,7 +139,7 @@ const mainPlans = {
       price: "596",
       anchorPrice: "1.392",
       opportunities: "3.000",
-      description: "Para times em crescimento — automatize, escale e converta leads no piloto automático",
+      description: "Para times em crescimento. Automatize, escale e converta leads no piloto automático.",
       features: [
         { text: "Tudo do Start (leads, CRM e disparos)", highlight: true },
         { text: "Priorize oportunidades com maior chance de fechamento (Score)" },
@@ -350,15 +350,6 @@ export const PricingSection = () => {
                     : "inset 0 1px 0 0 hsl(var(--primary) / 0.12), inset 0 0 60px -30px hsl(var(--primary) / 0.18)",
                 }}
               >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <div className="flex items-center gap-1 bg-primary text-white px-4 py-1 rounded-full text-sm font-medium whitespace-nowrap">
-                      <Sparkles size={14} />
-                      Mais Popular
-                    </div>
-                  </div>
-                )}
-
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
@@ -376,14 +367,22 @@ export const PricingSection = () => {
                       -{Math.round((1 - parsePrice(plan.price) / parsePrice(plan.anchorPrice)) * 100)}%
                     </span>
                   </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-display font-bold text-5xl md:text-6xl tabular-nums text-foreground leading-none">
-                      <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
-                    </span>
-                    <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">BRL</span>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-display font-bold text-5xl md:text-6xl tabular-nums text-foreground leading-none">
+                        <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
+                      </span>
+                      <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">BRL</span>
+                    </div>
+                    {plan.popular && (
+                      <span className="inline-flex items-center gap-1 bg-primary/15 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+                        <Sparkles size={11} />
+                        mais popular
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground mt-1.5">
-                    {isAnnual ? "por mês, cobrado anualmente" : "por mês"}
+                    {isAnnual ? "por usuário/mês, cobrado anualmente" : "por usuário/mês"}
                   </p>
                   {isAnnual && (
                     <p className="text-xs text-muted-foreground/80 mt-0.5">
@@ -442,16 +441,22 @@ export const PricingSection = () => {
             {!expanded ? (
               <button
                 onClick={handleShowComparison}
-                className="text-sm font-medium text-primary underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-colors"
+                className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 hover:bg-primary/15 border border-primary/30 hover:border-primary/50 text-primary text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
               >
-                Veja a comparação detalhada dos planos
+                <span>Veja a comparação detalhada dos planos</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-y-0.5">
+                  <path d="M12 5v14M5 12l7 7 7-7" />
+                </svg>
               </button>
             ) : (
               <button
                 onClick={() => setExpanded(false)}
-                className="text-sm font-medium text-muted-foreground underline underline-offset-4 decoration-muted-foreground/40 hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-muted/50 hover:bg-muted border border-border text-foreground text-sm font-medium transition-all duration-200"
               >
-                Ocultar comparação detalhada
+                <span>Ocultar comparação detalhada</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5" />
+                </svg>
               </button>
             )}
           </div>
