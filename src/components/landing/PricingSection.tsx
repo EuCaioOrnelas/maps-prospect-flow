@@ -216,7 +216,6 @@ export const PricingSection = () => {
         { label: "Disparos via WhatsApp oficial (Meta) e Evolution", start: true, growth: true, scale: true },
         { label: "Maior taxa de conversão por contexto e timing", start: true, growth: true, scale: true },
         { label: "Volume de oportunidades / mês", start: "1.000", growth: "3.000", scale: "Sob demanda" },
-        { label: "Múltiplas campanhas simultâneas", start: false, growth: true, scale: true },
       ],
     },
     {
