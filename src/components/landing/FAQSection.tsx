@@ -48,7 +48,7 @@ const faqs = [
   },
   {
     question: "Quantos números WhatsApp posso conectar?",
-    answer: "Como a Wiize opera com a Meta API Oficial, não existe limite de disparos por número. O que define o seu uso é o volume de oportunidades geradas dentro do plano contratado. Start, Growth e Enterprise liberam diferentes capacidades de oportunidades e números conectados, com a robustez e estabilidade da infraestrutura oficial do WhatsApp Business."
+    answer: "Como a Wiize opera com a Meta API Oficial, não existe limite de disparos por número. O que define o seu uso é o volume de oportunidades geradas dentro do plano contratado. Atendimento, Growth IA e Enterprise liberam diferentes capacidades de oportunidades e números conectados, com a robustez e estabilidade da infraestrutura oficial do WhatsApp Business."
   },
   {
     question: "Posso cancelar quando quiser?",
@@ -56,7 +56,7 @@ const faqs = [
   },
   {
     question: "Como funciona o teste grátis?",
-    answer: "São 7 dias de acesso total ao plano escolhido. No cadastro, você seleciona o plano desejado (Start, Growth ou Enterprise) e informa um cartão de crédito, mas nenhuma cobrança é feita durante o período de teste. Durante os 7 dias, você tem acesso completo a tudo que o plano oferece: SDR IA, IA de Intenção de Compra, fluxos inteligentes, campanhas, Atendimento Operacional com IA e CRM com Inteligência Comercial. A cobrança só acontece no 8º dia, caso você não cancele antes. Sem fidelidade e cancelamento direto na plataforma."
+    answer: "São 7 dias de acesso total ao plano escolhido. No cadastro, você seleciona o plano desejado (Atendimento, Growth IA ou Enterprise) e informa um cartão de crédito, mas nenhuma cobrança é feita durante o período de teste. Durante os 7 dias, você tem acesso completo a tudo que o plano oferece. A cobrança só acontece no 8º dia, caso você não cancele antes. Sem fidelidade e cancelamento direto na plataforma."
   },
 ];
 
