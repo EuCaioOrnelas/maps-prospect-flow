@@ -116,7 +116,7 @@ const mainPlans = {
       price: "246",
       anchorPrice: "592",
       opportunities: "1.000",
-      description: "Para gerar e validar oportunidades todos os dias",
+      description: "Para times pequenos começando a prospectar — gere e valide oportunidades todos os dias",
       features: [
         { text: "Oportunidades com alto potencial de fechamento" },
         { text: "Mensagens Geradas por IA para iniciar conversas" },
