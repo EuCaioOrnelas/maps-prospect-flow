@@ -163,7 +163,7 @@ const scalePlan = {
   key: "scale",
   price: "1.496",
   opportunities: "Personalizado",
-  description: "Um plano sob medida para a sua operação. Estrutura, volume e suporte dedicado para empresas que precisam de uma solução exclusiva.",
+  description: "Para operações de alto volume com suporte e estrutura dedicados.",
   features: [
     { text: "Tudo do Growth incluso" },
     { text: "Estrutura 100% personalizada", isNew: true },
@@ -513,10 +513,11 @@ export const PricingSection = () => {
 
             {/* Enterprise — inline com Start e Growth */}
             <motion.div
+              key={`enterprise-${isAnnual ? 'annual' : 'monthly'}`}
               initial={{ opacity: 0, y: 50, scale: 0.9 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
               whileHover={{ y: -8, scale: 1.03, transition: { duration: 0.3 } }}
               className="group relative rounded-2xl flex flex-col overflow-hidden glass p-5 md:p-6"
               style={{
@@ -530,9 +531,6 @@ export const PricingSection = () => {
                     <Building2 className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                   </div>
                   <h3 className="font-display font-bold text-lg md:text-xl">Enterprise</h3>
-                  <span className="ml-auto bg-primary/15 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
-                    sob medida
-                  </span>
                 </div>
                 <p className="text-muted-foreground text-xs sm:text-sm min-h-[2.5rem] md:min-h-[2.75rem]">
                   {scalePlan.description}
@@ -542,11 +540,11 @@ export const PricingSection = () => {
               <div className="mb-6">
                 <div className="flex items-baseline gap-2">
                   <span className="font-display font-bold text-3xl md:text-4xl tabular-nums text-foreground leading-none">
-                    Personalizado
+                    Sob medida
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1.5">
-                  Conforme o volume e estrutura da sua operação
+                  por usuário/mês
                 </p>
                 <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
                   Oportunidades sob demanda
