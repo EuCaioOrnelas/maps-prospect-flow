@@ -164,6 +164,7 @@ const LandingPage = () => {
 
           <Footer />
         </div>
+        <FloatingChatButton />
       </main>
     </>
   );
