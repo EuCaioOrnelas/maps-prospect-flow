@@ -148,6 +148,7 @@ const Index = () => {
           </Suspense>
 
           <Footer />
+          <FloatingChatButton />
         </div>
       </main>
     </>
