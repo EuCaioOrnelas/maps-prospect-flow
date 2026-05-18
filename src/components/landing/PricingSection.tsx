@@ -261,13 +261,13 @@ export const PricingSection = () => {
       ],
     },
     {
-      title: "Agente de IA Wiize",
+      title: "IA Closer Wiize",
       icon: Bot,
       rows: [
-        { label: "Agente de IA treinado com seu negócio", start: false, growth: true, scale: true },
-        { label: "Qualifica, agenda e tira dúvidas sozinho", start: false, growth: true, scale: true },
+        { label: "IA Closer treinada com seu negócio", start: false, growth: true, scale: true },
+        { label: "Qualifica, agenda e tira dúvidas sozinha", start: false, growth: true, scale: true },
         { label: "Aprende com cada conversa (memória contextual)", start: false, growth: true, scale: true },
-        { label: "Múltiplos agentes para diferentes produtos / times", start: false, growth: false, scale: true },
+        { label: "Múltiplas IAs Closer para diferentes produtos / times", start: false, growth: false, scale: true },
         { label: "Testes e simulações antes de ativar", start: false, growth: true, scale: true },
       ],
     },
