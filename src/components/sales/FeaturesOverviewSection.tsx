@@ -138,7 +138,7 @@ export const FeaturesOverviewSection = () => {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Bot size={20} className="text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-base">Agente de IA com Fluxos Estruturados</h3>
+                    <h3 className="font-semibold text-foreground text-base">Fluxos de Inteligência Operacional com IA</h3>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     A IA responde, qualifica e conduz cada conversa dentro de fluxos definidos, avançando o lead até o momento de decisão com naturalidade e consistência, sem intervenção humana.
