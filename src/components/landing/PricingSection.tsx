@@ -643,8 +643,8 @@ export const PricingSection = () => {
                     <span className="font-display text-base md:text-lg font-bold text-foreground">Planos</span>
                   </div>
                   {[
-                    { name: "Start", price: plans[0].price, suffix: "BRL", popular: false },
-                    { name: "Growth", price: plans[1].price, suffix: "BRL", popular: true },
+                    { name: "Atendimento", price: plans[0].price, suffix: "BRL", popular: false },
+                    { name: "Growth IA", price: plans[1].price, suffix: "BRL", popular: true },
                     { name: "Enterprise", price: "Sob medida", suffix: "", popular: false, custom: true },
                   ].map((col) => (
                     <div key={col.name} className="text-center px-1 relative">
