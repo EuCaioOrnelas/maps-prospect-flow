@@ -546,8 +546,37 @@ const Dashboard = () => {
           />
 
           <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
+            {!hasSDRAccess(profile) ? (
+              <div className="max-w-2xl mx-auto mt-12">
+                <div className="rounded-2xl border border-primary/30 bg-card/60 backdrop-blur p-8 text-center">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 border border-primary/20 mb-5">
+                    <Lock size={24} className="text-primary" />
+                  </div>
+                  <span className="inline-block px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-primary/10 text-primary mb-3">
+                    Exclusivo do Growth IA
+                  </span>
+                  <h1 className="font-display text-2xl sm:text-3xl font-bold mb-3">
+                    SDR IA não está incluso no seu plano Atendimento
+                  </h1>
+                  <p className="text-muted-foreground mb-6 leading-relaxed">
+                    O <strong className="text-foreground">SDR IA</strong> (captação automática de leads, diagnóstico com IA e geração de mensagens personalizadas por contexto) é exclusivo do plano <strong className="text-foreground">Growth IA</strong>.
+                    Faça upgrade para liberar e começar a gerar oportunidades em segundos.
+                  </p>
+                  <Button
+                    size="lg"
+                    variant="hero"
+                    onClick={() => navigate("/perfil?upgrade=growth")}
+                    className="w-full sm:w-auto"
+                  >
+                    Fazer upgrade para Growth IA
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Seu plano atual segue com chat, campanhas Meta, fluxos, CRM e dashboards liberados normalmente.
+                  </p>
+                </div>
+              </div>
+            ) : (
             <div className="max-w-4xl mx-auto">
-          {/* Hero Section */}
           <div className="text-center mb-8 sm:mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
               <Brain size={18} className="text-primary" />
