@@ -40,10 +40,10 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
     onSignupClick?.();
   };
 
-  const scrollToPricing = () => {
+  const scrollToId = (id: string) => {
     const start = Date.now();
     const tryScroll = () => {
-      const el = document.getElementById("pricing");
+      const el = document.getElementById(id);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
@@ -53,6 +53,18 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
       }
     };
     tryScroll();
+  };
+
+  const scrollToPricing = () => scrollToId("pricing");
+
+  const handleNavLinkClick = (e: React.MouseEvent, href: string) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    const id = href.replace("#", "");
+    if (location.pathname !== "/") {
+      navigate(`/#${id}`);
+    }
+    scrollToId(id);
   };
 
   const handlePricingClick = (e: React.MouseEvent) => {
@@ -109,7 +121,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             
             <div className="hidden md:flex items-center gap-6">
               {navLinks.map(link => (
-                <a key={link.href} href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <a key={link.href} href={link.href} onClick={(e) => handleNavLinkClick(e, link.href)} className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                   {link.label}
                 </a>
               ))}
@@ -159,8 +171,8 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                   <a
                     key={link.href}
                     href={link.href}
-                    className="text-muted-foreground hover:text-foreground transition-colors py-2"
-                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-muted-foreground hover:text-foreground transition-colors py-2 cursor-pointer"
+                    onClick={(e) => handleNavLinkClick(e, link.href)}
                   >
                     {link.label}
                   </a>
