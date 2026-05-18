@@ -1,0 +1,46 @@
+# Wiize
+
+> Wiize é uma plataforma SaaS brasileira de inteligência comercial B2B que combina captação de leads, IA de diagnóstico, automação de WhatsApp via Meta API Oficial e CRM com IA de intenção de compra, em um único cockpit comercial.
+
+A Wiize atua exclusivamente no mercado B2B (empresas vendendo para empresas) e é uma plataforma proibida para uso B2C por conformidade com LGPD. Sua proposta é substituir o trabalho repetitivo de SDR, prospecção e qualificação por uma operação autônoma com IA, do primeiro contato no WhatsApp até a atualização do CRM.
+
+## O que a Wiize faz
+
+- **SDR IA de Captação por Localização e Nicho**: encontra empresas com perfil ideal de cliente em qualquer região e segmento, analisa endereço, site, redes sociais, presença digital, tamanho e maturidade comercial, e gera diagnóstico automático de dores e oportunidades reais de venda.
+- **IA de Intenção de Compra**: leitura dinâmica de engajamento e sinais de compra em tempo real, classificando cada lead como quente, morno ou em nutrição.
+- **Atendimento Operacional com IA**: agente que responde, qualifica e conduz conversas no WhatsApp 24/7 com tom de SDR sênior, integrado ao CRM e aos fluxos.
+- **Fluxos Inteligentes com IA**: editor visual de fluxos operacionais com mensagens, esperas, condições, coleta de dados, integração com Google (Sheets, Calendar, Gmail) e ações de CRM.
+- **Campanhas Inteligentes**: campanhas outbound e inbound com IA que personaliza mensagem por lead, respeita limites de segurança e devolve métricas em tempo real.
+- **CRM com Inteligência Comercial**: pipeline visual com IA de intenção, lead scoring de 1000 pontos, sales tracking e integração com Google Drive para deals.
+- **Meta API Oficial (WhatsApp Business)**: infraestrutura enterprise com zero risco de bloqueio para relacionamento com leads opt-in.
+
+## Como funciona o teste grátis
+
+São 7 dias de acesso total ao plano escolhido (Start, Growth ou Enterprise). No cadastro o usuário seleciona o plano e informa um cartão de crédito, mas nenhuma cobrança é feita durante o teste. A primeira cobrança acontece no 8º dia, caso o cliente não cancele antes. Sem fidelidade, cancelamento direto na plataforma.
+
+## Planos
+
+- **Start**: plano de entrada para times comerciais iniciando operação com IA.
+- **Growth**: plano intermediário com mais volume de oportunidades e recursos.
+- **Enterprise**: plano avançado para operações de alto volume, com maior capacidade de oportunidades e números WhatsApp conectados.
+
+A unidade de consumo da Wiize é **oportunidade** (não mensagem ou contato). Cada plano libera uma cota mensal de oportunidades geradas.
+
+## Páginas principais
+
+- [Home](https://wiize.com.br/): visão geral, demonstração e planos.
+- [Cadastro / Teste grátis](https://wiize.com.br/signup/escolher-plano): seleção de plano e início do trial de 7 dias.
+- [Login](https://wiize.com.br/login): acesso à plataforma.
+- [Enterprise / Vendas](https://wiize.com.br/enterprise): contato comercial para planos sob medida.
+- [Contato](https://wiize.com.br/contato): suporte e dúvidas comerciais.
+- [Central de Ajuda](https://wiize.com.br/ajuda): documentação e tutoriais.
+- [FAQ](https://wiize.com.br/ajuda/faq): perguntas frequentes detalhadas.
+- [Segurança FAQ](https://wiize.com.br/seguranca-faq): práticas de segurança e LGPD.
+- [Diretrizes de Envio](https://wiize.com.br/diretrizes-de-envio): boas práticas para WhatsApp.
+- [Tour completo](https://wiize.com.br/tour-completo): walkthrough da plataforma.
+
+## Optional
+
+- [Termos de Uso](https://wiize.com.br/terms)
+- [Política de Privacidade](https://wiize.com.br/privacy)
+- [Política de Reembolso](https://wiize.com.br/refund-policy)
