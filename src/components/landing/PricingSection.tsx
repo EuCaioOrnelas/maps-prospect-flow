@@ -165,7 +165,7 @@ const scalePlan = {
   opportunities: "Personalizado",
   description: "Para operações de alto volume com suporte e estrutura dedicados.",
   features: [
-    { text: "Tudo do Growth incluso" },
+    { text: "Tudo do Growth IA incluso" },
     { text: "Estrutura 100% personalizada", isNew: true },
     { text: "Número de oportunidades sob demanda" },
     { text: "Fluxos e automações sob medida" },
