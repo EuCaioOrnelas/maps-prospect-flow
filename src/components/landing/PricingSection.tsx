@@ -163,7 +163,7 @@ const scalePlan = {
   key: "scale",
   price: "1.496",
   opportunities: "Personalizado",
-  description: "Um plano sob medida para a sua operação. Estrutura, volume e suporte dedicado para empresas que precisam de uma solução exclusiva.",
+  description: "Para operações de alto volume com suporte e estrutura dedicados.",
   features: [
     { text: "Tudo do Growth incluso" },
     { text: "Estrutura 100% personalizada", isNew: true },
