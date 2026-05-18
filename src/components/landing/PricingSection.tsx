@@ -92,7 +92,7 @@ const mainPlans = {
       price: "696",
       anchorPrice: "1.392",
       opportunities: "3.000",
-      description: "Para times em crescimento — automatize, escale e converta leads no piloto automático",
+      description: "Para times em crescimento. Automatize, escale e converta leads no piloto automático.",
       features: [
         { text: "Tudo do Start (leads, CRM e disparos)", highlight: true },
         { text: "Priorize oportunidades com maior chance de fechamento (Score)" },
