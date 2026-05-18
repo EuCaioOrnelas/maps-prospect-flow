@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -187,8 +187,69 @@ export const PricingSection = () => {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; key: string; price: string } | null>(null);
   const [isAnnual, setIsAnnual] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const comparisonRef = useRef<HTMLDivElement>(null);
 
   const plans = isAnnual ? mainPlans.annual : mainPlans.monthly;
+
+  const handleShowComparison = () => {
+    setExpanded(true);
+    setTimeout(() => {
+      comparisonRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
+
+  // Comparison matrix: feature -> { start, growth, scale } where value is boolean or string
+  const comparisonGroups: Array<{
+    title: string;
+    rows: Array<{ label: string; start: boolean | string; growth: boolean | string; scale: boolean | string }>;
+  }> = [
+    {
+      title: "Geração e captura de leads",
+      rows: [
+        { label: "Oportunidades com alto potencial de fechamento", start: true, growth: true, scale: true },
+        { label: "Mensagens geradas por IA para iniciar conversas", start: true, growth: true, scale: true },
+        { label: "Disparos via WhatsApp e Meta", start: true, growth: true, scale: true },
+        { label: "Volume de oportunidades / mês", start: "1.000", growth: "3.000", scale: "Sob demanda" },
+      ],
+    },
+    {
+      title: "CRM e priorização",
+      rows: [
+        { label: "Gestão de contatos em um só lugar (CRM)", start: true, growth: true, scale: true },
+        { label: "Score — priorização por chance de fechamento", start: true, growth: true, scale: true },
+        { label: "Fluxos de vendas automatizados", start: false, growth: true, scale: true },
+      ],
+    },
+    {
+      title: "Automação e IA",
+      rows: [
+        { label: "Automação de atendimento", start: false, growth: true, scale: true },
+        { label: "Follow-up automático inteligente", start: false, growth: true, scale: true },
+        { label: "Agente de IA em conversas", start: false, growth: true, scale: true },
+        { label: "Operação totalmente automatizada", start: false, growth: true, scale: true },
+      ],
+    },
+    {
+      title: "Infraestrutura e suporte",
+      rows: [
+        { label: "Números WhatsApp conectados", start: "Até 2", growth: "Até 5", scale: "Ilimitados" },
+        { label: "Suporte", start: "Email", growth: "Prioritário", scale: "Gerente dedicado" },
+        { label: "Onboarding com especialista", start: false, growth: false, scale: true },
+        { label: "Estrutura personalizada", start: false, growth: false, scale: true },
+        { label: "Processamento com prioridade máxima", start: false, growth: false, scale: true },
+      ],
+    },
+  ];
+
+  const renderCell = (v: boolean | string) => {
+    if (typeof v === "string") return <span className="text-sm text-foreground">{v}</span>;
+    return v ? (
+      <Check size={18} className="text-primary mx-auto" />
+    ) : (
+      <X size={18} className="text-muted-foreground/40 mx-auto" />
+    );
+  };
 
   const handleCardCheckout = async (customerData: CustomerData) => {
     if (!selectedPlan) return;
@@ -327,22 +388,25 @@ export const PricingSection = () => {
                   </p>
                 </div>
 
-                <ul className="space-y-3 mb-8 text-sm flex-grow">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
-                      {feature.disabled ? (
-                        <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
-                      )}
-                      <span className={
-                        feature.highlight ? "text-foreground font-semibold" :
-                        feature.subtle ? "text-muted-foreground/60 italic" :
-                        "text-muted-foreground"
-                      }>{feature.text}</span>
-                    </li>
-                  ))}
-                </ul>
+                {expanded && (
+                  <ul className="space-y-3 mb-8 text-sm flex-grow">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
+                        {feature.disabled ? (
+                          <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                        )}
+                        <span className={
+                          feature.highlight ? "text-foreground font-semibold" :
+                          feature.subtle ? "text-muted-foreground/60 italic" :
+                          "text-muted-foreground"
+                        }>{feature.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {!expanded && <div className="flex-grow" />}
 
                 <Button
                   variant={plan.popular ? "hero" : "outline"}
@@ -364,6 +428,25 @@ export const PricingSection = () => {
                 </Button>
               </motion.div>
             ))}
+          </div>
+
+          {/* Toggle comparison link */}
+          <div className="flex justify-center mb-10">
+            {!expanded ? (
+              <button
+                onClick={handleShowComparison}
+                className="text-sm font-medium text-primary underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-colors"
+              >
+                Veja a comparação detalhada dos planos
+              </button>
+            ) : (
+              <button
+                onClick={() => setExpanded(false)}
+                className="text-sm font-medium text-muted-foreground underline underline-offset-4 decoration-muted-foreground/40 hover:text-foreground transition-colors"
+              >
+                Ocultar comparação detalhada
+              </button>
+            )}
           </div>
 
           {/* Scale - Full width card, same style as others */}
@@ -391,17 +474,19 @@ export const PricingSection = () => {
                 </div>
                 <p className="text-muted-foreground text-xs sm:text-sm mb-4">{scalePlan.description}</p>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {scalePlan.features.map((feature, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <Check size={16} className="text-primary flex-shrink-0" />
-                      <span className="text-muted-foreground">{feature.text}</span>
-                      {feature.isNew && (
-                        <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">SOB MEDIDA</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {expanded && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {scalePlan.features.map((feature, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm">
+                        <Check size={16} className="text-primary flex-shrink-0" />
+                        <span className="text-muted-foreground">{feature.text}</span>
+                        {feature.isNew && (
+                          <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">SOB MEDIDA</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Right: Custom pricing + CTA */}
@@ -426,6 +511,59 @@ export const PricingSection = () => {
               </div>
             </div>
           </motion.div>
+
+          {/* Detailed comparison table */}
+          <div ref={comparisonRef} className="scroll-mt-24">
+            {expanded && (
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="mb-16 rounded-2xl border border-border bg-card/30 overflow-hidden"
+              >
+                <div className="p-5 md:p-6 border-b border-border bg-card/50">
+                  <h3 className="font-display text-xl md:text-2xl font-bold text-foreground">
+                    Comparação detalhada dos planos
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Veja todos os recursos disponíveis em cada plano.
+                  </p>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[640px] text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-card/30">
+                        <th className="text-left font-medium text-muted-foreground py-4 px-5 w-[40%]">Recurso</th>
+                        <th className="text-center font-semibold text-foreground py-4 px-3">Start</th>
+                        <th className="text-center font-semibold text-primary py-4 px-3">Growth</th>
+                        <th className="text-center font-semibold text-foreground py-4 px-3">Enterprise</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {comparisonGroups.map((group) => (
+                        <Fragment key={group.title}>
+                          <tr className="bg-muted/30">
+                            <td colSpan={4} className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-foreground/80">
+                              {group.title}
+                            </td>
+                          </tr>
+                          {group.rows.map((row, i) => (
+                            <tr key={i} className="border-b border-border/50 last:border-0">
+                              <td className="py-3 px-5 text-foreground">{row.label}</td>
+                              <td className="py-3 px-3 text-center">{renderCell(row.start)}</td>
+                              <td className="py-3 px-3 text-center bg-primary/5">{renderCell(row.growth)}</td>
+                              <td className="py-3 px-3 text-center">{renderCell(row.scale)}</td>
+                            </tr>
+                          ))}
+                        </Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+          </div>
 
           {/* Trust & Security Section */}
           <div 
