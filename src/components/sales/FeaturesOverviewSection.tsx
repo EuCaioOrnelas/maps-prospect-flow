@@ -163,15 +163,15 @@ export const FeaturesOverviewSection = () => {
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="relative z-10">
-                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Gestão & Scoring</span>
+                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Gestão & Intenção de Compra</span>
                   <div className="flex items-center gap-2.5 mb-1">
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <LayoutDashboard size={16} className="text-primary" />
                     </div>
-                     <h3 className="font-semibold text-foreground text-base">CRM com Scoring Automático</h3>
+                     <h3 className="font-semibold text-foreground text-base">CRM com IA de Intenção de Compra</h3>
                    </div>
                    <p className="text-sm text-muted-foreground leading-relaxed">
-                    Pipeline visual que organiza cada lead por estágio, com score baseado em comportamento real. Sua equipe sabe quem priorizar.
+                    Pipeline visual que organiza cada lead por estágio, com IA que detecta intenção de compra em tempo real. Sua equipe sabe exatamente quem priorizar.
                   </p>
                 </div>
               </div>
