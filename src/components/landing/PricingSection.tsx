@@ -202,10 +202,12 @@ export const PricingSection = () => {
   // Comparison matrix: feature -> { start, growth, scale } where value is boolean or string
   const comparisonGroups: Array<{
     title: string;
+    icon: LucideIcon;
     rows: Array<{ label: string; start: boolean | string; growth: boolean | string; scale: boolean | string }>;
   }> = [
     {
       title: "Geração e captura de leads",
+      icon: Target,
       rows: [
         { label: "Oportunidades com alto potencial de fechamento", start: true, growth: true, scale: true },
         { label: "Mensagens geradas por IA para iniciar conversas", start: true, growth: true, scale: true },
@@ -215,6 +217,7 @@ export const PricingSection = () => {
     },
     {
       title: "CRM e priorização",
+      icon: Users,
       rows: [
         { label: "Gestão de contatos em um só lugar (CRM)", start: true, growth: true, scale: true },
         { label: "Score — priorização por chance de fechamento", start: true, growth: true, scale: true },
@@ -223,6 +226,7 @@ export const PricingSection = () => {
     },
     {
       title: "Automação e IA",
+      icon: Bot,
       rows: [
         { label: "Automação de atendimento", start: false, growth: true, scale: true },
         { label: "Follow-up automático inteligente", start: false, growth: true, scale: true },
@@ -232,6 +236,7 @@ export const PricingSection = () => {
     },
     {
       title: "Infraestrutura e suporte",
+      icon: Headphones,
       rows: [
         { label: "Números WhatsApp conectados", start: "Até 2", growth: "Até 5", scale: "Ilimitados" },
         { label: "Suporte", start: "Email", growth: "Prioritário", scale: "Gerente dedicado" },
@@ -242,12 +247,21 @@ export const PricingSection = () => {
     },
   ];
 
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(comparisonGroups.map((g) => [g.title, true]))
+  );
+  const toggleGroup = (title: string) =>
+    setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
+  const allOpen = comparisonGroups.every((g) => openGroups[g.title]);
+  const setAllGroups = (open: boolean) =>
+    setOpenGroups(Object.fromEntries(comparisonGroups.map((g) => [g.title, open])));
+
   const renderCell = (v: boolean | string) => {
-    if (typeof v === "string") return <span className="text-sm text-foreground">{v}</span>;
+    if (typeof v === "string") return <span className="text-sm font-medium text-foreground">{v}</span>;
     return v ? (
-      <Check size={18} className="text-primary mx-auto" />
+      <Check size={18} className="text-primary mx-auto" strokeWidth={2.5} />
     ) : (
-      <X size={18} className="text-muted-foreground/40 mx-auto" />
+      <span className="text-muted-foreground/30 text-base">—</span>
     );
   };
 
