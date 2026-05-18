@@ -299,7 +299,7 @@ export const PricingSection = () => {
       icon: Headphones,
       rows: [
         { label: "Números WhatsApp conectados", start: "Até 2", growth: "Até 5", scale: "Ilimitados" },
-        { label: "Usuários da equipe", start: "1", growth: "Até 5", scale: "Ilimitados" },
+        
         { label: "Proxy dedicado e rotação automática", start: true, growth: true, scale: true },
         { label: "Backup de conversas e dados", start: true, growth: true, scale: true },
         { label: "Suporte", start: "Email", growth: "Prioritário", scale: "Gerente dedicado" },
