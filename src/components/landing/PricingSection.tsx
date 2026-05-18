@@ -399,8 +399,8 @@ export const PricingSection = () => {
             </div>
           </div>
 
-          {/* Start + Growth */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch mb-8">
+          {/* Start + Growth + Enterprise */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch mb-8">
             {plans.map((plan, index) => (
               <motion.div
                 key={`${plan.key}-${isAnnual ? 'annual' : 'monthly'}`}
