@@ -538,6 +538,10 @@ export const PricingSection = () => {
               </div>
 
               <div className="mb-6">
+                <div className="invisible flex items-center gap-2 mb-2" aria-hidden="true">
+                  <span className="text-sm">R$ 0</span>
+                  <span className="text-xs font-bold px-2 py-0.5">-0%</span>
+                </div>
                 <div className="flex items-baseline gap-2">
                   <span className="font-display font-bold text-[2rem] md:text-[2.5rem] tabular-nums text-foreground leading-none whitespace-nowrap">
                     Sob medida
