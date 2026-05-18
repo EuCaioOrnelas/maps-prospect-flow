@@ -430,6 +430,25 @@ export const PricingSection = () => {
             ))}
           </div>
 
+          {/* Toggle comparison link */}
+          <div className="flex justify-center mb-10">
+            {!expanded ? (
+              <button
+                onClick={handleShowComparison}
+                className="text-sm font-medium text-primary underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-colors"
+              >
+                Veja a comparação detalhada dos planos
+              </button>
+            ) : (
+              <button
+                onClick={() => setExpanded(false)}
+                className="text-sm font-medium text-muted-foreground underline underline-offset-4 decoration-muted-foreground/40 hover:text-foreground transition-colors"
+              >
+                Ocultar comparação detalhada
+              </button>
+            )}
+          </div>
+
           {/* Scale - Full width card, same style as others */}
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
