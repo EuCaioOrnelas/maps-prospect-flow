@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, X, Sparkles, Loader2, Shield, Lock, CreditCard, Server, FileCheck, ShieldCheck, BadgeCheck, RotateCcw, Rocket, TrendingUp, Building2 } from "lucide-react";
+import { Check, X, Sparkles, Loader2, Shield, Lock, CreditCard, Server, FileCheck, ShieldCheck, BadgeCheck, RotateCcw, Rocket, TrendingUp, Building2, Table2 } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -356,6 +356,12 @@ export const PricingSection = () => {
                       <plan.icon className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                     </div>
                     <h3 className="font-display font-bold text-lg md:text-xl">{plan.name}</h3>
+                    {plan.popular && (
+                      <span className="ml-auto inline-flex items-center gap-1 bg-primary/15 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+                        <Sparkles size={11} />
+                        mais popular
+                      </span>
+                    )}
                   </div>
                   <p className="text-muted-foreground text-xs sm:text-sm min-h-[2.5rem] md:min-h-[2.75rem]">{plan.description}</p>
                 </div>
@@ -367,19 +373,11 @@ export const PricingSection = () => {
                       -{Math.round((1 - parsePrice(plan.price) / parsePrice(plan.anchorPrice)) * 100)}%
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-display font-bold text-5xl md:text-6xl tabular-nums text-foreground leading-none">
-                        <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
-                      </span>
-                      <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">BRL</span>
-                    </div>
-                    {plan.popular && (
-                      <span className="inline-flex items-center gap-1 bg-primary/15 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
-                        <Sparkles size={11} />
-                        mais popular
-                      </span>
-                    )}
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-display font-bold text-5xl md:text-6xl tabular-nums text-foreground leading-none">
+                      <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
+                    </span>
+                    <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">BRL</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1.5">
                     {isAnnual ? "por usuário/mês, cobrado anualmente" : "por usuário/mês"}
@@ -441,22 +439,18 @@ export const PricingSection = () => {
             {!expanded ? (
               <button
                 onClick={handleShowComparison}
-                className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 hover:bg-primary/15 border border-primary/30 hover:border-primary/50 text-primary text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+                className="inline-flex items-center gap-2 text-sm font-medium text-primary underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-colors"
               >
-                <span>Veja a comparação detalhada dos planos</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-y-0.5">
-                  <path d="M12 5v14M5 12l7 7 7-7" />
-                </svg>
+                <Table2 size={15} />
+                Veja a comparação detalhada dos planos
               </button>
             ) : (
               <button
                 onClick={() => setExpanded(false)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-muted/50 hover:bg-muted border border-border text-foreground text-sm font-medium transition-all duration-200"
+                className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground underline underline-offset-4 decoration-muted-foreground/40 hover:text-foreground transition-colors"
               >
-                <span>Ocultar comparação detalhada</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 12H5" />
-                </svg>
+                <Table2 size={15} />
+                Ocultar comparação detalhada
               </button>
             )}
           </div>
