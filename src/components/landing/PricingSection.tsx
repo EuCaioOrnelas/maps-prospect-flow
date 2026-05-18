@@ -370,25 +370,27 @@ export const PricingSection = () => {
                 </div>
 
                 <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-2">
                     <span className="text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 text-sm">R$ {plan.anchorPrice}</span>
                     <span className="bg-primary/15 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
                       -{Math.round((1 - parsePrice(plan.price) / parsePrice(plan.anchorPrice)) * 100)}%
                     </span>
                   </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-base text-muted-foreground">R$</span>
-                    <span className="font-display font-bold text-4xl md:text-5xl tabular-nums">
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-display font-bold text-5xl md:text-6xl tabular-nums text-foreground leading-none">
                       <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
                     </span>
-                    <span className="text-base text-muted-foreground">/mês</span>
+                    <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">BRL</span>
                   </div>
+                  <p className="text-sm text-muted-foreground mt-1.5">
+                    {isAnnual ? "por mês, cobrado anualmente" : "por mês"}
+                  </p>
                   {isAnnual && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Cobrado anualmente — R$ {formatPrice(parsePrice(plan.price) * 12)}/ano
+                    <p className="text-xs text-muted-foreground/80 mt-0.5">
+                      Total R$ {formatPrice(parsePrice(plan.price) * 12)}/ano
                     </p>
                   )}
-                  <p className="text-primary mt-1.5 text-xs sm:text-sm font-medium">
+                  <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
                     Até {plan.opportunities} oportunidades/mês
                   </p>
                 </div>
