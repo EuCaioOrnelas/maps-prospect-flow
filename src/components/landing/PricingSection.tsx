@@ -599,69 +599,6 @@ export const PricingSection = () => {
             )}
           </div>
 
-          {/* Scale - Full width card, same style as others */}
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            whileHover={{ 
-              y: -8,
-              scale: 1.01,
-              transition: { duration: 0.3 }
-            }}
-            className="group rounded-2xl glass p-5 md:p-6 mb-16"
-          >
-            <div className="flex flex-col md:flex-row gap-6">
-              {/* Left: Plan info */}
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-                    <Building2 className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
-                  </div>
-                  <h3 className="font-display font-bold text-lg md:text-xl">Enterprise</h3>
-                  <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-0.5 rounded-full">🔥 SOB MEDIDA</span>
-                </div>
-                <p className="text-muted-foreground text-xs sm:text-sm mb-4">{scalePlan.description}</p>
-                
-                {expanded && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {scalePlan.features.map((feature, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm">
-                        <Check size={16} className="text-primary flex-shrink-0" />
-                        <span className="text-muted-foreground">{feature.text}</span>
-                        {feature.isNew && (
-                          <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">SOB MEDIDA</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Right: Custom pricing + CTA */}
-              <div className="flex flex-col items-center md:items-end justify-center gap-4 md:min-w-[240px] md:border-l md:border-border/40 md:pl-6">
-                <div className="text-center md:text-right">
-                  <p className="text-xs text-muted-foreground mb-1">Investimento</p>
-                  <div className="flex items-baseline gap-1 justify-center md:justify-end">
-                    <span className="font-display font-bold text-3xl md:text-4xl tabular-nums">Personalizado</span>
-                  </div>
-                  <p className="text-primary mt-1.5 text-xs font-medium">
-                    Depende do volume e estrutura da sua operação
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full md:w-auto"
-                  onClick={() => navigate("/enterprise")}
-                >
-                  Falar com Especialista
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-
           {/* Detailed comparison table */}
           <div ref={comparisonRef} className="scroll-mt-24">
             {expanded && (
