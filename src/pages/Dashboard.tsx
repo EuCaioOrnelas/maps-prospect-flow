@@ -1038,6 +1038,7 @@ const Dashboard = () => {
             </div>
           )}
         </div>
+            )}
       </main>
 
       {/* Upgrade Modal */}
