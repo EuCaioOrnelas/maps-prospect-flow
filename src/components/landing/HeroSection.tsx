@@ -838,7 +838,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               <span className="text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
             </div>
             <h1 className="font-display text-[2.2rem] sm:text-[2.6rem] md:text-[3.2rem] lg:text-[3.6rem] xl:text-[4rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.13]" style={{ animationDelay: "0.1s" }}>
-              A IA que transforma<br />Leads B2B em<br /><span className="text-shimmer-highlight whitespace-nowrap">vendas no Automático</span>
+              IA que transforma<br />Leads B2B em<br /><span className="text-shimmer-highlight whitespace-nowrap">vendas no Automático</span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
               Encontre leads qualificados, analise e classifique oportunidades com IA, gere abordagens personalizadas e automatize todo seu processo de vendas B2B do primeiro contato ao fechamento no WhatsApp.
