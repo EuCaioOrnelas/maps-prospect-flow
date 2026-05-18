@@ -11,44 +11,52 @@ import { Link } from "react-router-dom";
 
 const faqs = [
   {
-    question: "O que é o teste grátis de 7 dias?",
-    answer: "Ao criar sua conta, você recebe 7 dias de acesso completo ao Wiize — sem precisar de cartão de crédito. Durante o teste, você pode gerar até 120 oportunidades, usar o CRM, criar fluxos de automação, configurar Agentes de IA e disparar campanhas. Após os 7 dias, basta escolher um plano para continuar."
+    question: "O que é a WIIZE AI?",
+    answer: "A WIIZE AI é uma plataforma de Inteligência Operacional com IA para vendas B2B. Em um único ambiente, sua empresa prospecta, qualifica, atende e acompanha leads em tempo real — com IA atuando em cada etapa da operação comercial, do primeiro contato ao fechamento."
+  },
+  {
+    question: "Como funciona a SDR IA de Captação?",
+    answer: "A SDR IA encontra empresas com perfil ideal, analisa cada uma em profundidade (tamanho, demanda, maturidade digital) e gera um diagnóstico automático de necessidades, dores e oportunidades reais de vendas. Em seguida, cria abordagens personalizadas por contexto — entregando leads prontos para o time comercial agir."
+  },
+  {
+    question: "O que é a IA de Intenção de Compra?",
+    answer: "É a camada de Inteligência Comercial da WIIZE que lê engajamento, comportamento e sinais de compra em tempo real. Cada lead recebe uma leitura dinâmica de intenção, permitindo que sua equipe priorize quem está pronto para comprar agora — e não desperdice tempo com quem não está."
+  },
+  {
+    question: "Como funciona o Atendimento Operacional com IA?",
+    answer: "O Atendimento Operacional com IA responde, qualifica e conduz conversas no WhatsApp 24/7, com tom de copiloto comercial. Integrado ao CRM e aos fluxos, ele entende contexto, atualiza estágios e passa o bastão para o humano no momento certo — operando como um SDR sênior, sem pausas."
+  },
+  {
+    question: "O que são os Fluxos Inteligentes com IA?",
+    answer: "São fluxos operacionais visuais que orquestram cada etapa da jornada do lead — mensagens, esperas, condições, coleta de dados e ações no CRM. A IA entra quando necessário para qualificar, conduzir e avançar o lead, garantindo operação comercial consistente, sem depender de execução manual."
+  },
+  {
+    question: "O que são as campanhas inteligentes de mensagens?",
+    answer: "Campanhas com IA que personalizam abordagens em escala. Você seleciona o público no CRM e a WIIZE gera mensagens contextuais por lead, dispara dentro dos limites de segurança e devolve respostas e métricas em tempo real — outbound com inteligência, não disparo cego."
+  },
+  {
+    question: "O que é o CRM com Inteligência Comercial?",
+    answer: "Não é um CRM comum. É um cockpit comercial com visão completa do funil, oportunidades, IA de Intenção de Compra, leitura de engajamento e acompanhamento em tempo real. Toda interação — captação, atendimento, campanha — aterrissa centralizada, com inteligência para decidir o próximo passo."
+  },
+  {
+    question: "O que é a Meta API Oficial?",
+    answer: "É a interface oficial do WhatsApp Business para operações em escala — estabilidade, segurança e zero risco de bloqueio quando usada para relacionamento com leads opt-in. A WIIZE integra a Meta API Oficial para que sua operação comercial rode com a robustez de uma infraestrutura enterprise."
   },
   {
     question: "Corro risco de bloqueio no WhatsApp?",
-    answer: "O Wiize trabalha com duas APIs distintas. A API Outbound (Evolution API) é usada para prospecção ativa e disparos em massa — como qualquer ferramenta de outbound, existe risco de bloqueio, mas nosso sistema aplica boas práticas como delays aleatórios, variações de texto, pausas inteligentes e limites diários para minimizar esse risco significativamente. Já a API Inbound (Meta Cloud API Oficial) é usada para relacionamento com leads opt-in e tem risco zero de bloqueio, pois segue 100% as regras da Meta."
-  },
-  {
-    question: "O que são as campanhas de mensagens?",
-    answer: "Campanhas são disparos em massa organizados pelo Wiize. Você seleciona leads do CRM, escreve variações de mensagem e o sistema envia automaticamente respeitando limites de segurança. Cada número conectado suporta até 200 mensagens/dia. É possível agendar campanhas, usar variações A/B e acompanhar respostas em tempo real."
-  },
-  {
-    question: "Como funciona a SDR IA de Captação com Diagnóstico Automático?",
-    answer: "A SDR IA busca empresas no Google Maps usando filtros inteligentes (nicho, cidade, avaliações). Em seguida analisa cada empresa em profundidade — tamanho, demanda, maturidade digital — e faz um diagnóstico automático de necessidades, dores e oportunidades reais de vendas. Você recebe leads pré-qualificados com nome, telefone, endereço, website e contexto de abordagem. No teste grátis você pode gerar até 120 oportunidades."
-  },
-  {
-    question: "O que são os Agentes de IA?",
-    answer: "Os Agentes de IA são vendedores virtuais que trabalham 24/7 no seu WhatsApp. Eles respondem mensagens automaticamente, qualificam leads com perguntas inteligentes, detectam spam/bots e organizam tudo no CRM. Você configura a persona, o estilo de comunicação e os critérios de encerramento — a IA faz o resto."
-  },
-  {
-    question: "Como funcionam os Flows de Automação?",
-    answer: "Flows são sequências visuais de automação que você monta em um editor drag-and-drop. Cada fluxo pode incluir envio de mensagens, esperas programadas, condições, coleta de dados, testes A/B, integração com Google Sheets, Gmail e Google Calendar. Também é possível gerar fluxos inteiros com IA a partir de uma descrição simples."
-  },
-  {
-    question: "O que é a Meta API Oficial e qual a diferença da Outbound?",
-    answer: "A Meta API Oficial (Cloud API) é a interface autorizada pelo Meta para envio de mensagens via WhatsApp Business — risco zero de bloqueio, ideal para relacionamento com leads que deram opt-in. A API Outbound (Evolution) é usada para prospecção ativa e disparos em massa para leads frios. O Wiize integra ambas para que você tenha o melhor dos dois mundos."
-  },
-  {
-    question: "O que é o CRM integrado?",
-    answer: "O CRM do Wiize é um pipeline visual (Kanban) onde você gerencia todos os seus leads. Inclui estágios personalizáveis, tags, notas, histórico de atividades, deals com valor e arquivos anexados. Leads capturados ou que respondem campanhas são automaticamente organizados no CRM."
-  },
-  {
-    question: "Posso cancelar minha assinatura a qualquer momento?",
-    answer: "Sim! Você pode cancelar quando quiser — não há fidelidade ou taxas de cancelamento. Seu acesso continua ativo até o final do período pago. Durante o teste grátis, basta não assinar um plano e o acesso expira automaticamente."
+    answer: "A WIIZE opera com duas camadas: Meta API Oficial (relacionamento com leads opt-in) com risco zero, e infraestrutura outbound para prospecção ativa, com boas práticas operacionais — delays inteligentes, variações de mensagem, pausas adaptativas e limites diários — para proteger seus números em cada disparo."
   },
   {
     question: "Quantos números WhatsApp posso conectar?",
-    answer: "Depende do seu plano: Start permite 2 números (400 disparos/dia), Growth permite 5 números (1.000 disparos/dia). No plano Scale (Enterprise), números ilimitados. Cada número tem limite individual de 200 mensagens/dia para segurança."
+    answer: "Depende do seu plano: Start conecta 2 números (400 disparos/dia), Growth conecta 5 números (1.000 disparos/dia) e o plano Enterprise libera números ilimitados. Cada número opera com limite individual de 200 mensagens/dia para preservar a segurança da operação."
+  },
+  {
+    question: "Posso cancelar quando quiser?",
+    answer: "Sim. Sem fidelidade, sem taxa de cancelamento. Você cancela direto na plataforma e mantém o acesso até o fim do período pago."
+  },
+  {
+    question: "Como funciona o teste grátis?",
+    answer: "São 7 dias de acesso completo à WIIZE AI, sem cartão de crédito. Você ativa a SDR IA, gera até 120 oportunidades, configura fluxos, conecta seu WhatsApp e testa o Atendimento Operacional com IA e o CRM com Inteligência Comercial. Onboarding guiado para você ver resultado já nos primeiros dias."
   },
 ];
 
