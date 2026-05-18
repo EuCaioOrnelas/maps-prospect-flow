@@ -4,14 +4,14 @@ import { X, Sparkles } from "lucide-react";
 import logoIconNew from "@/assets/logo-icon-new.png";
 
 const comparisons = [
-  { old: "Buscar leads manualmente", oldSub: "e perder horas todos os dias", new: "Captação automática de leads", newSub: "prontos para comprar" },
-  { old: "Qualificar no \"feeling\"", oldSub: "e errar oportunidades reais", new: "Qualificação inteligente com IA", newSub: "baseada em dados reais" },
-  { old: "Enviar mensagens genéricas", oldSub: "que são ignoradas", new: "Mensagens personalizadas", newSub: "para cada lead automaticamente" },
-  { old: "Depender da equipe para responder", oldSub: "e atrasar contatos", new: "Atendimento automatizado", newSub: "e instantâneo 24/7" },
-  { old: "Perder vendas", oldSub: "por falta de follow-up", new: "Follow-up no momento certo", newSub: "sem esforço manual" },
-  { old: "Controlar tudo em planilhas", oldSub: "sem previsibilidade", new: "CRM integrado", newSub: "com visão completa do funil" },
-  { old: "Sem visão de engajamento", oldSub: "dos leads com a empresa", new: "IA de Intenção de Compra", newSub: "detecta quem está pronto pra fechar" },
-  { old: "Campanhas manuais e demoradas", oldSub: "sem escala real", new: "Campanhas de mensagens automáticas", newSub: "em escala com personalização" },
+  { old: "Buscar leads manualmente", oldSub: "e perder horas todos os dias", new: "SDR IA encontra e qualifica leads", newSub: "prontos para comprar" },
+  { old: "Qualificar no \"feeling\"", oldSub: "e errar oportunidades reais", new: "Qualificação inteligente com IA", newSub: "baseada em intenção e comportamento" },
+  { old: "Enviar mensagens genéricas", oldSub: "que são ignoradas", new: "IA gera mensagens personalizadas", newSub: "para cada lead automaticamente" },
+  { old: "Depender da equipe para responder", oldSub: "e atrasar contatos", new: "Atendimento operacional com IA 24/7", newSub: "integrado ao CRM" },
+  { old: "Perder vendas", oldSub: "por falta de follow-up", new: "Follow-up inteligente no momento ideal", newSub: "sem esforço manual" },
+  { old: "Controlar tudo em planilhas", oldSub: "sem previsibilidade", new: "CRM com inteligência comercial", newSub: "e visão completa do funil" },
+  { old: "Sem visão de engajamento", oldSub: "dos leads com a empresa", new: "IA de Intenção de Compra", newSub: "analisa engajamento em tempo real" },
+  { old: "Campanhas manuais e demoradas", oldSub: "sem escala real", new: "Campanhas inteligentes com IA", newSub: "e personalização em escala" },
 ];
 
 const CheckIcon = () => (
