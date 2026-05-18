@@ -203,7 +203,7 @@ export const PricingSection = () => {
   const comparisonGroups: Array<{
     title: string;
     icon: LucideIcon;
-    rows: Array<{ label: string; start: boolean | string; growth: boolean | string; scale: boolean | string }>;
+    rows: Array<{ label: React.ReactNode; start: boolean | string; growth: boolean | string; scale: boolean | string }>;
   }> = [
     {
       title: "Geração e captura de leads",
@@ -216,7 +216,6 @@ export const PricingSection = () => {
         { label: "Disparos via WhatsApp oficial (Meta) e Evolution", start: true, growth: true, scale: true },
         { label: "Maior taxa de conversão por contexto e timing", start: true, growth: true, scale: true },
         { label: "Volume de oportunidades / mês", start: "1.000", growth: "3.000", scale: "Sob demanda" },
-        { label: "Múltiplas campanhas simultâneas", start: false, growth: true, scale: true },
       ],
     },
     {
@@ -226,8 +225,8 @@ export const PricingSection = () => {
         { label: "CRM completo com kanban e pipeline visual", start: true, growth: true, scale: true },
         { label: "Score de IA — prioriza quem está pronto para fechar", start: true, growth: true, scale: true },
         { label: "Controle de engajamento por lead em tempo real", start: true, growth: true, scale: true },
-        { label: "Identifica leads prontos para upgrade / recompra", start: false, growth: true, scale: true },
-        { label: "Detecção de leads frios e reativação automática", start: false, growth: true, scale: true },
+        { label: "Identifica leads prontos para upgrade / recompra", start: true, growth: true, scale: true },
+        { label: "Detecção de leads frios e reativação automática", start: true, growth: true, scale: true },
         { label: "Tags, filtros avançados e segmentação dinâmica", start: true, growth: true, scale: true },
         { label: "Histórico unificado de conversas e interações", start: true, growth: true, scale: true },
         { label: "Importação e exportação de leads (CSV)", start: true, growth: true, scale: true },
@@ -253,9 +252,8 @@ export const PricingSection = () => {
       icon: Bot,
       rows: [
         { label: "Construtor visual de fluxos (drag & drop)", start: false, growth: true, scale: true },
-        { label: "Criação de fluxos completos com Wiize AI", start: false, growth: true, scale: true },
+        { label: <span className="inline-flex items-center gap-1.5">Fluxos completos com Wiize AI <Sparkles size={13} className="text-primary" /></span>, start: false, growth: true, scale: true },
         { label: "Follow-up automático inteligente (sem parecer robô)", start: false, growth: true, scale: true },
-        { label: "Aquecimento de números para evitar bloqueios", start: true, growth: true, scale: true },
         { label: "Disparos agendados e em lote com delays seguros", start: true, growth: true, scale: true },
         { label: "A/B testing de mensagens e fluxos", start: false, growth: true, scale: true },
         { label: "Gatilhos por palavra-chave, status e evento", start: false, growth: true, scale: true },
@@ -270,7 +268,6 @@ export const PricingSection = () => {
         { label: "Qualifica, agenda e tira dúvidas sozinho", start: false, growth: true, scale: true },
         { label: "Aprende com cada conversa (memória contextual)", start: false, growth: true, scale: true },
         { label: "Múltiplos agentes para diferentes produtos / times", start: false, growth: false, scale: true },
-        { label: "Limite de mensagens por dia (controle de custo)", start: "—", growth: "Padrão", scale: "Elevado" },
         { label: "Testes e simulações antes de ativar", start: false, growth: true, scale: true },
       ],
     },
@@ -281,9 +278,8 @@ export const PricingSection = () => {
         { label: "Integração com Google Calendar (agendamento automático)", start: false, growth: true, scale: true },
         { label: "Integração com Google Sheets (entrada e saída de dados)", start: false, growth: true, scale: true },
         { label: "Integração com Gmail (envio de e-mails pelo fluxo)", start: false, growth: true, scale: true },
-        { label: "Google Drive nas oportunidades e negócios", start: false, growth: true, scale: true },
+        { label: "Google Drive nas oportunidades e negócios", start: true, growth: true, scale: true },
         { label: "Meta Business / WhatsApp Cloud API oficial", start: true, growth: true, scale: true },
-        { label: "Webhooks e API aberta para integrações externas", start: false, growth: true, scale: true },
       ],
     },
     {
@@ -303,7 +299,7 @@ export const PricingSection = () => {
       icon: Headphones,
       rows: [
         { label: "Números WhatsApp conectados", start: "Até 2", growth: "Até 5", scale: "Ilimitados" },
-        { label: "Usuários da equipe", start: "1", growth: "Até 5", scale: "Ilimitados" },
+        
         { label: "Proxy dedicado e rotação automática", start: true, growth: true, scale: true },
         { label: "Backup de conversas e dados", start: true, growth: true, scale: true },
         { label: "Suporte", start: "Email", growth: "Prioritário", scale: "Gerente dedicado" },
@@ -403,8 +399,8 @@ export const PricingSection = () => {
             </div>
           </div>
 
-          {/* Start + Growth */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch mb-8">
+          {/* Start + Growth + Enterprise */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch mb-8">
             {plans.map((plan, index) => (
               <motion.div
                 key={`${plan.key}-${isAnnual ? 'annual' : 'monthly'}`}
@@ -514,6 +510,72 @@ export const PricingSection = () => {
                 </Button>
               </motion.div>
             ))}
+
+            {/* Enterprise — inline com Start e Growth */}
+            <motion.div
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              whileHover={{ y: -8, scale: 1.03, transition: { duration: 0.3 } }}
+              className="group relative rounded-2xl flex flex-col overflow-hidden glass p-5 md:p-6"
+              style={{
+                boxShadow:
+                  "inset 0 1px 0 0 hsl(var(--primary) / 0.12), inset 0 0 60px -30px hsl(var(--primary) / 0.18)",
+              }}
+            >
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                    <Building2 className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
+                  </div>
+                  <h3 className="font-display font-bold text-lg md:text-xl">Enterprise</h3>
+                  <span className="ml-auto bg-primary/15 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+                    sob medida
+                  </span>
+                </div>
+                <p className="text-muted-foreground text-xs sm:text-sm min-h-[2.5rem] md:min-h-[2.75rem]">
+                  {scalePlan.description}
+                </p>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-display font-bold text-3xl md:text-4xl tabular-nums text-foreground leading-none">
+                    Personalizado
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  Conforme o volume e estrutura da sua operação
+                </p>
+                <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
+                  Oportunidades sob demanda
+                </p>
+              </div>
+
+              {expanded && (
+                <ul className="space-y-3 mb-8 text-sm flex-grow">
+                  {scalePlan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm">
+                      <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                      <span className={i === 0 ? "text-foreground font-semibold" : "text-muted-foreground"}>
+                        {feature.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {!expanded && <div className="flex-grow" />}
+
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full mt-auto"
+                onClick={() => navigate("/enterprise")}
+              >
+                Falar com Especialista
+              </Button>
+            </motion.div>
           </div>
 
           {/* Toggle comparison link */}
@@ -536,69 +598,6 @@ export const PricingSection = () => {
               </button>
             )}
           </div>
-
-          {/* Scale - Full width card, same style as others */}
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            whileHover={{ 
-              y: -8,
-              scale: 1.01,
-              transition: { duration: 0.3 }
-            }}
-            className="group rounded-2xl glass p-5 md:p-6 mb-16"
-          >
-            <div className="flex flex-col md:flex-row gap-6">
-              {/* Left: Plan info */}
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-                    <Building2 className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
-                  </div>
-                  <h3 className="font-display font-bold text-lg md:text-xl">Enterprise</h3>
-                  <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-0.5 rounded-full">🔥 SOB MEDIDA</span>
-                </div>
-                <p className="text-muted-foreground text-xs sm:text-sm mb-4">{scalePlan.description}</p>
-                
-                {expanded && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {scalePlan.features.map((feature, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm">
-                        <Check size={16} className="text-primary flex-shrink-0" />
-                        <span className="text-muted-foreground">{feature.text}</span>
-                        {feature.isNew && (
-                          <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">SOB MEDIDA</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Right: Custom pricing + CTA */}
-              <div className="flex flex-col items-center md:items-end justify-center gap-4 md:min-w-[240px] md:border-l md:border-border/40 md:pl-6">
-                <div className="text-center md:text-right">
-                  <p className="text-xs text-muted-foreground mb-1">Investimento</p>
-                  <div className="flex items-baseline gap-1 justify-center md:justify-end">
-                    <span className="font-display font-bold text-3xl md:text-4xl tabular-nums">Personalizado</span>
-                  </div>
-                  <p className="text-primary mt-1.5 text-xs font-medium">
-                    Depende do volume e estrutura da sua operação
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full md:w-auto"
-                  onClick={() => navigate("/enterprise")}
-                >
-                  Falar com Especialista
-                </Button>
-              </div>
-            </div>
-          </motion.div>
 
           {/* Detailed comparison table */}
           <div ref={comparisonRef} className="scroll-mt-24">
