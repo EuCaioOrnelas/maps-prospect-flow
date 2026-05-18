@@ -23,8 +23,8 @@ const faqs = [
     answer: "Campanhas são disparos em massa organizados pelo Wiize. Você seleciona leads do CRM, escreve variações de mensagem e o sistema envia automaticamente respeitando limites de segurança. Cada número conectado suporta até 200 mensagens/dia. É possível agendar campanhas, usar variações A/B e acompanhar respostas em tempo real."
   },
   {
-    question: "Como funciona a captação de leads com IA?",
-    answer: "O Wiize busca empresas no Google Maps usando filtros inteligentes (nicho, cidade, avaliações). A IA analisa cada resultado e entrega leads pré-qualificados com nome, telefone, endereço, website e diagnóstico de oportunidade. No teste grátis você pode gerar até 120 oportunidades."
+    question: "Como funciona a SDR IA de Captação com Diagnóstico Automático?",
+    answer: "A SDR IA busca empresas no Google Maps usando filtros inteligentes (nicho, cidade, avaliações). Em seguida analisa cada empresa em profundidade — tamanho, demanda, maturidade digital — e faz um diagnóstico automático de necessidades, dores e oportunidades reais de vendas. Você recebe leads pré-qualificados com nome, telefone, endereço, website e contexto de abordagem. No teste grátis você pode gerar até 120 oportunidades."
   },
   {
     question: "O que são os Agentes de IA?",

@@ -10,7 +10,7 @@ const comparisons = [
   { old: "Depender da equipe para responder", oldSub: "e atrasar contatos", new: "Atendimento automatizado", newSub: "e instantâneo 24/7" },
   { old: "Perder vendas", oldSub: "por falta de follow-up", new: "Follow-up no momento certo", newSub: "sem esforço manual" },
   { old: "Controlar tudo em planilhas", oldSub: "sem previsibilidade", new: "CRM integrado", newSub: "com visão completa do funil" },
-  { old: "Sem visão de engajamento", oldSub: "dos leads com a empresa", new: "Score de engajamento por lead", newSub: "medindo cada interação" },
+  { old: "Sem visão de engajamento", oldSub: "dos leads com a empresa", new: "IA de Intenção de Compra", newSub: "detecta quem está pronto pra fechar" },
   { old: "Campanhas manuais e demoradas", oldSub: "sem escala real", new: "Campanhas de mensagens automáticas", newSub: "em escala com personalização" },
 ];
 
