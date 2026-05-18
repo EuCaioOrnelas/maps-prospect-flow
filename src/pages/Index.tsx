@@ -7,6 +7,7 @@ import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { Footer } from "@/components/landing/Footer";
 import { useLandingPageTracking } from "@/hooks/useLandingPageTracking";
 import { LandingPageSkeleton } from "@/components/landing/LandingPageSkeleton";
+import { FloatingChatButton } from "@/components/landing/FloatingChatButton";
 
 /**
  * Performance: above the fold (Navbar + Hero + TrustedBy + Footer básico)
@@ -147,6 +148,7 @@ const Index = () => {
           </Suspense>
 
           <Footer />
+          <FloatingChatButton />
         </div>
       </main>
     </>
