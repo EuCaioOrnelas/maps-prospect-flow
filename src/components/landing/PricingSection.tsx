@@ -223,7 +223,7 @@ export const PricingSection = () => {
       icon: Users,
       rows: [
         { label: "CRM completo com kanban e pipeline visual", start: true, growth: true, scale: true },
-        { label: "Score de IA — prioriza quem está pronto para fechar", start: true, growth: true, scale: true },
+        { label: "IA de Intenção de Compra — prioriza quem está pronto pra fechar", start: true, growth: true, scale: true },
         { label: "Controle de engajamento por lead em tempo real", start: true, growth: true, scale: true },
         { label: "Identifica leads prontos para upgrade / recompra", start: true, growth: true, scale: true },
         { label: "Detecção de leads frios e reativação automática", start: true, growth: true, scale: true },
