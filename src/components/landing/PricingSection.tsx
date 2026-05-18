@@ -441,16 +441,22 @@ export const PricingSection = () => {
             {!expanded ? (
               <button
                 onClick={handleShowComparison}
-                className="text-sm font-medium text-primary underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-colors"
+                className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 hover:bg-primary/15 border border-primary/30 hover:border-primary/50 text-primary text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
               >
-                Veja a comparação detalhada dos planos
+                <span>Veja a comparação detalhada dos planos</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-y-0.5">
+                  <path d="M12 5v14M5 12l7 7 7-7" />
+                </svg>
               </button>
             ) : (
               <button
                 onClick={() => setExpanded(false)}
-                className="text-sm font-medium text-muted-foreground underline underline-offset-4 decoration-muted-foreground/40 hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-muted/50 hover:bg-muted border border-border text-foreground text-sm font-medium transition-all duration-200"
               >
-                Ocultar comparação detalhada
+                <span>Ocultar comparação detalhada</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5" />
+                </svg>
               </button>
             )}
           </div>
