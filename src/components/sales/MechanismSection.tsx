@@ -1,15 +1,16 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
-import { Search, Brain, MessageSquare, Send, Bot, RefreshCw, CalendarCheck, LayoutGrid } from "lucide-react";
+import { Search, ScanSearch, Brain, Sparkles, Send, Bot, RefreshCw, CalendarCheck, LayoutGrid } from "lucide-react";
 import { useRef } from "react";
 import { useInView } from "framer-motion";
 
 const steps = [
-  { icon: Search, title: "Captação", desc: "Encontra empresas prontas para comprar", micro: "Prospecção contínua" },
-  { icon: Brain, title: "Diagnóstico IA", desc: "Identifica quem realmente vale a pena", micro: "Score calculado por IA" },
-  { icon: MessageSquare, title: "Mensagem", desc: "Cria abordagem personalizada automaticamente", micro: "Copy única por lead" },
+  { icon: Search, title: "IA de Captação por Localização e Nicho", desc: "Encontra empresas prontas para comprar com base em região e segmento", micro: "Prospecção contínua" },
+  { icon: ScanSearch, title: "IA Analisa", desc: "Entende tudo sobre a empresa: tamanho, demanda, maturidade e contexto de mercado", micro: "Leitura profunda do lead" },
+  { icon: Brain, title: "Diagnóstico IA", desc: "Com base na análise, identifica necessidades, dores e oportunidades reais", micro: "Score calculado por IA" },
+  { icon: Sparkles, title: "Geração de Mensagem com IA", desc: "Cria abordagem personalizada automaticamente para cada lead", micro: "Copy única por lead" },
   { icon: Send, title: "Envio", desc: "Dispara mensagens no momento ideal", micro: "Via WhatsApp oficial" },
-  { icon: Bot, title: "IA responde", desc: "Conversa, qualifica e conduz o lead", micro: "Atendimento 24/7" },
+  { icon: Bot, title: "IA Closer Responde", desc: "Conversa, qualifica e conduz o lead até o fechamento", micro: "Atendimento 24/7" },
   { icon: RefreshCw, title: "Follow-up", desc: "Recupera leads que iriam esfriar", micro: "Reengajamento automático" },
   { icon: CalendarCheck, title: "Conversão", desc: "Gera reuniões e oportunidades reais", micro: "Pipeline alimentado" },
   { icon: LayoutGrid, title: "CRM", desc: "Organiza tudo sem esforço manual", micro: "Histórico centralizado" },
