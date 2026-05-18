@@ -356,6 +356,12 @@ export const PricingSection = () => {
                       <plan.icon className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                     </div>
                     <h3 className="font-display font-bold text-lg md:text-xl">{plan.name}</h3>
+                    {plan.popular && (
+                      <span className="ml-auto inline-flex items-center gap-1 bg-primary/15 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+                        <Sparkles size={11} />
+                        mais popular
+                      </span>
+                    )}
                   </div>
                   <p className="text-muted-foreground text-xs sm:text-sm min-h-[2.5rem] md:min-h-[2.75rem]">{plan.description}</p>
                 </div>
@@ -367,19 +373,11 @@ export const PricingSection = () => {
                       -{Math.round((1 - parsePrice(plan.price) / parsePrice(plan.anchorPrice)) * 100)}%
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-display font-bold text-5xl md:text-6xl tabular-nums text-foreground leading-none">
-                        <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
-                      </span>
-                      <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">BRL</span>
-                    </div>
-                    {plan.popular && (
-                      <span className="inline-flex items-center gap-1 bg-primary/15 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
-                        <Sparkles size={11} />
-                        mais popular
-                      </span>
-                    )}
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-display font-bold text-5xl md:text-6xl tabular-nums text-foreground leading-none">
+                      <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
+                    </span>
+                    <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">BRL</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1.5">
                     {isAnnual ? "por usuário/mês, cobrado anualmente" : "por usuário/mês"}
