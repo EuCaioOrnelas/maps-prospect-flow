@@ -99,7 +99,7 @@ export const FAQSection = () => {
             Perguntas Frequentes
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
-            Tudo que você precisa saber sobre o Wiize
+            Tudo sobre a WIIZE AI e a operação comercial com Inteligência Operacional
           </p>
         </div>
 
