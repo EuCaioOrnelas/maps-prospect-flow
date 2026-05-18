@@ -388,22 +388,25 @@ export const PricingSection = () => {
                   </p>
                 </div>
 
-                <ul className="space-y-3 mb-8 text-sm flex-grow">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
-                      {feature.disabled ? (
-                        <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
-                      )}
-                      <span className={
-                        feature.highlight ? "text-foreground font-semibold" :
-                        feature.subtle ? "text-muted-foreground/60 italic" :
-                        "text-muted-foreground"
-                      }>{feature.text}</span>
-                    </li>
-                  ))}
-                </ul>
+                {expanded && (
+                  <ul className="space-y-3 mb-8 text-sm flex-grow">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
+                        {feature.disabled ? (
+                          <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                        )}
+                        <span className={
+                          feature.highlight ? "text-foreground font-semibold" :
+                          feature.subtle ? "text-muted-foreground/60 italic" :
+                          "text-muted-foreground"
+                        }>{feature.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {!expanded && <div className="flex-grow" />}
 
                 <Button
                   variant={plan.popular ? "hero" : "outline"}
