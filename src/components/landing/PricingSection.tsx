@@ -455,17 +455,19 @@ export const PricingSection = () => {
                 </div>
                 <p className="text-muted-foreground text-xs sm:text-sm mb-4">{scalePlan.description}</p>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {scalePlan.features.map((feature, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <Check size={16} className="text-primary flex-shrink-0" />
-                      <span className="text-muted-foreground">{feature.text}</span>
-                      {feature.isNew && (
-                        <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">SOB MEDIDA</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {expanded && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {scalePlan.features.map((feature, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm">
+                        <Check size={16} className="text-primary flex-shrink-0" />
+                        <span className="text-muted-foreground">{feature.text}</span>
+                        {feature.isNew && (
+                          <span className="shrink-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">SOB MEDIDA</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Right: Custom pricing + CTA */}
