@@ -26,7 +26,7 @@ const testimonials: Testimonial[] = [
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face",
   },
   {
-    text: "O agente de IA no WhatsApp é um game-changer. Responde leads automaticamente, faz follow-up inteligente e já converteu clientes enquanto dormíamos.",
+    text: "A IA Closer no WhatsApp é um game-changer. Responde leads automaticamente, faz follow-up inteligente e já converteu clientes enquanto dormíamos.",
     name: "Camila F.",
     role: "Head de Growth",
     company: "StartupHub",
