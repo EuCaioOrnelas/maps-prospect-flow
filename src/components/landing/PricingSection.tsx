@@ -512,6 +512,59 @@ export const PricingSection = () => {
             </div>
           </motion.div>
 
+          {/* Detailed comparison table */}
+          <div ref={comparisonRef} className="scroll-mt-24">
+            {expanded && (
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="mb-16 rounded-2xl border border-border bg-card/30 overflow-hidden"
+              >
+                <div className="p-5 md:p-6 border-b border-border bg-card/50">
+                  <h3 className="font-display text-xl md:text-2xl font-bold text-foreground">
+                    Comparação detalhada dos planos
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Veja todos os recursos disponíveis em cada plano.
+                  </p>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[640px] text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-card/30">
+                        <th className="text-left font-medium text-muted-foreground py-4 px-5 w-[40%]">Recurso</th>
+                        <th className="text-center font-semibold text-foreground py-4 px-3">Start</th>
+                        <th className="text-center font-semibold text-primary py-4 px-3">Growth</th>
+                        <th className="text-center font-semibold text-foreground py-4 px-3">Enterprise</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {comparisonGroups.map((group) => (
+                        <Fragment key={group.title}>
+                          <tr className="bg-muted/30">
+                            <td colSpan={4} className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-foreground/80">
+                              {group.title}
+                            </td>
+                          </tr>
+                          {group.rows.map((row, i) => (
+                            <tr key={i} className="border-b border-border/50 last:border-0">
+                              <td className="py-3 px-5 text-foreground">{row.label}</td>
+                              <td className="py-3 px-3 text-center">{renderCell(row.start)}</td>
+                              <td className="py-3 px-3 text-center bg-primary/5">{renderCell(row.growth)}</td>
+                              <td className="py-3 px-3 text-center">{renderCell(row.scale)}</td>
+                            </tr>
+                          ))}
+                        </Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
           {/* Trust & Security Section */}
           <div 
             className={`transition-all duration-700 delay-600 ${
