@@ -510,6 +510,72 @@ export const PricingSection = () => {
                 </Button>
               </motion.div>
             ))}
+
+            {/* Enterprise — inline com Start e Growth */}
+            <motion.div
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              whileHover={{ y: -8, scale: 1.03, transition: { duration: 0.3 } }}
+              className="group relative rounded-2xl flex flex-col overflow-hidden glass p-5 md:p-6"
+              style={{
+                boxShadow:
+                  "inset 0 1px 0 0 hsl(var(--primary) / 0.12), inset 0 0 60px -30px hsl(var(--primary) / 0.18)",
+              }}
+            >
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                    <Building2 className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
+                  </div>
+                  <h3 className="font-display font-bold text-lg md:text-xl">Enterprise</h3>
+                  <span className="ml-auto bg-primary/15 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+                    sob medida
+                  </span>
+                </div>
+                <p className="text-muted-foreground text-xs sm:text-sm min-h-[2.5rem] md:min-h-[2.75rem]">
+                  {scalePlan.description}
+                </p>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-display font-bold text-3xl md:text-4xl tabular-nums text-foreground leading-none">
+                    Personalizado
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  Conforme o volume e estrutura da sua operação
+                </p>
+                <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
+                  Oportunidades sob demanda
+                </p>
+              </div>
+
+              {expanded && (
+                <ul className="space-y-3 mb-8 text-sm flex-grow">
+                  {scalePlan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm">
+                      <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                      <span className={i === 0 ? "text-foreground font-semibold" : "text-muted-foreground"}>
+                        {feature.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {!expanded && <div className="flex-grow" />}
+
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full mt-auto"
+                onClick={() => navigate("/enterprise")}
+              >
+                Falar com Especialista
+              </Button>
+            </motion.div>
           </div>
 
           {/* Toggle comparison link */}
