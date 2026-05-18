@@ -452,7 +452,7 @@ export const PricingSection = () => {
                     </span>
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <span className="font-display font-bold text-5xl md:text-6xl tabular-nums text-foreground leading-none">
+                    <span className="font-display font-bold text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
                       <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
                     </span>
                     <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">BRL</span>
@@ -539,7 +539,7 @@ export const PricingSection = () => {
 
               <div className="mb-6">
                 <div className="flex items-baseline gap-2">
-                  <span className="font-display font-bold text-3xl md:text-4xl tabular-nums text-foreground leading-none">
+                  <span className="font-display font-bold text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
                     Sob medida
                   </span>
                 </div>
