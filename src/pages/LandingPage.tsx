@@ -6,6 +6,7 @@ import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { Footer } from "@/components/landing/Footer";
+import { FloatingChatButton } from "@/components/landing/FloatingChatButton";
 import { LandingPageSkeleton } from "@/components/landing/LandingPageSkeleton";
 import { useLandingPageTracking } from "@/hooks/useLandingPageTracking";
 import { supabase } from "@/integrations/supabase/client";
