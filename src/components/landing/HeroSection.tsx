@@ -420,7 +420,7 @@ const StageAIChat = ({ progress }: { progress: number }) => {
       <div className="flex items-center gap-2 rounded-xl bg-secondary/30 p-2.5 border border-border/40">
         <img src={gptIcon} alt="GPT" className="w-7 h-7 rounded-full" />
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-medium text-primary">Agente de IA respondendo em tempo real</p>
+          <p className="text-[11px] font-medium text-primary">IA Closer respondendo em tempo real</p>
           <p className="text-[11px] text-muted-foreground truncate">Contexto, score, CRM e histórico da conversa</p>
         </div>
         <div className="rounded-full bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">GPT ativo</div>
