@@ -291,7 +291,7 @@ export const PricingSection = () => {
         { label: "Relatórios por número, campanha e fluxo", start: true, growth: true, scale: true },
         { label: "Alertas inteligentes de oportunidades quentes", start: false, growth: true, scale: true },
         { label: "Projeção de receita por probabilidade", start: false, growth: true, scale: true },
-        { label: "Métricas detalhadas do agente de IA", start: false, growth: true, scale: true },
+        { label: "Métricas detalhadas da IA Closer", start: false, growth: true, scale: true },
       ],
     },
     {
