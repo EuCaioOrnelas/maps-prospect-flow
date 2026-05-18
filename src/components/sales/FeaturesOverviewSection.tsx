@@ -53,8 +53,9 @@ export const FeaturesOverviewSection = () => {
 
   return (
     <section
+      id="features"
       ref={ref as React.RefObject<HTMLElement>}
-      className="py-12 sm:py-20 w-full relative"
+      className="py-12 sm:py-20 w-full relative scroll-mt-24"
     >
       <div className="container mx-auto px-4 max-w-6xl">
         <motion.div
