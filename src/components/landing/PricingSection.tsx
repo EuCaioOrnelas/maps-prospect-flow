@@ -278,9 +278,8 @@ export const PricingSection = () => {
         { label: "Integração com Google Calendar (agendamento automático)", start: false, growth: true, scale: true },
         { label: "Integração com Google Sheets (entrada e saída de dados)", start: false, growth: true, scale: true },
         { label: "Integração com Gmail (envio de e-mails pelo fluxo)", start: false, growth: true, scale: true },
-        { label: "Google Drive nas oportunidades e negócios", start: false, growth: true, scale: true },
+        { label: "Google Drive nas oportunidades e negócios", start: true, growth: true, scale: true },
         { label: "Meta Business / WhatsApp Cloud API oficial", start: true, growth: true, scale: true },
-        { label: "Webhooks e API aberta para integrações externas", start: false, growth: true, scale: true },
       ],
     },
     {
