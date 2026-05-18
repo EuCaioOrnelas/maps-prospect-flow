@@ -138,7 +138,7 @@ export const FeaturesOverviewSection = () => {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Bot size={20} className="text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-base">Agente de IA com Fluxos Estruturados</h3>
+                    <h3 className="font-semibold text-foreground text-base">Fluxos de Inteligência Operacional com IA</h3>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     A IA responde, qualifica e conduz cada conversa dentro de fluxos definidos, avançando o lead até o momento de decisão com naturalidade e consistência, sem intervenção humana.
@@ -163,15 +163,15 @@ export const FeaturesOverviewSection = () => {
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="relative z-10">
-                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Gestão & Scoring</span>
+                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Gestão & Intenção de Compra</span>
                   <div className="flex items-center gap-2.5 mb-1">
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <LayoutDashboard size={16} className="text-primary" />
                     </div>
-                     <h3 className="font-semibold text-foreground text-base">CRM com Scoring Automático</h3>
+                     <h3 className="font-semibold text-foreground text-base">CRM com IA de Intenção de Compra</h3>
                    </div>
                    <p className="text-sm text-muted-foreground leading-relaxed">
-                    Pipeline visual que organiza cada lead por estágio, com score baseado em comportamento real. Sua equipe sabe quem priorizar.
+                    Pipeline visual que organiza cada lead por estágio, com IA que detecta intenção de compra em tempo real. Sua equipe sabe exatamente quem priorizar.
                   </p>
                 </div>
               </div>
@@ -183,15 +183,15 @@ export const FeaturesOverviewSection = () => {
                 <div className={cardGlowSecondary} />
                 <div className={cardGlowMain} />
                 <div className="relative z-10">
-                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Captação + Diagnóstico</span>
+                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">SDR IA de Captação + Diagnóstico</span>
                   <div className="flex items-center gap-2.5 mb-1">
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Search size={16} className="text-primary" />
                     </div>
-                     <h3 className="font-semibold text-foreground text-base">Captação com Diagnóstico Automático</h3>
+                     <h3 className="font-semibold text-foreground text-base">SDR IA de Captação com Diagnóstico Automático</h3>
                    </div>
                    <p className="text-sm text-muted-foreground leading-relaxed">
-                    Extrai leads do Google Maps e analisa cada empresa: nicho, presença digital e aderência ao produto. Leads priorizados por potencial de conversão.
+                    Capta empresas no Google Maps, analisa cada uma em profundidade e faz diagnóstico automático de necessidades, dores e oportunidades reais de vendas. Leads priorizados por potencial de conversão.
                   </p>
                 </div>
               </div>
