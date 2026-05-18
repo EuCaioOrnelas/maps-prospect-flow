@@ -539,47 +539,119 @@ export const PricingSection = () => {
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="mb-16 rounded-2xl border border-border bg-card/30 overflow-hidden"
+                className="mb-16 rounded-3xl border border-border/60 bg-gradient-to-b from-card/60 to-card/20 backdrop-blur-sm overflow-hidden shadow-[0_8px_40px_-12px_rgba(0,0,0,0.15)]"
               >
-                <div className="p-5 md:p-6 border-b border-border bg-card/50">
-                  <h3 className="font-display text-xl md:text-2xl font-bold text-foreground">
-                    Comparação detalhada dos planos
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Veja todos os recursos disponíveis em cada plano.
-                  </p>
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 p-6 md:p-8 border-b border-border/60">
+                  <div>
+                    <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground tracking-tight">
+                      Comparação detalhada
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1.5">
+                      Compare cada recurso, lado a lado, e escolha o plano ideal.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setAllGroups(!allOpen)}
+                    className="self-start sm:self-auto inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-full border border-border/60 hover:border-border"
+                  >
+                    <ChevronDown size={14} className={`transition-transform ${allOpen ? '' : '-rotate-90'}`} />
+                    {allOpen ? "Recolher todos" : "Expandir todos"}
+                  </button>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[640px] text-sm">
-                    <thead>
-                      <tr className="border-b border-border bg-card/30">
-                        <th className="text-left font-medium text-muted-foreground py-4 px-5 w-[40%]">Recurso</th>
-                        <th className="text-center font-semibold text-foreground py-4 px-3">Start</th>
-                        <th className="text-center font-semibold text-primary py-4 px-3">Growth</th>
-                        <th className="text-center font-semibold text-foreground py-4 px-3">Enterprise</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {comparisonGroups.map((group) => (
-                        <Fragment key={group.title}>
-                          <tr className="bg-muted/30">
-                            <td colSpan={4} className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-foreground/80">
+                {/* Plans header row */}
+                <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-4 md:px-6 py-5 md:py-6 border-b border-border/60 bg-background/40">
+                  <div className="flex items-end">
+                    <span className="font-display text-base md:text-lg font-bold text-foreground">Planos</span>
+                  </div>
+                  {[
+                    { name: "Start", price: plans[0].price, suffix: "BRL", popular: false },
+                    { name: "Growth", price: plans[1].price, suffix: "BRL", popular: true },
+                    { name: "Enterprise", price: "Sob medida", suffix: "", popular: false, custom: true },
+                  ].map((col) => (
+                    <div key={col.name} className="text-center px-1 relative">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <span className="text-xs md:text-sm font-semibold text-foreground/80">{col.name}</span>
+                        {col.popular && (
+                          <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wide bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">
+                            popular
+                          </span>
+                        )}
+                      </div>
+                      {col.custom ? (
+                        <div>
+                          <p className="font-display text-lg md:text-2xl font-bold text-foreground tracking-tight">Sob medida</p>
+                          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Conforme operação</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="flex items-baseline justify-center gap-1">
+                            <span className="font-display text-xl md:text-3xl font-bold text-foreground tabular-nums tracking-tight">
+                              {col.price}
+                            </span>
+                            <span className="text-[10px] md:text-xs font-medium text-muted-foreground">{col.suffix}</span>
+                          </div>
+                          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">por usuário/mês</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Groups */}
+                <div className="divide-y divide-border/60">
+                  {comparisonGroups.map((group) => {
+                    const isOpen = openGroups[group.title];
+                    const Icon = group.icon;
+                    return (
+                      <div key={group.title}>
+                        <button
+                          onClick={() => toggleGroup(group.title)}
+                          className="w-full grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-4 hover:bg-muted/30 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3 text-left">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 group-hover:bg-primary/15 transition-colors">
+                              <Icon size={16} />
+                            </div>
+                            <span className="font-display font-bold text-sm md:text-base text-foreground">
                               {group.title}
-                            </td>
-                          </tr>
-                          {group.rows.map((row, i) => (
-                            <tr key={i} className="border-b border-border/50 last:border-0">
-                              <td className="py-3 px-5 text-foreground">{row.label}</td>
-                              <td className="py-3 px-3 text-center">{renderCell(row.start)}</td>
-                              <td className="py-3 px-3 text-center bg-primary/5">{renderCell(row.growth)}</td>
-                              <td className="py-3 px-3 text-center">{renderCell(row.scale)}</td>
-                            </tr>
-                          ))}
-                        </Fragment>
-                      ))}
-                    </tbody>
-                  </table>
+                            </span>
+                          </div>
+                          <div className="col-span-3 flex items-center justify-end gap-3">
+                            <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                              {isOpen ? "Recolher" : `${group.rows.length} recursos`}
+                            </span>
+                            <ChevronDown
+                              size={18}
+                              className={`text-muted-foreground transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                            />
+                          </div>
+                        </button>
+
+                        <motion.div
+                          initial={false}
+                          animate={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pb-2">
+                            {group.rows.map((row, i) => (
+                              <div
+                                key={i}
+                                className="grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-3 text-sm hover:bg-muted/20 transition-colors"
+                              >
+                                <span className="text-foreground/90 text-xs md:text-sm pl-12">{row.label}</span>
+                                <div className="text-center">{renderCell(row.start)}</div>
+                                <div className="text-center bg-primary/[0.04] rounded-md py-1.5">{renderCell(row.growth)}</div>
+                                <div className="text-center">{renderCell(row.scale)}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      </div>
+                    );
+                  })}
                 </div>
               </motion.div>
             )}
