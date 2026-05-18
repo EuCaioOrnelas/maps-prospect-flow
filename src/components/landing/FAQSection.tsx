@@ -56,7 +56,7 @@ const faqs = [
   },
   {
     question: "Como funciona o teste grátis?",
-    answer: "São 7 dias de acesso total ao plano escolhido. No cadastro, você seleciona o plano desejado (Start, Growth ou Enterprise) e informa um cartão de crédito, mas nenhuma cobrança é feita durante o período de teste. Durante os 7 dias, você tem acesso completo a tudo que o plano oferece: SDR IA, IA de Intenção de Compra, fluxos inteligentes, campanhas, Atendimento Operacional com IA e CRM com Inteligência Comercial. A cobrança só acontece no 8º dia, caso você não cancele antes. Sem fidelidade e cancelamento direto na plataforma."
+    answer: "São 7 dias de acesso total ao plano escolhido. No cadastro, você seleciona o plano desejado (Atendimento, Growth IA ou Enterprise) e informa um cartão de crédito, mas nenhuma cobrança é feita durante o período de teste. Durante os 7 dias, você tem acesso completo a tudo que o plano oferece. A cobrança só acontece no 8º dia, caso você não cancele antes. Sem fidelidade e cancelamento direto na plataforma."
   },
 ];
 
