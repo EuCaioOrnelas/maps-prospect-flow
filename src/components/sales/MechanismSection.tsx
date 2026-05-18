@@ -144,7 +144,7 @@ export const MechanismSection = () => {
             <span className="text-shimmer-highlight">vendas em escala</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
-            A Wiize executa 9 etapas comerciais de forma contínua e autônoma: capta leads por localização e nicho, analisa cada empresa com IA, gera diagnóstico e abordagem personalizada, envia pelo WhatsApp, conversa, faz follow-up e atualiza o CRM — sem operação manual.
+            Um fluxo contínuo que transforma leads em clientes, sem depender de operação manual.
           </p>
         </motion.div>
 

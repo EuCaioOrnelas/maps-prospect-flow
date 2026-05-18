@@ -19,48 +19,6 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://wiize.com.br/signup/escolher-plano</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://wiize.com.br/signup/cartao-trial</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://wiize.com.br/enterprise</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://wiize.com.br/forgot-password</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://wiize.com.br/reset-password</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://wiize.com.br/tour-completo</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://wiize.com.br/diretrizes-de-envio</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.4</priority>
-  </url>
-  <url>
     <loc>https://wiize.com.br/contato</loc>
     <lastmod>2026-04-01</lastmod>
     <changefreq>monthly</changefreq>
@@ -85,7 +43,7 @@
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://wiize.com.br/privacy</loc>
+    <loc>https://wiize.com.br/privacidade</loc>
     <lastmod>2026-04-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
@@ -97,7 +55,7 @@
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://wiize.com.br/refund-policy</loc>
+    <loc>https://wiize.com.br/politica-reembolso</loc>
     <lastmod>2026-04-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
