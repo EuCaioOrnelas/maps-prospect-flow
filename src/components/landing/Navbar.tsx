@@ -40,10 +40,10 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
     onSignupClick?.();
   };
 
-  const scrollToPricing = () => {
+  const scrollToId = (id: string) => {
     const start = Date.now();
     const tryScroll = () => {
-      const el = document.getElementById("pricing");
+      const el = document.getElementById(id);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
@@ -53,6 +53,18 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
       }
     };
     tryScroll();
+  };
+
+  const scrollToPricing = () => scrollToId("pricing");
+
+  const handleNavLinkClick = (e: React.MouseEvent, href: string) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    const id = href.replace("#", "");
+    if (location.pathname !== "/") {
+      navigate(`/#${id}`);
+    }
+    scrollToId(id);
   };
 
   const handlePricingClick = (e: React.MouseEvent) => {
