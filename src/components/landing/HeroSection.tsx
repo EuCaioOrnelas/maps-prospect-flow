@@ -841,7 +841,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               IA que transforma<br />Leads B2B em<br /><span className="text-shimmer-highlight whitespace-nowrap">vendas no Automático</span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-              Encontre leads qualificados, analise e classifique oportunidades com IA, gere abordagens personalizadas e automatize todo seu processo de vendas B2B do primeiro contato ao fechamento no WhatsApp.
+              A Wiize é uma plataforma de inteligência comercial B2B que capta leads qualificados por localização e nicho, analisa cada empresa com IA, gera abordagens personalizadas e automatiza todo o processo de vendas no WhatsApp — do primeiro contato ao fechamento.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center xl:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
               {TRIAL_DISABLED ? (
