@@ -15,12 +15,12 @@ const faqs = [
     answer: "A Wiize é uma plataforma de inteligência comercial com IA onde a Wiize atua como copiloto da operação comercial, ajudando empresas B2B a prospectar, qualificar, atender e acompanhar leads em tempo real do primeiro contato ao fechamento."
   },
   {
-    question: "Como funciona a SDR IA de Captação?",
-    answer: "A SDR IA encontra empresas com perfil ideal, analisa cada uma em profundidade (tamanho, demanda, maturidade digital) e gera um diagnóstico automático de necessidades, dores e oportunidades reais de vendas. Em seguida, cria abordagens personalizadas por contexto, entregando leads prontos para o time comercial agir."
+    question: "Como funciona o SDR IA de Captação?",
+    answer: "O SDR IA capta empresas por localização e nicho de atuação, encontrando negócios com perfil ideal de cliente em qualquer região e segmento. Em seguida, faz uma análise completa de cada lead: endereço, site, redes sociais, presença digital, tamanho, demanda e maturidade comercial, gerando um diagnóstico automático de dores, necessidades e oportunidades reais de vendas. Com esse contexto, o SDR IA cria abordagens personalizadas por lead e entrega oportunidades prontas para o time comercial agir."
   },
   {
     question: "O que é a IA de Intenção de Compra?",
-    answer: "É a camada de Inteligência Comercial da Wiize que lê engajamento, comportamento e sinais de compra em tempo real. Cada lead recebe uma leitura dinâmica de intenção, permitindo que sua equipe priorize quem está pronto para comprar agora e não desperdice tempo com quem não está."
+    answer: "É a camada de Inteligência Comercial da Wiize que lê engajamento, comportamento e sinais de compra em tempo real. Cada lead recebe uma leitura dinâmica de intenção, mostrando quem está quente e pronto para a venda, quem precisa de atenção agora, quem está esfriando e quem ainda está em fase de nutrição. Assim, sua equipe prioriza o lead certo, no momento certo, e para de perder tempo com quem não está pronto para comprar."
   },
   {
     question: "Como funciona o Atendimento Operacional com IA?",
@@ -48,7 +48,7 @@ const faqs = [
   },
   {
     question: "Quantos números WhatsApp posso conectar?",
-    answer: "Depende do seu plano: Start conecta 2 números (400 disparos/dia), Growth conecta 5 números (1.000 disparos/dia) e o plano Enterprise libera números ilimitados. Cada número opera com limite individual de 200 mensagens/dia para preservar a segurança da operação."
+    answer: "Como a Wiize opera com a Meta API Oficial, não existe limite de disparos por número. O que define o seu uso é o volume de oportunidades geradas dentro do plano contratado. Start, Growth e Enterprise liberam diferentes capacidades de oportunidades e números conectados, com a robustez e estabilidade da infraestrutura oficial do WhatsApp Business."
   },
   {
     question: "Posso cancelar quando quiser?",
@@ -56,7 +56,7 @@ const faqs = [
   },
   {
     question: "Como funciona o teste grátis?",
-    answer: "São 7 dias de acesso completo à Wiize, sem cartão de crédito. Você ativa a SDR IA, gera até 120 oportunidades, configura fluxos, conecta seu WhatsApp e testa o Atendimento Operacional com IA e o CRM com Inteligência Comercial. Onboarding guiado para você ver resultado já nos primeiros dias."
+    answer: "São 7 dias de acesso total ao plano escolhido. No cadastro, você seleciona o plano desejado (Start, Growth ou Enterprise) e informa um cartão de crédito, mas nenhuma cobrança é feita durante o período de teste. Durante os 7 dias, você tem acesso completo a tudo que o plano oferece: SDR IA, IA de Intenção de Compra, fluxos inteligentes, campanhas, Atendimento Operacional com IA e CRM com Inteligência Comercial. A cobrança só acontece no 8º dia, caso você não cancele antes. Sem fidelidade e cancelamento direto na plataforma."
   },
 ];
 
