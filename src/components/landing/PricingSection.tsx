@@ -252,9 +252,8 @@ export const PricingSection = () => {
       icon: Bot,
       rows: [
         { label: "Construtor visual de fluxos (drag & drop)", start: false, growth: true, scale: true },
-        { label: "Criação de fluxos completos com Wiize AI", start: false, growth: true, scale: true },
+        { label: <span className="inline-flex items-center gap-1.5">Fluxos completos com Wiize AI <Sparkles size={13} className="text-primary" /></span>, start: false, growth: true, scale: true },
         { label: "Follow-up automático inteligente (sem parecer robô)", start: false, growth: true, scale: true },
-        { label: "Aquecimento de números para evitar bloqueios", start: true, growth: true, scale: true },
         { label: "Disparos agendados e em lote com delays seguros", start: true, growth: true, scale: true },
         { label: "A/B testing de mensagens e fluxos", start: false, growth: true, scale: true },
         { label: "Gatilhos por palavra-chave, status e evento", start: false, growth: true, scale: true },
