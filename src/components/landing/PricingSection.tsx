@@ -539,7 +539,7 @@ export const PricingSection = () => {
 
               <div className="mb-6">
                 <div className="flex items-baseline gap-2">
-                  <span className="font-display font-bold text-3xl md:text-4xl tabular-nums text-foreground leading-none">
+                  <span className="font-display font-bold text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
                     Sob medida
                   </span>
                 </div>
