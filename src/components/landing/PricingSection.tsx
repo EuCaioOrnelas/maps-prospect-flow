@@ -339,11 +339,16 @@ export const PricingSection = () => {
                   scale: plan.popular ? 1.02 : 1.03,
                   transition: { duration: 0.3 }
                 }}
-                className={`group relative rounded-2xl flex flex-col ${
+                className={`group relative rounded-2xl flex flex-col overflow-hidden ${
                   plan.popular
                     ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-6 md:z-10"
                     : "glass p-5 md:p-6"
                 }`}
+                style={{
+                  boxShadow: plan.popular
+                    ? "inset 0 1px 0 0 hsl(var(--primary) / 0.25), inset 0 0 80px -20px hsl(var(--primary) / 0.35), 0 10px 40px -10px hsl(var(--primary) / 0.35)"
+                    : "inset 0 1px 0 0 hsl(var(--primary) / 0.12), inset 0 0 60px -30px hsl(var(--primary) / 0.18)",
+                }}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
