@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 const faqs = [
   {
     question: "O que é a Wiize?",
-    answer: "A Wiize é uma plataforma de Inteligência Operacional com IA para vendas B2B. Em um único ambiente, sua empresa prospecta, qualifica, atende e acompanha leads em tempo real, com IA atuando em cada etapa da operação comercial, do primeiro contato ao fechamento."
+    answer: "A Wiize é uma plataforma de inteligência comercial com IA onde a Wiize atua como copiloto da operação comercial, ajudando empresas B2B a prospectar, qualificar, atender e acompanhar leads em tempo real do primeiro contato ao fechamento."
   },
   {
     question: "Como funciona a SDR IA de Captação?",
