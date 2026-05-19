@@ -117,7 +117,7 @@ const Dashboard = () => {
     })();
   }, [user]);
 
-  const searchesRemaining = profile ? (profile.searches_limit - profile.searches_used) + (((profile as any).bonus_searches) || 0) : 0;  // opportunities remaining (plan + carried bonus)
+  const searchesRemaining = profile ? (profile.searches_limit - profile.searches_used) + (((profile as any).bonus_searches) || 0) + ((((profile as any).extra_opportunities_packs) || 0) * 1000) : 0;  // opportunities remaining (plan + bonus + add-on packs)
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
   const showTrialIndicator = isFreePlan && trialDaysRemaining > 0 && !isTrialExpired;
 

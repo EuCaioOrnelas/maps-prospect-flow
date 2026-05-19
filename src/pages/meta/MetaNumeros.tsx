@@ -53,7 +53,9 @@ export default function MetaNumeros() {
   const [deleting, setDeleting] = useState(false);
 
   const userPlan = (profile?.plan || "free").toLowerCase();
-  const maxMetaConnections = META_PLAN_LIMITS[userPlan] ?? 1;
+  const basePlanNumbers = META_PLAN_LIMITS[userPlan] ?? 1;
+  const extraNumbers = ((profile as any)?.extra_numbers as number | undefined) ?? 0;
+  const maxMetaConnections = basePlanNumbers + extraNumbers;
   const reachedConnectionLimit = connections.length >= maxMetaConnections;
   const expiredConnections = connections.filter((c) => expiredTokenIds.has(c.id));
   const hasExpired = expiredConnections.length > 0;
@@ -187,7 +189,7 @@ export default function MetaNumeros() {
               if (reachedConnectionLimit) {
                 toast({
                   title: "Limite de números atingido",
-                  description: `Seu plano permite até ${maxMetaConnections} ${maxMetaConnections === 1 ? "número conectado" : "números conectados"}. Faça upgrade para adicionar mais.`,
+                  description: `Seu plano permite ${basePlanNumbers} ${basePlanNumbers === 1 ? "número" : "números"}${extraNumbers > 0 ? ` + ${extraNumbers} da Expansão de Atendimento` : ""}. Adicione a Expansão de Atendimento (+1 número) ou faça upgrade.`,
                   variant: "destructive",
                 });
                 return;
@@ -293,7 +295,8 @@ export default function MetaNumeros() {
           </div>
 
           <div className="text-xs text-muted-foreground">
-            {connections.length}/{maxMetaConnections} números do plano {userPlan}
+            {connections.length}/{maxMetaConnections} números conectados
+            {" "}<span className="opacity-70">({basePlanNumbers} do plano {userPlan}{extraNumbers > 0 ? ` + ${extraNumbers} da Expansão de Atendimento` : ""})</span>
           </div>
 
           <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5">
