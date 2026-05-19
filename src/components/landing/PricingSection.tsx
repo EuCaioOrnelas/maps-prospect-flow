@@ -191,7 +191,7 @@ export const PricingSection = () => {
   const [expanded, setExpanded] = useState(false);
   const comparisonRef = useRef<HTMLDivElement>(null);
 
-  const plans = isAnnual ? mainPlans.annual : mainPlans.monthly;
+  const plans = mainPlans.monthly;
 
   const handleShowComparison = () => {
     setExpanded(true);
