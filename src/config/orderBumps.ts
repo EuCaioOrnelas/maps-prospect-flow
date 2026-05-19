@@ -57,7 +57,7 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
   {
     id: "contacts",
     title: "Expansão de CRM",
-    shortLabel: "Expansão de CRM: +1k Contatos CRM",
+    shortLabel: "Expansão de CRM: +1.000 Contatos CRM",
     description: "Amplia o limite total de contatos armazenados e gerenciados dentro do seu CRM.",
     unit: "contatos",
     step: 1000,
