@@ -18,6 +18,28 @@ const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number; priceAnn
   scale: { name: "Wiize Enterprise", priceMonthly: 1496.00, priceAnnual: 1496.00 },
 };
 
+// Catálogo de bumps — preço mensal em REAIS + coluna no profile.
+const BUMP_CATALOG: Record<string, {
+  monthly: number;
+  column: "extra_numbers" | "extra_contacts_packs" | "extra_opportunities_packs";
+  allowedPlans: string[];
+}> = {
+  numbers:       { monthly: 96.00,  column: "extra_numbers",              allowedPlans: ["start", "growth"] },
+  contacts:      { monthly: 48.00,  column: "extra_contacts_packs",       allowedPlans: ["start", "growth"] },
+  opportunities: { monthly: 196.00, column: "extra_opportunities_packs",  allowedPlans: ["growth"] },
+};
+
+function sanitizeBumps(bumps: any, planKey: string, isAnnual: boolean): Record<string, number> {
+  const out: Record<string, number> = { numbers: 0, contacts: 0, opportunities: 0 };
+  if (!bumps || isAnnual) return out;
+  for (const id of Object.keys(out)) {
+    const qty = Math.max(0, Math.min(99, Math.floor(Number(bumps[id]) || 0)));
+    const def = BUMP_CATALOG[id];
+    if (def && def.allowedPlans.includes(planKey)) out[id] = qty;
+  }
+  return out;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -32,15 +54,16 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { planKey, customerData, testOverridePrice, billingPeriod } = await req.json();
+    const { planKey, customerData, testOverridePrice, billingPeriod, bumps } = await req.json();
     if (!planKey || !customerData) throw new Error("planKey and customerData are required");
 
     const plan = PLAN_CONFIG[planKey];
     if (!plan) throw new Error(`Invalid plan: ${planKey}`);
 
     const isAnnual = billingPeriod === "annual";
+    const cleanBumps = sanitizeBumps(bumps, planKey, isAnnual);
 
-    logStep("Request received", { planKey, email: customerData.email, billingPeriod: billingPeriod || "monthly" });
+    logStep("Request received", { planKey, email: customerData.email, billingPeriod: billingPeriod || "monthly", bumps: cleanBumps });
 
     // Authenticate user
     let userId: string | null = null;
@@ -66,7 +89,6 @@ serve(async (req) => {
       }
     }
 
-    // Clean CPF/CNPJ
     const cpfCnpj = customerData.taxId?.replace(/\D/g, "") || "";
     if (!cpfCnpj || cpfCnpj.length < 11) {
       throw new Error("CPF/CNPJ é obrigatório");
@@ -112,10 +134,14 @@ serve(async (req) => {
       logStep("Customer created", { customerId });
     }
 
-    // 2. Determine final price
-    let finalPrice = isAnnual ? plan.priceAnnual : plan.priceMonthly;
+    // 2. Determine final price (plano + bumps mensais)
+    const basePlanPrice = isAnnual ? plan.priceAnnual : plan.priceMonthly;
+    let bumpsMonthlyTotal = 0;
+    for (const [id, qty] of Object.entries(cleanBumps)) {
+      bumpsMonthlyTotal += BUMP_CATALOG[id].monthly * qty;
+    }
+    let finalPrice = basePlanPrice + bumpsMonthlyTotal;
     
-    // TEMP: Allow test override price
     if (testOverridePrice && typeof testOverridePrice === "number" && testOverridePrice > 0) {
       logStep("TEST OVERRIDE PRICE", { original: finalPrice, override: testOverridePrice });
       finalPrice = testOverridePrice;
@@ -126,6 +152,10 @@ serve(async (req) => {
     const contractId = `wiize_${planKey}_${Date.now()}`;
     const externalRef = userId || customerData.email;
 
+    const bumpDesc = bumpsMonthlyTotal > 0
+      ? ` +R$${bumpsMonthlyTotal.toFixed(0)} extras`
+      : "";
+
     const authorizationBody = {
       customerId: customerId,
       frequency: isAnnual ? "YEARLY" : "MONTHLY",
@@ -133,7 +163,7 @@ serve(async (req) => {
       startDate: startDate.toISOString().split("T")[0],
       originalValue: finalPrice,
       value: finalPrice,
-      description: `${plan.name} ${isAnnual ? "anual" : "mensal"}`.slice(0, 35),
+      description: `${plan.name}${bumpDesc}`.slice(0, 35),
       immediateQrCode: {
         originalValue: finalPrice,
         value: finalPrice,
@@ -170,7 +200,34 @@ serve(async (req) => {
     const qrCodeImage = authJson.encodedImage || authJson.immediateQrCode?.encodedImage || "";
     const conciliationId = authJson.immediateQrCode?.conciliationIdentifier || "";
 
-    // 4. Track checkout lead
+    // 4. Persiste bumps em profiles + auditoria
+    if (userId) {
+      const updates: Record<string, number> = {};
+      for (const [id, qty] of Object.entries(cleanBumps)) {
+        updates[BUMP_CATALOG[id].column] = qty;
+      }
+      const { error: upErr } = await supabaseClient
+        .from("profiles")
+        .update(updates)
+        .eq("id", userId);
+      if (upErr) logStep("Failed to persist extra_* in profile", { error: upErr.message });
+
+      for (const [id, qty] of Object.entries(cleanBumps)) {
+        if (qty > 0) {
+          await supabaseClient.from("order_bump_events").insert({
+            user_id: userId,
+            bump_id: id,
+            delta: qty,
+            new_quantity: qty,
+            source: "checkout",
+            asaas_subscription_id: authJson.id,
+            metadata: { plan_key: planKey, billing: "monthly", provider: "asaas" },
+          });
+        }
+      }
+    }
+
+    // 5. Track checkout lead
     try {
       await supabaseClient.from("checkout_leads").insert({
         user_id: userId || null,
@@ -195,7 +252,7 @@ serve(async (req) => {
         brCodeBase64: qrCodeImage ? `data:image/png;base64,${qrCodeImage}` : "",
         amount: Math.round(finalPrice * 100),
         conciliationId: conciliationId,
-        pixId: authJson.id, // for polling compatibility
+        pixId: authJson.id,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
