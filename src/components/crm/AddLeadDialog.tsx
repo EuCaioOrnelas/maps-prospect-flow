@@ -164,10 +164,15 @@ export const AddLeadDialog = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (isAtLimit) {
+      toast.error(`Limite de ${limit.toLocaleString('pt-BR')} contatos atingido. Faça upgrade para adicionar mais.`);
+      return;
+    }
+
     const phoneDigits = formData.phone.replace(/\D/g, '');
     const fullPhone = countryCode + phoneDigits;
-    
+
     if (!phoneDigits.trim()) {
       toast.error('O telefone é obrigatório');
       return;
