@@ -520,7 +520,7 @@ export const PricingSection = () => {
                       Processando...
                     </>
                   ) : plan.popular ? (
-                    "Escalar com IA"
+                    "Escalar Operações com Wiize AI"
                   ) : (
                     "Começar Agora"
                   )}
