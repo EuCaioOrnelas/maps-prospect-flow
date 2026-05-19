@@ -78,10 +78,35 @@ export function CheckoutBumpsUpsellDialog({
   const total = calcBumpsMonthlyCents(selection);
   const hasSelection = total > 0;
   const copy = getPlanCopy(planKey, planName);
+  const base = getPlanBase(planKey);
 
-  const [snapshot, setSnapshot] = useState<OrderBumpSelection>(emptyBumpSelection());
-  useEffect(() => {
-    if (open) setSnapshot({ ...selection });
+  // Linhas de breakdown (apenas recursos relevantes ao plano)
+  const breakdown: Array<{ label: string; base: number; extra: number; unit: string }> = [];
+  if (base.numbers > 0 || selection.numbers > 0) {
+    breakdown.push({
+      label: "Números de WhatsApp",
+      base: base.numbers,
+      extra: selection.numbers,
+      unit: "núm.",
+    });
+  }
+  if (base.contacts > 0 || selection.contacts > 0) {
+    breakdown.push({
+      label: "Contatos no CRM",
+      base: base.contacts,
+      extra: selection.contacts * 1000,
+      unit: "",
+    });
+  }
+  const planKeyLower = (planKey || "").toLowerCase();
+  if (planKeyLower === "growth" && (base.opportunities > 0 || selection.opportunities > 0)) {
+    breakdown.push({
+      label: "Oportunidades qualificadas",
+      base: base.opportunities,
+      extra: selection.opportunities * 1000,
+      unit: "",
+    });
+  }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
