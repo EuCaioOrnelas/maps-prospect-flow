@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { hasOpportunitiesAccess } from "@/lib/planAccess";
+import { useContactLimit } from "@/hooks/useContactLimit";
 import {
   Tooltip as UITooltip,
   TooltipContent,
@@ -62,6 +65,9 @@ export function DashboardHero({
   periodDays,
 }: DashboardHeroProps) {
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const showOpportunities = hasOpportunitiesAccess(profile as any);
+  const { count: contactCount, limit: contactLimit, hasLimit: hasContactLimit } = useContactLimit();
   const hasChange = financialChange !== 0;
   const [showCampaignDialog, setShowCampaignDialog] = useState(false);
 
