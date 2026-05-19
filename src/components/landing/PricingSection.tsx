@@ -69,12 +69,12 @@ const mainPlans = {
       price: "196",
       anchorPrice: "392",
       opportunities: "1.000",
-      description: "A camada de Inteligência Operacional da WIIZE AI para operar e converter no WhatsApp.",
+      description: "A camada de Inteligência Operacional da Wiize AI para operar e converter no WhatsApp.",
       features: [
         { text: "Atendimento Operacional com IA no WhatsApp oficial" },
         { text: "CRM Comercial com IA de Intenção de Compra" },
         { text: "Campanhas Inteligentes em escala" },
-        { text: "Fluxos Inteligentes com WIIZE AI" },
+        { text: "Fluxos Inteligentes com Wiize AI" },
         { text: "Cockpit Executivo de operação comercial" },
         { text: "Até 2 números WhatsApp conectados" },
         { text: "Suporte por email" },
@@ -92,7 +92,7 @@ const mainPlans = {
       price: "696",
       anchorPrice: "1.392",
       opportunities: "3.000",
-      description: "Operação Comercial completa com WIIZE AI: prospecção, conversão e fechamento em um só lugar.",
+      description: "Operação Comercial completa com Wiize AI: prospecção, conversão e fechamento em um só lugar.",
       features: [
         { text: "Tudo do plano Atendimento" },
         { text: "SDR IA para prospecção B2B por nicho e território" },
@@ -100,7 +100,7 @@ const mainPlans = {
         { text: "Geração de abordagens personalizadas por contexto" },
         { text: "Follow-up Inteligente com cadência adaptativa" },
         { text: "Copiloto Comercial IA Closer em conversas" },
-        { text: "Fluxos Operacionais avançados com WIIZE AI" },
+        { text: "Fluxos Operacionais avançados com Wiize AI" },
         { text: "Até 5 números WhatsApp conectados" },
         { text: "Suporte prioritário" },
         { text: "Operação Comercial com IA ponta a ponta" },
@@ -117,12 +117,12 @@ const mainPlans = {
       price: "157",
       anchorPrice: "392",
       opportunities: "1.000",
-      description: "A camada de Inteligência Operacional da WIIZE AI para operar e converter no WhatsApp.",
+      description: "A camada de Inteligência Operacional da Wiize AI para operar e converter no WhatsApp.",
       features: [
         { text: "Atendimento Operacional com IA no WhatsApp oficial" },
         { text: "CRM Comercial com IA de Intenção de Compra" },
         { text: "Campanhas Inteligentes em escala" },
-        { text: "Fluxos Inteligentes com WIIZE AI" },
+        { text: "Fluxos Inteligentes com Wiize AI" },
         { text: "Cockpit Executivo de operação comercial" },
         { text: "Até 2 números WhatsApp conectados" },
         { text: "Suporte por email" },
@@ -140,7 +140,7 @@ const mainPlans = {
       price: "596",
       anchorPrice: "1.392",
       opportunities: "3.000",
-      description: "Operação Comercial completa com WIIZE AI: prospecção, conversão e fechamento em um só lugar.",
+      description: "Operação Comercial completa com Wiize AI: prospecção, conversão e fechamento em um só lugar.",
       features: [
         { text: "Tudo do plano Atendimento" },
         { text: "SDR IA para prospecção B2B por nicho e território" },
@@ -148,7 +148,7 @@ const mainPlans = {
         { text: "Geração de abordagens personalizadas por contexto" },
         { text: "Follow-up Inteligente com cadência adaptativa" },
         { text: "Copiloto Comercial IA Closer em conversas" },
-        { text: "Fluxos Operacionais avançados com WIIZE AI" },
+        { text: "Fluxos Operacionais avançados com Wiize AI" },
         { text: "Até 5 números WhatsApp conectados" },
         { text: "Suporte prioritário" },
         { text: "Operação Comercial com IA ponta a ponta" },
@@ -165,13 +165,13 @@ const scalePlan = {
   key: "scale",
   price: "1.496",
   opportunities: "Personalizado",
-  description: "Infraestrutura operacional de IA sob medida para empresas que escalam a operação comercial com WIIZE AI.",
+  description: "Infraestrutura operacional de IA sob medida para empresas que escalam a operação comercial com Wiize AI.",
   features: [
     { text: "Tudo do plano Growth IA" },
-    { text: "Operação Comercial dedicada com WIIZE AI", isNew: true },
+    { text: "Operação Comercial dedicada com Wiize AI", isNew: true },
     { text: "Volume de oportunidades sob demanda" },
     { text: "Fluxos e Inteligências sob medida" },
-    { text: "Onboarding com especialista WIIZE" },
+    { text: "Onboarding com especialista Wiize" },
     { text: "Processamento com prioridade máxima" },
     { text: "Números WhatsApp ilimitados" },
     { text: "Gerente de conta exclusivo" },
@@ -461,7 +461,8 @@ export const PricingSection = () => {
                       -{Math.round((1 - parsePrice(plan.price) / parsePrice(plan.anchorPrice)) * 100)}%
                     </span>
                   </div>
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-sm font-medium text-muted-foreground">R$</span>
                     <span className="font-display font-bold text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
                       <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
                     </span>
@@ -553,9 +554,6 @@ export const PricingSection = () => {
                     Sob medida
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1.5">
-                  Plano personalizado
-                </p>
                 <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
                   Oportunidades sob demanda
                 </p>
@@ -657,7 +655,7 @@ export const PricingSection = () => {
                       {col.custom ? (
                         <div>
                           <p className="font-display text-lg md:text-2xl font-bold text-foreground tracking-tight">Sob medida</p>
-                          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Plano personalizado</p>
+                          
                         </div>
                       ) : (
                         <div>
