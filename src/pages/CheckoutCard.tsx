@@ -35,7 +35,8 @@ import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 import { CouponInputCard, type AppliedCoupon } from "@/components/checkout/CouponInputCard";
 import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
-import { emptyBumpSelection, calcBumpsTotalCents, calcBumpsMonthlyCents, type OrderBumpSelection } from "@/config/orderBumps";
+import { CheckoutBumpsUpsellDialog } from "@/components/checkout/CheckoutBumpsUpsellDialog";
+import { emptyBumpSelection, calcBumpsTotalCents, calcBumpsMonthlyCents, bumpsAllowedForCycle, getBumpsForPlan, type OrderBumpSelection } from "@/config/orderBumps";
 
 function formatCurrency(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
@@ -104,6 +105,8 @@ function CheckoutCardInner() {
   const [installmentDropdownOpen, setInstallmentDropdownOpen] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [bumps, setBumps] = useState<OrderBumpSelection>(emptyBumpSelection());
+  const [upsellOpen, setUpsellOpen] = useState(false);
+  const [upsellShown, setUpsellShown] = useState(false);
 
   // Load customer data + pending bumps from sessionStorage
   useEffect(() => {
@@ -134,6 +137,20 @@ function CheckoutCardInner() {
       sessionStorage.removeItem("pendingBumps");
     }
   }, [navigate]);
+
+  // Upsell de add-ons — abre 1x ao entrar no checkout (apenas mensal + plano elegível)
+  useEffect(() => {
+    if (upsellShown) return;
+    if (!customerData || !planKey) return;
+    if (!bumpsAllowedForCycle(billingPeriod)) return;
+    if (getBumpsForPlan(planKey).length === 0) return;
+    const t = setTimeout(() => {
+      setUpsellOpen(true);
+      setUpsellShown(true);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [customerData, planKey, billingPeriod, upsellShown]);
+
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -784,6 +801,16 @@ function CheckoutCardInner() {
           </div>
         </div>
       </footer>
+
+      <CheckoutBumpsUpsellDialog
+        open={upsellOpen}
+        onOpenChange={setUpsellOpen}
+        planKey={planKey}
+        planName={planName || planConfig?.name || "plano"}
+        billingPeriod={isAnnual ? "annual" : "monthly"}
+        selection={bumps}
+        onChange={setBumps}
+      />
     </div>
   );
 }

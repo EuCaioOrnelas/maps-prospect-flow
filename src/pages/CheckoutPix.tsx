@@ -30,7 +30,8 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
-import { emptyBumpSelection, calcBumpsMonthlyCents, type OrderBumpSelection } from "@/config/orderBumps";
+import { CheckoutBumpsUpsellDialog } from "@/components/checkout/CheckoutBumpsUpsellDialog";
+import { emptyBumpSelection, calcBumpsMonthlyCents, bumpsAllowedForCycle, getBumpsForPlan, type OrderBumpSelection } from "@/config/orderBumps";
 import { Sparkles } from "lucide-react";
 
 function formatCurrency(cents: number) {
@@ -70,6 +71,21 @@ export default function CheckoutPix() {
   const [paid, setPaid] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [bumps, setBumps] = useState<OrderBumpSelection>(emptyBumpSelection());
+  const [upsellOpen, setUpsellOpen] = useState(false);
+  const [upsellShown, setUpsellShown] = useState(false);
+
+  // Upsell — abre 1x ao entrar no checkout (apenas mensal + plano elegível)
+  useEffect(() => {
+    if (upsellShown) return;
+    if (!customerData || !planKey) return;
+    if (!bumpsAllowedForCycle(billingPeriod)) return;
+    if (getBumpsForPlan(planKey).length === 0) return;
+    const t = setTimeout(() => {
+      setUpsellOpen(true);
+      setUpsellShown(true);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [customerData, planKey, billingPeriod, upsellShown]);
 
   // Expiration timer (1 hour from QR generation)
   useEffect(() => {
@@ -605,6 +621,16 @@ export default function CheckoutPix() {
           </div>
         </div>
       </footer>
+
+      <CheckoutBumpsUpsellDialog
+        open={upsellOpen}
+        onOpenChange={setUpsellOpen}
+        planKey={planKey}
+        planName={planName || "plano"}
+        billingPeriod={billingPeriod}
+        selection={bumps}
+        onChange={setBumps}
+      />
     </div>
   );
 }
