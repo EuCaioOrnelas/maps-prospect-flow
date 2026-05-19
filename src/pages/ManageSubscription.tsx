@@ -845,6 +845,14 @@ export default function ManageSubscription() {
           </p>
         </motion.div>
       </div>
+
+      <ManageAddonsDialog
+        open={showAddonsDialog}
+        onOpenChange={setShowAddonsDialog}
+        planKey={(addonProfile?.plan || profile?.plan || "free").toLowerCase()}
+        profile={addonProfile || profile}
+        onSaved={fetchAddonProfile}
+      />
     </div>
   );
 }
