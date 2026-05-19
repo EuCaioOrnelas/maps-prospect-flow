@@ -56,8 +56,8 @@ function formatExpiry(value: string) {
 }
 
 const PLAN_PRICES: Record<string, { monthly: number; annual: number; name: string }> = {
-  start: { monthly: 29600, annual: 295200, name: "Wiize Start" },
-  growth: { monthly: 69600, annual: 715200, name: "Wiize Growth" },
+  start: { monthly: 19600, annual: 195700, name: "Wiize Atendimento" },
+  growth: { monthly: 69600, annual: 715200, name: "Wiize Growth IA" },
 };
 
 // Stripe Subscriptions cobra o anual em parcela única (1x à vista). Não há parcelamento real via API.
