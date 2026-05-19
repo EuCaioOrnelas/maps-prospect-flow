@@ -188,7 +188,6 @@ export const PricingSection = () => {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; key: string; price: string } | null>(null);
-  const [isAnnual, setIsAnnual] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const comparisonRef = useRef<HTMLDivElement>(null);
 
