@@ -489,11 +489,7 @@ export const PricingSection = () => {
                         ) : (
                           <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                         )}
-                        <span className={
-                          feature.highlight ? "text-foreground font-semibold" :
-                          feature.subtle ? "text-muted-foreground/60 italic" :
-                          "text-muted-foreground"
-                        }>{feature.text}</span>
+                        <span className="text-muted-foreground">{feature.text}</span>
                       </li>
                     ))}
                   </ul>
