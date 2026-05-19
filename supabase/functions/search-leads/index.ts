@@ -369,7 +369,7 @@ serve(async (req) => {
     // Get user profile to check opportunity limits
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('searches_used, searches_limit, plan')
+      .select('searches_used, searches_limit, plan, bonus_searches, extra_opportunities_packs')
       .eq('id', user.id)
       .single();
 
@@ -381,15 +381,18 @@ serve(async (req) => {
       );
     }
 
-    // Check remaining opportunities (each lead = 1 opportunity)
-    const remainingOpportunities = profile.searches_limit - profile.searches_used;
-    
+    // Effective limit = plan + add-on packs (1k each) + carried bonus
+    const extraPacks = (profile as any).extra_opportunities_packs || 0;
+    const bonus = (profile as any).bonus_searches || 0;
+    const effectiveLimit = profile.searches_limit + extraPacks * 1000 + bonus;
+    const remainingOpportunities = effectiveLimit - profile.searches_used;
+
     if (remainingOpportunities <= 0) {
       console.log('Opportunity limit reached for user:', user.id);
       return new Response(
         JSON.stringify({ 
           error: 'Limite de oportunidades atingido',
-          message: 'Faça upgrade do seu plano para continuar prospectando',
+          message: 'Faça upgrade do seu plano ou adicione a Expansão Comercial (+1.000 oportunidades) para continuar prospectando',
           limitReached: true
         }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
