@@ -241,7 +241,7 @@ export default function SignupChoosePlan() {
                       <span className="text-sm font-medium text-foreground">hoje</span>
                     </div>
                     <p className="text-sm font-medium text-primary mt-1.5">
-                      Até {plan.opportunities} oportunidades/mês
+                      {plan.usageLabel}
                     </p>
                     <div className="mt-3 rounded-lg bg-muted/40 border border-border/60 px-3 py-2">
                       <p className="text-xs text-foreground">
