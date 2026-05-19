@@ -30,7 +30,8 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
-import { emptyBumpSelection, calcBumpsMonthlyCents, type OrderBumpSelection } from "@/config/orderBumps";
+import { CheckoutBumpsUpsellDialog } from "@/components/checkout/CheckoutBumpsUpsellDialog";
+import { emptyBumpSelection, calcBumpsMonthlyCents, bumpsAllowedForCycle, getBumpsForPlan, type OrderBumpSelection } from "@/config/orderBumps";
 import { Sparkles } from "lucide-react";
 
 function formatCurrency(cents: number) {
