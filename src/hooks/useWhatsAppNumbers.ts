@@ -357,6 +357,8 @@ export const useWhatsAppNumbers = () => {
     setSelectedNumberId,
     loading,
     maxNumbers,
+    basePlanNumbers,
+    extraNumbers,
     hasMassMessagingAccess,
     hasConnectedNumbers,
     fetchNumbers,
