@@ -15,12 +15,12 @@ const corsHeaders = {
 
 const PLAN_PRICES: Record<string, { monthly: string; annual: string; name: string }> = {
   start: {
-    monthly: "price_1TLZi1K8CM0R6xMMDOg3MSTp",
+    monthly: "price_1TYl5KK8CM0R6xMMeHUhKt7s", // R$196 (novo)
     annual: "price_1TLZkSK8CM0R6xMMwr1Ke1IX",
     name: "Wiize Atendimento",
   },
   growth: {
-    monthly: "price_1TLZlSK8CM0R6xMMFtvROCby",
+    monthly: "price_1TYl6iK8CM0R6xMMd23UBpIz", // R$696 (novo)
     annual: "price_1TLZn8K8CM0R6xMMaEz5JuVW",
     name: "Wiize Growth IA",
   },
