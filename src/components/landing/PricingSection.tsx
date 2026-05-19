@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentMethodModal, type CustomerData } from "@/components/checkout/PaymentMethodModal";
-import { Switch } from "@/components/ui/switch";
+
 import type { LucideIcon } from "lucide-react";
 
 const parsePrice = (price: string) => Number(price.replace(/\./g, '').replace(',', '.'));
@@ -350,7 +350,7 @@ export const PricingSection = () => {
     if (!selectedPlan) return;
     setLoadingPlan(selectedPlan.key);
     try {
-      const billingKey = isAnnual ? "annual" : "monthly";
+      const billingKey = "monthly";
       const priceId = PRICE_IDS[billingKey][selectedPlan.key];
       const response = await supabase.functions.invoke("create-checkout", {
         body: { priceId, guestEmail: user ? undefined : customerData.email },
@@ -397,30 +397,14 @@ export const PricingSection = () => {
               Invista em prospecção previsível.
             </p>
 
-            {/* Toggle Annual / Monthly - fixed height container */}
-            <div className="flex items-center justify-center gap-3 h-8">
-              <span className={`text-sm font-medium transition-colors ${!isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
-                Mensal
-              </span>
-              <Switch
-                checked={isAnnual}
-                onCheckedChange={setIsAnnual}
-              />
-              <span className={`text-sm font-medium transition-colors ${isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
-                Anual
-              </span>
-              {/* Always reserve space for the badge */}
-              <span className={`bg-primary/15 text-primary text-xs font-bold px-2.5 py-1 rounded-full ml-1 transition-opacity duration-200 ${isAnnual ? 'opacity-100' : 'opacity-0'}`}>
-                Economize até 30%
-              </span>
-            </div>
+            <div className="h-8" />
           </div>
 
           {/* Start + Growth + Enterprise */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch mb-8">
             {plans.map((plan, index) => (
               <motion.div
-                key={`${plan.key}-${isAnnual ? 'annual' : 'monthly'}`}
+                key={plan.key}
                 initial={{ opacity: 0, y: 50, scale: 0.9 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true, margin: "-100px" }}
@@ -475,14 +459,6 @@ export const PricingSection = () => {
                     </span>
                     <span className="text-sm font-medium text-muted-foreground">/ mês</span>
                   </div>
-                  {isAnnual && (
-                    <p className="text-xs text-muted-foreground/80 mt-1">cobrado anualmente</p>
-                  )}
-                  {isAnnual && (
-                    <p className="text-xs text-muted-foreground/80 mt-0.5">
-                      Total R$ {formatPrice(parsePrice(plan.price) * 12)}/ano
-                    </p>
-                  )}
                   <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
                     {plan.usageLabel}
                   </p>
@@ -527,7 +503,7 @@ export const PricingSection = () => {
 
             {/* Enterprise — inline com Start e Growth */}
             <motion.div
-              key={`enterprise-${isAnnual ? 'annual' : 'monthly'}`}
+              key="enterprise"
               initial={{ opacity: 0, y: 50, scale: 0.9 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true, margin: "-100px" }}
@@ -827,7 +803,7 @@ export const PricingSection = () => {
         planName={selectedPlan?.name || ""}
         planPrice={selectedPlan?.price || ""}
         planKey={selectedPlan?.key || ""}
-        billingPeriod={isAnnual ? "annual" : "monthly"}
+        billingPeriod="monthly"
         onSelectCard={handleCardCheckout}
         onSelectPix={handlePixCheckout}
         loading={loadingPlan !== null}
