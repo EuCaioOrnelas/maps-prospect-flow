@@ -8,9 +8,11 @@ const corsHeaders = {
 
 // WiizeProspect price IDs válidos para MRR (atuais + legados)
 const WIIZE_PRICE_IDS = [
-  "price_1TLZi1K8CM0R6xMMDOg3MSTp", // Start - R$296/mês
+  "price_1TYl5KK8CM0R6xMMeHUhKt7s", // Atendimento - R$196/mês (atual)
+  "price_1TYl6iK8CM0R6xMMd23UBpIz", // Growth IA - R$696/mês (atual)
+  "price_1TLZi1K8CM0R6xMMDOg3MSTp", // Start - R$296/mês (legado)
   "price_1TLZkSK8CM0R6xMMwr1Ke1IX", // Start - anual (equiv. mensal R$246)
-  "price_1TLZlSK8CM0R6xMMFtvROCby", // Growth - R$696/mês
+  "price_1TLZlSK8CM0R6xMMFtvROCby", // Growth - R$696/mês (legado)
   "price_1TLZn8K8CM0R6xMMaEz5JuVW", // Growth - anual (equiv. mensal R$596)
   "price_1SlylcK8CM0R6xMMyHRWAd8G", // Scale - R$897
   "price_1SlykAK8CM0R6xMMOCM684rz", // Start - legado
@@ -29,6 +31,8 @@ const ADMIN_EMAILS = ["caiowiize@gmail.com"];
 
 // Plan name mapping from price IDs
 const PRICE_TO_PLAN: { [key: string]: string } = {
+  "price_1TYl5KK8CM0R6xMMeHUhKt7s": "start",
+  "price_1TYl6iK8CM0R6xMMd23UBpIz": "growth",
   "price_1TLZi1K8CM0R6xMMDOg3MSTp": "start",
   "price_1TLZkSK8CM0R6xMMwr1Ke1IX": "start",
   "price_1TLZlSK8CM0R6xMMFtvROCby": "growth",
