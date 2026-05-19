@@ -66,7 +66,7 @@ const PLANS = [
       "Geração de abordagens personalizadas por contexto",
       "Follow-up inteligente com contexto comercial",
       "Copiloto IA Closer em conversas",
-      "Fluxos Operacionais avançados com Wiize AI",
+      "Fluxos Operacionais com Wiize AI",
       "Até 5 números WhatsApp conectados",
       "Suporte prioritário",
     ],
