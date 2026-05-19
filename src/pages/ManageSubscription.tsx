@@ -300,6 +300,81 @@ export default function ManageSubscription() {
           </Card>
         </motion.div>
 
+        {/* Add-ons / Order Bumps */}
+        {(() => {
+          const planKey = (addonProfile?.plan || profile?.plan || "free").toLowerCase();
+          const availableBumps = getBumpsForPlan(planKey);
+          if (availableBumps.length === 0) return null;
+          const sel = profileToBumpSelection(addonProfile || profile);
+          const monthlyCents = calcBumpsMonthlyCents(sel);
+          const hasAny = sel.numbers + sel.contacts + sel.opportunities > 0;
+          const isMonthlyEligible = isStripe || isPix; // bumps só em ciclo mensal
+
+          return (
+            <motion.div {...fadeUp(0.04)}>
+              <Card className="border-border/50 shadow-md shadow-primary/[0.02] relative overflow-hidden">
+                <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/[0.06] rounded-full blur-[70px]" />
+                <CardHeader className="pb-3 relative z-10">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <CardTitle className="text-sm flex items-center gap-2 text-foreground font-semibold">
+                      <div className="h-7 w-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                        <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                      </div>
+                      Add-ons da sua assinatura
+                    </CardTitle>
+                    <Button
+                      size="sm"
+                      variant={hasAny ? "outline" : "default"}
+                      onClick={() => setShowAddonsDialog(true)}
+                      disabled={!isMonthlyEligible || !hasActiveSub}
+                      className="gap-1.5"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      {hasAny ? "Gerenciar" : "Adicionar add-ons"}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="relative z-10 space-y-3">
+                  {hasAny ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        {availableBumps.map((b) => {
+                          const qty = sel[b.id];
+                          if (qty <= 0) return null;
+                          return (
+                            <div key={b.id} className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{b.shortLabel}</p>
+                              <p className="text-base font-bold text-foreground tabular-nums mt-1">
+                                {qty}× <span className="text-xs font-medium text-muted-foreground">/mês</span>
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border border-border/40 bg-amber-500/[0.04] p-3">
+                        <span className="text-xs text-muted-foreground">Total extra mensal</span>
+                        <span className="text-sm font-bold text-foreground tabular-nums">
+                          {(monthlyCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}/mês
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Você ainda não possui add-ons. Expanda números de WhatsApp, contatos no CRM e oportunidades comerciais conforme sua operação cresce —
+                      pague apenas pelo que precisa, cancele a qualquer momento.
+                    </p>
+                  )}
+                  {!isMonthlyEligible && (
+                    <p className="text-[11px] text-muted-foreground/80">
+                      Add-ons disponíveis apenas para assinaturas mensais ativas.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })()}
+
         {/* Payment Method + Help */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <motion.div {...fadeUp(0.06)}>
