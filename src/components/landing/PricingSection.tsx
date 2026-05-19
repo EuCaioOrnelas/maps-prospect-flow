@@ -165,7 +165,7 @@ const scalePlan = {
   key: "scale",
   price: "1.496",
   opportunities: "Personalizado",
-  description: "Infraestrutura operacional de IA sob medida para empresas que escalam a operação comercial com Wiize AI.",
+  description: "Para escalar operações comerciais com infraestrutura e IA sob medida.",
   features: [
     { text: "Tudo do plano Growth IA" },
     { text: "Operação Comercial dedicada com Wiize AI", isNew: true },
