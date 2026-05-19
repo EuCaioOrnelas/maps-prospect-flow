@@ -216,7 +216,7 @@ export const PricingSection = () => {
         { label: "SDR IA para captação de empresas por nicho e região", start: false, growth: true, scale: true },
         { label: "Diagnóstico de leads com IA (porte, dores, maturidade digital)", start: false, growth: true, scale: true },
         { label: "Geração de mensagens personalizadas por contexto (IA)", start: false, growth: true, scale: true },
-        { label: "Enriquecimento automático (site, contatos, redes sociais)", start: false, growth: true, scale: true },
+        { label: "Enriquecimento inteligente de empresas e contatos", start: false, growth: true, scale: true },
         { label: "Segmentação por nicho, região e porte da empresa", start: false, growth: true, scale: true },
         { label: "Oportunidades com alto potencial de fechamento", start: false, growth: true, scale: true },
         { label: "Volume de oportunidades captadas / mês", start: "Não incluso", growth: "3.000", scale: "Sob demanda" },
