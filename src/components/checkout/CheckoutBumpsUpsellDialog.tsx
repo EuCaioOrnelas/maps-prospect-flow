@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight, X, Minus, Plus, Check, Zap } from "lucide-react";
@@ -6,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   calcBumpsMonthlyCents,
-  emptyBumpSelection,
   getBumpsForPlan,
   type OrderBumpId,
   type OrderBumpSelection,
