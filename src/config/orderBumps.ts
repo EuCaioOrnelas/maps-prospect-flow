@@ -41,9 +41,9 @@ export interface OrderBumpDef {
 export const ORDER_BUMPS: OrderBumpDef[] = [
   {
     id: "numbers",
-    title: "Número extra de WhatsApp",
-    shortLabel: "+1 número",
-    description: "Conecte outro número para aumentar disparo, atendimento e contornar limites diários.",
+    title: "Expansão de Atendimento",
+    shortLabel: "Expansão de Atendimento: +1 Número",
+    description: "Conecte mais um número de WhatsApp para escalar disparo, atendimento e contornar limites diários.",
     unit: "número",
     step: 1,
     monthlyPriceCents: 9600,
