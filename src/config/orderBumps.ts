@@ -1,16 +1,17 @@
 /**
- * Catálogo de Order Bumps do checkout.
+ * Catálogo de Order Bumps do checkout / gestão de add-ons.
  *
- * ⚠️ Preços ainda não definidos — usando placeholders. Ajuste `monthlyPriceCents`
- * de cada bump quando os valores forem decididos. O fluxo de UI/estado já está
- * pronto; basta atualizar números aqui.
+ * Preços e price IDs do Stripe definidos em 2026-05-19.
  *
  * Regras:
  * - `numbers` (incremento de 1) e `contacts` (incremento de 1.000) aparecem em
  *   Atendimento (start) e Growth.
  * - `opportunities` (incremento de 1.000) aparece SÓ no Growth.
- * - Todos os bumps são RECORRENTES e seguem o ciclo do plano (mensal/anual).
- *   No anual o valor é multiplicado por 12 com o mesmo % de desconto do plano.
+ * - Bumps são RECORRENTES MENSAIS. No checkout ANUAL eles são bloqueados pois
+ *   o Stripe não permite misturar intervalos `month` + `year` na mesma
+ *   subscription. A UI esconde a seção quando billingPeriod === "annual".
+ * - Quando o pagamento de um bump falha, o webhook remove o item da subscription
+ *   e zera a coluna `extra_*` correspondente em `profiles` (mantém o plano).
  */
 
 import { MessageSquare, Users, Target, type LucideIcon } from "lucide-react";
@@ -22,15 +23,19 @@ export interface OrderBumpDef {
   title: string;
   shortLabel: string;
   description: string;
-  unit: string;            // "número" | "contatos" | "oportunidades"
-  step: number;            // quanto cada incremento adiciona (1 ou 1000)
-  /** Preço mensal por 1 incremento (em centavos). 0 = placeholder. */
+  unit: string;
+  step: number;
+  /** Preço mensal por 1 incremento (em centavos). */
   monthlyPriceCents: number;
+  /** Price ID mensal do Stripe (recorrente). */
+  stripePriceIdMonthly: string;
+  /** Price ID anual — null por enquanto, bumps não disponíveis em anual. */
+  stripePriceIdAnnual: string | null;
   icon: LucideIcon;
-  /** Planos onde o bump aparece. */
   availableOn: Array<"start" | "growth">;
-  /** Cor de destaque (tailwind token). */
   accent: "primary" | "emerald" | "amber";
+  /** Coluna em profiles que guarda a quantidade ativa. */
+  profileColumn: "extra_numbers" | "extra_contacts_packs" | "extra_opportunities_packs";
 }
 
 export const ORDER_BUMPS: OrderBumpDef[] = [
@@ -41,10 +46,13 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
     description: "Conecte outro número para aumentar disparo, atendimento e contornar limites diários.",
     unit: "número",
     step: 1,
-    monthlyPriceCents: 0, // TODO: definir preço
+    monthlyPriceCents: 9600,
+    stripePriceIdMonthly: "price_1TYdiXK8CM0R6xMMqnhxGM1V",
+    stripePriceIdAnnual: null,
     icon: MessageSquare,
     availableOn: ["start", "growth"],
     accent: "emerald",
+    profileColumn: "extra_numbers",
   },
   {
     id: "contacts",
@@ -53,10 +61,13 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
     description: "Aumenta o limite total de contatos armazenados e gerenciados no CRM.",
     unit: "contatos",
     step: 1000,
-    monthlyPriceCents: 0, // TODO: definir preço
+    monthlyPriceCents: 4800,
+    stripePriceIdMonthly: "price_1TYdkPK8CM0R6xMMXHTfihdw",
+    stripePriceIdAnnual: null,
     icon: Users,
     availableOn: ["start", "growth"],
     accent: "primary",
+    profileColumn: "extra_contacts_packs",
   },
   {
     id: "opportunities",
@@ -65,10 +76,13 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
     description: "Mais leads qualificados captados pelo SDR IA todo mês.",
     unit: "oportunidades",
     step: 1000,
-    monthlyPriceCents: 0, // TODO: definir preço
+    monthlyPriceCents: 19600,
+    stripePriceIdMonthly: "price_1TYdknK8CM0R6xMM9TXjGFf5",
+    stripePriceIdAnnual: null,
     icon: Target,
     availableOn: ["growth"],
     accent: "amber",
+    profileColumn: "extra_opportunities_packs",
   },
 ];
 
@@ -80,17 +94,10 @@ export const emptyBumpSelection = (): OrderBumpSelection => ({
   opportunities: 0,
 });
 
-/**
- * Calcula o total mensal (em centavos) dos bumps selecionados.
- */
 export function calcBumpsMonthlyCents(selection: OrderBumpSelection): number {
   return ORDER_BUMPS.reduce((sum, b) => sum + b.monthlyPriceCents * (selection[b.id] || 0), 0);
 }
 
-/**
- * Calcula o total para o ciclo (mensal vs anual). No anual aplicamos 12x.
- * Se quiser dar desconto anual nos bumps, ajuste aqui.
- */
 export function calcBumpsTotalCents(
   selection: OrderBumpSelection,
   billing: "monthly" | "annual",
@@ -103,4 +110,22 @@ export function getBumpsForPlan(planKey: string): OrderBumpDef[] {
   const k = (planKey || "").toLowerCase();
   if (k !== "start" && k !== "growth") return [];
   return ORDER_BUMPS.filter((b) => b.availableOn.includes(k as "start" | "growth"));
+}
+
+/** True se a combinação plano+ciclo aceita order bumps. */
+export function bumpsAllowedForCycle(billing: "monthly" | "annual" | string): boolean {
+  return billing !== "annual";
+}
+
+/** Converte profile.extra_* em uma OrderBumpSelection. */
+export function profileToBumpSelection(profile: {
+  extra_numbers?: number | null;
+  extra_contacts_packs?: number | null;
+  extra_opportunities_packs?: number | null;
+} | null | undefined): OrderBumpSelection {
+  return {
+    numbers: profile?.extra_numbers || 0,
+    contacts: profile?.extra_contacts_packs || 0,
+    opportunities: profile?.extra_opportunities_packs || 0,
+  };
 }
