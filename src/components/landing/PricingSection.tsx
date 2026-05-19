@@ -163,8 +163,8 @@ const mainPlans = {
 const scalePlan = {
   name: "Enterprise",
   key: "scale",
-  price: "1.496",
-  opportunities: "Personalizado",
+  price: "Sob medida",
+  opportunities: "Sob demanda",
   description: "Para escalar operações comerciais com infraestrutura e IA sob medida.",
   features: [
     { text: "Tudo do plano Growth IA" },
@@ -525,8 +525,11 @@ export const PricingSection = () => {
               </div>
 
               <div className="mb-6">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-display font-bold text-[2rem] md:text-[2.5rem] tabular-nums text-foreground leading-none whitespace-nowrap">
+                <div className="flex items-center gap-2 mb-2 invisible" aria-hidden="true">
+                  <span className="text-sm">R$ —</span>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-display font-bold text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none whitespace-nowrap">
                     Sob medida
                   </span>
                 </div>
