@@ -29,6 +29,9 @@ import {
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
+import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
+import { emptyBumpSelection, calcBumpsMonthlyCents, type OrderBumpSelection } from "@/config/orderBumps";
+import { Sparkles } from "lucide-react";
 
 function formatCurrency(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
@@ -66,6 +69,7 @@ export default function CheckoutPix() {
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paid, setPaid] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [bumps, setBumps] = useState<OrderBumpSelection>(emptyBumpSelection());
 
   // Expiration timer (1 hour from QR generation)
   useEffect(() => {
