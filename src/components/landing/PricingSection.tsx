@@ -486,7 +486,7 @@ export const PricingSection = () => {
                     </p>
                   )}
                   <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
-                    Até {plan.opportunities} oportunidades/mês
+                    {plan.usageLabel}
                   </p>
                 </div>
 
