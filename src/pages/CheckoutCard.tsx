@@ -548,6 +548,19 @@ function CheckoutCardInner() {
                   <span className="text-muted-foreground">Email</span>
                   <span className="font-medium text-foreground text-xs truncate max-w-[180px]">{customerData?.email}</span>
                 </div>
+                {bumpsCycleCents > 0 && (
+                  <>
+                    <div className="h-px bg-border/50" />
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Sparkles className="h-3 w-3 text-amber-500" /> Extras (turbinar)
+                      </span>
+                      <span className="font-semibold text-foreground tabular-nums">
+                        +{formatCurrency(bumpsCycleCents)}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="h-px bg-border/50" />
                 {appliedCoupon && (
                   <>
@@ -599,6 +612,14 @@ function CheckoutCardInner() {
                 </div>
               </div>
             </div>
+
+            {/* Order bumps — turbine seu plano */}
+            <OrderBumpsCard
+              planKey={planKey}
+              billingPeriod={isAnnual ? "annual" : "monthly"}
+              selection={bumps}
+              onChange={setBumps}
+            />
 
             {/* Coupon card — abaixo do detalhe do plano e acima das info de segurança */}
             <CouponInputCard
