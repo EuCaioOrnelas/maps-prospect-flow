@@ -554,7 +554,7 @@ export const PricingSection = () => {
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1.5">
-                  por usuário/mês
+                  Plano personalizado
                 </p>
                 <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
                   Oportunidades sob demanda
