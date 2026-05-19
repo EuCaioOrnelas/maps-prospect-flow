@@ -45,12 +45,7 @@ const PLANS = [
       "Até 2 números WhatsApp conectados",
       "Suporte por email",
     ],
-    limitations: [
-      "SDR IA disponível no Growth IA",
-      "Diagnóstico Comercial com IA no Growth IA",
-      "Geração de abordagens por IA no Growth IA",
-      "Copiloto IA Closer disponível no Growth IA",
-    ],
+    limitations: [],
   },
   {
     key: "growth",

@@ -79,10 +79,6 @@ const mainPlans = {
         { text: "Cockpit Executivo de operação comercial" },
         { text: "Até 2 números WhatsApp conectados" },
         { text: "Suporte por email" },
-        { text: "SDR IA disponível no Growth IA", disabled: true },
-        { text: "Diagnóstico Comercial com IA no Growth IA", disabled: true },
-        { text: "Geração de abordagens por IA no Growth IA", disabled: true },
-        { text: "Copiloto IA Closer disponível no Growth IA", disabled: true },
       ] as PlanFeature[],
       popular: false,
       icon: Headphones,
@@ -128,10 +124,6 @@ const mainPlans = {
         { text: "Cockpit Executivo de operação comercial" },
         { text: "Até 2 números WhatsApp conectados" },
         { text: "Suporte por email" },
-        { text: "SDR IA disponível no Growth IA", disabled: true },
-        { text: "Diagnóstico Comercial com IA no Growth IA", disabled: true },
-        { text: "Geração de abordagens por IA no Growth IA", disabled: true },
-        { text: "Copiloto IA Closer disponível no Growth IA", disabled: true },
       ] as PlanFeature[],
       popular: false,
       icon: Headphones,
@@ -520,7 +512,7 @@ export const PricingSection = () => {
                       Processando...
                     </>
                   ) : plan.popular ? (
-                    "Escalar Operações com Wiize AI"
+                    "Escalar com Wiize IA"
                   ) : (
                     "Começar Agora"
                   )}
