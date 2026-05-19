@@ -10,9 +10,9 @@ const corsHeaders = {
 const ASAAS_API = "https://api.asaas.com/v3";
 
 const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number }> = {
-  start: { name: "Wiize Start", priceMonthly: 296.0 },
-  growth: { name: "Wiize Growth", priceMonthly: 696.0 },
-  scale: { name: "Wiize Scale", priceMonthly: 1496.0 },
+  start: { name: "Wiize Atendimento", priceMonthly: 196.0 },
+  growth: { name: "Wiize Growth IA", priceMonthly: 696.0 },
+  scale: { name: "Wiize Enterprise", priceMonthly: 1496.0 },
 };
 
 const UF_BY_NAME: Record<string, string> = {
