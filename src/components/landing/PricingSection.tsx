@@ -213,7 +213,7 @@ export const PricingSection = () => {
       title: "SDR IA · Captação e Diagnóstico",
       icon: Target,
       rows: [
-        { label: "Captação automática de leads por nicho e localização", start: false, growth: true, scale: true },
+        { label: "SDR IA para captação de empresas por nicho e região", start: false, growth: true, scale: true },
         { label: "Diagnóstico de leads com IA (porte, dores, maturidade digital)", start: false, growth: true, scale: true },
         { label: "Geração de mensagens personalizadas por contexto (IA)", start: false, growth: true, scale: true },
         { label: "Enriquecimento automático (site, contatos, redes sociais)", start: false, growth: true, scale: true },
