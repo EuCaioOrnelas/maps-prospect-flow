@@ -120,6 +120,7 @@ const mainPlans = {
       opportunities: "1.000",
       description: "A camada de Inteligência Operacional da Wiize AI para operar e converter no WhatsApp.",
       features: [
+        { text: "Chat ao vivo centralizado para todos os números" },
         { text: "Atendimento Operacional com IA no WhatsApp oficial" },
         { text: "CRM Comercial com IA de Intenção de Compra" },
         { text: "Campanhas Inteligentes em escala" },
