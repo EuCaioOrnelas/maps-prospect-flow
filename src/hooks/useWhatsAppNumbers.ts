@@ -73,7 +73,10 @@ export const useWhatsAppNumbers = () => {
   
   const userPlan = profile?.plan?.toLowerCase() || 'free';
   // Ensure free users always have access to at least 1 number
-  const maxNumbers = PLAN_LIMITS[userPlan] || PLAN_LIMITS['free'];
+  const basePlanNumbers = PLAN_LIMITS[userPlan] || PLAN_LIMITS['free'];
+  // Add-on: +N números comprados (extra_numbers em profiles)
+  const extraNumbers = (profile as any)?.extra_numbers || 0;
+  const maxNumbers = basePlanNumbers + extraNumbers;
   // All plans have mass messaging access (free users can use 1 number with 400 message limit)
   const hasMassMessagingAccess = true;
 
@@ -354,6 +357,8 @@ export const useWhatsAppNumbers = () => {
     setSelectedNumberId,
     loading,
     maxNumbers,
+    basePlanNumbers,
+    extraNumbers,
     hasMassMessagingAccess,
     hasConnectedNumbers,
     fetchNumbers,

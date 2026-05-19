@@ -1,71 +1,153 @@
-## Escopo
 
-Implementar gating de acesso para novos usuários no plano Atendimento (start pós-2026-05-18), limites de contatos no CRM por plano, e ajustar pricing/hero para refletir "contatos" no Atendimento e atualizar o Growth.
+# Order Bumps Funcionais — Plano Completo
 
-## 1. Pricing (landing) — `src/components/landing/PricingSection.tsx`
+## Decisões já fechadas
+- **Anual:** bumps escondidos no checkout/upgrade anual (Stripe não permite mistura `month` + `year` na mesma subscription).
+- **Falha de pagamento do bump:** só remove o bump (limites voltam ao do plano base). Plano principal continua ativo.
+- **Gestão pós-compra:** botão "Gerenciar add-ons" dentro da página de perfil/assinatura, com modal listando os bumps ativos e permitindo adicionar/remover.
 
-**Card Growth IA (mensal + anual, linhas 94 e 142):**
-- `opportunities: "10.000"`, `usageLabel: "Até 10.000 contatos no CRM"`
-- Adicionar nas `features` do Growth: `{ text: "Até 3.000 oportunidades qualificadas / mês" }` (após "SDR IA para prospecção...")
+## Catálogo (preços confirmados)
 
-**Card Atendimento:** já está como "Até 1.000 contatos no CRM" — sem mudança.
+| Bump            | Mensal  | Stripe Price ID                    | Planos       |
+|-----------------|---------|------------------------------------|--------------|
+| +1 número WA    | R$ 96   | `price_1TYdiXK8CM0R6xMMqnhxGM1V`   | start, growth |
+| +1k contatos    | R$ 48   | `price_1TYdkPK8CM0R6xMMXHTfihdw`   | start, growth |
+| +1k oportunid.  | R$ 196  | `price_1TYdknK8CM0R6xMM9TXjGFf5`   | growth (only) |
 
-**Tabela comparativa (linha 276):** alterar para uma linha de contatos:
-- `{ label: "Contatos totais no CRM", start: "Até 1.000", growth: "Até 10.000", scale: "Ilimitado" }`
-- Manter "Volume de oportunidades captadas / mês" como `start: "Não incluso", growth: "3.000", scale: "Sob demanda"`
+Asaas: sem price ID, soma direto no `value` da assinatura mensal.
 
-## 2. Helpers de plano — `src/lib/planAccess.ts`
+---
 
-Adicionar:
-- `getContactLimit(profile)` → `1000` para start (novo), `10000` para growth, `Infinity` para scale, legados ficam com `Infinity` (sem regressão).
-- `hasOpportunitiesAccess(profile)` → mesma lógica de `hasSDRAccess` (legado = sim, novo start = não).
-- `hasAIAgentsAccess(profile)` → idem (novo start = não).
+## 1. Banco de dados (migration)
 
-## 3. Feature gating de rotas (novos usuários "start")
+Adicionar 3 colunas em `public.profiles` para guardar a quantidade comprada de cada bump:
+```
+extra_numbers              integer NOT NULL DEFAULT 0
+extra_contacts_packs       integer NOT NULL DEFAULT 0   -- cada pack = 1.000 contatos
+extra_opportunities_packs  integer NOT NULL DEFAULT 0   -- cada pack = 1.000 oportunidades
+```
 
-Em `src/components/ProtectedRoute.tsx`, após o trial check, adicionar bloco que para **novos** users com plan=start redireciona rotas vetadas para `/upgrade`:
+E uma tabela de auditoria leve:
+```
+order_bump_events (id, user_id, bump_id, delta, source, stripe_subscription_id, created_at)
+```
+`source` ∈ `checkout|upgrade|webhook_revoke|webhook_grant`.
 
-Rotas bloqueadas para novo Atendimento:
-- `/prospeccao`, `/oportunidades`, `/reports/prospeccao` (Oportunidades / SDR IA)
-- `/agents`, `/agents/reports` (Agentes IA)
+---
 
-Implementação: usar lista `BLOCKED_PATHS_FOR_NEW_START` + checar `profile.plan === 'start' && !isLegacyPlanUser(profile)`.
+## 2. `src/config/orderBumps.ts`
+Preencher `monthlyPriceCents` (9600 / 4800 / 19600) e adicionar `stripePriceIdMonthly` em cada bump. Marcar `annual: null` para deixar explícito que não há price anual.
 
-**Sidebar (`src/components/layout/AppSidebar.tsx`):** ocultar itens "Oportunidades" e "Agentes IA" para novo start (filtro condicional na lista de nav items, usando `hasOpportunitiesAccess` / `hasAIAgentsAccess`).
+---
 
-## 4. Limite de contatos no CRM
+## 3. Edge functions
 
-**Onde aplica:** ao criar lead manual (`src/components/crm/AddLeadDialog.tsx`) e em qualquer importação (`crm-lead-import` features). Foco inicial no fluxo manual + bloqueio na UI.
+### 3a. `create-stripe-subscription` (existente)
+- Aceita novo param `bumps: { numbers, contacts, opportunities }`.
+- Se `billingPeriod === 'annual'` → ignora bumps.
+- Monta `items` com plano + 1 item por bump com `quantity > 0`, usando o price ID mapeado.
+- Grava as quantidades em `profiles.extra_*` após sucesso.
+- Insere em `order_bump_events` (source=`checkout`).
 
-Fluxo:
-1. Novo hook `useContactLimit()` que retorna `{ limit, count, isAtLimit, loading }`:
-   - `limit` vem de `getContactLimit(profile)`
-   - `count` = `supabase.from('crm_leads').select('id', { count: 'exact', head: true }).eq('user_id', user.id)`
-2. Em `AddLeadDialog`: se `isAtLimit`, desabilitar botão "Salvar" e mostrar alerta com CTA "Fazer upgrade" → navega para `/upgrade`.
-3. No header da página CRM (`src/pages/CRM.tsx`), mostrar badge "X / Y contatos" quando limite é finito, com link de upgrade ao chegar perto.
+### 3b. `create-asaas-subscription` (existente)
+- Aceita mesmo param `bumps`.
+- Bloqueia bumps quando anual.
+- Soma `bumps.numbers*96 + bumps.contacts*48 + bumps.opportunities*196` no `value`.
+- Grava `profiles.extra_*` igual ao Stripe.
 
-## 5. Hero do dashboard (Atendimento → "contatos")
+### 3c. `update-subscription-bumps` (novo)
+Para o fluxo "Gerenciar add-ons":
+- Input: `{ bumps: { numbers, contacts, opportunities } }` (estado desejado).
+- Busca a subscription Stripe ativa do user; aplica diff em `subscription.items` (cria/atualiza/remove items com proration).
+- Atualiza `profiles.extra_*`.
+- Para usuários Asaas: atualiza o `value` da assinatura recorrente via API e ajusta `profiles.extra_*`.
+- Bloqueia se subscription for anual.
 
-Em `src/pages/MainDashboard.tsx` (ou componente de hero/KPI principal), quando `!hasOpportunitiesAccess(profile)`:
-- Substituir o card/métrica "Oportunidades" por "Contatos no CRM" (com `count` e `limit`).
-- Demais users (growth/scale/legado) seguem vendo "Oportunidades".
+### 3d. `stripe-webhook` (existente) — adicionar handlers
+- `invoice.payment_failed` / `customer.subscription.updated` (status `past_due`/`unpaid`): se a invoice tinha items de bump, remove esses items da subscription e zera `profiles.extra_*` correspondentes (e grava `order_bump_events` source=`webhook_revoke`). Plano principal intacto.
+- `invoice.payment_succeeded`: reconcilia `profiles.extra_*` a partir dos items atuais da subscription (source=`webhook_grant`) — garante consistência.
 
-## Notas técnicas
+---
 
-- Não mexer em business logic de scoring/CRM, apenas gate de criação.
-- Não há migration de banco: limites são apenas lidos do `profiles.plan` + `created_at`.
-- Mantém grandfathering: usuários antigos no `start` (`isLegacyPlanUser=true`) continuam com acesso total e sem limite.
-- Cutoff já existente: `NEW_PLAN_CUTOFF = "2026-05-18T00:00:00Z"`.
+## 4. Frontend — checkout
 
-## Arquivos a editar
+### 4a. `CheckoutCard.tsx` e `CheckoutPix.tsx`
+- Esconder `OrderBumpsCard` quando `billingPeriod === 'annual'` (mostrar um aviso curto: "Add-ons disponíveis apenas no plano mensal por enquanto").
+- Mostrar valor real (R$96/48/196) — virá do config atualizado.
+- Enviar `bumps` no payload para a edge function.
 
-- `src/components/landing/PricingSection.tsx`
-- `src/lib/planAccess.ts`
-- `src/components/ProtectedRoute.tsx`
-- `src/components/layout/AppSidebar.tsx`
-- `src/components/crm/AddLeadDialog.tsx`
-- `src/pages/CRM.tsx`
-- `src/pages/MainDashboard.tsx`
-- Novo: `src/hooks/useContactLimit.ts`
+### 4b. `OrderBumpsCard.tsx`
+- Já existe. Só consumir os novos preços do config.
 
-Confirma para eu seguir com a implementação?
+---
+
+## 5. Frontend — gestão pós-compra
+
+### 5a. `src/pages/Profile.tsx` (ou tela atual de assinatura)
+- Novo card "Add-ons / Expansões" mostrando os bumps ativos (`profiles.extra_*`) com valor total mensal extra.
+- Botão "Gerenciar add-ons" abre `ManageAddonsDialog`.
+
+### 5b. `src/components/billing/ManageAddonsDialog.tsx` (novo)
+- Mesma UI do `OrderBumpsCard` (checkboxes + steppers), pré-preenchida com o que o user já tem.
+- Botão "Atualizar assinatura" chama `update-subscription-bumps`.
+- Bloqueia/avisa se plano for anual.
+- Bloqueia bump `opportunities` se plano ≠ growth.
+
+---
+
+## 6. Limites do app — aplicar `extra_*`
+
+Atualizar os hooks/funções que leem limites para somar a expansão:
+
+| Recurso        | Onde hoje                              | Como passa a ler                                   |
+|----------------|----------------------------------------|----------------------------------------------------|
+| Contatos CRM   | `useContactLimit.ts`                   | `limiteBase + extra_contacts_packs * 1000`         |
+| Números WA     | `useWhatsAppNumbers.ts` / Meta números | `whatsapp_numbers_limit + extra_numbers`           |
+| Oportunidades  | `profiles.searches_limit` (gasto mensal) | `searches_limit + extra_opportunities_packs * 1000` em tempo de leitura nos hooks `useDashboardKPIs`, `useCockpitForecast`, e onde for comparado |
+
+UI: mostrar "X / Y (+N add-on)" onde aplicável.
+
+---
+
+## 7. Memória do projeto
+Salvar um `mem://features/billing/order-bumps` com:
+- Quais bumps existem, preços, price IDs
+- Regra "só monthly por enquanto"
+- Como o webhook revoga os bumps em falha de pagamento
+- Tabelas e colunas adicionadas
+
+---
+
+## Arquivos que serão editados/criados
+
+**Criados**
+- `supabase/functions/update-subscription-bumps/index.ts`
+- `src/components/billing/ManageAddonsDialog.tsx`
+- migration: colunas em `profiles` + tabela `order_bump_events`
+- `mem://features/billing/order-bumps`
+
+**Editados**
+- `src/config/orderBumps.ts` (preços + price IDs)
+- `src/pages/CheckoutCard.tsx` (bloqueio anual + envio de bumps)
+- `src/pages/CheckoutPix.tsx` (idem)
+- `src/components/checkout/OrderBumpsCard.tsx` (label de bloqueio anual)
+- `supabase/functions/create-stripe-subscription/index.ts` (items múltiplos + persistência)
+- `supabase/functions/create-asaas-subscription/index.ts` (soma value + persistência)
+- `supabase/functions/stripe-webhook/index.ts` (revogar bumps em falha)
+- `src/pages/Profile.tsx` (card add-ons + abre dialog)
+- `src/hooks/useContactLimit.ts` (soma `extra_contacts_packs * 1000`)
+- `src/hooks/useWhatsAppNumbers.ts` (soma `extra_numbers`)
+- `src/hooks/useDashboardKPIs.ts` + `useCockpitForecast.ts` (soma `extra_opportunities_packs * 1000` no limite)
+- `src/integrations/supabase/types.ts` (auto, após migration)
+
+---
+
+## Ordem de execução
+1. Migration (colunas + tabela auditoria)
+2. Config + edge functions de criação (Stripe + Asaas)
+3. UI checkout (bloqueio anual + envio do payload)
+4. Edge `update-subscription-bumps` + Dialog `ManageAddonsDialog` no Profile
+5. Webhook de revogação
+6. Hooks de limite somando `extra_*`
+7. Memória do projeto
+8. Teste manual (curl edge function) com um user de teste

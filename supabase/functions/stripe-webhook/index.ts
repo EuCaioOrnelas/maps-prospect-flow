@@ -185,6 +185,156 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
+// ============== ORDER BUMPS — webhook helpers ==============
+
+const BUMP_PRICE_TO_DEF: Record<string, {
+  id: "numbers" | "contacts" | "opportunities";
+  column: "extra_numbers" | "extra_contacts_packs" | "extra_opportunities_packs";
+}> = {
+  "price_1TYdiXK8CM0R6xMMqnhxGM1V": { id: "numbers",       column: "extra_numbers" },
+  "price_1TYdkPK8CM0R6xMMXHTfihdw": { id: "contacts",      column: "extra_contacts_packs" },
+  "price_1TYdknK8CM0R6xMM9TXjGFf5": { id: "opportunities", column: "extra_opportunities_packs" },
+};
+
+async function findUserBySubscription(
+  stripe: Stripe,
+  supabase: any,
+  subscriptionId: string,
+): Promise<{ userId: string; email: string | null } | null> {
+  try {
+    const sub = await stripe.subscriptions.retrieve(subscriptionId);
+    const customer = await stripe.customers.retrieve(sub.customer as string);
+    if (!customer || (customer as any).deleted) return null;
+    const email = (customer as any).email;
+    if (!email) return null;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    if (!profile) return null;
+    return { userId: profile.id, email };
+  } catch (e) {
+    console.log(`[STRIPE-WEBHOOK] findUserBySubscription failed`, e);
+    return null;
+  }
+}
+
+/**
+ * Quando o pagamento da invoice falha, removemos TODOS os items de bump da
+ * subscription (plano continua intacto) e zeramos extra_* do profile.
+ */
+async function revokeBumpsOnFailure(
+  stripe: Stripe,
+  supabase: any,
+  subscriptionId: string | null,
+): Promise<void> {
+  if (!subscriptionId) return;
+  try {
+    const sub = await stripe.subscriptions.retrieve(subscriptionId);
+    const itemsToRemove = sub.items.data.filter((it) => BUMP_PRICE_TO_DEF[it.price.id]);
+    if (itemsToRemove.length === 0) {
+      console.log(`[STRIPE-WEBHOOK] No bump items to remove on sub ${subscriptionId}`);
+      return;
+    }
+
+    // Remove items na Stripe (sem proration — usuário não pagou)
+    await stripe.subscriptions.update(subscriptionId, {
+      items: itemsToRemove.map((it) => ({ id: it.id, deleted: true })),
+      proration_behavior: "none",
+    });
+    console.log(`[STRIPE-WEBHOOK] Removed ${itemsToRemove.length} bump item(s) from sub ${subscriptionId}`);
+
+    // Zera no profile + audita
+    const found = await findUserBySubscription(stripe, supabase, subscriptionId);
+    if (!found) return;
+    const zeroes: Record<string, number> = {
+      extra_numbers: 0,
+      extra_contacts_packs: 0,
+      extra_opportunities_packs: 0,
+    };
+    await supabase.from("profiles").update(zeroes).eq("id", found.userId);
+
+    for (const it of itemsToRemove) {
+      const def = BUMP_PRICE_TO_DEF[it.price.id];
+      if (!def) continue;
+      await supabase.from("order_bump_events").insert({
+        user_id: found.userId,
+        bump_id: def.id,
+        delta: -(it.quantity || 0),
+        new_quantity: 0,
+        source: "webhook_revoke",
+        stripe_subscription_id: subscriptionId,
+        metadata: { reason: "payment_failed" },
+      });
+    }
+  } catch (e) {
+    console.log(`[STRIPE-WEBHOOK] revokeBumpsOnFailure error`, e);
+  }
+}
+
+/**
+ * Reconcilia extra_* no profile a partir dos items atuais da subscription.
+ * Chamado em invoice.payment_succeeded para garantir consistência.
+ */
+async function reconcileBumpsFromSubscription(
+  stripe: Stripe,
+  supabase: any,
+  subscriptionId: string | null,
+  source: "webhook_grant" | "webhook_revoke",
+): Promise<void> {
+  if (!subscriptionId) return;
+  try {
+    const sub = await stripe.subscriptions.retrieve(subscriptionId);
+    const found = await findUserBySubscription(stripe, supabase, subscriptionId);
+    if (!found) return;
+
+    const desired: Record<string, number> = {
+      extra_numbers: 0,
+      extra_contacts_packs: 0,
+      extra_opportunities_packs: 0,
+    };
+    for (const it of sub.items.data) {
+      const def = BUMP_PRICE_TO_DEF[it.price.id];
+      if (def) desired[def.column] = it.quantity || 0;
+    }
+
+    // Lê estado atual para auditar deltas
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("extra_numbers, extra_contacts_packs, extra_opportunities_packs")
+      .eq("id", found.userId)
+      .maybeSingle();
+
+    await supabase.from("profiles").update(desired).eq("id", found.userId);
+
+    if (prof) {
+      const deltas: Array<{ id: string; column: keyof typeof desired }> = [
+        { id: "numbers", column: "extra_numbers" },
+        { id: "contacts", column: "extra_contacts_packs" },
+        { id: "opportunities", column: "extra_opportunities_packs" },
+      ];
+      for (const d of deltas) {
+        const prev = (prof as any)[d.column] || 0;
+        const next = desired[d.column];
+        if (prev !== next) {
+          await supabase.from("order_bump_events").insert({
+            user_id: found.userId,
+            bump_id: d.id,
+            delta: next - prev,
+            new_quantity: next,
+            source,
+            stripe_subscription_id: subscriptionId,
+            metadata: { reason: "invoice.payment_succeeded reconcile" },
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.log(`[STRIPE-WEBHOOK] reconcileBumpsFromSubscription error`, e);
+  }
+}
+
 // Map price IDs to plan names - includes all historical price IDs
 const PRICE_TO_PLAN: Record<string, string> = {
   // New prices (2026)
@@ -1018,19 +1168,23 @@ serve(async (req) => {
           subscriptionId: invoice.subscription,
           customerEmail: invoice.customer_email
         });
-        // Main handling is done in invoice.paid event
+        // Reconcilia bumps a partir dos items atuais da subscription
+        await reconcileBumpsFromSubscription(stripe, supabaseClient, invoice.subscription as string | null, "webhook_grant");
         break;
       }
 
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
-        logStep("Invoice payment failed", { 
+        logStep("Invoice payment failed - revoking bumps from subscription", { 
           invoiceId: invoice.id,
+          subscriptionId: invoice.subscription,
           customerEmail: invoice.customer_email
         });
-        // Handle failed payment - subscription.updated will handle status change
+        // Remove items de bump da subscription (mantém o plano principal) e zera extra_*.
+        await revokeBumpsOnFailure(stripe, supabaseClient, invoice.subscription as string | null);
         break;
       }
+
 
       case "charge.refunded": {
         const charge = event.data.object as Stripe.Charge;
