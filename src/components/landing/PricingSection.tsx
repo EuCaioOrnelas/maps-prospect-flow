@@ -101,7 +101,7 @@ const mainPlans = {
         { text: "Geração de abordagens personalizadas por contexto" },
         { text: "Follow-up inteligente com contexto comercial" },
         { text: "Copiloto Comercial IA Closer em conversas" },
-        { text: "Fluxos Operacionais avançados com Wiize AI" },
+        { text: "Fluxos Operacionais com Wiize AI" },
         { text: "Até 5 números WhatsApp conectados" },
         { text: "Suporte prioritário" },
         { text: "Operar com Wiize AI ponta a ponta" },
