@@ -87,3 +87,6 @@ verify_jwt = false
 [functions.support-embed]
 verify_jwt = false
 
+[functions.verify-ai-access]
+verify_jwt = false
+
