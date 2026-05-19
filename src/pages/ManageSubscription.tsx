@@ -124,6 +124,8 @@ export default function ManageSubscription() {
   const [cancellations, setCancellations] = useState<CancellationInfo[]>([]);
   const [cancellationDetails, setCancellationDetails] = useState<any>(null);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [showAddonsDialog, setShowAddonsDialog] = useState(false);
+  const [addonProfile, setAddonProfile] = useState<any>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -132,8 +134,22 @@ export default function ManageSubscription() {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (user) fetchInfo();
+    if (user) {
+      fetchInfo();
+      fetchAddonProfile();
+    }
   }, [user]);
+
+  const fetchAddonProfile = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, plan, extra_numbers, extra_contacts_packs, extra_opportunities_packs")
+      .eq("id", user.id)
+      .maybeSingle();
+    setAddonProfile(data);
+  };
+
 
   const fetchInfo = async () => {
     setLoading(true);
