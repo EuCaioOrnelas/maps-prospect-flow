@@ -1018,19 +1018,23 @@ serve(async (req) => {
           subscriptionId: invoice.subscription,
           customerEmail: invoice.customer_email
         });
-        // Main handling is done in invoice.paid event
+        // Reconcilia bumps a partir dos items atuais da subscription
+        await reconcileBumpsFromSubscription(stripe, supabaseClient, invoice.subscription as string | null, "webhook_grant");
         break;
       }
 
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
-        logStep("Invoice payment failed", { 
+        logStep("Invoice payment failed - revoking bumps from subscription", { 
           invoiceId: invoice.id,
+          subscriptionId: invoice.subscription,
           customerEmail: invoice.customer_email
         });
-        // Handle failed payment - subscription.updated will handle status change
+        // Remove items de bump da subscription (mantém o plano principal) e zera extra_*.
+        await revokeBumpsOnFailure(stripe, supabaseClient, invoice.subscription as string | null);
         break;
       }
+
 
       case "charge.refunded": {
         const charge = event.data.object as Stripe.Charge;
