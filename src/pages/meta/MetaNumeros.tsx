@@ -295,7 +295,8 @@ export default function MetaNumeros() {
           </div>
 
           <div className="text-xs text-muted-foreground">
-            {connections.length}/{maxMetaConnections} números do plano {userPlan}
+            {connections.length}/{maxMetaConnections} números conectados
+            {" "}<span className="opacity-70">({basePlanNumbers} do plano {userPlan}{extraNumbers > 0 ? ` + ${extraNumbers} da Expansão de Atendimento` : ""})</span>
           </div>
 
           <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5">
