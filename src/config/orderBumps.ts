@@ -71,9 +71,9 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
   },
   {
     id: "opportunities",
-    title: "Pacote de oportunidades comerciais",
-    shortLabel: "+1.000 oportunidades",
-    description: "Mais leads qualificados captados pelo SDR IA todo mês.",
+    title: "Expansão Comercial",
+    shortLabel: "Expansão Comercial: +1k Oportunidades",
+    description: "Mais leads B2B qualificados captados e diagnosticados pelo SDR IA todo mês.",
     unit: "oportunidades",
     step: 1000,
     monthlyPriceCents: 19600,
