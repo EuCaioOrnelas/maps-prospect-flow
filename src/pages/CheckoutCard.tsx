@@ -35,7 +35,8 @@ import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 import { CouponInputCard, type AppliedCoupon } from "@/components/checkout/CouponInputCard";
 import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
-import { emptyBumpSelection, calcBumpsTotalCents, calcBumpsMonthlyCents, type OrderBumpSelection } from "@/config/orderBumps";
+import { CheckoutBumpsUpsellDialog } from "@/components/checkout/CheckoutBumpsUpsellDialog";
+import { emptyBumpSelection, calcBumpsTotalCents, calcBumpsMonthlyCents, bumpsAllowedForCycle, getBumpsForPlan, type OrderBumpSelection } from "@/config/orderBumps";
 
 function formatCurrency(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
