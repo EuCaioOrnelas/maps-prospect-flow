@@ -105,6 +105,8 @@ function CheckoutCardInner() {
   const [installmentDropdownOpen, setInstallmentDropdownOpen] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [bumps, setBumps] = useState<OrderBumpSelection>(emptyBumpSelection());
+  const [upsellOpen, setUpsellOpen] = useState(false);
+  const [upsellShown, setUpsellShown] = useState(false);
 
   // Load customer data + pending bumps from sessionStorage
   useEffect(() => {
