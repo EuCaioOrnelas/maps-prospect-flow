@@ -74,7 +74,7 @@ const mainPlans = {
         { text: "Chat ao vivo centralizado para todos os números" },
         { text: "Atendimento contínuo com IA operacional no WhatsApp oficial" },
         { text: "CRM Comercial com IA de Intenção de Compra" },
-        { text: "Campanhas outbound em escala via Meta e WhatsApp Cloud" },
+        { text: "Campanhas inteligentes em escala via Meta API" },
         { text: "Fluxos Inteligentes com Wiize AI" },
         { text: "Cockpit Executivo de operação comercial" },
         { text: "Até 2 números WhatsApp conectados" },
@@ -101,7 +101,7 @@ const mainPlans = {
         { text: "Geração de abordagens personalizadas por contexto" },
         { text: "Follow-up inteligente com contexto comercial" },
         { text: "Copiloto Comercial IA Closer em conversas" },
-        { text: "Fluxos Operacionais avançados com Wiize AI" },
+        { text: "Fluxos Operacionais com Wiize AI" },
         { text: "Até 5 números WhatsApp conectados" },
         { text: "Suporte prioritário" },
         { text: "Operar com Wiize AI ponta a ponta" },
@@ -123,7 +123,7 @@ const mainPlans = {
         { text: "Chat ao vivo centralizado para todos os números" },
         { text: "Atendimento contínuo com IA operacional no WhatsApp oficial" },
         { text: "CRM Comercial com IA de Intenção de Compra" },
-        { text: "Campanhas outbound em escala via Meta e WhatsApp Cloud" },
+        { text: "Campanhas inteligentes em escala via Meta API" },
         { text: "Fluxos Inteligentes com Wiize AI" },
         { text: "Cockpit Executivo de operação comercial" },
         { text: "Até 2 números WhatsApp conectados" },
@@ -150,7 +150,7 @@ const mainPlans = {
         { text: "Geração de abordagens personalizadas por contexto" },
         { text: "Follow-up inteligente com contexto comercial" },
         { text: "Copiloto Comercial IA Closer em conversas" },
-        { text: "Fluxos Operacionais avançados com Wiize AI" },
+        { text: "Fluxos Operacionais com Wiize AI" },
         { text: "Até 5 números WhatsApp conectados" },
         { text: "Suporte prioritário" },
         { text: "Operar com Wiize AI ponta a ponta" },
@@ -213,10 +213,10 @@ export const PricingSection = () => {
       title: "SDR IA · Captação e Diagnóstico",
       icon: Target,
       rows: [
-        { label: "Captação automática de leads por nicho e localização", start: false, growth: true, scale: true },
+        { label: "SDR IA para captação de empresas por nicho e região", start: false, growth: true, scale: true },
         { label: "Diagnóstico de leads com IA (porte, dores, maturidade digital)", start: false, growth: true, scale: true },
         { label: "Geração de mensagens personalizadas por contexto (IA)", start: false, growth: true, scale: true },
-        { label: "Enriquecimento automático (site, contatos, redes sociais)", start: false, growth: true, scale: true },
+        { label: "Enriquecimento inteligente de empresas e contatos", start: false, growth: true, scale: true },
         { label: "Segmentação por nicho, região e porte da empresa", start: false, growth: true, scale: true },
         { label: "Oportunidades com alto potencial de fechamento", start: false, growth: true, scale: true },
         { label: "Volume de oportunidades captadas / mês", start: "Não incluso", growth: "3.000", scale: "Sob demanda" },
@@ -284,7 +284,7 @@ export const PricingSection = () => {
       icon: Bot,
       rows: [
         { label: "IA Closer treinada com seu negócio", start: false, growth: true, scale: true },
-        { label: "Qualifica, agenda e tira dúvidas sozinha", start: false, growth: true, scale: true },
+        { label: "Qualifica, agenda e conduz conversas com contexto comercial", start: false, growth: true, scale: true },
         { label: "Contexto comercial contínuo por conversa", start: false, growth: true, scale: true },
         { label: "Testes e simulações antes de ativar", start: false, growth: true, scale: true },
         { label: "Múltiplas IAs Closer para diferentes produtos e times", start: false, growth: false, scale: true },
@@ -520,7 +520,7 @@ export const PricingSection = () => {
                       Processando...
                     </>
                   ) : plan.popular ? (
-                    "Escalar com IA"
+                    "Escalar Operações com Wiize AI"
                   ) : (
                     "Começar Agora"
                   )}
