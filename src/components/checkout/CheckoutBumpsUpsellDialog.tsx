@@ -34,7 +34,7 @@ function getPlanCopy(planKey: string, planName: string) {
       eyebrow: "Maximize seu Growth IA",
       title: `Pronto para escalar ainda mais o ${planName}?`,
       subtitle:
-        "Você está prestes a destravar o SDR IA. Some expansões opcionais agora e tenha mais números, contatos e oportunidades comerciais já no primeiro ciclo — tudo em uma única cobrança.",
+        "Some expansões opcionais agora e tenha mais números, contatos e oportunidades já no primeiro ciclo. Tudo em uma única cobrança.",
     };
   }
   if (k === "start") {
@@ -42,15 +42,27 @@ function getPlanCopy(planKey: string, planName: string) {
       eyebrow: "Potencialize seu Atendimento",
       title: `Quer atender mais clientes no ${planName}?`,
       subtitle:
-        "Adicione mais um número de WhatsApp ou amplie seu CRM antes de finalizar. Tudo cobrado junto na mesma assinatura — você pode remover quando quiser.",
+        "Adicione mais um número de WhatsApp ou amplie seu CRM antes de finalizar. Tudo cobrado junto na mesma assinatura.",
     };
   }
   return {
     eyebrow: "Oferta exclusiva no checkout",
     title: `Antes de finalizar, turbine seu ${planName}`,
     subtitle:
-      "Adicione expansões opcionais agora. Tudo cobrado em uma única assinatura — você pode remover quando quiser.",
+      "Adicione expansões opcionais agora. Tudo cobrado em uma única assinatura.",
   };
+}
+
+/** Limites base por plano para cada recurso. */
+function getPlanBase(planKey: string) {
+  const k = (planKey || "").toLowerCase();
+  if (k === "growth") return { numbers: 5, contacts: 10000, opportunities: 3000 };
+  if (k === "start") return { numbers: 2, contacts: 1000, opportunities: 0 };
+  return { numbers: 0, contacts: 0, opportunities: 0 };
+}
+
+function fmtNum(n: number) {
+  return n.toLocaleString("pt-BR");
 }
 
 export function CheckoutBumpsUpsellDialog({
