@@ -20,6 +20,7 @@ import { NumbersManager } from '@/components/whatsapp/NumbersManager';
 import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
 import { usePhonePrivacy } from '@/hooks/usePhonePrivacy';
 import { useAuth } from '@/contexts/AuthContext';
+import { useContactLimit } from '@/hooks/useContactLimit';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ import {
 export default function CRM() {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
+  const { count: contactCount, limit: contactLimit, hasLimit: hasContactLimit, isAtLimit: contactsAtLimit, isNearLimit: contactsNearLimit } = useContactLimit();
   const isMobile = useIsMobile();
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("crm_beta_warning");
   useAutoScoreTracking("crm");
@@ -384,6 +386,20 @@ export default function CRM() {
               </div>
 
               <CRMMetrics stages={stages} leads={filteredLeads} />
+
+              {hasContactLimit && (
+                <div className={`mt-3 flex items-center justify-between gap-3 px-3 py-2 rounded-lg border ${contactsAtLimit ? 'border-destructive/40 bg-destructive/10' : contactsNearLimit ? 'border-amber-500/40 bg-amber-500/10' : 'border-border bg-muted/30'}`}>
+                  <p className="text-xs sm:text-sm text-foreground">
+                    Contatos no CRM: <strong>{contactCount.toLocaleString('pt-BR')}</strong> / {contactLimit.toLocaleString('pt-BR')}
+                    {contactsAtLimit && <span className="ml-2 text-destructive font-medium">Limite atingido</span>}
+                  </p>
+                  {(contactsAtLimit || contactsNearLimit) && (
+                    <Button size="sm" variant={contactsAtLimit ? 'default' : 'outline'} onClick={() => navigate('/upgrade')} className="h-7 text-xs">
+                      Fazer upgrade
+                    </Button>
+                  )}
+                </div>
+              )}
 
               <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <div className="flex-1 min-w-0">

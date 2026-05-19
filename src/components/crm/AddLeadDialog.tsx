@@ -34,6 +34,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CountryCodeSelect } from '@/components/crm/CountryCodeSelect';
+import { useContactLimit } from '@/hooks/useContactLimit';
+import { useNavigate } from 'react-router-dom';
 
 interface AddLeadDialogProps {
   open: boolean;
@@ -97,6 +99,8 @@ export const AddLeadDialog = ({
   checkLeadExists,
 }: AddLeadDialogProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { count, limit, hasLimit, isAtLimit } = useContactLimit();
   const [isLoading, setIsLoading] = useState(false);
   const [showNewOrigin, setShowNewOrigin] = useState(false);
   const [newOriginName, setNewOriginName] = useState('');
@@ -160,10 +164,15 @@ export const AddLeadDialog = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (isAtLimit) {
+      toast.error(`Limite de ${limit.toLocaleString('pt-BR')} contatos atingido. Faça upgrade para adicionar mais.`);
+      return;
+    }
+
     const phoneDigits = formData.phone.replace(/\D/g, '');
     const fullPhone = countryCode + phoneDigits;
-    
+
     if (!phoneDigits.trim()) {
       toast.error('O telefone é obrigatório');
       return;
@@ -234,6 +243,34 @@ export const AddLeadDialog = ({
         </DialogHeader>
 
         <div className="overflow-y-auto max-h-[calc(90vh-8rem)] sm:max-h-[calc(85vh-8rem)] -mr-6 pr-6">
+        {isAtLimit && (
+          <div className="mb-4 p-4 rounded-lg border border-destructive/40 bg-destructive/10 space-y-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-foreground">
+                  Limite de contatos atingido ({count.toLocaleString('pt-BR')} / {limit.toLocaleString('pt-BR')})
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Seu plano atual não permite adicionar novos contatos no CRM. Faça upgrade para liberar mais espaço.
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => { onOpenChange(false); navigate('/upgrade'); }}
+              className="w-full"
+            >
+              Fazer upgrade do plano
+            </Button>
+          </div>
+        )}
+        {hasLimit && !isAtLimit && (
+          <p className="mb-3 text-xs text-muted-foreground">
+            Contatos no CRM: <strong className="text-foreground">{count.toLocaleString('pt-BR')}</strong> / {limit.toLocaleString('pt-BR')}
+          </p>
+        )}
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Primary Fields - Name and Phone with emphasis */}
           <div className="space-y-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
@@ -455,7 +492,7 @@ export const AddLeadDialog = ({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading || existingLeadWarning}>
+            <Button type="submit" disabled={isLoading || existingLeadWarning || isAtLimit}>
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Adicionar
             </Button>

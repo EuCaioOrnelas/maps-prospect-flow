@@ -1,65 +1,71 @@
-## Plano: Migração Relacionamento → Meta Platform
+## Escopo
 
-Vou reutilizar os componentes que já funcionam em `src/pages/WhatsAppCampaign.tsx` e `src/components/whatsapp/*` dentro das páginas Meta, ao invés de reescrevê-los. Isso preserva toda a lógica de backend (Supabase, edge functions, drafts, balance, realtime, opt-in, disclaimers) que já está validada em produção.
+Implementar gating de acesso para novos usuários no plano Atendimento (start pós-2026-05-18), limites de contatos no CRM por plano, e ajustar pricing/hero para refletir "contatos" no Atendimento e atualizar o Growth.
 
-### 1. Templates (`/meta/templates`)
-- Substituir o conteúdo mockado atual de `MetaTemplates.tsx` por uma versão funcional baseada na **etapa "messages" do WhatsAppCampaign** (componente `FirstMessageTemplate` + `MessageVariations`), exibida como **biblioteca de templates** (lista persistida).
-- Criar tabela nova `meta_template_categories` (id, user_id, name, color) para **categorias personalizadas Wiize**.
-- Adicionar coluna `category_id` (nullable) em `meta_templates` (ou criar tabela `meta_user_templates` se ainda não existir — vou checar antes).
-- UI:
-  - Header com botão "Nova categoria" (dialog simples) e "Novo template".
-  - **Filtro de categoria** em chips no topo (Todos + categorias do usuário).
-  - Cards de template mantêm o visual atual da `MetaTemplates`, com badge da categoria interna Wiize (cor personalizada).
-- Mantém o sync com Meta e o badge de status (approved / pending / rejected).
+## 1. Pricing (landing) — `src/components/landing/PricingSection.tsx`
 
-### 2. Criação de Campanha (`/meta/campanhas` → "+ Nova campanha")
-- Trocar o `Sheet` atual `CampaignEditor` (mock) por um wizard completo idêntico ao do WhatsAppCampaign, em um `Sheet` em tela cheia:
-  1. **Seleção do Template** (consome a biblioteca do passo 1, com filtro por categoria).
-  2. **Seleção de Leads** — reutiliza `<LeadSelector />`.
-  3. **Configurações** — reutiliza `<CampaignSettings />` (delays, pausa inteligente, agendamento).
-  4. **Resumo** — reutiliza `<CampaignSummary />`.
-  5. **Execução** — reutiliza `<CampaignProgress />` + `<RealtimeMonitor />`.
-- Reaproveitar hooks: `useWhatsAppNumbers`, `useCampaignBalance`, `useCampaignDrafts`, `useCampaignRealtime`, `useAutoScoreTracking`.
-- Reaproveitar modais: `DisclaimerModal`, `WarmingWarningModal`, `UpgradeModal`, `FreeTrialLimitModal`, opt-in alerts.
-- A listagem de campanhas no topo continua a mesma UI (cards), mas alimentada pela tabela `whatsapp_campaigns` real (mesmo backend que Relacionamento).
+**Card Growth IA (mensal + anual, linhas 94 e 142):**
+- `opportunities: "10.000"`, `usageLabel: "Até 10.000 contatos no CRM"`
+- Adicionar nas `features` do Growth: `{ text: "Até 3.000 oportunidades qualificadas / mês" }` (após "SDR IA para prospecção...")
 
-### 3. Números (`/meta/numeros`)
-- Manter o **visual atual** da página Meta Números (grid de cards minimalista).
-- Cada card mostra: **Nome**, **Número**, **Tier**, **Uso/Limite (puxado da Meta API via hook existente)**.
-- **Remover**: badge "Quality rating".
-- **Botões**:
-  - "Reconectar" → só aparece quando o número está **desconectado**.
-  - "Sincronizar" → só aparece quando desconectado, dispara o sync do período offline (reutiliza a função do `NumbersManager`).
-  - "Excluir" → mantém `AlertDialog` de confirmação (com lista de campanhas afetadas, igual ao Relacionamento).
-- **Clique no card** → abre o painel/dialog de configuração do número idêntico ao de Relacionamento (`NumbersManager` em modo `forceOpen`), reaproveitando popups, warnings e o aviso de **opt-in**.
-- O botão "Conectar via Embedded Signup" passa a abrir o fluxo de adicionar número do `NumbersManager`.
+**Card Atendimento:** já está como "Até 1.000 contatos no CRM" — sem mudança.
 
-### Migração de banco
-- Apenas adicionar suporte a categorias internas (1 tabela + 1 coluna). Sem mexer em estrutura existente.
+**Tabela comparativa (linha 276):** alterar para uma linha de contatos:
+- `{ label: "Contatos totais no CRM", start: "Até 1.000", growth: "Até 10.000", scale: "Ilimitado" }`
+- Manter "Volume de oportunidades captadas / mês" como `start: "Não incluso", growth: "3.000", scale: "Sob demanda"`
 
-### Arquivos
-**Editar**
-- `src/pages/meta/MetaTemplates.tsx` (refazer com dados reais + categorias)
-- `src/pages/meta/MetaCampanhas.tsx` (substituir editor mockado pelo wizard real)
-- `src/pages/meta/MetaNumeros.tsx` (refazer com dados reais + reuso do NumbersManager)
+## 2. Helpers de plano — `src/lib/planAccess.ts`
 
-**Criar**
-- `src/components/meta/MetaTemplateCategoryDialog.tsx`
-- `src/components/meta/MetaCampaignWizard.tsx` (orquestrador que reusa os componentes whatsapp/*)
-- `src/components/meta/MetaNumberCard.tsx` (card limpo + handlers)
+Adicionar:
+- `getContactLimit(profile)` → `1000` para start (novo), `10000` para growth, `Infinity` para scale, legados ficam com `Infinity` (sem regressão).
+- `hasOpportunitiesAccess(profile)` → mesma lógica de `hasSDRAccess` (legado = sim, novo start = não).
+- `hasAIAgentsAccess(profile)` → idem (novo start = não).
 
-**Reusar sem alterar**
-- `src/components/whatsapp/LeadSelector.tsx`
-- `src/components/whatsapp/CampaignSettings.tsx`
-- `src/components/whatsapp/CampaignSummary.tsx`
-- `src/components/whatsapp/CampaignProgress.tsx`
-- `src/components/whatsapp/NumbersManager.tsx`
-- `src/components/whatsapp/RealtimeMonitor.tsx`
-- Modais: `DisclaimerModal`, `WarmingWarningModal`, `UpgradeModal`, `FreeTrialLimitModal`
+## 3. Feature gating de rotas (novos usuários "start")
 
-### Fora de escopo (não vou tocar)
-- A página `WhatsAppCampaign` original — segue funcionando para compatibilidade durante a transição. Se quiser depois eu removo do sidebar.
-- Lógica de envio / Edge Functions / RLS já existentes (sem mudanças).
+Em `src/components/ProtectedRoute.tsx`, após o trial check, adicionar bloco que para **novos** users com plan=start redireciona rotas vetadas para `/upgrade`:
 
-### Próximo passo
-Começo pela migração de Templates (banco + UI), depois Números, depois o wizard de Campanhas.
+Rotas bloqueadas para novo Atendimento:
+- `/prospeccao`, `/oportunidades`, `/reports/prospeccao` (Oportunidades / SDR IA)
+- `/agents`, `/agents/reports` (Agentes IA)
+
+Implementação: usar lista `BLOCKED_PATHS_FOR_NEW_START` + checar `profile.plan === 'start' && !isLegacyPlanUser(profile)`.
+
+**Sidebar (`src/components/layout/AppSidebar.tsx`):** ocultar itens "Oportunidades" e "Agentes IA" para novo start (filtro condicional na lista de nav items, usando `hasOpportunitiesAccess` / `hasAIAgentsAccess`).
+
+## 4. Limite de contatos no CRM
+
+**Onde aplica:** ao criar lead manual (`src/components/crm/AddLeadDialog.tsx`) e em qualquer importação (`crm-lead-import` features). Foco inicial no fluxo manual + bloqueio na UI.
+
+Fluxo:
+1. Novo hook `useContactLimit()` que retorna `{ limit, count, isAtLimit, loading }`:
+   - `limit` vem de `getContactLimit(profile)`
+   - `count` = `supabase.from('crm_leads').select('id', { count: 'exact', head: true }).eq('user_id', user.id)`
+2. Em `AddLeadDialog`: se `isAtLimit`, desabilitar botão "Salvar" e mostrar alerta com CTA "Fazer upgrade" → navega para `/upgrade`.
+3. No header da página CRM (`src/pages/CRM.tsx`), mostrar badge "X / Y contatos" quando limite é finito, com link de upgrade ao chegar perto.
+
+## 5. Hero do dashboard (Atendimento → "contatos")
+
+Em `src/pages/MainDashboard.tsx` (ou componente de hero/KPI principal), quando `!hasOpportunitiesAccess(profile)`:
+- Substituir o card/métrica "Oportunidades" por "Contatos no CRM" (com `count` e `limit`).
+- Demais users (growth/scale/legado) seguem vendo "Oportunidades".
+
+## Notas técnicas
+
+- Não mexer em business logic de scoring/CRM, apenas gate de criação.
+- Não há migration de banco: limites são apenas lidos do `profiles.plan` + `created_at`.
+- Mantém grandfathering: usuários antigos no `start` (`isLegacyPlanUser=true`) continuam com acesso total e sem limite.
+- Cutoff já existente: `NEW_PLAN_CUTOFF = "2026-05-18T00:00:00Z"`.
+
+## Arquivos a editar
+
+- `src/components/landing/PricingSection.tsx`
+- `src/lib/planAccess.ts`
+- `src/components/ProtectedRoute.tsx`
+- `src/components/layout/AppSidebar.tsx`
+- `src/components/crm/AddLeadDialog.tsx`
+- `src/pages/CRM.tsx`
+- `src/pages/MainDashboard.tsx`
+- Novo: `src/hooks/useContactLimit.ts`
+
+Confirma para eu seguir com a implementação?

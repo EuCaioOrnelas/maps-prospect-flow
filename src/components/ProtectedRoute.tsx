@@ -7,6 +7,7 @@ import { BlockedUserModal } from '@/components/BlockedUserModal';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardThemeProvider } from '@/contexts/ThemeContext';
 import { getFeatureForPath, profileHasFeature } from '@/lib/featurePermissions';
+import { planHasFeature } from '@/lib/planAccess';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -177,13 +178,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/trial-expired" replace />;
   }
 
-  // Custom subscription feature gate: if the user is a custom-subscription user
-  // and the requested route maps to a feature module they don't have access to,
-  // pretend the page doesn't exist (404). Admins always pass through.
+  // Custom subscription feature gate + plan-based gate (new "start" / Atendimento
+  // blocks Oportunidades and Agentes IA). Admins always pass through.
   if (!isAdmin && !requireAdmin) {
     const feat = getFeatureForPath(location.pathname);
     if (feat && !profileHasFeature(profile as any, feat)) {
       return <Navigate to="/404" replace />;
+    }
+    if (feat && !planHasFeature(profile as any, feat)) {
+      return <Navigate to="/upgrade" replace />;
     }
   }
 

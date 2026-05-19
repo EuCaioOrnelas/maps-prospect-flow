@@ -42,6 +42,7 @@ import { SidebarNavItem } from "./SidebarNavItem";
 import logoIconNew from "@/assets/logo-icon-new.png";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
 import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
+import { planHasFeature } from "@/lib/planAccess";
 
 interface AppSidebarProps {
   profile?: {
@@ -68,7 +69,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const location = useLocation();
   const { signOut, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
-  const can = (key: FeatureKey) => isAdmin || profileHasFeature(authProfile as any, key);
+  const can = (key: FeatureKey) =>
+    isAdmin ||
+    (profileHasFeature(authProfile as any, key) && planHasFeature(authProfile as any, key));
   const canEvolution = isAdmin || isLegacyEvolutionUser(authProfile as any);
   
   const { hasDisconnectedWarming, disconnectedNumbers } = useWarmingConnectionAlert();
@@ -152,12 +155,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       icon: Send,
       active: currentPath === "/whatsapp/reports"
     },
-    {
+    ...(can("agents") ? [{
       title: "Agentes IA",
       url: "/agents/reports",
       icon: Bot,
       active: currentPath === "/agents/reports"
-    },
+    }] : []),
   ];
 
   const handleLogout = async () => {
