@@ -120,6 +120,21 @@ export default function CheckoutPix() {
         navigate("/upgrade");
       }
     }
+    // Pre-fill bumps escolhidos no /upgrade
+    const storedBumps = sessionStorage.getItem("pendingBumps");
+    if (storedBumps) {
+      try {
+        const parsed = JSON.parse(storedBumps);
+        setBumps({
+          numbers: Number(parsed?.numbers) || 0,
+          contacts: Number(parsed?.contacts) || 0,
+          opportunities: Number(parsed?.opportunities) || 0,
+        });
+      } catch {
+        // ignore
+      }
+      sessionStorage.removeItem("pendingBumps");
+    }
   }, [navigate, isRenewal, renewalEmail, renewalName, planKey]);
 
   // Create subscription via Asaas
