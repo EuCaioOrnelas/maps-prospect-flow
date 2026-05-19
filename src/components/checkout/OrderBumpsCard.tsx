@@ -1,8 +1,9 @@
-import { Minus, Plus, Sparkles, Check } from "lucide-react";
+import { Minus, Plus, Sparkles, Check, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getBumpsForPlan,
+  bumpsAllowedForCycle,
   type OrderBumpSelection,
   type OrderBumpId,
   type OrderBumpDef,
@@ -48,11 +49,34 @@ export function OrderBumpsCard({ planKey, billingPeriod, selection, onChange }: 
   if (bumps.length === 0) return null;
 
   const isAnnual = billingPeriod === "annual";
+  const allowed = bumpsAllowedForCycle(billingPeriod);
+
+  // No anual, mostramos um card "indisponível" curto em vez de esconder de vez
+  // para deixar claro que os add-ons existem.
+  if (!allowed) {
+    return (
+      <div className="rounded-2xl border border-border/40 bg-card p-4 sm:p-5 space-y-2">
+        <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-amber-500" />
+          Turbine seu plano
+        </p>
+        <div className="flex items-start gap-2 rounded-lg border border-border/40 bg-muted/40 px-3 py-2.5">
+          <Lock className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+          <p className="text-[11px] text-muted-foreground leading-snug">
+            Add-ons (números, contatos e oportunidades extras) estão disponíveis apenas no
+            <strong className="text-foreground"> plano mensal</strong> por enquanto.
+            Você pode adicioná-los depois pela área de assinatura, mudando para mensal.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const setQty = (id: OrderBumpId, qty: number) => {
     const safe = Math.max(0, Math.min(99, qty));
     onChange({ ...selection, [id]: safe });
   };
+
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card p-4 sm:p-5 space-y-4">
