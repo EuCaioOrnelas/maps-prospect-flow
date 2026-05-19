@@ -24,10 +24,10 @@ function extractPlanFromDescription(description: string): string | null {
 }
 
 function extractPlanFromValue(value: number): string | null {
-  // Support both old and new prices
-  if (value === 197 || value === 296) return "start";
+  // Support old and new prices
+  if (value === 196 || value === 197 || value === 296) return "start";
   if (value === 497 || value === 696) return "growth";
-  if (value === 897) return "scale";
+  if (value === 897 || value === 1496) return "scale";
   return null;
 }
 
