@@ -34,7 +34,7 @@ const PLANS = [
     name: "Atendimento",
     monthly: 196,
     opportunities: "1.000", usageLabel: "Até 1.000 contatos no CRM",
-    desc: "Inteligência Operacional para sua operação comercial com Wiize AI",
+    desc: "Para organizar atendimento, CRM e campanhas no WhatsApp com IA.",
     highlight: false,
     perks: [
       "Atendimento contínuo com IA operacional (WhatsApp oficial)",
@@ -51,8 +51,8 @@ const PLANS = [
     key: "growth",
     name: "Growth IA",
     monthly: 696,
-    opportunities: "3.000", usageLabel: "Até 3.000 oportunidades qualificadas com Wiize AI",
-    desc: "Operação Comercial completa com IA: SDR IA, Copiloto Comercial e prospecção Wiize AI",
+    opportunities: "3.000", usageLabel: "Até 3.000 oportunidades qualificadas",
+    desc: "Para prospectar, analisar, qualificar e converter oportunidades B2B com Wiize AI.",
     highlight: true,
     perks: [
       "Tudo do plano Atendimento",
