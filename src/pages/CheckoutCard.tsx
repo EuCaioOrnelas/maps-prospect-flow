@@ -138,6 +138,20 @@ function CheckoutCardInner() {
     }
   }, [navigate]);
 
+  // Upsell de add-ons — abre 1x ao entrar no checkout (apenas mensal + plano elegível)
+  useEffect(() => {
+    if (upsellShown) return;
+    if (!customerData || !planKey) return;
+    if (!bumpsAllowedForCycle(billingPeriod)) return;
+    if (getBumpsForPlan(planKey).length === 0) return;
+    const t = setTimeout(() => {
+      setUpsellOpen(true);
+      setUpsellShown(true);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [customerData, planKey, billingPeriod, upsellShown]);
+
+
   // Close dropdown on click outside
   useEffect(() => {
     if (!installmentDropdownOpen) return;
