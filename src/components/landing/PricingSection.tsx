@@ -461,7 +461,8 @@ export const PricingSection = () => {
                       -{Math.round((1 - parsePrice(plan.price) / parsePrice(plan.anchorPrice)) * 100)}%
                     </span>
                   </div>
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-sm font-medium text-muted-foreground">R$</span>
                     <span className="font-display font-bold text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
                       <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
                     </span>
