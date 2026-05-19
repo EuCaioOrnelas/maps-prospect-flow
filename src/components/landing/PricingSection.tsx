@@ -71,6 +71,7 @@ const mainPlans = {
       opportunities: "1.000",
       description: "A camada de Inteligência Operacional da Wiize AI para operar e converter no WhatsApp.",
       features: [
+        { text: "Chat ao vivo centralizado para todos os números" },
         { text: "Atendimento Operacional com IA no WhatsApp oficial" },
         { text: "CRM Comercial com IA de Intenção de Compra" },
         { text: "Campanhas Inteligentes em escala" },
@@ -119,6 +120,7 @@ const mainPlans = {
       opportunities: "1.000",
       description: "A camada de Inteligência Operacional da Wiize AI para operar e converter no WhatsApp.",
       features: [
+        { text: "Chat ao vivo centralizado para todos os números" },
         { text: "Atendimento Operacional com IA no WhatsApp oficial" },
         { text: "CRM Comercial com IA de Intenção de Compra" },
         { text: "Campanhas Inteligentes em escala" },
@@ -208,7 +210,7 @@ export const PricingSection = () => {
     rows: Array<{ label: React.ReactNode; start: boolean | string; growth: boolean | string; scale: boolean | string }>;
   }> = [
     {
-      title: "SDR IA — Captação e Diagnóstico",
+      title: "SDR IA · Captação e Diagnóstico",
       icon: Target,
       rows: [
         { label: "Captação automática de leads por nicho e localização", start: false, growth: true, scale: true },
@@ -217,7 +219,7 @@ export const PricingSection = () => {
         { label: "Enriquecimento automático (site, contatos, redes sociais)", start: false, growth: true, scale: true },
         { label: "Segmentação por nicho, região e porte da empresa", start: false, growth: true, scale: true },
         { label: "Oportunidades com alto potencial de fechamento", start: false, growth: true, scale: true },
-        { label: "Volume de oportunidades captadas / mês", start: "—", growth: "3.000", scale: "Sob demanda" },
+        { label: "Volume de oportunidades captadas / mês", start: "Não incluso", growth: "3.000", scale: "Sob demanda" },
       ],
     },
     {
@@ -225,14 +227,15 @@ export const PricingSection = () => {
       icon: Users,
       rows: [
         { label: "CRM completo com kanban e pipeline visual", start: true, growth: true, scale: true },
-        { label: "Score de Intenção de Compra — prioriza quem está pronto pra fechar", start: true, growth: true, scale: true },
+        { label: "Score de Intenção de Compra prioriza quem está pronto pra fechar", start: true, growth: true, scale: true },
         { label: "Controle de engajamento por lead em tempo real", start: true, growth: true, scale: true },
-        { label: "Identifica leads prontos para upgrade / recompra", start: true, growth: true, scale: true },
+        { label: "Identifica leads prontos para upgrade e recompra", start: true, growth: true, scale: true },
         { label: "Detecção de leads frios e reativação automática", start: true, growth: true, scale: true },
         { label: "Tags, filtros avançados e segmentação dinâmica", start: true, growth: true, scale: true },
         { label: "Histórico unificado de conversas e interações", start: true, growth: true, scale: true },
         { label: "Importação e exportação de leads (CSV)", start: true, growth: true, scale: true },
-        { label: "Funis personalizados por time / produto", start: false, growth: true, scale: true },
+        { label: "Funis personalizados por time e produto", start: false, growth: true, scale: true },
+        { label: "Múltiplos pipelines simultâneos", start: false, growth: false, scale: true },
       ],
     },
     {
@@ -242,11 +245,12 @@ export const PricingSection = () => {
         { label: "Chat ao vivo centralizado (todos os números)", start: true, growth: true, scale: true },
         { label: "Atendimento 24/7 sem precisar de plantão humano", start: true, growth: true, scale: true },
         { label: "Respostas automáticas com contexto do lead", start: true, growth: true, scale: true },
-        { label: "Handoff inteligente — IA passa para humano na hora certa", start: true, growth: true, scale: true },
         { label: "Múltiplos atendentes no mesmo número", start: true, growth: true, scale: true },
         { label: "Áudio, imagem, documentos e mídias", start: true, growth: true, scale: true },
         { label: "Templates aprovados na Meta", start: true, growth: true, scale: true },
         { label: "Janela de 24h e reabertura automática via template", start: true, growth: true, scale: true },
+        { label: "Handoff inteligente: IA passa para humano na hora certa", start: false, growth: true, scale: true },
+        { label: "Atendimento dedicado com IA treinada para seu negócio", start: false, growth: false, scale: true },
       ],
     },
     {
@@ -257,6 +261,8 @@ export const PricingSection = () => {
         { label: "Disparos via Evolution (outbound)", start: true, growth: true, scale: true },
         { label: "Integração com Meta Ads", start: true, growth: true, scale: true },
         { label: "Disparos agendados e em lote com delays seguros", start: true, growth: true, scale: true },
+        { label: "Campanhas geradas e otimizadas por IA", start: false, growth: true, scale: true },
+        { label: "Volume de disparos sob medida", start: false, growth: false, scale: true },
       ],
     },
     {
@@ -264,11 +270,12 @@ export const PricingSection = () => {
       icon: Bot,
       rows: [
         { label: "Construtor visual de fluxos (drag & drop)", start: true, growth: true, scale: true },
-        { label: <span className="inline-flex items-center gap-1.5">Fluxos completos com Wiize AI <Sparkles size={13} className="text-primary" /></span>, start: true, growth: true, scale: true },
         { label: "Follow-up automático inteligente (sem parecer robô)", start: true, growth: true, scale: true },
-        { label: "A/B testing de mensagens e fluxos", start: true, growth: true, scale: true },
         { label: "Gatilhos por palavra-chave, status e evento", start: true, growth: true, scale: true },
-        { label: "Coleta de dados estruturados via conversa (IA)", start: true, growth: true, scale: true },
+        { label: <span className="inline-flex items-center gap-1.5">Fluxos completos gerados com Wiize AI <Sparkles size={13} className="text-primary" /></span>, start: false, growth: true, scale: true },
+        { label: "Coleta de dados estruturados via conversa (IA)", start: false, growth: true, scale: true },
+        { label: "A/B testing de mensagens e fluxos", start: false, growth: true, scale: true },
+        { label: "Fluxos sob medida desenhados pela Wiize", start: false, growth: false, scale: true },
       ],
     },
     {
@@ -278,19 +285,20 @@ export const PricingSection = () => {
         { label: "IA Closer treinada com seu negócio", start: false, growth: true, scale: true },
         { label: "Qualifica, agenda e tira dúvidas sozinha", start: false, growth: true, scale: true },
         { label: "Aprende com cada conversa (memória contextual)", start: false, growth: true, scale: true },
-        { label: "Múltiplas IAs Closer para diferentes produtos / times", start: false, growth: false, scale: true },
         { label: "Testes e simulações antes de ativar", start: false, growth: true, scale: true },
+        { label: "Múltiplas IAs Closer para diferentes produtos e times", start: false, growth: false, scale: true },
       ],
     },
     {
       title: "Integrações",
       icon: Target,
       rows: [
-        { label: "Integração com Google Calendar (agendamento automático)", start: true, growth: true, scale: true },
-        { label: "Integração com Google Sheets (entrada e saída de dados)", start: true, growth: true, scale: true },
-        { label: "Integração com Gmail (envio de e-mails pelo fluxo)", start: true, growth: true, scale: true },
+        { label: "Meta Business e WhatsApp Cloud API oficial", start: true, growth: true, scale: true },
         { label: "Google Drive nas oportunidades e negócios", start: true, growth: true, scale: true },
-        { label: "Meta Business / WhatsApp Cloud API oficial", start: true, growth: true, scale: true },
+        { label: "Integração com Google Calendar (agendamento automático)", start: false, growth: true, scale: true },
+        { label: "Integração com Google Sheets (entrada e saída de dados)", start: false, growth: true, scale: true },
+        { label: "Integração com Gmail (envio de e-mails pelo fluxo)", start: false, growth: true, scale: true },
+        { label: "Integrações personalizadas sob demanda", start: false, growth: false, scale: true },
       ],
     },
     {
@@ -300,9 +308,10 @@ export const PricingSection = () => {
         { label: "Dashboard de crescimento (cockpit executivo)", start: true, growth: true, scale: true },
         { label: "Funil de conversão por etapa do CRM", start: true, growth: true, scale: true },
         { label: "Relatórios por número, campanha e fluxo", start: true, growth: true, scale: true },
-        { label: "Alertas inteligentes de oportunidades quentes", start: true, growth: true, scale: true },
-        { label: "Projeção de receita por probabilidade", start: true, growth: true, scale: true },
+        { label: "Alertas inteligentes de oportunidades quentes", start: false, growth: true, scale: true },
+        { label: "Projeção de receita por probabilidade", start: false, growth: true, scale: true },
         { label: "Métricas detalhadas da IA Closer", start: false, growth: true, scale: true },
+        { label: "Relatórios personalizados e exportação avançada", start: false, growth: false, scale: true },
       ],
     },
     {
@@ -335,7 +344,7 @@ export const PricingSection = () => {
     return v ? (
       <Check size={18} className="text-primary mx-auto" strokeWidth={2.5} />
     ) : (
-      <span className="text-muted-foreground/30 text-base">—</span>
+      <span className="text-muted-foreground/40 text-xs">·</span>
     );
   };
 
