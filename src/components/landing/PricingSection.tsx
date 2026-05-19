@@ -74,7 +74,7 @@ const mainPlans = {
         { text: "Chat ao vivo centralizado para todos os números" },
         { text: "Atendimento contínuo com IA operacional no WhatsApp oficial" },
         { text: "CRM Comercial com IA de Intenção de Compra" },
-        { text: "Campanhas outbound em escala via Meta e WhatsApp Cloud" },
+        { text: "Campanhas inteligentes em escala via Meta API" },
         { text: "Fluxos Inteligentes com Wiize AI" },
         { text: "Cockpit Executivo de operação comercial" },
         { text: "Até 2 números WhatsApp conectados" },
