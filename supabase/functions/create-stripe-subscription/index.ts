@@ -1,6 +1,7 @@
 // Cria Subscription no Stripe (mensal ou anual) com cartão direto.
-// Recebe payment_method_id (do Stripe Elements) + dados do cliente + billingPeriod.
-// Cobra IMEDIATAMENTE e ativa renovação automática.
+// Suporta order bumps (apenas no mensal — Stripe não permite misturar intervalos
+// month + year na mesma subscription). Persiste extra_* em profiles após sucesso
+// e grava em order_bump_events.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
@@ -12,23 +13,64 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Plan → price IDs (monthly + annual)
 const PLAN_PRICES: Record<string, { monthly: string; annual: string; name: string }> = {
   start: {
     monthly: "price_1TLZi1K8CM0R6xMMDOg3MSTp",
     annual: "price_1TLZkSK8CM0R6xMMwr1Ke1IX",
-    name: "Wiize Start",
+    name: "Wiize Atendimento",
   },
   growth: {
     monthly: "price_1TLZlSK8CM0R6xMMFtvROCby",
     annual: "price_1TLZn8K8CM0R6xMMaEz5JuVW",
-    name: "Wiize Growth",
+    name: "Wiize Growth IA",
   },
 };
+
+// Catálogo dos bumps (espelho do src/config/orderBumps.ts).
+const BUMP_CATALOG: Record<string, {
+  priceId: string;
+  column: "extra_numbers" | "extra_contacts_packs" | "extra_opportunities_packs";
+  allowedPlans: string[];
+}> = {
+  numbers: {
+    priceId: "price_1TYdiXK8CM0R6xMMqnhxGM1V",
+    column: "extra_numbers",
+    allowedPlans: ["start", "growth"],
+  },
+  contacts: {
+    priceId: "price_1TYdkPK8CM0R6xMMXHTfihdw",
+    column: "extra_contacts_packs",
+    allowedPlans: ["start", "growth"],
+  },
+  opportunities: {
+    priceId: "price_1TYdknK8CM0R6xMM9TXjGFf5",
+    column: "extra_opportunities_packs",
+    allowedPlans: ["growth"],
+  },
+};
+
+interface BumpsInput {
+  numbers?: number;
+  contacts?: number;
+  opportunities?: number;
+}
 
 const log = (step: string, details?: unknown) => {
   console.log(`[CREATE-STRIPE-SUB] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
+
+function sanitizeBumps(bumps: BumpsInput | undefined, planKey: string, isAnnual: boolean): Record<string, number> {
+  const out: Record<string, number> = { numbers: 0, contacts: 0, opportunities: 0 };
+  if (!bumps || isAnnual) return out; // anual bloqueia bumps
+  for (const id of Object.keys(out)) {
+    const qty = Math.max(0, Math.min(99, Math.floor(Number((bumps as any)[id]) || 0)));
+    const def = BUMP_CATALOG[id];
+    if (def && def.allowedPlans.includes(planKey)) {
+      out[id] = qty;
+    }
+  }
+  return out;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -43,7 +85,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const { planKey, paymentMethodId, customerData, billingPeriod, promotionCodeId, couponId } = await req.json();
+    const { planKey, paymentMethodId, customerData, billingPeriod, promotionCodeId, couponId, bumps } = await req.json();
     if (!planKey || !paymentMethodId || !customerData) {
       throw new Error("planKey, paymentMethodId and customerData are required");
     }
@@ -53,7 +95,8 @@ serve(async (req) => {
     if (!planConfig) throw new Error(`Invalid plan: ${planKey}`);
 
     const priceId = isAnnual ? planConfig.annual : planConfig.monthly;
-    log("Request", { planKey, email: customerData.email, billingPeriod, priceId });
+    const cleanBumps = sanitizeBumps(bumps, planKey, isAnnual);
+    log("Request", { planKey, email: customerData.email, billingPeriod, priceId, bumps: cleanBumps });
 
     // 1. Resolve user_id
     let userId: string | null = null;
@@ -78,7 +121,6 @@ serve(async (req) => {
 
     if (existing.data.length > 0) {
       customerId = existing.data[0].id;
-      // Attach the new payment method
       await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
       await stripe.customers.update(customerId, {
         invoice_settings: { default_payment_method: paymentMethodId },
@@ -116,10 +158,17 @@ serve(async (req) => {
       log("Customer created", { customerId });
     }
 
-    // 3. Create Subscription that charges immediately
+    // 3. Monta items (plano + bumps)
+    const items: Stripe.SubscriptionCreateParams.Item[] = [{ price: priceId }];
+    for (const [id, qty] of Object.entries(cleanBumps)) {
+      if (qty > 0) {
+        items.push({ price: BUMP_CATALOG[id].priceId, quantity: qty });
+      }
+    }
+
     const subscriptionParams: Stripe.SubscriptionCreateParams = {
       customer: customerId,
-      items: [{ price: priceId }],
+      items,
       payment_behavior: "default_incomplete",
       payment_settings: {
         payment_method_types: ["card"],
@@ -129,29 +178,57 @@ serve(async (req) => {
         plan_key: planKey,
         billing_period: isAnnual ? "annual" : "monthly",
         user_id: userId || "",
+        bumps_numbers: String(cleanBumps.numbers),
+        bumps_contacts: String(cleanBumps.contacts),
+        bumps_opportunities: String(cleanBumps.opportunities),
         ...(promotionCodeId ? { promotion_code_id: String(promotionCodeId) } : {}),
         ...(couponId ? { coupon_id: String(couponId) } : {}),
       },
       expand: ["latest_invoice.payment_intent"],
     };
 
-    // Apply discount if a coupon/promotion code was validated client-side
     if (promotionCodeId) {
       subscriptionParams.discounts = [{ promotion_code: String(promotionCodeId) }];
-      log("Applying promotion code", { promotionCodeId });
     } else if (couponId) {
       subscriptionParams.discounts = [{ coupon: String(couponId) }];
-      log("Applying coupon", { couponId });
     }
 
     const subscription = await stripe.subscriptions.create(subscriptionParams);
-
     log("Subscription created", { id: subscription.id, status: subscription.status });
 
     const invoice = subscription.latest_invoice as Stripe.Invoice;
     const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent | null;
 
-    // 4. Track checkout lead
+    // 4. Persiste bumps em profiles (somente se tiver userId; se não, webhook
+    // de invoice.payment_succeeded vai reconciliar depois).
+    if (userId) {
+      const updates: Record<string, number> = {};
+      for (const [id, qty] of Object.entries(cleanBumps)) {
+        updates[BUMP_CATALOG[id].column] = qty;
+      }
+      const { error: upErr } = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("id", userId);
+      if (upErr) log("Failed to persist extra_* in profile", { error: upErr.message });
+
+      // Auditoria
+      for (const [id, qty] of Object.entries(cleanBumps)) {
+        if (qty > 0) {
+          await supabase.from("order_bump_events").insert({
+            user_id: userId,
+            bump_id: id,
+            delta: qty,
+            new_quantity: qty,
+            source: "checkout",
+            stripe_subscription_id: subscription.id,
+            metadata: { plan_key: planKey, billing: "monthly" },
+          });
+        }
+      }
+    }
+
+    // 5. Track checkout lead
     try {
       await supabase.from("checkout_leads").insert({
         user_id: userId || null,
