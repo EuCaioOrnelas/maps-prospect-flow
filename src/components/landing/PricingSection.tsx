@@ -554,9 +554,6 @@ export const PricingSection = () => {
                     Sob medida
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1.5">
-                  Plano personalizado
-                </p>
                 <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
                   Oportunidades sob demanda
                 </p>
