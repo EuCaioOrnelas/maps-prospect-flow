@@ -66,8 +66,8 @@ const mainPlans = {
     {
       name: "Atendimento",
       key: "start",
-      price: "197",
-      anchorPrice: "394",
+      price: "196",
+      anchorPrice: "392",
       opportunities: "1.000",
       description: "Para operar atendimento, chat e campanhas com inteligência. Sem SDR IA.",
       features: [
@@ -81,6 +81,7 @@ const mainPlans = {
         { text: "Sem SDR IA (captação de leads)", disabled: true },
         { text: "Sem Diagnóstico com IA", disabled: true },
         { text: "Sem Geração de mensagens com IA", disabled: true },
+        { text: "Sem IA Closer em conversas", disabled: true },
       ] as PlanFeature[],
       popular: false,
       icon: Headphones,
@@ -114,7 +115,7 @@ const mainPlans = {
       name: "Atendimento",
       key: "start",
       price: "157",
-      anchorPrice: "394",
+      anchorPrice: "392",
       opportunities: "1.000",
       description: "Para operar atendimento, chat e campanhas com inteligência. Sem SDR IA.",
       features: [
@@ -128,6 +129,7 @@ const mainPlans = {
         { text: "Sem SDR IA (captação de leads)", disabled: true },
         { text: "Sem Diagnóstico com IA", disabled: true },
         { text: "Sem Geração de mensagens com IA", disabled: true },
+        { text: "Sem IA Closer em conversas", disabled: true },
       ] as PlanFeature[],
       popular: false,
       icon: Headphones,
@@ -273,11 +275,11 @@ export const PricingSection = () => {
       title: "IA Closer Wiize",
       icon: Bot,
       rows: [
-        { label: "IA Closer treinada com seu negócio", start: true, growth: true, scale: true },
-        { label: "Qualifica, agenda e tira dúvidas sozinha", start: true, growth: true, scale: true },
-        { label: "Aprende com cada conversa (memória contextual)", start: true, growth: true, scale: true },
+        { label: "IA Closer treinada com seu negócio", start: false, growth: true, scale: true },
+        { label: "Qualifica, agenda e tira dúvidas sozinha", start: false, growth: true, scale: true },
+        { label: "Aprende com cada conversa (memória contextual)", start: false, growth: true, scale: true },
         { label: "Múltiplas IAs Closer para diferentes produtos / times", start: false, growth: false, scale: true },
-        { label: "Testes e simulações antes de ativar", start: true, growth: true, scale: true },
+        { label: "Testes e simulações antes de ativar", start: false, growth: true, scale: true },
       ],
     },
     {
@@ -300,7 +302,7 @@ export const PricingSection = () => {
         { label: "Relatórios por número, campanha e fluxo", start: true, growth: true, scale: true },
         { label: "Alertas inteligentes de oportunidades quentes", start: true, growth: true, scale: true },
         { label: "Projeção de receita por probabilidade", start: true, growth: true, scale: true },
-        { label: "Métricas detalhadas da IA Closer", start: true, growth: true, scale: true },
+        { label: "Métricas detalhadas da IA Closer", start: false, growth: true, scale: true },
       ],
     },
     {
