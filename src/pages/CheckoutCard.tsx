@@ -801,6 +801,16 @@ function CheckoutCardInner() {
           </div>
         </div>
       </footer>
+
+      <CheckoutBumpsUpsellDialog
+        open={upsellOpen}
+        onOpenChange={setUpsellOpen}
+        planKey={planKey}
+        planName={planName || planConfig?.name || "plano"}
+        billingPeriod={isAnnual ? "annual" : "monthly"}
+        selection={bumps}
+        onChange={setBumps}
+      />
     </div>
   );
 }
