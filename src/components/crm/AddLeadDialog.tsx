@@ -34,6 +34,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CountryCodeSelect } from '@/components/crm/CountryCodeSelect';
+import { useContactLimit } from '@/hooks/useContactLimit';
+import { useNavigate } from 'react-router-dom';
 
 interface AddLeadDialogProps {
   open: boolean;
@@ -97,6 +99,8 @@ export const AddLeadDialog = ({
   checkLeadExists,
 }: AddLeadDialogProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { count, limit, hasLimit, isAtLimit } = useContactLimit();
   const [isLoading, setIsLoading] = useState(false);
   const [showNewOrigin, setShowNewOrigin] = useState(false);
   const [newOriginName, setNewOriginName] = useState('');
