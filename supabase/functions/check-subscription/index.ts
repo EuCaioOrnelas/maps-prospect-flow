@@ -14,10 +14,13 @@ const logStep = (step: string, details?: any) => {
 
 // Map price IDs to plan names - includes all historical price IDs
 const PRICE_TO_PLAN: Record<string, string> = {
-  // New prices (2026)
-  "price_1TLZi1K8CM0R6xMMDOg3MSTp": "start",   // R$296/month
+  // Current prices (2026-05)
+  "price_1TYl5KK8CM0R6xMMeHUhKt7s": "start",   // R$196/month (atual)
+  "price_1TYl6iK8CM0R6xMMd23UBpIz": "growth",  // R$696/month (atual)
+  // Previous monthly prices - mantidos para reconhecer assinaturas legadas
+  "price_1TLZi1K8CM0R6xMMDOg3MSTp": "start",   // R$296/month (legado)
   "price_1TLZkSK8CM0R6xMMwr1Ke1IX": "start",   // R$246/month (annual)
-  "price_1TLZlSK8CM0R6xMMFtvROCby": "growth",  // R$696/month
+  "price_1TLZlSK8CM0R6xMMFtvROCby": "growth",  // R$696/month (legado)
   "price_1TLZn8K8CM0R6xMMaEz5JuVW": "growth",  // R$596/month (annual)
   "price_1SlylcK8CM0R6xMMyHRWAd8G": "scale",   // R$897/month
   // Legacy prices - must be mapped for existing subscriptions
