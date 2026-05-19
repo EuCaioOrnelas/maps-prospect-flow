@@ -312,10 +312,26 @@ const Upgrade = () => {
       return;
     }
 
-    // Free → paid: skip preview
+    // Free → paid: pergunta add-ons antes (apenas no mensal — anual bloqueia bumps)
     setSelectedPlanKey(planKey);
-    setPaymentModalOpen(true);
+    setPendingBumps(emptyBumpSelection());
+    if (!isAnnual) {
+      setAddOnsOpen(true);
+    } else {
+      sessionStorage.removeItem("pendingBumps");
+      setPaymentModalOpen(true);
+    }
   };
+
+  const handleAddOnsContinue = () => {
+    // Persiste bumps escolhidos para o checkout consumir
+    try {
+      sessionStorage.setItem("pendingBumps", JSON.stringify(pendingBumps));
+    } catch {
+      // ignore
+    }
+    setAddOnsOpen(false);
+    setPaymentModalOpen(true);
 
   const confirmUpgrade = async () => {
     if (!selectedPlanKey) return;
