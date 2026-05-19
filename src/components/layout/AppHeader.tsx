@@ -12,6 +12,7 @@ import {
 import { MobileNav } from "./MobileNav";
 import { useAuth } from "@/contexts/AuthContext";
 import ThemeSwitch from "@/components/ui/theme-switch";
+import { hasOpportunitiesAccess } from "@/lib/planAccess";
 
 interface AppHeaderProps {
   profile?: {
@@ -23,6 +24,7 @@ interface AppHeaderProps {
     searches_limit?: number;
     trial_start_at?: string | null;
     trial_auto_charge_cancelled?: boolean | null;
+    created_at?: string | null;
   } | null;
   onWhatsAppClick?: () => void;
 }
@@ -104,31 +106,35 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
             </Link>
           )}
 
-          {/* Credits indicator */}
-          <div className="hidden sm:flex items-center gap-2 text-sm">
-            <Search size={14} className="text-muted-foreground" />
-            <span className="text-muted-foreground">Oportunidades:</span>
-            <span className="font-semibold text-primary">{(profile?.searches_used || 0).toLocaleString('pt-BR')}</span>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-muted-foreground">{(profile?.searches_limit || 10).toLocaleString('pt-BR')}</span>
-            <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-1">
-              <div 
-                className="h-full bg-primary rounded-full transition-all"
-                style={{ width: `${Math.min(((profile?.searches_used || 0) / Math.max((profile?.searches_limit || 10) + ((profile as any)?.bonus_searches || 0), 1)) * 100, 100)}%` }}
-              />
-            </div>
-            <span className="text-xs text-muted-foreground ml-1 px-2 py-0.5 bg-secondary rounded">
-              {getPlanName(profile?.plan || 'free')}
-            </span>
-          </div>
+          {/* Credits indicator — só aparece para quem tem módulo de Oportunidades */}
+          {hasOpportunitiesAccess(profile as any) && (
+            <>
+              <div className="hidden sm:flex items-center gap-2 text-sm">
+                <Search size={14} className="text-muted-foreground" />
+                <span className="text-muted-foreground">Oportunidades:</span>
+                <span className="font-semibold text-primary">{(profile?.searches_used || 0).toLocaleString('pt-BR')}</span>
+                <span className="text-muted-foreground">/</span>
+                <span className="text-muted-foreground">{(profile?.searches_limit || 10).toLocaleString('pt-BR')}</span>
+                <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-1">
+                  <div 
+                    className="h-full bg-primary rounded-full transition-all"
+                    style={{ width: `${Math.min(((profile?.searches_used || 0) / Math.max((profile?.searches_limit || 10) + ((profile as any)?.bonus_searches || 0), 1)) * 100, 100)}%` }}
+                  />
+                </div>
+                <span className="text-xs text-muted-foreground ml-1 px-2 py-0.5 bg-secondary rounded">
+                  {getPlanName(profile?.plan || 'free')}
+                </span>
+              </div>
 
-          {/* Mobile compact credits */}
-          <div className="flex sm:hidden items-center gap-1.5 text-xs bg-secondary/50 px-2 py-1 rounded-lg">
-            <Search size={12} className="text-primary" />
-            <span className="font-semibold text-primary">{(profile?.searches_used || 0).toLocaleString('pt-BR')}</span>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-muted-foreground">{(profile?.searches_limit || 10).toLocaleString('pt-BR')}</span>
-          </div>
+              {/* Mobile compact credits */}
+              <div className="flex sm:hidden items-center gap-1.5 text-xs bg-secondary/50 px-2 py-1 rounded-lg">
+                <Search size={12} className="text-primary" />
+                <span className="font-semibold text-primary">{(profile?.searches_used || 0).toLocaleString('pt-BR')}</span>
+                <span className="text-muted-foreground">/</span>
+                <span className="text-muted-foreground">{(profile?.searches_limit || 10).toLocaleString('pt-BR')}</span>
+              </div>
+            </>
+          )}
 
           {/* Theme toggle - between credits and avatar */}
           <ThemeSwitch />
