@@ -566,7 +566,7 @@ export const PricingSection = () => {
                   {scalePlan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3 text-sm">
                       <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
-                      <span className={i === 0 ? "text-foreground font-semibold" : "text-muted-foreground"}>
+                      <span className="text-muted-foreground">
                         {feature.text}
                       </span>
                     </li>
