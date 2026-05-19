@@ -244,7 +244,7 @@ export const PricingSection = () => {
       icon: Headphones,
       rows: [
         { label: "Chat ao vivo centralizado (todos os números)", start: true, growth: true, scale: true },
-        { label: "Atendimento 24/7 sem precisar de plantão humano", start: true, growth: true, scale: true },
+        { label: "Atendimento contínuo com IA operacional", start: true, growth: true, scale: true },
         { label: "Respostas automáticas com contexto do lead", start: true, growth: true, scale: true },
         { label: "Múltiplos atendentes no mesmo número", start: true, growth: true, scale: true },
         { label: "Áudio, imagem, documentos e mídias", start: true, growth: true, scale: true },
