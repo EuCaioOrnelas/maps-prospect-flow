@@ -107,8 +107,6 @@ export function CheckoutBumpsUpsellDialog({
       unit: "",
     });
   }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
 
   const setQty = (id: OrderBumpId, qty: number) => {
     const safe = Math.max(0, Math.min(99, qty));
