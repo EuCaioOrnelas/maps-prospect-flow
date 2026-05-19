@@ -34,6 +34,8 @@ import { Elements, useStripe, useElements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 import { CouponInputCard, type AppliedCoupon } from "@/components/checkout/CouponInputCard";
+import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
+import { emptyBumpSelection, calcBumpsTotalCents, calcBumpsMonthlyCents, type OrderBumpSelection } from "@/config/orderBumps";
 
 function formatCurrency(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
@@ -101,6 +103,7 @@ function CheckoutCardInner() {
   const [cvvFocused, setCvvFocused] = useState(false);
   const [installmentDropdownOpen, setInstallmentDropdownOpen] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [bumps, setBumps] = useState<OrderBumpSelection>(emptyBumpSelection());
 
   // Load customer data from sessionStorage
   useEffect(() => {
@@ -173,17 +176,20 @@ function CheckoutCardInner() {
     addressNumber.trim().length >= 1;
 
   const installmentCount = 1;
-  const totalPrice = planConfig ? (isAnnual ? planConfig.annual : planConfig.monthly) : 0;
+  const planPrice = planConfig ? (isAnnual ? planConfig.annual : planConfig.monthly) : 0;
+  const bumpsCycleCents = calcBumpsTotalCents(bumps, isAnnual ? "annual" : "monthly");
+  const bumpsMonthlyCents = calcBumpsMonthlyCents(bumps);
+  const totalPrice = planPrice + bumpsCycleCents;
   const installmentValue = totalPrice;
 
-  // Calcula desconto da primeira cobrança (apenas referência visual no resumo)
+  // Calcula desconto da primeira cobrança (apenas referência visual no resumo) — cupom só sobre o plano
   const discountCents = (() => {
     if (!appliedCoupon) return 0;
     if (appliedCoupon.percentOff) {
-      return Math.round((totalPrice * appliedCoupon.percentOff) / 100);
+      return Math.round((planPrice * appliedCoupon.percentOff) / 100);
     }
     if (appliedCoupon.amountOff) {
-      return Math.min(appliedCoupon.amountOff, totalPrice);
+      return Math.min(appliedCoupon.amountOff, planPrice);
     }
     return 0;
   })();
@@ -542,6 +548,19 @@ function CheckoutCardInner() {
                   <span className="text-muted-foreground">Email</span>
                   <span className="font-medium text-foreground text-xs truncate max-w-[180px]">{customerData?.email}</span>
                 </div>
+                {bumpsCycleCents > 0 && (
+                  <>
+                    <div className="h-px bg-border/50" />
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Sparkles className="h-3 w-3 text-amber-500" /> Extras (turbinar)
+                      </span>
+                      <span className="font-semibold text-foreground tabular-nums">
+                        +{formatCurrency(bumpsCycleCents)}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="h-px bg-border/50" />
                 {appliedCoupon && (
                   <>
@@ -593,6 +612,14 @@ function CheckoutCardInner() {
                 </div>
               </div>
             </div>
+
+            {/* Order bumps — turbine seu plano */}
+            <OrderBumpsCard
+              planKey={planKey}
+              billingPeriod={isAnnual ? "annual" : "monthly"}
+              selection={bumps}
+              onChange={setBumps}
+            />
 
             {/* Coupon card — abaixo do detalhe do plano e acima das info de segurança */}
             <CouponInputCard

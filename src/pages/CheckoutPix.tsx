@@ -29,6 +29,9 @@ import {
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
+import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
+import { emptyBumpSelection, calcBumpsMonthlyCents, type OrderBumpSelection } from "@/config/orderBumps";
+import { Sparkles } from "lucide-react";
 
 function formatCurrency(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
@@ -66,6 +69,7 @@ export default function CheckoutPix() {
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paid, setPaid] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [bumps, setBumps] = useState<OrderBumpSelection>(emptyBumpSelection());
 
   // Expiration timer (1 hour from QR generation)
   useEffect(() => {
@@ -200,6 +204,8 @@ export default function CheckoutPix() {
   // Compute display prices
   const cleanPrice = planPrice.replace(",", ".");
   const originalCents = Math.round(parseFloat(cleanPrice) * 100);
+  const bumpsMonthlyCents = calcBumpsMonthlyCents(bumps);
+  const totalMonthlyCents = originalCents + bumpsMonthlyCents;
 
   return (
     <div className="landing-light min-h-screen bg-background text-foreground flex flex-col">
@@ -448,14 +454,35 @@ export default function CheckoutPix() {
                   <span className="font-medium text-foreground text-xs truncate max-w-[180px]">{customerData?.email}</span>
                 </div>
                 <div className="h-px bg-border/50" />
+                {bumpsMonthlyCents > 0 && (
+                  <>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Sparkles className="h-3 w-3 text-amber-500" /> Extras (turbinar)
+                      </span>
+                      <span className="font-semibold text-foreground tabular-nums">
+                        +{formatCurrency(bumpsMonthlyCents)}/mês
+                      </span>
+                    </div>
+                    <div className="h-px bg-border/50" />
+                  </>
+                )}
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold text-foreground">Total</span>
+                  <span className="font-semibold text-foreground">Total mensal</span>
                   <span className="font-bold text-lg text-foreground">
-                    {formatCurrency(originalCents)}
+                    {formatCurrency(totalMonthlyCents)}
                   </span>
                 </div>
               </div>
             </div>
+
+            {/* Order bumps — turbine seu plano */}
+            <OrderBumpsCard
+              planKey={planKey}
+              billingPeriod="monthly"
+              selection={bumps}
+              onChange={setBumps}
+            />
 
             {/* Coupon notice — only for credit card */}
             <div className="rounded-2xl border border-border/40 bg-muted/30 p-4 space-y-2">
