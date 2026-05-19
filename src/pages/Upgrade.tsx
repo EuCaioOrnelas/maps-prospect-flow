@@ -12,6 +12,12 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import type { LucideIcon } from "lucide-react";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
+import {
+  emptyBumpSelection,
+  calcBumpsMonthlyCents,
+  type OrderBumpSelection,
+} from "@/config/orderBumps";
 
 const PRICE_IDS: Record<string, Record<string, string>> = {
   monthly: {
