@@ -15,13 +15,15 @@ import {
   Clock, XCircle, Banknote, Loader2,
   Receipt, Info, ArrowLeft, HelpCircle,
   ExternalLink, Shield, MessageCircle, RefreshCw,
-  Calendar, Ban,
+  Calendar, Ban, Sparkles, Plus,
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ManageAddonsDialog } from "@/components/billing/ManageAddonsDialog";
+import { ORDER_BUMPS, calcBumpsMonthlyCents, profileToBumpSelection, getBumpsForPlan } from "@/config/orderBumps";
 
 interface SubscriptionInfo {
   id: string;
