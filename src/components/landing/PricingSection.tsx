@@ -68,7 +68,7 @@ const mainPlans = {
       key: "start",
       price: "196",
       anchorPrice: "392",
-      opportunities: "1.000",
+      opportunities: "1.000", usageLabel: "Até 1.000 contatos no CRM",
       description: "A camada de Inteligência Operacional da Wiize AI para operar e converter no WhatsApp.",
       features: [
         { text: "Chat ao vivo centralizado para todos os números" },
@@ -92,7 +92,7 @@ const mainPlans = {
       key: "growth",
       price: "696",
       anchorPrice: "1.392",
-      opportunities: "3.000",
+      opportunities: "3.000", usageLabel: "Até 3.000 oportunidades/mês",
       description: "Operação Comercial completa com Wiize AI: prospecção, conversão e fechamento em um só lugar.",
       features: [
         { text: "Tudo do plano Atendimento" },
@@ -117,7 +117,7 @@ const mainPlans = {
       key: "start",
       price: "157",
       anchorPrice: "392",
-      opportunities: "1.000",
+      opportunities: "1.000", usageLabel: "Até 1.000 contatos no CRM",
       description: "A camada de Inteligência Operacional da Wiize AI para operar e converter no WhatsApp.",
       features: [
         { text: "Chat ao vivo centralizado para todos os números" },
@@ -141,7 +141,7 @@ const mainPlans = {
       key: "growth",
       price: "596",
       anchorPrice: "1.392",
-      opportunities: "3.000",
+      opportunities: "3.000", usageLabel: "Até 3.000 oportunidades/mês",
       description: "Operação Comercial completa com Wiize AI: prospecção, conversão e fechamento em um só lugar.",
       features: [
         { text: "Tudo do plano Atendimento" },
@@ -226,6 +226,7 @@ export const PricingSection = () => {
       title: "CRM e priorização",
       icon: Users,
       rows: [
+        { label: "Contatos totais no CRM", start: "1.000", growth: "3.000", scale: "Ilimitado" },
         { label: "CRM completo com kanban e pipeline visual", start: true, growth: true, scale: true },
         { label: "Score de Intenção de Compra prioriza quem está pronto pra fechar", start: true, growth: true, scale: true },
         { label: "Controle de engajamento por lead em tempo real", start: true, growth: true, scale: true },
@@ -486,7 +487,7 @@ export const PricingSection = () => {
                     </p>
                   )}
                   <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
-                    Até {plan.opportunities} oportunidades/mês
+                    {plan.usageLabel}
                   </p>
                 </div>
 

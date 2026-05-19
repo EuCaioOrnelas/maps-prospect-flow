@@ -33,7 +33,7 @@ const PLANS = [
     key: "start",
     name: "Atendimento",
     monthly: 196,
-    opportunities: "1.000",
+    opportunities: "1.000", usageLabel: "Até 1.000 contatos no CRM",
     desc: "Inteligência Operacional para sua operação comercial com Wiize AI",
     highlight: false,
     perks: [
@@ -56,7 +56,7 @@ const PLANS = [
     key: "growth",
     name: "Growth IA",
     monthly: 696,
-    opportunities: "3.000",
+    opportunities: "3.000", usageLabel: "Até 3.000 oportunidades/mês",
     desc: "Operação Comercial completa com IA: SDR IA, Copiloto Comercial e prospecção Wiize AI",
     highlight: true,
     perks: [
@@ -241,7 +241,7 @@ export default function SignupChoosePlan() {
                       <span className="text-sm font-medium text-foreground">hoje</span>
                     </div>
                     <p className="text-sm font-medium text-primary mt-1.5">
-                      Até {plan.opportunities} oportunidades/mês
+                      {plan.usageLabel}
                     </p>
                     <div className="mt-3 rounded-lg bg-muted/40 border border-border/60 px-3 py-2">
                       <p className="text-xs text-foreground">
