@@ -344,7 +344,7 @@ export const PricingSection = () => {
     return v ? (
       <Check size={18} className="text-primary mx-auto" strokeWidth={2.5} />
     ) : (
-      <span className="text-muted-foreground/40 text-xs">·</span>
+      <span className="text-muted-foreground/40 text-base">—</span>
     );
   };
 
