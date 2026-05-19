@@ -465,11 +465,11 @@ export const PricingSection = () => {
                     <span className="font-display font-bold text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
                       <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
                     </span>
-                    <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">BRL</span>
+                    <span className="text-sm font-medium text-muted-foreground">/ mês</span>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1.5">
-                    {isAnnual ? "por usuário/mês, cobrado anualmente" : "por usuário/mês"}
-                  </p>
+                  {isAnnual && (
+                    <p className="text-xs text-muted-foreground/80 mt-1">cobrado anualmente</p>
+                  )}
                   {isAnnual && (
                     <p className="text-xs text-muted-foreground/80 mt-0.5">
                       Total R$ {formatPrice(parsePrice(plan.price) * 12)}/ano
