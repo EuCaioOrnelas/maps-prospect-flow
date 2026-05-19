@@ -155,12 +155,12 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       icon: Send,
       active: currentPath === "/whatsapp/reports"
     },
-    {
+    ...(can("agents") ? [{
       title: "Agentes IA",
       url: "/agents/reports",
       icon: Bot,
       active: currentPath === "/agents/reports"
-    },
+    }] : []),
   ];
 
   const handleLogout = async () => {
