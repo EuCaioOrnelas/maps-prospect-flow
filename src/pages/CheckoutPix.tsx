@@ -204,6 +204,8 @@ export default function CheckoutPix() {
   // Compute display prices
   const cleanPrice = planPrice.replace(",", ".");
   const originalCents = Math.round(parseFloat(cleanPrice) * 100);
+  const bumpsMonthlyCents = calcBumpsMonthlyCents(bumps);
+  const totalMonthlyCents = originalCents + bumpsMonthlyCents;
 
   return (
     <div className="landing-light min-h-screen bg-background text-foreground flex flex-col">
