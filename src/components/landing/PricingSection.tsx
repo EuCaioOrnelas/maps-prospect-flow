@@ -641,9 +641,9 @@ export const PricingSection = () => {
                     <span className="font-display text-base md:text-lg font-bold text-foreground">Planos</span>
                   </div>
                   {[
-                    { name: "Atendimento", price: plans[0].price, suffix: "BRL", popular: false },
-                    { name: "Growth IA", price: plans[1].price, suffix: "BRL", popular: true },
-                    { name: "Enterprise", price: "Sob medida", suffix: "", popular: false, custom: true },
+                    { name: "Atendimento", price: plans[0].price, popular: false },
+                    { name: "Growth IA", price: plans[1].price, popular: true },
+                    { name: "Enterprise", price: "Sob medida", popular: false, custom: true },
                   ].map((col) => (
                     <div key={col.name} className="text-center px-1 relative">
                       <div className="flex items-center justify-center gap-2 mb-2">
@@ -657,17 +657,16 @@ export const PricingSection = () => {
                       {col.custom ? (
                         <div>
                           <p className="font-display text-lg md:text-2xl font-bold text-foreground tracking-tight">Sob medida</p>
-                          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Conforme operação</p>
+                          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Plano personalizado</p>
                         </div>
                       ) : (
                         <div>
                           <div className="flex items-baseline justify-center gap-1">
                             <span className="font-display text-xl md:text-3xl font-bold text-foreground tabular-nums tracking-tight">
-                              {col.price}
+                              R$ {col.price}
                             </span>
-                            <span className="text-[10px] md:text-xs font-medium text-muted-foreground">{col.suffix}</span>
+                            <span className="text-[10px] md:text-xs font-medium text-muted-foreground">/ mês</span>
                           </div>
-                          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">por usuário/mês</p>
                         </div>
                       )}
                     </div>
