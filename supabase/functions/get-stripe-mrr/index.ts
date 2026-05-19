@@ -414,6 +414,8 @@ Deno.serve(async (req) => {
     // --- Compute real monthly MRR by tracking subscription lifecycles ---
     // For each month, calculate which subs were active and sum their monthly value
     const PLAN_MRR: { [priceId: string]: number } = {
+      "price_1TYl5KK8CM0R6xMMeHUhKt7s": 196,
+      "price_1TYl6iK8CM0R6xMMd23UBpIz": 696,
       "price_1TLZi1K8CM0R6xMMDOg3MSTp": 296,
       "price_1TLZkSK8CM0R6xMMwr1Ke1IX": 246,
       "price_1TLZlSK8CM0R6xMMFtvROCby": 696,
