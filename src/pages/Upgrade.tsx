@@ -332,6 +332,9 @@ const Upgrade = () => {
     }
     setAddOnsOpen(false);
     setPaymentModalOpen(true);
+  };
+
+
 
   const confirmUpgrade = async () => {
     if (!selectedPlanKey) return;
