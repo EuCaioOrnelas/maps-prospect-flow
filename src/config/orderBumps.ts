@@ -41,9 +41,9 @@ export interface OrderBumpDef {
 export const ORDER_BUMPS: OrderBumpDef[] = [
   {
     id: "numbers",
-    title: "Número extra de WhatsApp",
-    shortLabel: "+1 número",
-    description: "Conecte outro número para aumentar disparo, atendimento e contornar limites diários.",
+    title: "Expansão de Atendimento",
+    shortLabel: "Expansão de Atendimento: +1 Número",
+    description: "Conecte mais um número de WhatsApp para escalar disparo, atendimento e contornar limites diários.",
     unit: "número",
     step: 1,
     monthlyPriceCents: 9600,
@@ -56,9 +56,9 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
   },
   {
     id: "contacts",
-    title: "Pacote de contatos no CRM",
-    shortLabel: "+1.000 contatos",
-    description: "Aumenta o limite total de contatos armazenados e gerenciados no CRM.",
+    title: "Expansão de CRM",
+    shortLabel: "Expansão de CRM: +1k Contatos CRM",
+    description: "Amplia o limite total de contatos armazenados e gerenciados dentro do seu CRM.",
     unit: "contatos",
     step: 1000,
     monthlyPriceCents: 4800,
@@ -71,9 +71,9 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
   },
   {
     id: "opportunities",
-    title: "Pacote de oportunidades comerciais",
-    shortLabel: "+1.000 oportunidades",
-    description: "Mais leads qualificados captados pelo SDR IA todo mês.",
+    title: "Expansão Comercial",
+    shortLabel: "Expansão Comercial: +1k Oportunidades",
+    description: "Mais leads B2B qualificados captados e diagnosticados pelo SDR IA todo mês.",
     unit: "oportunidades",
     step: 1000,
     monthlyPriceCents: 19600,
