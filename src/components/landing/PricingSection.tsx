@@ -259,7 +259,7 @@ export const PricingSection = () => {
       icon: Target,
       rows: [
         { label: "Campanhas via Meta Cloud API (WhatsApp oficial)", start: true, growth: true, scale: true },
-        { label: "Disparos via Evolution (outbound)", start: true, growth: true, scale: true },
+        { label: "Campanhas outbound em escala", start: true, growth: true, scale: true },
         { label: "Integração com Meta Ads", start: true, growth: true, scale: true },
         { label: "Disparos agendados e em lote com delays seguros", start: true, growth: true, scale: true },
         { label: "Campanhas geradas e otimizadas por IA", start: false, growth: true, scale: true },
