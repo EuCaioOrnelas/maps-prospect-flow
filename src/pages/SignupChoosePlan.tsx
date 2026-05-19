@@ -32,7 +32,7 @@ const PLANS = [
   {
     key: "start",
     name: "Atendimento",
-    monthly: 197,
+    monthly: 196,
     opportunities: "1.000",
     desc: "Para operar atendimento, chat e campanhas com inteligência",
     highlight: false,
@@ -49,6 +49,7 @@ const PLANS = [
       "Sem SDR IA (captação de leads)",
       "Sem Diagnóstico com IA",
       "Sem Geração de mensagens com IA",
+      "Sem IA Closer em conversas",
     ],
   },
   {
