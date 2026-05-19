@@ -454,14 +454,35 @@ export default function CheckoutPix() {
                   <span className="font-medium text-foreground text-xs truncate max-w-[180px]">{customerData?.email}</span>
                 </div>
                 <div className="h-px bg-border/50" />
+                {bumpsMonthlyCents > 0 && (
+                  <>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Sparkles className="h-3 w-3 text-amber-500" /> Extras (turbinar)
+                      </span>
+                      <span className="font-semibold text-foreground tabular-nums">
+                        +{formatCurrency(bumpsMonthlyCents)}/mês
+                      </span>
+                    </div>
+                    <div className="h-px bg-border/50" />
+                  </>
+                )}
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold text-foreground">Total</span>
+                  <span className="font-semibold text-foreground">Total mensal</span>
                   <span className="font-bold text-lg text-foreground">
-                    {formatCurrency(originalCents)}
+                    {formatCurrency(totalMonthlyCents)}
                   </span>
                 </div>
               </div>
             </div>
+
+            {/* Order bumps — turbine seu plano */}
+            <OrderBumpsCard
+              planKey={planKey}
+              billingPeriod="monthly"
+              selection={bumps}
+              onChange={setBumps}
+            />
 
             {/* Coupon notice — only for credit card */}
             <div className="rounded-2xl border border-border/40 bg-muted/30 p-4 space-y-2">
