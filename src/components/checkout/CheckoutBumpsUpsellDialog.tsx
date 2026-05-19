@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight, X, Minus, Plus, Check, Zap } from "lucide-react";
@@ -6,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   calcBumpsMonthlyCents,
-  emptyBumpSelection,
   getBumpsForPlan,
   type OrderBumpId,
   type OrderBumpSelection,
@@ -34,7 +32,7 @@ function getPlanCopy(planKey: string, planName: string) {
       eyebrow: "Maximize seu Growth IA",
       title: `Pronto para escalar ainda mais o ${planName}?`,
       subtitle:
-        "Você está prestes a destravar o SDR IA. Some expansões opcionais agora e tenha mais números, contatos e oportunidades comerciais já no primeiro ciclo — tudo em uma única cobrança.",
+        "Some expansões opcionais agora e tenha mais números, contatos e oportunidades já no primeiro ciclo. Tudo em uma única cobrança.",
     };
   }
   if (k === "start") {
@@ -42,15 +40,27 @@ function getPlanCopy(planKey: string, planName: string) {
       eyebrow: "Potencialize seu Atendimento",
       title: `Quer atender mais clientes no ${planName}?`,
       subtitle:
-        "Adicione mais um número de WhatsApp ou amplie seu CRM antes de finalizar. Tudo cobrado junto na mesma assinatura — você pode remover quando quiser.",
+        "Adicione mais um número de WhatsApp ou amplie seu CRM antes de finalizar. Tudo cobrado junto na mesma assinatura.",
     };
   }
   return {
     eyebrow: "Oferta exclusiva no checkout",
     title: `Antes de finalizar, turbine seu ${planName}`,
     subtitle:
-      "Adicione expansões opcionais agora. Tudo cobrado em uma única assinatura — você pode remover quando quiser.",
+      "Adicione expansões opcionais agora. Tudo cobrado em uma única assinatura.",
   };
+}
+
+/** Limites base por plano para cada recurso. */
+function getPlanBase(planKey: string) {
+  const k = (planKey || "").toLowerCase();
+  if (k === "growth") return { numbers: 5, contacts: 10000, opportunities: 3000 };
+  if (k === "start") return { numbers: 2, contacts: 1000, opportunities: 0 };
+  return { numbers: 0, contacts: 0, opportunities: 0 };
+}
+
+function fmtNum(n: number) {
+  return n.toLocaleString("pt-BR");
 }
 
 export function CheckoutBumpsUpsellDialog({
@@ -66,12 +76,35 @@ export function CheckoutBumpsUpsellDialog({
   const total = calcBumpsMonthlyCents(selection);
   const hasSelection = total > 0;
   const copy = getPlanCopy(planKey, planName);
+  const base = getPlanBase(planKey);
 
-  const [snapshot, setSnapshot] = useState<OrderBumpSelection>(emptyBumpSelection());
-  useEffect(() => {
-    if (open) setSnapshot({ ...selection });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  // Linhas de breakdown (apenas recursos relevantes ao plano)
+  const breakdown: Array<{ label: string; base: number; extra: number; unit: string }> = [];
+  if (base.numbers > 0 || selection.numbers > 0) {
+    breakdown.push({
+      label: "Números de WhatsApp",
+      base: base.numbers,
+      extra: selection.numbers,
+      unit: "núm.",
+    });
+  }
+  if (base.contacts > 0 || selection.contacts > 0) {
+    breakdown.push({
+      label: "Contatos no CRM",
+      base: base.contacts,
+      extra: selection.contacts * 1000,
+      unit: "",
+    });
+  }
+  const planKeyLower = (planKey || "").toLowerCase();
+  if (planKeyLower === "growth" && (base.opportunities > 0 || selection.opportunities > 0)) {
+    breakdown.push({
+      label: "Oportunidades qualificadas",
+      base: base.opportunities,
+      extra: selection.opportunities * 1000,
+      unit: "",
+    });
+  }
 
   const setQty = (id: OrderBumpId, qty: number) => {
     const safe = Math.max(0, Math.min(99, qty));
@@ -219,9 +252,42 @@ export function CheckoutBumpsUpsellDialog({
         </div>
 
         {/* Footer */}
-        <div className="px-5 pb-5 pt-1 border-t border-border/40 bg-muted/20">
-          <div className="flex items-center justify-between gap-3 pt-3 mb-3">
-            <span className="text-xs text-muted-foreground">Extras selecionados</span>
+        <div className="px-5 pb-5 pt-3 border-t border-border/40 bg-muted/20 space-y-3">
+          {/* Breakdown por recurso: base do plano + upgrades */}
+          {breakdown.length > 0 && (
+            <div className="rounded-lg border border-border/50 bg-background/60 divide-y divide-border/40">
+              {breakdown.map((row) => {
+                const totalRow = row.base + row.extra;
+                return (
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between gap-3 px-3 py-2"
+                  >
+                    <span className="text-[11px] text-muted-foreground">{row.label}</span>
+                    <span className="text-[11px] tabular-nums text-foreground">
+                      <span className="text-muted-foreground">{fmtNum(row.base)} plano</span>
+                      <span className="mx-1 text-muted-foreground/60">+</span>
+                      <span
+                        className={cn(
+                          "font-semibold",
+                          row.extra > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+                        )}
+                      >
+                        {fmtNum(row.extra)} upgrades
+                      </span>
+                      <span className="mx-1 text-muted-foreground/60">=</span>
+                      <span className="font-bold text-foreground">
+                        {fmtNum(totalRow)} {row.unit}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs text-muted-foreground">Total adicional</span>
             <span className="text-sm font-bold text-foreground tabular-nums">
               {hasSelection ? `+${formatCurrency(total)}/mês` : "Nenhum"}
             </span>
@@ -247,7 +313,7 @@ export function CheckoutBumpsUpsellDialog({
             </Button>
           )}
 
-          <p className="text-[10px] text-muted-foreground text-center mt-2.5">
+          <p className="text-[10px] text-muted-foreground text-center">
             Você pode ajustar os extras a qualquer momento no resumo do pedido.
           </p>
         </div>
