@@ -175,6 +175,8 @@ const Upgrade = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [upgradePreview, setUpgradePreview] = useState<any>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [addOnsOpen, setAddOnsOpen] = useState(false);
+  const [pendingBumps, setPendingBumps] = useState<OrderBumpSelection>(emptyBumpSelection());
 
   const currentPlan = profile?.plan || "free";
   const { trackScoreEvent } = useAutoScoreTracking("upgrade");
