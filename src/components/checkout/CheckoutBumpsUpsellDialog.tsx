@@ -252,9 +252,42 @@ export function CheckoutBumpsUpsellDialog({
         </div>
 
         {/* Footer */}
-        <div className="px-5 pb-5 pt-1 border-t border-border/40 bg-muted/20">
-          <div className="flex items-center justify-between gap-3 pt-3 mb-3">
-            <span className="text-xs text-muted-foreground">Extras selecionados</span>
+        <div className="px-5 pb-5 pt-3 border-t border-border/40 bg-muted/20 space-y-3">
+          {/* Breakdown por recurso: base do plano + upgrades */}
+          {breakdown.length > 0 && (
+            <div className="rounded-lg border border-border/50 bg-background/60 divide-y divide-border/40">
+              {breakdown.map((row) => {
+                const totalRow = row.base + row.extra;
+                return (
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between gap-3 px-3 py-2"
+                  >
+                    <span className="text-[11px] text-muted-foreground">{row.label}</span>
+                    <span className="text-[11px] tabular-nums text-foreground">
+                      <span className="text-muted-foreground">{fmtNum(row.base)} plano</span>
+                      <span className="mx-1 text-muted-foreground/60">+</span>
+                      <span
+                        className={cn(
+                          "font-semibold",
+                          row.extra > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+                        )}
+                      >
+                        {fmtNum(row.extra)} upgrades
+                      </span>
+                      <span className="mx-1 text-muted-foreground/60">=</span>
+                      <span className="font-bold text-foreground">
+                        {fmtNum(totalRow)} {row.unit}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs text-muted-foreground">Total adicional</span>
             <span className="text-sm font-bold text-foreground tabular-nums">
               {hasSelection ? `+${formatCurrency(total)}/mês` : "Nenhum"}
             </span>
@@ -280,7 +313,7 @@ export function CheckoutBumpsUpsellDialog({
             </Button>
           )}
 
-          <p className="text-[10px] text-muted-foreground text-center mt-2.5">
+          <p className="text-[10px] text-muted-foreground text-center">
             Você pode ajustar os extras a qualquer momento no resumo do pedido.
           </p>
         </div>
