@@ -285,7 +285,7 @@ export const PricingSection = () => {
       rows: [
         { label: "IA Closer treinada com seu negócio", start: false, growth: true, scale: true },
         { label: "Qualifica, agenda e tira dúvidas sozinha", start: false, growth: true, scale: true },
-        { label: "Aprende com cada conversa (memória contextual)", start: false, growth: true, scale: true },
+        { label: "Contexto comercial contínuo por conversa", start: false, growth: true, scale: true },
         { label: "Testes e simulações antes de ativar", start: false, growth: true, scale: true },
         { label: "Múltiplas IAs Closer para diferentes produtos e times", start: false, growth: false, scale: true },
       ],
