@@ -33,7 +33,7 @@ const PLANS = [
     key: "start",
     name: "Atendimento",
     monthly: 196,
-    opportunities: "1.000",
+    opportunities: "1.000", usageLabel: "Até 1.000 contatos no CRM",
     desc: "Inteligência Operacional para sua operação comercial com Wiize AI",
     highlight: false,
     perks: [
@@ -56,7 +56,7 @@ const PLANS = [
     key: "growth",
     name: "Growth IA",
     monthly: 696,
-    opportunities: "3.000",
+    opportunities: "3.000", usageLabel: "Até 3.000 oportunidades/mês",
     desc: "Operação Comercial completa com IA: SDR IA, Copiloto Comercial e prospecção Wiize AI",
     highlight: true,
     perks: [
