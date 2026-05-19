@@ -20,6 +20,7 @@ import { NumbersManager } from '@/components/whatsapp/NumbersManager';
 import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
 import { usePhonePrivacy } from '@/hooks/usePhonePrivacy';
 import { useAuth } from '@/contexts/AuthContext';
+import { useContactLimit } from '@/hooks/useContactLimit';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ import {
 export default function CRM() {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
+  const { count: contactCount, limit: contactLimit, hasLimit: hasContactLimit, isAtLimit: contactsAtLimit, isNearLimit: contactsNearLimit } = useContactLimit();
   const isMobile = useIsMobile();
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("crm_beta_warning");
   useAutoScoreTracking("crm");
