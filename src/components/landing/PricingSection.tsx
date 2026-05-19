@@ -271,7 +271,7 @@ export const PricingSection = () => {
       icon: Bot,
       rows: [
         { label: "Construtor visual de fluxos (drag & drop)", start: true, growth: true, scale: true },
-        { label: "Follow-up automático inteligente (sem parecer robô)", start: true, growth: true, scale: true },
+        { label: "Follow-up inteligente com contexto comercial", start: true, growth: true, scale: true },
         { label: "Gatilhos por palavra-chave, status e evento", start: true, growth: true, scale: true },
         { label: <span className="inline-flex items-center gap-1.5">Fluxos completos gerados com Wiize AI <Sparkles size={13} className="text-primary" /></span>, start: false, growth: true, scale: true },
         { label: "Coleta de dados estruturados via conversa (IA)", start: false, growth: true, scale: true },
