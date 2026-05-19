@@ -40,7 +40,7 @@ const PLANS = [
       "Atendimento contínuo com IA operacional (WhatsApp oficial)",
       "CRM Comercial com IA de Intenção de Compra",
       "Fluxos Inteligentes com Wiize AI",
-      "Campanhas outbound em escala via Meta e WhatsApp Cloud",
+      "Campanhas inteligentes em escala via Meta API",
       "Cockpit Executivo e dashboards de operação",
       "Até 2 números WhatsApp conectados",
       "Suporte por email",
