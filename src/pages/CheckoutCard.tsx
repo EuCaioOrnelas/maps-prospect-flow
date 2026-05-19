@@ -211,6 +211,9 @@ function CheckoutCardInner() {
         },
       });
 
+      // Anual: bumps são bloqueados — força payload vazio
+      const bumpsPayload = isAnnual ? { numbers: 0, contacts: 0, opportunities: 0 } : bumps;
+
       const { data, error } = await supabase.functions.invoke("create-stripe-subscription", {
         body: {
           planKey,
@@ -218,6 +221,7 @@ function CheckoutCardInner() {
           paymentMethodId,
           promotionCodeId: appliedCoupon?.promotionCodeId,
           couponId: appliedCoupon?.couponId,
+          bumps: bumpsPayload,
           customerData: {
             ...customerData,
             postalCode: postalCode.replace(/\D/g, ""),
