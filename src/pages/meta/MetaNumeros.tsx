@@ -53,7 +53,9 @@ export default function MetaNumeros() {
   const [deleting, setDeleting] = useState(false);
 
   const userPlan = (profile?.plan || "free").toLowerCase();
-  const maxMetaConnections = META_PLAN_LIMITS[userPlan] ?? 1;
+  const basePlanNumbers = META_PLAN_LIMITS[userPlan] ?? 1;
+  const extraNumbers = ((profile as any)?.extra_numbers as number | undefined) ?? 0;
+  const maxMetaConnections = basePlanNumbers + extraNumbers;
   const reachedConnectionLimit = connections.length >= maxMetaConnections;
   const expiredConnections = connections.filter((c) => expiredTokenIds.has(c.id));
   const hasExpired = expiredConnections.length > 0;
