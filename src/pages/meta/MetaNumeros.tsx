@@ -189,7 +189,7 @@ export default function MetaNumeros() {
               if (reachedConnectionLimit) {
                 toast({
                   title: "Limite de números atingido",
-                  description: `Seu plano permite até ${maxMetaConnections} ${maxMetaConnections === 1 ? "número conectado" : "números conectados"}. Faça upgrade para adicionar mais.`,
+                  description: `Seu plano permite ${basePlanNumbers} ${basePlanNumbers === 1 ? "número" : "números"}${extraNumbers > 0 ? ` + ${extraNumbers} da Expansão de Atendimento` : ""}. Adicione a Expansão de Atendimento (+1 número) ou faça upgrade.`,
                   variant: "destructive",
                 });
                 return;
