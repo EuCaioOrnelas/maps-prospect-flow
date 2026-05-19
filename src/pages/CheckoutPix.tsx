@@ -50,8 +50,8 @@ export default function CheckoutPix() {
 
   // Auto-resolve price from plan key when not provided (e.g. renewal links)
   const PLAN_PRICES: Record<string, Record<string, string>> = {
-    monthly: { start: "296", growth: "696", scale: "897" },
-    annual: { start: "2952", growth: "7152", scale: "897" },
+    monthly: { start: "196", growth: "696", scale: "1496" },
+    annual: { start: "1957", growth: "7152", scale: "1496" },
   };
   const planPrice = planPriceParam || PLAN_PRICES[billingPeriod]?.[planKey] || PLAN_PRICES.monthly[planKey] || "";
 
