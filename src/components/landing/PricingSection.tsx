@@ -69,7 +69,7 @@ const mainPlans = {
       price: "196",
       anchorPrice: "392",
       opportunities: "1.000", usageLabel: "Até 1.000 contatos no CRM",
-      description: "A camada de Inteligência Operacional da Wiize AI para operar e converter no WhatsApp.",
+      description: "Para organizar atendimento, CRM e campanhas no WhatsApp com IA.",
       features: [
         { text: "Chat ao vivo centralizado para todos os números" },
         { text: "Atendimento contínuo com IA operacional no WhatsApp oficial" },
@@ -88,8 +88,8 @@ const mainPlans = {
       key: "growth",
       price: "696",
       anchorPrice: "1.392",
-      opportunities: "3.000", usageLabel: "Até 3.000 oportunidades qualificadas com Wiize AI",
-      description: "Operação Comercial completa com Wiize AI: prospecção, conversão e fechamento em um só lugar.",
+      opportunities: "3.000", usageLabel: "Até 3.000 oportunidades qualificadas",
+      description: "Para prospectar, analisar, qualificar e converter oportunidades B2B com Wiize AI.",
       features: [
         { text: "Tudo do plano Atendimento" },
         { text: "SDR IA para prospecção B2B por nicho e território" },
@@ -114,7 +114,7 @@ const mainPlans = {
       price: "157",
       anchorPrice: "392",
       opportunities: "1.000", usageLabel: "Até 1.000 contatos no CRM",
-      description: "A camada de Inteligência Operacional da Wiize AI para operar e converter no WhatsApp.",
+      description: "Para organizar atendimento, CRM e campanhas no WhatsApp com IA.",
       features: [
         { text: "Chat ao vivo centralizado para todos os números" },
         { text: "Atendimento contínuo com IA operacional no WhatsApp oficial" },
@@ -133,8 +133,8 @@ const mainPlans = {
       key: "growth",
       price: "596",
       anchorPrice: "1.392",
-      opportunities: "3.000", usageLabel: "Até 3.000 oportunidades qualificadas com Wiize AI",
-      description: "Operação Comercial completa com Wiize AI: prospecção, conversão e fechamento em um só lugar.",
+      opportunities: "3.000", usageLabel: "Até 3.000 oportunidades qualificadas",
+      description: "Para prospectar, analisar, qualificar e converter oportunidades B2B com Wiize AI.",
       features: [
         { text: "Tudo do plano Atendimento" },
         { text: "SDR IA para prospecção B2B por nicho e território" },
