@@ -24,7 +24,7 @@ export function useContactLimit() {
     }
     setLoading(true);
     const { count: c } = await supabase
-      .from("crm_leads")
+      .from("leads")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id);
     setCount(c || 0);
