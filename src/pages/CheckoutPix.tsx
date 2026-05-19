@@ -621,6 +621,16 @@ export default function CheckoutPix() {
           </div>
         </div>
       </footer>
+
+      <CheckoutBumpsUpsellDialog
+        open={upsellOpen}
+        onOpenChange={setUpsellOpen}
+        planKey={planKey}
+        planName={planName || "plano"}
+        billingPeriod={billingPeriod}
+        selection={bumps}
+        onChange={setBumps}
+      />
     </div>
   );
 }
