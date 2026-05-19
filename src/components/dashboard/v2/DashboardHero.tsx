@@ -114,7 +114,7 @@ export function DashboardHero({
                 <span className="text-primary">
                   R$ {fmt(financialImpact)}
                 </span>{" "}
-                em oportunidades
+                {showOpportunities ? "em oportunidades" : "em atendimentos"}
               </h2>
               {hasChange && (
                 <div className="flex items-center gap-1.5">
@@ -136,18 +136,38 @@ export function DashboardHero({
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <span><strong className="text-foreground">{fmtInt(leadsGerados)}</strong> leads gerados</span>
               <span><strong className="text-foreground">{conversasAtivas}</strong> conversas ativas</span>
-              <span><strong className="text-foreground">{oportunidadesQuentes}</strong> oportunidades quentes</span>
+              {showOpportunities ? (
+                <span><strong className="text-foreground">{oportunidadesQuentes}</strong> oportunidades quentes</span>
+              ) : (
+                <span>
+                  <strong className="text-foreground">{fmtInt(contactCount)}</strong> contatos no CRM
+                  {hasContactLimit && (
+                    <span className="text-muted-foreground"> / {contactLimit.toLocaleString('pt-BR')}</span>
+                  )}
+                </span>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-3 pt-1">
-              <Button
-                onClick={() => navigate('/opportunities')}
-                variant="outline"
-                className="gap-2 text-sm border-border/50 hover:bg-muted/50"
-              >
-                Ver Oportunidades
-                <ArrowRight size={14} />
-              </Button>
+              {showOpportunities ? (
+                <Button
+                  onClick={() => navigate('/opportunities')}
+                  variant="outline"
+                  className="gap-2 text-sm border-border/50 hover:bg-muted/50"
+                >
+                  Ver Oportunidades
+                  <ArrowRight size={14} />
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => navigate('/crm')}
+                  variant="outline"
+                  className="gap-2 text-sm border-border/50 hover:bg-muted/50"
+                >
+                  Ver Contatos
+                  <ArrowRight size={14} />
+                </Button>
+              )}
               <Button
                 onClick={() => setShowCampaignDialog(true)}
                 className="gap-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground"
