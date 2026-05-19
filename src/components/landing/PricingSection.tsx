@@ -163,8 +163,8 @@ const mainPlans = {
 const scalePlan = {
   name: "Enterprise",
   key: "scale",
-  price: "1.496",
-  opportunities: "Personalizado",
+  price: "Sob medida",
+  opportunities: "Sob demanda",
   description: "Para escalar operações comerciais com infraestrutura e IA sob medida.",
   features: [
     { text: "Tudo do plano Growth IA" },
