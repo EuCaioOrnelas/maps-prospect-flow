@@ -655,7 +655,7 @@ export const PricingSection = () => {
                       {col.custom ? (
                         <div>
                           <p className="font-display text-lg md:text-2xl font-bold text-foreground tracking-tight">Sob medida</p>
-                          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Plano personalizado</p>
+                          
                         </div>
                       ) : (
                         <div>
