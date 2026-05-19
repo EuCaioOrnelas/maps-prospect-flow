@@ -69,19 +69,19 @@ const mainPlans = {
       price: "196",
       anchorPrice: "392",
       opportunities: "1.000",
-      description: "Inteligência Operacional para sua operação comercial: CRM, chat, campanhas e fluxos com WIIZE AI.",
+      description: "A camada de Inteligência Operacional da WIIZE AI para operar e converter no WhatsApp.",
       features: [
-        { text: "Atendimento Operacional com IA (WhatsApp oficial)" },
+        { text: "Atendimento Operacional com IA no WhatsApp oficial" },
         { text: "CRM Comercial com IA de Intenção de Compra" },
+        { text: "Campanhas Inteligentes em escala" },
         { text: "Fluxos Inteligentes com WIIZE AI" },
-        { text: "Campanhas via Meta API + WhatsApp Cloud" },
-        { text: "Cockpit Executivo e dashboards de operação" },
+        { text: "Cockpit Executivo de operação comercial" },
         { text: "Até 2 números WhatsApp conectados" },
         { text: "Suporte por email" },
-        { text: "Sem SDR IA (prospecção)", disabled: true },
+        { text: "Sem SDR IA (prospecção B2B)", disabled: true },
         { text: "Sem Diagnóstico Comercial com IA", disabled: true },
         { text: "Sem Geração de mensagens por IA", disabled: true },
-        { text: "Sem IA Closer", disabled: true },
+        { text: "Sem Copiloto IA Closer", disabled: true },
       ] as PlanFeature[],
       popular: false,
       icon: Headphones,
@@ -92,18 +92,18 @@ const mainPlans = {
       price: "696",
       anchorPrice: "1.392",
       opportunities: "3.000",
-      description: "A operação comercial completa com IA: SDR IA, Copiloto Comercial e Inteligência de prospecção WIIZE AI.",
+      description: "Operação Comercial completa com WIIZE AI: prospecção, conversão e fechamento em um só lugar.",
       features: [
-        { text: "Tudo do plano Atendimento", highlight: true },
-        { text: "SDR IA — prospecção por nicho e território", highlight: true },
-        { text: "Diagnóstico Comercial com IA (porte, dores, maturidade)", highlight: true },
-        { text: "Geração de mensagens por IA contextual", highlight: true },
+        { text: "Tudo do plano Atendimento" },
+        { text: "SDR IA para prospecção B2B por nicho e território" },
+        { text: "Diagnóstico Comercial com IA de cada lead" },
+        { text: "Geração de abordagens personalizadas por contexto" },
         { text: "Follow-up Inteligente com cadência adaptativa" },
-        { text: "IA Closer — Copiloto Comercial em conversas" },
+        { text: "Copiloto Comercial IA Closer em conversas" },
         { text: "Fluxos Operacionais avançados com WIIZE AI" },
         { text: "Até 5 números WhatsApp conectados" },
         { text: "Suporte prioritário" },
-        { text: "Operação Comercial com IA ponta a ponta", highlight: true },
+        { text: "Operação Comercial com IA ponta a ponta" },
       ] as PlanFeature[],
       popular: true,
       icon: TrendingUp,
@@ -117,19 +117,19 @@ const mainPlans = {
       price: "157",
       anchorPrice: "392",
       opportunities: "1.000",
-      description: "Inteligência Operacional para sua operação comercial: CRM, chat, campanhas e fluxos com WIIZE AI.",
+      description: "A camada de Inteligência Operacional da WIIZE AI para operar e converter no WhatsApp.",
       features: [
-        { text: "Atendimento Operacional com IA (WhatsApp oficial)" },
+        { text: "Atendimento Operacional com IA no WhatsApp oficial" },
         { text: "CRM Comercial com IA de Intenção de Compra" },
+        { text: "Campanhas Inteligentes em escala" },
         { text: "Fluxos Inteligentes com WIIZE AI" },
-        { text: "Campanhas via Meta API + WhatsApp Cloud" },
-        { text: "Cockpit Executivo e dashboards de operação" },
+        { text: "Cockpit Executivo de operação comercial" },
         { text: "Até 2 números WhatsApp conectados" },
         { text: "Suporte por email" },
-        { text: "Sem SDR IA (prospecção)", disabled: true },
+        { text: "Sem SDR IA (prospecção B2B)", disabled: true },
         { text: "Sem Diagnóstico Comercial com IA", disabled: true },
         { text: "Sem Geração de mensagens por IA", disabled: true },
-        { text: "Sem IA Closer", disabled: true },
+        { text: "Sem Copiloto IA Closer", disabled: true },
       ] as PlanFeature[],
       popular: false,
       icon: Headphones,
@@ -140,18 +140,18 @@ const mainPlans = {
       price: "596",
       anchorPrice: "1.392",
       opportunities: "3.000",
-      description: "A operação comercial completa com IA: SDR IA, Copiloto Comercial e Inteligência de prospecção WIIZE AI.",
+      description: "Operação Comercial completa com WIIZE AI: prospecção, conversão e fechamento em um só lugar.",
       features: [
-        { text: "Tudo do plano Atendimento", highlight: true },
-        { text: "SDR IA — prospecção por nicho e território", highlight: true },
-        { text: "Diagnóstico Comercial com IA (porte, dores, maturidade)", highlight: true },
-        { text: "Geração de mensagens por IA contextual", highlight: true },
+        { text: "Tudo do plano Atendimento" },
+        { text: "SDR IA para prospecção B2B por nicho e território" },
+        { text: "Diagnóstico Comercial com IA de cada lead" },
+        { text: "Geração de abordagens personalizadas por contexto" },
         { text: "Follow-up Inteligente com cadência adaptativa" },
-        { text: "IA Closer — Copiloto Comercial em conversas" },
+        { text: "Copiloto Comercial IA Closer em conversas" },
         { text: "Fluxos Operacionais avançados com WIIZE AI" },
         { text: "Até 5 números WhatsApp conectados" },
         { text: "Suporte prioritário" },
-        { text: "Operação Comercial com IA ponta a ponta", highlight: true },
+        { text: "Operação Comercial com IA ponta a ponta" },
       ] as PlanFeature[],
       popular: true,
       icon: TrendingUp,
@@ -161,17 +161,17 @@ const mainPlans = {
 };
 
 const scalePlan = {
-  name: "Scale",
+  name: "Enterprise",
   key: "scale",
   price: "1.496",
   opportunities: "Personalizado",
-  description: "Para operações de alto volume com suporte e estrutura dedicados.",
+  description: "Infraestrutura operacional de IA sob medida para empresas que escalam a operação comercial com WIIZE AI.",
   features: [
-    { text: "Tudo do Growth IA incluso" },
-    { text: "Estrutura 100% personalizada", isNew: true },
-    { text: "Número de oportunidades sob demanda" },
-    { text: "Fluxos e automações sob medida" },
-    { text: "Onboarding dedicado com especialista" },
+    { text: "Tudo do plano Growth IA" },
+    { text: "Operação Comercial dedicada com WIIZE AI", isNew: true },
+    { text: "Volume de oportunidades sob demanda" },
+    { text: "Fluxos e Inteligências sob medida" },
+    { text: "Onboarding com especialista WIIZE" },
     { text: "Processamento com prioridade máxima" },
     { text: "Números WhatsApp ilimitados" },
     { text: "Gerente de conta exclusivo" },
@@ -465,11 +465,11 @@ export const PricingSection = () => {
                     <span className="font-display font-bold text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
                       <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
                     </span>
-                    <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">BRL</span>
+                    <span className="text-sm font-medium text-muted-foreground">/ mês</span>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1.5">
-                    {isAnnual ? "por usuário/mês, cobrado anualmente" : "por usuário/mês"}
-                  </p>
+                  {isAnnual && (
+                    <p className="text-xs text-muted-foreground/80 mt-1">cobrado anualmente</p>
+                  )}
                   {isAnnual && (
                     <p className="text-xs text-muted-foreground/80 mt-0.5">
                       Total R$ {formatPrice(parsePrice(plan.price) * 12)}/ano
@@ -489,11 +489,7 @@ export const PricingSection = () => {
                         ) : (
                           <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                         )}
-                        <span className={
-                          feature.highlight ? "text-foreground font-semibold" :
-                          feature.subtle ? "text-muted-foreground/60 italic" :
-                          "text-muted-foreground"
-                        }>{feature.text}</span>
+                        <span className="text-muted-foreground">{feature.text}</span>
                       </li>
                     ))}
                   </ul>
@@ -558,7 +554,7 @@ export const PricingSection = () => {
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1.5">
-                  por usuário/mês
+                  Plano personalizado
                 </p>
                 <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
                   Oportunidades sob demanda
@@ -570,7 +566,7 @@ export const PricingSection = () => {
                   {scalePlan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3 text-sm">
                       <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
-                      <span className={i === 0 ? "text-foreground font-semibold" : "text-muted-foreground"}>
+                      <span className="text-muted-foreground">
                         {feature.text}
                       </span>
                     </li>
@@ -645,9 +641,9 @@ export const PricingSection = () => {
                     <span className="font-display text-base md:text-lg font-bold text-foreground">Planos</span>
                   </div>
                   {[
-                    { name: "Atendimento", price: plans[0].price, suffix: "BRL", popular: false },
-                    { name: "Growth IA", price: plans[1].price, suffix: "BRL", popular: true },
-                    { name: "Enterprise", price: "Sob medida", suffix: "", popular: false, custom: true },
+                    { name: "Atendimento", price: plans[0].price, popular: false },
+                    { name: "Growth IA", price: plans[1].price, popular: true },
+                    { name: "Enterprise", price: "Sob medida", popular: false, custom: true },
                   ].map((col) => (
                     <div key={col.name} className="text-center px-1 relative">
                       <div className="flex items-center justify-center gap-2 mb-2">
@@ -661,17 +657,16 @@ export const PricingSection = () => {
                       {col.custom ? (
                         <div>
                           <p className="font-display text-lg md:text-2xl font-bold text-foreground tracking-tight">Sob medida</p>
-                          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Conforme operação</p>
+                          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Plano personalizado</p>
                         </div>
                       ) : (
                         <div>
                           <div className="flex items-baseline justify-center gap-1">
                             <span className="font-display text-xl md:text-3xl font-bold text-foreground tabular-nums tracking-tight">
-                              {col.price}
+                              R$ {col.price}
                             </span>
-                            <span className="text-[10px] md:text-xs font-medium text-muted-foreground">{col.suffix}</span>
+                            <span className="text-[10px] md:text-xs font-medium text-muted-foreground">/ mês</span>
                           </div>
-                          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">por usuário/mês</p>
                         </div>
                       )}
                     </div>
