@@ -943,6 +943,50 @@ const Upgrade = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add-ons step — só monthly + free→paid */}
+      <Dialog open={addOnsOpen} onOpenChange={setAddOnsOpen}>
+        <DialogContent className="max-w-lg bg-card border border-border max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl flex items-center gap-2">
+              <Sparkles className="text-amber-500" size={22} />
+              Turbine seu plano {selectedPlanData?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Adicione expansões opcionais agora. Tudo é cobrado junto, em uma única assinatura mensal.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <OrderBumpsCard
+              planKey={selectedPlanKey || "growth"}
+              billingPeriod="monthly"
+              selection={pendingBumps}
+              onChange={setPendingBumps}
+            />
+
+            <div className="flex items-center justify-between rounded-lg border border-border/40 bg-muted/40 p-3">
+              <span className="text-sm text-muted-foreground">Add-ons mensais</span>
+              <span className="text-base font-bold text-foreground tabular-nums">
+                {(calcBumpsMonthlyCents(pendingBumps) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}/mês
+              </span>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-snug">
+              Você pode pular essa etapa e contratar add-ons depois em <strong>Perfil → Gerenciar add-ons</strong>.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={handleAddOnsContinue}>
+              Pular e ir ao pagamento
+            </Button>
+            <Button variant="hero" onClick={handleAddOnsContinue}>
+              Continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
