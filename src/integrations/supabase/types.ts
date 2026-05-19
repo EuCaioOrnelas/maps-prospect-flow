@@ -2534,6 +2534,53 @@ export type Database = {
         }
         Relationships: []
       }
+      order_bump_events: {
+        Row: {
+          asaas_subscription_id: string | null
+          bump_id: string
+          created_at: string
+          delta: number
+          id: string
+          metadata: Json | null
+          new_quantity: number
+          source: string
+          stripe_subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          asaas_subscription_id?: string | null
+          bump_id: string
+          created_at?: string
+          delta: number
+          id?: string
+          metadata?: Json | null
+          new_quantity?: number
+          source: string
+          stripe_subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          asaas_subscription_id?: string | null
+          bump_id?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          metadata?: Json | null
+          new_quantity?: number
+          source?: string
+          stripe_subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_bump_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_applications: {
         Row: {
           access_email: string | null
@@ -3772,6 +3819,9 @@ export type Database = {
           custom_whatsapp_numbers_limit: number | null
           device_fingerprint: string | null
           email: string
+          extra_contacts_packs: number
+          extra_numbers: number
+          extra_opportunities_packs: number
           fraud_flags: Json | null
           id: string
           is_archived: boolean
@@ -3831,6 +3881,9 @@ export type Database = {
           custom_whatsapp_numbers_limit?: number | null
           device_fingerprint?: string | null
           email: string
+          extra_contacts_packs?: number
+          extra_numbers?: number
+          extra_opportunities_packs?: number
           fraud_flags?: Json | null
           id: string
           is_archived?: boolean
@@ -3890,6 +3943,9 @@ export type Database = {
           custom_whatsapp_numbers_limit?: number | null
           device_fingerprint?: string | null
           email?: string
+          extra_contacts_packs?: number
+          extra_numbers?: number
+          extra_opportunities_packs?: number
           fraud_flags?: Json | null
           id?: string
           is_archived?: boolean
