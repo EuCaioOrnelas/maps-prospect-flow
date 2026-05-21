@@ -269,53 +269,8 @@ export default function SignupChoosePlan() {
                     </div>
                   </div>
 
-                  <Collapsible
-                    open={!!openDetails[plan.key]}
-                    onOpenChange={(o) =>
-                      setOpenDetails((prev) => ({ ...prev, [plan.key]: o }))
-                    }
-                  >
-                    <CollapsibleTrigger asChild>
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") e.stopPropagation();
-                        }}
-                        className="mt-5 w-full flex items-center justify-between gap-2 rounded-lg border border-border bg-card/60 px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/40 transition-colors cursor-pointer"
-                      >
-                        <span className="inline-flex items-center gap-2">
-                          <Sparkles size={14} className="text-primary" />
-                          Ver detalhes do plano
-                        </span>
-                        <ChevronDown
-                          size={16}
-                          className={cn(
-                            "text-muted-foreground transition-transform",
-                            openDetails[plan.key] && "rotate-180",
-                          )}
-                        />
-                      </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <ul className="space-y-3 mt-4 text-sm">
-                        {plan.perks.map((p) => (
-                          <li key={p} className="flex items-start gap-3">
-                            <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
-                            <span className="text-muted-foreground">{p}</span>
-                          </li>
-                        ))}
-                        {plan.limitations.map((l) => (
-                          <li key={l} className="flex items-start gap-3 opacity-50">
-                            <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
-                            <span className="text-muted-foreground">{l}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CollapsibleContent>
-                  </Collapsible>
                 </div>
+
               );
             })}
           </div>
