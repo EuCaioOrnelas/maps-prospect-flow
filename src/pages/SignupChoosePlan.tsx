@@ -335,6 +335,13 @@ export default function SignupChoosePlan() {
           </div>
 
 
+          {/* Tabela comparativa completa - mesma da página de vendas */}
+          {showAllDetails && (
+            <div className="max-w-5xl mx-auto mb-10">
+              <PlanComparisonTable />
+            </div>
+          )}
+
           <p className="text-center text-xs text-muted-foreground mb-8">
             Mais de 5.000 oportunidades por mês?{" "}
             <Link to="/contato" className="text-primary hover:underline">
@@ -369,13 +376,6 @@ export default function SignupChoosePlan() {
               </Link>
             </p>
           </div>
-
-          {/* Tabela comparativa completa - mesma da página de vendas */}
-          {showAllDetails && (
-            <div className="max-w-5xl mx-auto mb-14">
-              <PlanComparisonTable />
-            </div>
-          )}
 
 
 
