@@ -28,6 +28,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import PlanComparisonTable from "@/components/signup/PlanComparisonTable";
+
 
 // Trial libera TODOS os recursos. O plano escolhido define apenas o valor cobrado a partir do 8º dia.
 // Os tópicos abaixo são EXATAMENTE os mesmos da página de vendas (PricingSection).
