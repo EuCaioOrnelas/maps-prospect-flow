@@ -28,6 +28,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import PlanComparisonTable from "@/components/signup/PlanComparisonTable";
+
 
 // Trial libera TODOS os recursos. O plano escolhido define apenas o valor cobrado a partir do 8º dia.
 // Os tópicos abaixo são EXATAMENTE os mesmos da página de vendas (PricingSection).
@@ -269,6 +271,24 @@ export default function SignupChoosePlan() {
                     </div>
                   </div>
 
+                  {/* Perks - aparecem ao clicar em "Ver detalhes completos" */}
+                  {showAllDetails && (
+                    <ul className="mt-5 space-y-3 text-sm">
+                      {plan.perks.map((p) => (
+                        <li key={p} className="flex items-start gap-3">
+                          <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                          <span className="text-muted-foreground">{p}</span>
+                        </li>
+                      ))}
+                      {plan.limitations.map((l) => (
+                        <li key={l} className="flex items-start gap-3 opacity-50">
+                          <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                          <span className="text-muted-foreground">{l}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
                   {/* In-card CTA */}
                   <div className="mt-6" onClick={(e) => e.stopPropagation()}>
                     {isSelected ? (
@@ -291,6 +311,7 @@ export default function SignupChoosePlan() {
                       </button>
                     )}
                   </div>
+
                 </div>
               );
             })}
@@ -349,46 +370,13 @@ export default function SignupChoosePlan() {
             </p>
           </div>
 
-          {/* Tabela detalhada dos planos - abre via link acima */}
+          {/* Tabela comparativa completa - mesma da página de vendas */}
           {showAllDetails && (
             <div className="max-w-5xl mx-auto mb-14">
-              <div className="grid md:grid-cols-2 gap-4">
-                {PLANS.map((plan) => (
-                  <div
-                    key={plan.key}
-                    className="rounded-2xl border border-border/60 bg-card/40 p-6"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-lg">Wiize {plan.name}</h3>
-                      {plan.highlight && (
-                        <span className="bg-primary/10 text-primary text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                          <Flame size={10} /> Mais escolhido
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-4">{plan.desc}</p>
-                    <p className="text-xs font-medium text-primary mb-4">
-                      {plan.usageLabel}
-                    </p>
-                    <ul className="space-y-3 text-sm">
-                      {plan.perks.map((p) => (
-                        <li key={p} className="flex items-start gap-3">
-                          <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
-                          <span className="text-muted-foreground">{p}</span>
-                        </li>
-                      ))}
-                      {plan.limitations.map((l) => (
-                        <li key={l} className="flex items-start gap-3 opacity-50">
-                          <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
-                          <span className="text-muted-foreground">{l}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+              <PlanComparisonTable />
             </div>
           )}
+
 
 
 
