@@ -107,7 +107,8 @@ export default function SignupChoosePlan() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string>("growth");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [openDetails, setOpenDetails] = useState<Record<string, boolean>>({});
+  const [showAllDetails, setShowAllDetails] = useState(false);
+
 
   const continueToSignup = () => {
     sessionStorage.setItem("trial_plan_chosen", selected);
