@@ -227,7 +227,7 @@ export const PricingSection = () => {
       title: "CRM e priorização",
       icon: Users,
       rows: [
-        { label: "Contatos totais no CRM", start: "1.000", growth: "3.000", scale: "Ilimitado" },
+        { label: "Contatos totais no CRM", start: "Até 1.000", growth: "Até 10.000", scale: "Sob medida" },
         { label: "CRM completo com kanban e pipeline visual", start: true, growth: true, scale: true },
         { label: "Score de Intenção de Compra prioriza quem está pronto pra fechar", start: true, growth: true, scale: true },
         { label: "Controle de engajamento por lead em tempo real", start: true, growth: true, scale: true },
@@ -275,7 +275,6 @@ export const PricingSection = () => {
         { label: "Enriquecimento inteligente de empresas e contatos", start: false, growth: true, scale: true },
         { label: "Segmentação por nicho, região e porte da empresa", start: false, growth: true, scale: true },
         { label: "Oportunidades com alto potencial de fechamento", start: false, growth: true, scale: true },
-        { label: "Contatos totais no CRM", start: "Até 1.000", growth: "Até 10.000", scale: "Ilimitado" },
         { label: "Volume de oportunidades captadas / mês", start: "Não incluso", growth: "3.000", scale: "Sob demanda" },
       ],
     },
