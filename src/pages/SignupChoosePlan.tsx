@@ -208,11 +208,19 @@ export default function SignupChoosePlan() {
             {PLANS.map((plan) => {
               const isSelected = selected === plan.key;
               return (
-                <button
+                <div
                   key={plan.key}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelected(plan.key)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelected(plan.key);
+                    }
+                  }}
                   className={cn(
-                    "text-left rounded-2xl border p-6 pt-7 transition-colors duration-200 relative flex flex-col",
+                    "text-left rounded-2xl border p-6 pt-7 transition-colors duration-200 relative flex flex-col cursor-pointer",
                     isSelected
                       ? "border-primary bg-primary/5 ring-2 ring-primary/30 shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.4)]"
                       : "border-border bg-card hover:border-primary/40 hover:bg-primary/[0.02]",
