@@ -269,6 +269,24 @@ export default function SignupChoosePlan() {
                     </div>
                   </div>
 
+                  {/* Perks - aparecem ao clicar em "Ver detalhes completos" */}
+                  {showAllDetails && (
+                    <ul className="mt-5 space-y-3 text-sm">
+                      {plan.perks.map((p) => (
+                        <li key={p} className="flex items-start gap-3">
+                          <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                          <span className="text-muted-foreground">{p}</span>
+                        </li>
+                      ))}
+                      {plan.limitations.map((l) => (
+                        <li key={l} className="flex items-start gap-3 opacity-50">
+                          <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                          <span className="text-muted-foreground">{l}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
                   {/* In-card CTA */}
                   <div className="mt-6" onClick={(e) => e.stopPropagation()}>
                     {isSelected ? (
@@ -291,6 +309,7 @@ export default function SignupChoosePlan() {
                       </button>
                     )}
                   </div>
+
                 </div>
               );
             })}
