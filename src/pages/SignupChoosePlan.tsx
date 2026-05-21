@@ -312,7 +312,7 @@ export default function SignupChoosePlan() {
                       </ul>
                     </CollapsibleContent>
                   </Collapsible>
-                </button>
+                </div>
               );
             })}
           </div>
