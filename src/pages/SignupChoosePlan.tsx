@@ -321,23 +321,13 @@ export default function SignupChoosePlan() {
             </Link>
           </p>
 
-          {/* CTA */}
-          <div className="flex flex-col items-center gap-3 mb-12">
-            <Button
-              size="lg"
-              variant="hero"
-              onClick={continueToSignup}
-              className="w-full max-w-md h-14 text-base group"
-            >
-              Começar meus 7 dias grátis
-              <ArrowRight size={18} className="ml-2 transition-transform group-hover:translate-x-1" />
-            </Button>
+          {/* Reassurance + login */}
+          <div className="flex flex-col items-center gap-3 mb-10">
             <p className="text-xs text-muted-foreground text-center max-w-md flex items-center gap-1.5 justify-center">
               <Lock size={11} /> R$ 0,00 hoje • Cancele quando quiser, em 1 clique
             </p>
 
-            {/* Reassurance card */}
-            <div className="mt-3 w-full max-w-md rounded-xl border border-border/60 bg-card/40 px-4 py-3">
+            <div className="w-full max-w-md rounded-xl border border-border/60 bg-card/40 px-4 py-3">
               <div className="flex items-start gap-2.5">
                 <ShieldCheck size={16} className="text-primary mt-0.5 shrink-0" />
                 <div className="text-left">
@@ -351,7 +341,7 @@ export default function SignupChoosePlan() {
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-muted-foreground mt-1">
               Já tem conta?{" "}
               <Link to="/login" className="text-primary hover:underline font-medium">
                 Fazer login
@@ -359,25 +349,9 @@ export default function SignupChoosePlan() {
             </p>
           </div>
 
-          {/* Comparação detalhada dos planos */}
-          <div className="max-w-5xl mx-auto mb-14">
-            <div className="flex justify-center mb-6">
-              <button
-                onClick={() => setShowAllDetails((v) => !v)}
-                className="inline-flex items-center gap-2 text-sm font-medium text-primary underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-colors"
-              >
-                <Table2 size={15} />
-                {showAllDetails
-                  ? "Ocultar detalhes dos planos"
-                  : "Ver detalhes completos de cada plano"}
-                <ChevronDown
-                  size={15}
-                  className={cn("transition-transform", showAllDetails && "rotate-180")}
-                />
-              </button>
-            </div>
-
-            {showAllDetails && (
+          {/* Tabela detalhada dos planos - abre via link acima */}
+          {showAllDetails && (
+            <div className="max-w-5xl mx-auto mb-14">
               <div className="grid md:grid-cols-2 gap-4">
                 {PLANS.map((plan) => (
                   <div
@@ -399,22 +373,13 @@ export default function SignupChoosePlan() {
                     <ul className="space-y-3 text-sm">
                       {plan.perks.map((p) => (
                         <li key={p} className="flex items-start gap-3">
-                          <Check
-                            size={16}
-                            className="text-primary flex-shrink-0 mt-0.5"
-                          />
+                          <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
                           <span className="text-muted-foreground">{p}</span>
                         </li>
                       ))}
                       {plan.limitations.map((l) => (
-                        <li
-                          key={l}
-                          className="flex items-start gap-3 opacity-50"
-                        >
-                          <X
-                            size={16}
-                            className="text-muted-foreground flex-shrink-0 mt-0.5"
-                          />
+                        <li key={l} className="flex items-start gap-3 opacity-50">
+                          <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
                           <span className="text-muted-foreground">{l}</span>
                         </li>
                       ))}
@@ -422,8 +387,9 @@ export default function SignupChoosePlan() {
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
 
 
           {/* FAQ */}
