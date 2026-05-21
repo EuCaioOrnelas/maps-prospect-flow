@@ -249,7 +249,7 @@ export default function SignupChoosePlan() {
                     </div>
                   </div>
                   {/* Pricing block - foco em gratuidade */}
-                  <div className="mt-6 pb-5 border-b border-border/60">
+                  <div className="mt-6">
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-4xl font-bold tracking-tight text-primary">
                         R$ 0,00
@@ -269,11 +269,50 @@ export default function SignupChoosePlan() {
                     </div>
                   </div>
 
+                  {/* In-card CTA */}
+                  <div className="mt-6" onClick={(e) => e.stopPropagation()}>
+                    {isSelected ? (
+                      <Button
+                        size="lg"
+                        variant="hero"
+                        onClick={continueToSignup}
+                        className="w-full h-12 text-sm group"
+                      >
+                        Começar meus 7 dias grátis
+                        <ArrowRight size={16} className="ml-2 transition-transform group-hover:translate-x-1" />
+                      </Button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setSelected(plan.key)}
+                        className="w-full h-12 rounded-full border border-border bg-card text-sm font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+                      >
+                        Selecionar este plano
+                      </button>
+                    )}
+                  </div>
                 </div>
-
               );
             })}
           </div>
+
+          {/* Ver detalhes link - logo abaixo dos cards */}
+          <div className="flex justify-center mb-8">
+            <button
+              onClick={() => setShowAllDetails((v) => !v)}
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-colors"
+            >
+              <Table2 size={15} />
+              {showAllDetails
+                ? "Ocultar detalhes dos planos"
+                : "Ver detalhes completos de cada plano"}
+              <ChevronDown
+                size={15}
+                className={cn("transition-transform", showAllDetails && "rotate-180")}
+              />
+            </button>
+          </div>
+
 
           <p className="text-center text-xs text-muted-foreground mb-8">
             Mais de 5.000 oportunidades por mês?{" "}
