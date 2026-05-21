@@ -18,7 +18,9 @@ import {
   CalendarClock,
   Flame,
   Rocket,
+  Table2,
 } from "lucide-react";
+
 import { SEO } from "@/components/SEO";
 import { cn } from "@/lib/utils";
 import {
