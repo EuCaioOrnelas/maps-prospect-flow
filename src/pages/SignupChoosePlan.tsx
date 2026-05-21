@@ -320,6 +320,73 @@ export default function SignupChoosePlan() {
             </p>
           </div>
 
+          {/* Comparação detalhada dos planos */}
+          <div className="max-w-5xl mx-auto mb-14">
+            <div className="flex justify-center mb-6">
+              <button
+                onClick={() => setShowAllDetails((v) => !v)}
+                className="inline-flex items-center gap-2 text-sm font-medium text-primary underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-colors"
+              >
+                <Table2 size={15} />
+                {showAllDetails
+                  ? "Ocultar detalhes dos planos"
+                  : "Ver detalhes completos de cada plano"}
+                <ChevronDown
+                  size={15}
+                  className={cn("transition-transform", showAllDetails && "rotate-180")}
+                />
+              </button>
+            </div>
+
+            {showAllDetails && (
+              <div className="grid md:grid-cols-2 gap-4">
+                {PLANS.map((plan) => (
+                  <div
+                    key={plan.key}
+                    className="rounded-2xl border border-border/60 bg-card/40 p-6"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="font-semibold text-lg">Wiize {plan.name}</h3>
+                      {plan.highlight && (
+                        <span className="bg-primary/10 text-primary text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                          <Flame size={10} /> Mais escolhido
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">{plan.desc}</p>
+                    <p className="text-xs font-medium text-primary mb-4">
+                      {plan.usageLabel}
+                    </p>
+                    <ul className="space-y-3 text-sm">
+                      {plan.perks.map((p) => (
+                        <li key={p} className="flex items-start gap-3">
+                          <Check
+                            size={16}
+                            className="text-primary flex-shrink-0 mt-0.5"
+                          />
+                          <span className="text-muted-foreground">{p}</span>
+                        </li>
+                      ))}
+                      {plan.limitations.map((l) => (
+                        <li
+                          key={l}
+                          className="flex items-start gap-3 opacity-50"
+                        >
+                          <X
+                            size={16}
+                            className="text-muted-foreground flex-shrink-0 mt-0.5"
+                          />
+                          <span className="text-muted-foreground">{l}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+
           {/* FAQ */}
           <div className="max-w-2xl mx-auto mb-12">
             <h2 className="font-display text-2xl font-bold text-center mb-2">
