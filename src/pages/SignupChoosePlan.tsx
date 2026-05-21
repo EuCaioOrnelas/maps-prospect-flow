@@ -28,20 +28,23 @@ import {
 } from "@/components/ui/collapsible";
 
 // Trial libera TODOS os recursos. O plano escolhido define apenas o valor cobrado a partir do 8º dia.
+// Os tópicos abaixo são EXATAMENTE os mesmos da página de vendas (PricingSection).
 const PLANS = [
   {
     key: "start",
     name: "Atendimento",
     monthly: 196,
-    opportunities: "1.000", usageLabel: "Até 1.000 contatos no CRM",
+    opportunities: "1.000",
+    usageLabel: "Até 1.000 contatos no CRM",
     desc: "Para organizar atendimento, CRM e campanhas no WhatsApp com IA.",
     highlight: false,
     perks: [
-      "Atendimento contínuo com IA operacional (WhatsApp oficial)",
+      "Chat ao vivo centralizado para todos os números",
+      "Atendimento contínuo com IA operacional no WhatsApp oficial",
       "CRM Comercial com IA de Intenção de Compra",
-      "Fluxos Inteligentes com Wiize AI",
       "Campanhas inteligentes em escala via Meta API",
-      "Cockpit Executivo e dashboards de operação",
+      "Fluxos Inteligentes com Wiize AI",
+      "Cockpit Executivo de operação comercial",
       "Integração com Google Calendar (agendamento automático)",
       "Integração com Google Sheets (entrada e saída de dados)",
       "Integração com Gmail (envio de e-mails pelo fluxo)",
@@ -54,19 +57,22 @@ const PLANS = [
     key: "growth",
     name: "Growth IA",
     monthly: 696,
-    opportunities: "3.000", usageLabel: "Até 3.000 oportunidades qualificadas",
+    opportunities: "3.000",
+    usageLabel: "Até 10.000 contatos no CRM",
     desc: "Para prospectar, analisar, qualificar e converter oportunidades B2B com Wiize AI.",
     highlight: true,
     perks: [
       "Tudo do plano Atendimento",
-      "SDR IA — prospecção por nicho e território",
-      "Diagnóstico Comercial com IA (porte, dores, maturidade)",
+      "SDR IA para prospecção B2B por nicho e território",
+      "Até 3.000 oportunidades qualificadas / mês",
+      "Diagnóstico Comercial com IA de cada lead",
       "Geração de abordagens personalizadas por contexto",
       "Follow-up inteligente com contexto comercial",
-      "Copiloto IA Closer em conversas",
+      "Copiloto Comercial IA Closer em conversas",
       "Fluxos Operacionais com Wiize AI",
       "Até 5 números WhatsApp conectados",
       "Suporte prioritário",
+      "Operar com Wiize AI ponta a ponta",
     ],
     limitations: [],
   },
@@ -99,6 +105,7 @@ export default function SignupChoosePlan() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string>("growth");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [openDetails, setOpenDetails] = useState<Record<string, boolean>>({});
 
   const continueToSignup = () => {
     sessionStorage.setItem("trial_plan_chosen", selected);
@@ -201,11 +208,19 @@ export default function SignupChoosePlan() {
             {PLANS.map((plan) => {
               const isSelected = selected === plan.key;
               return (
-                <button
+                <div
                   key={plan.key}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelected(plan.key)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelected(plan.key);
+                    }
+                  }}
                   className={cn(
-                    "text-left rounded-2xl border p-6 pt-7 transition-colors duration-200 relative flex flex-col",
+                    "text-left rounded-2xl border p-6 pt-7 transition-colors duration-200 relative flex flex-col cursor-pointer",
                     isSelected
                       ? "border-primary bg-primary/5 ring-2 ring-primary/30 shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.4)]"
                       : "border-border bg-card hover:border-primary/40 hover:bg-primary/[0.02]",
@@ -251,21 +266,53 @@ export default function SignupChoosePlan() {
                     </div>
                   </div>
 
-                  <ul className="space-y-3 mt-5 text-sm">
-                    {plan.perks.map((p) => (
-                      <li key={p} className="flex items-start gap-3">
-                        <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
-                        <span className="text-muted-foreground">{p}</span>
-                      </li>
-                    ))}
-                    {plan.limitations.map((l) => (
-                      <li key={l} className="flex items-start gap-3 opacity-50">
-                        <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
-                        <span className="text-muted-foreground">{l}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </button>
+                  <Collapsible
+                    open={!!openDetails[plan.key]}
+                    onOpenChange={(o) =>
+                      setOpenDetails((prev) => ({ ...prev, [plan.key]: o }))
+                    }
+                  >
+                    <CollapsibleTrigger asChild>
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") e.stopPropagation();
+                        }}
+                        className="mt-5 w-full flex items-center justify-between gap-2 rounded-lg border border-border bg-card/60 px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/40 transition-colors cursor-pointer"
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <Sparkles size={14} className="text-primary" />
+                          Ver detalhes do plano
+                        </span>
+                        <ChevronDown
+                          size={16}
+                          className={cn(
+                            "text-muted-foreground transition-transform",
+                            openDetails[plan.key] && "rotate-180",
+                          )}
+                        />
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <ul className="space-y-3 mt-4 text-sm">
+                        {plan.perks.map((p) => (
+                          <li key={p} className="flex items-start gap-3">
+                            <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                            <span className="text-muted-foreground">{p}</span>
+                          </li>
+                        ))}
+                        {plan.limitations.map((l) => (
+                          <li key={l} className="flex items-start gap-3 opacity-50">
+                            <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                            <span className="text-muted-foreground">{l}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
               );
             })}
           </div>
