@@ -5,6 +5,7 @@ import { Loader2, Sparkles, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   emptyBumpSelection,
   profileToBumpSelection,
