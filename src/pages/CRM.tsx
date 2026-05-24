@@ -388,17 +388,12 @@ export default function CRM() {
               <CRMMetrics stages={stages} leads={filteredLeads} />
 
               {hasContactLimit && (
-                <div className={`mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2.5 rounded-lg border ${contactsAtLimit ? 'border-destructive/40 bg-destructive/10' : contactsNearLimit ? 'border-amber-500/40 bg-amber-500/10' : 'border-border bg-muted/30'}`}>
+                <div className={`mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 rounded-xl border ${contactsAtLimit ? 'border-destructive/40 bg-destructive/10' : contactsNearLimit ? 'border-amber-500/40 bg-amber-500/10' : 'border-border/50 bg-card'}`}>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs sm:text-sm text-foreground">
-                    <span>Contatos no CRM:</span>
+                    <span className="text-muted-foreground">Contatos no CRM:</span>
                     <strong className="tabular-nums">{(Number(contactCount) || 0).toLocaleString('pt-BR')}</strong>
                     <span className="text-muted-foreground">/</span>
                     <strong className="tabular-nums">{Number.isFinite(contactLimit) ? contactLimit.toLocaleString('pt-BR') : '∞'}</strong>
-                    {(() => {
-                      const profile = (whatsappNumbers as any) ? null : null; // not used
-                      // baseLimit and extras come from the hook already
-                      return null;
-                    })()}
                     <span className="text-[10px] text-muted-foreground hidden md:inline">
                       ({((Number(contactCount) || 0) / Math.max(Number(contactLimit) || 1, 1) * 100).toFixed(0)}% usado)
                     </span>
@@ -410,8 +405,13 @@ export default function CRM() {
                         Expandir CRM
                       </Button>
                     ) : (
-                      <Button size="sm" variant="ghost" onClick={() => navigate('/upgrade')} className="h-7 text-xs text-muted-foreground hover:text-foreground">
-                        + Comprar +1.000
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => navigate('/upgrade')}
+                        className="h-7 text-xs text-muted-foreground hover:text-foreground border border-border/40 hover:border-border bg-transparent hover:bg-muted/40 font-normal"
+                      >
+                        Comprar mais
                       </Button>
                     )}
                   </div>

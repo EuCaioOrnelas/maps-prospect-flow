@@ -889,6 +889,15 @@ serve(async (req) => {
                 previousPlan: profile.plan
               });
 
+              // Safety net: reconcilia bumps (extra_*) sempre que a subscription
+              // for atualizada. Cobre o caso de compra de add-on via Stripe que
+              // não passou pelo edge function update-subscription-bumps.
+              try {
+                await reconcileBumpsFromSubscription(stripe, supabaseClient, subscription.id, "webhook_grant");
+              } catch (e) {
+                logStep("reconcileBumpsFromSubscription failed (subscription.updated)", { error: String(e) });
+              }
+
               // Log subscription event with transition type
               const eventType = transitionType === "downgrade" 
                 ? "subscription_downgrade" 

@@ -32,12 +32,16 @@ interface AppHeaderProps {
 export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
   const { signOut, trialDaysRemaining, isTrialing } = useAuth();
   const trialCancelled = profile?.trial_auto_charge_cancelled === true;
-  const isUrgent = isTrialing && trialDaysRemaining <= 2;
-  const trialToneClass = trialCancelled
-    ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25 hover:bg-primary/15 transition-colors cursor-pointer"
-    : isUrgent
-      ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/15 border border-destructive/40 hover:bg-destructive/25 transition-colors cursor-pointer"
-      : "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/15 border border-warning/30 hover:bg-warning/25 transition-colors cursor-pointer";
+  const isPaidPlan = !!profile?.plan && profile.plan !== 'free';
+  // Para quem pagou: não é "trial grátis", e sim janela de garantia/teste pago.
+  const isUrgent = isTrialing && trialDaysRemaining <= 2 && !isPaidPlan;
+  const trialToneClass = isPaidPlan
+    ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/15 transition-colors cursor-pointer"
+    : trialCancelled
+      ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25 hover:bg-primary/15 transition-colors cursor-pointer"
+      : isUrgent
+        ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/15 border border-destructive/40 hover:bg-destructive/25 transition-colors cursor-pointer"
+        : "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/15 border border-warning/30 hover:bg-warning/25 transition-colors cursor-pointer";
 
   const getPlanName = (plan: string) => {
     switch (plan) {
@@ -78,30 +82,32 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
               to="/profile"
               className={trialToneClass}
               title={
-                trialCancelled
-                  ? "Sua cobrança automática já foi cancelada e o teste segue ativo até o fim do período"
-                  : isUrgent
-                    ? "Seu teste está acabando — clique para cancelar a ativação automática se não quiser continuar"
-                    : "Você está no teste gratuito — clique para gerenciar"
+                isPaidPlan
+                  ? "Você tem 7 dias de garantia desde a compra — clique para gerenciar sua assinatura"
+                  : trialCancelled
+                    ? "Sua cobrança automática já foi cancelada e o teste segue ativo até o fim do período"
+                    : isUrgent
+                      ? "Seu teste está acabando — clique para cancelar a ativação automática se não quiser continuar"
+                      : "Você está no teste gratuito — clique para gerenciar"
               }
             >
               <Clock
                 size={14}
-                className={trialCancelled ? "text-primary" : isUrgent ? "text-destructive animate-pulse" : "text-warning animate-pulse"}
+                className={isPaidPlan ? "text-emerald-600" : trialCancelled ? "text-primary" : isUrgent ? "text-destructive animate-pulse" : "text-warning animate-pulse"}
               />
               <span
-                className={trialCancelled ? "text-xs font-semibold text-primary" : isUrgent ? "text-xs font-semibold text-destructive" : "text-xs font-semibold text-warning"}
+                className={isPaidPlan ? "text-xs font-semibold text-emerald-600" : trialCancelled ? "text-xs font-semibold text-primary" : isUrgent ? "text-xs font-semibold text-destructive" : "text-xs font-semibold text-warning"}
               >
                 {trialDaysRemaining <= 0
-                  ? "Teste expirado"
+                  ? (isPaidPlan ? "Garantia encerrada" : "Teste expirado")
                   : trialDaysRemaining === 1
-                    ? "Vence amanhã"
-                    : `${trialDaysRemaining}d restantes`}
+                    ? (isPaidPlan ? "Garantia: 1 dia" : "Vence amanhã")
+                    : `${trialDaysRemaining}d ${isPaidPlan ? "de garantia" : "restantes"}`}
               </span>
               <span
-                className={trialCancelled ? "text-[10px] text-primary/80 hidden sm:inline" : isUrgent ? "text-[10px] text-destructive/80 hidden sm:inline" : "text-[10px] text-warning/70 hidden sm:inline"}
+                className={isPaidPlan ? "text-[10px] text-emerald-700/80 dark:text-emerald-400/80 hidden sm:inline" : trialCancelled ? "text-[10px] text-primary/80 hidden sm:inline" : isUrgent ? "text-[10px] text-destructive/80 hidden sm:inline" : "text-[10px] text-warning/70 hidden sm:inline"}
               >
-                · {trialCancelled ? "Cobrança cancelada" : isUrgent ? "cancele se não quiser continuar" : "Teste grátis"}
+                · {isPaidPlan ? "Reembolso garantido" : trialCancelled ? "Cobrança cancelada" : isUrgent ? "cancele se não quiser continuar" : "Teste grátis"}
               </span>
             </Link>
           )}
