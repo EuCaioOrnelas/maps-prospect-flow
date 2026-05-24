@@ -30,8 +30,9 @@ function StatusBadge({ status }: { status: string }) {
 
 export function OpportunityRadar({ radarLeads }: OpportunityRadarProps) {
   const navigate = useNavigate();
+  const safeLeads = Array.isArray(radarLeads) ? radarLeads : [];
 
-  if (radarLeads.length === 0) {
+  if (safeLeads.length === 0) {
     return (
       <Card className="border-border/40 rounded-2xl">
         <CardHeader className="pb-3">
@@ -77,7 +78,7 @@ export function OpportunityRadar({ radarLeads }: OpportunityRadarProps) {
               </tr>
             </thead>
             <tbody>
-              {radarLeads.map((lead) => (
+              {safeLeads.map((lead) => (
                 <tr
                   key={lead.id}
                   className="border-b border-border/20 last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"

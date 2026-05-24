@@ -17,7 +17,8 @@ const HINTS: Record<string, string> = {
 const fmtN = (n: number) => (Number(n) || 0).toLocaleString("pt-BR");
 
 export function OperationalFunnel({ funnel }: OperationalFunnelProps) {
-  const empty = !funnel.length || funnel.every((s) => s.value === 0);
+  const safeFunnel = Array.isArray(funnel) ? funnel : [];
+  const empty = !safeFunnel.length || safeFunnel.every((s) => (s?.value || 0) === 0);
 
   return (
     <Card className="border-border/40 rounded-2xl h-full flex flex-col">
