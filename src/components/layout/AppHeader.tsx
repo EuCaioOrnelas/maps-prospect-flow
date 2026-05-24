@@ -32,12 +32,16 @@ interface AppHeaderProps {
 export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
   const { signOut, trialDaysRemaining, isTrialing } = useAuth();
   const trialCancelled = profile?.trial_auto_charge_cancelled === true;
-  const isUrgent = isTrialing && trialDaysRemaining <= 2;
-  const trialToneClass = trialCancelled
-    ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25 hover:bg-primary/15 transition-colors cursor-pointer"
-    : isUrgent
-      ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/15 border border-destructive/40 hover:bg-destructive/25 transition-colors cursor-pointer"
-      : "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/15 border border-warning/30 hover:bg-warning/25 transition-colors cursor-pointer";
+  const isPaidPlan = !!profile?.plan && profile.plan !== 'free';
+  // Para quem pagou: não é "trial grátis", e sim janela de garantia/teste pago.
+  const isUrgent = isTrialing && trialDaysRemaining <= 2 && !isPaidPlan;
+  const trialToneClass = isPaidPlan
+    ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/15 transition-colors cursor-pointer"
+    : trialCancelled
+      ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25 hover:bg-primary/15 transition-colors cursor-pointer"
+      : isUrgent
+        ? "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/15 border border-destructive/40 hover:bg-destructive/25 transition-colors cursor-pointer"
+        : "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/15 border border-warning/30 hover:bg-warning/25 transition-colors cursor-pointer";
 
   const getPlanName = (plan: string) => {
     switch (plan) {
