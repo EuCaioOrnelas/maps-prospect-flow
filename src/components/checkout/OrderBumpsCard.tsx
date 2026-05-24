@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   getBumpsForPlan,
   bumpsAllowedForCycle,
-  calcBumpsMonthlyCents,
   type OrderBumpSelection,
   type OrderBumpId,
 } from "@/config/orderBumps";
@@ -56,7 +55,6 @@ export function OrderBumpsCard({ planKey, billingPeriod, selection, onChange, va
     onChange({ ...selection, [id]: safe });
   };
 
-  const totalMonthly = calcBumpsMonthlyCents(selection);
   const isModal = variant === "modal";
 
   return (
@@ -172,12 +170,12 @@ export function OrderBumpsCard({ planKey, billingPeriod, selection, onChange, va
                     className="overflow-hidden"
                   >
                     <div className="px-3 pb-3">
-                      <div className="flex items-center justify-between gap-2 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/15 px-3 py-2">
+                      <div className="flex items-center justify-between gap-2 rounded-lg bg-muted/40 border border-border/40 px-3 py-2">
                         <span className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-                          <Check className="h-3 w-3 text-emerald-600" strokeWidth={3} />
+                          <Check className="h-3 w-3 text-muted-foreground" strokeWidth={2.5} />
                           Adicionado à sua assinatura
                         </span>
-                        <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
+                        <span className="text-[11px] font-semibold text-foreground tabular-nums">
                           +{formatCurrency(monthlyTotal)}/mês
                         </span>
                       </div>
@@ -189,19 +187,6 @@ export function OrderBumpsCard({ planKey, billingPeriod, selection, onChange, va
           );
         })}
       </div>
-
-      {/* Total footer */}
-      {totalMonthly > 0 && (
-        <div className={cn("mt-3", isModal ? "px-5 pb-5" : "")}>
-          <div className="flex items-center justify-between rounded-xl bg-muted/40 border border-border/40 px-3 py-2.5">
-            <span className="text-xs text-muted-foreground">Total dos extras</span>
-            <span className="text-sm font-bold text-foreground tabular-nums">
-              {formatCurrency(totalMonthly)}
-              <span className="text-xs text-muted-foreground font-medium">/mês</span>
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
