@@ -143,7 +143,7 @@ export function DashboardHero({
                 <span>
                   <strong className="text-foreground">{fmtInt(contactCount)}</strong> contatos no CRM
                   {hasContactLimit && (
-                    <span className="text-muted-foreground"> / {contactLimit.toLocaleString('pt-BR')}</span>
+                    <span className="text-muted-foreground"> / {(Number(contactLimit) || 0).toLocaleString('pt-BR')}</span>
                   )}
                 </span>
               )}
