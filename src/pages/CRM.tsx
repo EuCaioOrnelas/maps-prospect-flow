@@ -388,18 +388,36 @@ export default function CRM() {
               <CRMMetrics stages={stages} leads={filteredLeads} />
 
               {hasContactLimit && (
-                <div className={`mt-3 flex items-center justify-between gap-3 px-3 py-2 rounded-lg border ${contactsAtLimit ? 'border-destructive/40 bg-destructive/10' : contactsNearLimit ? 'border-amber-500/40 bg-amber-500/10' : 'border-border bg-muted/30'}`}>
-                  <p className="text-xs sm:text-sm text-foreground">
-                    Contatos no CRM: <strong>{contactCount.toLocaleString('pt-BR')}</strong> / {contactLimit.toLocaleString('pt-BR')}
+                <div className={`mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2.5 rounded-lg border ${contactsAtLimit ? 'border-destructive/40 bg-destructive/10' : contactsNearLimit ? 'border-amber-500/40 bg-amber-500/10' : 'border-border bg-muted/30'}`}>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs sm:text-sm text-foreground">
+                    <span>Contatos no CRM:</span>
+                    <strong className="tabular-nums">{(Number(contactCount) || 0).toLocaleString('pt-BR')}</strong>
+                    <span className="text-muted-foreground">/</span>
+                    <strong className="tabular-nums">{Number.isFinite(contactLimit) ? contactLimit.toLocaleString('pt-BR') : '∞'}</strong>
+                    {(() => {
+                      const profile = (whatsappNumbers as any) ? null : null; // not used
+                      // baseLimit and extras come from the hook already
+                      return null;
+                    })()}
+                    <span className="text-[10px] text-muted-foreground hidden md:inline">
+                      ({((Number(contactCount) || 0) / Math.max(Number(contactLimit) || 1, 1) * 100).toFixed(0)}% usado)
+                    </span>
                     {contactsAtLimit && <span className="ml-2 text-destructive font-medium">Limite atingido</span>}
-                  </p>
-                  {(contactsAtLimit || contactsNearLimit) && (
-                    <Button size="sm" variant={contactsAtLimit ? 'default' : 'outline'} onClick={() => navigate('/upgrade')} className="h-7 text-xs">
-                      Fazer upgrade
-                    </Button>
-                  )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {(contactsAtLimit || contactsNearLimit) ? (
+                      <Button size="sm" variant={contactsAtLimit ? 'default' : 'outline'} onClick={() => navigate('/upgrade')} className="h-7 text-xs">
+                        Expandir CRM
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="ghost" onClick={() => navigate('/upgrade')} className="h-7 text-xs text-muted-foreground hover:text-foreground">
+                        + Comprar +1.000
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
+
 
               <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <div className="flex-1 min-w-0">

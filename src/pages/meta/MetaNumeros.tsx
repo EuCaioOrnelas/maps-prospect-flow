@@ -183,25 +183,43 @@ export default function MetaNumeros() {
         title="Números & WABA"
         description="Conecte, edite e gerencie os tokens dos seus números oficiais da Meta."
         actions={
-          <Button
-            size="sm"
-            onClick={() => {
-              if (reachedConnectionLimit) {
-                toast({
-                  title: "Limite de números atingido",
-                  description: `Seu plano permite ${basePlanNumbers} ${basePlanNumbers === 1 ? "número" : "números"}${extraNumbers > 0 ? ` + ${extraNumbers} da Expansão de Atendimento` : ""}. Adicione a Expansão de Atendimento (+1 número) ou faça upgrade.`,
-                  variant: "destructive",
-                });
-                return;
-              }
-              setShowAddNumber(true);
-            }}
-            disabled={reachedConnectionLimit}
-          >
-            <Plus size={14} className="mr-1.5" /> Adicionar número
-          </Button>
+          <div className="flex items-center gap-3">
+            <span
+              className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${
+                reachedConnectionLimit
+                  ? "border-destructive/40 bg-destructive/10 text-destructive"
+                  : "border-border bg-muted/40 text-muted-foreground"
+              }`}
+              title={`${basePlanNumbers} do plano ${userPlan}${extraNumbers > 0 ? ` + ${extraNumbers} da Expansão` : ""}`}
+            >
+              <strong className="text-foreground tabular-nums">
+                {String(connections.length).padStart(2, "0")}
+              </strong>
+              /
+              <span className="tabular-nums">{String(maxMetaConnections).padStart(2, "0")}</span>
+              <span className="opacity-70">números</span>
+            </span>
+            <Button
+              size="sm"
+              onClick={() => {
+                if (reachedConnectionLimit) {
+                  toast({
+                    title: "Limite de números atingido",
+                    description: `Seu plano permite ${basePlanNumbers} ${basePlanNumbers === 1 ? "número" : "números"}${extraNumbers > 0 ? ` + ${extraNumbers} da Expansão de Atendimento` : ""}. Adicione a Expansão de Atendimento (+1 número) ou faça upgrade.`,
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                setShowAddNumber(true);
+              }}
+              disabled={reachedConnectionLimit}
+            >
+              <Plus size={14} className="mr-1.5" /> Adicionar número
+            </Button>
+          </div>
         }
       />
+
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
