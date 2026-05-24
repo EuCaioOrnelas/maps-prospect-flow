@@ -213,14 +213,14 @@ function CheckoutCardInner() {
   const totalPrice = planPrice + bumpsCycleCents;
   const installmentValue = totalPrice;
 
-  // Calcula desconto da primeira cobrança (apenas referência visual no resumo) — cupom só sobre o plano
+  // Calcula desconto da primeira cobrança sobre o pacote completo: plano + order bumps.
   const discountCents = (() => {
     if (!appliedCoupon) return 0;
     if (appliedCoupon.percentOff) {
-      return Math.round((planPrice * appliedCoupon.percentOff) / 100);
+      return Math.min(totalPrice, Math.round((totalPrice * appliedCoupon.percentOff) / 100));
     }
     if (appliedCoupon.amountOff) {
-      return Math.min(appliedCoupon.amountOff, planPrice);
+      return Math.min(appliedCoupon.amountOff, totalPrice);
     }
     return 0;
   })();
@@ -507,7 +507,7 @@ function CheckoutCardInner() {
                 <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
                   <p className="text-[11px] text-muted-foreground">
                     {(() => {
-                      const fullPrice = isAnnual ? planConfig.annual : planConfig.monthly;
+                      const fullPrice = totalPrice;
                       const chargedNow = totalAfterDiscount;
                       const periodLabel = isAnnual ? "anual" : "mensal";
                       const renewLabel = isAnnual ? "renovação automática anual" : "renovação automática todo mês";
