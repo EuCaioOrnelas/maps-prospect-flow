@@ -38,6 +38,11 @@ const CheckoutSuccess = () => {
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
+  // Garante que a página abra no topo (mostrando "Obrigado pela compra")
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
+
   // If user is already logged in, redirect to dashboard
   useEffect(() => {
     if (!authLoading && user) {
