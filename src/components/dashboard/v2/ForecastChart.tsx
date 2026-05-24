@@ -35,7 +35,9 @@ export function ForecastChart({
   scoreSales,
   scoreBuckets,
 }: ForecastChartProps) {
-  const totalSales = opportunitySales + scoreSales;
+  const safeBuckets = Array.isArray(scoreBuckets) ? scoreBuckets : [];
+  const totalSales = (Number(opportunitySales) || 0) + (Number(scoreSales) || 0);
+
 
   const conservative = Math.round(totalSales * 0.5 * averageTicket);
   const realistic = Math.round(totalSales * averageTicket);
@@ -66,7 +68,7 @@ export function ForecastChart({
                 <p className="font-semibold">Como calculamos o forecast:</p>
                 <p><strong>Oportunidades:</strong> {opportunitySales} venda(s) estimada(s) (1% de {leadsProspected} leads)</p>
                 <p><strong>Score:</strong> {scoreSales} venda(s) estimada(s) por engajamento</p>
-                {scoreBuckets.filter(b => b.count > 0).map(b => (
+                {safeBuckets.filter(b => b.count > 0).map(b => (
                   <p key={b.label} className="pl-2 text-muted-foreground">• {b.count} {b.label}: ~{b.estimatedSales} vendas</p>
                 ))}
                 <p><strong>Ticket médio:</strong> R$ {fmt(averageTicket)}</p>

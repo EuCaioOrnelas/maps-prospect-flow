@@ -17,7 +17,8 @@ const HINTS: Record<string, string> = {
 const fmtN = (n: number) => (Number(n) || 0).toLocaleString("pt-BR");
 
 export function OperationalFunnel({ funnel }: OperationalFunnelProps) {
-  const empty = !funnel.length || funnel.every((s) => s.value === 0);
+  const safeFunnel = Array.isArray(funnel) ? funnel : [];
+  const empty = !safeFunnel.length || safeFunnel.every((s) => (s?.value || 0) === 0);
 
   return (
     <Card className="border-border/40 rounded-2xl h-full flex flex-col">
@@ -35,12 +36,12 @@ export function OperationalFunnel({ funnel }: OperationalFunnelProps) {
           <TooltipProvider delayDuration={150}>
             <div className="flex flex-col items-center gap-2.5">
               {(() => {
-                const base = funnel[0]?.value || 1;
-                const nonZero = funnel.filter((s) => s.value > 0).map((s) => s.value);
+                const base = safeFunnel[0]?.value || 1;
+                const nonZero = safeFunnel.filter((s) => (s?.value || 0) > 0).map((s) => s.value);
                 const minVal = nonZero.length ? Math.min(...nonZero) : 1;
                 const MIN_PCT = 16;
                 const range = Math.max(base - minVal, 1);
-                return funnel.map((s) => {
+                return safeFunnel.map((s) => {
                   const convPct = (s.value / base) * 100;
                   let widthPct: number;
                   if (s.value <= 0) widthPct = MIN_PCT;
