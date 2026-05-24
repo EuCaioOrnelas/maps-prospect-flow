@@ -55,6 +55,8 @@ interface BumpsInput {
   opportunities?: number;
 }
 
+type StripeDiscount = NonNullable<Stripe.SubscriptionCreateParams["discounts"]>[number];
+
 const log = (step: string, details?: unknown) => {
   console.log(`[CREATE-STRIPE-SUB] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
@@ -158,11 +160,24 @@ serve(async (req) => {
       log("Customer created", { customerId });
     }
 
-    // 3. Monta items (plano + bumps)
-    const items: Stripe.SubscriptionCreateParams.Item[] = [{ price: priceId }];
+    const subscriptionDiscounts: StripeDiscount[] | undefined = promotionCodeId
+      ? [{ promotion_code: String(promotionCodeId) }]
+      : couponId
+        ? [{ coupon: String(couponId) }]
+        : undefined;
+
+    // 3. Monta items (plano + bumps). O desconto também é anexado item a item
+    // para evitar que cupons restritos ao produto do plano ignorem os order bumps.
+    const items: Stripe.SubscriptionCreateParams.Item[] = [
+      { price: priceId, ...(subscriptionDiscounts ? { discounts: subscriptionDiscounts } : {}) },
+    ];
     for (const [id, qty] of Object.entries(cleanBumps)) {
       if (qty > 0) {
-        items.push({ price: BUMP_CATALOG[id].priceId, quantity: qty });
+        items.push({
+          price: BUMP_CATALOG[id].priceId,
+          quantity: qty,
+          ...(subscriptionDiscounts ? { discounts: subscriptionDiscounts } : {}),
+        });
       }
     }
 
@@ -186,12 +201,6 @@ serve(async (req) => {
       },
       expand: ["latest_invoice.payment_intent"],
     };
-
-    if (promotionCodeId) {
-      subscriptionParams.discounts = [{ promotion_code: String(promotionCodeId) }];
-    } else if (couponId) {
-      subscriptionParams.discounts = [{ coupon: String(couponId) }];
-    }
 
     const subscription = await stripe.subscriptions.create(subscriptionParams);
     log("Subscription created", { id: subscription.id, status: subscription.status });
