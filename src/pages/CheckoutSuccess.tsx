@@ -47,6 +47,16 @@ const CheckoutSuccess = () => {
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!acceptedTerms) {
+      toast({
+        title: "Aceite os termos",
+        description: "Você precisa aceitar os Termos de Uso e a Política de Privacidade para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
