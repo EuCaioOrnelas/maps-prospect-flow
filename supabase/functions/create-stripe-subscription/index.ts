@@ -199,8 +199,23 @@ serve(async (req) => {
     const invoice = subscription.latest_invoice as Stripe.Invoice;
     const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent | null;
 
-    // 4. Persiste bumps em profiles (somente se tiver userId; se não, webhook
-    // de invoice.payment_succeeded vai reconciliar depois).
+    // Captura dados do cartão para o signup posterior
+    let cardLast4 = "";
+    let cardBrand = "CARD";
+    try {
+      const pm = await stripe.paymentMethods.retrieve(paymentMethodId);
+      cardLast4 = pm.card?.last4 || "";
+      cardBrand = (pm.card?.brand || "card").toUpperCase();
+    } catch (e) {
+      log("Failed to retrieve PM details", { error: String(e) });
+    }
+
+    const periodEnd = subscription.current_period_end
+      ? new Date(subscription.current_period_end * 1000).toISOString()
+      : new Date(Date.now() + (isAnnual ? 365 : 30) * 24 * 60 * 60 * 1000).toISOString();
+
+    // 4. Persiste bumps em profiles (somente se já tiver userId).
+    // Se não tiver, o trigger handle_new_user vai aplicar a partir da metadata do signup.
     if (userId) {
       const updates: Record<string, number> = {};
       for (const [id, qty] of Object.entries(cleanBumps)) {
@@ -212,7 +227,6 @@ serve(async (req) => {
         .eq("id", userId);
       if (upErr) log("Failed to persist extra_* in profile", { error: upErr.message });
 
-      // Auditoria
       for (const [id, qty] of Object.entries(cleanBumps)) {
         if (qty > 0) {
           await supabase.from("order_bump_events").insert({
@@ -222,13 +236,12 @@ serve(async (req) => {
             new_quantity: qty,
             source: "checkout",
             stripe_subscription_id: subscription.id,
-            metadata: { plan_key: planKey, billing: "monthly" },
+            metadata: { plan_key: planKey, billing: isAnnual ? "annual" : "monthly" },
           });
         }
       }
     }
 
-    // 5. Track checkout lead
     try {
       await supabase.from("checkout_leads").insert({
         user_id: userId || null,
@@ -255,8 +268,16 @@ serve(async (req) => {
         subscriptionId: subscription.id,
         customerId,
         clientSecret: paymentIntent?.client_secret || null,
+        paymentIntentId: paymentIntent?.id || null,
         status: subscription.status,
-        requiresAction: paymentIntent?.status === "requires_action",
+        paymentIntentStatus: paymentIntent?.status || null,
+        requiresAction: paymentIntent?.status === "requires_action" || paymentIntent?.status === "requires_confirmation",
+        cardLast4,
+        cardBrand,
+        periodEnd,
+        billingPeriod: isAnnual ? "annual" : "monthly",
+        planKey,
+        bumps: cleanBumps,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
