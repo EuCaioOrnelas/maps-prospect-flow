@@ -28,6 +28,7 @@ function formatCurrency(cents: number) {
 }
 
 export function ManageAddonsDialog({ open, onOpenChange, planKey, profile, onSaved }: Props) {
+  const { refreshProfile } = useAuth();
   const [selection, setSelection] = useState<OrderBumpSelection>(emptyBumpSelection());
   const [saving, setSaving] = useState(false);
   const initial = profileToBumpSelection(profile);
@@ -50,6 +51,9 @@ export function ManageAddonsDialog({ open, onOpenChange, planKey, profile, onSav
       });
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
+      // Garante que o profile (extra_*) seja refeito do banco — fonte da verdade
+      // para os limites mostrados no header/CRM.
+      try { await refreshProfile(); } catch {}
       toast({
         title: "Add-ons atualizados!",
         description: "Sua assinatura foi ajustada com sucesso.",
