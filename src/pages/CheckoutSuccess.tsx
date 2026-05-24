@@ -299,14 +299,45 @@ const CheckoutSuccess = () => {
               </motion.div>
 
               <motion.div
+                className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-3"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.05 }}
+              >
+                <input
+                  id="accept-terms"
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-border accent-primary cursor-pointer"
+                  required
+                />
+                <label htmlFor="accept-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer select-none">
+                  Li e aceito os{" "}
+                  <Link to="/terms" target="_blank" className="text-primary hover:underline font-medium">
+                    Termos de Uso
+                  </Link>
+                  ,{" "}
+                  <Link to="/privacy" target="_blank" className="text-primary hover:underline font-medium">
+                    Política de Privacidade
+                  </Link>{" "}
+                  e a{" "}
+                  <Link to="/refund-policy" target="_blank" className="text-primary hover:underline font-medium">
+                    Política de Reembolso
+                  </Link>{" "}
+                  da Wiize.
+                </label>
+              </motion.div>
+
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.1 }}
               >
                 <Button 
                   type="submit" 
-                  className="w-full h-12 text-base font-semibold bg-gradient-to-r from-emerald-600 to-primary hover:from-emerald-700 hover:to-primary/90" 
-                  disabled={loading}
+                  className="w-full h-12 text-base font-semibold bg-gradient-to-r from-emerald-600 to-primary hover:from-emerald-700 hover:to-primary/90 disabled:opacity-60" 
+                  disabled={loading || !acceptedTerms}
                 >
                   {loading ? (
                     <>
