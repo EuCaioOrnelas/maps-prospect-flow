@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   getBumpsForPlan,
   bumpsAllowedForCycle,
-  calcBumpsMonthlyCents,
   type OrderBumpSelection,
   type OrderBumpId,
 } from "@/config/orderBumps";
