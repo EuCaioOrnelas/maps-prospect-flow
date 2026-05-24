@@ -57,6 +57,22 @@ const CheckoutSuccess = () => {
       return;
     }
 
+    // Recupera dados da compra feita no checkout (CheckoutCard salvou em sessionStorage)
+    let purchase: any = null;
+    try {
+      const raw = sessionStorage.getItem("checkoutPurchase");
+      if (raw) purchase = JSON.parse(raw);
+    } catch { purchase = null; }
+
+    if (!purchase || !purchase.subscriptionId) {
+      toast({
+        title: "Compra não encontrada",
+        description: "Não localizamos sua compra. Finalize o pagamento antes de criar a conta.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -70,13 +86,29 @@ const CheckoutSuccess = () => {
         return;
       }
 
+      const metaPayload: Record<string, any> = {
+        name,
+        terms_accepted: "true",
+        // Reaproveita o branch trial_with_card do handle_new_user para criar o
+        // profile já como pagante (plan + subscription_end + provider stripe).
+        trial_with_card: "true",
+        trial_plan_chosen: purchase.planKey,
+        trial_billing_period: purchase.billingPeriod || "monthly",
+        trial_will_charge_at: purchase.periodEnd,
+        stripe_subscription_id: purchase.subscriptionId,
+        stripe_customer_id: purchase.customerId,
+        trial_card_last4: purchase.cardLast4 || "",
+        trial_card_brand: purchase.cardBrand || "CARD",
+        extra_numbers: String(purchase.bumps?.numbers || 0),
+        extra_contacts_packs: String(purchase.bumps?.contacts || 0),
+        extra_opportunities_packs: String(purchase.bumps?.opportunities || 0),
+      };
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            name,
-          },
+          data: metaPayload,
           emailRedirectTo: `${window.location.origin}/login`,
         },
       });
@@ -84,22 +116,21 @@ const CheckoutSuccess = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Check if email confirmation is required
+        // Limpa sessionStorage só após signup ok
+        sessionStorage.removeItem("checkoutPurchase");
+
         if (data.user.identities && data.user.identities.length === 0) {
-          // User already exists
           toast({
             title: "Email já cadastrado",
-            description: "Faça login com sua conta existente.",
+            description: "Faça login com sua conta existente — vamos vincular a compra ao seu cadastro.",
             variant: "destructive",
           });
         } else if (!data.session) {
-          // Email confirmation required
           setShowEmailVerification(true);
         } else {
-          // Auto-confirmed, redirect to dashboard
           toast({
             title: "Conta criada com sucesso!",
-            description: "Você já pode acessar sua conta.",
+            description: "Sua assinatura já está ativa.",
           });
           navigate("/dashboard");
         }

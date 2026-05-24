@@ -242,7 +242,6 @@ function CheckoutCardInner() {
         },
       });
 
-      // Anual: bumps são bloqueados — força payload vazio
       const bumpsPayload = isAnnual ? { numbers: 0, contacts: 0, opportunities: 0 } : bumps;
 
       const { data, error } = await supabase.functions.invoke("create-stripe-subscription", {
@@ -266,9 +265,38 @@ function CheckoutCardInner() {
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
 
+      // 3DS / SCA: se Stripe pediu confirmação, dispara confirmCardPayment no browser
+      if (data?.requiresAction && data?.clientSecret) {
+        const stripe = await stripePromise;
+        if (!stripe) throw new Error("Stripe não inicializado");
+        const result = await stripe.confirmCardPayment(data.clientSecret);
+        if (result.error) {
+          throw new Error(result.error.message || "Falha na confirmação do cartão (3DS).");
+        }
+        if (result.paymentIntent?.status !== "succeeded") {
+          throw new Error("Pagamento não foi confirmado pelo banco. Tente novamente.");
+        }
+      } else if (data?.status === "incomplete" || data?.status === "incomplete_expired") {
+        throw new Error("Pagamento não autorizado pelo banco. Verifique o cartão e tente novamente.");
+      }
+
+      // Persiste payload completo para o signup pós-checkout
+      sessionStorage.setItem("checkoutPurchase", JSON.stringify({
+        planKey: data?.planKey || planKey,
+        billingPeriod: data?.billingPeriod || billingPeriod,
+        subscriptionId: data?.subscriptionId,
+        customerId: data?.customerId,
+        bumps: data?.bumps || bumpsPayload,
+        cardLast4: data?.cardLast4 || "",
+        cardBrand: data?.cardBrand || "CARD",
+        periodEnd: data?.periodEnd,
+        email: customerData.email,
+        createdAt: new Date().toISOString(),
+      }));
+
       setSuccess(true);
-      toast({ title: "🎉 Assinatura criada!", description: isAnnual ? "Seu plano anual foi ativado com sucesso." : "Seu plano mensal foi ativado com sucesso." });
-      setTimeout(() => navigate("/checkout-success?provider=stripe"), 2500);
+      toast({ title: "🎉 Pagamento confirmado!", description: isAnnual ? "Seu plano anual foi ativado." : "Seu plano mensal foi ativado." });
+      setTimeout(() => navigate("/checkout-success?provider=stripe"), 1800);
     } catch (err: any) {
       toast({ title: "Erro no pagamento", description: err.message, variant: "destructive" });
     } finally {
