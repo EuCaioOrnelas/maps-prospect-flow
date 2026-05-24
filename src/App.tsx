@@ -184,11 +184,15 @@ const PasswordRecoveryRedirect = () => {
   useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const query = new URLSearchParams(window.location.search);
+    const hashType = hash.get("type");
+    const queryType = query.get("type");
+
+    // Apenas redireciona para reset-password se for EXPLICITAMENTE link de recovery.
+    // Links de confirmação de signup também trazem access_token no hash,
+    // por isso não devemos redirecionar baseado apenas na presença de access_token.
     const isRecoveryLink =
-      hash.get("type") === "recovery" ||
-      query.get("type") === "recovery" ||
-      hash.has("access_token") ||
-      query.has("code") ||
+      hashType === "recovery" ||
+      queryType === "recovery" ||
       hash.get("error_code") === "otp_expired";
 
     if (window.location.pathname === "/" && isRecoveryLink) {
