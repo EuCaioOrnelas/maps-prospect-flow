@@ -77,7 +77,7 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
         {/* Right side content */}
         <div className="flex items-center gap-4 sm:gap-6 ml-auto">
           {/* Trial countdown badge — aparece em qualquer plano enquanto durar o trial */}
-          {isTrialing && (
+          {isTrialing && !isPaidPlan && (
             <Link
               to="/profile"
               className={trialToneClass}
