@@ -36,6 +36,7 @@ const CheckoutSuccess = () => {
   const [loading, setLoading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // If user is already logged in, redirect to dashboard
   useEffect(() => {
