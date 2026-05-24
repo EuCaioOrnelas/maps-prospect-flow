@@ -46,7 +46,7 @@ function fmt(n: number) {
 }
 
 function fmtInt(n: number) {
-  return n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+  return (Number(n) || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 }
 
 const MONTH_LABELS_PT_BR = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
