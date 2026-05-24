@@ -56,7 +56,6 @@ export function OrderBumpsCard({ planKey, billingPeriod, selection, onChange, va
     onChange({ ...selection, [id]: safe });
   };
 
-  const totalMonthly = calcBumpsMonthlyCents(selection);
   const isModal = variant === "modal";
 
   return (
