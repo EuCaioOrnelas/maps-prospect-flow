@@ -10,7 +10,7 @@ interface OpportunityRadarProps {
 }
 
 function fmt(n: number) {
-  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (Number(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function StatusBadge({ status }: { status: string }) {

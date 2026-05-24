@@ -38,14 +38,15 @@ interface DashboardHeroProps {
 }
 
 function fmt(n: number) {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}B`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
-  if (n >= 10_000) return `${(n / 1_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`;
-  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const v = Number(n) || 0;
+  if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}B`;
+  if (v >= 1_000_000) return `${(v / 1_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
+  if (v >= 10_000) return `${(v / 1_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`;
+  return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function fmtInt(n: number) {
-  return n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+  return (Number(n) || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 }
 
 const MONTH_LABELS_PT_BR = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -142,7 +143,7 @@ export function DashboardHero({
                 <span>
                   <strong className="text-foreground">{fmtInt(contactCount)}</strong> contatos no CRM
                   {hasContactLimit && (
-                    <span className="text-muted-foreground"> / {contactLimit.toLocaleString('pt-BR')}</span>
+                    <span className="text-muted-foreground"> / {(Number(contactLimit) || 0).toLocaleString('pt-BR')}</span>
                   )}
                 </span>
               )}

@@ -14,7 +14,7 @@ const HINTS: Record<string, string> = {
   Oportunidades: "Leads classificados como alto potencial (alto/muito_alto).",
 };
 
-const fmtN = (n: number) => n.toLocaleString("pt-BR");
+const fmtN = (n: number) => (Number(n) || 0).toLocaleString("pt-BR");
 
 export function OperationalFunnel({ funnel }: OperationalFunnelProps) {
   const empty = !funnel.length || funnel.every((s) => s.value === 0);
