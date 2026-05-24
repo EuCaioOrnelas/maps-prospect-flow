@@ -48,6 +48,12 @@ const ResetPassword = () => {
         return;
       }
 
+      // Se for link de confirmação de signup (não recovery), não força redefinir senha.
+      // Apenas estabelece sessão e manda para o dashboard.
+      const linkType = hash.get("type") || query.get("type");
+      const isSignupConfirmation =
+        linkType === "signup" || linkType === "email_change" || linkType === "invite";
+
       const code = query.get("code");
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -75,6 +81,15 @@ const ResetPassword = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         rejectLink();
+        return;
+      }
+
+      if (isSignupConfirmation) {
+        toast({
+          title: "Email confirmado!",
+          description: "Sua conta foi ativada com sucesso.",
+        });
+        navigate("/dashboard", { replace: true });
         return;
       }
 
