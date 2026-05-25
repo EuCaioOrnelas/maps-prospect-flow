@@ -275,6 +275,31 @@ export default function AdminPartnerDetail() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={async () => {
+                try {
+                  const { data, error } = await supabase.functions.invoke("generate-partner-certificate", {
+                    body: { partner_id: partner.id, as_base64: true },
+                  });
+                  if (error) throw error;
+                  const { pdf_base64, filename } = data as { pdf_base64: string; filename: string };
+                  const bytes = Uint8Array.from(atob(pdf_base64), c => c.charCodeAt(0));
+                  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+                  const a = document.createElement("a");
+                  a.href = url; a.download = filename; a.click();
+                  URL.revokeObjectURL(url);
+                  toast({ title: "Certificado gerado", description: "Download iniciado." });
+                } catch (e: any) {
+                  toast({ title: "Erro ao gerar certificado", description: e?.message || "", variant: "destructive" });
+                }
+              }}
+            >
+              <FileDown size={14} /> Baixar certificado
+            </Button>
+
             {/* Reset rápido continua útil; edição completa fica em Configurações */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
