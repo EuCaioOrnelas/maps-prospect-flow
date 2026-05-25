@@ -45,10 +45,10 @@ interface Settings {
 }
 
 const levelMeta = {
-  bronze: { icon: Medal, color: "text-amber-600", bg: "from-amber-500/20 to-amber-600/5", ring: "ring-amber-500/30" },
-  silver: { icon: Award, color: "text-slate-400", bg: "from-slate-400/20 to-slate-500/5", ring: "ring-slate-400/30" },
-  gold: { icon: Crown, color: "text-yellow-500", bg: "from-yellow-500/20 to-yellow-600/5", ring: "ring-yellow-500/30" },
-  platinum: { icon: Gem, color: "text-sky-400", bg: "from-sky-400/20 to-sky-500/5", ring: "ring-sky-400/30" },
+  bronze: { icon: Medal, color: "text-foreground/70", bg: "from-muted/40 to-transparent", ring: "ring-border" },
+  silver: { icon: Award, color: "text-foreground/70", bg: "from-muted/40 to-transparent", ring: "ring-border" },
+  gold: { icon: Crown, color: "text-primary", bg: "from-primary/10 to-transparent", ring: "ring-primary/30" },
+  platinum: { icon: Gem, color: "text-foreground", bg: "from-foreground/5 to-transparent", ring: "ring-foreground/20" },
 } as const;
 
 function HelpHint({ text }: { text: string }) {
