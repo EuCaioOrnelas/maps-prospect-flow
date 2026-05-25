@@ -65,6 +65,8 @@ import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useGuidedTour, resetGuidedTour } from "@/hooks/useGuidedTour";
 import { PlayCircle } from "lucide-react";
+import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/lib/planAccess";
+
 
 const Profile = () => {
   const { profile, user, refreshProfile, signOut } = useAuth();
