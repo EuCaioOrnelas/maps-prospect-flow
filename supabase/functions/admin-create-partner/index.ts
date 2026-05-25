@@ -10,7 +10,7 @@ async function sendPartnerEmail(
   try {
     const { data: partner } = await supabase
       .from("partners")
-      .select("email, full_name, referral_code, user_id")
+      .select("email, full_name, referral_code, user_id, tax_id, verification_code, created_at")
       .eq("id", partnerId)
       .maybeSingle();
 
@@ -22,6 +22,15 @@ async function sendPartnerEmail(
     const firstName = (partner.full_name || "").split(" ")[0] || "Parceiro";
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const certificate = type === "partner_welcome"
+      ? {
+          full_name: partner.full_name,
+          tax_id: partner.tax_id,
+          partner_since: partner.created_at,
+          verification_code: partner.verification_code,
+        }
+      : undefined;
 
     const resp = await fetch(`${supabaseUrl}/functions/v1/send-partner-email`, {
       method: "POST",
@@ -36,6 +45,7 @@ async function sendPartnerEmail(
           first_name: firstName,
           referral_code: partner.referral_code,
           user_id: partner.user_id,
+          certificate,
           ...extraData,
         },
       }),
