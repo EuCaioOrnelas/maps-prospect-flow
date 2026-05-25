@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useOutletContext, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, DollarSign, Wallet, Clock, TrendingUp, MousePointerClick, Repeat, Target, Sparkles } from "lucide-react";
+import { Users, DollarSign, Wallet, Clock, TrendingUp, MousePointerClick, Repeat, Target, Sparkles, BadgeCheck, Copy, ExternalLink } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { fmtBRL, fmtPct } from "@/lib/partnerFormat";
 import { StatCard } from "@/components/partners/StatCard";
 import { PageHeader } from "@/components/partners/PageHeader";
@@ -163,6 +164,44 @@ export default function PartnerDashboard() {
           ))}
         </div>
       </div>
+
+      {/* Verification badge */}
+      {partner.verification_code && (
+        <Card className="border-border/60">
+          <CardContent className="p-5 flex items-center gap-4 flex-wrap">
+            <div className="h-11 w-11 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center shrink-0">
+              <BadgeCheck size={20} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold">Seu código de verificação</div>
+              <div className="text-xs text-muted-foreground">
+                Compartilhe para que clientes confirmem que você é um parceiro oficial Wiize.
+              </div>
+            </div>
+            <div className="font-mono text-base font-semibold px-3 py-2 rounded-lg bg-muted/40 border border-border/60">
+              {partner.verification_code}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(partner.verification_code);
+                toast({ title: "Código copiado" });
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 h-9 rounded-lg border border-border hover:bg-muted/40 transition-colors"
+            >
+              <Copy size={13} /> Copiar
+            </button>
+            <a
+              href={`/parceiros/verificar?code=${partner.verification_code}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <ExternalLink size={13} /> Página pública
+            </a>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Referral links */}
       <ReferralLinksCard partner={partner} />

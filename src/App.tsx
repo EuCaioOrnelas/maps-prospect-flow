@@ -155,6 +155,7 @@ const AdminPartnersGoals = lazyWithRetry(() => import("./pages/admin/AdminPartne
 const AdminPartnersLinks = lazyWithRetry(() => import("./pages/admin/AdminPartnersLinks"), "AdminPartnersLinks");
 const PartnerSlugRedirect = lazyWithRetry(() => import("./pages/PartnerSlugRedirect"), "PartnerSlugRedirect");
 const PartnersLanding = lazyWithRetry(() => import("./pages/PartnersLanding"), "PartnersLanding");
+const PartnerVerification = lazyWithRetry(() => import("./pages/PartnerVerification"), "PartnerVerification");
 const PartnersApply = lazyWithRetry(() => import("./pages/partners/PartnersApply"), "PartnersApply");
 const PartnersTerms = lazyWithRetry(() => import("./pages/partners/PartnersTerms"), "PartnersTerms");
 const AdminPartnersApplications = lazyWithRetry(() => import("./pages/admin/AdminPartnersApplications"), "AdminPartnersApplications");
@@ -358,6 +359,8 @@ const App = () => (
                 <Route path="/wiize-partners/candidatura" element={<LightThemeWrapper><PartnersApply /></LightThemeWrapper>} />
                 <Route path="/partners/terms" element={<LightThemeWrapper><PartnersTerms /></LightThemeWrapper>} />
                 <Route path="/parceiros/termos" element={<LightThemeWrapper><PartnersTerms /></LightThemeWrapper>} />
+                <Route path="/parceiros/verificar" element={<PartnerVerification />} />
+                <Route path="/partners/verify" element={<PartnerVerification />} />
                 <Route path="/partners/login" element={<LightThemeWrapper><PartnerLogin /></LightThemeWrapper>} />
                 <Route path="/r/:slug" element={<LightThemeWrapper><PartnerSlugRedirect /></LightThemeWrapper>} />
                 <Route path="/partners" element={<LightThemeWrapper><PartnerLayout /></LightThemeWrapper>}>

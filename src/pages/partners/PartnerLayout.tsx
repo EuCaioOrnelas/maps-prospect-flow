@@ -16,7 +16,7 @@ export default function PartnerLayout() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/partners/login", { replace: true }); return; }
-      const { data } = await supabase.from("partners").select("id, full_name, email, level, referral_code").eq("user_id", user.id).maybeSingle();
+      const { data } = await supabase.from("partners").select("id, full_name, email, level, referral_code, verification_code, status, created_at").eq("user_id", user.id).maybeSingle();
       if (!data) { navigate("/partners/login", { replace: true }); return; }
       setPartner(data);
       setLoading(false);

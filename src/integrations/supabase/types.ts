@@ -3605,6 +3605,7 @@ export type Database = {
           total_paid_clients: number
           updated_at: string
           user_id: string
+          verification_code: string | null
         }
         Insert: {
           company?: string | null
@@ -3628,6 +3629,7 @@ export type Database = {
           total_paid_clients?: number
           updated_at?: string
           user_id: string
+          verification_code?: string | null
         }
         Update: {
           company?: string | null
@@ -3651,6 +3653,7 @@ export type Database = {
           total_paid_clients?: number
           updated_at?: string
           user_id?: string
+          verification_code?: string | null
         }
         Relationships: []
       }
@@ -7351,6 +7354,7 @@ export type Database = {
         Args: { p_full_name: string }
         Returns: string
       }
+      generate_partner_verification_code: { Args: never; Returns: string }
       get_landing_page_stats: {
         Args: never
         Returns: {
@@ -7461,6 +7465,18 @@ export type Database = {
       update_partner_goal_progress: {
         Args: { p_partner_id: string }
         Returns: undefined
+      }
+      verify_partner_public: {
+        Args: { p_code: string }
+        Returns: {
+          company: string
+          country: string
+          full_name: string
+          level: Database["public"]["Enums"]["partner_level"]
+          partner_since: string
+          status: Database["public"]["Enums"]["partner_status"]
+          verification_code: string
+        }[]
       }
       verify_webhook_signature: {
         Args: { p_payload: string; p_secret_name: string; p_signature: string }
