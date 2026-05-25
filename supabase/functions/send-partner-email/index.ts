@@ -268,18 +268,43 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Auto-generate Wiize Partners certificate for the welcome email.
+    // Caller can disable with data.attach_certificate === false.
+    const attachments: Array<{ filename: string; content: string }> = [];
+    if (type === "partner_welcome" && data?.attach_certificate !== false) {
+      try {
+        if (data?.certificate?.full_name && data?.certificate?.verification_code) {
+          const pdfBytes = await generateCertificatePdf({
+            full_name: data.certificate.full_name,
+            tax_id: data.certificate.tax_id ?? null,
+            partner_since: data.certificate.partner_since || new Date().toISOString(),
+            verification_code: data.certificate.verification_code,
+          });
+          attachments.push({
+            filename: `Certificado-Wiize-Partners.pdf`,
+            content: bytesToBase64(pdfBytes),
+          });
+        }
+      } catch (err) {
+        console.warn("[send-partner-email] certificate generation failed:", err);
+      }
+    }
+
+    const payload: Record<string, unknown> = {
+      from: BRAND.from,
+      to: [to],
+      subject: built.subject,
+      html: built.html,
+    };
+    if (attachments.length) payload.attachments = attachments;
+
     const resp = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        from: BRAND.from,
-        to: [to],
-        subject: built.subject,
-        html: built.html,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const result = await resp.json();
