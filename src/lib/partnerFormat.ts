@@ -57,10 +57,10 @@ export const withdrawalStatusLabel: Record<string, string> = {
 };
 
 export const levelLabel: Record<string, string> = {
-  bronze: "Bronze",
-  silver: "Silver",
-  gold: "Gold",
-  platinum: "Platinum",
+  bronze: "Select",
+  silver: "Signature",
+  gold: "Prime",
+  platinum: "Exclusive",
 };
 
 export const goalStatusColors: Record<string, string> = {
