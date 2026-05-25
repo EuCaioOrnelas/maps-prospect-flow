@@ -62,6 +62,15 @@ const Login = () => {
   };
 
   useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("email_confirmed") === "true") {
+      toast({
+        title: "Email confirmado!",
+        description: "Agora faça login para acessar sua conta.",
+      });
+      window.history.replaceState({}, "", "/login");
+    }
+
     // Detecta erro vindo do callback do Google OAuth (trigger bloqueou signup)
     const hash = window.location.hash || "";
     const search = window.location.search || "";
