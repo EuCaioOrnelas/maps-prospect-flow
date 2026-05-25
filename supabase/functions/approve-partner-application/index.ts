@@ -104,8 +104,14 @@ Deno.serve(async (req) => {
       })
       .eq("id", app.id);
 
-    // Send welcome email with temporary password
+    // Send welcome email with temporary password + official certificate PDF in attach
     const portalUrl = "https://wiize.com.br/partners/login";
+    const { data: createdPartner } = await supabase
+      .from("partners")
+      .select("full_name, tax_id, verification_code, created_at")
+      .eq("id", partnerId)
+      .maybeSingle();
+
     fetch(`${supabaseUrl}/functions/v1/send-partner-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
@@ -117,6 +123,14 @@ Deno.serve(async (req) => {
           temp_password: tempPassword,
           portal_url: portalUrl,
           login_email: app.access_email || app.email,
+          certificate: createdPartner
+            ? {
+                full_name: createdPartner.full_name,
+                tax_id: createdPartner.tax_id,
+                partner_since: createdPartner.created_at,
+                verification_code: createdPartner.verification_code,
+              }
+            : undefined,
         },
       }),
     }).catch((e) => console.warn("[approve-partner-application] email err:", e));
