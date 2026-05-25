@@ -65,7 +65,7 @@ export async function generateCertificatePdf(
   const templateBytes = new Uint8Array(await resp.arrayBuffer());
 
   const pdf = await PDFDocument.load(templateBytes);
-  const font = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const font = await pdf.embedFont(StandardFonts.TimesRomanBold);
   const page = pdf.getPages()[0];
 
   const draw = (text: string, x: number, y: number) => {
