@@ -19,7 +19,8 @@ const TEMPLATE_URL =
   "https://wgokhkawjdxsmvfuhazb.supabase.co/storage/v1/object/public/partner-certificates/templates/certificate-template.pdf";
 
 // Brand green from the template
-const GREEN = rgb(0x1e / 255, 0x6b / 255, 0x3a / 255);
+// Clean professional black text (kept named GREEN to minimize diff usages)
+const GREEN = rgb(0.08, 0.08, 0.08);
 
 // Coordinates (PDF pts, origin bottom-left, A4 595 x 842)
 // Calibrated from the visual template. Tune here if the design changes.
@@ -27,7 +28,7 @@ const FIELDS = {
   nome:  { x: 248, y: 362 },
   cpf:   { x: 212, y: 315 },
   data:  { x: 294, y: 268 },
-  id:    { x: 252, y: 220 },
+  id:    { x: 252, y: 227 },
 };
 
 const FONT_SIZE = 12;
