@@ -268,7 +268,7 @@ export default function PartnersLanding() {
           </div>
 
           <p className="text-center text-sm text-muted-foreground mt-10">
-            Todo parceiro começa em <strong className="text-foreground">Bronze ({settings.bronze}%)</strong>. A progressão é automática conforme seus clientes ativos crescem.
+            Todo parceiro começa em <strong className="text-foreground">Select ({settings.bronze}%)</strong>. A progressão é automática conforme seus clientes ativos crescem.
           </p>
         </div>
       </section>
