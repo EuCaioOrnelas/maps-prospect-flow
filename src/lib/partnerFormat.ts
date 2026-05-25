@@ -20,10 +20,10 @@ export const fmtDateTime = (iso: string | null | undefined) => {
 };
 
 export const levelColors: Record<string, string> = {
-  bronze: "bg-amber-700/10 text-amber-700 border-amber-700/30",
-  silver: "bg-slate-400/10 text-slate-500 border-slate-400/30",
-  gold: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
-  platinum: "bg-purple-500/10 text-purple-600 border-purple-500/30",
+  bronze: "bg-muted text-foreground border-border",
+  silver: "bg-muted text-foreground border-border",
+  gold: "bg-primary/10 text-primary border-primary/30",
+  platinum: "bg-foreground/10 text-foreground border-foreground/30",
 };
 
 export const commissionStatusColors: Record<string, string> = {
@@ -57,10 +57,10 @@ export const withdrawalStatusLabel: Record<string, string> = {
 };
 
 export const levelLabel: Record<string, string> = {
-  bronze: "Bronze",
-  silver: "Silver",
-  gold: "Gold",
-  platinum: "Platinum",
+  bronze: "Select",
+  silver: "Signature",
+  gold: "Prime",
+  platinum: "Exclusive",
 };
 
 export const goalStatusColors: Record<string, string> = {

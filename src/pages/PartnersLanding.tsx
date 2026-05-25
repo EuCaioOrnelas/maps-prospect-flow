@@ -102,29 +102,25 @@ export default function PartnersLanding() {
 
   const tiers = [
     {
-      name: "Bronze", percent: settings.bronze,
+      name: "Select", percent: settings.bronze,
       range: `0 – ${settings.silverClients - 1} clientes`,
-      icon: ShieldCheck, iconColor: "text-amber-700",
-      grad: "from-amber-700/15 via-amber-700/5 to-transparent",
+      icon: ShieldCheck,
     },
     {
-      name: "Silver", percent: settings.silver,
+      name: "Signature", percent: settings.silver,
       range: `${settings.silverClients} – ${settings.goldClients - 1} clientes`,
-      icon: Award, iconColor: "text-slate-500",
-      grad: "from-slate-400/20 via-slate-400/5 to-transparent",
+      icon: Award,
     },
     {
-      name: "Gold", percent: settings.gold,
+      name: "Prime", percent: settings.gold,
       range: `${settings.goldClients} – ${settings.platinumClients - 1} clientes`,
-      icon: Rocket, iconColor: "text-yellow-600",
-      grad: "from-yellow-500/20 via-yellow-500/5 to-transparent",
+      icon: Rocket,
       highlight: true,
     },
     {
-      name: "Platinum", percent: settings.platinum,
+      name: "Exclusive", percent: settings.platinum,
       range: `${settings.platinumClients}+ clientes`,
-      icon: Crown, iconColor: "text-purple-600",
-      grad: "from-purple-500/20 via-purple-500/5 to-transparent",
+      icon: Crown,
     },
   ];
 
@@ -242,19 +238,18 @@ export default function PartnersLanding() {
               return (
                 <Card
                   key={t.name}
-                  className={`relative overflow-hidden border-border/50 bg-card transition-all hover:-translate-y-1 hover:shadow-xl ${
-                    t.highlight ? "ring-2 ring-primary shadow-2xl shadow-primary/20 lg:-translate-y-2" : ""
+                  className={`relative overflow-hidden border-border/60 bg-card transition-all hover:-translate-y-1 hover:shadow-lg ${
+                    t.highlight ? "ring-1 ring-primary/60 shadow-xl shadow-primary/10 lg:-translate-y-2" : ""
                   }`}
                 >
-                  <div className={`absolute inset-x-0 top-0 h-32 bg-gradient-to-b ${t.grad} pointer-events-none`} />
                   {t.highlight && (
                     <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-widest text-center py-1.5">
-                      ⭐ Mais popular
+                      Mais popular
                     </div>
                   )}
                   <CardContent className={`relative p-7 text-center ${t.highlight ? "pt-12" : ""}`}>
-                    <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-background ring-1 ring-border/60 mb-4">
-                      <Icon size={26} className={t.iconColor} strokeWidth={2.25} />
+                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-muted/60 ring-1 ring-border/60 mb-4">
+                      <Icon size={22} className="text-foreground/70" strokeWidth={2} />
                     </div>
                     <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2 font-semibold">{t.name}</div>
                     <div className="flex items-baseline justify-center gap-1 mb-1">
@@ -273,7 +268,7 @@ export default function PartnersLanding() {
           </div>
 
           <p className="text-center text-sm text-muted-foreground mt-10">
-            Todo parceiro começa em <strong className="text-foreground">Bronze ({settings.bronze}%)</strong>. A progressão é automática conforme seus clientes ativos crescem.
+            Todo parceiro começa em <strong className="text-foreground">Select ({settings.bronze}%)</strong>. A progressão é automática conforme seus clientes ativos crescem.
           </p>
         </div>
       </section>
