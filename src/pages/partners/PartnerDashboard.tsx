@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useOutletContext, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, DollarSign, Wallet, Clock, TrendingUp, MousePointerClick, Repeat, Target, Sparkles, BadgeCheck, Copy, ExternalLink } from "lucide-react";
+import { Users, DollarSign, Wallet, Clock, TrendingUp, MousePointerClick, Repeat, Target, Sparkles, BadgeCheck, Copy, ExternalLink, FileDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { fmtBRL, fmtPct } from "@/lib/partnerFormat";
 import { StatCard } from "@/components/partners/StatCard";
