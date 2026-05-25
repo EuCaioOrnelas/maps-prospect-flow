@@ -617,6 +617,7 @@ const Profile = () => {
             </Card>
           </div>
 
+          {hasOpps && (<>
           {/* Company Profile Card */}
           <Card className="border-border/50">
             <CardHeader className="pb-4">
