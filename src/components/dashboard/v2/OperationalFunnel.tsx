@@ -8,6 +8,7 @@ interface OperationalFunnelProps {
 
 const HINTS: Record<string, string> = {
   Captados: "Total de leads que entraram no CRM no período. É a base (100%) do funil.",
+  "Leads Prospectados": "Total de mensagens enviadas no período (somatório de todas as campanhas). É a base (100%) do funil.",
   Analisados: "Leads que passaram pela análise da IA e receberam classificação de oportunidade.",
   Enviados: "Leads que receberam a primeira mensagem (WhatsApp + Meta API).",
   Respondeu: "Leads que responderam ao primeiro contato.",
