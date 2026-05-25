@@ -210,13 +210,14 @@ export default function MainDashboard() {
                 <OperationalFunnel
                   funnel={
                     hasOpportunitiesAccess(profile as any)
-                      ? data.funnel
+                      ? (data.funnel || [])
                       : [
                           { stage: "Leads Prospectados", value: data.messagesSent || 0 },
-                          ...data.funnel.filter((s: any) => s.stage !== "Captados"),
+                          ...((data.funnel || []).filter((s: any) => s?.stage !== "Captados")),
                         ]
                   }
                 />
+
               </div>
 
               {/* 4 — Opportunity Radar */}
