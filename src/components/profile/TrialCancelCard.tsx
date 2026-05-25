@@ -35,7 +35,10 @@ export const TrialCancelCard = () => {
   const last4 = p?.trial_card_last4 as string | undefined;
   const planChosen = p?.trial_plan_chosen as string | undefined;
   const subId = p?.trial_asaas_subscription_id as string | undefined;
+  const subscriptionStatus = p?.subscription_status as string | undefined;
 
+  // Se já tem assinatura ativa, não mostra o card de cancelar trial
+  if (subscriptionStatus === 'active') return null;
   // Exibe enquanto houver uma assinatura de trial agendada (independente do plan,
   // pois agora o trial já ativa o plano escolhido — Start/Growth/Scale)
   if (!subId || !willCharge) return null;
