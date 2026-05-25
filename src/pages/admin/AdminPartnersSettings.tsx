@@ -235,6 +235,7 @@ export default function AdminPartnersSettings() {
             {(["bronze", "silver", "gold", "platinum"] as const).map((lvl) => {
               const meta = levelMeta[lvl];
               const Icon = meta.icon;
+              const tierLabel = ({ bronze: "Select", silver: "Signature", gold: "Prime", platinum: "Exclusive" } as const)[lvl];
               return (
                 <div
                   key={lvl}
@@ -244,7 +245,7 @@ export default function AdminPartnersSettings() {
                     <div className={`rounded-lg bg-background/60 p-1.5 ring-1 ring-border/60 ${meta.color}`}>
                       <Icon size={16} />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{lvl}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{tierLabel}</span>
                   </div>
                   <Label className="text-xs text-muted-foreground">Comissão</Label>
                   <div className="relative mt-1">
