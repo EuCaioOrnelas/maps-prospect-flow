@@ -25,6 +25,7 @@ import { TrialAutoChargeBanner } from "@/components/dashboard/TrialAutoChargeBan
 import { ExpiredSubscriptionDialog } from "@/components/ExpiredSubscriptionDialog";
 // Checklist e modal de onboarding removidos — somente o tour guiado orienta o usuário.
 import { buildTourDemoCockpit } from "@/lib/tourDemoCockpit";
+import { hasOpportunitiesAccess } from "@/lib/planAccess";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
