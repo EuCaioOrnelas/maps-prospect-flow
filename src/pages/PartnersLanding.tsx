@@ -102,29 +102,25 @@ export default function PartnersLanding() {
 
   const tiers = [
     {
-      name: "Bronze", percent: settings.bronze,
+      name: "Select", percent: settings.bronze,
       range: `0 – ${settings.silverClients - 1} clientes`,
-      icon: ShieldCheck, iconColor: "text-amber-700",
-      grad: "from-amber-700/15 via-amber-700/5 to-transparent",
+      icon: ShieldCheck,
     },
     {
-      name: "Silver", percent: settings.silver,
+      name: "Signature", percent: settings.silver,
       range: `${settings.silverClients} – ${settings.goldClients - 1} clientes`,
-      icon: Award, iconColor: "text-slate-500",
-      grad: "from-slate-400/20 via-slate-400/5 to-transparent",
+      icon: Award,
     },
     {
-      name: "Gold", percent: settings.gold,
+      name: "Prime", percent: settings.gold,
       range: `${settings.goldClients} – ${settings.platinumClients - 1} clientes`,
-      icon: Rocket, iconColor: "text-yellow-600",
-      grad: "from-yellow-500/20 via-yellow-500/5 to-transparent",
+      icon: Rocket,
       highlight: true,
     },
     {
-      name: "Platinum", percent: settings.platinum,
+      name: "Exclusive", percent: settings.platinum,
       range: `${settings.platinumClients}+ clientes`,
-      icon: Crown, iconColor: "text-purple-600",
-      grad: "from-purple-500/20 via-purple-500/5 to-transparent",
+      icon: Crown,
     },
   ];
 
