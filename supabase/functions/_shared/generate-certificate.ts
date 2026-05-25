@@ -27,7 +27,7 @@ const FIELDS = {
   nome:  { x: 248, y: 358 },
   cpf:   { x: 212, y: 311 },
   data:  { x: 294, y: 264 },
-  id:    { x: 214, y: 216 },
+  id:    { x: 252, y: 216 },
 };
 
 const FONT_SIZE = 12;
