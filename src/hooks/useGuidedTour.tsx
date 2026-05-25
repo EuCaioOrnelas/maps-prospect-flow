@@ -462,62 +462,69 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     },
   ];
 
-  // Auto-start on first dashboard visit
+  // Auto-start on first dashboard visit.
+  // Depend on user?.id (stable) instead of the whole user object (re-created on
+  // every auth refresh, which was canceling the async start before it fired).
+  const userId = user?.id;
   useEffect(() => {
-    if (!user || startedRef.current) return;
+    if (!userId || startedRef.current) return;
     if (location.pathname !== "/dashboard") return;
-    const LS_KEY = lsKeyFor(user.id);
+    const LS_KEY = lsKeyFor(userId);
     // One-time migration: clear the legacy global flag so it doesn't block new users
     if (localStorage.getItem(LS_KEY_LEGACY)) {
       localStorage.removeItem(LS_KEY_LEGACY);
     }
-    if (localStorage.getItem(LS_KEY)) return;
+    if (localStorage.getItem(LS_KEY)) {
+      startedRef.current = true;
+      return;
+    }
 
-    startedRef.current = true;
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from("user_onboarding")
         .select("tour_completed_at")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .maybeSingle();
       if (cancelled) return;
-      if (!data?.tour_completed_at) {
-        // Mark as completed IMMEDIATELY so the tour never auto-starts again,
-        // even if the user closes/refreshes mid-tour. Users can replay it
-        // anytime via the "Rever tour" button in /profile.
+      if (data?.tour_completed_at) {
+        startedRef.current = true;
         localStorage.setItem(LS_KEY, "1");
-        try {
-          await supabase
-            .from("user_onboarding")
-            .update({ tour_completed_at: new Date().toISOString() })
-            .eq("user_id", user.id);
-        } catch (e) {
-          console.error("[tour] mark-shown error", e);
-        }
-
-        // Preload pages used in the tour for instant transitions
-        try {
-          await Promise.all([
-            import("@/pages/Dashboard"),
-            import("@/pages/OpportunitiesManagement"),
-          ]);
-        } catch (e) {
-          console.warn("[tour] preload failed", e);
-        }
-        if (cancelled) return;
-        setTimeout(() => {
-          setCurrentStepIndex(0);
-          setIsActive(true);
-        }, 400);
-      } else {
-        localStorage.setItem(LS_KEY, "1");
+        return;
       }
+
+      // Preload pages used in the tour for instant transitions
+      try {
+        await Promise.all([
+          import("@/pages/Dashboard"),
+          import("@/pages/OpportunitiesManagement"),
+        ]);
+      } catch (e) {
+        console.warn("[tour] preload failed", e);
+      }
+      if (cancelled) return;
+
+      // Mark started + persist BEFORE firing so refresh mid-tour doesn't restart it.
+      startedRef.current = true;
+      localStorage.setItem(LS_KEY, "1");
+      try {
+        await supabase
+          .from("user_onboarding")
+          .update({ tour_completed_at: new Date().toISOString() })
+          .eq("user_id", userId);
+      } catch (e) {
+        console.error("[tour] mark-shown error", e);
+      }
+
+      setTimeout(() => {
+        setCurrentStepIndex(0);
+        setIsActive(true);
+      }, 300);
     })();
     return () => {
       cancelled = true;
     };
-  }, [user, location.pathname]);
+  }, [userId, location.pathname]);
 
   useEffect(() => {
     const step = steps[currentStepIndex];
