@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useOutletContext, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, DollarSign, Wallet, Clock, TrendingUp, MousePointerClick, Repeat, Target, Sparkles, BadgeCheck, Copy, ExternalLink } from "lucide-react";
+import { Users, DollarSign, Wallet, Clock, TrendingUp, MousePointerClick, Repeat, Target, Sparkles, BadgeCheck, Copy, ExternalLink, FileDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { fmtBRL, fmtPct } from "@/lib/partnerFormat";
 import { StatCard } from "@/components/partners/StatCard";
@@ -199,6 +199,29 @@ export default function PartnerDashboard() {
             >
               <ExternalLink size={13} /> Página pública
             </a>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const { data, error } = await supabase.functions.invoke("generate-partner-certificate", {
+                    body: { partner_id: partner.id, as_base64: true },
+                  });
+                  if (error) throw error;
+                  const { pdf_base64, filename } = data as { pdf_base64: string; filename: string };
+                  const bytes = Uint8Array.from(atob(pdf_base64), c => c.charCodeAt(0));
+                  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+                  const a = document.createElement("a");
+                  a.href = url; a.download = filename; a.click();
+                  URL.revokeObjectURL(url);
+                  toast({ title: "Certificado pronto", description: "Download iniciado." });
+                } catch (e: any) {
+                  toast({ title: "Erro ao gerar certificado", description: e?.message || "", variant: "destructive" });
+                }
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 h-9 rounded-lg border border-border hover:bg-muted/40 transition-colors"
+            >
+              <FileDown size={13} /> Baixar certificado
+            </button>
           </CardContent>
         </Card>
       )}
