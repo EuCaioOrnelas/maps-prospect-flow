@@ -377,7 +377,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
-    const redirectUrl = `${window.location.origin}/dashboard`;
+    const redirectUrl = `${window.location.origin}/login?email_confirmed=true`;
     
     // STEP 1+2: Run whitelist check AND fingerprint/IP collection IN PARALLEL
     let isWhitelisted = false;

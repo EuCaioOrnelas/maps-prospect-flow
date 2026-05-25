@@ -114,7 +114,7 @@ const CheckoutSuccess = () => {
         password,
         options: {
           data: metaPayload,
-          emailRedirectTo: `${window.location.origin}/login`,
+          emailRedirectTo: `${window.location.origin}/login?email_confirmed=true`,
         },
       });
 

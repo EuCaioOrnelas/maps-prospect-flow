@@ -197,6 +197,12 @@ const PasswordRecoveryRedirect = () => {
 
     if (window.location.pathname === "/" && isRecoveryLink) {
       window.location.replace(`/reset-password${window.location.search}${window.location.hash}`);
+      return;
+    }
+
+    const isSignupConfirmation = hashType === "signup" || queryType === "signup";
+    if (window.location.pathname === "/" && isSignupConfirmation) {
+      window.location.replace(`/login?email_confirmed=true${window.location.hash}`);
     }
   }, []);
 

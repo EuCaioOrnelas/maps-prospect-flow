@@ -62,6 +62,16 @@ const Login = () => {
   };
 
   useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("email_confirmed") === "true") {
+      sessionStorage.setItem("email_confirmed_force_login", "true");
+      toast({
+        title: "Email confirmado!",
+        description: "Agora faça login para acessar sua conta.",
+      });
+      window.history.replaceState({}, "", "/login");
+    }
+
     // Detecta erro vindo do callback do Google OAuth (trigger bloqueou signup)
     const hash = window.location.hash || "";
     const search = window.location.search || "";
@@ -83,6 +93,12 @@ const Login = () => {
 
     // Wait for profile to load before redirecting
     if (user && !loading) {
+      if (sessionStorage.getItem("email_confirmed_force_login") === "true") {
+        sessionStorage.removeItem("email_confirmed_force_login");
+        supabase.auth.signOut({ scope: "local" });
+        return;
+      }
+
       // If trial expired and user is on free plan, redirect to upgrade
       if (isTrialExpired && profile?.plan === 'free') {
         navigate("/upgrade?expired=true");

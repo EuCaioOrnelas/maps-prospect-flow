@@ -332,7 +332,7 @@ function SignupWithCardInner() {
       }
 
       // 3) Create auth user with trial metadata
-      const redirectUrl = `${window.location.origin}/dashboard`;
+      const redirectUrl = `${window.location.origin}/login?email_confirmed=true`;
       const { data: signupData, error: signupErr } = await supabase.auth.signUp({
         email,
         password,
