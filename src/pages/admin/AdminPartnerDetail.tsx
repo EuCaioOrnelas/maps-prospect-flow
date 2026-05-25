@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Copy, Check, KeyRound, RefreshCcw, Ban, Save, Loader2,
-  Users, DollarSign, Wallet, TrendingUp, MousePointerClick, Award, Building2, Trash2, Target, Link2,
+  Users, DollarSign, Wallet, TrendingUp, MousePointerClick, Award, Building2, Trash2, Target, Link2, FileDown,
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
