@@ -91,6 +91,7 @@ function buildEmail(type: string, data: any): { subject: string; html: string } 
         p("A sua candidatura foi aprovada. A partir de agora você ganha comissão recorrente sobre cada cliente que indicar para a Wiize.") +
         credentialsBlock +
         refBlock +
+        p("📎 Em anexo você encontra o seu <strong>Certificado Oficial Wiize Partners</strong> em PDF — pode usar nas suas redes, site e materiais comerciais.") +
         p("Compartilhe seu link em WhatsApp, redes sociais e e-mails. Toda venda gerada nos próximos <strong>2 anos</strong> é vinculada à sua conta.") +
         btn(portalLogin, "Acessar meu portal") +
         small("Comece pelo painel — você encontra materiais prontos, métricas de conversão e seu saldo em tempo real."),
