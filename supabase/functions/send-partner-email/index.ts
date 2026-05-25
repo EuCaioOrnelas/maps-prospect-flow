@@ -17,7 +17,8 @@
 //   - admin_partner_alert              → internal alert to the partners team
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
+import { PDFDocument, rgb } from "https://esm.sh/pdf-lib@1.17.1";
+import fontkit from "https://esm.sh/@pdf-lib/fontkit@1.1.1";
 
 // ----------------------------------------------------------------
 // Wiize Partners — inline certificate generator (PDF)
@@ -32,15 +33,19 @@ interface CertificateData {
 
 const CERT_TEMPLATE_URL =
   "https://wgokhkawjdxsmvfuhazb.supabase.co/storage/v1/object/public/partner-certificates/templates/certificate-template.pdf";
+const CERT_FONT_BOLD_URL =
+  "https://raw.githubusercontent.com/JulietaUla/Montserrat/master/fonts/ttf/Montserrat-Bold.ttf";
+const CERT_FONT_SEMI_URL =
+  "https://raw.githubusercontent.com/JulietaUla/Montserrat/master/fonts/ttf/Montserrat-SemiBold.ttf";
 
-const CERT_TEXT_COLOR = rgb(0.08, 0.08, 0.08); // clean professional black
+const CERT_TEXT_COLOR = rgb(0.08, 0.08, 0.08);
 const CERT_FIELDS = {
-  nome: { x: 248, y: 362 },
-  cpf:  { x: 212, y: 315 },
-  data: { x: 294, y: 268 },
-  id:   { x: 252, y: 227 },
+  nome: { x: 248, y: 360 },
+  cpf:  { x: 212, y: 313 },
+  data: { x: 294, y: 266 },
+  id:   { x: 252, y: 225 },
 };
-const CERT_FONT_SIZE = 12;
+const CERT_FONT_SIZE = 14;
 
 function maskTaxId(raw?: string | null): string {
   if (!raw) return "—";
@@ -57,18 +62,27 @@ function fmtCertDate(iso: string): string {
 }
 
 async function generateCertificatePdf(data: CertificateData): Promise<Uint8Array> {
-  const resp = await fetch(CERT_TEMPLATE_URL);
-  if (!resp.ok) throw new Error(`Failed to fetch certificate template: ${resp.status}`);
-  const templateBytes = new Uint8Array(await resp.arrayBuffer());
+  const [tplResp, boldResp, semiResp] = await Promise.all([
+    fetch(CERT_TEMPLATE_URL),
+    fetch(CERT_FONT_BOLD_URL),
+    fetch(CERT_FONT_SEMI_URL),
+  ]);
+  if (!tplResp.ok) throw new Error(`Failed to fetch certificate template: ${tplResp.status}`);
+  if (!boldResp.ok || !semiResp.ok) throw new Error("Failed to fetch certificate fonts");
+  const templateBytes = new Uint8Array(await tplResp.arrayBuffer());
+  const boldBytes = new Uint8Array(await boldResp.arrayBuffer());
+  const semiBytes = new Uint8Array(await semiResp.arrayBuffer());
   const pdf = await PDFDocument.load(templateBytes);
-  const font = await pdf.embedFont(StandardFonts.TimesRomanBold);
+  pdf.registerFontkit(fontkit);
+  const fontBold = await pdf.embedFont(boldBytes);
+  const fontSemi = await pdf.embedFont(semiBytes);
   const page = pdf.getPages()[0];
-  const draw = (t: string, x: number, y: number) =>
+  const draw = (t: string, x: number, y: number, font = fontSemi) =>
     page.drawText(t, { x, y, size: CERT_FONT_SIZE, font, color: CERT_TEXT_COLOR });
-  draw((data.full_name || "—").toUpperCase().slice(0, 50), CERT_FIELDS.nome.x, CERT_FIELDS.nome.y);
+  draw((data.full_name || "—").toUpperCase().slice(0, 50), CERT_FIELDS.nome.x, CERT_FIELDS.nome.y, fontBold);
   draw(maskTaxId(data.tax_id), CERT_FIELDS.cpf.x, CERT_FIELDS.cpf.y);
   draw(fmtCertDate(data.partner_since), CERT_FIELDS.data.x, CERT_FIELDS.data.y);
-  draw(data.verification_code || "—", CERT_FIELDS.id.x, CERT_FIELDS.id.y);
+  draw(data.verification_code || "—", CERT_FIELDS.id.x, CERT_FIELDS.id.y, fontBold);
   return await pdf.save();
 }
 
