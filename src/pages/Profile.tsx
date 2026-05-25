@@ -86,6 +86,23 @@ const Profile = () => {
   const [marketingEnabled, setMarketingEnabled] = useState(true);
   const [isLoadingEmailPrefs, setIsLoadingEmailPrefs] = useState(true);
   const [isSavingEmailPrefs, setIsSavingEmailPrefs] = useState(false);
+  const [crmContactsCount, setCrmContactsCount] = useState<number>(0);
+
+  const hasOpps = hasOpportunitiesAccess(profile as any);
+  const planLabel = getPlanDisplayName(profile as any);
+  const contactLimit = getContactLimit(profile as any);
+
+  useEffect(() => {
+    if (!user || hasOpps) return;
+    (async () => {
+      const { count } = await supabase
+        .from("crm_leads" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      setCrmContactsCount(count || 0);
+    })();
+  }, [user, hasOpps]);
+
   
   // Company profile state
   const [companyProfile, setCompanyProfile] = useState<any>(null);
