@@ -971,12 +971,19 @@ const Profile = () => {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Plano atual:</span>
                     <span className={`font-bold ${getPlanColor(profile?.plan || 'free')}`}>
-                      {getPlanName(profile?.plan || 'free')}
+                      {planLabel}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {(profile?.searches_used || 0).toLocaleString('pt-BR')} de {((profile?.searches_limit || 10) + (((profile as any)?.extra_opportunities_packs || 0) * 1000) + (((profile as any)?.bonus_searches || 0))).toLocaleString('pt-BR')} oportunidades utilizadas
-                  </p>
+                  {hasOpps ? (
+                    <p className="text-sm text-muted-foreground">
+                      {(profile?.searches_used || 0).toLocaleString('pt-BR')} de {((profile?.searches_limit || 10) + (((profile as any)?.extra_opportunities_packs || 0) * 1000) + (((profile as any)?.bonus_searches || 0))).toLocaleString('pt-BR')} oportunidades utilizadas
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {crmContactsCount.toLocaleString('pt-BR')} de {Number.isFinite(contactLimit) ? contactLimit.toLocaleString('pt-BR') : '∞'} contatos no CRM utilizados
+                    </p>
+                  )}
+
                   {(((profile as any)?.extra_opportunities_packs || 0) > 0) && (
                     <p className="text-xs text-primary font-medium">
                       + {(((profile as any).extra_opportunities_packs) * 1000).toLocaleString('pt-BR')} oportunidades da Expansão Comercial
