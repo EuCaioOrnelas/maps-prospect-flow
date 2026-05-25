@@ -950,6 +950,9 @@ const Profile = () => {
               )}
             </CardContent>
           </Card>
+          </>)}
+
+
 
           {/* Plan Card */}
           <Card className="border-border/50">
