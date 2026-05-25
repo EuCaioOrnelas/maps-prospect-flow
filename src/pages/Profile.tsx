@@ -65,6 +65,8 @@ import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useGuidedTour, resetGuidedTour } from "@/hooks/useGuidedTour";
 import { PlayCircle } from "lucide-react";
+import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/lib/planAccess";
+
 
 const Profile = () => {
   const { profile, user, refreshProfile, signOut } = useAuth();
@@ -84,6 +86,23 @@ const Profile = () => {
   const [marketingEnabled, setMarketingEnabled] = useState(true);
   const [isLoadingEmailPrefs, setIsLoadingEmailPrefs] = useState(true);
   const [isSavingEmailPrefs, setIsSavingEmailPrefs] = useState(false);
+  const [crmContactsCount, setCrmContactsCount] = useState<number>(0);
+
+  const hasOpps = hasOpportunitiesAccess(profile as any);
+  const planLabel = getPlanDisplayName(profile as any);
+  const contactLimit = getContactLimit(profile as any);
+
+  useEffect(() => {
+    if (!user || hasOpps) return;
+    (async () => {
+      const { count } = await supabase
+        .from("crm_leads" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      setCrmContactsCount(count || 0);
+    })();
+  }, [user, hasOpps]);
+
   
   // Company profile state
   const [companyProfile, setCompanyProfile] = useState<any>(null);
@@ -598,6 +617,7 @@ const Profile = () => {
             </Card>
           </div>
 
+          {hasOpps && (<>
           {/* Company Profile Card */}
           <Card className="border-border/50">
             <CardHeader className="pb-4">
@@ -930,6 +950,9 @@ const Profile = () => {
               )}
             </CardContent>
           </Card>
+          </>)}
+
+
 
           {/* Plan Card */}
           <Card className="border-border/50">
@@ -948,38 +971,48 @@ const Profile = () => {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Plano atual:</span>
                     <span className={`font-bold ${getPlanColor(profile?.plan || 'free')}`}>
-                      {getPlanName(profile?.plan || 'free')}
+                      {planLabel}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {(profile?.searches_used || 0).toLocaleString('pt-BR')} de {((profile?.searches_limit || 10) + (((profile as any)?.extra_opportunities_packs || 0) * 1000) + (((profile as any)?.bonus_searches || 0))).toLocaleString('pt-BR')} oportunidades utilizadas
-                  </p>
-                  {(((profile as any)?.extra_opportunities_packs || 0) > 0) && (
+                  {hasOpps ? (
+                    <p className="text-sm text-muted-foreground">
+                      {(profile?.searches_used || 0).toLocaleString('pt-BR')} de {((profile?.searches_limit || 10) + (((profile as any)?.extra_opportunities_packs || 0) * 1000) + (((profile as any)?.bonus_searches || 0))).toLocaleString('pt-BR')} oportunidades utilizadas
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {crmContactsCount.toLocaleString('pt-BR')} de {Number.isFinite(contactLimit) ? contactLimit.toLocaleString('pt-BR') : '∞'} contatos no CRM utilizados
+                    </p>
+                  )}
+
+                  {hasOpps && (((profile as any)?.extra_opportunities_packs || 0) > 0) && (
                     <p className="text-xs text-primary font-medium">
                       + {(((profile as any).extra_opportunities_packs) * 1000).toLocaleString('pt-BR')} oportunidades da Expansão Comercial
                     </p>
                   )}
-                  {((profile as any)?.bonus_searches || 0) > 0 && (
+                  {hasOpps && ((profile as any)?.bonus_searches || 0) > 0 && (
                     <p className="text-xs text-emerald-600 font-medium">
                       + {((profile as any).bonus_searches).toLocaleString('pt-BR')} oportunidades bônus do plano anterior
                     </p>
                   )}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
-                          <RefreshCcw className="h-3 w-3" />
-                          Reset das oportunidades mensais: {getNextSearchResetLabel()}
-                        </p>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="max-w-xs">
-                        <div className="space-y-1 text-sm">
-                          <p><strong>Último reset:</strong> {getLastResetLabel()}</p>
-                          <p><strong>Próximo reset:</strong> {getNextResetDate()}</p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  {hasOpps && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
+                            <RefreshCcw className="h-3 w-3" />
+                            Reset das oportunidades mensais: {getNextSearchResetLabel()}
+                          </p>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-xs">
+                          <div className="space-y-1 text-sm">
+                            <p><strong>Último reset:</strong> {getLastResetLabel()}</p>
+                            <p><strong>Próximo reset:</strong> {getNextResetDate()}</p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+
                 </div>
                 {profile?.plan === 'scale' ? (
                   <div className="flex items-center gap-2 text-sm text-emerald-500">
