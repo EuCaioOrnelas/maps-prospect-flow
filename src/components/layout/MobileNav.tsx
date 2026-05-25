@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
+import { planHasFeature } from "@/lib/planAccess";
 import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
 import { cn } from "@/lib/utils";
 
@@ -45,7 +46,9 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
   const [openSection, setOpenSection] = useState<SectionKey | null>(null);
   const { trialDaysRemaining, isTrialing, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
-  const can = (key: FeatureKey) => isAdmin || profileHasFeature(authProfile as any, key);
+  const can = (key: FeatureKey) =>
+    isAdmin ||
+    (profileHasFeature(authProfile as any, key) && planHasFeature(authProfile as any, key));
   const canEvolution = isAdmin || isLegacyEvolutionUser(authProfile as any);
 
   const isFreePlan = !profile?.plan || profile.plan === "free";
