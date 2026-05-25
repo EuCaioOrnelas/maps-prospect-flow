@@ -46,7 +46,9 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
   const [openSection, setOpenSection] = useState<SectionKey | null>(null);
   const { trialDaysRemaining, isTrialing, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
-  const can = (key: FeatureKey) => isAdmin || profileHasFeature(authProfile as any, key);
+  const can = (key: FeatureKey) =>
+    isAdmin ||
+    (profileHasFeature(authProfile as any, key) && planHasFeature(authProfile as any, key));
   const canEvolution = isAdmin || isLegacyEvolutionUser(authProfile as any);
 
   const isFreePlan = !profile?.plan || profile.plan === "free";
