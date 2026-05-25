@@ -188,15 +188,9 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
               </div>
 
               <div className="flex flex-col gap-1 pt-2 border-t border-border">
-                {/* Dashboard */}
-                <SectionHeader icon={LayoutDashboard} label="Dashboard" sectionKey="dashboard" />
-                {openSection === "dashboard" && (
-                  <div className="flex flex-col">
-                    <SubLink to="/dashboard" icon={LayoutDashboard} label="Visão Geral" />
-                    <SubLink to="/whatsapp/reports" icon={Send} label="Disparos" />
-                    <SubLink to="/agents/reports" icon={Bot} label="Agentes IA" />
-                  </div>
-                )}
+                {/* Dashboard - single link, no submenu */}
+                <TopLink to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+
 
                 {/* Oportunidades */}
                 {can("oportunidades") && (

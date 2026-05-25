@@ -267,50 +267,16 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         {/* Main navigation */}
         <nav className="flex-1 py-4 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1 px-4">
-            {/* Dashboard with submenu */}
+            {/* Dashboard - single page, no submenu */}
             <li>
               <SidebarNavItem
                 title="Dashboard"
                 icon={LayoutDashboard}
-                onClick={handleReportsClick}
-                isActive={isOnReportsPage || currentPath === "/dashboard"}
+                url="/dashboard"
+                isActive={currentPath === "/dashboard"}
                 isExpanded={isExpanded}
-                hasSubmenu
-                isSubmenuOpen={isReportsOpen}
                 tooltip="Dashboard"
               />
-
-              {isExpanded && (
-                <div
-                  className={cn(
-                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                    (isReportsOpen)
-                      ? "max-h-56 opacity-100 mt-1"
-                      : "max-h-0 opacity-0"
-                  )}
-                >
-                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
-                    {dashboardSubItems.map((subItem) => (
-                      <li key={subItem.title}>
-                        <Link
-                          to={subItem.url}
-                          className={cn(
-                            "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
-                            subItem.active
-                              ? "bg-sidebar-accent/60 text-primary font-medium"
-                              : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                          )}
-                        >
-                          <subItem.icon size={20} className="shrink-0" />
-                          <span className="whitespace-nowrap truncate">
-                            {subItem.title}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </li>
 
             {/* Oportunidades with submenu */}
