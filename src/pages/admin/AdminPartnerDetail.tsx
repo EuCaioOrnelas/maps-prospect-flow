@@ -526,10 +526,10 @@ export default function AdminPartnerDetail() {
                   <Select value={form.level} onValueChange={(v) => setForm({ ...form, level: v as Level })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="bronze">Bronze</SelectItem>
-                      <SelectItem value="silver">Silver</SelectItem>
-                      <SelectItem value="gold">Gold</SelectItem>
-                      <SelectItem value="platinum">Platinum</SelectItem>
+                      <SelectItem value="bronze">Select (10%)</SelectItem>
+                      <SelectItem value="silver">Signature (15%)</SelectItem>
+                      <SelectItem value="gold">Prime (20%)</SelectItem>
+                      <SelectItem value="platinum">Exclusive (25%)</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormField>
