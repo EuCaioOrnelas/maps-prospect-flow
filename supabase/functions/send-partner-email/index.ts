@@ -17,6 +17,7 @@
 //   - admin_partner_alert              → internal alert to the partners team
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { generateCertificatePdf, bytesToBase64 } from "../_shared/generate-certificate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
