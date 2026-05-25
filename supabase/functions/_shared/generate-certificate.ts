@@ -24,10 +24,10 @@ const GREEN = rgb(0x1e / 255, 0x6b / 255, 0x3a / 255);
 // Coordinates (PDF pts, origin bottom-left, A4 595 x 842)
 // Calibrated from the visual template. Tune here if the design changes.
 const FIELDS = {
-  nome:  { x: 248, y: 358 },
-  cpf:   { x: 212, y: 311 },
-  data:  { x: 294, y: 264 },
-  id:    { x: 252, y: 216 },
+  nome:  { x: 248, y: 362 },
+  cpf:   { x: 212, y: 315 },
+  data:  { x: 294, y: 268 },
+  id:    { x: 252, y: 220 },
 };
 
 const FONT_SIZE = 12;
