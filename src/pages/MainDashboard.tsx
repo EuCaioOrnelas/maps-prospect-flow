@@ -163,23 +163,25 @@ export default function MainDashboard() {
 
               <TrialAutoChargeBanner />
 
-              {/* 1 — Hero Impact */}
-              <div data-tour="cockpit-hero">
-                <DashboardHero
-                  financialImpact={financialImpact}
-                  financialChange={financialChange}
-                  leadsGerados={kpis.leadsGeradosPeriodo}
-                  conversasAtivas={kpis.conversasAtivasPeriodo}
-                  oportunidadesQuentes={kpis.oportunidadesQuentesPeriodo}
-                  cumulativeByMonth={data.cumulativeByMonth}
-                  leadsByDay={data.leadsByDay}
-                  estimatedSales={forecast.totalEstimatedSales}
-                  averageTicket={forecast.averageTicket}
-                  opportunitySales={forecast.opportunitySales}
-                  scoreSales={forecast.scoreSales}
-                  periodDays={periodDays}
-                />
-              </div>
+              {/* 1 — Hero Impact (oculto no plano Atendimento — sem prospecção) */}
+              {hasOpportunitiesAccess(profile as any) && (
+                <div data-tour="cockpit-hero">
+                  <DashboardHero
+                    financialImpact={financialImpact}
+                    financialChange={financialChange}
+                    leadsGerados={kpis.leadsGeradosPeriodo}
+                    conversasAtivas={kpis.conversasAtivasPeriodo}
+                    oportunidadesQuentes={kpis.oportunidadesQuentesPeriodo}
+                    cumulativeByMonth={data.cumulativeByMonth}
+                    leadsByDay={data.leadsByDay}
+                    estimatedSales={forecast.totalEstimatedSales}
+                    averageTicket={forecast.averageTicket}
+                    opportunitySales={forecast.opportunitySales}
+                    scoreSales={forecast.scoreSales}
+                    periodDays={periodDays}
+                  />
+                </div>
+              )}
 
               {/* 2 — Executive KPIs */}
               <div data-tour="cockpit-kpis">
@@ -205,7 +207,16 @@ export default function MainDashboard() {
                   scoreSales={forecast.scoreSales}
                   scoreBuckets={forecast.scoreBuckets}
                 />
-                <OperationalFunnel funnel={data.funnel} />
+                <OperationalFunnel
+                  funnel={
+                    hasOpportunitiesAccess(profile as any)
+                      ? data.funnel
+                      : [
+                          { stage: "Leads Prospectados", value: data.messagesSent || 0 },
+                          ...data.funnel.filter((s: any) => s.stage !== "Captados"),
+                        ]
+                  }
+                />
               </div>
 
               {/* 4 — Opportunity Radar */}
