@@ -984,32 +984,35 @@ const Profile = () => {
                     </p>
                   )}
 
-                  {(((profile as any)?.extra_opportunities_packs || 0) > 0) && (
+                  {hasOpps && (((profile as any)?.extra_opportunities_packs || 0) > 0) && (
                     <p className="text-xs text-primary font-medium">
                       + {(((profile as any).extra_opportunities_packs) * 1000).toLocaleString('pt-BR')} oportunidades da Expansão Comercial
                     </p>
                   )}
-                  {((profile as any)?.bonus_searches || 0) > 0 && (
+                  {hasOpps && ((profile as any)?.bonus_searches || 0) > 0 && (
                     <p className="text-xs text-emerald-600 font-medium">
                       + {((profile as any).bonus_searches).toLocaleString('pt-BR')} oportunidades bônus do plano anterior
                     </p>
                   )}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
-                          <RefreshCcw className="h-3 w-3" />
-                          Reset das oportunidades mensais: {getNextSearchResetLabel()}
-                        </p>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="max-w-xs">
-                        <div className="space-y-1 text-sm">
-                          <p><strong>Último reset:</strong> {getLastResetLabel()}</p>
-                          <p><strong>Próximo reset:</strong> {getNextResetDate()}</p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  {hasOpps && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
+                            <RefreshCcw className="h-3 w-3" />
+                            Reset das oportunidades mensais: {getNextSearchResetLabel()}
+                          </p>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-xs">
+                          <div className="space-y-1 text-sm">
+                            <p><strong>Último reset:</strong> {getLastResetLabel()}</p>
+                            <p><strong>Próximo reset:</strong> {getNextResetDate()}</p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+
                 </div>
                 {profile?.plan === 'scale' ? (
                   <div className="flex items-center gap-2 text-sm text-emerald-500">
