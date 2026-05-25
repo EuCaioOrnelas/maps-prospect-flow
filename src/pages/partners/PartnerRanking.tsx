@@ -10,17 +10,17 @@ const levelIcons: Record<string, any> = {
   bronze: ShieldCheck, silver: Award, gold: Rocket, platinum: Crown,
 };
 const levelGradients: Record<string, string> = {
-  bronze: "from-amber-700/15 to-amber-700/5 text-amber-700",
-  silver: "from-slate-400/15 to-slate-400/5 text-slate-500",
-  gold: "from-yellow-500/15 to-yellow-500/5 text-yellow-600",
-  platinum: "from-purple-500/15 to-purple-500/5 text-purple-600",
+  bronze: "from-muted/40 to-muted/10 text-foreground",
+  silver: "from-muted/60 to-muted/20 text-foreground",
+  gold: "from-primary/15 to-primary/5 text-primary",
+  platinum: "from-foreground/10 to-foreground/5 text-foreground",
 };
 
 const tierThresholds = [
-  { level: "bronze", min: 0, max: 500000, label: "Bronze", percent: 20 },
-  { level: "silver", min: 500000, max: 2500000, label: "Silver", percent: 25 },
-  { level: "gold", min: 2500000, max: 10000000, label: "Gold", percent: 30 },
-  { level: "platinum", min: 10000000, max: Infinity, label: "Platinum", percent: 40 },
+  { level: "bronze", min: 0, max: 500000, label: "Select", percent: 10 },
+  { level: "silver", min: 500000, max: 2500000, label: "Signature", percent: 15 },
+  { level: "gold", min: 2500000, max: 10000000, label: "Prime", percent: 20 },
+  { level: "platinum", min: 10000000, max: Infinity, label: "Exclusive", percent: 25 },
 ];
 
 interface RankRow {
