@@ -264,14 +264,19 @@ serve(async (req) => {
     // Create empty bank account
     await supabaseAdmin.from("partner_bank_accounts").insert({ partner_id: partner.id });
 
-    // Audit log
-    await supabaseAdmin.from("security_audit_log").insert({
-      user_id: callerData.user.id,
-      action: "partner_created",
-      resource_type: "partners",
-      resource_id: partner.id,
-      metadata: { email: body.email, level: partner.level },
-    }).catch(() => {});
+    // Audit log (best-effort, never block response)
+    try {
+      await supabaseAdmin.from("security_audit_log").insert({
+        user_id: callerData.user.id,
+        action: "partner_created",
+        resource_type: "partners",
+        resource_id: partner.id,
+        metadata: { email: body.email, level: partner.level },
+      });
+    } catch (e) {
+      console.warn("[admin-create-partner] audit log warn:", e);
+    }
+
 
     // Welcome email (best-effort)
     sendPartnerEmail(supabaseAdmin, partner.id, "partner_welcome").catch(() => {});
