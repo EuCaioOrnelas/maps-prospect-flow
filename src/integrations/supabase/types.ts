@@ -7449,6 +7449,10 @@ export type Database = {
         Args: { p_cpf: string; p_email: string }
         Returns: Json
       }
+      recompute_partner_level: {
+        Args: { p_partner_id: string }
+        Returns: undefined
+      }
       release_pending_commissions: { Args: never; Returns: number }
       request_partner_withdrawal: {
         Args: { p_amount_cents: number }
