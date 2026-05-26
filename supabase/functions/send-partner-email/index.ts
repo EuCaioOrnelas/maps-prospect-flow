@@ -353,21 +353,31 @@ Deno.serve(async (req) => {
     // Caller can disable with data.attach_certificate === false.
     const attachments: Array<{ filename: string; content: string }> = [];
     if (type === "partner_welcome" && data?.attach_certificate !== false) {
-      try {
-        if (data?.certificate?.full_name && data?.certificate?.verification_code) {
+      const cert = data?.certificate;
+      console.log("[send-partner-email] cert payload:", JSON.stringify({
+        has_cert: !!cert,
+        full_name: cert?.full_name,
+        verification_code: cert?.verification_code,
+      }));
+      if (!cert?.full_name) {
+        console.error("[send-partner-email] missing certificate.full_name — cannot attach");
+      } else {
+        try {
           const pdfBytes = await generateCertificatePdf({
-            full_name: data.certificate.full_name,
-            tax_id: data.certificate.tax_id ?? null,
-            partner_since: data.certificate.partner_since || new Date().toISOString(),
-            verification_code: data.certificate.verification_code,
+            full_name: cert.full_name,
+            tax_id: cert.tax_id ?? null,
+            partner_since: cert.partner_since || new Date().toISOString(),
+            verification_code: cert.verification_code || `WZ-${Date.now().toString(36).toUpperCase()}`,
           });
+          const b64 = bytesToBase64(pdfBytes);
+          console.log(`[send-partner-email] certificate generated: ${pdfBytes.length} bytes`);
           attachments.push({
             filename: `Certificado-Wiize-Partners.pdf`,
-            content: bytesToBase64(pdfBytes),
+            content: b64,
           });
+        } catch (err) {
+          console.error("[send-partner-email] certificate generation FAILED:", err);
         }
-      } catch (err) {
-        console.warn("[send-partner-email] certificate generation failed:", err);
       }
     }
 
@@ -377,7 +387,12 @@ Deno.serve(async (req) => {
       subject: built.subject,
       html: built.html,
     };
-    if (attachments.length) payload.attachments = attachments;
+    if (attachments.length) {
+      payload.attachments = attachments;
+      console.log(`[send-partner-email] sending with ${attachments.length} attachment(s) to ${to}`);
+    } else if (type === "partner_welcome") {
+      console.warn(`[send-partner-email] partner_welcome WITHOUT attachment to ${to}`);
+    }
 
     const resp = await fetch("https://api.resend.com/emails", {
       method: "POST",
