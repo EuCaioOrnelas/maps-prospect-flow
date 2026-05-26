@@ -560,7 +560,7 @@ export default function AdminPartnersApplications() {
 
                 {/* REJECT REASON (only pending) */}
                 {reviewing.status === "pending" && (
-                  <div className="px-6 py-4 border-t border-border bg-muted/30">
+                  <div className="px-6 py-4 border-t border-border bg-muted/30 shrink-0">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                       <AlertCircle className="h-3 w-3" /> Motivo da recusa (preencha apenas se for recusar)
                     </label>
