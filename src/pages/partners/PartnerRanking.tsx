@@ -10,10 +10,10 @@ const levelIcons: Record<string, any> = {
   bronze: ShieldCheck, silver: Award, gold: Rocket, platinum: Crown,
 };
 const levelGradients: Record<string, string> = {
-  bronze: "from-muted/40 to-muted/10 text-foreground",
-  silver: "from-muted/60 to-muted/20 text-foreground",
-  gold: "from-primary/15 to-primary/5 text-primary",
-  platinum: "from-foreground/10 to-foreground/5 text-foreground",
+  bronze: "from-muted/50 to-muted/10 text-muted-foreground",
+  silver: "from-muted/70 to-muted/20 text-foreground/80",
+  gold: "from-foreground/[0.08] to-foreground/[0.02] text-foreground",
+  platinum: "from-foreground/90 to-foreground/70 text-background",
 };
 
 const tierThresholds = [
