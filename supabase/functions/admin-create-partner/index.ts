@@ -195,25 +195,6 @@ serve(async (req) => {
         newUserId = created.user.id;
       }
     }
-        .select("id")
-        .eq("user_id", foundUserId)
-        .maybeSingle();
-
-      if (existingPartner) {
-        return new Response(JSON.stringify({ error: "Este email já está cadastrado como parceiro" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-
-      newUserId = foundUserId;
-      userAlreadyExisted = true;
-
-      // IMPORTANT: do NOT overwrite the existing user's password.
-      // This user already has a Wiize account — changing their password here
-      // would break their original Wiize login. They will use their existing
-      // Wiize credentials to access the partner portal.
-      console.log("[admin-create-partner] reusing existing Wiize user, password preserved:", foundUserId);
-    } else {
-      newUserId = created.user.id;
-    }
 
     // Upsert profile (handle_new_user may have created it)
     await supabaseAdmin.from("profiles").upsert({
