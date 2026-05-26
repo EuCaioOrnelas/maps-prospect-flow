@@ -158,7 +158,11 @@ function buildEmail(type: string, data: any): { subject: string; html: string } 
             `<p style="margin:8px 0 0;font-size:14px;color:#18181b;"><strong>E-mail:</strong> ${data.login_email || data.email || ""}</p>` +
             `<p style="margin:4px 0 0;font-size:14px;color:#18181b;"><strong>Senha temporária:</strong> <span style="font-family:monospace;background:#fff;padding:2px 6px;border-radius:4px;border:1px solid #e4e4e7;">${data.temp_password}</span></p>`
           )
-        : "";
+        : box(
+            small("Acesso ao portal:") +
+            `<p style="margin:8px 0 0;font-size:14px;color:#18181b;"><strong>E-mail:</strong> ${data.login_email || data.email || ""}</p>` +
+            `<p style="margin:4px 0 0;font-size:14px;color:#3f3f46;">Use a <strong>mesma senha</strong> que você cadastrou na candidatura. Esqueceu? Clique em <em>"Esqueci minha senha"</em> na tela de login.</p>`
+          );
       const refBlock = refLink
         ? box(small("Seu link exclusivo de indicação:") + `<p style="margin:8px 0 0;font-family:monospace;font-size:14px;color:${BRAND.color};word-break:break-all;">${refLink}</p>`)
         : "";
@@ -167,7 +171,6 @@ function buildEmail(type: string, data: any): { subject: string; html: string } 
         p("A sua candidatura foi aprovada. A partir de agora você ganha comissão recorrente sobre cada cliente que indicar para a Wiize.") +
         credentialsBlock +
         refBlock +
-        p("📎 Em anexo você encontra o seu <strong>Certificado Oficial Wiize Partners</strong> em PDF — pode usar nas suas redes, site e materiais comerciais.") +
         p("Compartilhe seu link em WhatsApp, redes sociais e e-mails. Toda venda gerada nos próximos <strong>2 anos</strong> é vinculada à sua conta.") +
         btn(portalLogin, "Acessar meu portal") +
         small("Comece pelo painel — você encontra materiais prontos, métricas de conversão e seu saldo em tempo real."),
@@ -175,6 +178,7 @@ function buildEmail(type: string, data: any): { subject: string; html: string } 
       );
       return { subject: "🎉 Sua candidatura para Wiize Partners foi aprovada", html };
     }
+
     case "partner_new_lead": {
       const html = layout("Você ganhou um novo lead",
         h(`Boa, ${data.first_name}! Você tem um novo lead 👀`) +
