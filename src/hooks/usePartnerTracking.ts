@@ -63,35 +63,35 @@ export function usePartnerTracking() {
     let cancelled = false;
     (async () => {
       try {
-        const { data: partner } = await supabase
-          .from("partners")
-          .select("id, status")
-          .eq("referral_code", ref)
-          .eq("status", "active")
-          .maybeSingle();
-
-        if (!partner || cancelled) return;
+        // SECURITY DEFINER RPC: anon users can resolve an active referral_code
+        // without us having to open the partners table to anon SELECT.
+        const { data: partnerLookup, error: partnerErr } = await supabase
+          .rpc("lookup_active_partner_by_code", { _code: ref });
+        if (partnerErr) {
+          console.warn("[usePartnerTracking] partner lookup failed:", partnerErr.message);
+          return;
+        }
+        const partnerId: string | undefined = Array.isArray(partnerLookup)
+          ? partnerLookup[0]?.partner_id
+          : (partnerLookup as any)?.partner_id;
+        if (!partnerId || cancelled) return;
 
         const linkSlug = params.get("rl")?.trim().toLowerCase();
         let referralLinkId: string | null = null;
 
         if (linkSlug) {
-          const { data: referralLink } = await supabase
-            .from("partner_referral_links")
-            .select("id, is_active")
-            .eq("slug", linkSlug)
-            .eq("partner_id", partner.id)
-            .maybeSingle();
-
-          if (referralLink?.is_active) {
-            referralLinkId = referralLink.id;
-          }
+          const { data: linkLookup } = await supabase
+            .rpc("lookup_active_referral_link", { _slug: linkSlug, _partner_id: partnerId });
+          const id = Array.isArray(linkLookup)
+            ? linkLookup[0]?.link_id
+            : (linkLookup as any)?.link_id;
+          if (id) referralLinkId = id;
         }
 
-        const { data: click } = await supabase
+        const { data: click, error: clickErr } = await supabase
           .from("partner_clicks")
           .insert({
-            partner_id: partner.id,
+            partner_id: partnerId,
             referral_code: ref,
             referral_link_id: referralLinkId,
             user_agent: navigator.userAgent.substring(0, 500),
@@ -106,11 +106,15 @@ export function usePartnerTracking() {
           .select("id")
           .single();
 
+        if (clickErr) {
+          console.warn("[usePartnerTracking] click insert failed:", clickErr.message);
+          return;
+        }
         if (cancelled || !click) return;
 
         persistReferral({
           code: ref,
-          partner_id: partner.id,
+          partner_id: partnerId,
           click_id: click.id,
           referral_link_id: referralLinkId,
           ts: Date.now(),
@@ -123,6 +127,7 @@ export function usePartnerTracking() {
     return () => { cancelled = true; };
   }, [location.search, location.pathname]);
 }
+
 
 /** Call this after a user signs up to attribute their account to the stored partner. */
 export async function attributePartnerLeadOnSignup(userId: string, email: string, name?: string) {
