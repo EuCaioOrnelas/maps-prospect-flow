@@ -134,6 +134,7 @@ export default function AdminPartnersApplications() {
   const [search, setSearch] = useState("");
   const [reviewing, setReviewing] = useState<Application | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [rejectOpen, setRejectOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [docUrls, setDocUrls] = useState<Record<string, string>>({});
   const [tempPasswordModal, setTempPasswordModal] = useState<{ email: string; password: string } | null>(null);
@@ -238,6 +239,7 @@ export default function AdminPartnersApplications() {
       return;
     }
     toast({ title: "Candidatura recusada" });
+    setRejectOpen(false);
     setReviewing(null);
     setRejectReason("");
     setSubmitting(false);
@@ -313,16 +315,15 @@ export default function AdminPartnersApplications() {
       ) : (
         <div className="grid gap-3">
           {filtered.map((a) => {
-            const theme = STATUS_THEME[a.status] || STATUS_THEME.pending;
             return (
               <Card
                 key={a.id}
-                className={`group hover:shadow-elegant transition-all cursor-pointer border-l-4 ${theme.cardBorder}`}
+                className="group hover:border-foreground/20 transition-all cursor-pointer border border-border"
                 onClick={() => setReviewing(a)}
               >
                 <CardContent className="p-5 flex items-start gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                    <div className="flex items-center gap-2.5 mb-2 flex-wrap">
                       <h3 className="font-semibold">{a.full_name}</h3>
                       <StatusBadge status={a.status} />
                       {a.internal_score !== null && (
@@ -355,43 +356,62 @@ export default function AdminPartnersApplications() {
         <DialogContent className="max-w-4xl h-[92vh] p-0 overflow-hidden gap-0 bg-background flex flex-col">
           {reviewing && (
             <>
-              {/* HEADER */}
-              <div className={`border-b border-border px-6 py-5 pr-14 shrink-0 ${
-                reviewing.status === "pending" ? "bg-amber-50/50 dark:bg-amber-500/5"
-                : reviewing.status === "approved" ? "bg-emerald-50/50 dark:bg-emerald-500/5"
-                : "bg-red-50/50 dark:bg-red-500/5"
-              }`}>
-                <DialogHeader className="space-y-2">
-                  <DialogTitle className="text-xl flex items-center gap-2.5 flex-wrap">
-                    {reviewing.full_name}
-                    <StatusBadge status={reviewing.status} />
-                    {reviewing.internal_score !== null && (
-                      <span className={`px-2 py-0.5 rounded-md border text-[11px] font-medium inline-flex items-center gap-1 ${scoreColor(reviewing.internal_score)}`}>
-                        <Award className="h-2.5 w-2.5" /> Score {reviewing.internal_score}/100
-                      </span>
-                    )}
-                  </DialogTitle>
-                  <DialogDescription className="flex items-center gap-3 text-xs flex-wrap">
-                    <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" /> {reviewing.email}</span>
-                    {reviewing.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {reviewing.phone}</span>}
-                    <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {fmtDateTime(reviewing.created_at)}</span>
-                  </DialogDescription>
+              {/* HEADER — estilo "Detalhes do Usuário" (clean) */}
+              <div className="px-6 pt-6 pb-4 shrink-0 border-b border-border">
+                <DialogHeader>
+                  <DialogTitle className="text-lg font-semibold">Detalhes da Candidatura</DialogTitle>
                 </DialogHeader>
+
+                {/* Subcard: avatar + identidade + score */}
+                <div className="mt-4 rounded-2xl bg-muted/40 border border-border/60 p-4 flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-background border border-border flex items-center justify-center shrink-0">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-base">{reviewing.full_name}</h3>
+                      <StatusBadge status={reviewing.status} />
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-0.5 truncate">{reviewing.email}</div>
+                    <div className="flex items-center gap-2 mt-2.5 flex-wrap text-[11px] text-muted-foreground">
+                      {reviewing.profile && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-background border border-border">
+                          <Briefcase className="h-3 w-3" /> {profileLabels[reviewing.profile] || reviewing.profile}
+                        </span>
+                      )}
+                      {(reviewing.city || reviewing.state) && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-background border border-border">
+                          <MapPin className="h-3 w-3" /> {[reviewing.city, reviewing.state].filter(Boolean).join("/")}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-background border border-border">
+                        <Calendar className="h-3 w-3" /> {fmtDateTime(reviewing.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                  {reviewing.internal_score !== null && (
+                    <div className="text-right shrink-0">
+                      <div className="text-3xl font-semibold tracking-tight leading-none">{reviewing.internal_score}</div>
+                      <div className="text-[11px] text-muted-foreground mt-1.5">Score</div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* TABS */}
+              {/* TABS — pill style, wrap (sem scroll horizontal) */}
               <Tabs value={dialogTab} onValueChange={setDialogTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                <div className="px-6 border-b border-border bg-muted/30 shrink-0">
-                  <TabsList className="bg-transparent h-auto p-0 gap-0 rounded-none w-full justify-start overflow-x-auto">
+                <div className="px-6 pt-4 pb-2 shrink-0">
+                  <TabsList className="bg-muted/50 h-auto p-1 rounded-xl flex flex-wrap gap-1 w-full justify-start">
                     <TabsTriggerNav value="resumo" icon={Activity} label="Resumo" current={dialogTab} />
                     <TabsTriggerNav value="identidade" icon={IdCard} label="Identidade" current={dialogTab} />
-                    <TabsTriggerNav value="perfil" icon={Briefcase} label="Perfil & Audiência" current={dialogTab} />
+                    <TabsTriggerNav value="perfil" icon={Briefcase} label="Perfil" current={dialogTab} />
                     <TabsTriggerNav value="parceria" icon={Users} label="Parceria" current={dialogTab} />
                     <TabsTriggerNav value="respostas" icon={MessageSquare} label="Respostas" current={dialogTab} />
                     <TabsTriggerNav value="documentos" icon={FileText} label="Documentos" current={dialogTab} badge={docsArr.length} />
                     <TabsTriggerNav value="origem" icon={Globe} label="Origem" current={dialogTab} />
                   </TabsList>
                 </div>
+
 
                 <div className="flex-1 overflow-y-auto px-6 py-6 min-h-0">
                   {/* RESUMO */}
@@ -558,28 +578,13 @@ export default function AdminPartnersApplications() {
                   </TabsContent>
                 </div>
 
-                {/* REJECT REASON (only pending) */}
-                {reviewing.status === "pending" && (
-                  <div className="px-6 py-4 border-t border-border bg-muted/30 shrink-0">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                      <AlertCircle className="h-3 w-3" /> Motivo da recusa (preencha apenas se for recusar)
-                    </label>
-                    <Textarea
-                      rows={2}
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                      placeholder="Mensagem cordial que será enviada por e-mail ao candidato."
-                      className="mt-1.5 bg-background"
-                    />
-                  </div>
-                )}
               </Tabs>
 
               {/* FOOTER */}
               {reviewing.status === "pending" && (
                 <DialogFooter className="px-6 py-4 border-t border-border bg-background shrink-0">
-                  <Button variant="outline" onClick={() => reject(reviewing)} disabled={submitting} className="gap-2 border-red-500/40 text-red-600 hover:bg-red-500/10 hover:text-red-700">
-                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <X size={14} />} Recusar candidatura
+                  <Button variant="outline" onClick={() => { setRejectReason(""); setRejectOpen(true); }} disabled={submitting} className="gap-2 border-red-500/40 text-red-600 hover:bg-red-500/10 hover:text-red-700">
+                    <X size={14} /> Recusar candidatura
                   </Button>
                   <Button onClick={() => approve(reviewing)} disabled={submitting} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
                     {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check size={14} />} Aprovar e criar parceiro
@@ -590,6 +595,41 @@ export default function AdminPartnersApplications() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* REJECT REASON DIALOG */}
+      <Dialog open={rejectOpen} onOpenChange={(o) => { if (!submitting) setRejectOpen(o); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-red-600" /> Recusar candidatura
+            </DialogTitle>
+            <DialogDescription>
+              Escreva uma mensagem cordial que será enviada por e-mail ao candidato explicando o motivo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Motivo da recusa</label>
+            <Textarea
+              rows={5}
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Ex: No momento estamos selecionando perfis com maior experiência em vendas B2B..."
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectOpen(false)} disabled={submitting}>Cancelar</Button>
+            <Button
+              onClick={() => reviewing && reject(reviewing)}
+              disabled={submitting || !rejectReason.trim()}
+              className="bg-red-600 hover:bg-red-700 text-white gap-2"
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <X size={14} />} Confirmar recusa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* TEMP PASSWORD MODAL */}
       <Dialog open={!!tempPasswordModal} onOpenChange={(o) => !o && setTempPasswordModal(null)}>
@@ -636,20 +676,19 @@ export default function AdminPartnersApplications() {
 
 // ============================ HELPERS ============================
 function TabsTriggerNav({
-  value, icon: Icon, label, current, badge,
-}: { value: string; icon: any; label: string; current: string; badge?: number }) {
+  value, label, current, badge,
+}: { value: string; icon?: any; label: string; current: string; badge?: number }) {
   const active = current === value;
   return (
     <TabsTrigger
       value={value}
-      className={`relative rounded-none px-4 py-3 h-auto bg-transparent text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none border-b-2 ${
-        active ? "border-primary" : "border-transparent"
-      } gap-1.5 text-sm whitespace-nowrap`}
+      className={`rounded-lg px-3.5 py-1.5 h-auto text-sm font-medium border-0 bg-transparent text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm gap-1.5 ${
+        active ? "" : ""
+      }`}
     >
-      <Icon className="h-3.5 w-3.5" />
       {label}
       {badge !== undefined && badge > 0 && (
-        <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{badge}</Badge>
+        <span className="ml-0.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-muted-foreground/15 text-[10px] font-medium text-foreground/70">{badge}</span>
       )}
     </TabsTrigger>
   );
