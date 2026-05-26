@@ -144,6 +144,7 @@ export default function PartnersApply() {
   const [submitted, setSubmitted] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [uploadSession] = useState(() => crypto.randomUUID());
+  const [docDialog, setDocDialog] = useState<{ key: string; label: string } | null>(null);
 
   // Auto-sync access email with main email if empty
   useEffect(() => {
@@ -151,6 +152,32 @@ export default function PartnersApply() {
       setForm((p) => ({ ...p, access_email: form.email }));
     }
   }, [form.email]);
+
+  // --- LocalStorage persistence (everything EXCEPT senha) ---
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (saved && typeof saved === "object") {
+        setForm((p) => ({ ...p, ...saved, password: "", password_confirm: "" }));
+        if (typeof saved.__step === "number") setStep(saved.__step);
+        if (saved.__started) setStarted(true);
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (submitted) return;
+    try {
+      const { password, password_confirm, website, ...safe } = form;
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ ...safe, __step: step, __started: started })
+      );
+    } catch { /* ignore quota */ }
+  }, [form, step, started, submitted]);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => {
     setForm((p) => ({ ...p, [k]: v }));
