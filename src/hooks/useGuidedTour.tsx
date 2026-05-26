@@ -147,7 +147,7 @@ function centerElementInScrollArea(element: HTMLElement, scrollAreaId = "lead-de
 }
 
 export function GuidedTourProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isActive, setIsActive] = useState(false);
@@ -155,7 +155,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const [direction, setDirection] = useState<"next" | "prev">("next");
   const startedRef = useRef(false);
 
-  const steps: TourStep[] = [
+  const allSteps: TourStep[] = [
     {
       id: "welcome",
       route: "/dashboard",
