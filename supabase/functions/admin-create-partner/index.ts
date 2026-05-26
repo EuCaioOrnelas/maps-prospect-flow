@@ -129,88 +129,67 @@ serve(async (req) => {
     let newUserId: string | null = null;
     let userAlreadyExisted = false;
 
-    // If no password was provided, the caller already knows this email
-    // belongs to an existing Wiize user. Skip the create attempt entirely.
-    const { data: created, error: createErr } = hasPassword
-      ? await supabaseAdmin.auth.admin.createUser({
-          email: normalizedEmail,
-          password: body.password,
-          email_confirm: true,
-          user_metadata: { full_name: body.full_name, is_partner: true },
-        })
-      : { data: null, error: { message: "no password — assume already registered" } as any };
-
-    if (createErr || !created?.user) {
-      const msg = (createErr?.message || "").toLowerCase();
-      const alreadyRegistered =
-        !hasPassword ||
-        msg.includes("already been registered") ||
-        msg.includes("already registered") ||
-        msg.includes("already exists") ||
-        msg.includes("duplicate");
-
-      if (!alreadyRegistered) {
-        return new Response(JSON.stringify({ error: createErr?.message || "Falha ao criar usuário" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // STEP 1: pre-check if the email already exists in auth.users via direct SQL
+    // (service role bypasses RLS and has access to the auth schema). This avoids
+    // racing with createUser's generic "already registered" response.
+    let preExistingUserId: string | null = null;
+    try {
+      const { data: existingId, error: existingErr } = await supabaseAdmin.rpc(
+        "get_auth_user_id_by_email",
+        { _email: normalizedEmail }
+      );
+      if (existingErr) {
+        console.warn("[admin-create-partner] auth lookup rpc error:", existingErr.message);
+      } else if (existingId) {
+        preExistingUserId = existingId as string;
+        console.log("[admin-create-partner] pre-check found existing user:", preExistingUserId);
       }
+    } catch (e) {
+      console.warn("[admin-create-partner] auth lookup rpc exception:", e);
+    }
 
-      // User already exists — find them and reuse.
-      // Strategy 1: query auth admin REST API with email filter (most reliable).
-      let foundUserId: string | null = null;
+    if (preExistingUserId) {
+      // Reuse existing user, do not change password
+      newUserId = preExistingUserId;
+      userAlreadyExisted = true;
 
-      try {
-        const adminUrl = `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(normalizedEmail)}`;
-        const r = await fetch(adminUrl, {
-          headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
-        });
-        if (r.ok) {
-          const j = await r.json();
-          const u = Array.isArray(j?.users) ? j.users[0] : null;
-          if (u?.id) foundUserId = u.id;
-        } else {
-          console.warn("[admin-create-partner] admin users lookup status:", r.status);
-        }
-      } catch (e) {
-        console.warn("[admin-create-partner] admin users lookup failed:", e);
-      }
-
-      // Strategy 2: fallback to paginated listUsers (case-insensitive trim)
-      if (!foundUserId) {
-        let page = 1;
-        while (page <= 50 && !foundUserId) {
-          const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
-          if (listErr) break;
-          const match = list?.users?.find((u: any) => (u.email || "").toLowerCase().trim() === normalizedEmail);
-          if (match) foundUserId = match.id;
-          if (!list?.users?.length || list.users.length < 200) break;
-          page++;
-        }
-      }
-
-      if (!foundUserId) {
-        return new Response(JSON.stringify({ error: `Email "${normalizedEmail}" já cadastrado no Auth, mas não foi possível localizar o usuário.` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-
-      // Check if this user is already a partner
       const { data: existingPartner } = await supabaseAdmin
         .from("partners")
         .select("id")
-        .eq("user_id", foundUserId)
+        .eq("user_id", preExistingUserId)
         .maybeSingle();
-
       if (existingPartner) {
         return new Response(JSON.stringify({ error: "Este email já está cadastrado como parceiro" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-
-      newUserId = foundUserId;
-      userAlreadyExisted = true;
-
-      // IMPORTANT: do NOT overwrite the existing user's password.
-      // This user already has a Wiize account — changing their password here
-      // would break their original Wiize login. They will use their existing
-      // Wiize credentials to access the partner portal.
-      console.log("[admin-create-partner] reusing existing Wiize user, password preserved:", foundUserId);
     } else {
-      newUserId = created.user.id;
+      // No existing auth user — must have a password to create one
+      if (!hasPassword) {
+        return new Response(JSON.stringify({ error: "Senha obrigatória: usuário ainda não existe no Auth." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+        email: normalizedEmail,
+        password: body.password,
+        email_confirm: true,
+        user_metadata: { full_name: body.full_name, is_partner: true },
+      });
+
+      if (createErr || !created?.user) {
+        // Race condition: someone created it between pre-check and now. Retry via rpc.
+        console.warn("[admin-create-partner] createUser failed:", createErr?.message);
+        const { data: raceId } = await supabaseAdmin.rpc(
+          "get_auth_user_id_by_email",
+          { _email: normalizedEmail }
+        );
+        if (raceId) {
+          newUserId = raceId as string;
+          userAlreadyExisted = true;
+        } else {
+          return new Response(JSON.stringify({ error: createErr?.message || "Falha ao criar usuário no Auth" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      } else {
+        newUserId = created.user.id;
+      }
     }
 
     // Upsert profile (handle_new_user may have created it)
