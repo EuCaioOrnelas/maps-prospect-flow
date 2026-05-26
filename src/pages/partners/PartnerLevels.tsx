@@ -194,7 +194,7 @@ export default function PartnerLevels() {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle2 size={18} className="text-emerald-500" />
-                  <span>Você é Platinum — comissão máxima do programa.</span>
+                  <span>Você é {LEVEL_META[currentLevel].label} — comissão máxima do programa.</span>
                 </div>
               </div>
             )}
