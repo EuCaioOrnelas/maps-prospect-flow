@@ -50,7 +50,8 @@ Deno.serve(async (req) => {
 
     if (appErr || !app) return json(404, { error: "Candidatura não encontrada" });
     if (app.status === "approved") return json(400, { error: "Candidatura já aprovada" });
-    if (!app.password_hash) return json(400, { error: "Candidatura sem senha definida — aprove via cadastro manual" });
+    if (app.status === "rejected") return json(400, { error: "Candidatura já recusada — não pode ser aprovada" });
+    // NOTE: não exigimos mais password_hash. Geramos uma senha temporária e enviamos por e-mail.
 
     // Generate a secure transient password (rotated on first login)
     // and use it to create the auth user. We then invalidate it by
