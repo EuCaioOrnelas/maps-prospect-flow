@@ -4,13 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
   Search, Check, X, Mail, Phone, Calendar, Users, Building2, MapPin, FileText,
   Instagram, Youtube, Linkedin, Globe, ExternalLink, Loader2, Award, Sparkles, Copy,
+  IdCard, Briefcase, MessageSquare, Activity, AlertCircle, Clock, CheckCircle2, XCircle,
 } from "lucide-react";
 import { fmtDateTime } from "@/lib/partnerFormat";
 
@@ -73,9 +76,50 @@ const profileLabels: Record<string, string> = {
 const yearsLabels: Record<string, string> = {
   beginner: "Iniciante", "1-2": "1-2 anos", "3-5": "3-5 anos", "5+": "5+ anos",
 };
+const docTypeLabels: Record<string, string> = {
+  id_doc: "Documento pessoal", cnpj_card: "Cartão CNPJ",
+  selfie: "Selfie c/ documento", address_proof: "Comp. de endereço",
+};
 
 const fmtCpf = (s: string | null) => s ? s.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "—";
 const fmtCnpj = (s: string | null) => s ? s.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5") : "—";
+
+// === STATUS THEMING ===
+const STATUS_THEME: Record<string, {
+  label: string; pill: string; dot: string; cardBorder: string; icon: React.ComponentType<{ className?: string }>;
+}> = {
+  pending: {
+    label: "Pendente",
+    pill: "bg-amber-500/15 text-amber-700 border-amber-500/40 dark:text-amber-300",
+    dot: "bg-amber-500",
+    cardBorder: "border-l-amber-500",
+    icon: Clock,
+  },
+  approved: {
+    label: "Aprovada",
+    pill: "bg-emerald-500/15 text-emerald-700 border-emerald-500/40 dark:text-emerald-300",
+    dot: "bg-emerald-500",
+    cardBorder: "border-l-emerald-500",
+    icon: CheckCircle2,
+  },
+  rejected: {
+    label: "Recusada",
+    pill: "bg-red-500/15 text-red-700 border-red-500/40 dark:text-red-300",
+    dot: "bg-red-500",
+    cardBorder: "border-l-red-500",
+    icon: XCircle,
+  },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const t = STATUS_THEME[status] || STATUS_THEME.pending;
+  const Icon = t.icon;
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold ${t.pill}`}>
+      <Icon className="h-3 w-3" /> {t.label}
+    </span>
+  );
+}
 
 export default function AdminPartnersApplications() {
   const [apps, setApps] = useState<Application[]>([]);
@@ -87,6 +131,7 @@ export default function AdminPartnersApplications() {
   const [submitting, setSubmitting] = useState(false);
   const [docUrls, setDocUrls] = useState<Record<string, string>>({});
   const [tempPasswordModal, setTempPasswordModal] = useState<{ email: string; password: string } | null>(null);
+  const [dialogTab, setDialogTab] = useState("resumo");
   const { toast } = useToast();
 
   const load = async () => {
@@ -100,6 +145,9 @@ export default function AdminPartnersApplications() {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Reset tab when opening a new candidate
+  useEffect(() => { if (reviewing) setDialogTab("resumo"); }, [reviewing?.id]);
 
   // Generate signed URLs for documents whenever a candidate is opened
   useEffect(() => {
@@ -145,12 +193,12 @@ export default function AdminPartnersApplications() {
           msg = parsed?.error || msg;
         } else if (data?.error) msg = data.error;
       } catch { /* ignore */ }
-      console.error("[approve] error:", { error, data, ctx: (error as any)?.context });
+      console.error("[approve] error:", { error, data });
       toast({ title: "Erro ao aprovar", description: msg, variant: "destructive" });
       setSubmitting(false);
       return;
     }
-    toast({ title: "Parceiro aprovado", description: "Conta criada e e-mail enviado." });
+    toast({ title: "Parceiro aprovado", description: "Conta criada e e-mail enviado com o certificado." });
     if (data.temp_password) {
       setTempPasswordModal({ email: a.access_email || a.email, password: data.temp_password });
     }
@@ -169,7 +217,6 @@ export default function AdminPartnersApplications() {
       body: { application_id: a.id, reason: rejectReason, send_email: true },
     });
     if (error || !data?.success) {
-      // Extrai a mensagem real do FunctionsHttpError (supabase-js esconde o body em error.context)
       let msg = "Não foi possível recusar.";
       try {
         const ctx = (error as any)?.context;
@@ -192,9 +239,11 @@ export default function AdminPartnersApplications() {
   };
 
   const scoreColor = (s: number) =>
-    s >= 70 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
-    : s >= 40 ? "bg-amber-500/10 text-amber-600 border-amber-500/30"
+    s >= 70 ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+    : s >= 40 ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
     : "bg-muted text-muted-foreground border-border";
+
+  const docsArr = Array.isArray(reviewing?.documents) ? reviewing!.documents : [];
 
   return (
     <div className="p-6 space-y-6">
@@ -203,12 +252,49 @@ export default function AdminPartnersApplications() {
         <p className="text-sm text-muted-foreground mt-1">Análise e aprovação de candidaturas vindas da landing pública.</p>
       </div>
 
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {(["pending", "approved", "rejected"] as const).map((s) => {
+          const t = STATUS_THEME[s];
+          const Icon = t.icon;
+          const active = filter === s;
+          return (
+            <button
+              key={s}
+              onClick={() => setFilter(s)}
+              className={`text-left rounded-xl border-l-4 ${t.cardBorder} bg-card border border-border p-4 transition-all hover:shadow-sm ${
+                active ? "ring-2 ring-ring/40" : ""
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium">{t.label}s</div>
+                  <div className="text-2xl font-semibold mt-1">{counts[s]}</div>
+                </div>
+                <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${t.pill}`}>
+                  <Icon className="h-4 w-4" />
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         <Tabs value={filter} onValueChange={setFilter} className="flex-1">
           <TabsList>
-            <TabsTrigger value="pending">Pendentes <Badge variant="secondary" className="ml-2">{counts.pending}</Badge></TabsTrigger>
-            <TabsTrigger value="approved">Aprovadas <Badge variant="secondary" className="ml-2">{counts.approved}</Badge></TabsTrigger>
-            <TabsTrigger value="rejected">Recusadas <Badge variant="secondary" className="ml-2">{counts.rejected}</Badge></TabsTrigger>
+            <TabsTrigger value="pending" className="gap-1.5">
+              <span className={`h-2 w-2 rounded-full ${STATUS_THEME.pending.dot}`} />
+              Pendentes <Badge variant="secondary" className="ml-1">{counts.pending}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="approved" className="gap-1.5">
+              <span className={`h-2 w-2 rounded-full ${STATUS_THEME.approved.dot}`} />
+              Aprovadas <Badge variant="secondary" className="ml-1">{counts.approved}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="rejected" className="gap-1.5">
+              <span className={`h-2 w-2 rounded-full ${STATUS_THEME.rejected.dot}`} />
+              Recusadas <Badge variant="secondary" className="ml-1">{counts.rejected}</Badge>
+            </TabsTrigger>
             <TabsTrigger value="all">Todas</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -224,184 +310,285 @@ export default function AdminPartnersApplications() {
         <Card><CardContent className="p-12 text-center text-sm text-muted-foreground">Nenhuma candidatura encontrada.</CardContent></Card>
       ) : (
         <div className="grid gap-3">
-          {filtered.map((a) => (
-            <Card key={a.id} className="group hover:shadow-elegant transition-all cursor-pointer" onClick={() => setReviewing(a)}>
-              <CardContent className="p-5 flex items-start gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2 flex-wrap">
-                    <h3 className="font-semibold">{a.full_name}</h3>
-                    <Badge variant={a.status === "pending" ? "default" : a.status === "approved" ? "secondary" : "destructive"}>
-                      {a.status === "pending" ? "Pendente" : a.status === "approved" ? "Aprovada" : "Recusada"}
-                    </Badge>
-                    {a.internal_score !== null && (
-                      <span className={`px-2 py-0.5 rounded-full border text-xs font-medium inline-flex items-center gap-1 ${scoreColor(a.internal_score)}`}>
-                        <Sparkles className="h-3 w-3" /> Score {a.internal_score}
-                      </span>
-                    )}
+          {filtered.map((a) => {
+            const theme = STATUS_THEME[a.status] || STATUS_THEME.pending;
+            return (
+              <Card
+                key={a.id}
+                className={`group hover:shadow-elegant transition-all cursor-pointer border-l-4 ${theme.cardBorder}`}
+                onClick={() => setReviewing(a)}
+              >
+                <CardContent className="p-5 flex items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                      <h3 className="font-semibold">{a.full_name}</h3>
+                      <StatusBadge status={a.status} />
+                      {a.internal_score !== null && (
+                        <span className={`px-2 py-0.5 rounded-full border text-xs font-medium inline-flex items-center gap-1 ${scoreColor(a.internal_score)}`}>
+                          <Sparkles className="h-3 w-3" /> Score {a.internal_score}
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5 truncate"><Mail size={12} />{a.email}</div>
+                      {a.phone && <div className="flex items-center gap-1.5"><Phone size={12} />{a.phone}</div>}
+                      {a.company_name && <div className="flex items-center gap-1.5 truncate"><Building2 size={12} />{a.company_name}</div>}
+                      {a.profile && <div className="flex items-center gap-1.5"><Users size={12} />{profileLabels[a.profile] || a.profile}</div>}
+                      {(a.city || a.state) && <div className="flex items-center gap-1.5"><MapPin size={12} />{[a.city, a.state].filter(Boolean).join("/")}</div>}
+                      <div className="flex items-center gap-1.5"><Calendar size={12} />{fmtDateTime(a.created_at)}</div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1.5"><Mail size={12} />{a.email}</div>
-                    {a.phone && <div className="flex items-center gap-1.5"><Phone size={12} />{a.phone}</div>}
-                    {a.company_name && <div className="flex items-center gap-1.5"><Building2 size={12} />{a.company_name}</div>}
-                    {a.profile && <div className="flex items-center gap-1.5"><Users size={12} />{profileLabels[a.profile] || a.profile}</div>}
-                    {(a.city || a.state) && <div className="flex items-center gap-1.5"><MapPin size={12} />{[a.city, a.state].filter(Boolean).join("/")}</div>}
-                    <div className="flex items-center gap-1.5"><Calendar size={12} />{fmtDateTime(a.created_at)}</div>
-                  </div>
-                </div>
-                {a.status === "pending" && (
-                  <Button size="sm" variant="outline">Revisar</Button>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                  <Button size="sm" variant={a.status === "pending" ? "default" : "outline"}>
+                    {a.status === "pending" ? "Revisar" : "Detalhes"}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      {/* REVIEW DIALOG */}
+      {/* ===================== REVIEW DIALOG ===================== */}
       <Dialog open={!!reviewing} onOpenChange={(o) => { if (!o) { setReviewing(null); setRejectReason(""); setDocUrls({}); } }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              {reviewing?.full_name}
-              {reviewing?.internal_score !== null && reviewing?.internal_score !== undefined && (
-                <span className={`px-2 py-0.5 rounded-full border text-xs font-medium inline-flex items-center gap-1 ${scoreColor(reviewing.internal_score)}`}>
-                  <Award className="h-3 w-3" /> Score {reviewing.internal_score}
-                </span>
-              )}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[92vh] p-0 overflow-hidden gap-0 bg-background">
           {reviewing && (
-            <div className="space-y-6 text-sm">
-              {/* IDENTIFICAÇÃO */}
-              <Section title="Identificação">
-                <Grid>
-                  <FieldRow label="E-mail" value={reviewing.email} />
-                  <FieldRow label="WhatsApp" value={reviewing.phone || "—"} />
-                  <FieldRow label="Telefone secundário" value={reviewing.phone_secondary || "—"} />
-                  <FieldRow label="CPF" value={fmtCpf(reviewing.cpf)} />
-                  <FieldRow label="CNPJ" value={fmtCnpj(reviewing.cnpj)} />
-                  <FieldRow label="Empresa" value={reviewing.company_name || "—"} />
-                  <FieldRow label="Cidade/UF" value={`${reviewing.city || "—"}${reviewing.state ? "/" + reviewing.state : ""}`} />
-                  <FieldRow label="CEP" value={reviewing.postal_code || "—"} />
-                  <FieldRow label="Endereço" value={reviewing.address || "—"} full />
-                </Grid>
-              </Section>
-
-              {/* PERFIL */}
-              <Section title="Perfil profissional">
-                <Grid>
-                  <FieldRow label="Perfil" value={profileLabels[reviewing.profile || ""] || reviewing.profile || "—"} />
-                  <FieldRow label="Experiência" value={yearsLabels[reviewing.years_in_market || ""] || reviewing.years_in_market || "—"} />
-                  <FieldRow label="Possui equipe" value={reviewing.has_team === null ? "—" : reviewing.has_team ? "Sim" : "Não"} />
-                  <FieldRow label="Clientes atuais" value={reviewing.current_clients_count?.toString() || "—"} />
-                </Grid>
-              </Section>
-
-              {/* AUDIÊNCIA */}
-              <Section title="Audiência e canais">
-                <Grid>
-                  <FieldRow label="Audiência" value={reviewing.audience_size || "—"} />
-                  <FieldRow label="Leads/mês" value={reviewing.monthly_leads_estimate || "—"} />
-                </Grid>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <SocialLink icon={Instagram} url={reviewing.instagram_url} label="Instagram" />
-                  <SocialLink icon={Youtube} url={reviewing.youtube_url} label="YouTube" />
-                  <SocialLink icon={Globe} url={reviewing.tiktok_url} label="TikTok" />
-                  <SocialLink icon={Linkedin} url={reviewing.linkedin_url} label="LinkedIn" />
-                  <SocialLink icon={Globe} url={reviewing.website_url} label="Site" />
-                  <SocialLink icon={Users} url={reviewing.community_url} label="Comunidade" />
-                </div>
-              </Section>
-
-              {/* PARCERIA */}
-              <Section title="Modelo de parceria">
-                <Grid>
-                  <FieldRow label="Indicações esperadas/mês" value={reviewing.expected_monthly_referrals?.toString() || "—"} />
-                  <FieldRow label="Já promoveu softwares" value={reviewing.promoted_other_softwares === null ? "—" : reviewing.promoted_other_softwares ? "Sim" : "Não"} />
-                </Grid>
-                {reviewing.promotion_channels && reviewing.promotion_channels.length > 0 && (
-                  <div className="mt-3">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5">Canais</div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {reviewing.promotion_channels.map((c) => <Badge key={c} variant="outline">{c}</Badge>)}
+            <>
+              {/* HEADER */}
+              <div className={`border-b border-border px-6 py-5 ${
+                reviewing.status === "pending" ? "bg-amber-500/5"
+                : reviewing.status === "approved" ? "bg-emerald-500/5"
+                : "bg-red-500/5"
+              }`}>
+                <DialogHeader className="space-y-3">
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="min-w-0">
+                      <DialogTitle className="text-xl flex items-center gap-2.5 flex-wrap">
+                        {reviewing.full_name}
+                        <StatusBadge status={reviewing.status} />
+                      </DialogTitle>
+                      <DialogDescription className="mt-1.5 flex items-center gap-3 text-xs flex-wrap">
+                        <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" /> {reviewing.email}</span>
+                        {reviewing.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {reviewing.phone}</span>}
+                        <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {fmtDateTime(reviewing.created_at)}</span>
+                      </DialogDescription>
                     </div>
+                    {reviewing.internal_score !== null && (
+                      <span className={`px-3 py-1.5 rounded-lg border text-sm font-semibold inline-flex items-center gap-1.5 ${scoreColor(reviewing.internal_score)}`}>
+                        <Award className="h-4 w-4" /> Score {reviewing.internal_score}/100
+                      </span>
+                    )}
                   </div>
-                )}
-                {reviewing.other_softwares_details && (
-                  <FreeText label="Detalhes de softwares" value={reviewing.other_softwares_details} />
-                )}
-              </Section>
+                </DialogHeader>
+              </div>
 
-              {/* RESPOSTAS LIVRES */}
-              <Section title="Respostas">
-                <FreeText label="Por que ser parceiro" value={reviewing.reason_to_be_partner} />
-                <FreeText label="Por que aprovar" value={reviewing.reason_to_be_approved} />
-                <FreeText label="Como venderia" value={reviewing.how_would_sell} />
-                <FreeText label="Diferencial" value={reviewing.differential} />
-                <FreeText label="Resultados 90 dias" value={reviewing.results_90_days} />
-              </Section>
+              {/* TABS */}
+              <Tabs value={dialogTab} onValueChange={setDialogTab} className="flex-1 flex flex-col min-h-0">
+                <div className="px-6 border-b border-border bg-muted/30">
+                  <TabsList className="bg-transparent h-auto p-0 gap-0 rounded-none w-full justify-start overflow-x-auto">
+                    <TabsTriggerNav value="resumo" icon={Activity} label="Resumo" current={dialogTab} />
+                    <TabsTriggerNav value="identidade" icon={IdCard} label="Identidade" current={dialogTab} />
+                    <TabsTriggerNav value="perfil" icon={Briefcase} label="Perfil & Audiência" current={dialogTab} />
+                    <TabsTriggerNav value="parceria" icon={Users} label="Parceria" current={dialogTab} />
+                    <TabsTriggerNav value="respostas" icon={MessageSquare} label="Respostas" current={dialogTab} />
+                    <TabsTriggerNav value="documentos" icon={FileText} label="Documentos" current={dialogTab} badge={docsArr.length} />
+                    <TabsTriggerNav value="origem" icon={Globe} label="Origem" current={dialogTab} />
+                  </TabsList>
+                </div>
 
-              {/* DOCUMENTOS */}
-              {Array.isArray(reviewing.documents) && reviewing.documents.length > 0 && (
-                <Section title={`Documentos (${reviewing.documents.length})`}>
-                  <div className="space-y-2">
-                    {reviewing.documents.map((doc: any, i: number) => (
-                      <a
-                        key={i}
-                        href={docUrls[doc.url] || "#"}
-                        target="_blank" rel="noopener noreferrer"
-                        className="flex items-center justify-between gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <div className="min-w-0">
-                            <div className="font-medium truncate">{doc.filename}</div>
-                            <div className="text-xs text-muted-foreground">{doc.type} · {Math.round((doc.size || 0) / 1024)} KB</div>
+                <div className="flex-1 overflow-y-auto px-6 py-6 max-h-[55vh]">
+                  {/* RESUMO */}
+                  <TabsContent value="resumo" className="m-0 space-y-4">
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <SummaryCard icon={IdCard} label="Documento" value={reviewing.cnpj ? `CNPJ ${fmtCnpj(reviewing.cnpj)}` : `CPF ${fmtCpf(reviewing.cpf)}`} />
+                      <SummaryCard icon={Briefcase} label="Perfil" value={profileLabels[reviewing.profile || ""] || reviewing.profile || "—"} sub={yearsLabels[reviewing.years_in_market || ""] || ""} />
+                      <SummaryCard icon={MapPin} label="Localização" value={`${reviewing.city || "—"}${reviewing.state ? "/" + reviewing.state : ""}`} />
+                      <SummaryCard icon={Users} label="Equipe / Clientes" value={`${reviewing.has_team ? "Com equipe" : "Sem equipe"} · ${reviewing.current_clients_count ?? 0} clientes`} />
+                      <SummaryCard icon={Activity} label="Indicações esperadas" value={reviewing.expected_monthly_referrals ? `${reviewing.expected_monthly_referrals}/mês` : "—"} />
+                      <SummaryCard icon={FileText} label="Documentos" value={`${docsArr.length} enviados`} sub={docsArr.length > 0 ? docsArr.map((d: any) => docTypeLabels[d.type] || d.type).join(", ") : ""} />
+                    </div>
+                    {reviewing.rejection_reason && (
+                      <div className="mt-2 rounded-xl border border-red-500/30 bg-red-500/5 p-4">
+                        <div className="text-xs font-semibold text-red-700 dark:text-red-400 flex items-center gap-1.5 mb-1">
+                          <XCircle className="h-3.5 w-3.5" /> MOTIVO DA RECUSA
+                        </div>
+                        <div className="text-sm text-foreground/90">{reviewing.rejection_reason}</div>
+                      </div>
+                    )}
+                    {reviewing.reviewed_at && (
+                      <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <Clock className="h-3 w-3" /> Revisada em {fmtDateTime(reviewing.reviewed_at)}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* IDENTIDADE */}
+                  <TabsContent value="identidade" className="m-0">
+                    <SectionCard title="Dados pessoais">
+                      <Grid>
+                        <FieldRow label="Nome completo" value={reviewing.full_name} />
+                        <FieldRow label="E-mail principal" value={reviewing.email} />
+                        <FieldRow label="E-mail de acesso" value={reviewing.access_email || "—"} />
+                        <FieldRow label="WhatsApp" value={reviewing.phone || "—"} />
+                        <FieldRow label="Telefone secundário" value={reviewing.phone_secondary || "—"} />
+                        <FieldRow label="CPF" value={fmtCpf(reviewing.cpf)} />
+                      </Grid>
+                    </SectionCard>
+                    <SectionCard title="Empresa">
+                      <Grid>
+                        <FieldRow label="Razão social / marca" value={reviewing.company_name || "—"} />
+                        <FieldRow label="CNPJ" value={fmtCnpj(reviewing.cnpj)} />
+                      </Grid>
+                    </SectionCard>
+                    <SectionCard title="Endereço">
+                      <Grid>
+                        <FieldRow label="País" value={reviewing.country || "BR"} />
+                        <FieldRow label="Cidade/UF" value={`${reviewing.city || "—"}${reviewing.state ? "/" + reviewing.state : ""}`} />
+                        <FieldRow label="CEP" value={reviewing.postal_code || "—"} />
+                        <FieldRow label="Endereço" value={reviewing.address || "—"} full />
+                      </Grid>
+                    </SectionCard>
+                  </TabsContent>
+
+                  {/* PERFIL & AUDIÊNCIA */}
+                  <TabsContent value="perfil" className="m-0">
+                    <SectionCard title="Perfil profissional">
+                      <Grid>
+                        <FieldRow label="Perfil" value={profileLabels[reviewing.profile || ""] || reviewing.profile || "—"} />
+                        <FieldRow label="Experiência" value={yearsLabels[reviewing.years_in_market || ""] || reviewing.years_in_market || "—"} />
+                        <FieldRow label="Possui equipe" value={reviewing.has_team === null ? "—" : reviewing.has_team ? "Sim" : "Não"} />
+                        <FieldRow label="Clientes atuais" value={reviewing.current_clients_count?.toString() || "—"} />
+                      </Grid>
+                    </SectionCard>
+                    <SectionCard title="Audiência">
+                      <Grid>
+                        <FieldRow label="Tamanho da audiência" value={reviewing.audience_size || "—"} />
+                        <FieldRow label="Leads/mês" value={reviewing.monthly_leads_estimate || "—"} />
+                      </Grid>
+                      <div className="mt-4">
+                        <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Canais sociais</div>
+                        <div className="flex flex-wrap gap-2">
+                          <SocialLink icon={Instagram} url={reviewing.instagram_url} label="Instagram" />
+                          <SocialLink icon={Youtube} url={reviewing.youtube_url} label="YouTube" />
+                          <SocialLink icon={Globe} url={reviewing.tiktok_url} label="TikTok" />
+                          <SocialLink icon={Linkedin} url={reviewing.linkedin_url} label="LinkedIn" />
+                          <SocialLink icon={Globe} url={reviewing.website_url} label="Site" />
+                          <SocialLink icon={Users} url={reviewing.community_url} label="Comunidade" />
+                          {![reviewing.instagram_url, reviewing.youtube_url, reviewing.tiktok_url, reviewing.linkedin_url, reviewing.website_url, reviewing.community_url].some(Boolean) && (
+                            <span className="text-xs text-muted-foreground italic">Nenhum canal informado</span>
+                          )}
+                        </div>
+                      </div>
+                    </SectionCard>
+                  </TabsContent>
+
+                  {/* PARCERIA */}
+                  <TabsContent value="parceria" className="m-0">
+                    <SectionCard title="Modelo de parceria">
+                      <Grid>
+                        <FieldRow label="Indicações esperadas/mês" value={reviewing.expected_monthly_referrals?.toString() || "—"} />
+                        <FieldRow label="Já promoveu softwares" value={reviewing.promoted_other_softwares === null ? "—" : reviewing.promoted_other_softwares ? "Sim" : "Não"} />
+                      </Grid>
+                      {reviewing.promotion_channels && reviewing.promotion_channels.length > 0 && (
+                        <div className="mt-4">
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Canais de promoção</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {reviewing.promotion_channels.map((c) => <Badge key={c} variant="outline">{c}</Badge>)}
                           </div>
                         </div>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </a>
-                    ))}
+                      )}
+                      {reviewing.other_softwares_details && (
+                        <FreeText label="Detalhes de softwares" value={reviewing.other_softwares_details} />
+                      )}
+                    </SectionCard>
+                  </TabsContent>
+
+                  {/* RESPOSTAS */}
+                  <TabsContent value="respostas" className="m-0 space-y-3">
+                    <FreeText label="Por que ser parceiro Wiize?" value={reviewing.reason_to_be_partner} />
+                    <FreeText label="Por que aprovar esta candidatura?" value={reviewing.reason_to_be_approved} />
+                    <FreeText label="Como venderia a Wiize?" value={reviewing.how_would_sell} />
+                    <FreeText label="Qual seu diferencial?" value={reviewing.differential} />
+                    <FreeText label="Resultados esperados em 90 dias" value={reviewing.results_90_days} />
+                    {!reviewing.reason_to_be_partner && !reviewing.reason_to_be_approved && !reviewing.how_would_sell && !reviewing.differential && !reviewing.results_90_days && (
+                      <div className="text-sm text-muted-foreground italic">Nenhuma resposta fornecida.</div>
+                    )}
+                  </TabsContent>
+
+                  {/* DOCUMENTOS */}
+                  <TabsContent value="documentos" className="m-0">
+                    {docsArr.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-border p-8 text-center">
+                        <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <div className="text-sm text-muted-foreground">Nenhum documento enviado.</div>
+                      </div>
+                    ) : (
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        {docsArr.map((doc: any, i: number) => (
+                          <a
+                            key={i}
+                            href={docUrls[doc.url] || "#"}
+                            target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-sm transition group"
+                          >
+                            <div className="h-11 w-11 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                              <FileText className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium truncate text-sm">{docTypeLabels[doc.type] || doc.type}</div>
+                              <div className="text-xs text-muted-foreground truncate">{doc.filename}</div>
+                              <div className="text-[11px] text-muted-foreground">{Math.round((doc.size || 0) / 1024)} KB</div>
+                            </div>
+                            <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition shrink-0" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* ORIGEM */}
+                  <TabsContent value="origem" className="m-0">
+                    <SectionCard title="Metadados de origem">
+                      <Grid>
+                        <FieldRow label="Source" value={reviewing.source || "—"} />
+                        <FieldRow label="UTM source" value={reviewing.utm_source || "—"} />
+                        <FieldRow label="UTM medium" value={reviewing.utm_medium || "—"} />
+                        <FieldRow label="UTM campaign" value={reviewing.utm_campaign || "—"} />
+                        <FieldRow label="IP" value={reviewing.ip_address || "—"} />
+                        <FieldRow label="Recebida em" value={fmtDateTime(reviewing.created_at)} />
+                      </Grid>
+                    </SectionCard>
+                  </TabsContent>
+                </div>
+
+                {/* REJECT REASON (only pending) */}
+                {reviewing.status === "pending" && (
+                  <div className="px-6 py-4 border-t border-border bg-muted/30">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                      <AlertCircle className="h-3 w-3" /> Motivo da recusa (preencha apenas se for recusar)
+                    </label>
+                    <Textarea
+                      rows={2}
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      placeholder="Mensagem cordial que será enviada por e-mail ao candidato."
+                      className="mt-1.5 bg-background"
+                    />
                   </div>
-                </Section>
-              )}
+                )}
+              </Tabs>
 
-              {/* META */}
-              <Section title="Origem e metadados">
-                <Grid>
-                  <FieldRow label="Origem" value={reviewing.source || "—"} />
-                  <FieldRow label="UTM source" value={reviewing.utm_source || "—"} />
-                  <FieldRow label="UTM medium" value={reviewing.utm_medium || "—"} />
-                  <FieldRow label="UTM campaign" value={reviewing.utm_campaign || "—"} />
-                  <FieldRow label="IP" value={reviewing.ip_address || "—"} />
-                  <FieldRow label="Recebida em" value={fmtDateTime(reviewing.created_at)} />
-                </Grid>
-              </Section>
-
+              {/* FOOTER */}
               {reviewing.status === "pending" && (
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Motivo da recusa (apenas se for recusar)</Label>
-                  <Textarea rows={3} value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
-                    placeholder="Mensagem cordial que será enviada por e-mail." className="mt-1.5" />
-                </div>
+                <DialogFooter className="px-6 py-4 border-t border-border bg-background">
+                  <Button variant="outline" onClick={() => reject(reviewing)} disabled={submitting} className="gap-2 border-red-500/40 text-red-600 hover:bg-red-500/10 hover:text-red-700">
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <X size={14} />} Recusar candidatura
+                  </Button>
+                  <Button onClick={() => approve(reviewing)} disabled={submitting} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check size={14} />} Aprovar e criar parceiro
+                  </Button>
+                </DialogFooter>
               )}
-              {reviewing.rejection_reason && (
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Motivo da recusa</Label>
-                  <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm mt-1.5">{reviewing.rejection_reason}</div>
-                </div>
-              )}
-            </div>
-          )}
-          {reviewing?.status === "pending" && (
-            <DialogFooter>
-              <Button variant="outline" onClick={() => reject(reviewing)} disabled={submitting} className="gap-2">
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <X size={14} />} Recusar
-              </Button>
-              <Button onClick={() => approve(reviewing)} disabled={submitting} className="gap-2">
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check size={14} />} Aprovar e criar parceiro
-              </Button>
-            </DialogFooter>
+            </>
           )}
         </DialogContent>
       </Dialog>
@@ -421,11 +608,11 @@ export default function AdminPartnersApplications() {
               </p>
               <div className="space-y-2">
                 <div>
-                  <Label className="text-xs">E-mail de acesso</Label>
+                  <div className="text-xs font-medium">E-mail de acesso</div>
                   <div className="bg-muted rounded-lg p-2.5 font-mono text-sm mt-1">{tempPasswordModal.email}</div>
                 </div>
                 <div>
-                  <Label className="text-xs">Senha temporária</Label>
+                  <div className="text-xs font-medium">Senha temporária</div>
                   <div className="flex gap-2 mt-1">
                     <div className="bg-muted rounded-lg p-2.5 font-mono text-sm flex-1">{tempPasswordModal.password}</div>
                     <Button size="sm" variant="outline" onClick={() => {
@@ -435,7 +622,7 @@ export default function AdminPartnersApplications() {
                   </div>
                 </div>
               </div>
-              <div className="bg-warning/10 border border-warning/30 text-warning rounded-lg p-3 text-xs">
+              <div className="bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 rounded-lg p-3 text-xs">
                 <strong>Atenção:</strong> esta senha não será exibida novamente. O parceiro poderá alterá-la no primeiro login.
               </div>
             </div>
@@ -450,43 +637,79 @@ export default function AdminPartnersApplications() {
 }
 
 // ============================ HELPERS ============================
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function TabsTriggerNav({
+  value, icon: Icon, label, current, badge,
+}: { value: string; icon: any; label: string; current: string; badge?: number }) {
+  const active = current === value;
   return (
-    <div>
+    <TabsTrigger
+      value={value}
+      className={`relative rounded-none px-4 py-3 h-auto bg-transparent text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none border-b-2 ${
+        active ? "border-primary" : "border-transparent"
+      } gap-1.5 text-sm whitespace-nowrap`}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+      {badge !== undefined && badge > 0 && (
+        <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{badge}</Badge>
+      )}
+    </TabsTrigger>
+  );
+}
+
+function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 mb-4 last:mb-0">
       <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">{title}</h4>
       {children}
     </div>
   );
 }
+
 function Grid({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-2 gap-x-4 gap-y-3">{children}</div>;
+  return <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">{children}</div>;
 }
+
 function FieldRow({ label, value, full }: { label: string; value: string; full?: boolean }) {
   return (
-    <div className={full ? "col-span-2" : ""}>
+    <div className={full ? "sm:col-span-2" : ""}>
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="font-medium mt-0.5 break-words">{value}</div>
+      <div className="font-medium mt-0.5 break-words text-sm">{value}</div>
     </div>
   );
 }
+
 function FreeText({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
-    <div className="mt-3 first:mt-0">
-      <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{label}</div>
-      <div className="bg-muted/50 rounded-lg p-3 text-sm leading-relaxed whitespace-pre-wrap">{value}</div>
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2 font-semibold">{label}</div>
+      <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">{value}</div>
     </div>
   );
 }
+
 function SocialLink({ icon: Icon, url, label }: { icon: any; url: string | null; label: string }) {
   if (!url) return null;
   return (
     <a href={url} target="_blank" rel="noopener noreferrer"
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted hover:bg-muted/70 text-xs transition">
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border hover:border-primary/40 hover:bg-primary/5 text-xs transition">
       <Icon className="h-3 w-3" /> {label} <ExternalLink className="h-2.5 w-2.5" />
     </a>
   );
 }
-function Label({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <div className={`font-medium ${className || ""}`}>{children}</div>;
+
+function SummaryCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string; sub?: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 flex items-start gap-3">
+      <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium">{label}</div>
+        <div className="font-semibold text-sm mt-0.5 truncate">{value}</div>
+        {sub && <div className="text-xs text-muted-foreground mt-0.5 truncate">{sub}</div>}
+      </div>
+    </div>
+  );
 }
