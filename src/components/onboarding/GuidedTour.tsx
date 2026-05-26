@@ -67,7 +67,7 @@ function getPillarKey(stepId: string) {
     return "gestao";
   }
 
-  if (["sidebar-campanhas-intro", "sidebar-campanhas-prospeccao", "sidebar-campanhas-relacionamento"].includes(stepId)) {
+  if (["sidebar-campanhas-intro", "sidebar-campanhas-prospeccao", "sidebar-campanhas-relacionamento", "sidebar-meta-intro", "sidebar-meta-campanhas", "sidebar-meta-numeros", "sidebar-meta-configuracoes"].includes(stepId)) {
     return "prospeccao";
   }
 
