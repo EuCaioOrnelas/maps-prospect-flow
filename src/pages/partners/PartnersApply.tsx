@@ -750,47 +750,123 @@ export default function PartnersApply() {
           {/* STEP 6 — DOCUMENTOS */}
           {step === 6 && (
             <div className="space-y-5">
-              <Header title="Documentos (opcional)" subtitle="Acelere sua aprovação enviando documentos. Aceitamos PDF, JPG, PNG ou WebP até 10 MB." />
+              <Header
+                title="Documentos"
+                subtitle="Para garantir a segurança do programa, precisamos validar sua identidade. Aceitamos PDF, JPG, PNG ou WebP até 10 MB."
+              />
               {docTypes.map((dt) => {
                 const existing = form.documents.find((d) => d.type === dt.key);
+                const isRequired = dt.required || (dt.requiredIfCnpj && !!form.cnpj && onlyDigits(form.cnpj).length === 14);
+                const err = errors[dt.key];
                 return (
-                  <div key={dt.key} className="border border-border rounded-xl p-4">
+                  <div
+                    key={dt.key}
+                    className={`border rounded-xl p-4 transition-colors ${
+                      err ? "border-destructive/60 bg-destructive/5" : "border-border"
+                    }`}
+                  >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">{dt.label}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium flex items-center gap-1.5 flex-wrap">
+                          {dt.label}
+                          {isRequired && <span className="text-destructive">*</span>}
+                          {existing && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />}
+                        </div>
+                        {dt.hint && !existing && (
+                          <div className="text-xs text-muted-foreground mt-0.5">{dt.hint}</div>
+                        )}
                         {existing && (
-                          <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
-                            <FileText className="h-3 w-3" /> {existing.filename}
+                          <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 truncate">
+                            <FileText className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{existing.filename}</span>
                           </div>
                         )}
                       </div>
                       {existing ? (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => removeDoc(dt.key)} className="text-destructive hover:text-destructive">
+                        <Button
+                          type="button" variant="ghost" size="sm"
+                          onClick={() => removeDoc(dt.key)}
+                          className="text-destructive hover:text-destructive shrink-0"
+                        >
                           <X className="h-4 w-4" />
                         </Button>
                       ) : (
-                        <label className="cursor-pointer">
-                          <input
-                            type="file" className="hidden"
-                            accept=".pdf,.jpg,.jpeg,.png,.webp"
-                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, dt.key); }}
-                            disabled={uploadingDoc === dt.key}
-                          />
-                          <Button type="button" variant="outline" size="sm" asChild className="gap-1.5 pointer-events-none">
-                            <span>
-                              {uploadingDoc === dt.key
-                                ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando…</>
-                                : <><Upload className="h-3.5 w-3.5" /> Enviar</>}
-                            </span>
-                          </Button>
-                        </label>
+                        <Button
+                          type="button" variant="outline" size="sm"
+                          className="gap-1.5 shrink-0"
+                          disabled={uploadingDoc === dt.key}
+                          onClick={() => setDocDialog({ key: dt.key, label: dt.label })}
+                        >
+                          {uploadingDoc === dt.key
+                            ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando…</>
+                            : <><Upload className="h-3.5 w-3.5" /> Enviar</>}
+                        </Button>
                       )}
                     </div>
+                    {err && (
+                      <div className="mt-2.5 flex items-center gap-1.5 text-xs text-destructive font-medium">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                        {err}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           )}
+
+          {/* Upload source dialog (Câmera vs Galeria) */}
+          <Dialog open={!!docDialog} onOpenChange={(o) => !o && setDocDialog(null)}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Enviar {docDialog?.label}</DialogTitle>
+                <DialogDescription>Escolha como deseja enviar o arquivo.</DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      const key = docDialog?.key;
+                      setDocDialog(null);
+                      if (f && key) handleFileUpload(f, key);
+                    }}
+                  />
+                  <div className="border border-border rounded-xl p-5 flex flex-col items-center gap-2 hover:border-primary hover:bg-primary/5 transition-all">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                      <Camera className="h-5 w-5" />
+                    </div>
+                    <div className="text-sm font-medium">Tirar foto</div>
+                    <div className="text-[11px] text-muted-foreground text-center">Câmera do dispositivo</div>
+                  </div>
+                </label>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      const key = docDialog?.key;
+                      setDocDialog(null);
+                      if (f && key) handleFileUpload(f, key);
+                    }}
+                  />
+                  <div className="border border-border rounded-xl p-5 flex flex-col items-center gap-2 hover:border-primary hover:bg-primary/5 transition-all">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                      <ImageIcon className="h-5 w-5" />
+                    </div>
+                    <div className="text-sm font-medium">Galeria</div>
+                    <div className="text-[11px] text-muted-foreground text-center">PDF, JPG, PNG, WebP</div>
+                  </div>
+                </label>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* STEP 7 — TERMOS */}
           {step === 7 && (
