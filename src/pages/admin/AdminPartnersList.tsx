@@ -25,10 +25,10 @@ interface Partner {
 }
 
 const levelMeta = {
-  bronze: { icon: Medal, classes: "bg-muted/70 text-foreground border-border", label: "Select" },
-  silver: { icon: Award, classes: "bg-muted text-foreground border-border", label: "Signature" },
-  gold: { icon: Crown, classes: "bg-primary/10 text-primary border-primary/30", label: "Prime" },
-  platinum: { icon: Gem, classes: "bg-foreground/10 text-foreground border-foreground/30", label: "Exclusive" },
+  bronze: { icon: Medal, classes: "bg-muted/60 text-muted-foreground border-border/60", label: "Select" },
+  silver: { icon: Award, classes: "bg-muted text-foreground/80 border-border", label: "Signature" },
+  gold: { icon: Crown, classes: "bg-foreground/[0.06] text-foreground border-foreground/15", label: "Prime" },
+  platinum: { icon: Gem, classes: "bg-foreground text-background border-foreground/40", label: "Exclusive" },
 } as const;
 
 const statusMeta: Record<Partner["status"], { dot: string; classes: string; label: string }> = {

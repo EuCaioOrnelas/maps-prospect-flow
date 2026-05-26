@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { fmtBRL, fmtDate, withdrawalStatusColors, withdrawalStatusLabel } from "@/lib/partnerFormat";
+import { fmtBRL, fmtDate, levelLabel, withdrawalStatusColors, withdrawalStatusLabel } from "@/lib/partnerFormat";
 import { CheckCircle2, XCircle, Eye } from "lucide-react";
 import { ReviewWithdrawalDialog } from "@/components/admin/partners/ReviewWithdrawalDialog";
 
@@ -87,7 +87,7 @@ export default function AdminPartnersWithdrawals() {
                 <div className="font-medium">{w.partner.full_name}</div>
                 <div className="text-xs text-muted-foreground">{w.partner.email}</div>
               </TableCell>
-              <TableCell><Badge variant="outline" className="capitalize">{w.partner.level}</Badge></TableCell>
+              <TableCell><Badge variant="outline">{levelLabel[w.partner.level] || w.partner.level}</Badge></TableCell>
               <TableCell className="text-right font-medium">{fmtBRL(w.amount_cents)}</TableCell>
               <TableCell className="text-sm">{fmtDate(w.requested_at)}</TableCell>
               <TableCell><Badge variant="outline" className={withdrawalStatusColors[w.status]}>{withdrawalStatusLabel[w.status]}</Badge></TableCell>
