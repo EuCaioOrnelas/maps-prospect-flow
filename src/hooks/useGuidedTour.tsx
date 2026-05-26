@@ -1,7 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
+import { hasOpportunitiesAccess, hasAIAgentsAccess, planHasFeature } from "@/lib/planAccess";
 
 export type TourStep = {
   id: string;
@@ -146,7 +147,7 @@ function centerElementInScrollArea(element: HTMLElement, scrollAreaId = "lead-de
 }
 
 export function GuidedTourProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isActive, setIsActive] = useState(false);
@@ -154,7 +155,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const [direction, setDirection] = useState<"next" | "prev">("next");
   const startedRef = useRef(false);
 
-  const steps: TourStep[] = [
+  const allSteps: TourStep[] = [
     {
       id: "welcome",
       route: "/dashboard",
@@ -461,6 +462,35 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       placement: "center",
     },
   ];
+
+  // Filter steps based on plan capabilities. New "start" (Atendimento) users
+  // don't have Oportunidades, Agentes IA or Aquecimento — skip those steps so
+  // the tour doesn't redirect to /upgrade mid-walkthrough.
+  const steps = useMemo<TourStep[]>(() => {
+    const skipOpps = !hasOpportunitiesAccess(profile as any);
+    const skipAgents = !hasAIAgentsAccess(profile as any);
+    const skipWarming = !planHasFeature(profile as any, "warming");
+
+    const OPP_IDS = new Set([
+      "sidebar-oportunidades-intro",
+      "sidebar-oportunidades-buscar",
+      "search-empty",
+      "search-typing",
+      "search-button",
+      "sidebar-oportunidades-gestao",
+      "management",
+      "diagnosis",
+      "approach-message",
+    ]);
+
+    return allSteps.filter((s) => {
+      if (skipOpps && OPP_IDS.has(s.id)) return false;
+      if (skipAgents && s.id === "sidebar-automacao-agentes") return false;
+      if (skipWarming && s.id === "sidebar-automacao-aquecimento") return false;
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.plan, profile?.created_at]);
 
   // Auto-start on first dashboard visit.
   // Depend on user?.id (stable) instead of the whole user object (re-created on
