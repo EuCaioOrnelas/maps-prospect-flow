@@ -84,39 +84,45 @@ const docTypeLabels: Record<string, string> = {
 const fmtCpf = (s: string | null) => s ? s.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "—";
 const fmtCnpj = (s: string | null) => s ? s.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5") : "—";
 
-// === STATUS THEMING ===
+// === STATUS THEMING (clean & minimal) ===
 const STATUS_THEME: Record<string, {
-  label: string; pill: string; dot: string; cardBorder: string; icon: React.ComponentType<{ className?: string }>;
+  label: string; pill: string; dot: string; iconBg: string; iconColor: string; cardBorder: string; icon: React.ComponentType<{ className?: string }>;
 }> = {
   pending: {
     label: "Pendente",
-    pill: "bg-amber-500/15 text-amber-700 border-amber-500/40 dark:text-amber-300",
+    pill: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20",
     dot: "bg-amber-500",
-    cardBorder: "border-l-amber-500",
+    iconBg: "bg-amber-50 dark:bg-amber-500/10",
+    iconColor: "text-amber-600 dark:text-amber-400",
+    cardBorder: "border-l-amber-500/70",
     icon: Clock,
   },
   approved: {
     label: "Aprovada",
-    pill: "bg-emerald-500/15 text-emerald-700 border-emerald-500/40 dark:text-emerald-300",
+    pill: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20",
     dot: "bg-emerald-500",
-    cardBorder: "border-l-emerald-500",
+    iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
+    iconColor: "text-emerald-600 dark:text-emerald-400",
+    cardBorder: "border-l-emerald-500/70",
     icon: CheckCircle2,
   },
   rejected: {
     label: "Recusada",
-    pill: "bg-red-500/15 text-red-700 border-red-500/40 dark:text-red-300",
+    pill: "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20",
     dot: "bg-red-500",
-    cardBorder: "border-l-red-500",
+    iconBg: "bg-red-50 dark:bg-red-500/10",
+    iconColor: "text-red-600 dark:text-red-400",
+    cardBorder: "border-l-red-500/70",
     icon: XCircle,
   },
 };
 
 function StatusBadge({ status }: { status: string }) {
   const t = STATUS_THEME[status] || STATUS_THEME.pending;
-  const Icon = t.icon;
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold ${t.pill}`}>
-      <Icon className="h-3 w-3" /> {t.label}
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-medium ${t.pill}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${t.dot}`} />
+      {t.label}
     </span>
   );
 }
