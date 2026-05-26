@@ -54,25 +54,25 @@ export default function PartnerLevels() {
         key: "bronze",
         thresholdClients: 0,
         commissionPercent: Number(settings.bronze_commission_percent),
-        perks: ["Acesso ao programa", "Materiais oficiais", "Saque a partir de R$ 100"],
+        perks: ["Acesso ao programa Wiize Partners", "Materiais oficiais de divulgação", "Saque a partir de R$ 100"],
       },
       {
         key: "silver",
         thresholdClients: settings.silver_threshold_clients,
         commissionPercent: Number(settings.silver_commission_percent),
-        perks: ["Comissão maior em todas as vendas", "Selo Silver no perfil", "Suporte prioritário"],
+        perks: ["Comissão Signature em todas as vendas", "Selo Signature no perfil público", "Suporte prioritário"],
       },
       {
         key: "gold",
         thresholdClients: settings.gold_threshold_clients,
         commissionPercent: Number(settings.gold_commission_percent),
-        perks: ["Comissão Gold em todas as vendas", "Acesso antecipado a campanhas", "Convite para eventos exclusivos"],
+        perks: ["Comissão Prime em todas as vendas", "Acesso antecipado a campanhas", "Convite para eventos exclusivos"],
       },
       {
         key: "platinum",
         thresholdClients: settings.platinum_threshold_clients ?? Math.max(settings.gold_threshold_clients * 2, 500),
         commissionPercent: Number(settings.platinum_commission_percent),
-        perks: ["Comissão máxima do programa", "Co-marketing dedicado", "Gerente de parceria 1:1"],
+        perks: ["Comissão Exclusive — máxima do programa", "Co-marketing dedicado pela Wiize", "Gerente de parceria 1:1"],
       },
     ];
   }, [settings]);
