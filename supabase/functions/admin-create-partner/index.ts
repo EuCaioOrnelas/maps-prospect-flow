@@ -153,20 +153,41 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: createErr?.message || "Falha ao criar usuário" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // User already exists — find them and reuse
+      // User already exists — find them and reuse.
+      // Strategy 1: query auth admin REST API with email filter (most reliable).
       let foundUserId: string | null = null;
-      let page = 1;
-      while (page <= 20 && !foundUserId) {
-        const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
-        if (listErr) break;
-        const match = list?.users?.find((u: any) => (u.email || "").toLowerCase() === normalizedEmail);
-        if (match) foundUserId = match.id;
-        if (!list?.users?.length || list.users.length < 200) break;
-        page++;
+
+      try {
+        const adminUrl = `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(normalizedEmail)}`;
+        const r = await fetch(adminUrl, {
+          headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
+        });
+        if (r.ok) {
+          const j = await r.json();
+          const u = Array.isArray(j?.users) ? j.users[0] : null;
+          if (u?.id) foundUserId = u.id;
+        } else {
+          console.warn("[admin-create-partner] admin users lookup status:", r.status);
+        }
+      } catch (e) {
+        console.warn("[admin-create-partner] admin users lookup failed:", e);
+      }
+
+      // Strategy 2: fallback to paginated listUsers (case-insensitive trim)
+      if (!foundUserId) {
+        let page = 1;
+        while (page <= 50 && !foundUserId) {
+          const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+          if (listErr) break;
+          const match = list?.users?.find((u: any) => (u.email || "").toLowerCase().trim() === normalizedEmail);
+          if (match) foundUserId = match.id;
+          if (!list?.users?.length || list.users.length < 200) break;
+          page++;
+        }
       }
 
       if (!foundUserId) {
-        return new Response(JSON.stringify({ error: "Email já cadastrado, mas não foi possível localizar o usuário" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ error: `Email "${normalizedEmail}" já cadastrado no Auth, mas não foi possível localizar o usuário.` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       // Check if this user is already a partner
