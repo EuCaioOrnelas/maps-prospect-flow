@@ -134,6 +134,7 @@ export default function AdminPartnersApplications() {
   const [search, setSearch] = useState("");
   const [reviewing, setReviewing] = useState<Application | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [rejectOpen, setRejectOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [docUrls, setDocUrls] = useState<Record<string, string>>({});
   const [tempPasswordModal, setTempPasswordModal] = useState<{ email: string; password: string } | null>(null);
