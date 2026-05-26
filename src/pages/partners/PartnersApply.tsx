@@ -79,10 +79,10 @@ const channelOptions = [
 ];
 
 const docTypes = [
-  { key: "id_doc", label: "Documento pessoal (RG/CNH)", required: false },
-  { key: "cnpj_card", label: "Cartão CNPJ (se empresa)", required: false },
-  { key: "address_proof", label: "Comprovante de endereço", required: false },
-  { key: "selfie", label: "Selfie segurando o documento (opcional)", required: false },
+  { key: "id_doc", label: "Documento pessoal (RG ou CNH)", required: true, hint: "Frente e verso legíveis" },
+  { key: "cnpj_card", label: "Cartão CNPJ", required: false, requiredIfCnpj: true, hint: "Obrigatório se você preencheu CNPJ" },
+  { key: "selfie", label: "Selfie segurando o documento", required: true, hint: "Segure o documento próximo ao rosto, com o rosto visível" },
+  { key: "address_proof", label: "Comprovante de endereço (opcional)", required: false, hint: "Conta de luz, água ou internet recente" },
 ];
 
 interface FormState {
