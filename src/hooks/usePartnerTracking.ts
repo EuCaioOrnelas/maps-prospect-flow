@@ -63,60 +63,34 @@ export function usePartnerTracking() {
     let cancelled = false;
     (async () => {
       try {
-        // SECURITY DEFINER RPC: anon users can resolve an active referral_code
-        // without us having to open the partners table to anon SELECT.
-        const { data: partnerLookup, error: partnerErr } = await supabase
-          .rpc("lookup_active_partner_by_code", { _code: ref });
-        if (partnerErr) {
-          console.warn("[usePartnerTracking] partner lookup failed:", partnerErr.message);
+        const linkSlug = params.get("rl")?.trim().toLowerCase() || null;
+        // SECURITY DEFINER RPC: atomically resolves the partner + (optional) link,
+        // inserts the click row, and returns the new click_id. Works for anon visitors
+        // without exposing any partner data.
+        const { data, error } = await supabase.rpc("register_partner_click", {
+          _referral_code: ref,
+          _referral_link_slug: linkSlug,
+          _landing_page: location.pathname,
+          _user_agent: navigator.userAgent.substring(0, 500),
+          _utm_source: params.get("utm_source"),
+          _utm_medium: params.get("utm_medium"),
+          _utm_campaign: params.get("utm_campaign"),
+          _utm_term: params.get("utm_term"),
+          _utm_content: params.get("utm_content"),
+          _session_id: crypto.randomUUID(),
+        });
+        if (error) {
+          console.warn("[usePartnerTracking] register_partner_click failed:", error.message);
           return;
         }
-        const partnerId: string | undefined = Array.isArray(partnerLookup)
-          ? partnerLookup[0]?.partner_id
-          : (partnerLookup as any)?.partner_id;
-        if (!partnerId || cancelled) return;
-
-        const linkSlug = params.get("rl")?.trim().toLowerCase();
-        let referralLinkId: string | null = null;
-
-        if (linkSlug) {
-          const { data: linkLookup } = await supabase
-            .rpc("lookup_active_referral_link", { _slug: linkSlug, _partner_id: partnerId });
-          const id = Array.isArray(linkLookup)
-            ? linkLookup[0]?.link_id
-            : (linkLookup as any)?.link_id;
-          if (id) referralLinkId = id;
-        }
-
-        const { data: click, error: clickErr } = await supabase
-          .from("partner_clicks")
-          .insert({
-            partner_id: partnerId,
-            referral_code: ref,
-            referral_link_id: referralLinkId,
-            user_agent: navigator.userAgent.substring(0, 500),
-            landing_page: location.pathname,
-            utm_source: params.get("utm_source"),
-            utm_medium: params.get("utm_medium"),
-            utm_campaign: params.get("utm_campaign"),
-            utm_term: params.get("utm_term"),
-            utm_content: params.get("utm_content"),
-            session_id: crypto.randomUUID(),
-          })
-          .select("id")
-          .single();
-
-        if (clickErr) {
-          console.warn("[usePartnerTracking] click insert failed:", clickErr.message);
-          return;
-        }
-        if (cancelled || !click) return;
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row?.click_id || !row?.partner_id || cancelled) return;
 
         persistReferral({
           code: ref,
-          partner_id: partnerId,
-          click_id: click.id,
-          referral_link_id: referralLinkId,
+          partner_id: row.partner_id,
+          click_id: row.click_id,
+          referral_link_id: row.referral_link_id ?? null,
           ts: Date.now(),
         });
       } catch (err) {
@@ -127,6 +101,7 @@ export function usePartnerTracking() {
     return () => { cancelled = true; };
   }, [location.search, location.pathname]);
 }
+
 
 
 /** Call this after a user signs up to attribute their account to the stored partner. */
