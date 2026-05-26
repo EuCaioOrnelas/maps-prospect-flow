@@ -63,56 +63,34 @@ export function usePartnerTracking() {
     let cancelled = false;
     (async () => {
       try {
-        const { data: partner } = await supabase
-          .from("partners")
-          .select("id, status")
-          .eq("referral_code", ref)
-          .eq("status", "active")
-          .maybeSingle();
-
-        if (!partner || cancelled) return;
-
-        const linkSlug = params.get("rl")?.trim().toLowerCase();
-        let referralLinkId: string | null = null;
-
-        if (linkSlug) {
-          const { data: referralLink } = await supabase
-            .from("partner_referral_links")
-            .select("id, is_active")
-            .eq("slug", linkSlug)
-            .eq("partner_id", partner.id)
-            .maybeSingle();
-
-          if (referralLink?.is_active) {
-            referralLinkId = referralLink.id;
-          }
+        const linkSlug = params.get("rl")?.trim().toLowerCase() || null;
+        // SECURITY DEFINER RPC: atomically resolves the partner + (optional) link,
+        // inserts the click row, and returns the new click_id. Works for anon visitors
+        // without exposing any partner data.
+        const { data, error } = await supabase.rpc("register_partner_click", {
+          _referral_code: ref,
+          _referral_link_slug: linkSlug,
+          _landing_page: location.pathname,
+          _user_agent: navigator.userAgent.substring(0, 500),
+          _utm_source: params.get("utm_source"),
+          _utm_medium: params.get("utm_medium"),
+          _utm_campaign: params.get("utm_campaign"),
+          _utm_term: params.get("utm_term"),
+          _utm_content: params.get("utm_content"),
+          _session_id: crypto.randomUUID(),
+        });
+        if (error) {
+          console.warn("[usePartnerTracking] register_partner_click failed:", error.message);
+          return;
         }
-
-        const { data: click } = await supabase
-          .from("partner_clicks")
-          .insert({
-            partner_id: partner.id,
-            referral_code: ref,
-            referral_link_id: referralLinkId,
-            user_agent: navigator.userAgent.substring(0, 500),
-            landing_page: location.pathname,
-            utm_source: params.get("utm_source"),
-            utm_medium: params.get("utm_medium"),
-            utm_campaign: params.get("utm_campaign"),
-            utm_term: params.get("utm_term"),
-            utm_content: params.get("utm_content"),
-            session_id: crypto.randomUUID(),
-          })
-          .select("id")
-          .single();
-
-        if (cancelled || !click) return;
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row?.click_id || !row?.partner_id || cancelled) return;
 
         persistReferral({
           code: ref,
-          partner_id: partner.id,
-          click_id: click.id,
-          referral_link_id: referralLinkId,
+          partner_id: row.partner_id,
+          click_id: row.click_id,
+          referral_link_id: row.referral_link_id ?? null,
           ts: Date.now(),
         });
       } catch (err) {
@@ -123,6 +101,8 @@ export function usePartnerTracking() {
     return () => { cancelled = true; };
   }, [location.search, location.pathname]);
 }
+
+
 
 /** Call this after a user signs up to attribute their account to the stored partner. */
 export async function attributePartnerLeadOnSignup(userId: string, email: string, name?: string) {
@@ -153,7 +133,7 @@ export async function attributePartnerLeadOnSignup(userId: string, email: string
       return;
     }
 
-    await supabase.from("partner_leads").insert({
+    const { error: leadErr } = await supabase.from("partner_leads").insert({
       partner_id: ref.partner_id,
       user_id: userId,
       email,
@@ -162,15 +142,23 @@ export async function attributePartnerLeadOnSignup(userId: string, email: string
       referral_link_id: ref.referral_link_id ?? null,
       is_trial: true,
     });
-    await supabase
+    if (leadErr) {
+      // Unique violation on user_id (23505) means this user was already attributed — silent ok.
+      if ((leadErr as any).code !== "23505") {
+        console.warn("[attributePartnerLeadOnSignup] lead insert failed:", leadErr.message);
+        return;
+      }
+    }
+    const { error: clickUpdErr } = await supabase
       .from("partner_clicks")
       .update({ converted_to_lead_at: new Date().toISOString(), converted_user_id: userId })
-      .eq("id", ref.click_id);
-    await supabase
-      .from("partners")
-      .update({ total_leads: undefined as any })
-      .eq("id", ref.partner_id);
+      .eq("id", ref.click_id)
+      .is("converted_user_id", null);
+    if (clickUpdErr) {
+      console.warn("[attributePartnerLeadOnSignup] click update failed:", clickUpdErr.message);
+    }
   } catch (err) {
     console.warn("[attributePartnerLeadOnSignup]", err);
   }
 }
+

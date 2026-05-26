@@ -7409,6 +7409,18 @@ export type Database = {
         Args: { p_action: string; p_details?: Json; p_table_name: string }
         Returns: undefined
       }
+      lookup_active_partner_by_code: {
+        Args: { _code: string }
+        Returns: {
+          partner_id: string
+        }[]
+      }
+      lookup_active_referral_link: {
+        Args: { _partner_id: string; _slug: string }
+        Returns: {
+          link_id: string
+        }[]
+      }
       match_faqs: {
         Args: {
           match_count?: number
@@ -7452,6 +7464,25 @@ export type Database = {
       recompute_partner_level: {
         Args: { p_partner_id: string }
         Returns: undefined
+      }
+      register_partner_click: {
+        Args: {
+          _landing_page?: string
+          _referral_code: string
+          _referral_link_slug?: string
+          _session_id?: string
+          _user_agent?: string
+          _utm_campaign?: string
+          _utm_content?: string
+          _utm_medium?: string
+          _utm_source?: string
+          _utm_term?: string
+        }
+        Returns: {
+          click_id: string
+          partner_id: string
+          referral_link_id: string
+        }[]
       }
       release_pending_commissions: { Args: never; Returns: number }
       request_partner_withdrawal: {
