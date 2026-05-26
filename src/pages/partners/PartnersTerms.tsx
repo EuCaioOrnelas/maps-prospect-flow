@@ -37,7 +37,7 @@ const Bullet = ({ children, allowed }: { children: React.ReactNode; allowed?: bo
 );
 
 export default function PartnersTerms() {
-  const updatedAt = "27 de abril de 2026";
+  const updatedAt = "26 de maio de 2026";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
@@ -168,28 +168,62 @@ export default function PartnersTerms() {
           </ul>
         </Section>
 
-        <Section icon={Wallet} title="4. Comissionamento e Pagamento">
-          <ul className="space-y-2.5">
+        <Section icon={Wallet} title="4. Comissionamento, Níveis e Planos">
+          <p className="text-foreground/90">
+            A comissão é calculada sobre o valor líquido efetivamente pago pelo cliente indicado
+            (plano + order bumps − descontos − impostos retidos pela operadora de pagamento) e segue
+            a estrutura de níveis abaixo, vigente a partir de 26/05/2026:
+          </p>
+          <div className="overflow-x-auto rounded-xl border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40 text-foreground">
+                <tr>
+                  <th className="text-left px-4 py-2.5 font-semibold">Nível</th>
+                  <th className="text-left px-4 py-2.5 font-semibold">Comissão</th>
+                  <th className="text-left px-4 py-2.5 font-semibold">Como subir</th>
+                </tr>
+              </thead>
+              <tbody className="text-foreground/90">
+                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Select</td><td className="px-4 py-2.5">10%</td><td className="px-4 py-2.5 text-muted-foreground">Nível inicial após aprovação</td></tr>
+                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Signature</td><td className="px-4 py-2.5">15%</td><td className="px-4 py-2.5 text-muted-foreground">A partir de 5 clientes ativos</td></tr>
+                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Prime</td><td className="px-4 py-2.5">20%</td><td className="px-4 py-2.5 text-muted-foreground">A partir de 15 clientes ativos</td></tr>
+                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Exclusive</td><td className="px-4 py-2.5">25%</td><td className="px-4 py-2.5 text-muted-foreground">A partir de 30 clientes ativos + curadoria Wiize</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ul className="space-y-2.5 pt-2">
             <Bullet>
-              A comissão é paga apenas sobre vendas <strong>aprovadas e efetivamente pagas</strong>,
-              após período de carência (cooling-off) que cobre o direito de arrependimento, chargebacks
-              e reembolsos, conforme política vigente publicada na área do Parceiro.
+              A comissão incide sobre os <strong>planos pagos da Wiize</strong> (Atendimento, Growth e Enterprise),
+              incluindo <strong>order bumps</strong> e add-ons contratados no checkout. Não há comissão sobre o plano
+              gratuito, períodos de trial, créditos promocionais, taxas de gateway ou impostos.
             </Bullet>
             <Bullet>
-              Vendas canceladas, estornadas, fraudulentas ou que violem estes Termos são deduzidas
-              do saldo do Parceiro, podendo gerar saldo negativo a ser compensado em ciclos futuros.
+              A recorrência é paga por até <strong>24 meses</strong> a partir da primeira fatura paga, desde que o
+              cliente permaneça ativo e adimplente.
             </Bullet>
             <Bullet>
-              O saque está sujeito a valor mínimo definido pela Wiize e exige dados bancários (PIX
-              ou conta corrente) cadastrados e validados.
+              A comissão é paga apenas sobre vendas <strong>aprovadas e efetivamente pagas</strong>, após período de
+              carência (cooling-off) de <strong>14 dias</strong>, que cobre o direito de arrependimento, chargebacks
+              e reembolsos.
             </Bullet>
             <Bullet>
-              É responsabilidade do Parceiro emitir nota fiscal de prestação de serviços e recolher
-              os tributos devidos sobre as comissões recebidas.
+              Vendas canceladas, estornadas, fraudulentas ou que violem estes Termos são <strong>deduzidas
+              automaticamente</strong> do saldo do Parceiro, podendo gerar saldo negativo a ser compensado em ciclos
+              futuros. Após o pagamento de uma comissão, o valor é descontado do saldo disponível e o histórico fica
+              registrado no portal.
             </Bullet>
             <Bullet>
-              A Wiize pode ajustar percentuais, regras de atribuição (last-click, janela de cookies)
-              e estrutura de níveis com aviso prévio mínimo de 30 dias.
+              <strong>Saque mínimo de R$ 100</strong> via PIX, processado em até 5 dias úteis após aprovação. É
+              exigido cadastro e validação prévia da chave PIX no portal do Parceiro.
+            </Bullet>
+            <Bullet>
+              É responsabilidade do Parceiro emitir nota fiscal de prestação de serviços e recolher os tributos
+              devidos sobre as comissões recebidas. Para parceiros PF, valores acima de R$ 1.903,98/mês podem sofrer
+              retenção de IRRF conforme tabela vigente.
+            </Bullet>
+            <Bullet>
+              A Wiize pode ajustar percentuais, regras de atribuição (last-click, janela de cookies de 2 anos) e
+              estrutura de níveis com aviso prévio mínimo de 30 dias, sempre respeitando as comissões já apuradas.
             </Bullet>
           </ul>
         </Section>

@@ -15,12 +15,23 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowRight, ArrowLeft, Check, Sparkles, Wallet, TrendingUp, Megaphone,
   Target, Users, ShieldCheck, Upload, X, FileText, Loader2, CheckCircle2, ExternalLink,
+  AlertCircle, Camera, ImageIcon,
 } from "lucide-react";
 import {
   maskCPF, maskCNPJ, maskCEP, maskPhone, isValidCPF, isValidCNPJ,
   onlyDigits, BR_STATES,
 } from "@/lib/brMasks";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import wiizeLogo from "@/assets/logo-icon-new.png";
+
+const STORAGE_KEY = "wiize_partner_application_draft_v1";
+const MIN_CHARS = {
+  reason_to_be_partner: 30,
+  reason_to_be_approved: 30,
+  how_would_sell: 30,
+  differential: 20,
+  results_90_days: 20,
+} as const;
 
 const STEPS = [
   "Identificação",
@@ -68,10 +79,10 @@ const channelOptions = [
 ];
 
 const docTypes = [
-  { key: "id_doc", label: "Documento pessoal (RG/CNH)", required: false },
-  { key: "cnpj_card", label: "Cartão CNPJ (se empresa)", required: false },
-  { key: "address_proof", label: "Comprovante de endereço", required: false },
-  { key: "selfie", label: "Selfie segurando o documento (opcional)", required: false },
+  { key: "id_doc", label: "Documento pessoal (RG ou CNH)", required: true, hint: "Frente e verso legíveis" },
+  { key: "cnpj_card", label: "Cartão CNPJ", required: false, requiredIfCnpj: true, hint: "Obrigatório se você preencheu CNPJ" },
+  { key: "selfie", label: "Selfie segurando o documento", required: true, hint: "Segure o documento próximo ao rosto, com o rosto visível" },
+  { key: "address_proof", label: "Comprovante de endereço (opcional)", required: false, hint: "Conta de luz, água ou internet recente" },
 ];
 
 interface FormState {
@@ -133,6 +144,7 @@ export default function PartnersApply() {
   const [submitted, setSubmitted] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [uploadSession] = useState(() => crypto.randomUUID());
+  const [docDialog, setDocDialog] = useState<{ key: string; label: string } | null>(null);
 
   // Auto-sync access email with main email if empty
   useEffect(() => {
@@ -140,6 +152,32 @@ export default function PartnersApply() {
       setForm((p) => ({ ...p, access_email: form.email }));
     }
   }, [form.email]);
+
+  // --- LocalStorage persistence (everything EXCEPT senha) ---
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (saved && typeof saved === "object") {
+        setForm((p) => ({ ...p, ...saved, password: "", password_confirm: "" }));
+        if (typeof saved.__step === "number") setStep(saved.__step);
+        if (saved.__started) setStarted(true);
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (submitted) return;
+    try {
+      const { password, password_confirm, website, ...safe } = form;
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ ...safe, __step: step, __started: started })
+      );
+    } catch { /* ignore quota */ }
+  }, [form, step, started, submitted]);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => {
     setForm((p) => ({ ...p, [k]: v }));
@@ -175,11 +213,28 @@ export default function PartnersApply() {
       if (!form.promoted_other_softwares) e.promoted_other_softwares = "Responda esta pergunta";
     }
     if (s === 5) {
-      if (form.reason_to_be_partner.trim().length < 30) e.reason_to_be_partner = "Mínimo 30 caracteres";
-      if (form.reason_to_be_approved.trim().length < 30) e.reason_to_be_approved = "Mínimo 30 caracteres";
-      if (form.how_would_sell.trim().length < 30) e.how_would_sell = "Mínimo 30 caracteres";
-      if (form.differential.trim().length < 20) e.differential = "Mínimo 20 caracteres";
-      if (form.results_90_days.trim().length < 20) e.results_90_days = "Mínimo 20 caracteres";
+      const check = (field: keyof typeof MIN_CHARS, label: string) => {
+        const len = (form[field] as string).trim().length;
+        const min = MIN_CHARS[field];
+        if (len < min) {
+          e[field] = len === 0
+            ? `Campo obrigatório — escreva ao menos ${min} caracteres sobre ${label}.`
+            : `Faltam ${min - len} caracteres (mínimo ${min}). Você escreveu apenas ${len}.`;
+        }
+      };
+      check("reason_to_be_partner", "seu interesse em ser parceiro");
+      check("reason_to_be_approved", "por que você merece ser aprovado");
+      check("how_would_sell", "como pretende vender a Wiize");
+      check("differential", "seu diferencial");
+      check("results_90_days", "resultados esperados em 90 dias");
+    }
+    if (s === 6) {
+      const hasDoc = (key: string) => form.documents.some((d) => d.type === key);
+      if (!hasDoc("id_doc")) e.id_doc = "Documento pessoal (RG ou CNH) é obrigatório.";
+      if (form.cnpj && onlyDigits(form.cnpj).length === 14 && !hasDoc("cnpj_card")) {
+        e.cnpj_card = "Como você preencheu o CNPJ, o Cartão CNPJ é obrigatório.";
+      }
+      if (!hasDoc("selfie")) e.selfie = "Selfie segurando o documento é obrigatória.";
     }
     if (s === 7) {
       if (!form.terms_accepted) e.terms_accepted = "Aceite os termos";
@@ -319,6 +374,7 @@ export default function PartnersApply() {
         setSubmitting(false);
         return;
       }
+      try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
       setSubmitted(true);
     } catch (err: any) {
       toast({ title: "Erro inesperado", description: err?.message || "Tente novamente.", variant: "destructive" });
@@ -683,58 +739,135 @@ export default function PartnersApply() {
           {step === 5 && (
             <div className="space-y-5">
               <Header title="Conte mais sobre você" subtitle="Suas respostas nos ajudam a entender seu potencial. Seja direto e específico." />
-              <LongField label="Por que deseja ser parceiro da Wiize?" value={form.reason_to_be_partner} onChange={(v) => set("reason_to_be_partner", v)} error={errors.reason_to_be_partner} />
-              <LongField label="Por que a Wiize deveria aprovar sua candidatura?" value={form.reason_to_be_approved} onChange={(v) => set("reason_to_be_approved", v)} error={errors.reason_to_be_approved} />
-              <LongField label="Como você venderia a Wiize?" value={form.how_would_sell} onChange={(v) => set("how_would_sell", v)} error={errors.how_would_sell} />
-              <LongField label="O que diferencia você de outros parceiros?" value={form.differential} onChange={(v) => set("differential", v)} error={errors.differential} />
-              <LongField label="Quais resultados acredita conseguir nos próximos 90 dias?" value={form.results_90_days} onChange={(v) => set("results_90_days", v)} error={errors.results_90_days} />
+              <LongField min={MIN_CHARS.reason_to_be_partner} label="Por que deseja ser parceiro da Wiize?" value={form.reason_to_be_partner} onChange={(v) => set("reason_to_be_partner", v)} error={errors.reason_to_be_partner} />
+              <LongField min={MIN_CHARS.reason_to_be_approved} label="Por que a Wiize deveria aprovar sua candidatura?" value={form.reason_to_be_approved} onChange={(v) => set("reason_to_be_approved", v)} error={errors.reason_to_be_approved} />
+              <LongField min={MIN_CHARS.how_would_sell} label="Como você venderia a Wiize?" value={form.how_would_sell} onChange={(v) => set("how_would_sell", v)} error={errors.how_would_sell} />
+              <LongField min={MIN_CHARS.differential} label="O que diferencia você de outros parceiros?" value={form.differential} onChange={(v) => set("differential", v)} error={errors.differential} />
+              <LongField min={MIN_CHARS.results_90_days} label="Quais resultados acredita conseguir nos próximos 90 dias?" value={form.results_90_days} onChange={(v) => set("results_90_days", v)} error={errors.results_90_days} />
+
             </div>
           )}
 
           {/* STEP 6 — DOCUMENTOS */}
           {step === 6 && (
             <div className="space-y-5">
-              <Header title="Documentos (opcional)" subtitle="Acelere sua aprovação enviando documentos. Aceitamos PDF, JPG, PNG ou WebP até 10 MB." />
+              <Header
+                title="Documentos"
+                subtitle="Para garantir a segurança do programa, precisamos validar sua identidade. Aceitamos PDF, JPG, PNG ou WebP até 10 MB."
+              />
               {docTypes.map((dt) => {
                 const existing = form.documents.find((d) => d.type === dt.key);
+                const isRequired = dt.required || (dt.requiredIfCnpj && !!form.cnpj && onlyDigits(form.cnpj).length === 14);
+                const err = errors[dt.key];
                 return (
-                  <div key={dt.key} className="border border-border rounded-xl p-4">
+                  <div
+                    key={dt.key}
+                    className={`border rounded-xl p-4 transition-colors ${
+                      err ? "border-destructive/60 bg-destructive/5" : "border-border"
+                    }`}
+                  >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">{dt.label}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium flex items-center gap-1.5 flex-wrap">
+                          {dt.label}
+                          {isRequired && <span className="text-destructive">*</span>}
+                          {existing && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />}
+                        </div>
+                        {dt.hint && !existing && (
+                          <div className="text-xs text-muted-foreground mt-0.5">{dt.hint}</div>
+                        )}
                         {existing && (
-                          <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
-                            <FileText className="h-3 w-3" /> {existing.filename}
+                          <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 truncate">
+                            <FileText className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{existing.filename}</span>
                           </div>
                         )}
                       </div>
                       {existing ? (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => removeDoc(dt.key)} className="text-destructive hover:text-destructive">
+                        <Button
+                          type="button" variant="ghost" size="sm"
+                          onClick={() => removeDoc(dt.key)}
+                          className="text-destructive hover:text-destructive shrink-0"
+                        >
                           <X className="h-4 w-4" />
                         </Button>
                       ) : (
-                        <label className="cursor-pointer">
-                          <input
-                            type="file" className="hidden"
-                            accept=".pdf,.jpg,.jpeg,.png,.webp"
-                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, dt.key); }}
-                            disabled={uploadingDoc === dt.key}
-                          />
-                          <Button type="button" variant="outline" size="sm" asChild className="gap-1.5 pointer-events-none">
-                            <span>
-                              {uploadingDoc === dt.key
-                                ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando…</>
-                                : <><Upload className="h-3.5 w-3.5" /> Enviar</>}
-                            </span>
-                          </Button>
-                        </label>
+                        <Button
+                          type="button" variant="outline" size="sm"
+                          className="gap-1.5 shrink-0"
+                          disabled={uploadingDoc === dt.key}
+                          onClick={() => setDocDialog({ key: dt.key, label: dt.label })}
+                        >
+                          {uploadingDoc === dt.key
+                            ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando…</>
+                            : <><Upload className="h-3.5 w-3.5" /> Enviar</>}
+                        </Button>
                       )}
                     </div>
+                    {err && (
+                      <div className="mt-2.5 flex items-center gap-1.5 text-xs text-destructive font-medium">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                        {err}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           )}
+
+          {/* Upload source dialog (Câmera vs Galeria) */}
+          <Dialog open={!!docDialog} onOpenChange={(o) => !o && setDocDialog(null)}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Enviar {docDialog?.label}</DialogTitle>
+                <DialogDescription>Escolha como deseja enviar o arquivo.</DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      const key = docDialog?.key;
+                      setDocDialog(null);
+                      if (f && key) handleFileUpload(f, key);
+                    }}
+                  />
+                  <div className="border border-border rounded-xl p-5 flex flex-col items-center gap-2 hover:border-primary hover:bg-primary/5 transition-all">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                      <Camera className="h-5 w-5" />
+                    </div>
+                    <div className="text-sm font-medium">Tirar foto</div>
+                    <div className="text-[11px] text-muted-foreground text-center">Câmera do dispositivo</div>
+                  </div>
+                </label>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      const key = docDialog?.key;
+                      setDocDialog(null);
+                      if (f && key) handleFileUpload(f, key);
+                    }}
+                  />
+                  <div className="border border-border rounded-xl p-5 flex flex-col items-center gap-2 hover:border-primary hover:bg-primary/5 transition-all">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                      <ImageIcon className="h-5 w-5" />
+                    </div>
+                    <div className="text-sm font-medium">Galeria</div>
+                    <div className="text-[11px] text-muted-foreground text-center">PDF, JPG, PNG, WebP</div>
+                  </div>
+                </label>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* STEP 7 — TERMOS */}
           {step === 7 && (
@@ -803,19 +936,47 @@ function Field({
         {label} {required && <span className="text-destructive">*</span>}
       </Label>
       {children}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && (
+        <p className="text-xs text-destructive flex items-center gap-1.5 font-medium">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
 function LongField({
-  label, value, onChange, error,
-}: { label: string; value: string; onChange: (v: string) => void; error?: string }) {
+  label, value, onChange, error, min,
+}: { label: string; value: string; onChange: (v: string) => void; error?: string; min: number }) {
+  const len = value.trim().length;
+  const remaining = Math.max(0, min - len);
+  const ok = len >= min;
   return (
-    <Field label={label} error={error} required>
-      <Textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} placeholder="Sua resposta…" />
-      <div className="text-[11px] text-muted-foreground text-right">{value.length} caracteres</div>
-    </Field>
+    <div className="space-y-1.5">
+      <Label className="text-sm font-medium">
+        {label} <span className="text-destructive">*</span>
+      </Label>
+      <Textarea
+        rows={4}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Sua resposta…"
+        className={error ? "border-destructive focus-visible:ring-destructive/40" : ""}
+      />
+      <div className="flex items-center justify-between text-[11px]">
+        <span className={ok ? "text-emerald-600 font-medium flex items-center gap-1" : "text-muted-foreground"}>
+          {ok ? <><CheckCircle2 className="h-3 w-3" /> Mínimo atingido</> : `Faltam ${remaining} de ${min} caracteres`}
+        </span>
+        <span className="text-muted-foreground">{len} caracteres</span>
+      </div>
+      {error && (
+        <div className="mt-1 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive font-medium flex items-start gap-1.5">
+          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
+    </div>
   );
 }
 
