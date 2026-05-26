@@ -7355,6 +7355,7 @@ export type Database = {
         Returns: string
       }
       generate_partner_verification_code: { Args: never; Returns: string }
+      get_auth_user_id_by_email: { Args: { _email: string }; Returns: string }
       get_landing_page_stats: {
         Args: never
         Returns: {
