@@ -676,20 +676,19 @@ export default function AdminPartnersApplications() {
 
 // ============================ HELPERS ============================
 function TabsTriggerNav({
-  value, icon: Icon, label, current, badge,
-}: { value: string; icon: any; label: string; current: string; badge?: number }) {
+  value, label, current, badge,
+}: { value: string; icon?: any; label: string; current: string; badge?: number }) {
   const active = current === value;
   return (
     <TabsTrigger
       value={value}
-      className={`relative rounded-none px-4 py-3 h-auto bg-transparent text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none border-b-2 ${
-        active ? "border-primary" : "border-transparent"
-      } gap-1.5 text-sm whitespace-nowrap`}
+      className={`rounded-lg px-3.5 py-1.5 h-auto text-sm font-medium border-0 bg-transparent text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm gap-1.5 ${
+        active ? "" : ""
+      }`}
     >
-      <Icon className="h-3.5 w-3.5" />
       {label}
       {badge !== undefined && badge > 0 && (
-        <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{badge}</Badge>
+        <span className="ml-0.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-muted-foreground/15 text-[10px] font-medium text-foreground/70">{badge}</span>
       )}
     </TabsTrigger>
   );
