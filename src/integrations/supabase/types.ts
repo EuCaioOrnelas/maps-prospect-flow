@@ -7465,6 +7465,25 @@ export type Database = {
         Args: { p_partner_id: string }
         Returns: undefined
       }
+      register_partner_click: {
+        Args: {
+          _landing_page?: string
+          _referral_code: string
+          _referral_link_slug?: string
+          _session_id?: string
+          _user_agent?: string
+          _utm_campaign?: string
+          _utm_content?: string
+          _utm_medium?: string
+          _utm_source?: string
+          _utm_term?: string
+        }
+        Returns: {
+          click_id: string
+          partner_id: string
+          referral_link_id: string
+        }[]
+      }
       release_pending_commissions: { Args: never; Returns: number }
       request_partner_withdrawal: {
         Args: { p_amount_cents: number }
