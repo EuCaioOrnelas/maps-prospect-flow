@@ -380,8 +380,8 @@ export default function AdminPartnersApplications() {
               </div>
 
               {/* TABS */}
-              <Tabs value={dialogTab} onValueChange={setDialogTab} className="flex-1 flex flex-col min-h-0">
-                <div className="px-6 border-b border-border bg-muted/30">
+              <Tabs value={dialogTab} onValueChange={setDialogTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="px-6 border-b border-border bg-muted/30 shrink-0">
                   <TabsList className="bg-transparent h-auto p-0 gap-0 rounded-none w-full justify-start overflow-x-auto">
                     <TabsTriggerNav value="resumo" icon={Activity} label="Resumo" current={dialogTab} />
                     <TabsTriggerNav value="identidade" icon={IdCard} label="Identidade" current={dialogTab} />
