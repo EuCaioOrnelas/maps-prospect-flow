@@ -175,16 +175,14 @@ serve(async (req) => {
       });
 
       if (createErr || !created?.user) {
-        // Race condition: someone created it between pre-check and now. Retry lookup.
+        // Race condition: someone created it between pre-check and now. Retry via rpc.
         console.warn("[admin-create-partner] createUser failed:", createErr?.message);
-        const { data: raceUser } = await (supabaseAdmin as any)
-          .schema("auth")
-          .from("users")
-          .select("id")
-          .ilike("email", normalizedEmail)
-          .maybeSingle();
-        if (raceUser?.id) {
-          newUserId = raceUser.id;
+        const { data: raceId } = await supabaseAdmin.rpc(
+          "get_auth_user_id_by_email",
+          { _email: normalizedEmail }
+        );
+        if (raceId) {
+          newUserId = raceId as string;
           userAlreadyExisted = true;
         } else {
           return new Response(JSON.stringify({ error: createErr?.message || "Falha ao criar usuário no Auth" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
