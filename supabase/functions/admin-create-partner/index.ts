@@ -166,17 +166,24 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: "Este email já está cadastrado como parceiro" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     } else {
-      // No existing auth user — must have a password to create one
-      if (!hasPassword) {
-        return new Response(JSON.stringify({ error: "Senha obrigatória: usuário ainda não existe no Auth." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // No existing auth user — must have either a password or password_hash
+      if (!hasPassword && !hasHash) {
+        return new Response(JSON.stringify({ error: "Senha (ou hash) obrigatória: usuário ainda não existe no Auth." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+      const createPayload: Record<string, unknown> = {
         email: normalizedEmail,
-        password: body.password,
         email_confirm: true,
         user_metadata: { full_name: body.full_name, is_partner: true },
-      });
+      };
+      if (hasHash) {
+        // Supabase admin API accepts pre-hashed bcrypt passwords
+        createPayload.password_hash = body.password_hash;
+      } else {
+        createPayload.password = body.password;
+      }
+
+      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser(createPayload as any);
 
       if (createErr || !created?.user) {
         // Race condition: someone created it between pre-check and now. Retry via rpc.
@@ -195,6 +202,7 @@ serve(async (req) => {
         newUserId = created.user.id;
       }
     }
+
 
     // Upsert profile (handle_new_user may have created it)
     await supabaseAdmin.from("profiles").upsert({
