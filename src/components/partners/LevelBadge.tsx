@@ -43,7 +43,7 @@ export const LEVEL_META: Record<PartnerLevel, {
   platinum: {
     label: "Exclusive",
     icon: Gem,
-    fg: "text-background",
+    fg: "text-white",
     bg: "bg-foreground",
     glow: "shadow-[0_2px_10px_-3px_hsl(var(--foreground)/0.35)]",
     ring: "ring-foreground/40",
