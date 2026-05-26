@@ -137,7 +137,7 @@ export default function AdminPartnersApplications() {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [docUrls, setDocUrls] = useState<Record<string, string>>({});
-  const [tempPasswordModal, setTempPasswordModal] = useState<{ email: string; password: string } | null>(null);
+  const [approvedModal, setApprovedModal] = useState<{ name: string; email: string } | null>(null);
   const [dialogTab, setDialogTab] = useState("resumo");
   const { toast } = useToast();
 
