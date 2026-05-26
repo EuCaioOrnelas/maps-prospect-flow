@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,10 @@ export default function PartnerLogin() {
 
   return (
     <div className="min-h-screen flex bg-background">
+      <Helmet>
+        <title>Portal do Parceiro — Wiize Partners</title>
+        <meta name="description" content="Acesse o portal exclusivo de parceiros Wiize. Acompanhe leads, comissões e saques em tempo real." />
+      </Helmet>
       {/* Left side - Branding with soft background image */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#31AA62]">
         {/* Rich gradient layers */}
