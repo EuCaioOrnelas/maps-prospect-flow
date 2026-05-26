@@ -15,8 +15,8 @@ export type TourStep = {
   placement?: "top" | "bottom" | "left" | "right" | "center";
   /** Force the sidebar to stay expanded for this step */
   forceSidebar?: boolean;
-  /** Open ONLY this submenu in the sidebar (oportunidades|campanhas|crm|automacao|chat|dashboard). Implies forceSidebar. */
-  sidebarSection?: "oportunidades" | "campanhas" | "crm" | "automacao" | "chat" | "dashboard";
+  /** Open ONLY this submenu in the sidebar. Implies forceSidebar. */
+  sidebarSection?: "oportunidades" | "campanhas" | "meta" | "crm" | "automacao" | "chat" | "dashboard";
   /** Inject the synthetic demo lead at the top of the gestão list */
   injectDemoLead?: boolean;
   /** Inject aspirational fake data into the cockpit (MainDashboard) */
