@@ -290,8 +290,11 @@ serve(async (req) => {
     }
 
 
-    // Welcome email (best-effort)
-    sendPartnerEmail(supabaseAdmin, partner.id, "partner_welcome").catch(() => {});
+    // Welcome email (best-effort) — skip if caller will send its own (e.g. approval flow)
+    if (!body.skip_welcome_email) {
+      sendPartnerEmail(supabaseAdmin, partner.id, "partner_welcome").catch(() => {});
+    }
+
 
     return new Response(JSON.stringify({ success: true, partner }), {
       status: 200,
