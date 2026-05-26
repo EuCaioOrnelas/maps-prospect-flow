@@ -68,7 +68,8 @@ const corsHeaders = {
 interface CreatePartnerBody {
   full_name: string;
   email: string;
-  password: string;
+  password?: string;
+  password_hash?: string; // bcrypt hash from partner_applications (preferred when available)
   phone?: string;
   company?: string;
   tax_id?: string;
@@ -78,7 +79,9 @@ interface CreatePartnerBody {
   internal_notes?: string;
   status?: "active" | "inactive" | "blocked";
   referral_code?: string;
+  skip_welcome_email?: boolean; // approval flow sends its own email
 }
+
 
 const REFERRAL_CODE_REGEX = /^[a-z0-9]{3,30}$/;
 
