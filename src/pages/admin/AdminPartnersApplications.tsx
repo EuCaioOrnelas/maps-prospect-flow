@@ -578,28 +578,13 @@ export default function AdminPartnersApplications() {
                   </TabsContent>
                 </div>
 
-                {/* REJECT REASON (only pending) */}
-                {reviewing.status === "pending" && (
-                  <div className="px-6 py-4 border-t border-border bg-muted/30 shrink-0">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                      <AlertCircle className="h-3 w-3" /> Motivo da recusa (preencha apenas se for recusar)
-                    </label>
-                    <Textarea
-                      rows={2}
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                      placeholder="Mensagem cordial que será enviada por e-mail ao candidato."
-                      className="mt-1.5 bg-background"
-                    />
-                  </div>
-                )}
               </Tabs>
 
               {/* FOOTER */}
               {reviewing.status === "pending" && (
                 <DialogFooter className="px-6 py-4 border-t border-border bg-background shrink-0">
-                  <Button variant="outline" onClick={() => reject(reviewing)} disabled={submitting} className="gap-2 border-red-500/40 text-red-600 hover:bg-red-500/10 hover:text-red-700">
-                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <X size={14} />} Recusar candidatura
+                  <Button variant="outline" onClick={() => { setRejectReason(""); setRejectOpen(true); }} disabled={submitting} className="gap-2 border-red-500/40 text-red-600 hover:bg-red-500/10 hover:text-red-700">
+                    <X size={14} /> Recusar candidatura
                   </Button>
                   <Button onClick={() => approve(reviewing)} disabled={submitting} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
                     {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check size={14} />} Aprovar e criar parceiro
@@ -610,6 +595,41 @@ export default function AdminPartnersApplications() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* REJECT REASON DIALOG */}
+      <Dialog open={rejectOpen} onOpenChange={(o) => { if (!submitting) setRejectOpen(o); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-red-600" /> Recusar candidatura
+            </DialogTitle>
+            <DialogDescription>
+              Escreva uma mensagem cordial que será enviada por e-mail ao candidato explicando o motivo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Motivo da recusa</label>
+            <Textarea
+              rows={5}
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Ex: No momento estamos selecionando perfis com maior experiência em vendas B2B..."
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectOpen(false)} disabled={submitting}>Cancelar</Button>
+            <Button
+              onClick={() => reviewing && reject(reviewing)}
+              disabled={submitting || !rejectReason.trim()}
+              className="bg-red-600 hover:bg-red-700 text-white gap-2"
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <X size={14} />} Confirmar recusa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* TEMP PASSWORD MODAL */}
       <Dialog open={!!tempPasswordModal} onOpenChange={(o) => !o && setTempPasswordModal(null)}>
