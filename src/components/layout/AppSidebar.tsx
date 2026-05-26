@@ -92,7 +92,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   useEffect(() => {
     const update = () => {
       const cls = document.body.classList;
-      const sections = ["oportunidades", "campanhas", "crm", "automacao", "chat", "dashboard"];
+      const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
       const active = sections.find((s) => cls.contains(`tour-open-${s}`)) ?? null;
       const anyOpen = active !== null || cls.contains("tour-sidebar-open");
       setTourForceOpen(anyOpen);
@@ -110,6 +110,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       setIsExpanded(true);
       setIsOpportunitiesOpen(tourSection === "oportunidades");
       setIsCampaignsOpen(tourSection === "campanhas");
+      setIsMetaOpen(tourSection === "meta");
       setIsCrmOpen(tourSection === "crm");
       setIsAutomationOpen(tourSection === "automacao");
       setIsReportsOpen(tourSection === "dashboard");
