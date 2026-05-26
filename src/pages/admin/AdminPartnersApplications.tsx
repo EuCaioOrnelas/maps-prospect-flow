@@ -245,9 +245,9 @@ export default function AdminPartnersApplications() {
   };
 
   const scoreColor = (s: number) =>
-    s >= 70 ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
-    : s >= 40 ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
-    : "bg-muted text-muted-foreground border-border";
+    s >= 70 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20"
+    : s >= 40 ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200 dark:border-amber-500/20"
+    : "bg-muted/50 text-muted-foreground border-border";
 
   const docsArr = Array.isArray(reviewing?.documents) ? reviewing!.documents : [];
 
