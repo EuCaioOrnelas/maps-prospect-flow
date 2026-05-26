@@ -15,12 +15,23 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowRight, ArrowLeft, Check, Sparkles, Wallet, TrendingUp, Megaphone,
   Target, Users, ShieldCheck, Upload, X, FileText, Loader2, CheckCircle2, ExternalLink,
+  AlertCircle, Camera, ImageIcon,
 } from "lucide-react";
 import {
   maskCPF, maskCNPJ, maskCEP, maskPhone, isValidCPF, isValidCNPJ,
   onlyDigits, BR_STATES,
 } from "@/lib/brMasks";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import wiizeLogo from "@/assets/logo-icon-new.png";
+
+const STORAGE_KEY = "wiize_partner_application_draft_v1";
+const MIN_CHARS = {
+  reason_to_be_partner: 30,
+  reason_to_be_approved: 30,
+  how_would_sell: 30,
+  differential: 20,
+  results_90_days: 20,
+} as const;
 
 const STEPS = [
   "Identificação",
