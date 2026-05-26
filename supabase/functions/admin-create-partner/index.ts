@@ -124,9 +124,10 @@ serve(async (req) => {
     if (!body.full_name?.trim() || !body.email?.trim()) {
       return new Response(JSON.stringify({ error: "Nome e email são obrigatórios" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    // Password is only required when we'll create a new auth user.
-    // If the email already belongs to a Wiize user, we reuse it without password.
+    // Authentication: prefer pre-hashed password (from candidature) over plain password.
+    const hasHash = !!body.password_hash && typeof body.password_hash === "string";
     const hasPassword = !!body.password && body.password.length >= 8;
+
 
     const normalizedEmail = body.email.trim().toLowerCase();
     let newUserId: string | null = null;
