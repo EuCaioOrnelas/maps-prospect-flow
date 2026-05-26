@@ -213,11 +213,28 @@ export default function PartnersApply() {
       if (!form.promoted_other_softwares) e.promoted_other_softwares = "Responda esta pergunta";
     }
     if (s === 5) {
-      if (form.reason_to_be_partner.trim().length < 30) e.reason_to_be_partner = "Mínimo 30 caracteres";
-      if (form.reason_to_be_approved.trim().length < 30) e.reason_to_be_approved = "Mínimo 30 caracteres";
-      if (form.how_would_sell.trim().length < 30) e.how_would_sell = "Mínimo 30 caracteres";
-      if (form.differential.trim().length < 20) e.differential = "Mínimo 20 caracteres";
-      if (form.results_90_days.trim().length < 20) e.results_90_days = "Mínimo 20 caracteres";
+      const check = (field: keyof typeof MIN_CHARS, label: string) => {
+        const len = (form[field] as string).trim().length;
+        const min = MIN_CHARS[field];
+        if (len < min) {
+          e[field] = len === 0
+            ? `Campo obrigatório — escreva ao menos ${min} caracteres sobre ${label}.`
+            : `Faltam ${min - len} caracteres (mínimo ${min}). Você escreveu apenas ${len}.`;
+        }
+      };
+      check("reason_to_be_partner", "seu interesse em ser parceiro");
+      check("reason_to_be_approved", "por que você merece ser aprovado");
+      check("how_would_sell", "como pretende vender a Wiize");
+      check("differential", "seu diferencial");
+      check("results_90_days", "resultados esperados em 90 dias");
+    }
+    if (s === 6) {
+      const hasDoc = (key: string) => form.documents.some((d) => d.type === key);
+      if (!hasDoc("id_doc")) e.id_doc = "Documento pessoal (RG ou CNH) é obrigatório.";
+      if (form.cnpj && onlyDigits(form.cnpj).length === 14 && !hasDoc("cnpj_card")) {
+        e.cnpj_card = "Como você preencheu o CNPJ, o Cartão CNPJ é obrigatório.";
+      }
+      if (!hasDoc("selfie")) e.selfie = "Selfie segurando o documento é obrigatória.";
     }
     if (s === 7) {
       if (!form.terms_accepted) e.terms_accepted = "Aceite os termos";
