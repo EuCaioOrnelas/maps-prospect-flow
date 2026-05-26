@@ -326,8 +326,8 @@ export default function AdminPartnersApplications() {
                       <h3 className="font-semibold">{a.full_name}</h3>
                       <StatusBadge status={a.status} />
                       {a.internal_score !== null && (
-                        <span className={`px-2 py-0.5 rounded-full border text-xs font-medium inline-flex items-center gap-1 ${scoreColor(a.internal_score)}`}>
-                          <Sparkles className="h-3 w-3" /> Score {a.internal_score}
+                        <span className={`px-2 py-0.5 rounded-md border text-[11px] font-medium inline-flex items-center gap-1 ${scoreColor(a.internal_score)}`}>
+                          <Sparkles className="h-2.5 w-2.5" /> Score {a.internal_score}
                         </span>
                       )}
                     </div>
