@@ -84,39 +84,45 @@ const docTypeLabels: Record<string, string> = {
 const fmtCpf = (s: string | null) => s ? s.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "—";
 const fmtCnpj = (s: string | null) => s ? s.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5") : "—";
 
-// === STATUS THEMING ===
+// === STATUS THEMING (clean & minimal) ===
 const STATUS_THEME: Record<string, {
-  label: string; pill: string; dot: string; cardBorder: string; icon: React.ComponentType<{ className?: string }>;
+  label: string; pill: string; dot: string; iconBg: string; iconColor: string; cardBorder: string; icon: React.ComponentType<{ className?: string }>;
 }> = {
   pending: {
     label: "Pendente",
-    pill: "bg-amber-500/15 text-amber-700 border-amber-500/40 dark:text-amber-300",
+    pill: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20",
     dot: "bg-amber-500",
-    cardBorder: "border-l-amber-500",
+    iconBg: "bg-amber-50 dark:bg-amber-500/10",
+    iconColor: "text-amber-600 dark:text-amber-400",
+    cardBorder: "border-l-amber-500/70",
     icon: Clock,
   },
   approved: {
     label: "Aprovada",
-    pill: "bg-emerald-500/15 text-emerald-700 border-emerald-500/40 dark:text-emerald-300",
+    pill: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20",
     dot: "bg-emerald-500",
-    cardBorder: "border-l-emerald-500",
+    iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
+    iconColor: "text-emerald-600 dark:text-emerald-400",
+    cardBorder: "border-l-emerald-500/70",
     icon: CheckCircle2,
   },
   rejected: {
     label: "Recusada",
-    pill: "bg-red-500/15 text-red-700 border-red-500/40 dark:text-red-300",
+    pill: "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20",
     dot: "bg-red-500",
-    cardBorder: "border-l-red-500",
+    iconBg: "bg-red-50 dark:bg-red-500/10",
+    iconColor: "text-red-600 dark:text-red-400",
+    cardBorder: "border-l-red-500/70",
     icon: XCircle,
   },
 };
 
 function StatusBadge({ status }: { status: string }) {
   const t = STATUS_THEME[status] || STATUS_THEME.pending;
-  const Icon = t.icon;
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold ${t.pill}`}>
-      <Icon className="h-3 w-3" /> {t.label}
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-medium ${t.pill}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${t.dot}`} />
+      {t.label}
     </span>
   );
 }
@@ -239,9 +245,9 @@ export default function AdminPartnersApplications() {
   };
 
   const scoreColor = (s: number) =>
-    s >= 70 ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
-    : s >= 40 ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
-    : "bg-muted text-muted-foreground border-border";
+    s >= 70 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20"
+    : s >= 40 ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200 dark:border-amber-500/20"
+    : "bg-muted/50 text-muted-foreground border-border";
 
   const docsArr = Array.isArray(reviewing?.documents) ? reviewing!.documents : [];
 
@@ -252,7 +258,7 @@ export default function AdminPartnersApplications() {
         <p className="text-sm text-muted-foreground mt-1">Análise e aprovação de candidaturas vindas da landing pública.</p>
       </div>
 
-      {/* Stat cards */}
+      {/* Stat cards — estilo Wiize Cockpit (clean, ícone topo + número grande + label) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {(["pending", "approved", "rejected"] as const).map((s) => {
           const t = STATUS_THEME[s];
@@ -262,19 +268,15 @@ export default function AdminPartnersApplications() {
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`text-left rounded-xl border-l-4 ${t.cardBorder} bg-card border border-border p-4 transition-all hover:shadow-sm ${
-                active ? "ring-2 ring-ring/40" : ""
+              className={`text-left rounded-2xl bg-card border border-border p-5 transition-all hover:border-foreground/20 ${
+                active ? "border-foreground/30 shadow-sm" : ""
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium">{t.label}s</div>
-                  <div className="text-2xl font-semibold mt-1">{counts[s]}</div>
-                </div>
-                <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${t.pill}`}>
-                  <Icon className="h-4 w-4" />
-                </div>
+              <div className={`h-9 w-9 rounded-lg ${t.iconBg} ${t.iconColor} flex items-center justify-center mb-4`}>
+                <Icon className="h-4 w-4" />
               </div>
+              <div className="text-3xl font-semibold tracking-tight text-foreground">{counts[s]}</div>
+              <div className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider mt-1">{t.label}s</div>
             </button>
           );
         })}
@@ -324,8 +326,8 @@ export default function AdminPartnersApplications() {
                       <h3 className="font-semibold">{a.full_name}</h3>
                       <StatusBadge status={a.status} />
                       {a.internal_score !== null && (
-                        <span className={`px-2 py-0.5 rounded-full border text-xs font-medium inline-flex items-center gap-1 ${scoreColor(a.internal_score)}`}>
-                          <Sparkles className="h-3 w-3" /> Score {a.internal_score}
+                        <span className={`px-2 py-0.5 rounded-md border text-[11px] font-medium inline-flex items-center gap-1 ${scoreColor(a.internal_score)}`}>
+                          <Sparkles className="h-2.5 w-2.5" /> Score {a.internal_score}
                         </span>
                       )}
                     </div>
@@ -350,40 +352,36 @@ export default function AdminPartnersApplications() {
 
       {/* ===================== REVIEW DIALOG ===================== */}
       <Dialog open={!!reviewing} onOpenChange={(o) => { if (!o) { setReviewing(null); setRejectReason(""); setDocUrls({}); } }}>
-        <DialogContent className="max-w-4xl max-h-[92vh] p-0 overflow-hidden gap-0 bg-background">
+        <DialogContent className="max-w-4xl h-[92vh] p-0 overflow-hidden gap-0 bg-background flex flex-col">
           {reviewing && (
             <>
               {/* HEADER */}
-              <div className={`border-b border-border px-6 py-5 ${
-                reviewing.status === "pending" ? "bg-amber-500/5"
-                : reviewing.status === "approved" ? "bg-emerald-500/5"
-                : "bg-red-500/5"
+              <div className={`border-b border-border px-6 py-5 pr-14 shrink-0 ${
+                reviewing.status === "pending" ? "bg-amber-50/50 dark:bg-amber-500/5"
+                : reviewing.status === "approved" ? "bg-emerald-50/50 dark:bg-emerald-500/5"
+                : "bg-red-50/50 dark:bg-red-500/5"
               }`}>
-                <DialogHeader className="space-y-3">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div className="min-w-0">
-                      <DialogTitle className="text-xl flex items-center gap-2.5 flex-wrap">
-                        {reviewing.full_name}
-                        <StatusBadge status={reviewing.status} />
-                      </DialogTitle>
-                      <DialogDescription className="mt-1.5 flex items-center gap-3 text-xs flex-wrap">
-                        <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" /> {reviewing.email}</span>
-                        {reviewing.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {reviewing.phone}</span>}
-                        <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {fmtDateTime(reviewing.created_at)}</span>
-                      </DialogDescription>
-                    </div>
+                <DialogHeader className="space-y-2">
+                  <DialogTitle className="text-xl flex items-center gap-2.5 flex-wrap">
+                    {reviewing.full_name}
+                    <StatusBadge status={reviewing.status} />
                     {reviewing.internal_score !== null && (
-                      <span className={`px-3 py-1.5 rounded-lg border text-sm font-semibold inline-flex items-center gap-1.5 ${scoreColor(reviewing.internal_score)}`}>
-                        <Award className="h-4 w-4" /> Score {reviewing.internal_score}/100
+                      <span className={`px-2 py-0.5 rounded-md border text-[11px] font-medium inline-flex items-center gap-1 ${scoreColor(reviewing.internal_score)}`}>
+                        <Award className="h-2.5 w-2.5" /> Score {reviewing.internal_score}/100
                       </span>
                     )}
-                  </div>
+                  </DialogTitle>
+                  <DialogDescription className="flex items-center gap-3 text-xs flex-wrap">
+                    <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" /> {reviewing.email}</span>
+                    {reviewing.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {reviewing.phone}</span>}
+                    <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {fmtDateTime(reviewing.created_at)}</span>
+                  </DialogDescription>
                 </DialogHeader>
               </div>
 
               {/* TABS */}
-              <Tabs value={dialogTab} onValueChange={setDialogTab} className="flex-1 flex flex-col min-h-0">
-                <div className="px-6 border-b border-border bg-muted/30">
+              <Tabs value={dialogTab} onValueChange={setDialogTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="px-6 border-b border-border bg-muted/30 shrink-0">
                   <TabsList className="bg-transparent h-auto p-0 gap-0 rounded-none w-full justify-start overflow-x-auto">
                     <TabsTriggerNav value="resumo" icon={Activity} label="Resumo" current={dialogTab} />
                     <TabsTriggerNav value="identidade" icon={IdCard} label="Identidade" current={dialogTab} />
@@ -395,7 +393,7 @@ export default function AdminPartnersApplications() {
                   </TabsList>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-6 py-6 max-h-[55vh]">
+                <div className="flex-1 overflow-y-auto px-6 py-6 min-h-0">
                   {/* RESUMO */}
                   <TabsContent value="resumo" className="m-0 space-y-4">
                     <div className="grid sm:grid-cols-2 gap-3">
@@ -562,7 +560,7 @@ export default function AdminPartnersApplications() {
 
                 {/* REJECT REASON (only pending) */}
                 {reviewing.status === "pending" && (
-                  <div className="px-6 py-4 border-t border-border bg-muted/30">
+                  <div className="px-6 py-4 border-t border-border bg-muted/30 shrink-0">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                       <AlertCircle className="h-3 w-3" /> Motivo da recusa (preencha apenas se for recusar)
                     </label>
@@ -579,7 +577,7 @@ export default function AdminPartnersApplications() {
 
               {/* FOOTER */}
               {reviewing.status === "pending" && (
-                <DialogFooter className="px-6 py-4 border-t border-border bg-background">
+                <DialogFooter className="px-6 py-4 border-t border-border bg-background shrink-0">
                   <Button variant="outline" onClick={() => reject(reviewing)} disabled={submitting} className="gap-2 border-red-500/40 text-red-600 hover:bg-red-500/10 hover:text-red-700">
                     {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <X size={14} />} Recusar candidatura
                   </Button>
