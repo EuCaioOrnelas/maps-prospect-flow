@@ -216,10 +216,9 @@ export default function AdminPartnersApplications() {
       setSubmitting(false);
       return;
     }
-    toast({ title: "Parceiro aprovado", description: "Conta criada e e-mail enviado com o certificado." });
-    if (data.temp_password) {
-      setTempPasswordModal({ email: a.access_email || a.email, password: data.temp_password });
-    }
+    toast({ title: "Parceiro aprovado", description: "E-mail de boas-vindas enviado com o certificado." });
+    setApprovedModal({ name: a.full_name, email: a.access_email || a.email });
+
     setReviewing(null);
     setSubmitting(false);
     load();
