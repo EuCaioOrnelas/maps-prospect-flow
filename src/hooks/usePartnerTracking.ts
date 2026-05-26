@@ -158,7 +158,7 @@ export async function attributePartnerLeadOnSignup(userId: string, email: string
       return;
     }
 
-    await supabase.from("partner_leads").insert({
+    const { error: leadErr } = await supabase.from("partner_leads").insert({
       partner_id: ref.partner_id,
       user_id: userId,
       email,
@@ -167,15 +167,23 @@ export async function attributePartnerLeadOnSignup(userId: string, email: string
       referral_link_id: ref.referral_link_id ?? null,
       is_trial: true,
     });
-    await supabase
+    if (leadErr) {
+      // Unique violation on user_id (23505) means this user was already attributed — silent ok.
+      if ((leadErr as any).code !== "23505") {
+        console.warn("[attributePartnerLeadOnSignup] lead insert failed:", leadErr.message);
+        return;
+      }
+    }
+    const { error: clickUpdErr } = await supabase
       .from("partner_clicks")
       .update({ converted_to_lead_at: new Date().toISOString(), converted_user_id: userId })
-      .eq("id", ref.click_id);
-    await supabase
-      .from("partners")
-      .update({ total_leads: undefined as any })
-      .eq("id", ref.partner_id);
+      .eq("id", ref.click_id)
+      .is("converted_user_id", null);
+    if (clickUpdErr) {
+      console.warn("[attributePartnerLeadOnSignup] click update failed:", clickUpdErr.message);
+    }
   } catch (err) {
     console.warn("[attributePartnerLeadOnSignup]", err);
   }
 }
+
