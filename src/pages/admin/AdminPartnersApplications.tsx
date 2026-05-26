@@ -577,7 +577,7 @@ export default function AdminPartnersApplications() {
 
               {/* FOOTER */}
               {reviewing.status === "pending" && (
-                <DialogFooter className="px-6 py-4 border-t border-border bg-background">
+                <DialogFooter className="px-6 py-4 border-t border-border bg-background shrink-0">
                   <Button variant="outline" onClick={() => reject(reviewing)} disabled={submitting} className="gap-2 border-red-500/40 text-red-600 hover:bg-red-500/10 hover:text-red-700">
                     {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <X size={14} />} Recusar candidatura
                   </Button>
