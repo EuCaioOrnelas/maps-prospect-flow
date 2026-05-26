@@ -368,38 +368,6 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       waitMs: 500,
     },
 
-    // ---- Gestão (CRM) ----
-    {
-      id: "sidebar-crm-intro",
-      route: "/dashboard",
-      target: '[data-tour="sidebar-crm"]',
-      title: "Gestão do funil (CRM)",
-      body: "No menu CRM você acompanha todo o funil de vendas e a qualificação automática dos seus leads.",
-      placement: "right",
-      sidebarSection: "crm",
-      waitMs: 700,
-    },
-    {
-      id: "sidebar-crm-pipeline",
-      route: "/dashboard",
-      target: '[data-tour="sidebar-crm-pipeline"]',
-      title: "Pipeline visual",
-      body: "Acompanhe cada lead pelas etapas do funil, do primeiro contato ao fechamento, com kanban e arrastar e soltar.",
-      placement: "right",
-      sidebarSection: "crm",
-      waitMs: 700,
-    },
-    {
-      id: "sidebar-crm-score",
-      route: "/dashboard",
-      target: '[data-tour="sidebar-crm-score"]',
-      title: "Score de contatos",
-      body: "Identifique os leads mais quentes em uma escala de 0 a 1.000, baseada em engajamento, intenção de compra e respostas no WhatsApp.",
-      placement: "right",
-      sidebarSection: "crm",
-      waitMs: 500,
-    },
-
     // ---- Atendimento ----
     {
       id: "sidebar-chat",
@@ -451,6 +419,38 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       body: "Aqueça novos chips de WhatsApp com conversas naturais geradas por IA antes de iniciar campanhas em volume, reduzindo riscos de bloqueio.",
       placement: "right",
       sidebarSection: "automacao",
+      waitMs: 500,
+    },
+
+    // ---- Gestão (CRM) ----
+    {
+      id: "sidebar-crm-intro",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-crm"]',
+      title: "Gestão do funil (CRM)",
+      body: "No menu CRM você acompanha todo o funil de vendas e a qualificação automática dos seus leads.",
+      placement: "right",
+      sidebarSection: "crm",
+      waitMs: 700,
+    },
+    {
+      id: "sidebar-crm-pipeline",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-crm-pipeline"]',
+      title: "Pipeline visual",
+      body: "Acompanhe cada lead pelas etapas do funil, do primeiro contato ao fechamento, com kanban e arrastar e soltar.",
+      placement: "right",
+      sidebarSection: "crm",
+      waitMs: 700,
+    },
+    {
+      id: "sidebar-crm-score",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-crm-score"]',
+      title: "Score de contatos",
+      body: "Identifique os leads mais quentes em uma escala de 0 a 1.000, baseada em engajamento, intenção de compra e respostas no WhatsApp.",
+      placement: "right",
+      sidebarSection: "crm",
       waitMs: 500,
     },
 
