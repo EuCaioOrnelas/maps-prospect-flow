@@ -258,7 +258,7 @@ export default function AdminPartnersApplications() {
         <p className="text-sm text-muted-foreground mt-1">Análise e aprovação de candidaturas vindas da landing pública.</p>
       </div>
 
-      {/* Stat cards */}
+      {/* Stat cards — estilo Wiize Cockpit (clean, ícone topo + número grande + label) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {(["pending", "approved", "rejected"] as const).map((s) => {
           const t = STATUS_THEME[s];
@@ -268,19 +268,15 @@ export default function AdminPartnersApplications() {
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`text-left rounded-xl border-l-4 ${t.cardBorder} bg-card border border-border p-4 transition-all hover:shadow-sm ${
-                active ? "ring-2 ring-ring/40" : ""
+              className={`text-left rounded-2xl bg-card border border-border p-5 transition-all hover:border-foreground/20 ${
+                active ? "border-foreground/30 shadow-sm" : ""
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs text-muted-foreground font-medium">{t.label}s</div>
-                  <div className="text-2xl font-semibold mt-1">{counts[s]}</div>
-                </div>
-                <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${t.pill}`}>
-                  <Icon className="h-4 w-4" />
-                </div>
+              <div className={`h-9 w-9 rounded-lg ${t.iconBg} ${t.iconColor} flex items-center justify-center mb-4`}>
+                <Icon className="h-4 w-4" />
               </div>
+              <div className="text-3xl font-semibold tracking-tight text-foreground">{counts[s]}</div>
+              <div className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider mt-1">{t.label}s</div>
             </button>
           );
         })}
