@@ -239,6 +239,7 @@ export default function AdminPartnersApplications() {
       return;
     }
     toast({ title: "Candidatura recusada" });
+    setRejectOpen(false);
     setReviewing(null);
     setRejectReason("");
     setSubmitting(false);
