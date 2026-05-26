@@ -134,20 +134,18 @@ serve(async (req) => {
     // racing with createUser's generic "already registered" response.
     let preExistingUserId: string | null = null;
     try {
-      const { data: existingByEmail, error: existingErr } = await (supabaseAdmin as any)
-        .schema("auth")
-        .from("users")
-        .select("id, email")
-        .ilike("email", normalizedEmail)
-        .maybeSingle();
+      const { data: existingId, error: existingErr } = await supabaseAdmin.rpc(
+        "get_auth_user_id_by_email",
+        { _email: normalizedEmail }
+      );
       if (existingErr) {
-        console.warn("[admin-create-partner] auth.users pre-check error:", existingErr.message);
-      } else if (existingByEmail?.id) {
-        preExistingUserId = existingByEmail.id;
+        console.warn("[admin-create-partner] auth lookup rpc error:", existingErr.message);
+      } else if (existingId) {
+        preExistingUserId = existingId as string;
         console.log("[admin-create-partner] pre-check found existing user:", preExistingUserId);
       }
     } catch (e) {
-      console.warn("[admin-create-partner] auth.users pre-check exception:", e);
+      console.warn("[admin-create-partner] auth lookup rpc exception:", e);
     }
 
     if (preExistingUserId) {
