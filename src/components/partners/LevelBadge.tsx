@@ -3,30 +3,31 @@ import { cn } from "@/lib/utils";
 
 export type PartnerLevel = "bronze" | "silver" | "gold" | "platinum";
 
+/**
+ * Visual system for partner tiers.
+ * Clean monochrome scale — all tiers use neutral surfaces with a single
+ * subtle accent. Differentiation comes from the icon, not from rainbow colors.
+ */
 export const LEVEL_META: Record<PartnerLevel, {
   label: string;
   icon: typeof Award;
-  /** Tailwind classes for icon + text foreground */
   fg: string;
-  /** Background gradient for the badge */
   bg: string;
-  /** Soft glow shadow */
   glow: string;
-  /** Accent ring color (translucent) */
   ring: string;
 }> = {
   bronze: {
     label: "Select",
     icon: Medal,
-    fg: "text-foreground",
-    bg: "bg-muted/70",
+    fg: "text-muted-foreground",
+    bg: "bg-muted/60",
     glow: "",
-    ring: "ring-border",
+    ring: "ring-border/60",
   },
   silver: {
     label: "Signature",
     icon: Award,
-    fg: "text-foreground",
+    fg: "text-foreground/80",
     bg: "bg-muted",
     glow: "",
     ring: "ring-border",
@@ -34,18 +35,18 @@ export const LEVEL_META: Record<PartnerLevel, {
   gold: {
     label: "Prime",
     icon: Crown,
-    fg: "text-primary-foreground",
-    bg: "bg-primary",
-    glow: "shadow-[0_4px_16px_-6px_hsl(var(--primary)/0.4)]",
-    ring: "ring-primary/40",
+    fg: "text-foreground",
+    bg: "bg-foreground/[0.06]",
+    glow: "",
+    ring: "ring-foreground/15",
   },
   platinum: {
     label: "Exclusive",
     icon: Gem,
-    fg: "text-background",
+    fg: "text-primary-foreground",
     bg: "bg-foreground",
-    glow: "shadow-[0_4px_16px_-6px_hsl(var(--foreground)/0.3)]",
-    ring: "ring-foreground/30",
+    glow: "shadow-[0_2px_8px_-3px_hsl(var(--foreground)/0.25)]",
+    ring: "ring-foreground/40",
   },
 };
 
@@ -70,7 +71,7 @@ export function LevelBadge({ level, size = "md", showLabel = true, className }: 
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full font-semibold ring-1 backdrop-blur-sm",
+        "inline-flex items-center rounded-full font-semibold ring-1",
         meta.bg,
         meta.fg,
         meta.ring,
@@ -80,7 +81,8 @@ export function LevelBadge({ level, size = "md", showLabel = true, className }: 
       )}
     >
       <Icon size={dims.icon} className="shrink-0" strokeWidth={2.25} />
-      {showLabel && <span className="capitalize tracking-wide">{meta.label}</span>}
+      {showLabel && <span className="tracking-wide">{meta.label}</span>}
     </span>
   );
 }
+
