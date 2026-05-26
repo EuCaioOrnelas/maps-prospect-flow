@@ -739,11 +739,12 @@ export default function PartnersApply() {
           {step === 5 && (
             <div className="space-y-5">
               <Header title="Conte mais sobre você" subtitle="Suas respostas nos ajudam a entender seu potencial. Seja direto e específico." />
-              <LongField label="Por que deseja ser parceiro da Wiize?" value={form.reason_to_be_partner} onChange={(v) => set("reason_to_be_partner", v)} error={errors.reason_to_be_partner} />
-              <LongField label="Por que a Wiize deveria aprovar sua candidatura?" value={form.reason_to_be_approved} onChange={(v) => set("reason_to_be_approved", v)} error={errors.reason_to_be_approved} />
-              <LongField label="Como você venderia a Wiize?" value={form.how_would_sell} onChange={(v) => set("how_would_sell", v)} error={errors.how_would_sell} />
-              <LongField label="O que diferencia você de outros parceiros?" value={form.differential} onChange={(v) => set("differential", v)} error={errors.differential} />
-              <LongField label="Quais resultados acredita conseguir nos próximos 90 dias?" value={form.results_90_days} onChange={(v) => set("results_90_days", v)} error={errors.results_90_days} />
+              <LongField min={MIN_CHARS.reason_to_be_partner} label="Por que deseja ser parceiro da Wiize?" value={form.reason_to_be_partner} onChange={(v) => set("reason_to_be_partner", v)} error={errors.reason_to_be_partner} />
+              <LongField min={MIN_CHARS.reason_to_be_approved} label="Por que a Wiize deveria aprovar sua candidatura?" value={form.reason_to_be_approved} onChange={(v) => set("reason_to_be_approved", v)} error={errors.reason_to_be_approved} />
+              <LongField min={MIN_CHARS.how_would_sell} label="Como você venderia a Wiize?" value={form.how_would_sell} onChange={(v) => set("how_would_sell", v)} error={errors.how_would_sell} />
+              <LongField min={MIN_CHARS.differential} label="O que diferencia você de outros parceiros?" value={form.differential} onChange={(v) => set("differential", v)} error={errors.differential} />
+              <LongField min={MIN_CHARS.results_90_days} label="Quais resultados acredita conseguir nos próximos 90 dias?" value={form.results_90_days} onChange={(v) => set("results_90_days", v)} error={errors.results_90_days} />
+
             </div>
           )}
 
