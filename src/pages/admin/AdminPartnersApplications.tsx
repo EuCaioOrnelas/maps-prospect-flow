@@ -393,7 +393,7 @@ export default function AdminPartnersApplications() {
                   </TabsList>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-6 py-6 max-h-[55vh]">
+                <div className="flex-1 overflow-y-auto px-6 py-6 min-h-0">
                   {/* RESUMO */}
                   <TabsContent value="resumo" className="m-0 space-y-4">
                     <div className="grid sm:grid-cols-2 gap-3">
