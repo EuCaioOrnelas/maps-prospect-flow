@@ -348,21 +348,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       waitMs: 700,
     },
     {
-      id: "sidebar-campanhas-prospeccao",
-      route: "/dashboard",
-      target: '[data-tour="sidebar-campanhas-prospeccao"]',
-      title: "Prospecção fria (Outbound)",
-      body: "Use seus próprios números do WhatsApp para envios em massa, com aquecimento controlado e variações automáticas de mensagem.",
-      placement: "right",
-      sidebarSection: "campanhas",
-      waitMs: 700,
-    },
-    {
       id: "sidebar-campanhas-relacionamento",
       route: "/dashboard",
       target: '[data-tour="sidebar-campanhas-relacionamento"]',
-      title: "Relacionamento (API Oficial Meta)",
-      body: "Envios oficiais via Meta Cloud API com templates aprovados. Ideal para nutrir e reativar quem já é seu cliente.",
+      title: "Campanhas (API Oficial Meta)",
+      body: "Envios oficiais via Meta Cloud API com templates aprovados. Ideal para prospectar, nutrir e reativar contatos com segurança.",
       placement: "right",
       sidebarSection: "campanhas",
       waitMs: 500,
@@ -470,6 +460,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     const skipOpps = !hasOpportunitiesAccess(profile as any);
     const skipAgents = !hasAIAgentsAccess(profile as any);
     const skipWarming = !planHasFeature(profile as any, "warming");
+    // Atendimento (novo "start") não tem Cockpit/Dashboard com as métricas
+    // de receita/funil — pulamos esses passos para evitar tela vazia.
+    const skipCockpit = skipOpps;
 
     const OPP_IDS = new Set([
       "sidebar-oportunidades-intro",
@@ -482,9 +475,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       "diagnosis",
       "approach-message",
     ]);
+    const COCKPIT_IDS = new Set(["cockpit-overview", "cockpit-kpis", "cockpit-forecast"]);
 
     return allSteps.filter((s) => {
       if (skipOpps && OPP_IDS.has(s.id)) return false;
+      if (skipCockpit && COCKPIT_IDS.has(s.id)) return false;
       if (skipAgents && s.id === "sidebar-automacao-agentes") return false;
       if (skipWarming && s.id === "sidebar-automacao-aquecimento") return false;
       return true;
