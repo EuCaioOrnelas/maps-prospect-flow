@@ -355,16 +355,23 @@ export default function PartnersApply() {
 
       const { data, error } = await supabase.functions.invoke("submit-partner-application", { body: payload });
       if (error) {
-        // Tenta extrair mensagem do FunctionsHttpError
+        // FunctionsHttpError: extract real backend message from response body
         let msg = "Não foi possível enviar.";
         try {
           const ctx = (error as any).context;
-          if (ctx?.json) msg = ctx.json.error || msg;
-          else if (ctx?.body) {
-            const parsed = typeof ctx.body === "string" ? JSON.parse(ctx.body) : ctx.body;
-            msg = parsed?.error || msg;
+          if (ctx && typeof ctx.clone === "function") {
+            const txt = await ctx.clone().text();
+            try {
+              const parsed = JSON.parse(txt);
+              msg = parsed?.error || parsed?.message || msg;
+            } catch {
+              if (txt) msg = txt;
+            }
+          } else if ((error as any).message) {
+            msg = (error as any).message;
           }
         } catch { /* ignore */ }
+        console.error("[PartnersApply] submit error:", error, "→", msg);
         toast({ title: "Erro ao enviar", description: msg, variant: "destructive" });
         setSubmitting(false);
         return;
@@ -376,6 +383,7 @@ export default function PartnersApply() {
       }
       try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
       setSubmitted(true);
+
     } catch (err: any) {
       toast({ title: "Erro inesperado", description: err?.message || "Tente novamente.", variant: "destructive" });
     } finally {
