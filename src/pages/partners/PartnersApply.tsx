@@ -935,19 +935,47 @@ function Field({
         {label} {required && <span className="text-destructive">*</span>}
       </Label>
       {children}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && (
+        <p className="text-xs text-destructive flex items-center gap-1.5 font-medium">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
 function LongField({
-  label, value, onChange, error,
-}: { label: string; value: string; onChange: (v: string) => void; error?: string }) {
+  label, value, onChange, error, min,
+}: { label: string; value: string; onChange: (v: string) => void; error?: string; min: number }) {
+  const len = value.trim().length;
+  const remaining = Math.max(0, min - len);
+  const ok = len >= min;
   return (
-    <Field label={label} error={error} required>
-      <Textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} placeholder="Sua resposta…" />
-      <div className="text-[11px] text-muted-foreground text-right">{value.length} caracteres</div>
-    </Field>
+    <div className="space-y-1.5">
+      <Label className="text-sm font-medium">
+        {label} <span className="text-destructive">*</span>
+      </Label>
+      <Textarea
+        rows={4}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Sua resposta…"
+        className={error ? "border-destructive focus-visible:ring-destructive/40" : ""}
+      />
+      <div className="flex items-center justify-between text-[11px]">
+        <span className={ok ? "text-emerald-600 font-medium flex items-center gap-1" : "text-muted-foreground"}>
+          {ok ? <><CheckCircle2 className="h-3 w-3" /> Mínimo atingido</> : `Faltam ${remaining} de ${min} caracteres`}
+        </span>
+        <span className="text-muted-foreground">{len} caracteres</span>
+      </div>
+      {error && (
+        <div className="mt-1 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive font-medium flex items-start gap-1.5">
+          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
+    </div>
   );
 }
 
