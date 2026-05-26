@@ -185,22 +185,33 @@ export default function AdminPartnersApplications() {
     rejected: apps.filter((a) => a.status === "rejected").length,
   };
 
+  // Extracts a usable error message from supabase.functions.invoke responses
+  const extractFnError = async (error: any, data: any, fallback: string): Promise<string> => {
+    try {
+      if (data?.error) return String(data.error);
+      const ctx = error?.context;
+      if (ctx instanceof Response) {
+        const text = await ctx.clone().text();
+        try { return JSON.parse(text)?.error || text || fallback; }
+        catch { return text || fallback; }
+      }
+      if (ctx?.body) {
+        const parsed = typeof ctx.body === "string" ? JSON.parse(ctx.body) : ctx.body;
+        return parsed?.error || fallback;
+      }
+      if (error?.message) return error.message;
+    } catch { /* ignore */ }
+    return fallback;
+  };
+
   const approve = async (a: Application) => {
     setSubmitting(true);
     const { data, error } = await supabase.functions.invoke("approve-partner-application", {
       body: { application_id: a.id, level: "bronze" },
     });
     if (error || !data?.success) {
-      let msg = "Não foi possível aprovar.";
-      try {
-        const ctx = (error as any)?.context;
-        if (ctx?.json) msg = ctx.json.error || msg;
-        else if (ctx?.body) {
-          const parsed = typeof ctx.body === "string" ? JSON.parse(ctx.body) : ctx.body;
-          msg = parsed?.error || msg;
-        } else if (data?.error) msg = data.error;
-      } catch { /* ignore */ }
-      console.error("[approve] error:", { error, data });
+      const msg = await extractFnError(error, data, "Não foi possível aprovar.");
+      console.error("[approve] error:", { error, data, msg });
       toast({ title: "Erro ao aprovar", description: msg, variant: "destructive" });
       setSubmitting(false);
       return;
@@ -224,16 +235,8 @@ export default function AdminPartnersApplications() {
       body: { application_id: a.id, reason: rejectReason, send_email: true },
     });
     if (error || !data?.success) {
-      let msg = "Não foi possível recusar.";
-      try {
-        const ctx = (error as any)?.context;
-        if (ctx?.json) msg = ctx.json.error || msg;
-        else if (ctx?.body) {
-          const parsed = typeof ctx.body === "string" ? JSON.parse(ctx.body) : ctx.body;
-          msg = parsed?.error || msg;
-        } else if (data?.error) msg = data.error;
-      } catch { /* ignore */ }
-      console.error("[reject] error:", { error, data });
+      const msg = await extractFnError(error, data, "Não foi possível recusar.");
+      console.error("[reject] error:", { error, data, msg });
       toast({ title: "Erro ao recusar", description: msg, variant: "destructive" });
       setSubmitting(false);
       return;
