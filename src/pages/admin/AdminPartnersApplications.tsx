@@ -352,34 +352,30 @@ export default function AdminPartnersApplications() {
 
       {/* ===================== REVIEW DIALOG ===================== */}
       <Dialog open={!!reviewing} onOpenChange={(o) => { if (!o) { setReviewing(null); setRejectReason(""); setDocUrls({}); } }}>
-        <DialogContent className="max-w-4xl max-h-[92vh] p-0 overflow-hidden gap-0 bg-background">
+        <DialogContent className="max-w-4xl h-[92vh] p-0 overflow-hidden gap-0 bg-background flex flex-col">
           {reviewing && (
             <>
               {/* HEADER */}
-              <div className={`border-b border-border px-6 py-5 ${
-                reviewing.status === "pending" ? "bg-amber-500/5"
-                : reviewing.status === "approved" ? "bg-emerald-500/5"
-                : "bg-red-500/5"
+              <div className={`border-b border-border px-6 py-5 pr-14 shrink-0 ${
+                reviewing.status === "pending" ? "bg-amber-50/50 dark:bg-amber-500/5"
+                : reviewing.status === "approved" ? "bg-emerald-50/50 dark:bg-emerald-500/5"
+                : "bg-red-50/50 dark:bg-red-500/5"
               }`}>
-                <DialogHeader className="space-y-3">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div className="min-w-0">
-                      <DialogTitle className="text-xl flex items-center gap-2.5 flex-wrap">
-                        {reviewing.full_name}
-                        <StatusBadge status={reviewing.status} />
-                      </DialogTitle>
-                      <DialogDescription className="mt-1.5 flex items-center gap-3 text-xs flex-wrap">
-                        <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" /> {reviewing.email}</span>
-                        {reviewing.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {reviewing.phone}</span>}
-                        <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {fmtDateTime(reviewing.created_at)}</span>
-                      </DialogDescription>
-                    </div>
+                <DialogHeader className="space-y-2">
+                  <DialogTitle className="text-xl flex items-center gap-2.5 flex-wrap">
+                    {reviewing.full_name}
+                    <StatusBadge status={reviewing.status} />
                     {reviewing.internal_score !== null && (
-                      <span className={`px-3 py-1.5 rounded-lg border text-sm font-semibold inline-flex items-center gap-1.5 ${scoreColor(reviewing.internal_score)}`}>
-                        <Award className="h-4 w-4" /> Score {reviewing.internal_score}/100
+                      <span className={`px-2 py-0.5 rounded-md border text-[11px] font-medium inline-flex items-center gap-1 ${scoreColor(reviewing.internal_score)}`}>
+                        <Award className="h-2.5 w-2.5" /> Score {reviewing.internal_score}/100
                       </span>
                     )}
-                  </div>
+                  </DialogTitle>
+                  <DialogDescription className="flex items-center gap-3 text-xs flex-wrap">
+                    <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" /> {reviewing.email}</span>
+                    {reviewing.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {reviewing.phone}</span>}
+                    <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {fmtDateTime(reviewing.created_at)}</span>
+                  </DialogDescription>
                 </DialogHeader>
               </div>
 
