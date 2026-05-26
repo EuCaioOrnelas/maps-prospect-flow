@@ -1,7 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
+import { hasOpportunitiesAccess, hasAIAgentsAccess, planHasFeature } from "@/lib/planAccess";
 
 export type TourStep = {
   id: string;
