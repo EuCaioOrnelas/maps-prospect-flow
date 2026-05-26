@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { fmtBRL, fmtDate, withdrawalStatusColors, withdrawalStatusLabel } from "@/lib/partnerFormat";
+import { fmtBRL, fmtDate, levelLabel, withdrawalStatusColors, withdrawalStatusLabel } from "@/lib/partnerFormat";
 import { CheckCircle2, XCircle, Eye } from "lucide-react";
 import { ReviewWithdrawalDialog } from "@/components/admin/partners/ReviewWithdrawalDialog";
 
