@@ -7409,6 +7409,18 @@ export type Database = {
         Args: { p_action: string; p_details?: Json; p_table_name: string }
         Returns: undefined
       }
+      lookup_active_partner_by_code: {
+        Args: { _code: string }
+        Returns: {
+          partner_id: string
+        }[]
+      }
+      lookup_active_referral_link: {
+        Args: { _partner_id: string; _slug: string }
+        Returns: {
+          link_id: string
+        }[]
+      }
       match_faqs: {
         Args: {
           match_count?: number
