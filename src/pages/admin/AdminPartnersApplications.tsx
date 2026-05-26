@@ -137,7 +137,7 @@ export default function AdminPartnersApplications() {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [docUrls, setDocUrls] = useState<Record<string, string>>({});
-  const [tempPasswordModal, setTempPasswordModal] = useState<{ email: string; password: string } | null>(null);
+  const [approvedModal, setApprovedModal] = useState<{ name: string; email: string } | null>(null);
   const [dialogTab, setDialogTab] = useState("resumo");
   const { toast } = useToast();
 
@@ -216,10 +216,9 @@ export default function AdminPartnersApplications() {
       setSubmitting(false);
       return;
     }
-    toast({ title: "Parceiro aprovado", description: "Conta criada e e-mail enviado com o certificado." });
-    if (data.temp_password) {
-      setTempPasswordModal({ email: a.access_email || a.email, password: data.temp_password });
-    }
+    toast({ title: "Parceiro aprovado", description: "E-mail de boas-vindas enviado com o certificado." });
+    setApprovedModal({ name: a.full_name, email: a.access_email || a.email });
+
     setReviewing(null);
     setSubmitting(false);
     load();
@@ -634,45 +633,56 @@ export default function AdminPartnersApplications() {
       </Dialog>
 
 
-      {/* TEMP PASSWORD MODAL */}
-      <Dialog open={!!tempPasswordModal} onOpenChange={(o) => !o && setTempPasswordModal(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" /> Parceiro aprovado!
-            </DialogTitle>
-          </DialogHeader>
-          {tempPasswordModal && (
-            <div className="space-y-4 text-sm">
-              <p className="text-muted-foreground">
-                A senha temporária foi enviada por e-mail. Caso precise, copie aqui:
-              </p>
-              <div className="space-y-2">
-                <div>
-                  <div className="text-xs font-medium">E-mail de acesso</div>
-                  <div className="bg-muted rounded-lg p-2.5 font-mono text-sm mt-1">{tempPasswordModal.email}</div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium">Senha temporária</div>
-                  <div className="flex gap-2 mt-1">
-                    <div className="bg-muted rounded-lg p-2.5 font-mono text-sm flex-1">{tempPasswordModal.password}</div>
-                    <Button size="sm" variant="outline" onClick={() => {
-                      navigator.clipboard.writeText(tempPasswordModal.password);
-                      toast({ title: "Senha copiada" });
-                    }}><Copy className="h-4 w-4" /></Button>
+      {/* APPROVED MODAL */}
+      <Dialog open={!!approvedModal} onOpenChange={(o) => !o && setApprovedModal(null)}>
+        <DialogContent className="max-w-md p-0 overflow-hidden border-0">
+          {approvedModal && (
+            <>
+              {/* Hero header */}
+              <div className="relative bg-gradient-to-br from-emerald-500 to-emerald-600 px-6 py-8 text-white text-center">
+                <div className="absolute inset-0 opacity-10 [background-image:radial-gradient(circle_at_30%_20%,white_1px,transparent_1px),radial-gradient(circle_at_70%_80%,white_1px,transparent_1px)] [background-size:24px_24px]" />
+                <div className="relative">
+                  <div className="mx-auto mb-3 w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/10">
+                    <Check className="h-7 w-7" strokeWidth={3} />
                   </div>
+                  <h2 className="text-xl font-semibold tracking-tight">Parceiro aprovado!</h2>
+                  <p className="text-sm text-white/85 mt-1">{approvedModal.name}</p>
                 </div>
               </div>
-              <div className="bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 rounded-lg p-3 text-xs">
-                <strong>Atenção:</strong> esta senha não será exibida novamente. O parceiro poderá alterá-la no primeiro login.
+
+              {/* Body */}
+              <div className="px-6 py-5 space-y-4">
+                <div className="rounded-lg border border-border bg-muted/30 p-3.5">
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">E-mail de acesso</div>
+                  <div className="text-sm font-medium text-foreground mt-1 break-all">{approvedModal.email}</div>
+                </div>
+
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                    <span>E-mail de boas-vindas enviado com o <strong className="text-foreground">certificado oficial</strong>.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                    <span>O parceiro usa a <strong className="text-foreground">senha que escolheu</strong> ao se candidatar.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Link de indicação e painel já estão ativos.</span>
+                  </li>
+                </ul>
               </div>
-            </div>
+
+              <DialogFooter className="px-6 pb-6 pt-0">
+                <Button onClick={() => setApprovedModal(null)} className="w-full" size="lg">
+                  Concluir
+                </Button>
+              </DialogFooter>
+            </>
           )}
-          <DialogFooter>
-            <Button onClick={() => setTempPasswordModal(null)}>Fechar</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

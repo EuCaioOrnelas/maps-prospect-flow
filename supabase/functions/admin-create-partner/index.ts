@@ -68,7 +68,8 @@ const corsHeaders = {
 interface CreatePartnerBody {
   full_name: string;
   email: string;
-  password: string;
+  password?: string;
+  password_hash?: string; // bcrypt hash from partner_applications (preferred when available)
   phone?: string;
   company?: string;
   tax_id?: string;
@@ -78,7 +79,9 @@ interface CreatePartnerBody {
   internal_notes?: string;
   status?: "active" | "inactive" | "blocked";
   referral_code?: string;
+  skip_welcome_email?: boolean; // approval flow sends its own email
 }
+
 
 const REFERRAL_CODE_REGEX = /^[a-z0-9]{3,30}$/;
 
@@ -121,9 +124,10 @@ serve(async (req) => {
     if (!body.full_name?.trim() || !body.email?.trim()) {
       return new Response(JSON.stringify({ error: "Nome e email são obrigatórios" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    // Password is only required when we'll create a new auth user.
-    // If the email already belongs to a Wiize user, we reuse it without password.
+    // Authentication: prefer pre-hashed password (from candidature) over plain password.
+    const hasHash = !!body.password_hash && typeof body.password_hash === "string";
     const hasPassword = !!body.password && body.password.length >= 8;
+
 
     const normalizedEmail = body.email.trim().toLowerCase();
     let newUserId: string | null = null;
@@ -162,17 +166,24 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: "Este email já está cadastrado como parceiro" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     } else {
-      // No existing auth user — must have a password to create one
-      if (!hasPassword) {
-        return new Response(JSON.stringify({ error: "Senha obrigatória: usuário ainda não existe no Auth." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // No existing auth user — must have either a password or password_hash
+      if (!hasPassword && !hasHash) {
+        return new Response(JSON.stringify({ error: "Senha (ou hash) obrigatória: usuário ainda não existe no Auth." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+      const createPayload: Record<string, unknown> = {
         email: normalizedEmail,
-        password: body.password,
         email_confirm: true,
         user_metadata: { full_name: body.full_name, is_partner: true },
-      });
+      };
+      if (hasHash) {
+        // Supabase admin API accepts pre-hashed bcrypt passwords
+        createPayload.password_hash = body.password_hash;
+      } else {
+        createPayload.password = body.password;
+      }
+
+      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser(createPayload as any);
 
       if (createErr || !created?.user) {
         // Race condition: someone created it between pre-check and now. Retry via rpc.
@@ -191,6 +202,7 @@ serve(async (req) => {
         newUserId = created.user.id;
       }
     }
+
 
     // Upsert profile (handle_new_user may have created it)
     await supabaseAdmin.from("profiles").upsert({
@@ -278,8 +290,11 @@ serve(async (req) => {
     }
 
 
-    // Welcome email (best-effort)
-    sendPartnerEmail(supabaseAdmin, partner.id, "partner_welcome").catch(() => {});
+    // Welcome email (best-effort) — skip if caller will send its own (e.g. approval flow)
+    if (!body.skip_welcome_email) {
+      sendPartnerEmail(supabaseAdmin, partner.id, "partner_welcome").catch(() => {});
+    }
+
 
     return new Response(JSON.stringify({ success: true, partner }), {
       status: 200,
