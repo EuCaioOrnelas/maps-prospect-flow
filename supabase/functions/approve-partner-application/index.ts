@@ -51,20 +51,12 @@ Deno.serve(async (req) => {
     if (appErr || !app) return json(404, { error: "Candidatura não encontrada" });
     if (app.status === "approved") return json(400, { error: "Candidatura já aprovada" });
     if (app.status === "rejected") return json(400, { error: "Candidatura já recusada — não pode ser aprovada" });
-    // NOTE: não exigimos mais password_hash. Geramos uma senha temporária e enviamos por e-mail.
+    if (!app.password_hash) {
+      return json(400, { error: "Candidatura sem senha cadastrada — peça ao candidato para reenviar." });
+    }
 
-    // Generate a secure transient password (rotated on first login)
-    // and use it to create the auth user. We then invalidate it by
-    // calling password reset, but for a smoother UX we use the user-chosen
-    // password — which we already validated. To honor the bcrypt hash and
-    // not store the plain password anywhere, we store the chosen password
-    // in a temporary one-shot secret column, but here we cannot recover it.
-    // Strategy: candidate chose a password during apply → we hashed it → we
-    // CANNOT recreate that password server-side. So at approval time we
-    // generate a new temporary password and email it.
-    const tempPassword = `Wiize${crypto.randomUUID().slice(0, 8)}!${Math.floor(Math.random() * 9000 + 1000)}`;
-
-    // Call admin-create-partner internally
+    // Call admin-create-partner internally, passing the bcrypt hash chosen
+    // by the candidate during signup. The user logs in with their own password.
     const createResp = await fetch(`${supabaseUrl}/functions/v1/admin-create-partner`, {
       method: "POST",
       headers: {
@@ -74,7 +66,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         full_name: app.full_name,
         email: app.access_email || app.email,
-        password: tempPassword,
+        password_hash: app.password_hash,
         phone: app.phone,
         company: app.company_name,
         tax_id: app.cnpj || app.cpf,
@@ -83,8 +75,10 @@ Deno.serve(async (req) => {
         custom_commission_percent: custom_commission_percent ?? null,
         internal_notes: `Aprovado via candidatura #${app.id}. Score: ${app.internal_score || 0}.`,
         status: "active",
+        skip_welcome_email: true, // approval flow sends its own welcome email below
       }),
     });
+
 
     const createResult = await createResp.json();
     if (!createResp.ok) {
