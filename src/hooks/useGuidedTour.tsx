@@ -579,7 +579,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     if (step.injectDemoLead) {
       document.body.classList.add("tour-demo-lead");
     }
-    if (step.injectDemoCockpit) {
+    // Sempre injeta os dados aspiracionais do cockpit enquanto o tour roda em
+    // qualquer step que fique na /dashboard — assim o fundo do guide nunca
+    // aparece vazio (especialmente para Atendimento, que pula os passos do
+    // cockpit). Steps que explicitamente desativam isso continuam funcionando.
+    if (step.injectDemoCockpit || (step.route === "/dashboard" && step.injectDemoCockpit !== false as any)) {
       document.body.classList.add("tour-demo-cockpit");
     }
   }, [isActive, currentStepIndex, steps]);
