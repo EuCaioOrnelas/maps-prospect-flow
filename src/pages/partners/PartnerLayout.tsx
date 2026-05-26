@@ -132,7 +132,7 @@ export default function PartnerLayout() {
             </div>
           </div>
 
-          <div className="mt-3 rounded-lg border border-border/60 bg-background/40 p-2.5 space-y-2">
+          <div className="mt-3 rounded-lg border border-primary/25 bg-gradient-to-br from-primary/[0.10] via-primary/[0.04] to-transparent p-2.5 space-y-2 shadow-sm">
             <div className="flex items-center justify-between gap-2">
               <LevelBadge level={partner.level} size="sm" />
               <div className="text-right leading-tight">
@@ -143,19 +143,19 @@ export default function PartnerLayout() {
 
             {nextTier ? (
               <div className="space-y-1.5">
-                <Progress value={progressPct} className="h-1.5" />
+                <Progress value={progressPct} className="h-1.5 bg-primary/15 [&>div]:bg-primary" />
                 <div className="flex items-center justify-between text-[10px] text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
-                    <TrendingUp size={10} />
+                    <TrendingUp size={10} className="text-primary" />
                     {clientsRemaining > 0
                       ? <>Faltam <span className="text-foreground font-semibold">{clientsRemaining}</span></>
                       : <span className="text-foreground font-semibold">Meta atingida</span>}
                   </span>
-                  <span className="font-medium text-foreground/70">→ {LEVEL_META[nextTier.key].label}</span>
+                  <span className="font-semibold text-primary">→ {LEVEL_META[nextTier.key].label}</span>
                 </div>
               </div>
             ) : (
-              <div className="text-[10px] text-muted-foreground text-center">
+              <div className="text-[10px] text-primary font-semibold text-center">
                 Topo da carreira atingido
               </div>
             )}
