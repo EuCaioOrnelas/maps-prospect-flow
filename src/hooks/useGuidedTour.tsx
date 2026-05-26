@@ -15,8 +15,8 @@ export type TourStep = {
   placement?: "top" | "bottom" | "left" | "right" | "center";
   /** Force the sidebar to stay expanded for this step */
   forceSidebar?: boolean;
-  /** Open ONLY this submenu in the sidebar (oportunidades|campanhas|crm|automacao|chat|dashboard). Implies forceSidebar. */
-  sidebarSection?: "oportunidades" | "campanhas" | "crm" | "automacao" | "chat" | "dashboard";
+  /** Open ONLY this submenu in the sidebar. Implies forceSidebar. */
+  sidebarSection?: "oportunidades" | "campanhas" | "meta" | "crm" | "automacao" | "chat" | "dashboard";
   /** Inject the synthetic demo lead at the top of the gestão list */
   injectDemoLead?: boolean;
   /** Inject aspirational fake data into the cockpit (MainDashboard) */
@@ -336,25 +336,35 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       },
     },
 
-    // ---- Prospecção (Campanhas) ----
+    // ---- Meta (API Oficial) ----
     {
-      id: "sidebar-campanhas-intro",
+      id: "sidebar-meta-intro",
       route: "/dashboard",
-      target: '[data-tour="sidebar-campanhas"]',
-      title: "Prospecção em escala",
-      body: "O menu Campanha concentra os dois modos de envio em volume. Vamos passar por cada um.",
+      target: '[data-tour="sidebar-meta"]',
+      title: "Meta — API Oficial do WhatsApp",
+      body: "Tudo o que envolve a Meta Cloud API fica neste menu: dashboard de entregas, campanhas, números e configurações.",
       placement: "right",
-      sidebarSection: "campanhas",
+      sidebarSection: "meta",
       waitMs: 700,
     },
     {
-      id: "sidebar-campanhas-relacionamento",
+      id: "sidebar-meta-campanhas",
       route: "/dashboard",
-      target: '[data-tour="sidebar-campanhas-relacionamento"]',
-      title: "Campanhas (API Oficial Meta)",
-      body: "Envios oficiais via Meta Cloud API com templates aprovados. Ideal para prospectar, nutrir e reativar contatos com segurança.",
+      target: '[data-tour="sidebar-meta-campanhas"]',
+      title: "Campanhas oficiais",
+      body: "Dispare templates aprovados pela Meta para prospecção, nutrição e reativação — com entregabilidade garantida.",
       placement: "right",
-      sidebarSection: "campanhas",
+      sidebarSection: "meta",
+      waitMs: 500,
+    },
+    {
+      id: "sidebar-meta-numeros",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-meta-numeros"]',
+      title: "Números & WABA",
+      body: "Conecte e gerencie seus números oficiais ligados à sua conta WABA (WhatsApp Business Account).",
+      placement: "right",
+      sidebarSection: "meta",
       waitMs: 500,
     },
 
@@ -553,7 +563,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const step = steps[currentStepIndex];
-    const sections = ["oportunidades", "campanhas", "crm", "automacao", "chat", "dashboard"];
+    const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
 
     sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
     document.body.classList.remove("tour-sidebar-open", "tour-demo-lead", "tour-demo-cockpit");
@@ -569,7 +579,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     if (step.injectDemoLead) {
       document.body.classList.add("tour-demo-lead");
     }
-    if (step.injectDemoCockpit) {
+    // Sempre injeta os dados aspiracionais do cockpit enquanto o tour roda em
+    // qualquer step que fique na /dashboard — assim o fundo do guide nunca
+    // aparece vazio (especialmente para Atendimento, que pula os passos do
+    // cockpit). Steps que explicitamente desativam isso continuam funcionando.
+    if (step.injectDemoCockpit || (step.route === "/dashboard" && step.injectDemoCockpit !== false as any)) {
       document.body.classList.add("tour-demo-cockpit");
     }
   }, [isActive, currentStepIndex, steps]);
@@ -583,7 +597,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       // is already expanded with the CORRECT submenu open by the time the
       // spotlight measures the target. This prevents the "icon-then-expand"
       // flicker and the "wrong position" issue when collapsing other submenus.
-      const sections = ["oportunidades", "campanhas", "crm", "automacao", "chat", "dashboard"];
+      const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
       sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
       document.body.classList.remove("tour-sidebar-open");
       if (step.sidebarSection) {
@@ -687,7 +701,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   const finish = useCallback(() => {
     setIsActive(false);
-    const sections = ["oportunidades", "campanhas", "crm", "automacao", "chat", "dashboard"];
+    const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
     sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
     document.body.classList.remove("tour-sidebar-open");
     document.body.classList.remove("tour-demo-lead");

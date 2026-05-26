@@ -92,7 +92,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   useEffect(() => {
     const update = () => {
       const cls = document.body.classList;
-      const sections = ["oportunidades", "campanhas", "crm", "automacao", "chat", "dashboard"];
+      const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
       const active = sections.find((s) => cls.contains(`tour-open-${s}`)) ?? null;
       const anyOpen = active !== null || cls.contains("tour-sidebar-open");
       setTourForceOpen(anyOpen);
@@ -110,6 +110,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       setIsExpanded(true);
       setIsOpportunitiesOpen(tourSection === "oportunidades");
       setIsCampaignsOpen(tourSection === "campanhas");
+      setIsMetaOpen(tourSection === "meta");
       setIsCrmOpen(tourSection === "crm");
       setIsAutomationOpen(tourSection === "automacao");
       setIsReportsOpen(tourSection === "dashboard");
@@ -338,7 +339,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             )}
 
             {/* Meta */}
-            <li>
+            <li data-tour="sidebar-meta">
               <SidebarNavItem
                 title="Meta"
                 icon={MetaIcon as any}
@@ -358,14 +359,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 >
                   <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full">
                     {[
-                      { title: "Dashboard", url: "/meta", icon: LayoutDashboardIcon },
-                      { title: "Campanhas", url: "/meta/campanhas", icon: MegaphoneIcon },
-                      { title: "Números & WABA", url: "/meta/numeros", icon: Phone },
-                      { title: "Configurações", url: "/meta/configuracoes", icon: SettingsIcon },
+                      { title: "Dashboard", url: "/meta", icon: LayoutDashboardIcon, tour: "sidebar-meta-dashboard" },
+                      { title: "Campanhas", url: "/meta/campanhas", icon: MegaphoneIcon, tour: "sidebar-meta-campanhas" },
+                      { title: "Números & WABA", url: "/meta/numeros", icon: Phone, tour: "sidebar-meta-numeros" },
+                      { title: "Configurações", url: "/meta/configuracoes", icon: SettingsIcon, tour: "sidebar-meta-configuracoes" },
                     ].map((item) => {
                       const active = item.url === "/meta" ? currentPath === "/meta" : currentPath === item.url;
                       return (
-                        <li key={item.url}>
+                        <li key={item.url} data-tour={item.tour}>
                           <Link
                             to={item.url}
                             className={cn(
@@ -385,6 +386,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 </div>
               )}
             </li>
+
 
             {/* Campanhas with submenu — Evolution só para usuários legacy */}
             {can("campaigns") && canEvolution && (
