@@ -99,11 +99,11 @@ Deno.serve(async (req) => {
       })
       .eq("id", app.id);
 
-    // Send welcome email with temporary password + official certificate PDF in attach
+    // Send welcome email with certificate (user logs in with own password)
     const portalUrl = "https://wiize.com.br/partners/login";
     const { data: createdPartner } = await supabase
       .from("partners")
-      .select("full_name, tax_id, verification_code, created_at")
+      .select("full_name, tax_id, verification_code, created_at, referral_code")
       .eq("id", partnerId)
       .maybeSingle();
 
@@ -115,9 +115,9 @@ Deno.serve(async (req) => {
         to: app.access_email || app.email,
         data: {
           first_name: app.full_name.split(" ")[0] || "Parceiro",
-          temp_password: tempPassword,
           portal_url: portalUrl,
           login_email: app.access_email || app.email,
+          referral_code: createdPartner?.referral_code,
           certificate: createdPartner
             ? {
                 full_name: createdPartner.full_name,
@@ -133,8 +133,8 @@ Deno.serve(async (req) => {
     return json(200, {
       success: true,
       partner_id: partnerId,
-      temp_password: tempPassword,
     });
+
   } catch (e) {
     console.error("[approve-partner-application] fatal:", e);
     return json(500, { error: "Erro inesperado" });
