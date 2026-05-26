@@ -315,16 +315,15 @@ export default function AdminPartnersApplications() {
       ) : (
         <div className="grid gap-3">
           {filtered.map((a) => {
-            const theme = STATUS_THEME[a.status] || STATUS_THEME.pending;
             return (
               <Card
                 key={a.id}
-                className={`group hover:shadow-elegant transition-all cursor-pointer border-l-4 ${theme.cardBorder}`}
+                className="group hover:border-foreground/20 transition-all cursor-pointer border border-border"
                 onClick={() => setReviewing(a)}
               >
                 <CardContent className="p-5 flex items-start gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                    <div className="flex items-center gap-2.5 mb-2 flex-wrap">
                       <h3 className="font-semibold">{a.full_name}</h3>
                       <StatusBadge status={a.status} />
                       {a.internal_score !== null && (
