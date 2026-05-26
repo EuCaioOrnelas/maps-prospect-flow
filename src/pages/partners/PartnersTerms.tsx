@@ -37,7 +37,7 @@ const Bullet = ({ children, allowed }: { children: React.ReactNode; allowed?: bo
 );
 
 export default function PartnersTerms() {
-  const updatedAt = "27 de abril de 2026";
+  const updatedAt = "26 de maio de 2026";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
