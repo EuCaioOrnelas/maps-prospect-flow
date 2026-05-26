@@ -563,7 +563,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const step = steps[currentStepIndex];
-    const sections = ["oportunidades", "campanhas", "crm", "automacao", "chat", "dashboard"];
+    const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
 
     sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
     document.body.classList.remove("tour-sidebar-open", "tour-demo-lead", "tour-demo-cockpit");
@@ -593,7 +593,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       // is already expanded with the CORRECT submenu open by the time the
       // spotlight measures the target. This prevents the "icon-then-expand"
       // flicker and the "wrong position" issue when collapsing other submenus.
-      const sections = ["oportunidades", "campanhas", "crm", "automacao", "chat", "dashboard"];
+      const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
       sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
       document.body.classList.remove("tour-sidebar-open");
       if (step.sidebarSection) {
@@ -697,7 +697,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   const finish = useCallback(() => {
     setIsActive(false);
-    const sections = ["oportunidades", "campanhas", "crm", "automacao", "chat", "dashboard"];
+    const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
     sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
     document.body.classList.remove("tour-sidebar-open");
     document.body.classList.remove("tour-demo-lead");
