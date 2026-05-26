@@ -374,6 +374,7 @@ export default function PartnersApply() {
         setSubmitting(false);
         return;
       }
+      try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
       setSubmitted(true);
     } catch (err: any) {
       toast({ title: "Erro inesperado", description: err?.message || "Tente novamente.", variant: "destructive" });
