@@ -156,7 +156,7 @@ export function DashboardHero({
                   variant="outline"
                   className="gap-2 text-sm border-border/50 hover:bg-muted/50"
                 >
-                  Ver Oportunidades
+                  Ver Prospecção IA
                   <ArrowRight size={14} />
                 </Button>
               ) : (
