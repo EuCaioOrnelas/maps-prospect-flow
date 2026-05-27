@@ -304,7 +304,7 @@ export default function CRMSales() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-muted/30 text-left text-xs uppercase text-muted-foreground">
+                    <thead className="bg-muted/15 text-left text-xs uppercase text-muted-foreground">
                       <tr>
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Tag className="w-3 h-3" /> Venda</span></th>
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Building2 className="w-3 h-3" /> Cliente</span></th>
@@ -325,7 +325,7 @@ export default function CRMSales() {
                         return (
                           <tr
                             key={s.id}
-                            className="hover:bg-muted/30 cursor-pointer transition-colors"
+                            className="hover:bg-muted/20 cursor-pointer transition-colors"
                             onClick={() => handleOpenLead(s.lead_id)}
                           >
                             <td className="px-4 py-3">
