@@ -599,6 +599,7 @@ export default function CRM() {
         open={dialogOpen}
         onOpenChange={handleDialogClose}
         initialTab={pendingInitialTab}
+        initialRegisterSale={pendingInitialRegisterSale}
         onUpdate={async (id, updates) => {
           const result = await updateLead(id, updates);
           return result as Lead | null;
