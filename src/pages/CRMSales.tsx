@@ -27,11 +27,20 @@ import {
   ArrowUpRight,
   ArrowLeft,
   Plus,
+  Pencil,
+  Tag,
+  CircleDollarSign,
+  Layers,
+  Activity,
+  Settings2,
 } from "lucide-react";
 import { CRMTabs } from "@/components/crm/CRMTabs";
 import { SalesKPIs } from "@/components/crm/SalesKPIs";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
+import { EditSaleDialog } from "@/components/crm/EditSaleDialog";
+import type { Sale } from "@/hooks/useSales";
 import { toast } from "sonner";
+
 
 const fmtMoney = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
@@ -56,6 +65,7 @@ export default function CRMSales() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
+  const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const params = new URLSearchParams(location.search);
   const isRegisterMode = params.get("mode") === "registrar";
   const leadId = params.get("leadId") || (location.state as any)?.leadId || "";
@@ -216,8 +226,8 @@ export default function CRMSales() {
               </Card>
             )}
 
-            {/* Filtros */}
-            <Card className="p-3 rounded-2xl border-border/40">
+            {/* Filtros - loose, sem card */}
+            <div className="flex flex-col gap-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
                 <div className="relative lg:col-span-2">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -225,11 +235,11 @@ export default function CRMSales() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Buscar venda ou cliente..."
-                    className="pl-9"
+                    className="pl-9 bg-card/60 border-border/60"
                   />
                 </div>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
+                  <SelectTrigger className="bg-card/60 border-border/60"><SelectValue placeholder="Tipo" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os tipos</SelectItem>
                     <SelectItem value="recurring">Recorrente</SelectItem>
@@ -237,7 +247,7 @@ export default function CRMSales() {
                   </SelectContent>
                 </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectTrigger className="bg-card/60 border-border/60"><SelectValue placeholder="Status" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os status</SelectItem>
                     <SelectItem value="active">Ativo</SelectItem>
@@ -252,7 +262,7 @@ export default function CRMSales() {
                     type="date"
                     value={dateFrom}
                     onChange={(e) => setDateFrom(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 bg-card/60 border-border/60"
                     title="Data inicial"
                   />
                 </div>
@@ -262,19 +272,20 @@ export default function CRMSales() {
                     type="date"
                     value={dateTo}
                     onChange={(e) => setDateTo(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 bg-card/60 border-border/60"
                     title="Data final"
                   />
                 </div>
               </div>
               {hasFilters && (
-                <div className="mt-2 flex justify-end">
+                <div className="flex justify-end">
                   <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={clearFilters}>
                     Limpar filtros
                   </Button>
                 </div>
               )}
-            </Card>
+            </div>
+
 
             {/* Tabela */}
             <Card className="overflow-hidden rounded-2xl border-border/40">
@@ -295,14 +306,15 @@ export default function CRMSales() {
                   <table className="w-full text-sm">
                     <thead className="bg-muted/30 text-left text-xs uppercase text-muted-foreground">
                       <tr>
-                        <th className="px-4 py-2.5 font-medium">Venda</th>
-                        <th className="px-4 py-2.5 font-medium">Cliente</th>
-                        <th className="px-4 py-2.5 font-medium">Valor</th>
-                        <th className="px-4 py-2.5 font-medium">Tipo</th>
-                        <th className="px-4 py-2.5 font-medium">Início</th>
-                        <th className="px-4 py-2.5 font-medium">Expira</th>
-                        <th className="px-4 py-2.5 font-medium">Status</th>
-                        <th className="px-4 py-2.5 font-medium text-right">Ações</th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Tag className="w-3 h-3" /> Venda</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Building2 className="w-3 h-3" /> Cliente</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><CircleDollarSign className="w-3 h-3" /> Valor</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Layers className="w-3 h-3" /> Tipo</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Calendar className="w-3 h-3" /> Início</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><CalendarClock className="w-3 h-3" /> Expira</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Activity className="w-3 h-3" /> Status</span></th>
+                        <th className="px-4 py-2.5 font-medium text-right"><span className="inline-flex items-center gap-1.5"><Settings2 className="w-3 h-3" /> Ações</span></th>
+
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -408,6 +420,16 @@ export default function CRMSales() {
                                   size="icon"
                                   variant="ghost"
                                   className="h-7 w-7"
+                                  title="Editar venda"
+                                  onClick={() => setEditingSale(s)}
+                                >
+                                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7"
+                                  title="Excluir venda"
                                   onClick={async () => {
                                     if (!confirm("Excluir esta venda?")) return;
                                     await deleteSale(s.id);
@@ -416,6 +438,7 @@ export default function CRMSales() {
                                 >
                                   <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
                                 </Button>
+
                               </div>
                             </td>
                           </tr>
@@ -431,6 +454,8 @@ export default function CRMSales() {
           </div>
         </div>
       </main>
+      <EditSaleDialog open={!!editingSale} onOpenChange={(o) => !o && setEditingSale(null)} sale={editingSale} />
     </div>
   );
 }
+
