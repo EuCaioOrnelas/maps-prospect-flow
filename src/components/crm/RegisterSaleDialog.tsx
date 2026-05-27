@@ -126,7 +126,7 @@ export function RegisterSaleDialog({
 
   const formBody = (
     <>
-      <div className="space-y-4 py-2">
+      <div className={cn(embedded ? "space-y-2.5 py-1" : "space-y-4 py-2")}>
         <div className="space-y-1.5">
           <Label htmlFor="sale-title" className="flex items-center gap-1.5">
             <Tag className="w-3.5 h-3.5 text-primary" /> Título da venda *
@@ -137,6 +137,7 @@ export function RegisterSaleDialog({
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ex: Plano Growth Anual - João da Silva"
             maxLength={120}
+            className={cn(embedded && "h-8 text-xs")}
           />
         </div>
 
@@ -149,8 +150,9 @@ export function RegisterSaleDialog({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Detalhes do acordo, escopo, condições especiais..."
-            rows={3}
+            rows={embedded ? 2 : 3}
             maxLength={500}
+            className={cn(embedded && "min-h-16 text-xs")}
           />
         </div>
 
@@ -162,18 +164,18 @@ export function RegisterSaleDialog({
             type="single"
             value={saleType}
             onValueChange={(v) => v && setSaleType(v as SaleType)}
-            className="justify-start"
+            className={cn("justify-start", embedded && "w-full gap-1")}
           >
-            <ToggleGroupItem value="recurring" className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+            <ToggleGroupItem value="recurring" className={cn("data-[state=on]:bg-primary data-[state=on]:text-primary-foreground", embedded && "h-8 flex-1 px-2 text-[11px]")}>
               Recorrente (mensalidade)
             </ToggleGroupItem>
-            <ToggleGroupItem value="one_time" className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+            <ToggleGroupItem value="one_time" className={cn("data-[state=on]:bg-primary data-[state=on]:text-primary-foreground", embedded && "h-8 flex-1 px-2 text-[11px]")}>
               Venda única
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className={cn("grid gap-3", embedded ? "grid-cols-1" : "grid-cols-2")}>
           <div className="space-y-1.5">
             <Label htmlFor="sale-value" className="flex items-center gap-1.5">
               <DollarSign className="w-3.5 h-3.5 text-primary" />
@@ -185,6 +187,7 @@ export function RegisterSaleDialog({
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder="0,00"
+              className={cn(embedded && "h-8 text-xs")}
             />
           </div>
 
@@ -194,7 +197,7 @@ export function RegisterSaleDialog({
                 <CalendarClock className="w-3.5 h-3.5 text-primary" /> Tempo de contrato *
               </Label>
               <Select value={months} onValueChange={setMonths}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className={cn(embedded && "h-8 text-xs")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {CONTRACT_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -205,7 +208,7 @@ export function RegisterSaleDialog({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className={cn("grid gap-3", embedded ? "grid-cols-1" : "grid-cols-2")}>
           <div className="space-y-1.5">
             <Label htmlFor="sale-start" className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-primary" /> Data de início *
@@ -215,6 +218,7 @@ export function RegisterSaleDialog({
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              className={cn(embedded && "h-8 text-xs")}
             />
           </div>
           <div className="space-y-1.5">
@@ -222,7 +226,7 @@ export function RegisterSaleDialog({
               <CreditCard className="w-3.5 h-3.5 text-primary" /> Forma de pagamento
             </Label>
             <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className={cn(embedded && "h-8 text-xs")}><SelectValue /></SelectTrigger>
               <SelectContent>
                 {PAYMENT_METHODS.map((m) => (
                   <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
@@ -232,18 +236,20 @@ export function RegisterSaleDialog({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className={cn("grid gap-3", embedded ? "grid-cols-1" : "grid-cols-2")}>
           <FileSlot
             label="Comprovante"
             icon={<Receipt className="w-3.5 h-3.5 text-primary" />}
             file={receiptFile}
             onChange={setReceiptFile}
+            compact={embedded}
           />
           <FileSlot
             label="Contrato"
             icon={<FileSignature className="w-3.5 h-3.5 text-primary" />}
             file={contractFile}
             onChange={setContractFile}
+            compact={embedded}
           />
         </div>
       </div>
