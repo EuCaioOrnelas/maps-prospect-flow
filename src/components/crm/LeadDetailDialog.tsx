@@ -1772,27 +1772,6 @@ export const LeadDetailDialog = ({
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Register Sale (pre-filled from negotiation value) */}
-        {lead && (
-          <RegisterSaleDialog
-            open={showDealConfirm}
-            onOpenChange={(o) => {
-              setShowDealConfirm(o);
-              if (!o) setDealAttachmentFiles([]);
-            }}
-            leadId={lead.id}
-            leadName={lead.company_name || lead.contact_name || undefined}
-            initialValue={dealValue}
-            initialTitle={lead.company_name ? `Venda - ${lead.company_name}` : undefined}
-            onCreated={async () => {
-              await onUpdate(lead.id, { estimated_value: dealValue });
-              setDealValue(0);
-              loadDeals();
-              loadDealAttachments();
-            }}
-          />
-        )}
-
         {/* Manage Origins Dialog */}
         <Dialog open={showManageOriginsDialog} onOpenChange={setShowManageOriginsDialog}>
           <DialogContent className="max-w-md">
