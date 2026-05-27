@@ -10,7 +10,6 @@ import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
 import { ManageStagesDialog } from '@/components/crm/ManageStagesDialog';
 import { CRMTabs } from '@/components/crm/CRMTabs';
-import { RegisterSaleDialog } from '@/components/crm/RegisterSaleDialog';
 // MobileBlockOverlay removed - CRM now works on mobile
 import { type ColumnWidth } from '@/components/crm/KanbanColumn';
 import { AppSidebar } from '@/components/layout/AppSidebar';
@@ -582,6 +581,8 @@ export default function CRM() {
                   setAddLeadDefaultStageId(stageId);
                   setAddLeadOpen(true);
                 }}
+                activeSaleLead={saleDialogLead}
+                onCloseSaleCard={() => setSaleDialogLead(null)}
               />
             )}
           </div>
@@ -645,16 +646,6 @@ export default function CRM() {
         onDeleteStage={deleteStage}
         onMoveStage={moveStage}
       />
-
-      {saleDialogLead && (
-        <RegisterSaleDialog
-          open={!!saleDialogLead}
-          onOpenChange={(o) => !o && setSaleDialogLead(null)}
-          leadId={saleDialogLead.id}
-          leadName={saleDialogLead.name}
-          cardOverlayMode
-        />
-      )}
 
       {/* Beta Warning Dialog */}
       <Dialog open={showBetaWarning} onOpenChange={() => {}}>
