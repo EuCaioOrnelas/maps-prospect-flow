@@ -9,7 +9,7 @@ export function CRMTabs() {
     { to: "/crm/vendas", label: "Vendas & Receita", icon: DollarSign, exact: false },
   ];
   return (
-    <div className="flex items-center gap-2 mt-4">
+    <div className="mt-4 inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/50 p-1">
       {tabs.map((tab) => {
         const active = tab.exact ? pathname === tab.to : pathname.startsWith(tab.to);
         return (
@@ -18,10 +18,10 @@ export function CRMTabs() {
             to={tab.to}
             end={tab.exact}
             className={cn(
-              "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs sm:text-sm font-medium border transition-all",
+              "inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium transition-all",
               active
-                ? "bg-foreground text-background border-foreground shadow-sm"
-                : "bg-card text-muted-foreground border-border/60 hover:text-foreground hover:border-border"
+                ? "bg-card text-foreground shadow-sm border border-border/60"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             <tab.icon className="w-3.5 h-3.5" />
