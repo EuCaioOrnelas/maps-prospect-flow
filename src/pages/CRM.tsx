@@ -89,7 +89,7 @@ export default function CRM() {
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
   const [numbersManagerOpen, setNumbersManagerOpen] = useState(false);
-  const [saleDialogLead, setSaleDialogLead] = useState<{ id: string; name: string } | null>(null);
+  const [saleDialogLead, setSaleDialogLead] = useState<{ id: string; name: string; anchorRect?: { top: number; left: number; width: number; height: number } } | null>(null);
   const [pendingInitialTab, setPendingInitialTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files' | undefined>(undefined);
   const columnWidth: ColumnWidth = 'medium';
 
