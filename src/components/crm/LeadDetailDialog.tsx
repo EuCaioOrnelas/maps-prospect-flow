@@ -97,6 +97,7 @@ interface LeadDetailDialogProps {
   onAddOrigin: (origin: string) => Promise<void>;
   onUpdateOrigin?: (oldName: string, newName: string) => Promise<void>;
   onDeleteOrigin?: (name: string) => Promise<void>;
+  initialTab?: 'info' | 'notes' | 'history' | 'deals' | 'files';
 }
 
 // formatPhoneNumber is now imported from '@/lib/phoneUtils'
