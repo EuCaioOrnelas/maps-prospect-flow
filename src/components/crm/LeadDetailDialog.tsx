@@ -59,7 +59,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { LeadSalesBlock } from '@/components/crm/LeadSalesBlock';
-import { RegisterSaleDialog } from '@/components/crm/RegisterSaleDialog';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface LeadDeal {
@@ -319,7 +318,6 @@ export const LeadDetailDialog = ({
   const [savedValue, setSavedValue] = useState<number>(0);
   const [contractType, setContractType] = useState<string>('1');
   const [customMonths, setCustomMonths] = useState<number>(1);
-  const [showDealConfirm, setShowDealConfirm] = useState(false);
   const [isSavingValue, setIsSavingValue] = useState(false);
 
   // Agent pause state
@@ -643,6 +641,34 @@ export const LeadDetailDialog = ({
     setNotes(notesData);
     setActivities(activitiesData);
   };
+
+  useEffect(() => {
+    if (!open || !lead) return;
+    const estimatedValue = Number(lead.estimated_value || 0);
+    setFormData({
+      phone: lead.phone || '',
+      company_name: lead.company_name || '',
+      contact_name: lead.contact_name || '',
+      category: lead.category || '',
+      city: lead.city || '',
+      region: lead.region || '',
+      website: lead.website || '',
+      estimated_value: estimatedValue,
+    });
+    setDealValue(estimatedValue);
+    setSavedValue(estimatedValue);
+    setHeaderNameValue(lead.contact_name || lead.company_name || '');
+    setLocalTags(Array.isArray(lead.tags) ? lead.tags : []);
+    setNewNote('');
+    setShowWhatsAppOptions(false);
+    setIsWhatsAppStatusOpen(false);
+    setActiveTab(initialTab || 'info');
+    loadDeals();
+    loadNotesAndActivities();
+    loadLeadFiles();
+    loadDriveConnection();
+    loadAgentPauseStatus();
+  }, [open, lead?.id]);
 
   const handleSave = async () => {
     if (!lead) return;
@@ -1350,28 +1376,6 @@ export const LeadDetailDialog = ({
                     Valor da Negociação
                   </span>
                   <div className="bg-primary/5 border border-primary/20 rounded-lg overflow-hidden">
-                    {showDealConfirm ? (
-                      <div className="h-[430px] bg-card">
-                        <RegisterSaleDialog
-                          open
-                          embedded
-                          onOpenChange={(o) => {
-                            setShowDealConfirm(o);
-                            if (!o) setDealAttachmentFiles([]);
-                          }}
-                          leadId={lead.id}
-                          leadName={lead.company_name || lead.contact_name || undefined}
-                          initialValue={dealValue}
-                          initialTitle={lead.company_name ? `Venda - ${lead.company_name}` : undefined}
-                          onCreated={async () => {
-                            await onUpdate(lead.id, { estimated_value: dealValue });
-                            setDealValue(0);
-                            loadDeals();
-                            loadDealAttachments();
-                          }}
-                        />
-                      </div>
-                    ) : (
                       <div className="p-3 space-y-3">
                         <div className="flex items-center gap-2">
                           <span className="text-primary font-medium text-lg">R$</span>
@@ -1403,7 +1407,18 @@ export const LeadDetailDialog = ({
                           <Button
                             size="sm"
                             className="w-full"
-                            onClick={() => setShowDealConfirm(true)}
+                            onClick={() => {
+                              const params = new URLSearchParams({ mode: 'registrar', leadId: lead.id });
+                              navigate(`/crm/vendas?${params.toString()}`, {
+                                state: {
+                                  leadId: lead.id,
+                                  leadName: lead.company_name || lead.contact_name || undefined,
+                                  initialValue: dealValue,
+                                  initialTitle: lead.company_name ? `Venda - ${lead.company_name}` : undefined,
+                                },
+                              });
+                              onOpenChange(false);
+                            }}
                             disabled={!dealValue || dealValue <= 0}
                           >
                             <Check className="w-4 h-4 mr-2" />
@@ -1421,7 +1436,6 @@ export const LeadDetailDialog = ({
                           </div>
                         )}
                       </div>
-                    )}
                   </div>
                 </div>
 

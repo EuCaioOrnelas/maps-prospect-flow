@@ -1,7 +1,6 @@
 import { memo, useMemo, useCallback } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { LeadCard } from './LeadCard';
-import { RegisterSaleDialog } from './RegisterSaleDialog';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus } from 'lucide-react';
@@ -28,8 +27,6 @@ interface KanbanColumnProps {
   columnWidth?: ColumnWidth;
   isAgentSilenced?: boolean;
   onAddLead?: (stageId: string) => void;
-  activeSaleLead?: { id: string; name: string } | null;
-  onCloseSaleCard?: () => void;
 }
 
 const getColumnWidthClass = (width: ColumnWidth, isExpanded: boolean): string => {
@@ -66,8 +63,6 @@ const KanbanColumnComponent = ({
   columnWidth = 'medium',
   isAgentSilenced = false,
   onAddLead,
-  activeSaleLead,
-  onCloseSaleCard,
 }: KanbanColumnProps) => {
   const totalValue = useMemo(() => 
     leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0),
@@ -154,9 +149,7 @@ const KanbanColumnComponent = ({
       {/* Cards */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1" style={{ transform: 'translateZ(0)', willChange: 'scroll-position' }}>
         <div className="p-2 space-y-2 w-full min-w-0">
-          {leads.map((lead) => {
-            const isSaleCardActive = activeSaleLead?.id === lead.id;
-            return (
+          {leads.map((lead) => (
             <div key={lead.id} className="relative">
               {bulkSelectMode && (
                 <div 
@@ -169,31 +162,16 @@ const KanbanColumnComponent = ({
                   />
                 </div>
               )}
-              {isSaleCardActive ? (
-                <div className="w-full max-w-full h-[430px] overflow-hidden bg-card border border-primary/40 rounded-[18px] shadow-lg relative">
-                  <RegisterSaleDialog
-                    open
-                    embedded
-                    leadId={lead.id}
-                    leadName={activeSaleLead.name}
-                    onOpenChange={(open) => {
-                      if (!open) onCloseSaleCard?.();
-                    }}
-                    onCreated={onCloseSaleCard}
-                  />
-                </div>
-              ) : (
-                <LeadCard
-                  lead={lead}
-                  onClick={() => onLeadClick(lead)}
-                  onDragStart={() => onDragStart(lead.id)}
-                  onDragEnd={onDragEnd}
-                  isSelected={bulkSelectMode ? selectedLeadIds?.has(lead.id) : selectedLeadId === lead.id}
-                  onUpdateName={onUpdateLeadName}
-                />
-              )}
+              <LeadCard
+                lead={lead}
+                onClick={() => onLeadClick(lead)}
+                onDragStart={() => onDragStart(lead.id)}
+                onDragEnd={onDragEnd}
+                isSelected={bulkSelectMode ? selectedLeadIds?.has(lead.id) : selectedLeadId === lead.id}
+                onUpdateName={onUpdateLeadName}
+              />
             </div>
-          );})}
+          ))}
           {leads.length === 0 && (
             <div className={cn(
               "text-center py-8 text-sm border-2 border-dashed rounded-lg transition-colors duration-200",

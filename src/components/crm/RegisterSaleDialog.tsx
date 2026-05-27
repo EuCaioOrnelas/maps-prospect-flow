@@ -21,6 +21,7 @@ interface RegisterSaleDialogProps {
   initialDescription?: string;
   onCreated?: () => void;
   embedded?: boolean;
+  embeddedLayout?: "compact" | "page";
 }
 
 const CONTRACT_OPTIONS = [
@@ -41,9 +42,11 @@ export function RegisterSaleDialog({
   initialDescription,
   onCreated,
   embedded = false,
+  embeddedLayout = "compact",
 }: RegisterSaleDialogProps) {
   const { createSale, uploadAttachment } = useSales();
   const [submitting, setSubmitting] = useState(false);
+  const compact = embedded && embeddedLayout !== "page";
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -71,11 +74,11 @@ export function RegisterSaleDialog({
       setReceiptFile(null);
       setContractFile(null);
     }
-  }, [open, initialValue, initialTitle, initialDescription, leadName]);
+  }, [open, initialValue, initialTitle, initialDescription, leadName, leadId]);
 
   const handleSubmit = async () => {
     if (!title.trim()) return toast.error("Informe um título para a venda");
-    const numValue = Number(value.replace(",", "."));
+    const numValue = Number(value.replace(/\./g, "").replace(",", "."));
     if (!numValue || numValue <= 0) return toast.error("Informe um valor válido");
 
     setSubmitting(true);
@@ -126,7 +129,7 @@ export function RegisterSaleDialog({
 
   const formBody = (
     <>
-      <div className={cn(embedded ? "space-y-2.5 py-1" : "space-y-4 py-2")}>
+      <div className={cn(compact ? "space-y-2.5 py-1" : "space-y-4 py-2")}>
         <div className="space-y-1.5">
           <Label htmlFor="sale-title" className="flex items-center gap-1.5">
             <Tag className="w-3.5 h-3.5 text-primary" /> Título da venda *
@@ -137,7 +140,7 @@ export function RegisterSaleDialog({
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ex: Plano Growth Anual - João da Silva"
             maxLength={120}
-            className={cn(embedded && "h-8 text-xs")}
+            className={cn(compact && "h-8 text-xs")}
           />
         </div>
 
@@ -150,9 +153,9 @@ export function RegisterSaleDialog({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Detalhes do acordo, escopo, condições especiais..."
-            rows={embedded ? 2 : 3}
+            rows={compact ? 2 : 3}
             maxLength={500}
-            className={cn(embedded && "min-h-16 text-xs")}
+            className={cn(compact && "min-h-16 text-xs")}
           />
         </div>
 
@@ -164,18 +167,18 @@ export function RegisterSaleDialog({
             type="single"
             value={saleType}
             onValueChange={(v) => v && setSaleType(v as SaleType)}
-            className={cn("justify-start", embedded && "w-full gap-1")}
+            className={cn("justify-start", compact && "w-full gap-1")}
           >
-            <ToggleGroupItem value="recurring" className={cn("data-[state=on]:bg-primary data-[state=on]:text-primary-foreground", embedded && "h-8 flex-1 px-2 text-[11px]")}>
+            <ToggleGroupItem value="recurring" className={cn("data-[state=on]:bg-primary data-[state=on]:text-primary-foreground", compact && "h-8 flex-1 px-2 text-[11px]")}>
               Recorrente (mensalidade)
             </ToggleGroupItem>
-            <ToggleGroupItem value="one_time" className={cn("data-[state=on]:bg-primary data-[state=on]:text-primary-foreground", embedded && "h-8 flex-1 px-2 text-[11px]")}>
+            <ToggleGroupItem value="one_time" className={cn("data-[state=on]:bg-primary data-[state=on]:text-primary-foreground", compact && "h-8 flex-1 px-2 text-[11px]")}>
               Venda única
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
 
-        <div className={cn("grid gap-3", embedded ? "grid-cols-1" : "grid-cols-2")}>
+        <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
           <div className="space-y-1.5">
             <Label htmlFor="sale-value" className="flex items-center gap-1.5">
               <DollarSign className="w-3.5 h-3.5 text-primary" />
@@ -187,7 +190,7 @@ export function RegisterSaleDialog({
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder="0,00"
-              className={cn(embedded && "h-8 text-xs")}
+              className={cn(compact && "h-8 text-xs")}
             />
           </div>
 
@@ -197,7 +200,7 @@ export function RegisterSaleDialog({
                 <CalendarClock className="w-3.5 h-3.5 text-primary" /> Tempo de contrato *
               </Label>
               <Select value={months} onValueChange={setMonths}>
-                <SelectTrigger className={cn(embedded && "h-8 text-xs")}><SelectValue /></SelectTrigger>
+                <SelectTrigger className={cn(compact && "h-8 text-xs")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {CONTRACT_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -208,7 +211,7 @@ export function RegisterSaleDialog({
           )}
         </div>
 
-        <div className={cn("grid gap-3", embedded ? "grid-cols-1" : "grid-cols-2")}>
+        <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
           <div className="space-y-1.5">
             <Label htmlFor="sale-start" className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-primary" /> Data de início *
@@ -218,7 +221,7 @@ export function RegisterSaleDialog({
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className={cn(embedded && "h-8 text-xs")}
+              className={cn(compact && "h-8 text-xs")}
             />
           </div>
           <div className="space-y-1.5">
@@ -226,7 +229,7 @@ export function RegisterSaleDialog({
               <CreditCard className="w-3.5 h-3.5 text-primary" /> Forma de pagamento
             </Label>
             <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-              <SelectTrigger className={cn(embedded && "h-8 text-xs")}><SelectValue /></SelectTrigger>
+              <SelectTrigger className={cn(compact && "h-8 text-xs")}><SelectValue /></SelectTrigger>
               <SelectContent>
                 {PAYMENT_METHODS.map((m) => (
                   <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
@@ -236,20 +239,20 @@ export function RegisterSaleDialog({
           </div>
         </div>
 
-        <div className={cn("grid gap-3", embedded ? "grid-cols-1" : "grid-cols-2")}>
+        <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
           <FileSlot
             label="Comprovante"
             icon={<Receipt className="w-3.5 h-3.5 text-primary" />}
             file={receiptFile}
             onChange={setReceiptFile}
-            compact={embedded}
+            compact={compact}
           />
           <FileSlot
             label="Contrato"
             icon={<FileSignature className="w-3.5 h-3.5 text-primary" />}
             file={contractFile}
             onChange={setContractFile}
-            compact={embedded}
+            compact={compact}
           />
         </div>
       </div>
@@ -258,10 +261,10 @@ export function RegisterSaleDialog({
 
   const footer = (
     <div className={cn("flex justify-end gap-2 pt-2 border-t border-border/60", embedded && "shrink-0")}> 
-      <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={submitting} className={cn(embedded && "h-8 px-2 text-xs")}>
+      <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
         Cancelar
       </Button>
-      <Button size="sm" onClick={handleSubmit} disabled={submitting} className={cn(embedded && "h-8 px-2 text-xs")}>
+      <Button size="sm" onClick={handleSubmit} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
         {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
         Registrar venda
       </Button>
@@ -275,10 +278,10 @@ export function RegisterSaleDialog({
   if (embedded) {
     return (
       <div className="w-full h-full max-h-full overflow-hidden flex flex-col bg-card" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-2 px-3.5 pt-3 pb-2 border-b border-border/60 shrink-0">
+        <div className={cn("flex items-start justify-between gap-2 border-b border-border/60 shrink-0", compact ? "px-3.5 pt-3 pb-2" : "px-0 pb-4")}>
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-foreground truncate">Registrar venda</h3>
-            <p className="text-xs text-muted-foreground truncate">
+            <h3 className={cn("font-semibold text-foreground truncate", compact ? "text-sm" : "text-xl")}>Registrar venda</h3>
+            <p className={cn("text-muted-foreground truncate", compact ? "text-xs" : "text-sm")}> 
               {leadName ? `Venda fechada com ${leadName}` : "Detalhes da venda fechada"}
             </p>
           </div>
@@ -294,10 +297,10 @@ export function RegisterSaleDialog({
             <X className="w-4 h-4" />
           </Button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-3.5">
+        <div className={cn("min-h-0 flex-1 overflow-y-auto", compact ? "px-3.5" : "px-0 py-2")}> 
           {formBody}
         </div>
-        <div className="px-3.5 pb-3 shrink-0 bg-card">
+        <div className={cn("shrink-0 bg-card", compact ? "px-3.5 pb-3" : "px-0 pt-2")}> 
           {footer}
         </div>
       </div>
