@@ -39,6 +39,7 @@ export function RegisterSaleDialog({
   initialTitle,
   initialDescription,
   onCreated,
+  anchorRect,
 }: RegisterSaleDialogProps) {
   const { createSale, uploadAttachment } = useSales();
   const [submitting, setSubmitting] = useState(false);
