@@ -226,8 +226,8 @@ export default function CRMSales() {
               </Card>
             )}
 
-            {/* Filtros */}
-            <Card className="p-3 rounded-2xl border-border/40">
+            {/* Filtros - loose, sem card */}
+            <div className="flex flex-col gap-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
                 <div className="relative lg:col-span-2">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -235,11 +235,11 @@ export default function CRMSales() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Buscar venda ou cliente..."
-                    className="pl-9"
+                    className="pl-9 bg-card/60 border-border/60"
                   />
                 </div>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
+                  <SelectTrigger className="bg-card/60 border-border/60"><SelectValue placeholder="Tipo" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os tipos</SelectItem>
                     <SelectItem value="recurring">Recorrente</SelectItem>
@@ -247,7 +247,7 @@ export default function CRMSales() {
                   </SelectContent>
                 </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectTrigger className="bg-card/60 border-border/60"><SelectValue placeholder="Status" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os status</SelectItem>
                     <SelectItem value="active">Ativo</SelectItem>
@@ -262,7 +262,7 @@ export default function CRMSales() {
                     type="date"
                     value={dateFrom}
                     onChange={(e) => setDateFrom(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 bg-card/60 border-border/60"
                     title="Data inicial"
                   />
                 </div>
@@ -272,19 +272,20 @@ export default function CRMSales() {
                     type="date"
                     value={dateTo}
                     onChange={(e) => setDateTo(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 bg-card/60 border-border/60"
                     title="Data final"
                   />
                 </div>
               </div>
               {hasFilters && (
-                <div className="mt-2 flex justify-end">
+                <div className="flex justify-end">
                   <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={clearFilters}>
                     Limpar filtros
                   </Button>
                 </div>
               )}
-            </Card>
+            </div>
+
 
             {/* Tabela */}
             <Card className="overflow-hidden rounded-2xl border-border/40">
