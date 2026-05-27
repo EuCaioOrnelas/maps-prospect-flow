@@ -306,14 +306,15 @@ export default function CRMSales() {
                   <table className="w-full text-sm">
                     <thead className="bg-muted/30 text-left text-xs uppercase text-muted-foreground">
                       <tr>
-                        <th className="px-4 py-2.5 font-medium">Venda</th>
-                        <th className="px-4 py-2.5 font-medium">Cliente</th>
-                        <th className="px-4 py-2.5 font-medium">Valor</th>
-                        <th className="px-4 py-2.5 font-medium">Tipo</th>
-                        <th className="px-4 py-2.5 font-medium">Início</th>
-                        <th className="px-4 py-2.5 font-medium">Expira</th>
-                        <th className="px-4 py-2.5 font-medium">Status</th>
-                        <th className="px-4 py-2.5 font-medium text-right">Ações</th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Tag className="w-3 h-3" /> Venda</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Building2 className="w-3 h-3" /> Cliente</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><CircleDollarSign className="w-3 h-3" /> Valor</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Layers className="w-3 h-3" /> Tipo</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Calendar className="w-3 h-3" /> Início</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><CalendarClock className="w-3 h-3" /> Expira</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Activity className="w-3 h-3" /> Status</span></th>
+                        <th className="px-4 py-2.5 font-medium text-right"><span className="inline-flex items-center gap-1.5"><Settings2 className="w-3 h-3" /> Ações</span></th>
+
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
