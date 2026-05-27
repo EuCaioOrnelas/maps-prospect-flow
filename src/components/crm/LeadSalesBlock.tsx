@@ -49,11 +49,23 @@ export function LeadSalesBlock({ leadId, leadName }: LeadSalesBlockProps) {
           <h3 className="text-sm font-semibold">Vendas & Receita</h3>
           <p className="text-xs text-muted-foreground">Histórico financeiro com este cliente</p>
         </div>
-        <Button size="sm" onClick={() => setDialogOpen(true)}>
+        {!dialogOpen && <Button size="sm" onClick={() => setDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-1.5" />
           Nova venda
-        </Button>
+        </Button>}
       </div>
+
+      {dialogOpen && (
+        <Card className="h-[430px] overflow-hidden border-primary/30 p-0">
+          <RegisterSaleDialog
+            open
+            embedded
+            onOpenChange={setDialogOpen}
+            leadId={leadId}
+            leadName={leadName}
+          />
+        </Card>
+      )}
 
       <SalesKPIs
         totalRevenue={metrics.totalRevenue}
@@ -140,12 +152,6 @@ export function LeadSalesBlock({ leadId, leadName }: LeadSalesBlockProps) {
         </div>
       )}
 
-      <RegisterSaleDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        leadId={leadId}
-        leadName={leadName}
-      />
     </div>
   );
 }

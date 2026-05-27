@@ -1349,52 +1349,77 @@ export const LeadDetailDialog = ({
                     <DollarSign className="w-3 h-3" />
                     Valor da Negociação
                   </span>
-                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-primary font-medium text-lg">R$</span>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={formatCurrency(dealValue)}
-                        onChange={(e) => {
-                          const formatted = formatCurrencyInput(e.target.value);
-                          const value = parseCurrency(formatted);
-                          setDealValue(value);
-                        }}
-                        className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground"
-                        placeholder="0,00"
-                      />
-                    </div>
-                    {hasUnsavedValue ? (
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        variant="secondary"
-                        onClick={() => handleValueChange(dealValue)}
-                        disabled={isSavingValue}
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        {isSavingValue ? 'Salvando...' : 'Salvar Valor'}
-                      </Button>
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg overflow-hidden">
+                    {showDealConfirm ? (
+                      <div className="h-[430px] bg-card">
+                        <RegisterSaleDialog
+                          open
+                          embedded
+                          onOpenChange={(o) => {
+                            setShowDealConfirm(o);
+                            if (!o) setDealAttachmentFiles([]);
+                          }}
+                          leadId={lead.id}
+                          leadName={lead.company_name || lead.contact_name || undefined}
+                          initialValue={dealValue}
+                          initialTitle={lead.company_name ? `Venda - ${lead.company_name}` : undefined}
+                          onCreated={async () => {
+                            await onUpdate(lead.id, { estimated_value: dealValue });
+                            setDealValue(0);
+                            loadDeals();
+                            loadDealAttachments();
+                          }}
+                        />
+                      </div>
                     ) : (
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        onClick={() => setShowDealConfirm(true)}
-                        disabled={!dealValue || dealValue <= 0}
-                      >
-                        <Check className="w-4 h-4 mr-2" />
-                        Negociação Fechada
-                      </Button>
-                    )}
-                    {deals.length > 0 && (
-                      <div className="pt-2 border-t border-primary/10">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Total em vendas:</span>
-                          <span className="font-medium text-primary">
-                            R$ {deals.reduce((sum, d) => sum + Number(d.value), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </span>
+                      <div className="p-3 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-primary font-medium text-lg">R$</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={formatCurrency(dealValue)}
+                            onChange={(e) => {
+                              const formatted = formatCurrencyInput(e.target.value);
+                              const value = parseCurrency(formatted);
+                              setDealValue(value);
+                            }}
+                            className="flex-1 text-lg font-semibold bg-transparent outline-none text-foreground"
+                            placeholder="0,00"
+                          />
                         </div>
+                        {hasUnsavedValue ? (
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            variant="secondary"
+                            onClick={() => handleValueChange(dealValue)}
+                            disabled={isSavingValue}
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            {isSavingValue ? 'Salvando...' : 'Salvar Valor'}
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            onClick={() => setShowDealConfirm(true)}
+                            disabled={!dealValue || dealValue <= 0}
+                          >
+                            <Check className="w-4 h-4 mr-2" />
+                            Negociação Fechada
+                          </Button>
+                        )}
+                        {deals.length > 0 && (
+                          <div className="pt-2 border-t border-primary/10">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>Total em vendas:</span>
+                              <span className="font-medium text-primary">
+                                R$ {deals.reduce((sum, d) => sum + Number(d.value), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1746,27 +1771,6 @@ export const LeadDetailDialog = ({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
-        {/* Register Sale (pre-filled from negotiation value) */}
-        {lead && (
-          <RegisterSaleDialog
-            open={showDealConfirm}
-            onOpenChange={(o) => {
-              setShowDealConfirm(o);
-              if (!o) setDealAttachmentFiles([]);
-            }}
-            leadId={lead.id}
-            leadName={lead.company_name || lead.contact_name || undefined}
-            initialValue={dealValue}
-            initialTitle={lead.company_name ? `Venda - ${lead.company_name}` : undefined}
-            onCreated={async () => {
-              await onUpdate(lead.id, { estimated_value: dealValue });
-              setDealValue(0);
-              loadDeals();
-              loadDealAttachments();
-            }}
-          />
-        )}
 
         {/* Manage Origins Dialog */}
         <Dialog open={showManageOriginsDialog} onOpenChange={setShowManageOriginsDialog}>
