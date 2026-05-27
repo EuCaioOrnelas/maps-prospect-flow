@@ -26,7 +26,7 @@ export function CRMTabs() {
           >
             <span className={cn(
               "inline-flex items-center justify-center w-5 h-5 rounded-md",
-              active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+              active ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground"
             )}>
               <tab.icon className="w-3 h-3" />
             </span>
