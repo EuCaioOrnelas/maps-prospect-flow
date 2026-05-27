@@ -11,6 +11,11 @@ import { toast } from "sonner";
 interface LeadSalesBlockProps {
   leadId: string;
   leadName?: string;
+  registerOpen?: boolean;
+  onRegisterOpenChange?: (open: boolean) => void;
+  initialValue?: number;
+  initialTitle?: string;
+  onSaleCreated?: () => void;
 }
 
 const fmtMoney = (n: number) =>
@@ -26,9 +31,19 @@ const statusLabel: Record<string, { label: string; tone: string }> = {
   renewed: { label: "Renovado", tone: "bg-primary/10 text-primary border-primary/30" },
 };
 
-export function LeadSalesBlock({ leadId, leadName }: LeadSalesBlockProps) {
-  const { sales, metrics, deleteSale, getAttachmentUrl } = useSales(leadId);
-  const [dialogOpen, setDialogOpen] = useState(false);
+export function LeadSalesBlock({
+  leadId,
+  leadName,
+  registerOpen,
+  onRegisterOpenChange,
+  initialValue,
+  initialTitle,
+  onSaleCreated,
+}: LeadSalesBlockProps) {
+  const { sales, metrics, deleteSale, getAttachmentUrl, fetchSales } = useSales(leadId);
+  const [internalDialogOpen, setInternalDialogOpen] = useState(false);
+  const dialogOpen = registerOpen ?? internalDialogOpen;
+  const setDialogOpen = onRegisterOpenChange ?? setInternalDialogOpen;
 
   const handleDownload = async (path: string) => {
     const url = await getAttachmentUrl(path);
@@ -42,6 +57,27 @@ export function LeadSalesBlock({ leadId, leadName }: LeadSalesBlockProps) {
     toast.success("Venda removida");
   };
 
+  if (dialogOpen) {
+    return (
+      <Card className="min-h-[560px] overflow-hidden border-primary/30 p-4 sm:p-5">
+        <RegisterSaleDialog
+          open
+          embedded
+          embeddedLayout="page"
+          onOpenChange={setDialogOpen}
+          leadId={leadId}
+          leadName={leadName}
+          initialValue={initialValue}
+          initialTitle={initialTitle}
+          onCreated={() => {
+            fetchSales();
+            onSaleCreated?.();
+          }}
+        />
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -49,23 +85,11 @@ export function LeadSalesBlock({ leadId, leadName }: LeadSalesBlockProps) {
           <h3 className="text-sm font-semibold">Vendas & Receita</h3>
           <p className="text-xs text-muted-foreground">Histórico financeiro com este cliente</p>
         </div>
-        {!dialogOpen && <Button size="sm" onClick={() => setDialogOpen(true)}>
+        <Button size="sm" onClick={() => setDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-1.5" />
           Nova venda
-        </Button>}
+        </Button>
       </div>
-
-      {dialogOpen && (
-        <Card className="h-[430px] overflow-hidden border-primary/30 p-0">
-          <RegisterSaleDialog
-            open
-            embedded
-            onOpenChange={setDialogOpen}
-            leadId={leadId}
-            leadName={leadName}
-          />
-        </Card>
-      )}
 
       <SalesKPIs
         totalRevenue={metrics.totalRevenue}
