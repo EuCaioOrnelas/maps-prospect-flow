@@ -125,7 +125,29 @@ export function RegisterSaleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card">
+      <DialogContent
+        className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card"
+        style={
+          anchorRect
+            ? (() => {
+                const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
+                const vh = typeof window !== "undefined" ? window.innerHeight : 768;
+                const width = Math.min(Math.max(anchorRect.width, 480), vw - 16);
+                const left = Math.min(Math.max(8, anchorRect.left), vw - width - 8);
+                const top = Math.min(Math.max(8, anchorRect.top), Math.max(8, vh - 120));
+                return {
+                  position: "fixed",
+                  left: `${left}px`,
+                  top: `${top}px`,
+                  width: `${width}px`,
+                  maxWidth: `${width}px`,
+                  transform: "none",
+                  margin: 0,
+                } as React.CSSProperties;
+              })()
+            : undefined
+        }
+      >
         <DialogHeader>
           <DialogTitle>Registrar venda</DialogTitle>
           <DialogDescription>
