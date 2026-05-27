@@ -629,6 +629,15 @@ export default function CRM() {
         onMoveStage={moveStage}
       />
 
+      {saleDialogLead && (
+        <RegisterSaleDialog
+          open={!!saleDialogLead}
+          onOpenChange={(o) => !o && setSaleDialogLead(null)}
+          leadId={saleDialogLead.id}
+          leadName={saleDialogLead.name}
+        />
+      )}
+
       {/* Beta Warning Dialog */}
       <Dialog open={showBetaWarning} onOpenChange={() => {}}>
         <DialogContent className="sm:max-w-md w-[95vw] rounded-lg max-h-[90vh] overflow-y-auto" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
