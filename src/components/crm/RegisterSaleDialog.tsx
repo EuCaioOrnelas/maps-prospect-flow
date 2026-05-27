@@ -19,6 +19,7 @@ interface RegisterSaleDialogProps {
   initialTitle?: string;
   initialDescription?: string;
   onCreated?: () => void;
+  anchorRect?: { top: number; left: number; width: number; height: number };
 }
 
 const CONTRACT_OPTIONS = [
