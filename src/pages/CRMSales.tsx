@@ -27,11 +27,20 @@ import {
   ArrowUpRight,
   ArrowLeft,
   Plus,
+  Pencil,
+  Tag,
+  CircleDollarSign,
+  Layers,
+  Activity,
+  Settings2,
 } from "lucide-react";
 import { CRMTabs } from "@/components/crm/CRMTabs";
 import { SalesKPIs } from "@/components/crm/SalesKPIs";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
+import { EditSaleDialog } from "@/components/crm/EditSaleDialog";
+import type { Sale } from "@/hooks/useSales";
 import { toast } from "sonner";
+
 
 const fmtMoney = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
