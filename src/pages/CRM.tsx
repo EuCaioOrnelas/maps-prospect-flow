@@ -88,7 +88,6 @@ export default function CRM() {
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
   const [numbersManagerOpen, setNumbersManagerOpen] = useState(false);
-  const [saleDialogLead, setSaleDialogLead] = useState<{ id: string; name: string } | null>(null);
   const [pendingInitialTab, setPendingInitialTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files' | undefined>(undefined);
   const columnWidth: ColumnWidth = 'medium';
 
@@ -355,9 +354,13 @@ export default function CRM() {
     const target = stages.find((s) => s.id === stageId);
     if (target?.name === 'Fechado (Ganho)') {
       const lead = leads.find((l) => l.id === leadId);
-      setSaleDialogLead({
-        id: leadId,
-        name: lead?.company_name || lead?.contact_name || 'cliente',
+      navigate(`/crm/vendas?mode=registrar&leadId=${encodeURIComponent(leadId)}`, {
+        state: {
+          leadId,
+          leadName: lead?.company_name || lead?.contact_name || 'cliente',
+          initialValue: Number(lead?.estimated_value || 0),
+          initialTitle: lead?.company_name ? `Venda - ${lead.company_name}` : undefined,
+        },
       });
     }
   };
@@ -581,8 +584,6 @@ export default function CRM() {
                   setAddLeadDefaultStageId(stageId);
                   setAddLeadOpen(true);
                 }}
-                activeSaleLead={saleDialogLead}
-                onCloseSaleCard={() => setSaleDialogLead(null)}
               />
             )}
           </div>

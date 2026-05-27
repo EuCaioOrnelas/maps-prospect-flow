@@ -17,8 +17,6 @@ interface KanbanBoardWithScrollProps {
   columnWidth?: ColumnWidth;
   agentSilencedStages?: Set<string>;
   onAddLead?: (stageId: string) => void;
-  activeSaleLead?: { id: string; name: string } | null;
-  onCloseSaleCard?: () => void;
 }
 
 const KanbanBoardWithScrollComponent = ({
@@ -35,8 +33,6 @@ const KanbanBoardWithScrollComponent = ({
   columnWidth = 'medium',
   agentSilencedStages,
   onAddLead,
-  activeSaleLead,
-  onCloseSaleCard,
 }: KanbanBoardWithScrollProps) => {
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -195,8 +191,6 @@ const KanbanBoardWithScrollComponent = ({
           columnWidth={columnWidth}
           isAgentSilenced={agentSilencedStages?.has(stage.name)}
           onAddLead={onAddLead}
-          activeSaleLead={activeSaleLead}
-          onCloseSaleCard={onCloseSaleCard}
         />
       ))}
     </div>

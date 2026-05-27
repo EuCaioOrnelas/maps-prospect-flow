@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,9 +25,12 @@ import {
   User,
   Calendar,
   ArrowUpRight,
+  ArrowLeft,
+  Plus,
 } from "lucide-react";
 import { CRMTabs } from "@/components/crm/CRMTabs";
 import { SalesKPIs } from "@/components/crm/SalesKPIs";
+import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
 import { toast } from "sonner";
 
 const fmtMoney = (n: number) =>
@@ -45,6 +48,7 @@ const STATUS_BADGES: Record<string, { label: string; tone: string }> = {
 export default function CRMSales() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { sales, metrics, deleteSale, getAttachmentUrl } = useSales();
 
   const [search, setSearch] = useState("");
@@ -52,6 +56,12 @@ export default function CRMSales() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
+  const params = new URLSearchParams(location.search);
+  const isRegisterMode = params.get("mode") === "registrar";
+  const leadId = params.get("leadId") || (location.state as any)?.leadId || "";
+  const leadName = (location.state as any)?.leadName as string | undefined;
+  const initialValue = Number((location.state as any)?.initialValue || 0);
+  const initialTitle = (location.state as any)?.initialTitle as string | undefined;
 
   const { data: sidebarProfile } = useQuery({
     queryKey: ["profile", user?.id],
