@@ -2096,10 +2096,20 @@ export type Database = {
           closed_at: string
           contract_months: number
           contract_type: string
+          contract_url: string | null
           created_at: string
+          description: string | null
+          expiration_date: string | null
           id: string
           lead_id: string
           notes: string | null
+          payment_method: string | null
+          receipt_url: string | null
+          sale_type: string
+          start_date: string
+          status: string
+          title: string | null
+          updated_at: string
           user_id: string
           value: number
         }
@@ -2107,10 +2117,20 @@ export type Database = {
           closed_at?: string
           contract_months?: number
           contract_type?: string
+          contract_url?: string | null
           created_at?: string
+          description?: string | null
+          expiration_date?: string | null
           id?: string
           lead_id: string
           notes?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          sale_type?: string
+          start_date?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
           user_id: string
           value: number
         }
@@ -2118,10 +2138,20 @@ export type Database = {
           closed_at?: string
           contract_months?: number
           contract_type?: string
+          contract_url?: string | null
           created_at?: string
+          description?: string | null
+          expiration_date?: string | null
           id?: string
           lead_id?: string
           notes?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          sale_type?: string
+          start_date?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
           user_id?: string
           value?: number
         }

@@ -61,6 +61,7 @@ const RenewalSuccess = lazyWithRetry(() => import("./pages/RenewalSuccess"), "Re
 const Contact = lazyWithRetry(() => import("./pages/Contact"), "Contact");
 const Profile = lazyWithRetry(() => import("./pages/Profile"), "Profile");
 const CRM = lazyWithRetry(() => import("./pages/CRM"), "CRM");
+const CRMSales = lazyWithRetry(() => import("./pages/CRMSales"), "CRMSales");
 const CRMScore = lazyWithRetry(() => import("./pages/CRMScore"), "CRMScore");
 const Warming = lazyWithRetry(() => import("./pages/Warming"), "Warming");
 const WarmingReports = lazyWithRetry(() => import("./pages/WarmingReports"), "WarmingReports");
@@ -265,6 +266,7 @@ const App = () => (
                 <Route path="/meta-campaigns" element={<ProtectedRoute><MetaCampaigns /></ProtectedRoute>} />
                 <Route path="/meta-api-guide" element={<ProtectedRoute><MetaApiGuide /></ProtectedRoute>} />
                 <Route path="/crm" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
+                <Route path="/crm/vendas" element={<ProtectedRoute><CRMSales /></ProtectedRoute>} />
                 <Route path="/crm/score" element={<ProtectedRoute><CRMScore /></ProtectedRoute>} />
                 <Route path="/crm-coming-soon" element={<ProtectedRoute><CRMComingSoon /></ProtectedRoute>} />
                 <Route path="/chat" element={<ProtectedRoute><ChatComingSoonGate><Chat /></ChatComingSoonGate></ProtectedRoute>} />

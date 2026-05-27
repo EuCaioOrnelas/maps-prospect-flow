@@ -284,14 +284,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             {can("oportunidades") && (
             <li data-tour="sidebar-oportunidades">
               <SidebarNavItem
-                title="Oportunidades"
+                title="Prospecção IA"
                 icon={Search}
                 onClick={handleOpportunitiesClick}
                 isActive={isOnOpportunitiesPage}
                 isExpanded={isExpanded}
                 hasSubmenu
                 isSubmenuOpen={isOpportunitiesOpen}
-                tooltip="Oportunidades"
+                tooltip="Prospecção IA"
               />
 
               {isExpanded && (
