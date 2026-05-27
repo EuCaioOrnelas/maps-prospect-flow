@@ -1410,16 +1410,8 @@ export const LeadDetailDialog = ({
                             size="sm"
                             className="w-full"
                             onClick={() => {
-                              const params = new URLSearchParams({ mode: 'registrar', leadId: lead.id });
-                              navigate(`/crm/vendas?${params.toString()}`, {
-                                state: {
-                                  leadId: lead.id,
-                                  leadName: lead.company_name || lead.contact_name || undefined,
-                                  initialValue: dealValue,
-                                  initialTitle: lead.company_name ? `Venda - ${lead.company_name}` : undefined,
-                                },
-                              });
-                              onOpenChange(false);
+                              setActiveTab('deals');
+                              setRegisterSaleOpen(true);
                             }}
                             disabled={!dealValue || dealValue <= 0}
                           >
@@ -1504,6 +1496,14 @@ export const LeadDetailDialog = ({
               <LeadSalesBlock
                 leadId={lead.id}
                 leadName={lead.company_name || lead.contact_name || undefined}
+                registerOpen={registerSaleOpen}
+                onRegisterOpenChange={setRegisterSaleOpen}
+                initialValue={dealValue}
+                initialTitle={lead.company_name ? `Venda - ${lead.company_name}` : undefined}
+                onSaleCreated={() => {
+                  setRegisterSaleOpen(false);
+                  loadDeals();
+                }}
               />
             )}
 
