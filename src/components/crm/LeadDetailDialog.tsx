@@ -319,6 +319,7 @@ export const LeadDetailDialog = ({
   const [contractType, setContractType] = useState<string>('1');
   const [customMonths, setCustomMonths] = useState<number>(1);
   const [isSavingValue, setIsSavingValue] = useState(false);
+  const [registerSaleOpen, setRegisterSaleOpen] = useState(false);
 
   // Agent pause state
   const [agentPauseStatus, setAgentPauseStatus] = useState<{
@@ -663,6 +664,7 @@ export const LeadDetailDialog = ({
     setShowWhatsAppOptions(false);
     setIsWhatsAppStatusOpen(false);
     setActiveTab(initialTab || 'info');
+    setRegisterSaleOpen(false);
     loadDeals();
     loadNotesAndActivities();
     loadLeadFiles();
