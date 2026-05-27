@@ -65,6 +65,7 @@ export default function CRMSales() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
+  const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const params = new URLSearchParams(location.search);
   const isRegisterMode = params.get("mode") === "registrar";
   const leadId = params.get("leadId") || (location.state as any)?.leadId || "";
