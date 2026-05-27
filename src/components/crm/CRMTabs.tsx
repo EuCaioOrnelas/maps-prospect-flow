@@ -1,15 +1,15 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Users, DollarSign } from "lucide-react";
+import { LayoutGrid, DollarSign } from "lucide-react";
 
 export function CRMTabs() {
   const { pathname } = useLocation();
   const tabs = [
-    { to: "/crm", label: "Pipeline", icon: Users, exact: true },
+    { to: "/crm", label: "Pipeline", icon: LayoutGrid, exact: true },
     { to: "/crm/vendas", label: "Vendas & Receita", icon: DollarSign, exact: false },
   ];
   return (
-    <div className="flex items-center gap-1 border-b border-border/50 px-3 sm:px-4 lg:px-6">
+    <div className="flex items-center gap-2 px-3 sm:px-4 lg:px-6 pb-3">
       {tabs.map((tab) => {
         const active = tab.exact ? pathname === tab.to : pathname.startsWith(tab.to);
         return (
@@ -18,13 +18,13 @@ export function CRMTabs() {
             to={tab.to}
             end={tab.exact}
             className={cn(
-              "flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative -mb-px",
+              "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs sm:text-sm font-medium border transition-all",
               active
-                ? "text-primary border-b-2 border-primary"
-                : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
+                ? "bg-foreground text-background border-foreground shadow-sm"
+                : "bg-card text-muted-foreground border-border/60 hover:text-foreground hover:border-border"
             )}
           >
-            <tab.icon className="w-4 h-4" />
+            <tab.icon className="w-3.5 h-3.5" />
             {tab.label}
           </NavLink>
         );
