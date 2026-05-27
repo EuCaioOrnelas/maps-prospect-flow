@@ -454,6 +454,8 @@ export default function CRMSales() {
           </div>
         </div>
       </main>
+      <EditSaleDialog open={!!editingSale} onOpenChange={(o) => !o && setEditingSale(null)} sale={editingSale} />
     </div>
   );
 }
+
