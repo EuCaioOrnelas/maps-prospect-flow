@@ -58,6 +58,7 @@ import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { LeadSalesBlock } from '@/components/crm/LeadSalesBlock';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface LeadDeal {
@@ -1453,91 +1454,10 @@ export const LeadDetailDialog = ({
 
             {/* Deals Tab */}
             {activeTab === 'deals' && (
-              <div className="space-y-4">
-                {deals.length > 0 ? (
-                  <div className="space-y-3">
-                    {deals.map((deal) => (
-                      <div key={deal.id} className="bg-muted/40 rounded-lg p-4 border border-border/50 group relative">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <TrendingUp className="w-4 h-4 text-primary" />
-                              <span className="font-semibold text-lg text-primary">
-                                R$ {Number(deal.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {deal.contract_months} {deal.contract_months === 1 ? 'mês' : 'meses'}
-                              </span>
-                              <span>•</span>
-                              <span>
-                                {format(new Date(deal.closed_at), "dd/MM/yyyy", { locale: ptBR })}
-                              </span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => setDeleteDealId(deal.id)}
-                            className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80 transition-opacity p-1"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                        {deal.notes && (
-                          <p className="text-sm text-muted-foreground mt-2 pt-2 border-t border-border/50">
-                            {deal.notes}
-                          </p>
-                        )}
-                        {/* Deal Attachments */}
-                        {(dealAttachments[deal.id] || []).length > 0 && (
-                          <div className="mt-2 pt-2 border-t border-border/50 space-y-1.5">
-                            <span className="text-[11px] font-medium text-muted-foreground uppercase">Anexos</span>
-                            {dealAttachments[deal.id].map((att) => (
-                              <a
-                                key={att.id}
-                                href={att.file_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 text-xs text-primary hover:underline p-1.5 rounded bg-muted/30 hover:bg-muted/60 transition-colors"
-                              >
-                                <FileText className="w-3.5 h-3.5 shrink-0" />
-                                <span className="truncate">{att.file_name}</span>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
-                                  {att.file_type === 'receipt' ? 'Comprovante' : att.file_type === 'contract' ? 'Contrato' : 'Outro'}
-                                </Badge>
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    
-                    {/* Total Summary */}
-                    <div className="bg-primary/10 rounded-lg p-4 border border-primary/20">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">Total em Vendas</span>
-                        <span className="text-xl font-bold text-primary">
-                          R$ {deals.reduce((sum, d) => sum + Number(d.value), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {deals.length} {deals.length === 1 ? 'venda registrada' : 'vendas registradas'}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <TrendingUp className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
-                    <p className="text-sm text-muted-foreground">
-                      Nenhuma venda registrada
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Use o campo de valor na aba Informações e clique no ✓ para registrar
-                    </p>
-                  </div>
-                )}
-              </div>
+              <LeadSalesBlock
+                leadId={lead.id}
+                leadName={lead.company_name || lead.contact_name || undefined}
+              />
             )}
 
             {/* Arquivos Tab */}

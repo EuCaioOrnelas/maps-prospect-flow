@@ -9,6 +9,8 @@ import { BulkActionsBar } from '@/components/crm/BulkActionsBar';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
 import { ManageStagesDialog } from '@/components/crm/ManageStagesDialog';
+import { CRMTabs } from '@/components/crm/CRMTabs';
+import { RegisterSaleDialog } from '@/components/crm/RegisterSaleDialog';
 // MobileBlockOverlay removed - CRM now works on mobile
 import { type ColumnWidth } from '@/components/crm/KanbanColumn';
 import { AppSidebar } from '@/components/layout/AppSidebar';
@@ -86,6 +88,7 @@ export default function CRM() {
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
   const [numbersManagerOpen, setNumbersManagerOpen] = useState(false);
+  const [saleDialogLead, setSaleDialogLead] = useState<{ id: string; name: string } | null>(null);
   const columnWidth: ColumnWidth = 'medium';
 
   // Fetch custom origins
@@ -335,6 +338,14 @@ export default function CRM() {
 
   const handleLeadMove = async (leadId: string, stageId: string) => {
     await moveLeadToStage(leadId, stageId);
+    const target = stages.find((s) => s.id === stageId);
+    if (target?.name === 'Fechado (Ganho)') {
+      const lead = leads.find((l) => l.id === leadId);
+      setSaleDialogLead({
+        id: leadId,
+        name: lead?.company_name || lead?.contact_name || 'cliente',
+      });
+    }
   };
 
   const handleDialogClose = (open: boolean) => {
@@ -520,6 +531,7 @@ export default function CRM() {
                 </div>
               </div>
             </div>
+            <CRMTabs />
           </div>
 
           {/* Kanban Board */}
@@ -616,6 +628,15 @@ export default function CRM() {
         onDeleteStage={deleteStage}
         onMoveStage={moveStage}
       />
+
+      {saleDialogLead && (
+        <RegisterSaleDialog
+          open={!!saleDialogLead}
+          onOpenChange={(o) => !o && setSaleDialogLead(null)}
+          leadId={saleDialogLead.id}
+          leadName={saleDialogLead.name}
+        />
+      )}
 
       {/* Beta Warning Dialog */}
       <Dialog open={showBetaWarning} onOpenChange={() => {}}>
