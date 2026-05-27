@@ -1697,18 +1697,6 @@ export const LeadDetailDialog = ({
           </div>
         </ScrollArea>
 
-        {/* Footer */}
-        <div className="px-6 py-3 border-t border-border bg-muted/20">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={() => setShowDeleteLeadDialog(true)}
-          >
-            <Trash2 className="w-4 h-4 mr-1" />
-            Excluir Lead
-          </Button>
-        </div>
 
         {/* New Origin Dialog */}
         <Dialog open={showNewOriginDialog} onOpenChange={setShowNewOriginDialog}>
