@@ -31,15 +31,15 @@ interface KanbanColumnProps {
 
 const getColumnWidthClass = (width: ColumnWidth, isExpanded: boolean): string => {
   if (isExpanded) return 'w-full max-w-2xl';
-  
+
   switch (width) {
     case 'compact':
-      return 'w-[75vw] min-w-[224px] sm:w-56 snap-center';
+      return 'w-[78vw] min-w-[240px] sm:w-60 snap-center';
     case 'large':
-      return 'w-[80vw] min-w-[280px] sm:w-80 snap-center';
+      return 'w-[84vw] min-w-[340px] sm:w-96 snap-center';
     case 'medium':
     default:
-      return 'w-[78vw] min-w-[260px] sm:w-72 snap-center';
+      return 'w-[82vw] min-w-[300px] sm:w-80 snap-center';
   }
 };
 
@@ -148,7 +148,7 @@ const KanbanColumnComponent = ({
 
       {/* Cards */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1" style={{ transform: 'translateZ(0)', willChange: 'scroll-position' }}>
-        <div className="p-2 space-y-2 w-full min-w-0">
+        <div className="p-2 space-y-3 w-full min-w-0">
           {leads.map((lead) => (
             <div key={lead.id} className="relative">
               {bulkSelectMode && (
