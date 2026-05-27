@@ -398,18 +398,20 @@ export default function CRM() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">CRM</h1>
+                      <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">Pipeline</h1>
                       <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 text-[10px] sm:text-xs font-semibold gap-1">
                         <FlaskConical className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         BETA
                       </Badge>
                     </div>
                     <p className="text-xs sm:text-sm text-muted-foreground">
-                      {filteredLeads.filter(l => l.pipeline_stage_id != null).length} leads no funil
+                      Gestão completa de leads, vendas e receita do seu funil
                     </p>
                   </div>
                 </div>
               </div>
+
+              <CRMTabs />
 
               <CRMMetrics stages={stages} leads={filteredLeads} />
 
@@ -546,7 +548,6 @@ export default function CRM() {
                 </div>
               </div>
             </div>
-            <CRMTabs />
           </div>
 
           {/* Kanban Board */}
