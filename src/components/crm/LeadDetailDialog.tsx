@@ -97,6 +97,7 @@ interface LeadDetailDialogProps {
   onUpdateOrigin?: (oldName: string, newName: string) => Promise<void>;
   onDeleteOrigin?: (name: string) => Promise<void>;
   initialTab?: 'info' | 'notes' | 'history' | 'deals' | 'files';
+  initialRegisterSale?: boolean;
 }
 
 // formatPhoneNumber is now imported from '@/lib/phoneUtils'
@@ -268,6 +269,7 @@ export const LeadDetailDialog = ({
   onUpdateOrigin,
   onDeleteOrigin,
   initialTab,
+  initialRegisterSale = false,
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -319,6 +321,7 @@ export const LeadDetailDialog = ({
   const [contractType, setContractType] = useState<string>('1');
   const [customMonths, setCustomMonths] = useState<number>(1);
   const [isSavingValue, setIsSavingValue] = useState(false);
+  const [registerSaleOpen, setRegisterSaleOpen] = useState(false);
 
   // Agent pause state
   const [agentPauseStatus, setAgentPauseStatus] = useState<{
@@ -663,12 +666,13 @@ export const LeadDetailDialog = ({
     setShowWhatsAppOptions(false);
     setIsWhatsAppStatusOpen(false);
     setActiveTab(initialTab || 'info');
+    setRegisterSaleOpen(initialRegisterSale);
     loadDeals();
     loadNotesAndActivities();
     loadLeadFiles();
     loadDriveConnection();
     loadAgentPauseStatus();
-  }, [open, lead?.id]);
+  }, [open, lead?.id, initialRegisterSale]);
 
   const handleSave = async () => {
     if (!lead) return;
@@ -1408,16 +1412,8 @@ export const LeadDetailDialog = ({
                             size="sm"
                             className="w-full"
                             onClick={() => {
-                              const params = new URLSearchParams({ mode: 'registrar', leadId: lead.id });
-                              navigate(`/crm/vendas?${params.toString()}`, {
-                                state: {
-                                  leadId: lead.id,
-                                  leadName: lead.company_name || lead.contact_name || undefined,
-                                  initialValue: dealValue,
-                                  initialTitle: lead.company_name ? `Venda - ${lead.company_name}` : undefined,
-                                },
-                              });
-                              onOpenChange(false);
+                              setActiveTab('deals');
+                              setRegisterSaleOpen(true);
                             }}
                             disabled={!dealValue || dealValue <= 0}
                           >
@@ -1502,6 +1498,14 @@ export const LeadDetailDialog = ({
               <LeadSalesBlock
                 leadId={lead.id}
                 leadName={lead.company_name || lead.contact_name || undefined}
+                registerOpen={registerSaleOpen}
+                onRegisterOpenChange={setRegisterSaleOpen}
+                initialValue={dealValue}
+                initialTitle={lead.company_name ? `Venda - ${lead.company_name}` : undefined}
+                onSaleCreated={() => {
+                  setRegisterSaleOpen(false);
+                  loadDeals();
+                }}
               />
             )}
 
