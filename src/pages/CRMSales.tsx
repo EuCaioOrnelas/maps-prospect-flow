@@ -330,7 +330,7 @@ export default function CRMSales() {
                           >
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
                                   <DollarSign className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="min-w-0">
@@ -362,7 +362,7 @@ export default function CRMSales() {
                               <div className="font-semibold">{fmtMoney(total)}</div>
                               {s.sale_type === "recurring" && (
                                 <div className="text-[10px] text-muted-foreground">
-                                  {fmtMoney(s.value)}/mês × {s.contract_months}m
+                                  {fmtMoney(s.value)} × {s.contract_months} {s.contract_months === 1 ? "mês" : "meses"}
                                 </div>
                               )}
                             </td>
