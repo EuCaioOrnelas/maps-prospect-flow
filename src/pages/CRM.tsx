@@ -660,6 +660,7 @@ export default function CRM() {
           onOpenChange={(o) => !o && setSaleDialogLead(null)}
           leadId={saleDialogLead.id}
           leadName={saleDialogLead.name}
+          anchorRect={saleDialogLead.anchorRect}
         />
       )}
 
