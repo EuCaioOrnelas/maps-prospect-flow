@@ -89,6 +89,7 @@ export default function CRM() {
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
   const [numbersManagerOpen, setNumbersManagerOpen] = useState(false);
   const [pendingInitialTab, setPendingInitialTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files' | undefined>(undefined);
+  const [pendingInitialRegisterSale, setPendingInitialRegisterSale] = useState(false);
   const columnWidth: ColumnWidth = 'medium';
 
   // Fetch custom origins
@@ -346,6 +347,7 @@ export default function CRM() {
 
   const handleLeadClick = (lead: Lead) => {
     setSelectedLead(lead);
+    setPendingInitialRegisterSale(false);
     setDialogOpen(true);
   };
 
@@ -354,14 +356,12 @@ export default function CRM() {
     const target = stages.find((s) => s.id === stageId);
     if (target?.name === 'Fechado (Ganho)') {
       const lead = leads.find((l) => l.id === leadId);
-      navigate(`/crm/vendas?mode=registrar&leadId=${encodeURIComponent(leadId)}`, {
-        state: {
-          leadId,
-          leadName: lead?.company_name || lead?.contact_name || 'cliente',
-          initialValue: Number(lead?.estimated_value || 0),
-          initialTitle: lead?.company_name ? `Venda - ${lead.company_name}` : undefined,
-        },
-      });
+      if (lead) {
+        setSelectedLead({ ...lead, pipeline_stage_id: stageId });
+        setPendingInitialTab('deals');
+        setPendingInitialRegisterSale(true);
+        setDialogOpen(true);
+      }
     }
   };
 
@@ -369,6 +369,8 @@ export default function CRM() {
     setDialogOpen(open);
     if (!open) {
       setSelectedLead(null);
+      setPendingInitialTab(undefined);
+      setPendingInitialRegisterSale(false);
     }
   };
 
