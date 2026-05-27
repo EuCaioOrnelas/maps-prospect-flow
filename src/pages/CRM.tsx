@@ -169,6 +169,7 @@ export default function CRM() {
     if (lead) {
       setSelectedLead(lead);
       setPendingInitialTab(state.openTab);
+      setPendingInitialRegisterSale(false);
       setDialogOpen(true);
       navigate(location.pathname, { replace: true, state: null });
     }
