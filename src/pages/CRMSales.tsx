@@ -119,14 +119,14 @@ export default function CRMSales() {
                   <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Vendas & Receita</h1>
+                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Pipeline</h1>
                   <p className="text-xs sm:text-sm text-muted-foreground">
                     Histórico financeiro de vendas fechadas — controle total da sua receita
                   </p>
                 </div>
               </div>
+              <CRMTabs />
             </div>
-            <CRMTabs />
           </div>
 
           {/* Content */}

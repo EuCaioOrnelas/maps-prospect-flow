@@ -9,7 +9,7 @@ export function CRMTabs() {
     { to: "/crm/vendas", label: "Vendas & Receita", icon: DollarSign, exact: false },
   ];
   return (
-    <div className="flex items-center gap-2 px-3 sm:px-4 lg:px-6 pb-3">
+    <div className="flex items-center gap-2 mt-4">
       {tabs.map((tab) => {
         const active = tab.exact ? pathname === tab.to : pathname.startsWith(tab.to);
         return (

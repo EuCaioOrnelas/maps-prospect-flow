@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Upload, FileText, Trash2, Loader2 } from "lucide-react";
+import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature } from "lucide-react";
 import { useSales, PAYMENT_METHODS, type SaleType } from "@/hooks/useSales";
 import { toast } from "sonner";
 
@@ -133,7 +133,9 @@ export function RegisterSaleDialog({
 
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label htmlFor="sale-title">Título da venda *</Label>
+            <Label htmlFor="sale-title" className="flex items-center gap-1.5">
+              <Tag className="w-3.5 h-3.5 text-primary" /> Título da venda *
+            </Label>
             <Input
               id="sale-title"
               value={title}
@@ -144,7 +146,9 @@ export function RegisterSaleDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="sale-desc">Descrição (opcional)</Label>
+            <Label htmlFor="sale-desc" className="flex items-center gap-1.5">
+              <AlignLeft className="w-3.5 h-3.5 text-primary" /> Descrição (opcional)
+            </Label>
             <Textarea
               id="sale-desc"
               value={description}
@@ -156,7 +160,9 @@ export function RegisterSaleDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Tipo de venda *</Label>
+            <Label className="flex items-center gap-1.5">
+              <Repeat className="w-3.5 h-3.5 text-primary" /> Tipo de venda *
+            </Label>
             <ToggleGroup
               type="single"
               value={saleType}
@@ -174,7 +180,8 @@ export function RegisterSaleDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="sale-value">
+              <Label htmlFor="sale-value" className="flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-primary" />
                 {saleType === "recurring" ? "Valor mensal (R$) *" : "Valor total (R$) *"}
               </Label>
               <Input
@@ -188,7 +195,9 @@ export function RegisterSaleDialog({
 
             {saleType === "recurring" && (
               <div className="space-y-1.5">
-                <Label>Tempo de contrato *</Label>
+                <Label className="flex items-center gap-1.5">
+                  <CalendarClock className="w-3.5 h-3.5 text-primary" /> Tempo de contrato *
+                </Label>
                 <Select value={months} onValueChange={setMonths}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -203,7 +212,9 @@ export function RegisterSaleDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="sale-start">Data de início *</Label>
+              <Label htmlFor="sale-start" className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-primary" /> Data de início *
+              </Label>
               <Input
                 id="sale-start"
                 type="date"
@@ -212,7 +223,9 @@ export function RegisterSaleDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Forma de pagamento</Label>
+              <Label className="flex items-center gap-1.5">
+                <CreditCard className="w-3.5 h-3.5 text-primary" /> Forma de pagamento
+              </Label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -227,11 +240,13 @@ export function RegisterSaleDialog({
           <div className="grid grid-cols-2 gap-3">
             <FileSlot
               label="Comprovante"
+              icon={<Receipt className="w-3.5 h-3.5 text-primary" />}
               file={receiptFile}
               onChange={setReceiptFile}
             />
             <FileSlot
               label="Contrato"
+              icon={<FileSignature className="w-3.5 h-3.5 text-primary" />}
               file={contractFile}
               onChange={setContractFile}
             />
@@ -252,10 +267,10 @@ export function RegisterSaleDialog({
   );
 }
 
-function FileSlot({ label, file, onChange }: { label: string; file: File | null; onChange: (f: File | null) => void }) {
+function FileSlot({ label, icon, file, onChange }: { label: string; icon?: React.ReactNode; file: File | null; onChange: (f: File | null) => void }) {
   return (
     <div className="space-y-1.5">
-      <Label>{label} (opcional)</Label>
+      <Label className="flex items-center gap-1.5">{icon}{label} (opcional)</Label>
       {file ? (
         <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-muted/30">
           <FileText className="w-4 h-4 text-primary shrink-0" />
