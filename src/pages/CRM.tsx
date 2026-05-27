@@ -162,6 +162,19 @@ export default function CRM() {
     return () => { supabase.removeChannel(channel); };
   }, [user, refetchSilencedStages]);
 
+  // Open lead from navigation state (e.g. from /crm/vendas row click)
+  useEffect(() => {
+    const state = location.state as { openLeadId?: string; openTab?: 'info' | 'notes' | 'history' | 'deals' | 'files' } | null;
+    if (!state?.openLeadId || !leads.length) return;
+    const lead = leads.find((l) => l.id === state.openLeadId);
+    if (lead) {
+      setSelectedLead(lead);
+      setPendingInitialTab(state.openTab);
+      setDialogOpen(true);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.state, leads, navigate, location.pathname, setSelectedLead]);
+
   // Fetch user profile for sidebar
   const { data: sidebarProfile } = useQuery({
     queryKey: ['profile', user?.id],
