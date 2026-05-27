@@ -277,30 +277,15 @@ export function RegisterSaleDialog({
 
   if (embedded) {
     return (
-      <div className="w-full h-full max-h-full overflow-hidden flex flex-col bg-card" onClick={(e) => e.stopPropagation()}>
-        <div className={cn("flex items-start justify-between gap-2 border-b border-border/60 shrink-0", compact ? "px-3.5 pt-3 pb-2" : "px-0 pb-4")}>
-          <div className="min-w-0">
-            <h3 className={cn("font-semibold text-foreground truncate", compact ? "text-sm" : "text-xl")}>Registrar venda</h3>
-            <p className={cn("text-muted-foreground truncate", compact ? "text-xs" : "text-sm")}> 
-              {leadName ? `Venda fechada com ${leadName}` : "Detalhes da venda fechada"}
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 shrink-0"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-            aria-label="Cancelar registro de venda"
-          >
-            <X className="w-4 h-4" />
-          </Button>
+      <div className="w-full">
+        <div className="pb-4 mb-2 border-b border-border/60">
+          <h3 className="text-xl font-semibold text-foreground">Registrar venda</h3>
+          <p className="text-sm text-muted-foreground">
+            {leadName ? `Venda fechada com ${leadName}` : "Detalhes da venda fechada"}
+          </p>
         </div>
-        <div className={cn("min-h-0 flex-1 overflow-y-auto", compact ? "px-3.5" : "px-0 py-2")}> 
-          {formBody}
-        </div>
-        <div className={cn("shrink-0 bg-card", compact ? "px-3.5 pb-3" : "px-0 pt-2")}> 
+        {formBody}
+        <div className="pt-2">
           {footer}
         </div>
       </div>
