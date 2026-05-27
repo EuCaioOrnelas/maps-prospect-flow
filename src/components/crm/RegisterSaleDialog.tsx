@@ -126,15 +126,16 @@ export function RegisterSaleDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card"
+        className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card p-4"
         style={
           anchorRect
             ? (() => {
                 const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
                 const vh = typeof window !== "undefined" ? window.innerHeight : 768;
-                const width = Math.min(Math.max(anchorRect.width, 480), vw - 16);
+                const width = Math.min(anchorRect.width, vw - 16);
                 const left = Math.min(Math.max(8, anchorRect.left), vw - width - 8);
-                const top = Math.min(Math.max(8, anchorRect.top), Math.max(8, vh - 120));
+                const desiredTop = anchorRect.top;
+                const top = Math.min(Math.max(8, desiredTop), Math.max(8, vh - 120));
                 return {
                   position: "fixed",
                   left: `${left}px`,
