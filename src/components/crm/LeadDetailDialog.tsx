@@ -97,6 +97,7 @@ interface LeadDetailDialogProps {
   onUpdateOrigin?: (oldName: string, newName: string) => Promise<void>;
   onDeleteOrigin?: (name: string) => Promise<void>;
   initialTab?: 'info' | 'notes' | 'history' | 'deals' | 'files';
+  initialRegisterSale?: boolean;
 }
 
 // formatPhoneNumber is now imported from '@/lib/phoneUtils'
@@ -268,6 +269,7 @@ export const LeadDetailDialog = ({
   onUpdateOrigin,
   onDeleteOrigin,
   initialTab,
+  initialRegisterSale = false,
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -664,13 +666,13 @@ export const LeadDetailDialog = ({
     setShowWhatsAppOptions(false);
     setIsWhatsAppStatusOpen(false);
     setActiveTab(initialTab || 'info');
-    setRegisterSaleOpen(false);
+    setRegisterSaleOpen(initialRegisterSale);
     loadDeals();
     loadNotesAndActivities();
     loadLeadFiles();
     loadDriveConnection();
     loadAgentPauseStatus();
-  }, [open, lead?.id]);
+  }, [open, lead?.id, initialRegisterSale]);
 
   const handleSave = async () => {
     if (!lead) return;
