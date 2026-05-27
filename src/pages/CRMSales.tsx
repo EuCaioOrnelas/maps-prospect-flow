@@ -420,6 +420,16 @@ export default function CRMSales() {
                                   size="icon"
                                   variant="ghost"
                                   className="h-7 w-7"
+                                  title="Editar venda"
+                                  onClick={() => setEditingSale(s)}
+                                >
+                                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7"
+                                  title="Excluir venda"
                                   onClick={async () => {
                                     if (!confirm("Excluir esta venda?")) return;
                                     await deleteSale(s.id);
@@ -428,6 +438,7 @@ export default function CRMSales() {
                                 >
                                   <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
                                 </Button>
+
                               </div>
                             </td>
                           </tr>
