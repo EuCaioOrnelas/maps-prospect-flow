@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,170 +124,196 @@ export function RegisterSaleDialog({
     }
   };
 
+  const formBody = (
+    <>
+      <div className="space-y-4 py-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="sale-title" className="flex items-center gap-1.5">
+            <Tag className="w-3.5 h-3.5 text-primary" /> Título da venda *
+          </Label>
+          <Input
+            id="sale-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Ex: Plano Growth Anual - João da Silva"
+            maxLength={120}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="sale-desc" className="flex items-center gap-1.5">
+            <AlignLeft className="w-3.5 h-3.5 text-primary" /> Descrição (opcional)
+          </Label>
+          <Textarea
+            id="sale-desc"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Detalhes do acordo, escopo, condições especiais..."
+            rows={3}
+            maxLength={500}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5">
+            <Repeat className="w-3.5 h-3.5 text-primary" /> Tipo de venda *
+          </Label>
+          <ToggleGroup
+            type="single"
+            value={saleType}
+            onValueChange={(v) => v && setSaleType(v as SaleType)}
+            className="justify-start"
+          >
+            <ToggleGroupItem value="recurring" className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+              Recorrente (mensalidade)
+            </ToggleGroupItem>
+            <ToggleGroupItem value="one_time" className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+              Venda única
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="sale-value" className="flex items-center gap-1.5">
+              <DollarSign className="w-3.5 h-3.5 text-primary" />
+              {saleType === "recurring" ? "Valor mensal (R$) *" : "Valor total (R$) *"}
+            </Label>
+            <Input
+              id="sale-value"
+              inputMode="decimal"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="0,00"
+            />
+          </div>
+
+          {saleType === "recurring" && (
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <CalendarClock className="w-3.5 h-3.5 text-primary" /> Tempo de contrato *
+              </Label>
+              <Select value={months} onValueChange={setMonths}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CONTRACT_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="sale-start" className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-primary" /> Data de início *
+            </Label>
+            <Input
+              id="sale-start"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5">
+              <CreditCard className="w-3.5 h-3.5 text-primary" /> Forma de pagamento
+            </Label>
+            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PAYMENT_METHODS.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <FileSlot
+            label="Comprovante"
+            icon={<Receipt className="w-3.5 h-3.5 text-primary" />}
+            file={receiptFile}
+            onChange={setReceiptFile}
+          />
+          <FileSlot
+            label="Contrato"
+            icon={<FileSignature className="w-3.5 h-3.5 text-primary" />}
+            file={contractFile}
+            onChange={setContractFile}
+          />
+        </div>
+      </div>
+    </>
+  );
+
+  const footer = (
+    <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
+      <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={submitting}>
+        Cancelar
+      </Button>
+      <Button size="sm" onClick={handleSubmit} disabled={submitting}>
+        {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+        Registrar venda
+      </Button>
+    </div>
+  );
+
+  // Inline overlay mode: replaces the lead card visually
+  if (anchorRect && open && typeof document !== "undefined") {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const width = Math.min(Math.max(anchorRect.width, 360), vw - 16);
+    const left = Math.min(Math.max(8, anchorRect.left), vw - width - 8);
+    const top = Math.max(8, Math.min(anchorRect.top, vh - 100));
+    const maxHeight = vh - top - 16;
+
+    return createPortal(
+      <div
+        className="fixed inset-0 z-[70]"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget && !submitting) onOpenChange(false);
+        }}
+      >
+        <div
+          role="dialog"
+          aria-label="Registrar venda"
+          className="fixed bg-card border border-primary/40 rounded-[18px] shadow-2xl overflow-hidden flex flex-col animate-in fade-in-0 zoom-in-95 duration-150"
+          style={{
+            left: `${left}px`,
+            top: `${top}px`,
+            width: `${width}px`,
+            maxHeight: `${maxHeight}px`,
+          }}
+        >
+          <div className="px-4 pt-3 pb-2 border-b border-border/60">
+            <h3 className="text-sm font-semibold text-foreground">Registrar venda</h3>
+            <p className="text-xs text-muted-foreground truncate">
+              {leadName ? `Venda fechada com ${leadName}` : "Detalhes da venda fechada"}
+            </p>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4">{formBody}</div>
+          <div className="px-4 pb-3">{footer}</div>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card p-4"
-        style={
-          anchorRect
-            ? (() => {
-                const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
-                const vh = typeof window !== "undefined" ? window.innerHeight : 768;
-                const width = Math.min(anchorRect.width, vw - 16);
-                const left = Math.min(Math.max(8, anchorRect.left), vw - width - 8);
-                const desiredTop = anchorRect.top;
-                const top = Math.min(Math.max(8, desiredTop), Math.max(8, vh - 120));
-                return {
-                  position: "fixed",
-                  left: `${left}px`,
-                  top: `${top}px`,
-                  width: `${width}px`,
-                  maxWidth: `${width}px`,
-                  transform: "none",
-                  margin: 0,
-                } as React.CSSProperties;
-              })()
-            : undefined
-        }
-      >
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card p-4">
         <DialogHeader>
           <DialogTitle>Registrar venda</DialogTitle>
           <DialogDescription>
             {leadName ? `Cadastre a venda fechada com ${leadName}` : "Cadastre os detalhes da venda fechada"}
           </DialogDescription>
         </DialogHeader>
-
-        <div className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="sale-title" className="flex items-center gap-1.5">
-              <Tag className="w-3.5 h-3.5 text-primary" /> Título da venda *
-            </Label>
-            <Input
-              id="sale-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Plano Growth Anual - João da Silva"
-              maxLength={120}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="sale-desc" className="flex items-center gap-1.5">
-              <AlignLeft className="w-3.5 h-3.5 text-primary" /> Descrição (opcional)
-            </Label>
-            <Textarea
-              id="sale-desc"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detalhes do acordo, escopo, condições especiais..."
-              rows={3}
-              maxLength={500}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="flex items-center gap-1.5">
-              <Repeat className="w-3.5 h-3.5 text-primary" /> Tipo de venda *
-            </Label>
-            <ToggleGroup
-              type="single"
-              value={saleType}
-              onValueChange={(v) => v && setSaleType(v as SaleType)}
-              className="justify-start"
-            >
-              <ToggleGroupItem value="recurring" className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                Recorrente (mensalidade)
-              </ToggleGroupItem>
-              <ToggleGroupItem value="one_time" className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                Venda única
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="sale-value" className="flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5 text-primary" />
-                {saleType === "recurring" ? "Valor mensal (R$) *" : "Valor total (R$) *"}
-              </Label>
-              <Input
-                id="sale-value"
-                inputMode="decimal"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="0,00"
-              />
-            </div>
-
-            {saleType === "recurring" && (
-              <div className="space-y-1.5">
-                <Label className="flex items-center gap-1.5">
-                  <CalendarClock className="w-3.5 h-3.5 text-primary" /> Tempo de contrato *
-                </Label>
-                <Select value={months} onValueChange={setMonths}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CONTRACT_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="sale-start" className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-primary" /> Data de início *
-              </Label>
-              <Input
-                id="sale-start"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5">
-                <CreditCard className="w-3.5 h-3.5 text-primary" /> Forma de pagamento
-              </Label>
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PAYMENT_METHODS.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <FileSlot
-              label="Comprovante"
-              icon={<Receipt className="w-3.5 h-3.5 text-primary" />}
-              file={receiptFile}
-              onChange={setReceiptFile}
-            />
-            <FileSlot
-              label="Contrato"
-              icon={<FileSignature className="w-3.5 h-3.5 text-primary" />}
-              file={contractFile}
-              onChange={setContractFile}
-            />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
-            {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Registrar venda
-          </Button>
-        </DialogFooter>
+        {formBody}
+        <DialogFooter>{footer}</DialogFooter>
       </DialogContent>
     </Dialog>
   );
