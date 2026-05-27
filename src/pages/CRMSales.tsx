@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSales, type SaleStatus } from "@/hooks/useSales";
+import { useSales } from "@/hooks/useSales";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
@@ -12,7 +13,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, FileText, Download, Trash2, Search, CalendarClock, Repeat } from "lucide-react";
+import {
+  DollarSign,
+  FileText,
+  Download,
+  Trash2,
+  Search,
+  CalendarClock,
+  Repeat,
+  Building2,
+  User,
+  Calendar,
+  ArrowUpRight,
+} from "lucide-react";
 import { CRMTabs } from "@/components/crm/CRMTabs";
 import { SalesKPIs } from "@/components/crm/SalesKPIs";
 import { toast } from "sonner";
@@ -31,11 +44,14 @@ const STATUS_BADGES: Record<string, { label: string; tone: string }> = {
 
 export default function CRMSales() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const { sales, metrics, deleteSale, getAttachmentUrl } = useSales();
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
 
   const { data: sidebarProfile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -51,6 +67,8 @@ export default function CRMSales() {
     return sales.filter((s) => {
       if (typeFilter !== "all" && s.sale_type !== typeFilter) return false;
       if (statusFilter !== "all" && s.status !== statusFilter) return false;
+      if (dateFrom && s.start_date < dateFrom) return false;
+      if (dateTo && s.start_date > dateTo) return false;
       if (search) {
         const q = search.toLowerCase();
         const hit =
@@ -62,13 +80,27 @@ export default function CRMSales() {
       }
       return true;
     });
-  }, [sales, typeFilter, statusFilter, search]);
+  }, [sales, typeFilter, statusFilter, search, dateFrom, dateTo]);
 
   const handleDownload = async (path: string) => {
     const url = await getAttachmentUrl(path);
     if (url) window.open(url, "_blank");
     else toast.error("Não foi possível abrir o arquivo");
   };
+
+  const handleOpenLead = (leadId: string) => {
+    navigate("/crm", { state: { openLeadId: leadId, openTab: "deals" } });
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setTypeFilter("all");
+    setStatusFilter("all");
+    setDateFrom("");
+    setDateTo("");
+  };
+
+  const hasFilters = !!(search || typeFilter !== "all" || statusFilter !== "all" || dateFrom || dateTo);
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -79,7 +111,7 @@ export default function CRMSales() {
 
       <main className="lg:pl-[72px] pt-[42px] lg:pt-0 min-h-screen">
         <div className="flex flex-col h-screen">
-          {/* Header */}
+          {/* Header — Wiize format */}
           <div className="flex-shrink-0 border-b border-border/50">
             <div className="px-3 pt-2 pb-3 sm:p-4 lg:p-6">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -109,17 +141,24 @@ export default function CRMSales() {
 
             {/* Expirando em breve */}
             {metrics.expiringSoon.length > 0 && (
-              <Card className="p-4 border-amber-500/30 bg-amber-500/5">
+              <Card className="p-4 border-amber-500/30 bg-amber-500/5 rounded-2xl">
                 <div className="flex items-center gap-2 mb-3">
                   <CalendarClock className="w-4 h-4 text-amber-500" />
-                  <h3 className="text-sm font-semibold">Expirando em até 30 dias ({metrics.expiringSoon.length})</h3>
+                  <h3 className="text-sm font-semibold">
+                    Expirando em até 30 dias ({metrics.expiringSoon.length})
+                  </h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {metrics.expiringSoon.slice(0, 6).map((s) => (
-                    <div key={s.id} className="rounded-lg border border-amber-500/20 bg-card p-2.5 text-xs">
+                    <div
+                      key={s.id}
+                      className="rounded-lg border border-amber-500/20 bg-card p-2.5 text-xs cursor-pointer hover:bg-amber-500/5"
+                      onClick={() => handleOpenLead(s.lead_id)}
+                    >
                       <p className="font-medium truncate">{s.title || s.lead?.company_name || "Venda"}</p>
                       <p className="text-muted-foreground">
-                        {s.lead?.company_name || s.lead?.contact_name || "—"} · expira {fmtDate(s.expiration_date)}
+                        {s.lead?.company_name || s.lead?.contact_name || "—"} · expira{" "}
+                        {fmtDate(s.expiration_date)}
                       </p>
                     </div>
                   ))}
@@ -128,44 +167,77 @@ export default function CRMSales() {
             )}
 
             {/* Filtros */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar por título, cliente ou descrição..."
-                  className="pl-9"
-                />
+            <Card className="p-3 rounded-2xl border-border/40">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+                <div className="relative lg:col-span-2">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar venda ou cliente..."
+                    className="pl-9"
+                  />
+                </div>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os tipos</SelectItem>
+                    <SelectItem value="recurring">Recorrente</SelectItem>
+                    <SelectItem value="one_time">Venda única</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os status</SelectItem>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="expired">Expirado</SelectItem>
+                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                    <SelectItem value="renewed">Renovado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                  <Input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="pl-9"
+                    title="Data inicial"
+                  />
+                </div>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                  <Input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="pl-9"
+                    title="Data final"
+                  />
+                </div>
               </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="Tipo" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os tipos</SelectItem>
-                  <SelectItem value="recurring">Recorrente</SelectItem>
-                  <SelectItem value="one_time">Venda única</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="Status" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="expired">Expirado</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
-                  <SelectItem value="renewed">Renovado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              {hasFilters && (
+                <div className="mt-2 flex justify-end">
+                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={clearFilters}>
+                    Limpar filtros
+                  </Button>
+                </div>
+              )}
+            </Card>
 
             {/* Tabela */}
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden rounded-2xl border-border/40">
               {filtered.length === 0 ? (
                 <div className="text-center py-16">
                   <DollarSign className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-sm font-medium">Nenhuma venda encontrada</p>
+                  <p className="text-sm font-medium">
+                    {sales.length === 0 ? "Sem dados para análise" : "Nenhuma venda encontrada"}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Mova um lead para "Fechado (Ganho)" no pipeline para registrar uma venda.
+                    {sales.length === 0
+                      ? "Mova um lead para \"Fechado (Ganho)\" no pipeline para registrar uma venda."
+                      : "Ajuste os filtros para ver outras vendas."}
                   </p>
                 </div>
               ) : (
@@ -186,45 +258,99 @@ export default function CRMSales() {
                     <tbody className="divide-y divide-border">
                       {filtered.map((s) => {
                         const st = STATUS_BADGES[s.status] || STATUS_BADGES.active;
-                        const total = s.sale_type === "recurring" ? s.value * (s.contract_months || 1) : s.value;
+                        const total =
+                          s.sale_type === "recurring" ? s.value * (s.contract_months || 1) : s.value;
                         return (
-                          <tr key={s.id} className="hover:bg-muted/20">
+                          <tr
+                            key={s.id}
+                            className="hover:bg-muted/30 cursor-pointer transition-colors"
+                            onClick={() => handleOpenLead(s.lead_id)}
+                          >
                             <td className="px-4 py-3">
-                              <p className="font-medium truncate max-w-[240px]">{s.title || "—"}</p>
-                              {s.description && (
-                                <p className="text-xs text-muted-foreground truncate max-w-[240px]">{s.description}</p>
-                              )}
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                  <DollarSign className="w-3.5 h-3.5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-medium truncate max-w-[220px] flex items-center gap-1">
+                                    {s.title || "—"}
+                                    <ArrowUpRight className="w-3 h-3 text-muted-foreground/50" />
+                                  </p>
+                                  {s.description && (
+                                    <p className="text-xs text-muted-foreground truncate max-w-[220px]">
+                                      {s.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
                             </td>
-                            <td className="px-4 py-3 text-muted-foreground">
-                              {s.lead?.company_name || s.lead?.contact_name || "—"}
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                {s.lead?.company_name ? (
+                                  <Building2 className="w-3.5 h-3.5 shrink-0" />
+                                ) : (
+                                  <User className="w-3.5 h-3.5 shrink-0" />
+                                )}
+                                <span className="truncate">
+                                  {s.lead?.company_name || s.lead?.contact_name || "—"}
+                                </span>
+                              </div>
                             </td>
                             <td className="px-4 py-3 tabular-nums">
                               <div className="font-semibold">{fmtMoney(total)}</div>
                               {s.sale_type === "recurring" && (
-                                <div className="text-[10px] text-muted-foreground">{fmtMoney(s.value)}/mês × {s.contract_months}m</div>
+                                <div className="text-[10px] text-muted-foreground">
+                                  {fmtMoney(s.value)}/mês × {s.contract_months}m
+                                </div>
                               )}
                             </td>
                             <td className="px-4 py-3">
                               {s.sale_type === "recurring" ? (
-                                <Badge variant="outline" className="gap-1"><Repeat className="w-3 h-3" /> Recorrente</Badge>
+                                <Badge variant="outline" className="gap-1">
+                                  <Repeat className="w-3 h-3" /> Recorrente
+                                </Badge>
                               ) : (
                                 <Badge variant="outline">Única</Badge>
                               )}
                             </td>
-                            <td className="px-4 py-3 text-muted-foreground tabular-nums">{fmtDate(s.start_date)}</td>
-                            <td className="px-4 py-3 text-muted-foreground tabular-nums">{fmtDate(s.expiration_date)}</td>
-                            <td className="px-4 py-3">
-                              <Badge variant="outline" className={st.tone}>{st.label}</Badge>
+                            <td className="px-4 py-3 text-muted-foreground tabular-nums">
+                              <span className="inline-flex items-center gap-1.5">
+                                <Calendar className="w-3 h-3" />
+                                {fmtDate(s.start_date)}
+                              </span>
                             </td>
-                            <td className="px-4 py-3 text-right">
+                            <td className="px-4 py-3 text-muted-foreground tabular-nums">
+                              <span className="inline-flex items-center gap-1.5">
+                                <CalendarClock className="w-3 h-3" />
+                                {fmtDate(s.expiration_date)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge variant="outline" className={st.tone}>
+                                {st.label}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1">
                                 {s.receipt_url && (
-                                  <Button size="icon" variant="ghost" className="h-7 w-7" title="Comprovante" onClick={() => handleDownload(s.receipt_url!)}>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7"
+                                    title="Comprovante"
+                                    onClick={() => handleDownload(s.receipt_url!)}
+                                  >
                                     <FileText className="w-3.5 h-3.5" />
                                   </Button>
                                 )}
                                 {s.contract_url && (
-                                  <Button size="icon" variant="ghost" className="h-7 w-7" title="Contrato" onClick={() => handleDownload(s.contract_url!)}>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7"
+                                    title="Contrato"
+                                    onClick={() => handleDownload(s.contract_url!)}
+                                  >
                                     <Download className="w-3.5 h-3.5" />
                                   </Button>
                                 )}

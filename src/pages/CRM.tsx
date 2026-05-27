@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, memo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCRM, type Lead } from '@/hooks/useCRM';
 import { KanbanBoardWithScroll } from '@/components/crm/KanbanBoardWithScroll';
 import { LeadDetailDialog } from '@/components/crm/LeadDetailDialog';
@@ -42,6 +42,7 @@ import {
 
 export default function CRM() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, profile, loading } = useAuth();
   const { count: contactCount, limit: contactLimit, hasLimit: hasContactLimit, isAtLimit: contactsAtLimit, isNearLimit: contactsNearLimit } = useContactLimit();
   const isMobile = useIsMobile();
@@ -89,6 +90,7 @@ export default function CRM() {
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
   const [numbersManagerOpen, setNumbersManagerOpen] = useState(false);
   const [saleDialogLead, setSaleDialogLead] = useState<{ id: string; name: string } | null>(null);
+  const [pendingInitialTab, setPendingInitialTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files' | undefined>(undefined);
   const columnWidth: ColumnWidth = 'medium';
 
   // Fetch custom origins
@@ -159,6 +161,19 @@ export default function CRM() {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user, refetchSilencedStages]);
+
+  // Open lead from navigation state (e.g. from /crm/vendas row click)
+  useEffect(() => {
+    const state = location.state as { openLeadId?: string; openTab?: 'info' | 'notes' | 'history' | 'deals' | 'files' } | null;
+    if (!state?.openLeadId || !leads.length) return;
+    const lead = leads.find((l) => l.id === state.openLeadId);
+    if (lead) {
+      setSelectedLead(lead);
+      setPendingInitialTab(state.openTab);
+      setDialogOpen(true);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.state, leads, navigate, location.pathname, setSelectedLead]);
 
   // Fetch user profile for sidebar
   const { data: sidebarProfile } = useQuery({
@@ -578,6 +593,7 @@ export default function CRM() {
         origins={customOrigins}
         open={dialogOpen}
         onOpenChange={handleDialogClose}
+        initialTab={pendingInitialTab}
         onUpdate={async (id, updates) => {
           const result = await updateLead(id, updates);
           return result as Lead | null;

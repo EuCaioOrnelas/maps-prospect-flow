@@ -15,6 +15,9 @@ interface RegisterSaleDialogProps {
   onOpenChange: (open: boolean) => void;
   leadId: string;
   leadName?: string;
+  initialValue?: number;
+  initialTitle?: string;
+  initialDescription?: string;
   onCreated?: () => void;
 }
 
@@ -26,7 +29,16 @@ const CONTRACT_OPTIONS = [
   { value: "24", label: "24 meses" },
 ];
 
-export function RegisterSaleDialog({ open, onOpenChange, leadId, leadName, onCreated }: RegisterSaleDialogProps) {
+export function RegisterSaleDialog({
+  open,
+  onOpenChange,
+  leadId,
+  leadName,
+  initialValue,
+  initialTitle,
+  initialDescription,
+  onCreated,
+}: RegisterSaleDialogProps) {
   const { createSale, uploadAttachment } = useSales();
   const [submitting, setSubmitting] = useState(false);
 
@@ -42,17 +54,21 @@ export function RegisterSaleDialog({ open, onOpenChange, leadId, leadName, onCre
 
   useEffect(() => {
     if (open) {
-      setTitle("");
-      setDescription("");
+      setTitle(initialTitle ?? (leadName ? `Venda - ${leadName}` : ""));
+      setDescription(initialDescription ?? "");
       setSaleType("recurring");
-      setValue("");
+      setValue(
+        initialValue && initialValue > 0
+          ? initialValue.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : ""
+      );
       setMonths("12");
       setPaymentMethod("pix");
       setStartDate(new Date().toISOString().slice(0, 10));
       setReceiptFile(null);
       setContractFile(null);
     }
-  }, [open]);
+  }, [open, initialValue, initialTitle, initialDescription, leadName]);
 
   const handleSubmit = async () => {
     if (!title.trim()) return toast.error("Informe um título para a venda");
@@ -223,8 +239,8 @@ export function RegisterSaleDialog({ open, onOpenChange, leadId, leadName, onCre
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
-            Pular por ora
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
+            Cancelar
           </Button>
           <Button onClick={handleSubmit} disabled={submitting}>
             {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
