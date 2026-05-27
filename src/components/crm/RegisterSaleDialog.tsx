@@ -21,6 +21,7 @@ interface RegisterSaleDialogProps {
   initialDescription?: string;
   onCreated?: () => void;
   anchorRect?: { top: number; left: number; width: number; height: number };
+  cardOverlayMode?: boolean;
 }
 
 const CONTRACT_OPTIONS = [
@@ -41,9 +42,11 @@ export function RegisterSaleDialog({
   initialDescription,
   onCreated,
   anchorRect,
+  cardOverlayMode = false,
 }: RegisterSaleDialogProps) {
   const { createSale, uploadAttachment } = useSales();
   const [submitting, setSubmitting] = useState(false);
+  const [detectedAnchorRect, setDetectedAnchorRect] = useState<typeof anchorRect>();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -72,6 +75,29 @@ export function RegisterSaleDialog({
       setContractFile(null);
     }
   }, [open, initialValue, initialTitle, initialDescription, leadName]);
+
+  useEffect(() => {
+    if (!open || !cardOverlayMode || anchorRect || typeof document === "undefined") return;
+
+    let frameOne = 0;
+    let frameTwo = 0;
+    const measureLeadCard = () => {
+      const cardEl = document.querySelector<HTMLElement>(`[data-lead-id="${leadId}"]`);
+      if (!cardEl) return;
+      const rect = cardEl.getBoundingClientRect();
+      setDetectedAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
+    };
+
+    frameOne = requestAnimationFrame(() => {
+      measureLeadCard();
+      frameTwo = requestAnimationFrame(measureLeadCard);
+    });
+
+    return () => {
+      cancelAnimationFrame(frameOne);
+      cancelAnimationFrame(frameTwo);
+    };
+  }, [open, cardOverlayMode, anchorRect, leadId]);
 
   const handleSubmit = async () => {
     if (!title.trim()) return toast.error("Informe um título para a venda");
@@ -262,14 +288,18 @@ export function RegisterSaleDialog({
     </div>
   );
 
+  const activeAnchorRect = anchorRect ?? (cardOverlayMode ? detectedAnchorRect : undefined);
+
+  if (cardOverlayMode && open && typeof document !== "undefined" && !activeAnchorRect) {
+    return null;
+  }
+
   // Inline overlay mode: replaces the lead card visually
-  if (anchorRect && open && typeof document !== "undefined") {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const width = Math.min(Math.max(anchorRect.width, 360), vw - 16);
-    const left = Math.min(Math.max(8, anchorRect.left), vw - width - 8);
-    const top = Math.max(8, Math.min(anchorRect.top, vh - 100));
-    const maxHeight = vh - top - 16;
+  if (activeAnchorRect && open && typeof document !== "undefined") {
+    const width = activeAnchorRect.width;
+    const height = activeAnchorRect.height;
+    const left = activeAnchorRect.left;
+    const top = activeAnchorRect.top;
 
     return createPortal(
       <div
@@ -281,22 +311,23 @@ export function RegisterSaleDialog({
         <div
           role="dialog"
           aria-label="Registrar venda"
-          className="fixed bg-card border border-primary/40 rounded-[18px] shadow-2xl overflow-hidden flex flex-col animate-in fade-in-0 zoom-in-95 duration-150"
+          className="fixed bg-card border border-primary/40 rounded-[18px] shadow-lg overflow-hidden flex flex-col animate-in fade-in-0 duration-100"
           style={{
             left: `${left}px`,
             top: `${top}px`,
             width: `${width}px`,
-            maxHeight: `${maxHeight}px`,
+            height: `${height}px`,
+            maxHeight: `${height}px`,
           }}
         >
-          <div className="px-4 pt-3 pb-2 border-b border-border/60">
+          <div className="px-3.5 pt-3 pb-2 border-b border-border/60 shrink-0">
             <h3 className="text-sm font-semibold text-foreground">Registrar venda</h3>
             <p className="text-xs text-muted-foreground truncate">
               {leadName ? `Venda fechada com ${leadName}` : "Detalhes da venda fechada"}
             </p>
           </div>
-          <div className="flex-1 overflow-y-auto px-4">{formBody}</div>
-          <div className="px-4 pb-3">{footer}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-3.5">{formBody}</div>
+          <div className="px-3.5 pb-3 shrink-0">{footer}</div>
         </div>
       </div>,
       document.body
