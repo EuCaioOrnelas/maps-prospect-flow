@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature, X } from "lucide-react";
+import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature } from "lucide-react";
 import { useSales, PAYMENT_METHODS, type SaleType } from "@/hooks/useSales";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -167,12 +167,27 @@ export function RegisterSaleDialog({
             type="single"
             value={saleType}
             onValueChange={(v) => v && setSaleType(v as SaleType)}
-            className={cn("justify-start", compact && "w-full gap-1")}
+            className={cn(
+              "inline-flex justify-start rounded-full border border-border bg-muted/40 p-1 shadow-inner shadow-background/40",
+              compact && "grid w-full grid-cols-2 gap-1"
+            )}
           >
-            <ToggleGroupItem value="recurring" className={cn("data-[state=on]:bg-primary data-[state=on]:text-primary-foreground", compact && "h-8 flex-1 px-2 text-[11px]")}>
-              Recorrente (mensalidade)
+            <ToggleGroupItem
+              value="recurring"
+              className={cn(
+                "h-8 rounded-full px-4 text-sm text-muted-foreground hover:bg-background/70 hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm",
+                compact && "w-full px-2 text-[11px]"
+              )}
+            >
+              Recorrente
             </ToggleGroupItem>
-            <ToggleGroupItem value="one_time" className={cn("data-[state=on]:bg-primary data-[state=on]:text-primary-foreground", compact && "h-8 flex-1 px-2 text-[11px]")}>
+            <ToggleGroupItem
+              value="one_time"
+              className={cn(
+                "h-8 rounded-full px-4 text-sm text-muted-foreground hover:bg-background/70 hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm",
+                compact && "w-full px-2 text-[11px]"
+              )}
+            >
               Venda única
             </ToggleGroupItem>
           </ToggleGroup>
@@ -278,7 +293,7 @@ export function RegisterSaleDialog({
   if (embedded) {
     return (
       <div className="w-full">
-        <div className="pb-4 mb-2 border-b border-border/60">
+        <div className="pb-4 mb-2">
           <h3 className="text-xl font-semibold text-foreground">Registrar venda</h3>
           <p className="text-sm text-muted-foreground">
             {leadName ? `Venda fechada com ${leadName}` : "Detalhes da venda fechada"}
