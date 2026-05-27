@@ -59,22 +59,20 @@ export function LeadSalesBlock({
 
   if (dialogOpen) {
     return (
-      <Card className="min-h-[560px] overflow-hidden border-primary/30 p-4 sm:p-5">
-        <RegisterSaleDialog
-          open
-          embedded
-          embeddedLayout="page"
-          onOpenChange={setDialogOpen}
-          leadId={leadId}
-          leadName={leadName}
-          initialValue={initialValue}
-          initialTitle={initialTitle}
-          onCreated={() => {
-            fetchSales();
-            onSaleCreated?.();
-          }}
-        />
-      </Card>
+      <RegisterSaleDialog
+        open
+        embedded
+        embeddedLayout="page"
+        onOpenChange={setDialogOpen}
+        leadId={leadId}
+        leadName={leadName}
+        initialValue={initialValue}
+        initialTitle={initialTitle}
+        onCreated={() => {
+          fetchSales();
+          onSaleCreated?.();
+        }}
+      />
     );
   }
 
