@@ -268,10 +268,14 @@ export const LeadDetailDialog = ({
   onAddOrigin,
   onUpdateOrigin,
   onDeleteOrigin,
+  initialTab,
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files'>(initialTab || 'info');
+  useEffect(() => {
+    if (open && initialTab) setActiveTab(initialTab);
+  }, [open, initialTab]);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingHeaderName, setIsEditingHeaderName] = useState(false);
   const [headerNameValue, setHeaderNameValue] = useState('');
