@@ -257,60 +257,50 @@ export function RegisterSaleDialog({
   );
 
   const footer = (
-    <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
-      <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={submitting}>
+    <div className={cn("flex justify-end gap-2 pt-2 border-t border-border/60", embedded && "shrink-0")}> 
+      <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={submitting} className={cn(embedded && "h-8 px-2 text-xs")}>
         Cancelar
       </Button>
-      <Button size="sm" onClick={handleSubmit} disabled={submitting}>
+      <Button size="sm" onClick={handleSubmit} disabled={submitting} className={cn(embedded && "h-8 px-2 text-xs")}>
         {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
         Registrar venda
       </Button>
     </div>
   );
 
-  const activeAnchorRect = anchorRect ?? (cardOverlayMode ? detectedAnchorRect : undefined);
-
-  if (cardOverlayMode && open && typeof document !== "undefined" && !activeAnchorRect) {
+  if (!open) {
     return null;
   }
 
-  // Inline overlay mode: replaces the lead card visually
-  if (activeAnchorRect && open && typeof document !== "undefined") {
-    const width = activeAnchorRect.width;
-    const height = activeAnchorRect.height;
-    const left = activeAnchorRect.left;
-    const top = activeAnchorRect.top;
-
-    return createPortal(
-      <div
-        className="fixed inset-0 z-[70]"
-        onMouseDown={(e) => {
-          if (e.target === e.currentTarget && !submitting) onOpenChange(false);
-        }}
-      >
-        <div
-          role="dialog"
-          aria-label="Registrar venda"
-          className="fixed bg-card border border-primary/40 rounded-[18px] shadow-lg overflow-hidden flex flex-col animate-in fade-in-0 duration-100"
-          style={{
-            left: `${left}px`,
-            top: `${top}px`,
-            width: `${width}px`,
-            height: `${height}px`,
-            maxHeight: `${height}px`,
-          }}
-        >
-          <div className="px-3.5 pt-3 pb-2 border-b border-border/60 shrink-0">
-            <h3 className="text-sm font-semibold text-foreground">Registrar venda</h3>
+  if (embedded) {
+    return (
+      <div className="w-full h-full max-h-full overflow-hidden flex flex-col bg-card" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-2 px-3.5 pt-3 pb-2 border-b border-border/60 shrink-0">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-foreground truncate">Registrar venda</h3>
             <p className="text-xs text-muted-foreground truncate">
               {leadName ? `Venda fechada com ${leadName}` : "Detalhes da venda fechada"}
             </p>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-3.5">{formBody}</div>
-          <div className="px-3.5 pb-3 shrink-0">{footer}</div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0"
+            onClick={() => onOpenChange(false)}
+            disabled={submitting}
+            aria-label="Cancelar registro de venda"
+          >
+            <X className="w-4 h-4" />
+          </Button>
         </div>
-      </div>,
-      document.body
+        <div className="min-h-0 flex-1 overflow-y-auto px-3.5">
+          {formBody}
+        </div>
+        <div className="px-3.5 pb-3 shrink-0 bg-card">
+          {footer}
+        </div>
+      </div>
     );
   }
 
@@ -330,12 +320,12 @@ export function RegisterSaleDialog({
   );
 }
 
-function FileSlot({ label, icon, file, onChange }: { label: string; icon?: React.ReactNode; file: File | null; onChange: (f: File | null) => void }) {
+function FileSlot({ label, icon, file, onChange, compact = false }: { label: string; icon?: React.ReactNode; file: File | null; onChange: (f: File | null) => void; compact?: boolean }) {
   return (
     <div className="space-y-1.5">
       <Label className="flex items-center gap-1.5">{icon}{label} (opcional)</Label>
       {file ? (
-        <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-muted/30">
+        <div className={cn("flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-muted/30", compact && "py-1.5 text-xs")}>
           <FileText className="w-4 h-4 text-primary shrink-0" />
           <span className="truncate flex-1" title={file.name}>{file.name}</span>
           <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => onChange(null)}>
@@ -343,7 +333,7 @@ function FileSlot({ label, icon, file, onChange }: { label: string; icon?: React
           </Button>
         </div>
       ) : (
-        <label className="flex items-center justify-center gap-2 rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground cursor-pointer hover:bg-muted/30 transition-colors">
+        <label className={cn("flex items-center justify-center gap-2 rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground cursor-pointer hover:bg-muted/30 transition-colors", compact && "py-1.5 text-xs")}>
           <Upload className="w-4 h-4" />
           Enviar arquivo
           <input
