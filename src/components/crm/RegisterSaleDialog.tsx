@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature } from "lucide-react";
+import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature, X } from "lucide-react";
 import { useSales, PAYMENT_METHODS, type SaleType } from "@/hooks/useSales";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface RegisterSaleDialogProps {
@@ -20,8 +20,7 @@ interface RegisterSaleDialogProps {
   initialTitle?: string;
   initialDescription?: string;
   onCreated?: () => void;
-  anchorRect?: { top: number; left: number; width: number; height: number };
-  cardOverlayMode?: boolean;
+  embedded?: boolean;
 }
 
 const CONTRACT_OPTIONS = [
@@ -41,12 +40,10 @@ export function RegisterSaleDialog({
   initialTitle,
   initialDescription,
   onCreated,
-  anchorRect,
-  cardOverlayMode = false,
+  embedded = false,
 }: RegisterSaleDialogProps) {
   const { createSale, uploadAttachment } = useSales();
   const [submitting, setSubmitting] = useState(false);
-  const [detectedAnchorRect, setDetectedAnchorRect] = useState<typeof anchorRect>();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -75,29 +72,6 @@ export function RegisterSaleDialog({
       setContractFile(null);
     }
   }, [open, initialValue, initialTitle, initialDescription, leadName]);
-
-  useEffect(() => {
-    if (!open || !cardOverlayMode || anchorRect || typeof document === "undefined") return;
-
-    let frameOne = 0;
-    let frameTwo = 0;
-    const measureLeadCard = () => {
-      const cardEl = document.querySelector<HTMLElement>(`[data-lead-id="${leadId}"]`);
-      if (!cardEl) return;
-      const rect = cardEl.getBoundingClientRect();
-      setDetectedAnchorRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
-    };
-
-    frameOne = requestAnimationFrame(() => {
-      measureLeadCard();
-      frameTwo = requestAnimationFrame(measureLeadCard);
-    });
-
-    return () => {
-      cancelAnimationFrame(frameOne);
-      cancelAnimationFrame(frameTwo);
-    };
-  }, [open, cardOverlayMode, anchorRect, leadId]);
 
   const handleSubmit = async () => {
     if (!title.trim()) return toast.error("Informe um título para a venda");
