@@ -74,6 +74,7 @@ const LeadCardComponent = ({
 
   return (
     <div
+      data-lead-id={lead.id}
       className={cn(
         "w-full max-w-full overflow-hidden bg-card border border-border/60 rounded-[18px] p-3.5 cursor-pointer transition-all duration-200 relative",
         "shadow-sm hover:shadow-lg hover:border-primary/30 hover:-translate-y-px",

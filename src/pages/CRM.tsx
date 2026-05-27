@@ -89,7 +89,7 @@ export default function CRM() {
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
   const [numbersManagerOpen, setNumbersManagerOpen] = useState(false);
-  const [saleDialogLead, setSaleDialogLead] = useState<{ id: string; name: string } | null>(null);
+  const [saleDialogLead, setSaleDialogLead] = useState<{ id: string; name: string; anchorRect?: { top: number; left: number; width: number; height: number } } | null>(null);
   const [pendingInitialTab, setPendingInitialTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files' | undefined>(undefined);
   const columnWidth: ColumnWidth = 'medium';
 
@@ -352,6 +352,13 @@ export default function CRM() {
   };
 
   const handleLeadMove = async (leadId: string, stageId: string) => {
+    // Capture lead card position BEFORE the move (card will unmount after stage change)
+    let anchorRect: { top: number; left: number; width: number; height: number } | undefined;
+    const cardEl = document.querySelector<HTMLElement>(`[data-lead-id="${leadId}"]`);
+    if (cardEl) {
+      const r = cardEl.getBoundingClientRect();
+      anchorRect = { top: r.top, left: r.left, width: r.width, height: r.height };
+    }
     await moveLeadToStage(leadId, stageId);
     const target = stages.find((s) => s.id === stageId);
     if (target?.name === 'Fechado (Ganho)') {
@@ -359,6 +366,7 @@ export default function CRM() {
       setSaleDialogLead({
         id: leadId,
         name: lead?.company_name || lead?.contact_name || 'cliente',
+        anchorRect,
       });
     }
   };
@@ -652,6 +660,7 @@ export default function CRM() {
           onOpenChange={(o) => !o && setSaleDialogLead(null)}
           leadId={saleDialogLead.id}
           leadName={saleDialogLead.name}
+          anchorRect={saleDialogLead.anchorRect}
         />
       )}
 
