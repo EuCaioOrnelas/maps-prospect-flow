@@ -124,16 +124,28 @@ export default function CRMSales() {
           {/* Header — Wiize format */}
           <div className="flex-shrink-0 border-b border-border/50">
             <div className="px-3 pt-2 pb-3 sm:p-4 lg:p-6">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg">
-                  <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg shrink-0">
+                    <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">
+                      {isRegisterMode ? "Registrar venda" : "Pipeline"}
+                    </h1>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                      {isRegisterMode
+                        ? "Cadastre os detalhes da venda fechada"
+                        : "Histórico financeiro de vendas fechadas — controle total da sua receita"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Pipeline</h1>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Histórico financeiro de vendas fechadas — controle total da sua receita
-                  </p>
-                </div>
+                {isRegisterMode && (
+                  <Button variant="outline" size="sm" onClick={() => navigate("/crm/vendas")}>
+                    <ArrowLeft className="w-4 h-4 mr-1.5" />
+                    Voltar
+                  </Button>
+                )}
               </div>
               <CRMTabs />
             </div>
@@ -141,6 +153,34 @@ export default function CRMSales() {
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 space-y-5">
+            {isRegisterMode ? (
+              <Card className="p-4 sm:p-6 rounded-2xl border-border/40 max-w-3xl">
+                {leadId ? (
+                  <RegisterSaleDialog
+                    open
+                    embedded
+                    embeddedLayout="page"
+                    onOpenChange={(open) => {
+                      if (!open) navigate("/crm/vendas");
+                    }}
+                    leadId={leadId}
+                    leadName={leadName}
+                    initialValue={initialValue}
+                    initialTitle={initialTitle}
+                    onCreated={() => navigate("/crm/vendas")}
+                  />
+                ) : (
+                  <div className="py-12 text-center">
+                    <DollarSign className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-sm font-medium">Selecione um lead para registrar venda</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Abra um lead ou mova-o para Fechado (Ganho) para preencher este formulário automaticamente.
+                    </p>
+                  </div>
+                )}
+              </Card>
+            ) : (
+              <>
             <SalesKPIs
               totalRevenue={metrics.totalRevenue}
               mrr={metrics.mrr}
@@ -386,6 +426,8 @@ export default function CRMSales() {
                 </div>
               )}
             </Card>
+              </>
+            )}
           </div>
         </div>
       </main>
