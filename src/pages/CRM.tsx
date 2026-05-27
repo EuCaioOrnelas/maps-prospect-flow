@@ -348,6 +348,7 @@ export default function CRM() {
 
   const handleLeadClick = (lead: Lead) => {
     setSelectedLead(lead);
+    setPendingInitialTab(undefined);
     setPendingInitialRegisterSale(false);
     setDialogOpen(true);
   };
