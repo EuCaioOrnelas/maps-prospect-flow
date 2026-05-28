@@ -534,14 +534,39 @@ export default function CRM() {
                     </TooltipTrigger>
                     <TooltipContent>{bulkSelectMode ? 'Cancelar seleção' : 'Excluir em massa'}</TooltipContent>
                   </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <ExportLeadsButton leads={filteredLeads} stages={stages} />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Exportar leads para Excel</TooltipContent>
-                  </Tooltip>
+                  <ImportExportDialog
+                    leads={filteredLeads}
+                    stages={stages}
+                    origins={availableOrigins}
+                    onAddOrigin={handleAddOrigin}
+                    onImportLeads={async (rows: ImportRow[], stageId, origin) => {
+                      let inserted = 0;
+                      let skipped = 0;
+                      for (const r of rows) {
+                        try {
+                          const exists = await checkLeadExists(r.phone);
+                          if (exists) { skipped++; continue; }
+                          await createLead({
+                            phone: r.phone,
+                            contact_name: r.contact_name || null,
+                            company_name: r.company_name || null,
+                            category: r.category || null,
+                            city: r.city || null,
+                            region: r.region || null,
+                            website: r.website || null,
+                            origin: origin,
+                            pipeline_stage_id: stageId,
+                            tags: [],
+                          } as any);
+                          inserted++;
+                        } catch (e) {
+                          console.error('Import row failed', r, e);
+                          skipped++;
+                        }
+                      }
+                      return { inserted, skipped };
+                    }}
+                  />
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button size="sm" onClick={() => { setAddLeadDefaultStageId(undefined); setAddLeadOpen(true); }} className="h-8 sm:h-9">
