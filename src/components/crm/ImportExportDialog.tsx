@@ -501,7 +501,12 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
           {mode === "import-config" && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><FileUp className="w-4 h-4" /> Importar leads — passo 2</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
+                    <ArrowDownToLine className="w-4 h-4" />
+                  </div>
+                  Importar leads — passo 2
+                </DialogTitle>
                 <DialogDescription>Defina etapa do pipeline e origem dos leads.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 mt-2">
