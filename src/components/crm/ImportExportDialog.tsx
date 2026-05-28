@@ -333,7 +333,12 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
           {mode === "export-config" && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><FileDown className="w-4 h-4" /> Exportar leads</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
+                    <ArrowUpFromLine className="w-4 h-4" />
+                  </div>
+                  Exportar leads
+                </DialogTitle>
                 <DialogDescription>Selecione período, colunas e faixa de score.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 mt-2">
