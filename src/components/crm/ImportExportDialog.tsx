@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Download, Upload, ArrowLeft, ArrowRight, FileSpreadsheet, AlertTriangle, CheckCircle2, FileDown, FileUp, Sparkles } from "lucide-react";
+import { Download, Upload, ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, FileDown, FileUp, Sparkles, ArrowDownToLine, ArrowUpFromLine, FileSpreadsheet, Phone, AlertCircle } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { type Lead, WHATSAPP_STATUS_LABELS } from "@/hooks/useCRM";
@@ -260,25 +260,29 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
     }
   };
 
+  const [isDragging, setIsDragging] = useState(false);
+
   return (
     <>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
             variant="outline"
-            size="icon"
-            className="h-8 w-8 sm:h-9 sm:w-9"
+            size="sm"
+            className="h-8 sm:h-9 px-2 gap-1"
             onClick={() => { resetAll(); setOpen(true); }}
             aria-label="Importar e Exportar leads"
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <ArrowDownToLine className="w-4 h-4 text-primary" />
+            <span className="text-muted-foreground/60 text-xs">|</span>
+            <ArrowUpFromLine className="w-4 h-4 text-primary" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Importar / Exportar leads</TooltipContent>
       </Tooltip>
 
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) resetAll(); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card">
           {mode === "menu" && (
             <>
               <DialogHeader>
@@ -290,11 +294,11 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                 <button
                   onClick={() => setMode("export-config")}
-                  className="text-left p-4 rounded-xl border border-border/60 hover:border-primary/50 hover:bg-muted/30 transition-all group"
+                  className="text-left p-4 rounded-xl border border-border bg-background hover:border-primary/60 transition-colors"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center justify-center">
-                      <FileDown className="w-5 h-5" />
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-9 h-9 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
+                      <ArrowUpFromLine className="w-4.5 h-4.5" strokeWidth={2} />
                     </div>
                     <div className="font-semibold">Exportar leads</div>
                   </div>
@@ -304,11 +308,11 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
                 </button>
                 <button
                   onClick={() => setMode("import-template")}
-                  className="text-left p-4 rounded-xl border border-border/60 hover:border-primary/50 hover:bg-muted/30 transition-all group"
+                  className="text-left p-4 rounded-xl border border-border bg-background hover:border-primary/60 transition-colors"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 inline-flex items-center justify-center">
-                      <FileUp className="w-5 h-5" />
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-9 h-9 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
+                      <ArrowDownToLine className="w-4.5 h-4.5" strokeWidth={2} />
                     </div>
                     <div className="font-semibold">Importar leads</div>
                   </div>
@@ -318,7 +322,7 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
                 </button>
               </div>
               {hasLimit && (
-                <div className="mt-3 px-3 py-2 rounded-lg border border-border/50 bg-muted/30 text-xs text-muted-foreground flex items-center justify-between">
+                <div className="mt-3 px-3 py-2 rounded-lg border border-border bg-muted/30 text-xs text-muted-foreground flex items-center justify-between">
                   <span>Espaço no CRM: <strong className="text-foreground">{contactCount.toLocaleString("pt-BR")}</strong> / {Number.isFinite(contactLimit) ? contactLimit.toLocaleString("pt-BR") : "∞"}</span>
                   <span>Disponível: <strong className="text-foreground">{Number.isFinite(remainingSlots) ? remainingSlots.toLocaleString("pt-BR") : "∞"}</strong></span>
                 </div>
@@ -329,7 +333,12 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
           {mode === "export-config" && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><FileDown className="w-4 h-4" /> Exportar leads</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
+                    <ArrowUpFromLine className="w-4 h-4" />
+                  </div>
+                  Exportar leads
+                </DialogTitle>
                 <DialogDescription>Selecione período, colunas e faixa de score.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 mt-2">
@@ -386,24 +395,83 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
           {mode === "import-template" && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><FileUp className="w-4 h-4" /> Importar leads — passo 1</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
+                    <ArrowDownToLine className="w-4 h-4" />
+                  </div>
+                  Importar leads — passo 1
+                </DialogTitle>
                 <DialogDescription>Baixe a planilha modelo, preencha e suba o arquivo.</DialogDescription>
               </DialogHeader>
               <div className="space-y-3 mt-2">
-                <div className="p-4 rounded-xl border border-border/60 bg-muted/20">
+                {/* Template download — centered */}
+                <div className="p-5 rounded-xl border border-border bg-muted/20 flex flex-col items-center text-center">
+                  <div className="w-10 h-10 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center mb-2">
+                    <FileSpreadsheet className="w-5 h-5" />
+                  </div>
                   <div className="font-medium text-sm mb-1">Planilha modelo</div>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Campos: <strong>Nome</strong>, <strong>Telefone</strong> (obrigatório, com DDI 55 + DDD do estado, sem o "+"), <strong>Empresa</strong>, <strong>Nicho</strong>, <strong>Cidade</strong>, <strong>Região</strong>, <strong>Website</strong>.
-                    Origem e etapa do pipeline são selecionadas na próxima etapa.
+                  <p className="text-xs text-muted-foreground mb-3 max-w-md">
+                    Comece pelo modelo oficial para garantir que sua importação funcione sem erros.
                   </p>
-                  <Button variant="outline" size="sm" onClick={downloadTemplate}>
-                    <Download className="w-4 h-4 mr-2" /> Baixar planilha modelo
+                  <Button variant="outline" size="sm" onClick={downloadTemplate} className="gap-2">
+                    <Download className="w-4 h-4" /> Baixar planilha modelo
                   </Button>
                 </div>
-                <div className="p-4 rounded-xl border-2 border-dashed border-border/70 text-center">
-                  <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm font-medium">Envie sua planilha preenchida</p>
-                  <p className="text-xs text-muted-foreground mb-3">Formatos suportados: .xlsx, .xls, .csv</p>
+
+                {/* Mandatory formatting rules */}
+                <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-500" />
+                    <div className="text-sm font-semibold text-foreground">Regras obrigatórias de formatação</div>
+                  </div>
+                  <ul className="space-y-1.5 text-xs text-muted-foreground">
+                    <li className="flex gap-2">
+                      <Phone className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                      <span><strong className="text-foreground">Telefone obrigatório</strong> com <strong>DDI 55 + DDD + número</strong> (12 a 13 dígitos, só números, sem "+", espaços ou parênteses). Ex.: <code className="px-1 py-0.5 rounded bg-muted/60 font-mono">5511999998888</code></span>
+                    </li>
+                    <li className="flex gap-2">
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                      <span>Formatos aceitos: <strong>.xlsx, .xls, .csv</strong> (use a 1ª aba da planilha).</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                      <span>Colunas reconhecidas: <strong>Nome, Telefone, Empresa, Nicho, Cidade, Região, Website</strong>. Outras colunas são ignoradas.</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500 mt-0.5 shrink-0" />
+                      <span>Linhas com telefone inválido são <strong>descartadas automaticamente</strong>. Duplicados não são reimportados.</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                      <span><strong>Etapa do pipeline</strong> e <strong>origem</strong> são definidas no próximo passo (não na planilha).</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Drag and drop area */}
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    const f = e.dataTransfer.files?.[0];
+                    if (f) handleFile(f);
+                  }}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`p-6 rounded-xl border-2 border-dashed text-center cursor-pointer transition-colors ${
+                    isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/20"
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center mb-2">
+                    <Upload className="w-5 h-5" />
+                  </div>
+                  <p className="text-sm font-medium">
+                    {isDragging ? "Solte o arquivo aqui" : "Arraste e solte sua planilha"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    ou <span className="text-primary font-medium">clique para escolher</span> — .xlsx, .xls ou .csv
+                  </p>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -411,8 +479,8 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
                     className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
                   />
-                  <Button onClick={() => fileInputRef.current?.click()}>Escolher arquivo</Button>
                 </div>
+
                 {hasLimit && (
                   <div className="px-3 py-2 rounded-lg bg-muted/40 text-xs flex items-center justify-between">
                     <span>Espaço disponível no CRM: <strong>{Number.isFinite(remainingSlots) ? remainingSlots.toLocaleString("pt-BR") : "∞"}</strong></span>
@@ -433,7 +501,12 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
           {mode === "import-config" && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><FileUp className="w-4 h-4" /> Importar leads — passo 2</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
+                    <ArrowDownToLine className="w-4 h-4" />
+                  </div>
+                  Importar leads — passo 2
+                </DialogTitle>
                 <DialogDescription>Defina etapa do pipeline e origem dos leads.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 mt-2">
