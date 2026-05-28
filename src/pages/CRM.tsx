@@ -4,7 +4,7 @@ import { useCRM, type Lead } from '@/hooks/useCRM';
 import { KanbanBoardWithScroll } from '@/components/crm/KanbanBoardWithScroll';
 import { LeadDetailDialog } from '@/components/crm/LeadDetailDialog';
 import { AddLeadDialog } from '@/components/crm/AddLeadDialog';
-import { ExportLeadsButton } from '@/components/crm/ExportLeadsButton';
+import { ImportExportDialog, type ImportRow } from '@/components/crm/ImportExportDialog';
 import { BulkActionsBar } from '@/components/crm/BulkActionsBar';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
