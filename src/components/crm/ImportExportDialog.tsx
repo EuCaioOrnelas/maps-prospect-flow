@@ -260,25 +260,29 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
     }
   };
 
+  const [isDragging, setIsDragging] = useState(false);
+
   return (
     <>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
             variant="outline"
-            size="icon"
-            className="h-8 w-8 sm:h-9 sm:w-9"
+            size="sm"
+            className="h-8 sm:h-9 px-2 gap-1"
             onClick={() => { resetAll(); setOpen(true); }}
             aria-label="Importar e Exportar leads"
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <ArrowDownToLine className="w-4 h-4 text-primary" />
+            <span className="text-muted-foreground/60 text-xs">|</span>
+            <ArrowUpFromLine className="w-4 h-4 text-primary" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Importar / Exportar leads</TooltipContent>
       </Tooltip>
 
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) resetAll(); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card">
           {mode === "menu" && (
             <>
               <DialogHeader>
@@ -290,11 +294,11 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                 <button
                   onClick={() => setMode("export-config")}
-                  className="text-left p-4 rounded-xl border border-border/60 hover:border-primary/50 hover:bg-muted/30 transition-all group"
+                  className="text-left p-4 rounded-xl border border-border bg-background hover:border-primary/60 transition-colors"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center justify-center">
-                      <FileDown className="w-5 h-5" />
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-9 h-9 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
+                      <ArrowUpFromLine className="w-4.5 h-4.5" strokeWidth={2} />
                     </div>
                     <div className="font-semibold">Exportar leads</div>
                   </div>
@@ -304,11 +308,11 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
                 </button>
                 <button
                   onClick={() => setMode("import-template")}
-                  className="text-left p-4 rounded-xl border border-border/60 hover:border-primary/50 hover:bg-muted/30 transition-all group"
+                  className="text-left p-4 rounded-xl border border-border bg-background hover:border-primary/60 transition-colors"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 inline-flex items-center justify-center">
-                      <FileUp className="w-5 h-5" />
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-9 h-9 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
+                      <ArrowDownToLine className="w-4.5 h-4.5" strokeWidth={2} />
                     </div>
                     <div className="font-semibold">Importar leads</div>
                   </div>
@@ -318,7 +322,7 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
                 </button>
               </div>
               {hasLimit && (
-                <div className="mt-3 px-3 py-2 rounded-lg border border-border/50 bg-muted/30 text-xs text-muted-foreground flex items-center justify-between">
+                <div className="mt-3 px-3 py-2 rounded-lg border border-border bg-muted/30 text-xs text-muted-foreground flex items-center justify-between">
                   <span>Espaço no CRM: <strong className="text-foreground">{contactCount.toLocaleString("pt-BR")}</strong> / {Number.isFinite(contactLimit) ? contactLimit.toLocaleString("pt-BR") : "∞"}</span>
                   <span>Disponível: <strong className="text-foreground">{Number.isFinite(remainingSlots) ? remainingSlots.toLocaleString("pt-BR") : "∞"}</strong></span>
                 </div>
