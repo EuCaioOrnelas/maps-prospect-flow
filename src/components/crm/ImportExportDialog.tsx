@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Download, Upload, ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, FileDown, FileUp, Sparkles, ArrowDownToLine, ArrowUpFromLine, FileSpreadsheet, Phone, AlertCircle } from "lucide-react";
+import { Download, Upload, ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, FileDown, FileUp, Sparkles, FileSpreadsheet, Phone, AlertCircle } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { type Lead, WHATSAPP_STATUS_LABELS } from "@/hooks/useCRM";
@@ -273,9 +273,9 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
             onClick={() => { resetAll(); setOpen(true); }}
             aria-label="Importar e Exportar leads"
           >
-            <ArrowDownToLine className="w-4 h-4 text-primary" />
-            <span className="text-muted-foreground/60 text-xs">|</span>
-            <ArrowUpFromLine className="w-4 h-4 text-primary" />
+            <FileDown className="w-4 h-4 text-foreground" strokeWidth={1.75} />
+            <span className="text-muted-foreground/40 text-xs">|</span>
+            <FileUp className="w-4 h-4 text-foreground" strokeWidth={1.75} />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Importar / Exportar leads</TooltipContent>
@@ -297,8 +297,8 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
                   className="text-left p-4 rounded-xl border border-border bg-background hover:border-primary/60 transition-colors"
                 >
                   <div className="flex items-center gap-2.5 mb-2">
-                    <div className="w-9 h-9 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
-                      <ArrowUpFromLine className="w-4.5 h-4.5" strokeWidth={2} />
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center">
+                      <FileUp className="w-4.5 h-4.5" strokeWidth={1.75} />
                     </div>
                     <div className="font-semibold">Exportar leads</div>
                   </div>
@@ -311,8 +311,8 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
                   className="text-left p-4 rounded-xl border border-border bg-background hover:border-primary/60 transition-colors"
                 >
                   <div className="flex items-center gap-2.5 mb-2">
-                    <div className="w-9 h-9 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
-                      <ArrowDownToLine className="w-4.5 h-4.5" strokeWidth={2} />
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center">
+                      <FileDown className="w-4.5 h-4.5" strokeWidth={1.75} />
                     </div>
                     <div className="font-semibold">Importar leads</div>
                   </div>
@@ -334,8 +334,8 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
-                    <ArrowUpFromLine className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center">
+                    <FileUp className="w-4 h-4" strokeWidth={1.75} />
                   </div>
                   Exportar leads
                 </DialogTitle>
@@ -396,8 +396,8 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
-                    <ArrowDownToLine className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center">
+                    <FileDown className="w-4 h-4" strokeWidth={1.75} />
                   </div>
                   Importar leads — passo 1
                 </DialogTitle>
@@ -406,7 +406,7 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
               <div className="space-y-3 mt-2">
                 {/* Template download — centered */}
                 <div className="p-5 rounded-xl border border-border bg-muted/20 flex flex-col items-center text-center">
-                  <div className="w-10 h-10 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center mb-2">
                     <FileSpreadsheet className="w-5 h-5" />
                   </div>
                   <div className="font-medium text-sm mb-1">Planilha modelo</div>
@@ -463,7 +463,7 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
                     isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/20"
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center mb-2">
                     <Upload className="w-5 h-5" />
                   </div>
                   <p className="text-sm font-medium">
@@ -502,8 +502,8 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
-                    <ArrowDownToLine className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center">
+                    <FileDown className="w-4 h-4" strokeWidth={1.75} />
                   </div>
                   Importar leads — passo 2
                 </DialogTitle>
