@@ -297,8 +297,8 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
                   className="text-left p-4 rounded-xl border border-border bg-background hover:border-primary/60 transition-colors"
                 >
                   <div className="flex items-center gap-2.5 mb-2">
-                    <div className="w-9 h-9 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
-                      <ArrowUpFromLine className="w-4.5 h-4.5" strokeWidth={2} />
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center">
+                      <FileUp className="w-4.5 h-4.5" strokeWidth={1.75} />
                     </div>
                     <div className="font-semibold">Exportar leads</div>
                   </div>
@@ -311,8 +311,8 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
                   className="text-left p-4 rounded-xl border border-border bg-background hover:border-primary/60 transition-colors"
                 >
                   <div className="flex items-center gap-2.5 mb-2">
-                    <div className="w-9 h-9 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
-                      <ArrowDownToLine className="w-4.5 h-4.5" strokeWidth={2} />
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center">
+                      <FileDown className="w-4.5 h-4.5" strokeWidth={1.75} />
                     </div>
                     <div className="font-semibold">Importar leads</div>
                   </div>
