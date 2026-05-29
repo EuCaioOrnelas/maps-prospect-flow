@@ -273,9 +273,9 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
             onClick={() => { resetAll(); setOpen(true); }}
             aria-label="Importar e Exportar leads"
           >
-            <ArrowDownToLine className="w-4 h-4 text-primary" />
-            <span className="text-muted-foreground/60 text-xs">|</span>
-            <ArrowUpFromLine className="w-4 h-4 text-primary" />
+            <FileDown className="w-4 h-4 text-foreground" strokeWidth={1.75} />
+            <span className="text-muted-foreground/40 text-xs">|</span>
+            <FileUp className="w-4 h-4 text-foreground" strokeWidth={1.75} />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Importar / Exportar leads</TooltipContent>
