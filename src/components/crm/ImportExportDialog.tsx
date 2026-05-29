@@ -406,7 +406,7 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
               <div className="space-y-3 mt-2">
                 {/* Template download — centered */}
                 <div className="p-5 rounded-xl border border-border bg-muted/20 flex flex-col items-center text-center">
-                  <div className="w-10 h-10 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center mb-2">
                     <FileSpreadsheet className="w-5 h-5" />
                   </div>
                   <div className="font-medium text-sm mb-1">Planilha modelo</div>
@@ -463,7 +463,7 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
                     isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/20"
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center mb-2">
                     <Upload className="w-5 h-5" />
                   </div>
                   <p className="text-sm font-medium">
