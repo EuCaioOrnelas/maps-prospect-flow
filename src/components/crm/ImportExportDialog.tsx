@@ -502,8 +502,8 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-md bg-primary/10 text-primary inline-flex items-center justify-center">
-                    <ArrowDownToLine className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center">
+                    <FileDown className="w-4 h-4" strokeWidth={1.75} />
                   </div>
                   Importar leads — passo 2
                 </DialogTitle>
