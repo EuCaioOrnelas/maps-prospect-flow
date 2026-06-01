@@ -22,6 +22,9 @@ import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
 import { usePhonePrivacy } from '@/hooks/usePhonePrivacy';
 import { useAuth } from '@/contexts/AuthContext';
 import { useContactLimit } from '@/hooks/useContactLimit';
+import { useAccountRole } from '@/hooks/useAccountRole';
+import { useAccountMembers } from '@/hooks/useAccountMembers';
+import { CRMResponsibleFilter, type ResponsibleFilter } from '@/components/crm/CRMResponsibleFilter';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -50,6 +53,16 @@ export default function CRM() {
   const { hidden: phoneHidden, toggle: togglePhonePrivacy } = usePhonePrivacy();
   const { numbers: waNumbers, setNumbers: setWaNumbers, maxNumbers: waMaxNumbers, fetchNumbers: refetchWaNumbers } = useWhatsAppNumbers();
 
+  const { role } = useAccountRole();
+  const { members: accountMembers } = useAccountMembers();
+  const isOperational = role === 'operational';
+  const canChangeResponsible = role === 'owner' || role === 'admin';
+  const responsibleMembers = useMemo(
+    () => accountMembers.map((m) => ({ user_id: m.user_id, name: m.name, email: m.email })),
+    [accountMembers]
+  );
+  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>(isOperational ? 'me' : 'me');
+
   const {
     stages, 
     leads, 
@@ -68,6 +81,7 @@ export default function CRM() {
     createStage,
     deleteStage,
     moveStage,
+    assignLeadResponsible,
   } = useCRM();
 
   const [filters, setFilters] = useState<CRMFiltersState>({
