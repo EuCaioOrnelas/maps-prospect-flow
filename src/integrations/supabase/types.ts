@@ -2413,6 +2413,7 @@ export type Database = {
           ai_diagnosis: string | null
           ai_recommended_action: string | null
           ai_score: number | null
+          archived_at: string | null
           category: string | null
           city: string | null
           closing_probability: string | null
@@ -2420,6 +2421,7 @@ export type Database = {
           contact_id: string | null
           contact_name: string | null
           created_at: string
+          created_by_user_id: string | null
           drive_folder_id: string | null
           drive_folder_url: string | null
           email: string | null
@@ -2460,6 +2462,7 @@ export type Database = {
           ai_diagnosis?: string | null
           ai_recommended_action?: string | null
           ai_score?: number | null
+          archived_at?: string | null
           category?: string | null
           city?: string | null
           closing_probability?: string | null
@@ -2467,6 +2470,7 @@ export type Database = {
           contact_id?: string | null
           contact_name?: string | null
           created_at?: string
+          created_by_user_id?: string | null
           drive_folder_id?: string | null
           drive_folder_url?: string | null
           email?: string | null
@@ -2507,6 +2511,7 @@ export type Database = {
           ai_diagnosis?: string | null
           ai_recommended_action?: string | null
           ai_score?: number | null
+          archived_at?: string | null
           category?: string | null
           city?: string | null
           closing_probability?: string | null
@@ -2514,6 +2519,7 @@ export type Database = {
           contact_id?: string | null
           contact_name?: string | null
           created_at?: string
+          created_by_user_id?: string | null
           drive_folder_id?: string | null
           drive_folder_url?: string | null
           email?: string | null

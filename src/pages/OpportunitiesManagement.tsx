@@ -27,7 +27,7 @@ import {
   TrendingUp, Target, ChevronLeft, ChevronRight, Sparkles, RefreshCw,
   Info, MessageSquare, Copy, Check, Pencil, Building2, Tag, Map,
   CheckCircle2, Clock, Send, ShieldCheck, Eye, AlertTriangle, Zap, SlidersHorizontal, X,
-  Settings, Wifi, ChevronDown, ChevronUp,
+  Settings, Wifi, ChevronDown, ChevronUp, Users,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,6 +39,11 @@ import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { buildTourDemoLead } from "@/lib/tourDemoLead";
 import { buildTourFillerLeads } from "@/lib/tourDemoCockpit";
+import { useAccountRole } from "@/hooks/useAccountRole";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { CRMResponsibleFilter, type ResponsibleFilter } from "@/components/crm/CRMResponsibleFilter";
+import { OpportunityBulkBar } from "@/components/opportunities/OpportunityBulkBar";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface OpportunityLead {
   id: string;
@@ -64,15 +69,25 @@ interface OpportunityLead {
   origin: string | null;
   first_message_sent: boolean | null;
   whatsapp_number_id: string | null;
+  responsible_user_id: string | null;
+  archived_at: string | null;
 }
 
-const ITEMS_PER_PAGE = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 60] as const;
 
 export default function OpportunitiesManagement() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   useAutoScoreTracking("opportunities_management");
+  const { role } = useAccountRole();
+  const { members: accountMembers } = useAccountMembers();
+  const canChangeResponsible = role === "owner" || role === "admin";
+  const responsibleMembers = useMemo(
+    () => accountMembers.map((m) => ({ user_id: m.user_id, name: m.name, email: m.email })),
+    [accountMembers]
+  );
+
   const [leads, setLeads] = useState<OpportunityLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -84,6 +99,9 @@ export default function OpportunitiesManagement() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterCity, setFilterCity] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(20);
+  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>("me");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedLead, setSelectedLead] = useState<OpportunityLead | null>(null);
   const [popupTab, setPopupTab] = useState<"score" | "dados">("dados");
   const [scoring, setScoring] = useState(false);
@@ -189,9 +207,9 @@ export default function OpportunitiesManagement() {
     try {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id")
-        .eq("user_id", user.id)
+        .select("id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id, responsible_user_id, archived_at")
         .in("origin", ["oportunidades", "prospeccao"])
+        .is("archived_at", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -202,6 +220,21 @@ export default function OpportunitiesManagement() {
       setLoading(false);
     }
   };
+
+  // Realtime — refetch on any account-scoped lead change in opportunities
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`opps-leads-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "leads" },
+        () => { fetchLeads(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const batchScoreLeads = async (unscoredLeads: OpportunityLead[]) => {
     setBatchScoring(true);
@@ -409,13 +442,67 @@ export default function OpportunitiesManagement() {
     if (filterCity !== "all") {
       result = result.filter(l => l.city === filterCity);
     }
+    if (responsibleFilter === "me") {
+      result = result.filter(l => l.responsible_user_id === user?.id);
+    } else if (responsibleFilter !== "all") {
+      result = result.filter(l => l.responsible_user_id === responsibleFilter);
+    }
     if (sortOrder === "score_desc") {
       result = [...result].sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0));
     } else if (sortOrder === "score_asc") {
       result = [...result].sort((a, b) => (a.ai_score ?? 0) - (b.ai_score ?? 0));
     }
     return result;
-  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity]);
+  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity, responsibleFilter, user?.id]);
+
+  // Bulk actions handlers
+  const toggleSelected = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const selectAllVisible = () => setSelectedIds(new Set(paginatedLeadsIds()));
+  const paginatedLeadsIds = (): string[] => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredLeads.slice(start, start + pageSize).map(l => l.id).filter(id => !String(id).startsWith("__tour_"));
+  };
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const bulkAssign = async (responsibleUserId: string | null) => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase
+      .from("leads")
+      .update({ responsible_user_id: responsibleUserId })
+      .in("id", ids);
+    if (error) {
+      console.error(error);
+      toast({ title: "Erro ao transferir", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads(prev => prev.map(l => ids.includes(l.id) ? { ...l, responsible_user_id: responsibleUserId } : l));
+    toast({ title: "Responsável atualizado", description: `${ids.length} lead(s) transferido(s).` });
+    clearSelection();
+  };
+
+  const bulkArchive = async () => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase
+      .from("leads")
+      .update({ archived_at: new Date().toISOString() })
+      .in("id", ids);
+    if (error) {
+      console.error(error);
+      toast({ title: "Erro ao arquivar", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads(prev => prev.filter(l => !ids.includes(l.id)));
+    toast({ title: "Arquivado", description: `${ids.length} lead(s) arquivado(s).` });
+    clearSelection();
+  };
 
   // Tour demo lead injection (synthetic, never persisted)
   const [tourDemoActive, setTourDemoActive] = useState(
@@ -448,10 +535,10 @@ export default function OpportunitiesManagement() {
     return base;
   }, [filteredLeads, tourDemoActive]);
 
-  const totalPages = Math.max(1, Math.ceil(displayLeads.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(displayLeads.length / pageSize));
   const paginatedLeads = displayLeads.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
 
   const getScoreBadge = (score: number | null) => {
@@ -1157,6 +1244,22 @@ export default function OpportunitiesManagement() {
                         className="pl-9"
                       />
                     </div>
+                    <CRMResponsibleFilter
+                      value={responsibleFilter}
+                      onChange={(v) => { setResponsibleFilter(v); setCurrentPage(1); clearSelection(); }}
+                      members={responsibleMembers}
+                      currentUserId={user?.id ?? null}
+                    />
+                    <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
+                      <SelectTrigger className="w-[100px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAGE_SIZE_OPTIONS.map(n => (
+                          <SelectItem key={n} value={String(n)}>{n} / pág</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Button
                       variant="outline"
                       className="gap-2 overflow-visible"
@@ -1173,6 +1276,7 @@ export default function OpportunitiesManagement() {
                   </div>
                 );
               })()}
+
 
               {/* Filter Dialog */}
               <Dialog open={showFilters} onOpenChange={setShowFilters}>
@@ -1299,11 +1403,32 @@ export default function OpportunitiesManagement() {
                 </DialogContent>
               </Dialog>
 
+              {/* Bulk actions bar */}
+              <OpportunityBulkBar
+                selectedCount={selectedIds.size}
+                totalVisible={paginatedLeads.filter(l => !String(l.id).startsWith("__tour_")).length}
+                onSelectAllVisible={selectAllVisible}
+                onClear={clearSelection}
+                onChangeResponsible={bulkAssign}
+                onArchive={bulkArchive}
+                members={responsibleMembers}
+                canChangeResponsible={canChangeResponsible}
+              />
+
               {/* Table */}
               <div className="bg-card border border-border rounded-xl overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[40px]">
+                        <Checkbox
+                          checked={selectedIds.size > 0 && paginatedLeads.filter(l => !String(l.id).startsWith("__tour_")).every(l => selectedIds.has(l.id))}
+                          onCheckedChange={(checked) => {
+                            if (checked) selectAllVisible(); else clearSelection();
+                          }}
+                          aria-label="Selecionar página"
+                        />
+                      </TableHead>
                       <TableHead><div className="flex items-center gap-1.5"><Building2 size={14} />Empresa</div></TableHead>
                       <TableHead><div className="flex items-center gap-1.5"><Tag size={14} />Categoria</div></TableHead>
                       <TableHead><div className="flex items-center gap-1.5"><MapPin size={14} />Cidade</div></TableHead>
@@ -1311,6 +1436,7 @@ export default function OpportunitiesManagement() {
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5 whitespace-nowrap"><BarChart3 size={14} />Índ. Fech.</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><TrendingUp size={14} />Intenção</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><CheckCircle2 size={14} />Status</div></TableHead>
+                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Users size={14} />Resp.</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Map size={14} />Maps</div></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1325,7 +1451,7 @@ export default function OpportunitiesManagement() {
                       ))
                     ) : paginatedLeads.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                        <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                           {searchTerm || filterLevel !== "all"
                             ? "Nenhuma oportunidade encontrada com esses filtros"
                             : "Nenhuma oportunidade ainda. Faça uma busca em Oportunidades → Buscar"}
@@ -1339,6 +1465,15 @@ export default function OpportunitiesManagement() {
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => { setSelectedLead(lead); setPopupTab("dados"); setEditingMessage(false); }}
                         >
+                          <TableCell className="w-[40px]" onClick={(e) => e.stopPropagation()}>
+                            {!String(lead.id).startsWith("__tour_") && (
+                              <Checkbox
+                                checked={selectedIds.has(lead.id)}
+                                onCheckedChange={() => toggleSelected(lead.id)}
+                                aria-label="Selecionar lead"
+                              />
+                            )}
+                          </TableCell>
                           <TableCell className="font-medium max-w-[220px]">
                             <span className="truncate block whitespace-nowrap" title={lead.company_name || "Sem nome"}>
                               {lead.company_name || "Sem nome"}
@@ -1363,6 +1498,21 @@ export default function OpportunitiesManagement() {
                             )}
                           </TableCell>
                           <TableCell className="text-center">{getLevelBadge(lead.opportunity_level, lead.ai_score)}</TableCell>
+                          <TableCell className="text-center">
+                            {(() => {
+                              const m = responsibleMembers.find(x => x.user_id === lead.responsible_user_id);
+                              const label = m ? (m.name || m.email || "?") : "—";
+                              const initial = m ? (m.name || m.email || "?").trim().charAt(0).toUpperCase() : "—";
+                              return (
+                                <span
+                                  title={`Responsável: ${label}`}
+                                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold border border-border/60 ${m ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}
+                                >
+                                  {initial}
+                                </span>
+                              );
+                            })()}
+                          </TableCell>
                           <TableCell className="text-center">
                             {lead.first_message_sent ? (
                               <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
