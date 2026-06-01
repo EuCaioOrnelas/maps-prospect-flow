@@ -12,6 +12,7 @@ import { useLeadScores } from '@/hooks/useLeadScores';
 import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
 import { LeadEngagementScore } from './LeadEngagementScore';
 import { LeadPotentialValueCompact } from './LeadPotentialValueCompact';
+import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 
 interface LeadCardProps {
   lead: Lead;
@@ -20,6 +21,9 @@ interface LeadCardProps {
   onDragEnd: () => void;
   isSelected?: boolean;
   onUpdateName?: (leadId: string, newName: string) => Promise<void>;
+  members?: ResponsibleMember[];
+  onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
+  canChangeResponsible?: boolean;
 }
 
 const LeadCardComponent = ({
@@ -29,6 +33,9 @@ const LeadCardComponent = ({
   onDragEnd,
   isSelected,
   onUpdateName,
+  members = [],
+  onChangeResponsible,
+  canChangeResponsible = true,
 }: LeadCardProps) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.contact_name || '');
@@ -141,6 +148,12 @@ const LeadCardComponent = ({
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
               )}
+              <ResponsibleAvatar
+                responsibleId={lead.responsible_user_id}
+                members={members}
+                canEdit={canChangeResponsible && !!onChangeResponsible}
+                onChange={async (uid) => { if (onChangeResponsible) await onChangeResponsible(lead.id, uid); }}
+              />
             </div>
           </>
         )}
