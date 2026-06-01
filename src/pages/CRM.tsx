@@ -646,6 +646,10 @@ export default function CRM() {
                   setAddLeadDefaultStageId(stageId);
                   setAddLeadOpen(true);
                 }}
+                members={responsibleMembers}
+                onChangeResponsible={assignLeadResponsible}
+                canChangeResponsible={canChangeResponsible}
+                hideValue={isOperational}
               />
             )}
           </div>
