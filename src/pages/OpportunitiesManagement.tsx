@@ -466,10 +466,10 @@ export default function OpportunitiesManagement() {
     return base;
   }, [filteredLeads, tourDemoActive]);
 
-  const totalPages = Math.max(1, Math.ceil(displayLeads.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(displayLeads.length / pageSize));
   const paginatedLeads = displayLeads.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
 
   const getScoreBadge = (score: number | null) => {
