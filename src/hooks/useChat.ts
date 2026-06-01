@@ -17,9 +17,11 @@ export interface ChatConversation {
   is_pinned: boolean;
   is_archived: boolean;
   is_muted: boolean;
+  responsible_user_id: string | null;
   created_at: string;
   updated_at: string;
 }
+
 
 export interface ChatMessage {
   id: string;
