@@ -385,6 +385,27 @@ export default function MetaNumeros() {
                 <Input value={editNickname} onChange={(e) => setEditNickname(e.target.value)} placeholder="Ex: Atendimento, Vendas..." />
               </div>
 
+              {canChangeResponsible && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Responsável (opcional)</label>
+                  <Select value={editResponsible} onValueChange={setEditResponsible}>
+                    <SelectTrigger><SelectValue placeholder="Sem responsável" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem responsável</SelectItem>
+                      {members.map((m) => (
+                        <SelectItem key={m.user_id} value={m.user_id}>
+                          {m.name || m.email || m.user_id.slice(0, 8)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground">
+                    Quem deve receber notificações e atender por padrão neste número.
+                  </p>
+                </div>
+              )}
+
+
               {!showTokenField ? (
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground hover:text-foreground" onClick={() => setShowTokenField(true)}>
                   <Pencil size={11} /> Atualizar token de acesso
