@@ -1244,6 +1244,22 @@ export default function OpportunitiesManagement() {
                         className="pl-9"
                       />
                     </div>
+                    <CRMResponsibleFilter
+                      value={responsibleFilter}
+                      onChange={(v) => { setResponsibleFilter(v); setCurrentPage(1); clearSelection(); }}
+                      members={responsibleMembers}
+                      currentUserId={user?.id ?? null}
+                    />
+                    <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
+                      <SelectTrigger className="w-[100px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAGE_SIZE_OPTIONS.map(n => (
+                          <SelectItem key={n} value={String(n)}>{n} / pág</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Button
                       variant="outline"
                       className="gap-2 overflow-visible"
@@ -1260,6 +1276,7 @@ export default function OpportunitiesManagement() {
                   </div>
                 );
               })()}
+
 
               {/* Filter Dialog */}
               <Dialog open={showFilters} onOpenChange={setShowFilters}>
@@ -1386,11 +1403,32 @@ export default function OpportunitiesManagement() {
                 </DialogContent>
               </Dialog>
 
+              {/* Bulk actions bar */}
+              <OpportunityBulkBar
+                selectedCount={selectedIds.size}
+                totalVisible={paginatedLeads.filter(l => !String(l.id).startsWith("__tour_")).length}
+                onSelectAllVisible={selectAllVisible}
+                onClear={clearSelection}
+                onChangeResponsible={bulkAssign}
+                onArchive={bulkArchive}
+                members={responsibleMembers}
+                canChangeResponsible={canChangeResponsible}
+              />
+
               {/* Table */}
               <div className="bg-card border border-border rounded-xl overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[40px]">
+                        <Checkbox
+                          checked={selectedIds.size > 0 && paginatedLeads.filter(l => !String(l.id).startsWith("__tour_")).every(l => selectedIds.has(l.id))}
+                          onCheckedChange={(checked) => {
+                            if (checked) selectAllVisible(); else clearSelection();
+                          }}
+                          aria-label="Selecionar página"
+                        />
+                      </TableHead>
                       <TableHead><div className="flex items-center gap-1.5"><Building2 size={14} />Empresa</div></TableHead>
                       <TableHead><div className="flex items-center gap-1.5"><Tag size={14} />Categoria</div></TableHead>
                       <TableHead><div className="flex items-center gap-1.5"><MapPin size={14} />Cidade</div></TableHead>
@@ -1398,6 +1436,7 @@ export default function OpportunitiesManagement() {
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5 whitespace-nowrap"><BarChart3 size={14} />Índ. Fech.</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><TrendingUp size={14} />Intenção</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><CheckCircle2 size={14} />Status</div></TableHead>
+                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Users size={14} />Resp.</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Map size={14} />Maps</div></TableHead>
                     </TableRow>
                   </TableHeader>
