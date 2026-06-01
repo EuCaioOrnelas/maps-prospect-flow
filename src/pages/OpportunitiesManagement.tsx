@@ -207,9 +207,9 @@ export default function OpportunitiesManagement() {
     try {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id")
-        .eq("user_id", user.id)
+        .select("id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id, responsible_user_id, archived_at")
         .in("origin", ["oportunidades", "prospeccao"])
+        .is("archived_at", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -220,6 +220,21 @@ export default function OpportunitiesManagement() {
       setLoading(false);
     }
   };
+
+  // Realtime — refetch on any account-scoped lead change in opportunities
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`opps-leads-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "leads" },
+        () => { fetchLeads(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const batchScoreLeads = async (unscoredLeads: OpportunityLead[]) => {
     setBatchScoring(true);
