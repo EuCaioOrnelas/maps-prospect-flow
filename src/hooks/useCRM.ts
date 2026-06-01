@@ -687,19 +687,19 @@ export const useCRM = () => {
     }
   }, [user, fetchStages, fetchLeads]);
 
-  // Real-time subscriptions
+  // Real-time subscriptions (account-wide; RLS filters payload)
   useEffect(() => {
-    if (!user) return;
+    if (!user || !ownerUserId) return;
 
     const leadsChannel = supabase
-      .channel('leads-changes')
+      .channel(`leads-changes-${ownerUserId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'leads',
-          filter: `user_id=eq.${user.id}`,
+          filter: `owner_user_id=eq.${ownerUserId}`,
         },
         () => {
           fetchLeads();
@@ -708,14 +708,14 @@ export const useCRM = () => {
       .subscribe();
 
     const stagesChannel = supabase
-      .channel('stages-changes')
+      .channel(`stages-changes-${ownerUserId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'pipeline_stages',
-          filter: `user_id=eq.${user.id}`,
+          filter: `owner_user_id=eq.${ownerUserId}`,
         },
         () => {
           fetchStages();
@@ -727,7 +727,7 @@ export const useCRM = () => {
       supabase.removeChannel(leadsChannel);
       supabase.removeChannel(stagesChannel);
     };
-  }, [user, fetchLeads, fetchStages]);
+  }, [user, ownerUserId, fetchLeads, fetchStages]);
 
   return {
     stages,
