@@ -221,20 +221,28 @@ export default function OpportunitiesManagement() {
     }
   };
 
-  // Realtime — refetch on any account-scoped lead change in opportunities
+  // Realtime — refetch on any account-scoped lead change (throttled)
   useEffect(() => {
     if (!user) return;
+    let pending = false;
+    let timer: any = null;
+    const scheduleRefetch = () => {
+      if (pending) return;
+      pending = true;
+      timer = setTimeout(() => { pending = false; fetchLeads(); }, 1500);
+    };
     const channel = supabase
       .channel(`opps-leads-${user.id}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "leads" },
-        () => { fetchLeads(); }
+        () => { scheduleRefetch(); }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { if (timer) clearTimeout(timer); supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
+
 
   const batchScoreLeads = async (unscoredLeads: OpportunityLead[]) => {
     setBatchScoring(true);
