@@ -114,6 +114,7 @@ export type Database = {
           response_content: string | null
           response_received: boolean
           response_received_at: string | null
+          responsible_user_id: string | null
           status: string
           updated_at: string
           user_responded_at: string | null
@@ -143,6 +144,7 @@ export type Database = {
           response_content?: string | null
           response_received?: boolean
           response_received_at?: string | null
+          responsible_user_id?: string | null
           status?: string
           updated_at?: string
           user_responded_at?: string | null
@@ -172,6 +174,7 @@ export type Database = {
           response_content?: string | null
           response_received?: boolean
           response_received_at?: string | null
+          responsible_user_id?: string | null
           status?: string
           updated_at?: string
           user_responded_at?: string | null
@@ -861,6 +864,7 @@ export type Database = {
           last_message_type: string | null
           owner_user_id: string | null
           pinned_at: string | null
+          responsible_user_id: string | null
           unread_count: number | null
           updated_at: string
           user_id: string
@@ -881,6 +885,7 @@ export type Database = {
           last_message_type?: string | null
           owner_user_id?: string | null
           pinned_at?: string | null
+          responsible_user_id?: string | null
           unread_count?: number | null
           updated_at?: string
           user_id: string
@@ -901,6 +906,7 @@ export type Database = {
           last_message_type?: string | null
           owner_user_id?: string | null
           pinned_at?: string | null
+          responsible_user_id?: string | null
           unread_count?: number | null
           updated_at?: string
           user_id?: string
@@ -6679,6 +6685,7 @@ export type Database = {
           owner_user_id: string | null
           phone_number_id: string | null
           raw_signup_data: Json | null
+          responsible_user_id: string | null
           status: string
           token_expires_at: string | null
           updated_at: string
@@ -6696,6 +6703,7 @@ export type Database = {
           owner_user_id?: string | null
           phone_number_id?: string | null
           raw_signup_data?: Json | null
+          responsible_user_id?: string | null
           status?: string
           token_expires_at?: string | null
           updated_at?: string
@@ -6713,6 +6721,7 @@ export type Database = {
           owner_user_id?: string | null
           phone_number_id?: string | null
           raw_signup_data?: Json | null
+          responsible_user_id?: string | null
           status?: string
           token_expires_at?: string | null
           updated_at?: string
@@ -7348,6 +7357,7 @@ export type Database = {
           owner_user_id: string | null
           phone_number: string | null
           proxy_id: string | null
+          responsible_user_id: string | null
           updated_at: string
           user_id: string
         }
@@ -7364,6 +7374,7 @@ export type Database = {
           owner_user_id?: string | null
           phone_number?: string | null
           proxy_id?: string | null
+          responsible_user_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -7380,6 +7391,7 @@ export type Database = {
           owner_user_id?: string | null
           phone_number?: string | null
           proxy_id?: string | null
+          responsible_user_id?: string | null
           updated_at?: string
           user_id?: string
         }
