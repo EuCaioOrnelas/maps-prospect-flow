@@ -361,6 +361,17 @@ export const useCRM = () => {
     trackScoreEvent("crm_advanced_feature_used", { action: "move_stage" });
   };
 
+  // Assign / change lead responsible (member of the account)
+  const assignLeadResponsible = async (leadId: string, responsibleUserId: string | null) => {
+    await updateLead(leadId, { responsible_user_id: responsibleUserId } as Partial<Lead>);
+    await logActivity(
+      leadId,
+      'responsible_changed',
+      responsibleUserId ? 'Responsável atualizado' : 'Responsável removido',
+      { responsible_user_id: responsibleUserId }
+    );
+  };
+
   // Delete lead
   const deleteLead = async (id: string) => {
     if (!user) return;
