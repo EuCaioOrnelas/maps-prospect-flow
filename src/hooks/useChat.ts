@@ -187,8 +187,10 @@ export function useChat() {
           is_pinned: false,
           is_archived: false,
           is_muted: false,
+          responsible_user_id: null,
           created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
           updated_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
+
         };
         dbConversations.push(fakeConv);
       }
