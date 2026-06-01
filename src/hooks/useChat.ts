@@ -586,5 +586,7 @@ export function useChat() {
     messagesEndRef,
     fetchTemplates,
     handleReconnect,
+    transferConversation,
   };
 }
+
