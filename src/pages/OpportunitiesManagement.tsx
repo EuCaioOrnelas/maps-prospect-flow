@@ -1437,9 +1437,11 @@ export default function OpportunitiesManagement() {
                 onClear={clearSelection}
                 onChangeResponsible={bulkAssign}
                 onArchive={bulkArchive}
+                onMarkSent={bulkMarkSent}
                 members={responsibleMembers}
                 canChangeResponsible={canChangeResponsible}
               />
+
 
               {/* Table */}
               <div className="bg-card border border-border rounded-xl overflow-hidden">
