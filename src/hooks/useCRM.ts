@@ -122,35 +122,39 @@ const DEFAULT_STAGES: Omit<PipelineStage, 'id' | 'user_id' | 'created_at' | 'upd
 
 export const useCRM = () => {
   const { user } = useAuth();
+  const { role, ownerUserId } = useAccountRole();
   const { trackScoreEvent } = useUserScoreTracking();
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
-  // Fetch pipeline stages
+  // Fetch pipeline stages (account-wide; RLS restricts)
   const fetchStages = useCallback(async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
+    const query = supabase
       .from('pipeline_stages')
       .select('*')
-      .eq('user_id', user.id)
       .order('position', { ascending: true });
+
+    if (ownerUserId) query.eq('owner_user_id', ownerUserId);
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching pipeline stages:', error);
       return;
     }
 
-    // If no stages exist, create default ones
-    if (!data || data.length === 0) {
+    // If no stages exist AND current user is owner of the account, create defaults
+    if ((!data || data.length === 0) && (!role || role === 'owner')) {
       await createDefaultStages();
       return;
     }
 
-    setStages(data);
-  }, [user]);
+    setStages(data || []);
+  }, [user, ownerUserId, role]);
 
   // Create default pipeline stages
   const createDefaultStages = async () => {
@@ -174,18 +178,21 @@ export const useCRM = () => {
     setStages(data || []);
   };
 
-  // Fetch ALL leads for the user (excluding invalid phone numbers like group IDs)
+  // Fetch ALL leads visible to the user (RLS enforces account/role scope)
   const fetchLeads = useCallback(async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
+    const query = supabase
       .from('leads')
       .select(`
         *,
         whatsapp_number:whatsapp_numbers(id, name, phone_number)
       `)
-      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
+
+    if (ownerUserId) query.eq('owner_user_id', ownerUserId);
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching leads:', error);
