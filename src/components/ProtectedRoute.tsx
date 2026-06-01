@@ -8,6 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardThemeProvider } from '@/contexts/ThemeContext';
 import { getFeatureForPath, profileHasFeature } from '@/lib/featurePermissions';
 import { planHasFeature } from '@/lib/planAccess';
+import { getRolePermissionForPath, roleHasPermission, getDefaultHomeForRole, type AccountRole } from '@/lib/accountPermissions';
+import { MustChangePasswordDialog } from '@/components/users/MustChangePasswordDialog';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -31,8 +33,22 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   const { isAdmin, loading: isAdminLoading } = useAdminCheck();
   const location = useLocation();
   const trackedPaths = useRef<Set<string>>(new Set());
-  // null = ainda checando, true = precisa fazer onboarding, false = ok
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+  const [accountRole, setAccountRole] = useState<AccountRole | null>(null);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) { setAccountRole(null); setMustChangePassword(false); return; }
+    (async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('account_role, must_change_password')
+        .eq('id', user.id)
+        .maybeSingle();
+      setAccountRole(((data as any)?.account_role || 'owner') as AccountRole);
+      setMustChangePassword(!!(data as any)?.must_change_password);
+    })();
+  }, [user?.id]);
 
   // Verifica se o usuário já completou (ou pulou) o onboarding inicial
   useEffect(() => {
