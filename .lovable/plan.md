@@ -1,190 +1,116 @@
-# Prospecção IA + Sistema de Vendas no CRM
+# Sistema de Usuários e Permissões — Wiize
 
-## Visão geral
+Implementação de multiusuários por conta (Owner + Sub Usuários) com cargos, permissões granulares, proteção de rotas, primeiro login obrigatório, convite por email e auditoria.
 
-Três mudanças que se conectam:
+## 1. Modelo de dados (Lovable Cloud / Supabase)
 
-1. **Rebrand** "Oportunidades" → **"Prospecção IA"** (apenas label, rota e tabelas inalteradas).
-2. **Sistema de Vendas** dentro do CRM: novo modal ao marcar lead como "Fechado (Ganho)", bloco no popup do lead, e nova sub-página `/crm/vendas` com KPIs financeiros.
-3. **Receita recorrente**: vendas com contrato gerando receita projetada até expiração (MRR real, não estimado).
+Em vez de criar uma tabela `users` paralela (que conflitaria com `auth.users`), o padrão correto é trabalhar sobre `profiles` + uma tabela de membership.
 
----
+**Migração:**
+- Enum `account_role`: `owner | admin | operational`
+- Enum `account_member_status`: `active | inactive`
+- Tabela `account_members`:
+  - `id`, `owner_user_id` (UUID — id do Owner / "conta"), `user_id` (UUID, FK lógica para auth.users), `role`, `status`, `must_change_password`, `created_by`, `created_at`, `updated_at`, `last_login_at`
+  - Único: (`owner_user_id`, `user_id`)
+- Adicionar em `profiles`: `parent_owner_id UUID NULL` (aponta para o owner da conta — null = é o próprio owner) e `account_role account_role` (espelhado p/ leitura rápida)
+- Tabela `account_audit_log`: `id, owner_user_id, actor_user_id, action, target_user_id, metadata jsonb, created_at`
+- RPCs SECURITY DEFINER:
+  - `get_account_owner(_user_id uuid) returns uuid` — retorna o owner da conta (próprio id se for owner, senão `parent_owner_id`)
+  - `get_account_role(_user_id uuid) returns account_role`
+  - `count_account_members(_owner uuid) returns int`
+  - `create_account_member(...)` — valida limite por plano, cria auth user via edge function (não dá pra criar do SQL), aqui só registra membership
+  - `update_account_member_role / status / reset_password_flag`
+- GRANTs corretos + RLS:
+  - `account_members`: SELECT permitido se `get_account_owner(auth.uid()) = owner_user_id` (todos da conta veem); INSERT/UPDATE/DELETE só Owner/Admin via has_role check
+  - `account_audit_log`: SELECT só Owner/Admin da conta
 
-## 1. Rebrand "Prospecção IA"
+## 2. Limites por plano
+Centralizado em `src/lib/planAccess.ts`:
+- `getUserSeatLimit(profile)`:
+  - `start` (Atendimento) → 3 (1 owner + 2 sub)
+  - `growth` → 6 (1 + 5)
+  - `scale`/legados → Infinity
+- Validação no front (UI bloqueia botão) **e** no edge function (server-side hard limit).
 
-**Onde trocar (só label visual, sem mudar rotas/tabelas):**
+## 3. Edge Functions
+- `account-create-member`: cria usuário em `auth.users` via service role, insere `profiles` (com `parent_owner_id` = owner), insere `account_members`, envia email via Resend (secret `RESEND_API_KEY` já existente — verificar). Valida limite, valida que caller é Owner/Admin.
+- `account-reset-member-password`: gera senha temporária, atualiza via Admin API, marca `must_change_password=true`, envia email.
+- `account-update-member`: editar nome/cargo/status (Owner não pode ser desativado/removido).
 
-- Sidebar (`AppSidebar.tsx`) — item "Oportunidades" vira "Prospecção IA"
-- Títulos de página (`Opportunities.tsx`, breadcrumbs)
-- Guide (`useGuidedTour.tsx`) — textos dos steps
-- Cockpit — cards e CTAs que dizem "Oportunidades"
-- Modais e dialogs de upgrade que mencionam o módulo
-- Help center / FAQ menções
+## 4. Frontend
 
-**Mantém igual:**
-- Rota `/oportunidades`
-- Tabelas `opportunities`, `opportunity_*`
-- Variáveis/funções no código
-- A "unidade de consumo" interna (continua sendo "Opportunity unit")
+**Permissões (`src/lib/accountPermissions.ts`):**
+```ts
+type Permission = 'dashboard_main' | 'dashboard_meta' | 'prospeccao' | 'crm' 
+                | 'atendimento' | 'usuarios' | 'assinaturas' | 'faturamento' 
+                | 'configuracoes' | 'integracoes';
 
----
-
-## 2. Estrutura de navegação do CRM
-
-CRM vira pai com 2 abas no topo:
-
-```
-/crm           → Pipeline (kanban atual, comportamento inalterado)
-/crm/vendas    → Vendas & Receita (NOVA página)
-```
-
-Abas renderizadas no topo da página, estilo `Tabs` do shadcn. Sidebar continua mostrando só "CRM" como item único.
-
----
-
-## 3. Banco de dados — nova tabela `sales`
-
-```sql
-CREATE TABLE public.sales (
-  id uuid PK,
-  user_id uuid (FK auth ref, scoped via RLS),
-  lead_id uuid (FK leads, ON DELETE SET NULL),
-  
-  -- Identificação
-  title text NOT NULL,
-  description text,
-  
-  -- Valores
-  amount numeric(12,2) NOT NULL,              -- valor total ou mensal (ver type)
-  sale_type text NOT NULL,                    -- 'one_time' | 'recurring'
-  payment_method text,                        -- pix, credit_card, boleto, transfer, other
-  
-  -- Contrato (só se recurring)
-  contract_months integer,                    -- 1, 3, 6, 12, 24, ou null (one_time)
-  start_date date NOT NULL DEFAULT today,
-  expiration_date date,                       -- calculado: start_date + contract_months
-  
-  -- Status do contrato
-  status text NOT NULL DEFAULT 'active',      -- active | expired | cancelled | renewed
-  
-  -- Anexos (Supabase Storage: bucket 'sales-attachments')
-  receipt_url text,                           -- comprovante
-  contract_url text,                          -- contrato assinado
-  
-  created_at, updated_at
-);
-
--- Bucket privado 'sales-attachments' com RLS por user_id
+const ROLE_PERMISSIONS: Record<AccountRole, Permission[]> = {
+  owner: [/* todas */],
+  admin: [/* todas exceto assinaturas/faturamento */],
+  operational: ['prospeccao', 'crm', 'atendimento'],
+};
 ```
 
-**Cálculo de receita total:**
-- `one_time`: vale o `amount`
-- `recurring`: `amount * contract_months`
-- **MRR atual**: soma `amount` de todas vendas `recurring` com status `active` e `expiration_date >= today`
+**Hook `useAccountRole()`** — carrega role do usuário logado (cacheado).
 
-**Job/edge function diário** (ou trigger no read) atualiza `status` para `expired` quando `expiration_date < today`.
+**Proteção de rotas em `ProtectedRoute`:**
+- Mapear pathname → Permission (estender o catálogo atual)
+- Se sem permissão → `/acesso-negado`
+- Operacional logando → redirect para `/prospeccao-ia` (substituir lógica de landing pós-login)
 
----
+**Nova página `/usuarios` (`src/pages/Users.tsx`):**
+- Header com contador `X / Y usuários utilizados`
+- Tabela: Nome, Email, Cargo, Status, Criado em, Último login, Ações
+- Botão **Adicionar Usuário** → `AddUserDialog`
+- Ações por linha: Editar / Desativar / Reativar / Redefinir Senha (Owner sem ações destrutivas)
 
-## 4. Modal "Cadastrar Venda" (ao marcar Ganho)
+**`AddUserDialog`:**
+- Form: Nome, Email, Senha, Confirmar Senha, Cargo (Admin/Operacional — Owner nunca)
+- Tabela de permissões readonly que reativa conforme cargo selecionado (toggles `disabled`)
+- Validação de limite antes de submit
+- Sucesso → `UserCreatedSuccessDialog` com confetti, botões "Copiar Dados" e "Compartilhar" (WhatsApp/Gmail/Outlook/Copiar Link) com mensagem pré-montada
 
-Trigger: quando lead é movido para coluna **"Fechado (Ganho)"** (drag ou via popup), abre modal obrigatório.
+**`MustChangePasswordDialog`** — modal não-dismissível disparado no `AuthContext`/`ProtectedRoute` quando `must_change_password=true`. Atualiza via `supabase.auth.updateUser({password})` e zera o flag via RPC.
 
-**Campos:**
-- Título da venda *
-- Descrição
-- Tipo: One-time / Recorrente *
-- Valor (R$) * — label muda: "Valor total" vs "Valor mensal"
-- Se recorrente: Tempo de contrato (1, 3, 6, 12, 24 meses, custom) *
-- Data de início * (default: hoje)
-- Forma de pagamento
-- Upload comprovante (PDF/IMG, opcional)
-- Upload contrato (PDF/IMG, opcional)
+**Sidebar (`AppSidebar.tsx`):**
+- Item "Usuários" entre Sino e Ajuda, visível só para Owner/Admin
 
-Botão "Pular por ora" — permite mover sem cadastrar (cria placeholder editável depois).
+**Perfil (Admin):**
+- Esconder seções de assinatura/faturamento/cartão; mostrar apenas card simples "Plano + próxima renovação"
 
----
+**Página `/acesso-negado`:** elegante, com ícone, mensagem e botão Voltar.
 
-## 5. Popup do lead — novo bloco "Vendas"
+## 5. Auditoria
+- Edge functions registram em `account_audit_log` (criação/edição/desativação/reativação/reset).
+- (Opcional nesta fase) tela admin para visualizar log — fora do escopo desta entrega, apenas a tabela registrando.
 
-Dentro do `LeadDetailDialog` (componente atual do CRM), adicionar uma seção **"Vendas & Receita"** com:
+## 6. Email (Resend)
+- Verificar via `fetch_secrets` se `RESEND_API_KEY` existe; se não, pedir.
+- Template HTML simples seguindo identidade Wiize com nome, email, senha temporária, URL do sistema, aviso de troca.
 
-- 4 mini-cards no topo:
-  - Receita total recebida (soma de tudo)
-  - Vendas ativas (count)
-  - MRR (recorrentes ativas)
-  - Próxima expiração (data + dias restantes)
-- Lista de vendas do lead (cards expandíveis): título, valor, status badge, contrato, datas, anexos
-- Botão "+ Nova venda" — abre o mesmo modal acima
-
----
-
-## 6. Página `/crm/vendas` — Vendas & Receita
-
-**Topo: 4 KPIs (cards premium)**
-- Receita total recebida (acumulado)
-- MRR ativo
-- Vendas ativas / Total
-- Receita projetada (próximos 12 meses, baseada em contratos ativos)
-
-**Filtros:** período (mês atual, últ. 3m, 6m, 12m, custom), tipo (one-time/recurring), status
-
-**Gráfico:** linha de receita por mês (últimos 12 meses) — usar Recharts (já no projeto)
-
-**Tabela de vendas:**
-Colunas: Lead, Título, Valor, Tipo, Início, Expira em, Status, Ações (editar/ver anexo/cancelar)
-
-**Card lateral "Expirando em breve"** (próximos 30 dias) com CTA "Renovar".
-
----
-
-## 7. Cockpit principal (Dashboard)
-
-Adicionar **1 KPI novo** discreto: "Receita do mês" → linka pra `/crm/vendas`.
-Não substituir nenhum KPI existente, só somar.
-
----
-
-## Arquivos a criar
-
-- `supabase/migrations/...sales.sql` (tabela, RLS, GRANT, bucket, índices)
-- `src/hooks/useSales.ts` (CRUD + métricas)
-- `src/pages/CRMSales.tsx` (nova página)
-- `src/components/crm/SalesLayout.tsx` (tabs Pipeline | Vendas)
-- `src/components/crm/RegisterSaleDialog.tsx` (modal cadastro)
-- `src/components/crm/LeadSalesBlock.tsx` (bloco no popup)
-- `src/components/crm/SalesKPIs.tsx` (4 KPIs)
-- `src/components/crm/SalesRevenueChart.tsx` (gráfico)
-- `src/components/crm/SalesTable.tsx` (tabela)
-- `src/components/crm/ExpiringSoonCard.tsx`
-
-## Arquivos a editar
-
-- `src/App.tsx` — rota `/crm/vendas`
-- `src/pages/CRM.tsx` — wrap com `SalesLayout` (tabs)
-- `src/components/layout/AppSidebar.tsx` — "Oportunidades" → "Prospecção IA"
-- `src/components/crm/LeadDetailDialog.tsx` (ou equivalente) — inserir `LeadSalesBlock`
-- `src/components/crm/KanbanBoard.tsx` (ou onde move stage) — disparar `RegisterSaleDialog` ao ir pra Ganho
-- `src/hooks/useGuidedTour.tsx` — textos "Prospecção IA"
-- `src/pages/MainDashboard.tsx` — novo KPI "Receita do mês"
-- Páginas/textos com "Oportunidades" visíveis ao usuário (busca por regex)
-
----
+## 7. Ordem de execução
+1. Verificar secret Resend
+2. Migration (enums, account_members, audit_log, profiles columns, RPCs, GRANTs, RLS)
+3. `src/lib/accountPermissions.ts` + extender `planAccess.ts` com `getUserSeatLimit`
+4. Edge functions (`account-create-member`, `account-reset-member-password`, `account-update-member`)
+5. Hook `useAccountRole` + `useAccountMembers`
+6. Estender `ProtectedRoute` com check de permissão e redirect operacional
+7. Página `/usuarios` + dialogs (Add, Edit, Success, ResetPassword)
+8. `MustChangePasswordDialog` global
+9. Sidebar item + ocultar para operacional
+10. Página `/acesso-negado`
+11. Ajustes na página Perfil para Admin
+12. Smoke test: criar admin, criar operacional, login operacional → redirect, tentar acessar /dashboard → negado, primeiro login → modal senha
 
 ## Detalhes técnicos
+- Toda criação/edição de membros passa por edge function (service role) — RLS impede front de inserir direto em `account_members` para outro usuário.
+- `must_change_password` lido do `profiles` (joinado no AuthContext) para evitar round-trip extra.
+- Limite checado em 3 camadas: UI, RPC `count_account_members`, e dentro da edge function antes de criar auth user.
+- Operacional: redirect feito em `ProtectedRoute` quando `location.pathname === '/dashboard'` e role = operational → `/prospeccao-ia`. Também ajustar pós-login default.
+- Confetti: usar `canvas-confetti` (já leve, sem dependências pesadas) — adicionar via `bun add canvas-confetti`.
 
-- **Storage**: bucket `sales-attachments`, privado, RLS por `user_id`, paths: `{user_id}/{sale_id}/{receipt|contract}.{ext}`
-- **MRR query**: `SUM(amount) WHERE sale_type='recurring' AND status='active' AND expiration_date >= CURRENT_DATE`
-- **Atualização de status**: edge function diária `update-sales-status` (cron 03:00) marca `expired`
-- **Memory**: adicionar `mem://features/crm/sales-and-revenue-system` com schema, fórmulas MRR, e regra de rebrand "Prospecção IA"
-- **Permissão por plano**: Atendimento (sem SDR) continua sem ver Prospecção IA; Vendas dentro do CRM fica visível pra todos (faz sentido pro Atendimento também controlar vendas)
-
----
-
-## Implementação em 2 fases
-
-**Fase 1 (esta tarefa):** rebrand + tabela + modal Ganho + bloco no popup + página `/crm/vendas` com KPIs e tabela básica.
-
-**Fase 2 (próxima):** gráfico de receita mensal, cron de expiração, alertas de renovação, edição/cancelamento avançado.
-
-Se aprovar, executo a Fase 1 inteira.
+## Fora de escopo (confirmar depois se necessário)
+- UI admin para visualizar audit log
+- Convite por link (em vez de senha temporária) — fluxo atual usa senha gerada pelo Owner conforme spec
+- 2FA por membro
