@@ -32,7 +32,7 @@ export function useAccountMembers() {
     setLoading(true);
 
     // 1) descobrir o owner da conta
-    const { data: rpcData } = await supabase.rpc("get_account_owner", { _user_id: user.id });
+    const { data: rpcData } = await supabase.rpc("get_account_owner", { _uid: user.id });
     const owner = (rpcData as string) || user.id;
     setOwnerUserId(owner);
 
