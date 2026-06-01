@@ -5,6 +5,7 @@ import { Users, DollarSign, Target, LucideIcon } from 'lucide-react';
 interface CRMMetricsProps {
   leads: Lead[];
   stages: PipelineStage[];
+  hideValue?: boolean;
 }
 
 interface Metric {
@@ -15,7 +16,7 @@ interface Metric {
   color: string;
 }
 
-export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
+export const CRMMetrics = ({ leads, stages, hideValue = false }: CRMMetricsProps) => {
   const leadsInPipeline = leads.filter(lead => lead.pipeline_stage_id != null);
   const totalLeads = leadsInPipeline.length;
   
@@ -57,16 +58,16 @@ export const CRMMetrics = ({ leads, stages }: CRMMetricsProps) => {
       icon: Target,
       color: 'text-primary',
     },
-    {
+    ...(hideValue ? [] : [{
       label: 'Valor Total em Negociação',
       value: `R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`,
       icon: DollarSign,
       color: 'text-primary',
-    },
+    } as Metric]),
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+    <div className={`grid grid-cols-1 ${hideValue ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mt-4`}>
       {metrics.map((metric) => (
         <Card key={metric.label} className="border-border/50 relative overflow-hidden">
           {/* Green glow */}
