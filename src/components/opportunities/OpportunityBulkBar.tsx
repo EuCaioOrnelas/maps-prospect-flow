@@ -73,6 +73,18 @@ export function OpportunityBulkBar({
             </PopoverContent>
           </Popover>
         )}
+        {onMarkSent && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5"
+            disabled={busy !== null}
+            onClick={async () => { setBusy("sent"); try { await onMarkSent(); } finally { setBusy(null); } }}
+          >
+            {busy === "sent" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            Marcar como enviado
+          </Button>
+        )}
         <Button
           size="sm"
           variant="outline"
