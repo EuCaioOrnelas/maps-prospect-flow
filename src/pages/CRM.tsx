@@ -357,6 +357,11 @@ export default function CRM() {
       toDate.setHours(23, 59, 59, 999);
       if (leadDate > toDate) return false;
     }
+    if (responsibleFilter === 'me') {
+      if (lead.responsible_user_id !== user?.id) return false;
+    } else if (responsibleFilter !== 'all') {
+      if (lead.responsible_user_id !== responsibleFilter) return false;
+    }
     return true;
   });
 
