@@ -51,10 +51,9 @@ export const MustChangePasswordDialog = ({ open, onCompleted }: Props) => {
   return (
     <Dialog open={open} onOpenChange={() => { /* não permite fechar */ }}>
       <DialogContent
-        className="sm:max-w-md"
+        className="sm:max-w-md [&>button.absolute]:hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
-        hideClose
       >
         <DialogHeader>
           <div className="mx-auto w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-2">
