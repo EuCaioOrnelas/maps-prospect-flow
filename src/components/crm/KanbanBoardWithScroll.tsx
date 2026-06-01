@@ -20,6 +20,7 @@ interface KanbanBoardWithScrollProps {
   members?: import('./ResponsibleAvatar').ResponsibleMember[];
   onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
   canChangeResponsible?: boolean;
+  hideValue?: boolean;
 }
 
 const KanbanBoardWithScrollComponent = ({
@@ -36,6 +37,10 @@ const KanbanBoardWithScrollComponent = ({
   columnWidth = 'medium',
   agentSilencedStages,
   onAddLead,
+  members,
+  onChangeResponsible,
+  canChangeResponsible,
+  hideValue,
 }: KanbanBoardWithScrollProps) => {
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -194,6 +199,10 @@ const KanbanBoardWithScrollComponent = ({
           columnWidth={columnWidth}
           isAgentSilenced={agentSilencedStages?.has(stage.name)}
           onAddLead={onAddLead}
+          members={members}
+          onChangeResponsible={onChangeResponsible}
+          canChangeResponsible={canChangeResponsible}
+          hideValue={hideValue}
         />
       ))}
     </div>

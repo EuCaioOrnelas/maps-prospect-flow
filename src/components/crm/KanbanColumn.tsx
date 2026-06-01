@@ -27,6 +27,10 @@ interface KanbanColumnProps {
   columnWidth?: ColumnWidth;
   isAgentSilenced?: boolean;
   onAddLead?: (stageId: string) => void;
+  members?: import('./ResponsibleAvatar').ResponsibleMember[];
+  onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
+  canChangeResponsible?: boolean;
+  hideValue?: boolean;
 }
 
 const getColumnWidthClass = (width: ColumnWidth, isExpanded: boolean): string => {
@@ -63,6 +67,10 @@ const KanbanColumnComponent = ({
   columnWidth = 'medium',
   isAgentSilenced = false,
   onAddLead,
+  members = [],
+  onChangeResponsible,
+  canChangeResponsible = true,
+  hideValue = false,
 }: KanbanColumnProps) => {
   const totalValue = useMemo(() => 
     leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0),
@@ -169,6 +177,10 @@ const KanbanColumnComponent = ({
                 onDragEnd={onDragEnd}
                 isSelected={bulkSelectMode ? selectedLeadIds?.has(lead.id) : selectedLeadId === lead.id}
                 onUpdateName={onUpdateLeadName}
+                members={members}
+                onChangeResponsible={onChangeResponsible}
+                canChangeResponsible={canChangeResponsible}
+                hideValue={hideValue}
               />
             </div>
           ))}

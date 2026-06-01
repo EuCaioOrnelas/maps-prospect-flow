@@ -22,6 +22,9 @@ import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
 import { usePhonePrivacy } from '@/hooks/usePhonePrivacy';
 import { useAuth } from '@/contexts/AuthContext';
 import { useContactLimit } from '@/hooks/useContactLimit';
+import { useAccountRole } from '@/hooks/useAccountRole';
+import { useAccountMembers } from '@/hooks/useAccountMembers';
+import { CRMResponsibleFilter, type ResponsibleFilter } from '@/components/crm/CRMResponsibleFilter';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -50,6 +53,16 @@ export default function CRM() {
   const { hidden: phoneHidden, toggle: togglePhonePrivacy } = usePhonePrivacy();
   const { numbers: waNumbers, setNumbers: setWaNumbers, maxNumbers: waMaxNumbers, fetchNumbers: refetchWaNumbers } = useWhatsAppNumbers();
 
+  const { role } = useAccountRole();
+  const { members: accountMembers } = useAccountMembers();
+  const isOperational = role === 'operational';
+  const canChangeResponsible = role === 'owner' || role === 'admin';
+  const responsibleMembers = useMemo(
+    () => accountMembers.map((m) => ({ user_id: m.user_id, name: m.name, email: m.email })),
+    [accountMembers]
+  );
+  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>(isOperational ? 'me' : 'me');
+
   const {
     stages, 
     leads, 
@@ -68,6 +81,7 @@ export default function CRM() {
     createStage,
     deleteStage,
     moveStage,
+    assignLeadResponsible,
   } = useCRM();
 
   const [filters, setFilters] = useState<CRMFiltersState>({
@@ -343,6 +357,11 @@ export default function CRM() {
       toDate.setHours(23, 59, 59, 999);
       if (leadDate > toDate) return false;
     }
+    if (responsibleFilter === 'me') {
+      if (lead.responsible_user_id !== user?.id) return false;
+    } else if (responsibleFilter !== 'all') {
+      if (lead.responsible_user_id !== responsibleFilter) return false;
+    }
     return true;
   });
 
@@ -419,7 +438,21 @@ export default function CRM() {
 
               <CRMTabs />
 
-              <CRMMetrics stages={stages} leads={filteredLeads} />
+              <CRMMetrics stages={stages} leads={filteredLeads} hideValue={isOperational} />
+
+              {!isOperational && (
+                <div className="mt-3 flex items-center gap-2">
+                  <CRMResponsibleFilter
+                    value={responsibleFilter}
+                    onChange={setResponsibleFilter}
+                    members={responsibleMembers}
+                    currentUserId={user?.id ?? null}
+                  />
+                  <span className="text-[10px] text-muted-foreground">
+                    Filtrar leads por responsável
+                  </span>
+                </div>
+              )}
 
               {hasContactLimit && (
                 <div className={`mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 rounded-xl border ${contactsAtLimit ? 'border-destructive/40 bg-destructive/10' : contactsNearLimit ? 'border-amber-500/40 bg-amber-500/10' : 'border-border/50 bg-card'}`}>
@@ -613,6 +646,10 @@ export default function CRM() {
                   setAddLeadDefaultStageId(stageId);
                   setAddLeadOpen(true);
                 }}
+                members={responsibleMembers}
+                onChangeResponsible={assignLeadResponsible}
+                canChangeResponsible={canChangeResponsible}
+                hideValue={isOperational}
               />
             )}
           </div>

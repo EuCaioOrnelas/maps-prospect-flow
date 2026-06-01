@@ -24,6 +24,7 @@ interface LeadCardProps {
   members?: ResponsibleMember[];
   onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
   canChangeResponsible?: boolean;
+  hideValue?: boolean;
 }
 
 const LeadCardComponent = ({
@@ -36,6 +37,7 @@ const LeadCardComponent = ({
   members = [],
   onChangeResponsible,
   canChangeResponsible = true,
+  hideValue = false,
 }: LeadCardProps) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.contact_name || '');
@@ -176,7 +178,7 @@ const LeadCardComponent = ({
       )}
 
       {/* Valor potencial — pill verde compacto */}
-      {Number(lead.estimated_value) > 0 && (
+      {!hideValue && Number(lead.estimated_value) > 0 && (
         <div className="mb-2.5">
           <LeadPotentialValueCompact value={Number(lead.estimated_value)} />
         </div>
@@ -237,8 +239,12 @@ export const LeadCard = memo(LeadCardComponent, (prevProps, nextProps) => {
     prevProps.lead.ai_score === nextProps.lead.ai_score &&
     prevProps.lead.estimated_value === nextProps.lead.estimated_value &&
     prevProps.lead.last_response_at === nextProps.lead.last_response_at &&
+    prevProps.lead.responsible_user_id === nextProps.lead.responsible_user_id &&
     JSON.stringify(prevProps.lead.tags) === JSON.stringify(nextProps.lead.tags) &&
     prevProps.isSelected === nextProps.isSelected &&
-    prevProps.onClick === nextProps.onClick
+    prevProps.onClick === nextProps.onClick &&
+    prevProps.members === nextProps.members &&
+    prevProps.canChangeResponsible === nextProps.canChangeResponsible &&
+    prevProps.hideValue === nextProps.hideValue
   );
 });
