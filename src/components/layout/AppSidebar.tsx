@@ -643,6 +643,20 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               />
             </li>
 
+            {/* Usuários — visível apenas para Owner/Admin */}
+            {canSeeUsers && (
+              <li>
+                <SidebarNavItem
+                  title="Usuários"
+                  icon={UsersIcon}
+                  url="/usuarios"
+                  isActive={currentPath === "/usuarios"}
+                  isExpanded={isExpanded}
+                  tooltip="Usuários da conta"
+                />
+              </li>
+            )}
+
             {/* Ajuda */}
             <li>
               <SidebarNavItem

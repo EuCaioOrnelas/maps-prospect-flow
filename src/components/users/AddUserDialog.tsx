@@ -111,8 +111,20 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
           </DialogHeader>
 
           {!canAdd && (
-            <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-              Você atingiu o limite de usuários do seu plano. Faça upgrade para adicionar mais.
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 flex items-start gap-3">
+              <div className="flex-1 text-sm">
+                <div className="font-semibold text-destructive mb-1">Limite de usuários atingido</div>
+                <p className="text-muted-foreground">
+                  Seu plano <span className="font-medium text-foreground">{planLabel}</span> não permite mais vagas. Faça upgrade para liberar mais usuários e desbloquear novos recursos.
+                </p>
+              </div>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => { onOpenChange(false); window.location.href = "/upgrade"; }}
+              >
+                Fazer upgrade
+              </Button>
             </div>
           )}
 
@@ -165,9 +177,15 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
 
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancelar</Button>
-            <Button onClick={handleSubmit} disabled={loading || !canAdd}>
-              {loading ? <Loader2 className="animate-spin" size={16} /> : "Criar usuário"}
-            </Button>
+            {canAdd ? (
+              <Button onClick={handleSubmit} disabled={loading}>
+                {loading ? <Loader2 className="animate-spin" size={16} /> : "Criar usuário"}
+              </Button>
+            ) : (
+              <Button onClick={() => { onOpenChange(false); window.location.href = "/upgrade"; }}>
+                Fazer upgrade
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
