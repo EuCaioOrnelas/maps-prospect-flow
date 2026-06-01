@@ -18,6 +18,9 @@ import { MetaManualSetup } from "@/components/meta-campaigns/MetaManualSetup";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useAccountRole } from "@/hooks/useAccountRole";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export interface WabaConnection {
   id: string;
@@ -28,7 +31,9 @@ export interface WabaConnection {
   access_token: string;
   status: string | null;
   nickname: string | null;
+  responsible_user_id?: string | null;
 }
+
 
 const META_PLAN_LIMITS: Record<string, number> = {
   free: 1, trial: 1, start: 2, growth: 5, scale: 10,
@@ -37,6 +42,9 @@ const META_PLAN_LIMITS: Record<string, number> = {
 export default function MetaNumeros() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { role } = useAccountRole();
+  const { members } = useAccountMembers();
+  const canChangeResponsible = role === "owner" || role === "admin";
 
   const [connections, setConnections] = useState<WabaConnection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,12 +53,14 @@ export default function MetaNumeros() {
 
   const [editingConn, setEditingConn] = useState<WabaConnection | null>(null);
   const [editNickname, setEditNickname] = useState("");
+  const [editResponsible, setEditResponsible] = useState<string>("none");
   const [editToken, setEditToken] = useState("");
   const [showTokenField, setShowTokenField] = useState(false);
 
   const [showAddNumber, setShowAddNumber] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
 
   const userPlan = (profile?.plan || "free").toLowerCase();
   const basePlanNumbers = META_PLAN_LIMITS[userPlan] ?? 1;
@@ -119,15 +129,20 @@ export default function MetaNumeros() {
     if (!editingConn) return;
     try {
       const updates: Record<string, any> = { nickname: editNickname || null };
+      if (canChangeResponsible) {
+        updates.responsible_user_id = editResponsible === "none" ? null : editResponsible;
+      }
       if (showTokenField && editToken.trim()) updates.access_token = editToken.trim();
       await supabase.from("user_waba_connections").update(updates).eq("id", editingConn.id);
 
       const updated = {
         ...editingConn,
         nickname: editNickname || null,
+        ...(canChangeResponsible ? { responsible_user_id: editResponsible === "none" ? null : editResponsible } : {}),
         ...(showTokenField && editToken.trim() ? { access_token: editToken.trim() } : {}),
       };
       setConnections((prev) => prev.map((c) => (c.id === editingConn.id ? updated : c)));
+
 
       if (showTokenField && editToken.trim()) {
         const stillExpired = await validateConnectionToken(updated);
@@ -295,9 +310,11 @@ export default function MetaNumeros() {
                       onClick={() => {
                         setEditingConn(conn);
                         setEditNickname(conn.nickname || "");
+                        setEditResponsible(conn.responsible_user_id || "none");
                         setEditToken("");
                         setShowTokenField(isExpired);
                       }}
+
                     >
                       <Pencil size={13} className="text-muted-foreground" />
                     </Button>
@@ -367,6 +384,27 @@ export default function MetaNumeros() {
                 <label className="text-sm font-medium">Apelido do número</label>
                 <Input value={editNickname} onChange={(e) => setEditNickname(e.target.value)} placeholder="Ex: Atendimento, Vendas..." />
               </div>
+
+              {canChangeResponsible && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Responsável (opcional)</label>
+                  <Select value={editResponsible} onValueChange={setEditResponsible}>
+                    <SelectTrigger><SelectValue placeholder="Sem responsável" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem responsável</SelectItem>
+                      {members.map((m) => (
+                        <SelectItem key={m.user_id} value={m.user_id}>
+                          {m.name || m.email || m.user_id.slice(0, 8)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground">
+                    Quem deve receber notificações e atender por padrão neste número.
+                  </p>
+                </div>
+              )}
+
 
               {!showTokenField ? (
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground hover:text-foreground" onClick={() => setShowTokenField(true)}>

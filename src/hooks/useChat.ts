@@ -17,9 +17,11 @@ export interface ChatConversation {
   is_pinned: boolean;
   is_archived: boolean;
   is_muted: boolean;
+  responsible_user_id: string | null;
   created_at: string;
   updated_at: string;
 }
+
 
 export interface ChatMessage {
   id: string;
@@ -185,8 +187,10 @@ export function useChat() {
           is_pinned: false,
           is_archived: false,
           is_muted: false,
+          responsible_user_id: null,
           created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
           updated_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
+
         };
         dbConversations.push(fakeConv);
       }
@@ -544,6 +548,16 @@ export function useChat() {
     await loadConnections(true);
   }, [loadConnections, user]);
 
+  const transferConversation = useCallback(async (conversationId: string, responsibleUserId: string | null) => {
+    const { error } = await supabase
+      .from("chat_conversations")
+      .update({ responsible_user_id: responsibleUserId } as any)
+      .eq("id", conversationId);
+    if (error) throw error;
+    setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, responsible_user_id: responsibleUserId } : c));
+  }, []);
+
+
   return {
     conversations: filteredConversations,
     messages,
@@ -572,5 +586,7 @@ export function useChat() {
     messagesEndRef,
     fetchTemplates,
     handleReconnect,
+    transferConversation,
   };
 }
+
