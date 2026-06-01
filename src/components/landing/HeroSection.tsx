@@ -838,7 +838,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               <span className="text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
             </div>
             <h1 className="font-display text-[2.2rem] sm:text-[2.6rem] md:text-[3.2rem] lg:text-[3.6rem] xl:text-[4rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.13]" style={{ animationDelay: "0.1s" }}>
-              IA comercial que<br />Transforma leads<br /><span className="text-shimmer-highlight whitespace-nowrap">Oportunidades reais</span>
+              IA comercial que<br />transforma leads em<br /><span className="text-shimmer-highlight whitespace-nowrap">oportunidades reais</span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
               IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.
