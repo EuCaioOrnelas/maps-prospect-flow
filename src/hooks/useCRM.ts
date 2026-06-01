@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAccountRole } from '@/hooks/useAccountRole';
 import { useUserScoreTracking } from '@/hooks/useUserScoreTracking';
 
 export interface PipelineStage {
@@ -17,6 +18,8 @@ export interface PipelineStage {
 export interface Lead {
   id: string;
   user_id: string;
+  owner_user_id?: string | null;
+  responsible_user_id?: string | null;
   company_name: string | null;
   contact_name: string | null;
   phone: string;
@@ -119,35 +122,39 @@ const DEFAULT_STAGES: Omit<PipelineStage, 'id' | 'user_id' | 'created_at' | 'upd
 
 export const useCRM = () => {
   const { user } = useAuth();
+  const { role, ownerUserId } = useAccountRole();
   const { trackScoreEvent } = useUserScoreTracking();
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
-  // Fetch pipeline stages
+  // Fetch pipeline stages (account-wide; RLS restricts)
   const fetchStages = useCallback(async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
+    const query = supabase
       .from('pipeline_stages')
       .select('*')
-      .eq('user_id', user.id)
       .order('position', { ascending: true });
+
+    if (ownerUserId) query.eq('owner_user_id', ownerUserId);
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching pipeline stages:', error);
       return;
     }
 
-    // If no stages exist, create default ones
-    if (!data || data.length === 0) {
+    // If no stages exist AND current user is owner of the account, create defaults
+    if ((!data || data.length === 0) && (!role || role === 'owner')) {
       await createDefaultStages();
       return;
     }
 
-    setStages(data);
-  }, [user]);
+    setStages(data || []);
+  }, [user, ownerUserId, role]);
 
   // Create default pipeline stages
   const createDefaultStages = async () => {
@@ -171,18 +178,21 @@ export const useCRM = () => {
     setStages(data || []);
   };
 
-  // Fetch ALL leads for the user (excluding invalid phone numbers like group IDs)
+  // Fetch ALL leads visible to the user (RLS enforces account/role scope)
   const fetchLeads = useCallback(async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
+    const query = supabase
       .from('leads')
       .select(`
         *,
         whatsapp_number:whatsapp_numbers(id, name, phone_number)
       `)
-      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
+
+    if (ownerUserId) query.eq('owner_user_id', ownerUserId);
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching leads:', error);
@@ -229,7 +239,7 @@ export const useCRM = () => {
 
     setLeads(uniqueLeads as Lead[]);
     setIsLoading(false);
-  }, [user]);
+  }, [user, ownerUserId]);
 
   // Validate phone number before creating lead
   const isValidPhoneNumber = (phone: string): boolean => {
@@ -323,7 +333,6 @@ export const useCRM = () => {
       .from('leads')
       .update(updates)
       .eq('id', id)
-      .eq('user_id', user.id)
       .select()
       .single();
 
@@ -350,6 +359,17 @@ export const useCRM = () => {
     // Log activity
     await logActivity(leadId, 'stage_changed', `Movido para ${newStage.name}`);
     trackScoreEvent("crm_advanced_feature_used", { action: "move_stage" });
+  };
+
+  // Assign / change lead responsible (member of the account)
+  const assignLeadResponsible = async (leadId: string, responsibleUserId: string | null) => {
+    await updateLead(leadId, { responsible_user_id: responsibleUserId } as Partial<Lead>);
+    await logActivity(
+      leadId,
+      'responsible_changed',
+      responsibleUserId ? 'Responsável atualizado' : 'Responsável removido',
+      { responsible_user_id: responsibleUserId }
+    );
   };
 
   // Delete lead
@@ -678,19 +698,19 @@ export const useCRM = () => {
     }
   }, [user, fetchStages, fetchLeads]);
 
-  // Real-time subscriptions
+  // Real-time subscriptions (account-wide; RLS filters payload)
   useEffect(() => {
-    if (!user) return;
+    if (!user || !ownerUserId) return;
 
     const leadsChannel = supabase
-      .channel('leads-changes')
+      .channel(`leads-changes-${ownerUserId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'leads',
-          filter: `user_id=eq.${user.id}`,
+          filter: `owner_user_id=eq.${ownerUserId}`,
         },
         () => {
           fetchLeads();
@@ -699,14 +719,14 @@ export const useCRM = () => {
       .subscribe();
 
     const stagesChannel = supabase
-      .channel('stages-changes')
+      .channel(`stages-changes-${ownerUserId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'pipeline_stages',
-          filter: `user_id=eq.${user.id}`,
+          filter: `owner_user_id=eq.${ownerUserId}`,
         },
         () => {
           fetchStages();
@@ -718,7 +738,7 @@ export const useCRM = () => {
       supabase.removeChannel(leadsChannel);
       supabase.removeChannel(stagesChannel);
     };
-  }, [user, fetchLeads, fetchStages]);
+  }, [user, ownerUserId, fetchLeads, fetchStages]);
 
   return {
     stages,
@@ -730,6 +750,7 @@ export const useCRM = () => {
     fetchLeads,
     createLead,
     updateLead,
+    assignLeadResponsible,
     moveLeadToStage,
     deleteLead,
     deleteLeads,
