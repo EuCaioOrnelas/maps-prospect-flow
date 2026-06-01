@@ -18,6 +18,8 @@ export interface PipelineStage {
 export interface Lead {
   id: string;
   user_id: string;
+  owner_user_id?: string | null;
+  responsible_user_id?: string | null;
   company_name: string | null;
   contact_name: string | null;
   phone: string;
