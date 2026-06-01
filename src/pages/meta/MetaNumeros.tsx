@@ -310,9 +310,11 @@ export default function MetaNumeros() {
                       onClick={() => {
                         setEditingConn(conn);
                         setEditNickname(conn.nickname || "");
+                        setEditResponsible(conn.responsible_user_id || "none");
                         setEditToken("");
                         setShowTokenField(isExpired);
                       }}
+
                     >
                       <Pencil size={13} className="text-muted-foreground" />
                     </Button>
