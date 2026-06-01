@@ -504,6 +504,24 @@ export default function OpportunitiesManagement() {
     clearSelection();
   };
 
+  const bulkMarkSent = async () => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase
+      .from("leads")
+      .update({ first_message_sent: true } as any)
+      .in("id", ids);
+    if (error) {
+      console.error(error);
+      toast({ title: "Erro ao marcar", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads(prev => prev.map(l => ids.includes(l.id) ? { ...l, first_message_sent: true } : l));
+    toast({ title: "Marcado como enviado", description: `${ids.length} lead(s) atualizado(s).` });
+    clearSelection();
+  };
+
+
   // Tour demo lead injection (synthetic, never persisted)
   const [tourDemoActive, setTourDemoActive] = useState(
     typeof document !== "undefined" && document.body.classList.contains("tour-demo-lead")
