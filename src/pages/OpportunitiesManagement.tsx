@@ -442,13 +442,67 @@ export default function OpportunitiesManagement() {
     if (filterCity !== "all") {
       result = result.filter(l => l.city === filterCity);
     }
+    if (responsibleFilter === "me") {
+      result = result.filter(l => l.responsible_user_id === user?.id);
+    } else if (responsibleFilter !== "all") {
+      result = result.filter(l => l.responsible_user_id === responsibleFilter);
+    }
     if (sortOrder === "score_desc") {
       result = [...result].sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0));
     } else if (sortOrder === "score_asc") {
       result = [...result].sort((a, b) => (a.ai_score ?? 0) - (b.ai_score ?? 0));
     }
     return result;
-  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity]);
+  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity, responsibleFilter, user?.id]);
+
+  // Bulk actions handlers
+  const toggleSelected = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const selectAllVisible = () => setSelectedIds(new Set(paginatedLeadsIds()));
+  const paginatedLeadsIds = (): string[] => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredLeads.slice(start, start + pageSize).map(l => l.id).filter(id => !String(id).startsWith("__tour_"));
+  };
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const bulkAssign = async (responsibleUserId: string | null) => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase
+      .from("leads")
+      .update({ responsible_user_id: responsibleUserId })
+      .in("id", ids);
+    if (error) {
+      console.error(error);
+      toast({ title: "Erro ao transferir", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads(prev => prev.map(l => ids.includes(l.id) ? { ...l, responsible_user_id: responsibleUserId } : l));
+    toast({ title: "Responsável atualizado", description: `${ids.length} lead(s) transferido(s).` });
+    clearSelection();
+  };
+
+  const bulkArchive = async () => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase
+      .from("leads")
+      .update({ archived_at: new Date().toISOString() })
+      .in("id", ids);
+    if (error) {
+      console.error(error);
+      toast({ title: "Erro ao arquivar", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads(prev => prev.filter(l => !ids.includes(l.id)));
+    toast({ title: "Arquivado", description: `${ids.length} lead(s) arquivado(s).` });
+    clearSelection();
+  };
 
   // Tour demo lead injection (synthetic, never persisted)
   const [tourDemoActive, setTourDemoActive] = useState(
