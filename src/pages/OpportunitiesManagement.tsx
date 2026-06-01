@@ -221,20 +221,28 @@ export default function OpportunitiesManagement() {
     }
   };
 
-  // Realtime — refetch on any account-scoped lead change in opportunities
+  // Realtime — refetch on any account-scoped lead change (throttled)
   useEffect(() => {
     if (!user) return;
+    let pending = false;
+    let timer: any = null;
+    const scheduleRefetch = () => {
+      if (pending) return;
+      pending = true;
+      timer = setTimeout(() => { pending = false; fetchLeads(); }, 1500);
+    };
     const channel = supabase
       .channel(`opps-leads-${user.id}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "leads" },
-        () => { fetchLeads(); }
+        () => { scheduleRefetch(); }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { if (timer) clearTimeout(timer); supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
+
 
   const batchScoreLeads = async (unscoredLeads: OpportunityLead[]) => {
     setBatchScoring(true);
@@ -503,6 +511,24 @@ export default function OpportunitiesManagement() {
     toast({ title: "Arquivado", description: `${ids.length} lead(s) arquivado(s).` });
     clearSelection();
   };
+
+  const bulkMarkSent = async () => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase
+      .from("leads")
+      .update({ first_message_sent: true } as any)
+      .in("id", ids);
+    if (error) {
+      console.error(error);
+      toast({ title: "Erro ao marcar", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads(prev => prev.map(l => ids.includes(l.id) ? { ...l, first_message_sent: true } : l));
+    toast({ title: "Marcado como enviado", description: `${ids.length} lead(s) atualizado(s).` });
+    clearSelection();
+  };
+
 
   // Tour demo lead injection (synthetic, never persisted)
   const [tourDemoActive, setTourDemoActive] = useState(
@@ -1411,9 +1437,11 @@ export default function OpportunitiesManagement() {
                 onClear={clearSelection}
                 onChangeResponsible={bulkAssign}
                 onArchive={bulkArchive}
+                onMarkSent={bulkMarkSent}
                 members={responsibleMembers}
                 canChangeResponsible={canChangeResponsible}
               />
+
 
               {/* Table */}
               <div className="bg-card border border-border rounded-xl overflow-hidden">

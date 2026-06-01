@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, Archive, X, Loader2, UserCog } from "lucide-react";
+import { Users, Archive, X, Loader2, UserCog, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -13,6 +13,7 @@ interface Props {
   onClear: () => void;
   onChangeResponsible: (userId: string | null) => Promise<void>;
   onArchive: () => Promise<void>;
+  onMarkSent?: () => Promise<void>;
   members: ResponsibleMember[];
   canChangeResponsible: boolean;
 }
@@ -24,10 +25,11 @@ export function OpportunityBulkBar({
   onClear,
   onChangeResponsible,
   onArchive,
+  onMarkSent,
   members,
   canChangeResponsible,
 }: Props) {
-  const [busy, setBusy] = useState<"resp" | "arch" | null>(null);
+  const [busy, setBusy] = useState<"resp" | "arch" | "sent" | null>(null);
   if (selectedCount === 0) return null;
 
   return (
@@ -70,6 +72,18 @@ export function OpportunityBulkBar({
               </div>
             </PopoverContent>
           </Popover>
+        )}
+        {onMarkSent && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5"
+            disabled={busy !== null}
+            onClick={async () => { setBusy("sent"); try { await onMarkSent(); } finally { setBusy(null); } }}
+          >
+            {busy === "sent" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            Marcar como enviado
+          </Button>
         )}
         <Button
           size="sm"
