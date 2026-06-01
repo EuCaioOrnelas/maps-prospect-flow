@@ -18,6 +18,9 @@ import { MetaManualSetup } from "@/components/meta-campaigns/MetaManualSetup";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useAccountRole } from "@/hooks/useAccountRole";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export interface WabaConnection {
   id: string;
@@ -28,7 +31,9 @@ export interface WabaConnection {
   access_token: string;
   status: string | null;
   nickname: string | null;
+  responsible_user_id?: string | null;
 }
+
 
 const META_PLAN_LIMITS: Record<string, number> = {
   free: 1, trial: 1, start: 2, growth: 5, scale: 10,
