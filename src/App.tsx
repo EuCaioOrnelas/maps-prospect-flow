@@ -27,6 +27,8 @@ const SignupChoosePlan = lazyWithRetry(() => import("./pages/SignupChoosePlan"),
 const SignupWithCard = lazyWithRetry(() => import("./pages/SignupWithCard"), "SignupWithCard");
 import NotFound from "./pages/NotFound";
 import Upgrade from "./pages/Upgrade";
+const Users = lazyWithRetry(() => import("./pages/Users"), "Users");
+const AccessDenied = lazyWithRetry(() => import("./pages/AccessDenied"), "AccessDenied");
 
 // Lazy load all other pages
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"), "Dashboard");
@@ -253,7 +255,9 @@ const App = () => (
                 <Route path="/renewal-success" element={<LightThemeWrapper><RenewalSuccess /></LightThemeWrapper>} />
                 <Route path="/minha-assinatura" element={<DashboardThemeProvider><Suspense fallback={<PageLoader />}><ManageSubscription /></Suspense></DashboardThemeProvider>} />
                 <Route path="/contato" element={<LightThemeWrapper><Contact /></LightThemeWrapper>} />
-                <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Profile /></Suspense></ProtectedRoute>} />
+               <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Profile /></Suspense></ProtectedRoute>} />
+               <Route path="/usuarios" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Users /></Suspense></ProtectedRoute>} />
+               <Route path="/acesso-negado" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><AccessDenied /></Suspense></ProtectedRoute>} />
                 <Route path="/d7x9k2m4-meta-review" element={<LightThemeWrapper><MetaAppDocumentation /></LightThemeWrapper>} />
                 <Route path="/onboarding" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><Onboarding /></Suspense></LightThemeWrapper>} />
                 <Route path="/dashboard" element={<ProtectedRoute><MainDashboard /></ProtectedRoute>} />
