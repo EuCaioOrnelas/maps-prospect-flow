@@ -42,6 +42,9 @@ const META_PLAN_LIMITS: Record<string, number> = {
 export default function MetaNumeros() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { role } = useAccountRole();
+  const { members } = useAccountMembers();
+  const canChangeResponsible = role === "owner" || role === "admin";
 
   const [connections, setConnections] = useState<WabaConnection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,12 +53,14 @@ export default function MetaNumeros() {
 
   const [editingConn, setEditingConn] = useState<WabaConnection | null>(null);
   const [editNickname, setEditNickname] = useState("");
+  const [editResponsible, setEditResponsible] = useState<string>("none");
   const [editToken, setEditToken] = useState("");
   const [showTokenField, setShowTokenField] = useState(false);
 
   const [showAddNumber, setShowAddNumber] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
 
   const userPlan = (profile?.plan || "free").toLowerCase();
   const basePlanNumbers = META_PLAN_LIMITS[userPlan] ?? 1;
