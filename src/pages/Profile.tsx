@@ -71,6 +71,8 @@ import { useAccountRole } from "@/hooks/useAccountRole";
 
 const Profile = () => {
   const { profile, user, refreshProfile, signOut } = useAuth();
+  const { role: accountRole } = useAccountRole();
+  const isSubUser = accountRole === "admin" || accountRole === "operational";
   useAutoScoreTracking("profile");
   const { toast } = useToast();
   const navigate = useNavigate();
