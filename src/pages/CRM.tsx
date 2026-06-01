@@ -438,7 +438,21 @@ export default function CRM() {
 
               <CRMTabs />
 
-              <CRMMetrics stages={stages} leads={filteredLeads} />
+              <CRMMetrics stages={stages} leads={filteredLeads} hideValue={isOperational} />
+
+              {!isOperational && (
+                <div className="mt-3 flex items-center gap-2">
+                  <CRMResponsibleFilter
+                    value={responsibleFilter}
+                    onChange={setResponsibleFilter}
+                    members={responsibleMembers}
+                    currentUserId={user?.id ?? null}
+                  />
+                  <span className="text-[10px] text-muted-foreground">
+                    Filtrar leads por responsável
+                  </span>
+                </div>
+              )}
 
               {hasContactLimit && (
                 <div className={`mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 rounded-xl border ${contactsAtLimit ? 'border-destructive/40 bg-destructive/10' : contactsNearLimit ? 'border-amber-500/40 bg-amber-500/10' : 'border-border/50 bg-card'}`}>
