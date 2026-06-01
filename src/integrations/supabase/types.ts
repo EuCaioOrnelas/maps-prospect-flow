@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          owner_user_id: string
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          owner_user_id: string
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          owner_user_id?: string
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
+      account_members: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          last_login_at: string | null
+          must_change_password: boolean
+          name: string | null
+          owner_user_id: string
+          role: Database["public"]["Enums"]["account_role"]
+          status: Database["public"]["Enums"]["account_member_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          last_login_at?: string | null
+          must_change_password?: boolean
+          name?: string | null
+          owner_user_id: string
+          role?: Database["public"]["Enums"]["account_role"]
+          status?: Database["public"]["Enums"]["account_member_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          last_login_at?: string | null
+          must_change_password?: boolean
+          name?: string | null
+          owner_user_id?: string
+          role?: Database["public"]["Enums"]["account_role"]
+          status?: Database["public"]["Enums"]["account_member_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       agent_conversations: {
         Row: {
           agent_id: string
@@ -3832,6 +3907,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_role: Database["public"]["Enums"]["account_role"]
           address: string | null
           address_complement: string | null
           address_number: string | null
@@ -3861,8 +3937,10 @@ export type Database = {
           is_blocked: boolean | null
           is_custom_subscription: boolean
           last_searches_reset: string | null
+          must_change_password: boolean
           name: string | null
           neighborhood: string | null
+          parent_owner_id: string | null
           payment_provider: string | null
           phone: string | null
           plan: string
@@ -3894,6 +3972,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_role?: Database["public"]["Enums"]["account_role"]
           address?: string | null
           address_complement?: string | null
           address_number?: string | null
@@ -3923,8 +4002,10 @@ export type Database = {
           is_blocked?: boolean | null
           is_custom_subscription?: boolean
           last_searches_reset?: string | null
+          must_change_password?: boolean
           name?: string | null
           neighborhood?: string | null
+          parent_owner_id?: string | null
           payment_provider?: string | null
           phone?: string | null
           plan?: string
@@ -3956,6 +4037,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_role?: Database["public"]["Enums"]["account_role"]
           address?: string | null
           address_complement?: string | null
           address_number?: string | null
@@ -3985,8 +4067,10 @@ export type Database = {
           is_blocked?: boolean | null
           is_custom_subscription?: boolean
           last_searches_reset?: string | null
+          must_change_password?: boolean
           name?: string | null
           neighborhood?: string | null
+          parent_owner_id?: string | null
           payment_provider?: string | null
           phone?: string | null
           plan?: string
@@ -7380,11 +7464,18 @@ export type Database = {
       cleanup_rate_limits: { Args: never; Returns: undefined }
       compute_partner_balance: { Args: { p_partner_id: string }; Returns: Json }
       compute_partner_mrr: { Args: { p_partner_id: string }; Returns: number }
+      count_account_members: { Args: { _owner: string }; Returns: number }
       generate_partner_referral_code: {
         Args: { p_full_name: string }
         Returns: string
       }
       generate_partner_verification_code: { Args: never; Returns: string }
+      get_account_owner: { Args: { _user_id: string }; Returns: string }
+      get_account_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["account_role"]
+      }
+      get_account_seat_limit: { Args: { _owner: string }; Returns: number }
       get_auth_user_id_by_email: { Args: { _email: string }; Returns: string }
       get_landing_page_stats: {
         Args: never
@@ -7550,6 +7641,8 @@ export type Database = {
       }
     }
     Enums: {
+      account_member_status: "active" | "inactive"
+      account_role: "owner" | "admin" | "operational"
       app_role: "admin" | "moderator" | "user" | "partner"
       commission_status:
         | "pending"
@@ -7721,6 +7814,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_member_status: ["active", "inactive"],
+      account_role: ["owner", "admin", "operational"],
       app_role: ["admin", "moderator", "user", "partner"],
       commission_status: [
         "pending",

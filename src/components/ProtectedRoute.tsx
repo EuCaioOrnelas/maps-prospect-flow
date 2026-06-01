@@ -8,6 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardThemeProvider } from '@/contexts/ThemeContext';
 import { getFeatureForPath, profileHasFeature } from '@/lib/featurePermissions';
 import { planHasFeature } from '@/lib/planAccess';
+import { getRolePermissionForPath, roleHasPermission, getDefaultHomeForRole, type AccountRole } from '@/lib/accountPermissions';
+import { MustChangePasswordDialog } from '@/components/users/MustChangePasswordDialog';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -31,8 +33,22 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   const { isAdmin, loading: isAdminLoading } = useAdminCheck();
   const location = useLocation();
   const trackedPaths = useRef<Set<string>>(new Set());
-  // null = ainda checando, true = precisa fazer onboarding, false = ok
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+  const [accountRole, setAccountRole] = useState<AccountRole | null>(null);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) { setAccountRole(null); setMustChangePassword(false); return; }
+    (async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('account_role, must_change_password')
+        .eq('id', user.id)
+        .maybeSingle();
+      setAccountRole(((data as any)?.account_role || 'owner') as AccountRole);
+      setMustChangePassword(!!(data as any)?.must_change_password);
+    })();
+  }, [user?.id]);
 
   // Verifica se o usuário já completou (ou pulou) o onboarding inicial
   useEffect(() => {
@@ -178,8 +194,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/trial-expired" replace />;
   }
 
-  // Custom subscription feature gate + plan-based gate (new "start" / Atendimento
-  // blocks Oportunidades and Agentes IA). Admins always pass through.
+  // Custom subscription feature gate + plan-based gate
   if (!isAdmin && !requireAdmin) {
     const feat = getFeatureForPath(location.pathname);
     if (feat && !profileHasFeature(profile as any, feat)) {
@@ -190,5 +205,24 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     }
   }
 
-  return <DashboardThemeProvider>{children}</DashboardThemeProvider>;
+  // Role-based gate (account_members system)
+  if (!isAdmin && !requireAdmin && accountRole) {
+    // Operational user landing on /dashboard → redirect to their home
+    if (accountRole === 'operational' && location.pathname === '/dashboard') {
+      return <Navigate to={getDefaultHomeForRole(accountRole)} replace />;
+    }
+    const rolePerm = getRolePermissionForPath(location.pathname);
+    if (rolePerm && !roleHasPermission(accountRole, rolePerm) && location.pathname !== '/acesso-negado') {
+      return <Navigate to="/acesso-negado" replace />;
+    }
+  }
+
+  return (
+    <DashboardThemeProvider>
+      {children}
+      {mustChangePassword && (
+        <MustChangePasswordDialog open={true} onCompleted={() => setMustChangePassword(false)} />
+      )}
+    </DashboardThemeProvider>
+  );
 };
