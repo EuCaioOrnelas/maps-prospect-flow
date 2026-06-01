@@ -548,6 +548,16 @@ export function useChat() {
     await loadConnections(true);
   }, [loadConnections, user]);
 
+  const transferConversation = useCallback(async (conversationId: string, responsibleUserId: string | null) => {
+    const { error } = await supabase
+      .from("chat_conversations")
+      .update({ responsible_user_id: responsibleUserId } as any)
+      .eq("id", conversationId);
+    if (error) throw error;
+    setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, responsible_user_id: responsibleUserId } : c));
+  }, []);
+
+
   return {
     conversations: filteredConversations,
     messages,
