@@ -80,6 +80,14 @@ export default function OpportunitiesManagement() {
   const { toast } = useToast();
   const navigate = useNavigate();
   useAutoScoreTracking("opportunities_management");
+  const { role } = useAccountRole();
+  const { members: accountMembers } = useAccountMembers();
+  const canChangeResponsible = role === "owner" || role === "admin";
+  const responsibleMembers = useMemo(
+    () => accountMembers.map((m) => ({ user_id: m.user_id, name: m.name, email: m.email })),
+    [accountMembers]
+  );
+
   const [leads, setLeads] = useState<OpportunityLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,6 +99,9 @@ export default function OpportunitiesManagement() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterCity, setFilterCity] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(20);
+  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>("me");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedLead, setSelectedLead] = useState<OpportunityLead | null>(null);
   const [popupTab, setPopupTab] = useState<"score" | "dados">("dados");
   const [scoring, setScoring] = useState(false);
