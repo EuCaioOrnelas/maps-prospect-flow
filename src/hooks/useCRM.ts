@@ -750,6 +750,7 @@ export const useCRM = () => {
     fetchLeads,
     createLead,
     updateLead,
+    assignLeadResponsible,
     moveLeadToStage,
     deleteLead,
     deleteLeads,
