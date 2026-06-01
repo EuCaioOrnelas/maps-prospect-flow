@@ -66,6 +66,7 @@ import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useGuidedTour, resetGuidedTour } from "@/hooks/useGuidedTour";
 import { PlayCircle } from "lucide-react";
 import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/lib/planAccess";
+import { useAccountRole } from "@/hooks/useAccountRole";
 
 
 const Profile = () => {
