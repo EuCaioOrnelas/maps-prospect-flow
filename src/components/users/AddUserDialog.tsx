@@ -177,9 +177,15 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
 
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancelar</Button>
-            <Button onClick={handleSubmit} disabled={loading || !canAdd}>
-              {loading ? <Loader2 className="animate-spin" size={16} /> : "Criar usuário"}
-            </Button>
+            {canAdd ? (
+              <Button onClick={handleSubmit} disabled={loading}>
+                {loading ? <Loader2 className="animate-spin" size={16} /> : "Criar usuário"}
+              </Button>
+            ) : (
+              <Button onClick={() => { onOpenChange(false); window.location.href = "/upgrade"; }}>
+                Fazer upgrade
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
