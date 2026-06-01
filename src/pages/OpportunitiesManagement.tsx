@@ -1451,7 +1451,7 @@ export default function OpportunitiesManagement() {
                       ))
                     ) : paginatedLeads.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                        <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                           {searchTerm || filterLevel !== "all"
                             ? "Nenhuma oportunidade encontrada com esses filtros"
                             : "Nenhuma oportunidade ainda. Faça uma busca em Oportunidades → Buscar"}
@@ -1465,6 +1465,15 @@ export default function OpportunitiesManagement() {
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => { setSelectedLead(lead); setPopupTab("dados"); setEditingMessage(false); }}
                         >
+                          <TableCell className="w-[40px]" onClick={(e) => e.stopPropagation()}>
+                            {!String(lead.id).startsWith("__tour_") && (
+                              <Checkbox
+                                checked={selectedIds.has(lead.id)}
+                                onCheckedChange={() => toggleSelected(lead.id)}
+                                aria-label="Selecionar lead"
+                              />
+                            )}
+                          </TableCell>
                           <TableCell className="font-medium max-w-[220px]">
                             <span className="truncate block whitespace-nowrap" title={lead.company_name || "Sem nome"}>
                               {lead.company_name || "Sem nome"}
@@ -1489,6 +1498,21 @@ export default function OpportunitiesManagement() {
                             )}
                           </TableCell>
                           <TableCell className="text-center">{getLevelBadge(lead.opportunity_level, lead.ai_score)}</TableCell>
+                          <TableCell className="text-center">
+                            {(() => {
+                              const m = responsibleMembers.find(x => x.user_id === lead.responsible_user_id);
+                              const label = m ? (m.name || m.email || "?") : "—";
+                              const initial = m ? (m.name || m.email || "?").trim().charAt(0).toUpperCase() : "—";
+                              return (
+                                <span
+                                  title={`Responsável: ${label}`}
+                                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold border border-border/60 ${m ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}
+                                >
+                                  {initial}
+                                </span>
+                              );
+                            })()}
+                          </TableCell>
                           <TableCell className="text-center">
                             {lead.first_message_sent ? (
                               <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
