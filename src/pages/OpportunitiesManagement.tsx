@@ -39,6 +39,11 @@ import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { buildTourDemoLead } from "@/lib/tourDemoLead";
 import { buildTourFillerLeads } from "@/lib/tourDemoCockpit";
+import { useAccountRole } from "@/hooks/useAccountRole";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { CRMResponsibleFilter, type ResponsibleFilter } from "@/components/crm/CRMResponsibleFilter";
+import { OpportunityBulkBar } from "@/components/opportunities/OpportunityBulkBar";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface OpportunityLead {
   id: string;
@@ -64,9 +69,11 @@ interface OpportunityLead {
   origin: string | null;
   first_message_sent: boolean | null;
   whatsapp_number_id: string | null;
+  responsible_user_id: string | null;
+  archived_at: string | null;
 }
 
-const ITEMS_PER_PAGE = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 60] as const;
 
 export default function OpportunitiesManagement() {
   const { profile, user } = useAuth();
