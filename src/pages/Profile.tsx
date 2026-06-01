@@ -957,6 +957,38 @@ const Profile = () => {
 
 
 
+          {/* Plan Card — Owner vê completo; Admin/Operational vê resumo somente leitura */}
+          {isSubUser ? (
+            <Card className="border-border/50">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2">
+                  <Crown className="h-5 w-5 text-warning" />
+                  Plano da conta
+                </CardTitle>
+                <CardDescription>
+                  Apenas o dono da conta gerencia assinatura e faturamento
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Plano atual:</span>
+                      <span className={`font-bold ${getPlanColor(profile?.plan || 'free')}`}>
+                        {planLabel}
+                      </span>
+                    </div>
+                    {profile?.subscription_current_period_end && (
+                      <p className="text-xs text-muted-foreground">
+                        Próxima renovação: {formatDate(profile.subscription_current_period_end)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+          <>
           {/* Plan Card */}
           <Card className="border-border/50">
             <CardHeader className="pb-4">
