@@ -239,7 +239,7 @@ export const useCRM = () => {
 
     setLeads(uniqueLeads as Lead[]);
     setIsLoading(false);
-  }, [user]);
+  }, [user, ownerUserId]);
 
   // Validate phone number before creating lead
   const isValidPhoneNumber = (phone: string): boolean => {
