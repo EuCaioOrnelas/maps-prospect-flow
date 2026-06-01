@@ -105,6 +105,7 @@ export type Database = {
           is_processing: boolean | null
           lead_name: string | null
           lead_phone: string
+          owner_user_id: string | null
           process_after: string | null
           reply_content: string | null
           reply_count: number | null
@@ -133,6 +134,7 @@ export type Database = {
           is_processing?: boolean | null
           lead_name?: string | null
           lead_phone: string
+          owner_user_id?: string | null
           process_after?: string | null
           reply_content?: string | null
           reply_count?: number | null
@@ -161,6 +163,7 @@ export type Database = {
           is_processing?: boolean | null
           lead_name?: string | null
           lead_phone?: string
+          owner_user_id?: string | null
           process_after?: string | null
           reply_content?: string | null
           reply_count?: number | null
@@ -193,6 +196,7 @@ export type Database = {
           lead_name: string | null
           lead_phone: string
           message_content: string
+          owner_user_id: string | null
           received_at: string
         }
         Insert: {
@@ -203,6 +207,7 @@ export type Database = {
           lead_name?: string | null
           lead_phone: string
           message_content: string
+          owner_user_id?: string | null
           received_at?: string
         }
         Update: {
@@ -213,6 +218,7 @@ export type Database = {
           lead_name?: string | null
           lead_phone?: string
           message_content?: string
+          owner_user_id?: string | null
           received_at?: string
         }
         Relationships: [
@@ -241,6 +247,7 @@ export type Database = {
           direction: string
           id: string
           message_type: string | null
+          owner_user_id: string | null
           processed_at: string
         }
         Insert: {
@@ -251,6 +258,7 @@ export type Database = {
           direction: string
           id?: string
           message_type?: string | null
+          owner_user_id?: string | null
           processed_at?: string
         }
         Update: {
@@ -261,6 +269,7 @@ export type Database = {
           direction?: string
           id?: string
           message_type?: string | null
+          owner_user_id?: string | null
           processed_at?: string
         }
         Relationships: [
@@ -287,6 +296,7 @@ export type Database = {
           icon: string | null
           id: string
           name: string
+          owner_user_id: string | null
           template_data: Json
           updated_at: string
           user_id: string
@@ -297,6 +307,7 @@ export type Database = {
           icon?: string | null
           id?: string
           name: string
+          owner_user_id?: string | null
           template_data: Json
           updated_at?: string
           user_id: string
@@ -307,6 +318,7 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+          owner_user_id?: string | null
           template_data?: Json
           updated_at?: string
           user_id?: string
@@ -338,6 +350,7 @@ export type Database = {
           objective: string
           operating_hours_end: string
           operating_hours_start: string
+          owner_user_id: string | null
           post_response_behavior: string | null
           respond_to_groups: boolean
           status: string
@@ -372,6 +385,7 @@ export type Database = {
           objective: string
           operating_hours_end?: string
           operating_hours_start?: string
+          owner_user_id?: string | null
           post_response_behavior?: string | null
           respond_to_groups?: boolean
           status?: string
@@ -406,6 +420,7 @@ export type Database = {
           objective?: string
           operating_hours_end?: string
           operating_hours_start?: string
+          owner_user_id?: string | null
           post_response_behavior?: string | null
           respond_to_groups?: boolean
           status?: string
@@ -605,6 +620,7 @@ export type Database = {
           is_scheduled: boolean
           messages: Json
           name: string
+          owner_user_id: string | null
           pause_after_contacts: number
           pause_minutes: number
           scheduled_date: string | null
@@ -625,6 +641,7 @@ export type Database = {
           is_scheduled?: boolean
           messages?: Json
           name?: string
+          owner_user_id?: string | null
           pause_after_contacts?: number
           pause_minutes?: number
           scheduled_date?: string | null
@@ -645,6 +662,7 @@ export type Database = {
           is_scheduled?: boolean
           messages?: Json
           name?: string
+          owner_user_id?: string | null
           pause_after_contacts?: number
           pause_minutes?: number
           scheduled_date?: string | null
@@ -665,6 +683,7 @@ export type Database = {
           detected_at: string
           id: string
           incident_type: string
+          owner_user_id: string | null
           user_id: string
           whatsapp_number_id: string | null
         }
@@ -675,6 +694,7 @@ export type Database = {
           detected_at?: string
           id?: string
           incident_type: string
+          owner_user_id?: string | null
           user_id: string
           whatsapp_number_id?: string | null
         }
@@ -685,6 +705,7 @@ export type Database = {
           detected_at?: string
           id?: string
           incident_type?: string
+          owner_user_id?: string | null
           user_id?: string
           whatsapp_number_id?: string | null
         }
@@ -748,6 +769,7 @@ export type Database = {
           created_at: string
           id: string
           message_content: string | null
+          owner_user_id: string | null
           responded_at: string
           user_id: string
           window_number: number
@@ -758,6 +780,7 @@ export type Database = {
           created_at?: string
           id?: string
           message_content?: string | null
+          owner_user_id?: string | null
           responded_at?: string
           user_id: string
           window_number?: number
@@ -768,6 +791,7 @@ export type Database = {
           created_at?: string
           id?: string
           message_content?: string | null
+          owner_user_id?: string | null
           responded_at?: string
           user_id?: string
           window_number?: number
@@ -835,6 +859,7 @@ export type Database = {
           last_message_direction: string | null
           last_message_text: string | null
           last_message_type: string | null
+          owner_user_id: string | null
           pinned_at: string | null
           unread_count: number | null
           updated_at: string
@@ -854,6 +879,7 @@ export type Database = {
           last_message_direction?: string | null
           last_message_text?: string | null
           last_message_type?: string | null
+          owner_user_id?: string | null
           pinned_at?: string | null
           unread_count?: number | null
           updated_at?: string
@@ -873,6 +899,7 @@ export type Database = {
           last_message_direction?: string | null
           last_message_text?: string | null
           last_message_type?: string | null
+          owner_user_id?: string | null
           pinned_at?: string | null
           unread_count?: number | null
           updated_at?: string
@@ -902,6 +929,7 @@ export type Database = {
           media_url: string | null
           message_type: string
           metadata: Json | null
+          owner_user_id: string | null
           reply_to_message_id: string | null
           status: string | null
           status_updated_at: string | null
@@ -920,6 +948,7 @@ export type Database = {
           media_url?: string | null
           message_type?: string
           metadata?: Json | null
+          owner_user_id?: string | null
           reply_to_message_id?: string | null
           status?: string | null
           status_updated_at?: string | null
@@ -938,6 +967,7 @@ export type Database = {
           media_url?: string | null
           message_type?: string
           metadata?: Json | null
+          owner_user_id?: string | null
           reply_to_message_id?: string | null
           status?: string | null
           status_updated_at?: string | null
@@ -1033,6 +1063,7 @@ export type Database = {
           created_at: string
           id: string
           last_message_sent_at: string | null
+          owner_user_id: string | null
           updated_at: string
           user_id: string
         }
@@ -1047,6 +1078,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_message_sent_at?: string | null
+          owner_user_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1061,6 +1093,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_message_sent_at?: string | null
+          owner_user_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1073,6 +1106,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          owner_user_id: string | null
           updated_at: string
           user_id: string
         }
@@ -1082,6 +1116,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          owner_user_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1091,6 +1126,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          owner_user_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1182,18 +1218,21 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          owner_user_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
+          owner_user_id?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
+          owner_user_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1911,6 +1950,7 @@ export type Database = {
           created_at: string
           first_message_sent_at: string
           id: string
+          owner_user_id: string | null
           phone: string
           user_id: string
           whatsapp_number_id: string | null
@@ -1920,6 +1960,7 @@ export type Database = {
           created_at?: string
           first_message_sent_at?: string
           id?: string
+          owner_user_id?: string | null
           phone: string
           user_id: string
           whatsapp_number_id?: string | null
@@ -1929,6 +1970,7 @@ export type Database = {
           created_at?: string
           first_message_sent_at?: string
           id?: string
+          owner_user_id?: string | null
           phone?: string
           user_id?: string
           whatsapp_number_id?: string | null
@@ -2095,6 +2137,7 @@ export type Database = {
           id: string
           lead_id: string
           metadata: Json | null
+          owner_user_id: string | null
           user_id: string
         }
         Insert: {
@@ -2104,6 +2147,7 @@ export type Database = {
           id?: string
           lead_id: string
           metadata?: Json | null
+          owner_user_id?: string | null
           user_id: string
         }
         Update: {
@@ -2113,6 +2157,7 @@ export type Database = {
           id?: string
           lead_id?: string
           metadata?: Json | null
+          owner_user_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -2134,6 +2179,7 @@ export type Database = {
           file_type: string
           file_url: string
           id: string
+          owner_user_id: string | null
           user_id: string
         }
         Insert: {
@@ -2144,6 +2190,7 @@ export type Database = {
           file_type?: string
           file_url: string
           id?: string
+          owner_user_id?: string | null
           user_id: string
         }
         Update: {
@@ -2154,6 +2201,7 @@ export type Database = {
           file_type?: string
           file_url?: string
           id?: string
+          owner_user_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -2178,6 +2226,7 @@ export type Database = {
           id: string
           lead_id: string
           notes: string | null
+          owner_user_id: string | null
           payment_method: string | null
           receipt_url: string | null
           sale_type: string
@@ -2199,6 +2248,7 @@ export type Database = {
           id?: string
           lead_id: string
           notes?: string | null
+          owner_user_id?: string | null
           payment_method?: string | null
           receipt_url?: string | null
           sale_type?: string
@@ -2220,6 +2270,7 @@ export type Database = {
           id?: string
           lead_id?: string
           notes?: string | null
+          owner_user_id?: string | null
           payment_method?: string | null
           receipt_url?: string | null
           sale_type?: string
@@ -2251,6 +2302,7 @@ export type Database = {
           file_url: string | null
           id: string
           lead_id: string
+          owner_user_id: string | null
           source: string
           updated_at: string
           user_id: string
@@ -2265,6 +2317,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           lead_id: string
+          owner_user_id?: string | null
           source?: string
           updated_at?: string
           user_id: string
@@ -2279,6 +2332,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           lead_id?: string
+          owner_user_id?: string | null
           source?: string
           updated_at?: string
           user_id?: string
@@ -2299,6 +2353,7 @@ export type Database = {
           created_at: string
           id: string
           lead_id: string
+          owner_user_id: string | null
           user_id: string
         }
         Insert: {
@@ -2306,6 +2361,7 @@ export type Database = {
           created_at?: string
           id?: string
           lead_id: string
+          owner_user_id?: string | null
           user_id: string
         }
         Update: {
@@ -2313,6 +2369,7 @@ export type Database = {
           created_at?: string
           id?: string
           lead_id?: string
+          owner_user_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -2330,18 +2387,21 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          owner_user_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
+          owner_user_id?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
+          owner_user_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -2376,6 +2436,7 @@ export type Database = {
           last_response_at: string | null
           opportunity_level: string | null
           origin: string | null
+          owner_user_id: string | null
           phone: string
           phone_numbers: Json | null
           pipeline_stage_id: string | null
@@ -2383,6 +2444,7 @@ export type Database = {
           rating: number | null
           region: string | null
           responded_at: string | null
+          responsible_user_id: string | null
           review_count: number | null
           social_media: Json | null
           tags: string[] | null
@@ -2421,6 +2483,7 @@ export type Database = {
           last_response_at?: string | null
           opportunity_level?: string | null
           origin?: string | null
+          owner_user_id?: string | null
           phone: string
           phone_numbers?: Json | null
           pipeline_stage_id?: string | null
@@ -2428,6 +2491,7 @@ export type Database = {
           rating?: number | null
           region?: string | null
           responded_at?: string | null
+          responsible_user_id?: string | null
           review_count?: number | null
           social_media?: Json | null
           tags?: string[] | null
@@ -2466,6 +2530,7 @@ export type Database = {
           last_response_at?: string | null
           opportunity_level?: string | null
           origin?: string | null
+          owner_user_id?: string | null
           phone?: string
           phone_numbers?: Json | null
           pipeline_stage_id?: string | null
@@ -2473,6 +2538,7 @@ export type Database = {
           rating?: number | null
           region?: string | null
           responded_at?: string | null
+          responsible_user_id?: string | null
           review_count?: number | null
           social_media?: Json | null
           tags?: string[] | null
@@ -2507,6 +2573,7 @@ export type Database = {
           error_details: Json | null
           failed_count: number
           id: string
+          owner_user_id: string | null
           status: string
           success_count: number
           template_language: string
@@ -2522,6 +2589,7 @@ export type Database = {
           error_details?: Json | null
           failed_count?: number
           id?: string
+          owner_user_id?: string | null
           status?: string
           success_count?: number
           template_language?: string
@@ -2537,6 +2605,7 @@ export type Database = {
           error_details?: Json | null
           failed_count?: number
           id?: string
+          owner_user_id?: string | null
           status?: string
           success_count?: number
           template_language?: string
@@ -2563,6 +2632,7 @@ export type Database = {
           notify_daily_summary: boolean
           notify_number_disconnected: boolean
           notify_quality_drop: boolean
+          owner_user_id: string | null
           security_audit_log: boolean
           security_hmac_required: boolean
           security_ip_allowlist: boolean
@@ -2576,6 +2646,7 @@ export type Database = {
           notify_daily_summary?: boolean
           notify_number_disconnected?: boolean
           notify_quality_drop?: boolean
+          owner_user_id?: string | null
           security_audit_log?: boolean
           security_hmac_required?: boolean
           security_ip_allowlist?: boolean
@@ -2589,6 +2660,7 @@ export type Database = {
           notify_daily_summary?: boolean
           notify_number_disconnected?: boolean
           notify_quality_drop?: boolean
+          owner_user_id?: string | null
           security_audit_log?: boolean
           security_hmac_required?: boolean
           security_ip_allowlist?: boolean
@@ -3769,6 +3841,7 @@ export type Database = {
           id: string
           is_default: boolean | null
           name: string
+          owner_user_id: string | null
           position: number
           updated_at: string
           user_id: string
@@ -3779,6 +3852,7 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           name: string
+          owner_user_id?: string | null
           position?: number
           updated_at?: string
           user_id: string
@@ -3789,6 +3863,7 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           name?: string
+          owner_user_id?: string | null
           position?: number
           updated_at?: string
           user_id?: string
@@ -4200,6 +4275,7 @@ export type Database = {
           id: string
           is_read: boolean
           metric_name: string
+          owner_user_id: string | null
           previous_value: number
           user_id: string
           variation_pct: number
@@ -4213,6 +4289,7 @@ export type Database = {
           id?: string
           is_read?: boolean
           metric_name: string
+          owner_user_id?: string | null
           previous_value?: number
           user_id: string
           variation_pct?: number
@@ -4226,6 +4303,7 @@ export type Database = {
           id?: string
           is_read?: boolean
           metric_name?: string
+          owner_user_id?: string | null
           previous_value?: number
           user_id?: string
           variation_pct?: number
@@ -4243,6 +4321,7 @@ export type Database = {
           lead_id: string
           number_instance_id: string | null
           outbound_count_7d: number
+          owner_user_id: string | null
           unreplied_inbound_count: number
           updated_at: string
           user_id: string
@@ -4257,6 +4336,7 @@ export type Database = {
           lead_id: string
           number_instance_id?: string | null
           outbound_count_7d?: number
+          owner_user_id?: string | null
           unreplied_inbound_count?: number
           updated_at?: string
           user_id: string
@@ -4271,6 +4351,7 @@ export type Database = {
           lead_id?: string
           number_instance_id?: string | null
           outbound_count_7d?: number
+          owner_user_id?: string | null
           unreplied_inbound_count?: number
           updated_at?: string
           user_id?: string
@@ -4304,6 +4385,7 @@ export type Database = {
           intent_subtype: string | null
           lead_id: string
           number_instance_id: string | null
+          owner_user_id: string | null
           user_id: string
         }
         Insert: {
@@ -4317,6 +4399,7 @@ export type Database = {
           intent_subtype?: string | null
           lead_id: string
           number_instance_id?: string | null
+          owner_user_id?: string | null
           user_id: string
         }
         Update: {
@@ -4330,6 +4413,7 @@ export type Database = {
           intent_subtype?: string | null
           lead_id?: string
           number_instance_id?: string | null
+          owner_user_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -4359,6 +4443,7 @@ export type Database = {
           lead_id: string
           matched_keywords: string[] | null
           message_id: string | null
+          owner_user_id: string | null
           raw_message: string
         }
         Insert: {
@@ -4370,6 +4455,7 @@ export type Database = {
           lead_id: string
           matched_keywords?: string[] | null
           message_id?: string | null
+          owner_user_id?: string | null
           raw_message: string
         }
         Update: {
@@ -4381,6 +4467,7 @@ export type Database = {
           lead_id?: string
           matched_keywords?: string[] | null
           message_id?: string | null
+          owner_user_id?: string | null
           raw_message?: string
         }
         Relationships: [
@@ -4405,7 +4492,9 @@ export type Database = {
           last_intent_subtype: string | null
           name: string | null
           notes: string | null
+          owner_user_id: string | null
           phone_e164: string
+          responsible_user_id: string | null
           risk_reason: string | null
           risk_state: Database["public"]["Enums"]["revenue_risk_state"]
           score_engagement: number
@@ -4431,7 +4520,9 @@ export type Database = {
           last_intent_subtype?: string | null
           name?: string | null
           notes?: string | null
+          owner_user_id?: string | null
           phone_e164: string
+          responsible_user_id?: string | null
           risk_reason?: string | null
           risk_state?: Database["public"]["Enums"]["revenue_risk_state"]
           score_engagement?: number
@@ -4457,7 +4548,9 @@ export type Database = {
           last_intent_subtype?: string | null
           name?: string | null
           notes?: string | null
+          owner_user_id?: string | null
           phone_e164?: string
+          responsible_user_id?: string | null
           risk_reason?: string | null
           risk_state?: Database["public"]["Enums"]["revenue_risk_state"]
           score_engagement?: number
@@ -4487,6 +4580,7 @@ export type Database = {
           created_at: string
           id: string
           is_enabled: boolean
+          owner_user_id: string | null
           updated_at: string
           user_id: string
           whatsapp_number_id: string
@@ -4495,6 +4589,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_enabled?: boolean
+          owner_user_id?: string | null
           updated_at?: string
           user_id: string
           whatsapp_number_id: string
@@ -4503,6 +4598,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_enabled?: boolean
+          owner_user_id?: string | null
           updated_at?: string
           user_id?: string
           whatsapp_number_id?: string
@@ -4521,6 +4617,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          owner_user_id: string | null
           report_data: Json
           report_date: string
           user_id: string
@@ -4528,6 +4625,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          owner_user_id?: string | null
           report_data?: Json
           report_date?: string
           user_id: string
@@ -4535,6 +4633,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          owner_user_id?: string | null
           report_data?: Json
           report_date?: string
           user_id?: string
@@ -4549,6 +4648,7 @@ export type Database = {
           event_type: string
           id: string
           lead_id: string
+          owner_user_id: string | null
           points_applied: number
           score_after: number
           score_before: number
@@ -4561,6 +4661,7 @@ export type Database = {
           event_type: string
           id?: string
           lead_id: string
+          owner_user_id?: string | null
           points_applied?: number
           score_after?: number
           score_before?: number
@@ -4573,6 +4674,7 @@ export type Database = {
           event_type?: string
           id?: string
           lead_id?: string
+          owner_user_id?: string | null
           points_applied?: number
           score_after?: number
           score_before?: number
@@ -4601,6 +4703,7 @@ export type Database = {
           id: string
           is_enabled: boolean
           max_per_day: number | null
+          owner_user_id: string | null
           points: number
           rule_key: string
           updated_at: string
@@ -4611,6 +4714,7 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           max_per_day?: number | null
+          owner_user_id?: string | null
           points?: number
           rule_key: string
           updated_at?: string
@@ -4621,6 +4725,7 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           max_per_day?: number | null
+          owner_user_id?: string | null
           points?: number
           rule_key?: string
           updated_at?: string
@@ -4633,6 +4738,7 @@ export type Database = {
           created_at: string
           id: string
           lead_id: string
+          owner_user_id: string | null
           score_value: number
           snapshot_date: string
           status_bucket: string
@@ -4642,6 +4748,7 @@ export type Database = {
           created_at?: string
           id?: string
           lead_id: string
+          owner_user_id?: string | null
           score_value?: number
           snapshot_date?: string
           status_bucket?: string
@@ -4651,6 +4758,7 @@ export type Database = {
           created_at?: string
           id?: string
           lead_id?: string
+          owner_user_id?: string | null
           score_value?: number
           snapshot_date?: string
           status_bucket?: string
@@ -4676,6 +4784,7 @@ export type Database = {
           default_close_rate_very_hot: number
           default_ticket_value: number
           id: string
+          owner_user_id: string | null
           risk_no_reply_hours: number
           sla_first_response_minutes: number
           updated_at: string
@@ -4694,6 +4803,7 @@ export type Database = {
           default_close_rate_very_hot?: number
           default_ticket_value?: number
           id?: string
+          owner_user_id?: string | null
           risk_no_reply_hours?: number
           sla_first_response_minutes?: number
           updated_at?: string
@@ -4712,6 +4822,7 @@ export type Database = {
           default_close_rate_very_hot?: number
           default_ticket_value?: number
           id?: string
+          owner_user_id?: string | null
           risk_no_reply_hours?: number
           sla_first_response_minutes?: number
           updated_at?: string
@@ -4802,6 +4913,7 @@ export type Database = {
           keyword: string
           leads: Json | null
           location: string
+          owner_user_id: string | null
           results_count: number
           user_id: string
         }
@@ -4811,6 +4923,7 @@ export type Database = {
           keyword: string
           leads?: Json | null
           location: string
+          owner_user_id?: string | null
           results_count?: number
           user_id: string
         }
@@ -4820,6 +4933,7 @@ export type Database = {
           keyword?: string
           leads?: Json | null
           location?: string
+          owner_user_id?: string | null
           results_count?: number
           user_id?: string
         }
@@ -6034,6 +6148,7 @@ export type Database = {
           id: string
           max_chars: number
           name: string
+          owner_user_id: string | null
           system_prompt: string | null
           updated_at: string
           user_id: string
@@ -6048,6 +6163,7 @@ export type Database = {
           id?: string
           max_chars?: number
           name?: string
+          owner_user_id?: string | null
           system_prompt?: string | null
           updated_at?: string
           user_id: string
@@ -6062,6 +6178,7 @@ export type Database = {
           id?: string
           max_chars?: number
           name?: string
+          owner_user_id?: string | null
           system_prompt?: string | null
           updated_at?: string
           user_id?: string
@@ -6083,6 +6200,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          owner_user_id: string | null
           provider: string
           updated_at: string
           user_id: string
@@ -6093,6 +6211,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          owner_user_id?: string | null
           provider: string
           updated_at?: string
           user_id: string
@@ -6103,6 +6222,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          owner_user_id?: string | null
           provider?: string
           updated_at?: string
           user_id?: string
@@ -6165,6 +6285,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          owner_user_id: string | null
           refresh_token: string | null
           root_folder_id: string | null
           token_expires_at: string | null
@@ -6176,6 +6297,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          owner_user_id?: string | null
           refresh_token?: string | null
           root_folder_id?: string | null
           token_expires_at?: string | null
@@ -6187,6 +6309,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          owner_user_id?: string | null
           refresh_token?: string | null
           root_folder_id?: string | null
           token_expires_at?: string | null
@@ -6225,6 +6348,7 @@ export type Database = {
           created_at: string
           google_email: string | null
           id: string
+          owner_user_id: string | null
           refresh_token: string
           scopes: string[] | null
           token_expires_at: string
@@ -6236,6 +6360,7 @@ export type Database = {
           created_at?: string
           google_email?: string | null
           id?: string
+          owner_user_id?: string | null
           refresh_token: string
           scopes?: string[] | null
           token_expires_at: string
@@ -6247,6 +6372,7 @@ export type Database = {
           created_at?: string
           google_email?: string | null
           id?: string
+          owner_user_id?: string | null
           refresh_token?: string
           scopes?: string[] | null
           token_expires_at?: string
@@ -6544,6 +6670,7 @@ export type Database = {
           display_phone_number: string | null
           id: string
           nickname: string | null
+          owner_user_id: string | null
           phone_number_id: string | null
           raw_signup_data: Json | null
           status: string
@@ -6560,6 +6687,7 @@ export type Database = {
           display_phone_number?: string | null
           id?: string
           nickname?: string | null
+          owner_user_id?: string | null
           phone_number_id?: string | null
           raw_signup_data?: Json | null
           status?: string
@@ -6576,6 +6704,7 @@ export type Database = {
           display_phone_number?: string | null
           id?: string
           nickname?: string | null
+          owner_user_id?: string | null
           phone_number_id?: string | null
           raw_signup_data?: Json | null
           status?: string
@@ -6594,6 +6723,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          owner_user_id: string | null
           phone_number_id: string | null
           status: Database["public"]["Enums"]["wa_flow_status"]
           updated_at: string
@@ -6608,6 +6738,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          owner_user_id?: string | null
           phone_number_id?: string | null
           status?: Database["public"]["Enums"]["wa_flow_status"]
           updated_at?: string
@@ -6622,6 +6753,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          owner_user_id?: string | null
           phone_number_id?: string | null
           status?: Database["public"]["Enums"]["wa_flow_status"]
           updated_at?: string
@@ -6704,6 +6836,7 @@ export type Database = {
           lead_name: string | null
           lead_phone: string
           node_history: Json | null
+          owner_user_id: string | null
           started_at: string
           status: string
           updated_at: string
@@ -6726,6 +6859,7 @@ export type Database = {
           lead_name?: string | null
           lead_phone: string
           node_history?: Json | null
+          owner_user_id?: string | null
           started_at?: string
           status?: string
           updated_at?: string
@@ -6748,6 +6882,7 @@ export type Database = {
           lead_name?: string | null
           lead_phone?: string
           node_history?: Json | null
+          owner_user_id?: string | null
           started_at?: string
           status?: string
           updated_at?: string
@@ -6826,6 +6961,7 @@ export type Database = {
           messages_received: number
           messages_sent: number
           next_reply_at: string | null
+          owner_user_id: string | null
           status: string
           updated_at: string
           user_id: string
@@ -6849,6 +6985,7 @@ export type Database = {
           messages_received?: number
           messages_sent?: number
           next_reply_at?: string | null
+          owner_user_id?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -6872,6 +7009,7 @@ export type Database = {
           messages_received?: number
           messages_sent?: number
           next_reply_at?: string | null
+          owner_user_id?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -6900,6 +7038,7 @@ export type Database = {
           created_at: string
           id: string
           leads_count: number | null
+          owner_user_id: string | null
           phone_key: string | null
           search_city: string | null
           search_query: string
@@ -6912,6 +7051,7 @@ export type Database = {
           created_at?: string
           id?: string
           leads_count?: number | null
+          owner_user_id?: string | null
           phone_key?: string | null
           search_city?: string | null
           search_query: string
@@ -6924,6 +7064,7 @@ export type Database = {
           created_at?: string
           id?: string
           leads_count?: number | null
+          owner_user_id?: string | null
           phone_key?: string | null
           search_city?: string | null
           search_query?: string
@@ -6966,6 +7107,7 @@ export type Database = {
           leads_limit: number
           leads_used: number
           messages_sent_today: number
+          owner_user_id: string | null
           paused_at: string | null
           phone_key: string | null
           started_at: string | null
@@ -6992,6 +7134,7 @@ export type Database = {
           leads_limit?: number
           leads_used?: number
           messages_sent_today?: number
+          owner_user_id?: string | null
           paused_at?: string | null
           phone_key?: string | null
           started_at?: string | null
@@ -7018,6 +7161,7 @@ export type Database = {
           leads_limit?: number
           leads_used?: number
           messages_sent_today?: number
+          owner_user_id?: string | null
           paused_at?: string | null
           phone_key?: string | null
           started_at?: string | null
@@ -7081,6 +7225,7 @@ export type Database = {
           message_mode: string
           messages: Json
           name: string
+          owner_user_id: string | null
           pause_after_contacts: number | null
           pause_minutes: number | null
           pause_reason: string | null
@@ -7117,6 +7262,7 @@ export type Database = {
           message_mode?: string
           messages?: Json
           name: string
+          owner_user_id?: string | null
           pause_after_contacts?: number | null
           pause_minutes?: number | null
           pause_reason?: string | null
@@ -7153,6 +7299,7 @@ export type Database = {
           message_mode?: string
           messages?: Json
           name?: string
+          owner_user_id?: string | null
           pause_after_contacts?: number | null
           pause_minutes?: number | null
           pause_reason?: string | null
@@ -7192,6 +7339,7 @@ export type Database = {
           last_health_check_at: string | null
           last_sent_at: string | null
           name: string
+          owner_user_id: string | null
           phone_number: string | null
           proxy_id: string | null
           updated_at: string
@@ -7207,6 +7355,7 @@ export type Database = {
           last_health_check_at?: string | null
           last_sent_at?: string | null
           name: string
+          owner_user_id?: string | null
           phone_number?: string | null
           proxy_id?: string | null
           updated_at?: string
@@ -7222,6 +7371,7 @@ export type Database = {
           last_health_check_at?: string | null
           last_sent_at?: string | null
           name?: string
+          owner_user_id?: string | null
           phone_number?: string | null
           proxy_id?: string | null
           updated_at?: string
@@ -7330,6 +7480,7 @@ export type Database = {
           id: string
           language: string
           name: string
+          owner_user_id: string | null
           updated_at: string
           user_id: string
         }
@@ -7341,6 +7492,7 @@ export type Database = {
           id?: string
           language?: string
           name: string
+          owner_user_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -7352,6 +7504,7 @@ export type Database = {
           id?: string
           language?: string
           name?: string
+          owner_user_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -7371,6 +7524,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          owner_user_id: string | null
           updated_at: string
           user_id: string
         }
@@ -7379,6 +7533,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          owner_user_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -7387,6 +7542,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          owner_user_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -7465,12 +7621,14 @@ export type Database = {
       compute_partner_balance: { Args: { p_partner_id: string }; Returns: Json }
       compute_partner_mrr: { Args: { p_partner_id: string }; Returns: number }
       count_account_members: { Args: { _owner: string }; Returns: number }
+      current_account_owner: { Args: never; Returns: string }
+      current_account_role: { Args: never; Returns: string }
       generate_partner_referral_code: {
         Args: { p_full_name: string }
         Returns: string
       }
       generate_partner_verification_code: { Args: never; Returns: string }
-      get_account_owner: { Args: { _user_id: string }; Returns: string }
+      get_account_owner: { Args: { _uid: string }; Returns: string }
       get_account_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["account_role"]
@@ -7515,6 +7673,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_account_member: { Args: { _target_owner: string }; Returns: boolean }
       is_current_user_admin: { Args: never; Returns: boolean }
       is_user_blocked: { Args: { p_user_id: string }; Returns: boolean }
       log_security_event: {
