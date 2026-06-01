@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UserPlus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2, UserPlus, ArrowUpRight } from "lucide-react";
 import {
   AccountRole,
   ROLE_PERMISSIONS,
@@ -48,6 +49,14 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<{ email: string; password: string } | null>(null);
   const { toast } = useToast();
+  const { profile } = useAuth();
+  const plan = ((profile as any)?.plan || "").toLowerCase();
+
+  // Atendimento (start) → upgrade pra Growth; Growth → Enterprise sob medida; demais → Enterprise
+  const upgradeTarget = plan === "start"
+    ? { label: "Fazer upgrade para Growth IA", href: "/upgrade?to=growth" }
+    : { label: "Falar com Enterprise (plano sob medida)", href: "/enterprise" };
+
 
   useEffect(() => {
     if (!open) {
@@ -115,15 +124,20 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
               <div className="flex-1 text-sm">
                 <div className="font-semibold text-destructive mb-1">Limite de usuários atingido</div>
                 <p className="text-muted-foreground">
-                  Seu plano <span className="font-medium text-foreground">{planLabel}</span> não permite mais vagas. Faça upgrade para liberar mais usuários e desbloquear novos recursos.
+                  Seu plano <span className="font-medium text-foreground">{planLabel}</span> não permite mais vagas.{" "}
+                  {plan === "start"
+                    ? "Atualize para o Growth IA e libere até 5 usuários da conta."
+                    : "Vamos montar um plano sob medida com usuários ilimitados no Enterprise."}
                 </p>
               </div>
               <Button
                 variant="default"
                 size="sm"
-                onClick={() => { onOpenChange(false); window.location.href = "/upgrade"; }}
+                className="gap-1.5 shrink-0"
+                onClick={() => { onOpenChange(false); window.location.href = upgradeTarget.href; }}
               >
-                Fazer upgrade
+                {upgradeTarget.label}
+                <ArrowUpRight size={14} />
               </Button>
             </div>
           )}
@@ -182,8 +196,9 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
                 {loading ? <Loader2 className="animate-spin" size={16} /> : "Criar usuário"}
               </Button>
             ) : (
-              <Button onClick={() => { onOpenChange(false); window.location.href = "/upgrade"; }}>
-                Fazer upgrade
+              <Button className="gap-1.5" onClick={() => { onOpenChange(false); window.location.href = upgradeTarget.href; }}>
+                {upgradeTarget.label}
+                <ArrowUpRight size={14} />
               </Button>
             )}
           </DialogFooter>
