@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, Archive, X, Loader2, UserCog } from "lucide-react";
+import { Users, Archive, X, Loader2, UserCog, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -13,6 +13,7 @@ interface Props {
   onClear: () => void;
   onChangeResponsible: (userId: string | null) => Promise<void>;
   onArchive: () => Promise<void>;
+  onMarkSent?: () => Promise<void>;
   members: ResponsibleMember[];
   canChangeResponsible: boolean;
 }
@@ -24,10 +25,11 @@ export function OpportunityBulkBar({
   onClear,
   onChangeResponsible,
   onArchive,
+  onMarkSent,
   members,
   canChangeResponsible,
 }: Props) {
-  const [busy, setBusy] = useState<"resp" | "arch" | null>(null);
+  const [busy, setBusy] = useState<"resp" | "arch" | "sent" | null>(null);
   if (selectedCount === 0) return null;
 
   return (
