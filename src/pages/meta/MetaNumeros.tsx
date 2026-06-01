@@ -129,15 +129,20 @@ export default function MetaNumeros() {
     if (!editingConn) return;
     try {
       const updates: Record<string, any> = { nickname: editNickname || null };
+      if (canChangeResponsible) {
+        updates.responsible_user_id = editResponsible === "none" ? null : editResponsible;
+      }
       if (showTokenField && editToken.trim()) updates.access_token = editToken.trim();
       await supabase.from("user_waba_connections").update(updates).eq("id", editingConn.id);
 
       const updated = {
         ...editingConn,
         nickname: editNickname || null,
+        ...(canChangeResponsible ? { responsible_user_id: editResponsible === "none" ? null : editResponsible } : {}),
         ...(showTokenField && editToken.trim() ? { access_token: editToken.trim() } : {}),
       };
       setConnections((prev) => prev.map((c) => (c.id === editingConn.id ? updated : c)));
+
 
       if (showTokenField && editToken.trim()) {
         const stillExpired = await validateConnectionToken(updated);
