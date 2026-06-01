@@ -1126,6 +1126,8 @@ const Profile = () => {
 
           {/* Trial Cancel Card — só aparece se está em trial com cartão */}
           <TrialCancelCard />
+          </>
+          )}
 
           {/* Email Preferences Card */}
           <Card className="border-border/50">
