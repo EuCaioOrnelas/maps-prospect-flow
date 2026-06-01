@@ -10,6 +10,7 @@ import {
   Handshake,
   Megaphone,
   Users,
+  Users as UsersIcon,
   Flame,
   AlertTriangle,
   Bell,
@@ -43,6 +44,7 @@ import logoIconNew from "@/assets/logo-icon-new.png";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
 import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
 import { planHasFeature } from "@/lib/planAccess";
+import { useAccountRole } from "@/hooks/useAccountRole";
 
 interface AppSidebarProps {
   profile?: {
@@ -69,6 +71,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const location = useLocation();
   const { signOut, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
+  const { role: accountRole } = useAccountRole();
+  const canSeeUsers = isAdmin || accountRole === "owner" || accountRole === "admin";
   const can = (key: FeatureKey) =>
     isAdmin ||
     (profileHasFeature(authProfile as any, key) && planHasFeature(authProfile as any, key));

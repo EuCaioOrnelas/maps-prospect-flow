@@ -194,8 +194,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/trial-expired" replace />;
   }
 
-  // Custom subscription feature gate + plan-based gate (new "start" / Atendimento
-  // blocks Oportunidades and Agentes IA). Admins always pass through.
+  // Custom subscription feature gate + plan-based gate
   if (!isAdmin && !requireAdmin) {
     const feat = getFeatureForPath(location.pathname);
     if (feat && !profileHasFeature(profile as any, feat)) {
@@ -206,5 +205,24 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     }
   }
 
-  return <DashboardThemeProvider>{children}</DashboardThemeProvider>;
+  // Role-based gate (account_members system)
+  if (!isAdmin && !requireAdmin && accountRole) {
+    // Operational user landing on /dashboard → redirect to their home
+    if (accountRole === 'operational' && location.pathname === '/dashboard') {
+      return <Navigate to={getDefaultHomeForRole(accountRole)} replace />;
+    }
+    const rolePerm = getRolePermissionForPath(location.pathname);
+    if (rolePerm && !roleHasPermission(accountRole, rolePerm) && location.pathname !== '/acesso-negado') {
+      return <Navigate to="/acesso-negado" replace />;
+    }
+  }
+
+  return (
+    <DashboardThemeProvider>
+      {children}
+      {mustChangePassword && (
+        <MustChangePasswordDialog open={true} onCompleted={() => setMustChangePassword(false)} />
+      )}
+    </DashboardThemeProvider>
+  );
 };
