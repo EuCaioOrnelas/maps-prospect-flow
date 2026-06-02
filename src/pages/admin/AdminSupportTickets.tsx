@@ -1075,34 +1075,62 @@ export default function AdminSupportTickets() {
                 </div>
               )}
 
-              {/* Conversa */}
+              {/* Conversa unificada: Cliente ↔ Wian ↔ Suporte */}
               <div>
-                <p className="text-sm font-semibold mb-2">Conversa</p>
-                <div className="rounded-lg border border-border bg-background max-h-[420px] overflow-y-auto p-3 space-y-2">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold">Conversa</p>
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                    <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#dcf8c6] border border-[#b6e8a0]"></span>Suporte</span>
+                    <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#e7f0fb] border border-[#c9dcf4]"></span>Wian</span>
+                    <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-white border border-zinc-300"></span>Cliente</span>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-border bg-[#f4f1ec] dark:bg-zinc-900 max-h-[460px] overflow-y-auto p-4 space-y-2">
                   {loadingMsgs ? (
                     <div className="py-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" /></div>
                   ) : messages.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">Sem mensagens (ticket manual ou sem chat).</p>
-                  ) : messages.map((m) => (
-                    <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[80%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
-                        m.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : m.role === "ai"
-                            ? "bg-muted text-foreground border border-border"
-                            : "bg-accent text-accent-foreground border border-border"
-                      }`}>
-                        <div className={`text-[10px] uppercase tracking-wide mb-1 flex items-center gap-1 ${m.role === "user" ? "opacity-90" : "opacity-60"}`}>
-                          {m.role === "user" ? "Cliente" : m.role === "ai" ? "Wian (IA)" : m.role}
-                          {m.metadata?.has_image && <ImageIcon className="w-3 h-3" />}
+                    <p className="text-sm text-muted-foreground text-center py-6">Sem mensagens ainda.</p>
+                  ) : messages.map((m) => {
+                    const isSupport = m.role === "assistant"; // resposta humana via e-mail
+                    const isAI = m.role === "ai";
+                    const isCustomer = m.role === "user";
+                    const align = isSupport ? "justify-end" : "justify-start";
+                    const bubble = isSupport
+                      ? "bg-[#dcf8c6] text-zinc-900 border border-[#cdebb6] dark:bg-emerald-900/40 dark:text-emerald-50 dark:border-emerald-700/40"
+                      : isAI
+                        ? "bg-[#e7f0fb] text-zinc-900 border border-[#cfdff5] dark:bg-sky-950/40 dark:text-sky-50 dark:border-sky-800/40"
+                        : "bg-white text-zinc-900 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700";
+                    const label = isSupport ? "Suporte" : isAI ? "Wian (IA)" : "Cliente";
+                    const labelColor = isSupport ? "text-emerald-700 dark:text-emerald-300" : isAI ? "text-sky-700 dark:text-sky-300" : "text-zinc-500 dark:text-zinc-400";
+                    const atts: { path: string; name: string; type?: string }[] = Array.isArray(m.metadata?.attachments) ? m.metadata.attachments : [];
+                    return (
+                      <div key={m.id} className={`flex ${align}`}>
+                        <div className={`max-w-[78%] rounded-2xl px-3.5 py-2 shadow-sm ${bubble}`}>
+                          <div className={`text-[10px] font-semibold uppercase tracking-wide mb-1 flex items-center gap-1 ${labelColor}`}>
+                            {label}
+                            {m.metadata?.has_image && <ImageIcon className="w-3 h-3" />}
+                          </div>
+                          <div className="text-[13.5px] leading-relaxed whitespace-pre-wrap">{m.content}</div>
+                          {atts.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {atts.map((a, i) => {
+                                const url = signedUrls[a.path];
+                                const isImg = a.type?.startsWith("image/");
+                                if (isImg && url) {
+                                  return <a key={i} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={a.name} className="h-20 w-20 object-cover rounded-md border border-black/10" /></a>;
+                                }
+                                return <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] flex items-center gap-1 bg-black/5 px-2 py-1 rounded hover:bg-black/10"><Paperclip className="w-3 h-3" />{a.name}</a>;
+                              })}
+                            </div>
+                          )}
+                          {m.metadata?.has_image && atts.length === 0 && (
+                            <div className="mt-1 text-[10px] opacity-70 italic">Cliente anexou imagem no chat</div>
+                          )}
+                          <div className="mt-1 text-[10px] opacity-50 text-right">{formatDistanceToNow(new Date(m.created_at), { addSuffix: true, locale: ptBR })}</div>
                         </div>
-                        {m.content}
-                        {m.metadata?.has_image && (
-                          <div className="mt-1 text-[10px] opacity-70 italic">📎 Cliente anexou imagem no chat</div>
-                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1112,27 +1140,56 @@ export default function AdminSupportTickets() {
                   <p className="text-sm font-semibold">Responder ao cliente por e-mail</p>
                   {selected.email && <Badge variant="outline" className="text-xs gap-1"><Mail className="w-3 h-3" />{selected.email}</Badge>}
                 </div>
-                <div className="rounded-lg border border-border bg-muted/10 p-3 space-y-2">
+                <div className="rounded-xl border border-border bg-muted/10 p-3 space-y-2">
                   <Textarea
                     rows={4}
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
+                    onPaste={handleReplyPaste}
                     placeholder={selected.email
-                      ? "Sua resposta será enviada por e-mail ao cliente e registrada na conversa. Quando ele responder, volta automaticamente aqui."
+                      ? "Escreva sua resposta. Cole imagens (Ctrl/Cmd+V) ou anexe arquivos. A resposta chega no e-mail do cliente e fica registrada aqui."
                       : "Este ticket não possui e-mail do cliente."}
                     disabled={!selected.email}
                   />
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] text-muted-foreground">
-                      Assunto: <span className="font-mono">Suporte Wiize - {selected.category || "Atendimento"} - Ticket #{selected.ticket_number || selected.id.slice(0,8).toUpperCase()}</span>
-                    </p>
+                  {replyFiles.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {replyFiles.map((f, i) => (
+                        <div key={i} className="flex items-center gap-1.5 text-xs bg-background border border-border rounded-md px-2 py-1">
+                          {f.type.startsWith("image/")
+                            ? <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                            : <Paperclip className="w-3.5 h-3.5 text-muted-foreground" />}
+                          <span className="max-w-[180px] truncate">{f.name}</span>
+                          <span className="text-muted-foreground">({(f.size / 1024).toFixed(0)}KB)</span>
+                          <button type="button" onClick={() => setReplyFiles(replyFiles.filter((_, j) => j !== i))}>
+                            <X className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={replyFileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip"
+                        className="hidden"
+                        onChange={(e) => handleReplyFiles(e.target.files)}
+                      />
+                      <Button size="sm" variant="outline" onClick={() => replyFileInputRef.current?.click()} disabled={!selected.email}>
+                        <Paperclip className="w-4 h-4 mr-1" /> Anexar
+                      </Button>
+                      <p className="text-[11px] text-muted-foreground">Cole imagens com Ctrl/Cmd+V · até 10MB cada</p>
+                    </div>
                     <Button size="sm" onClick={sendCustomerReply} disabled={sendingReply || !selected.email}>
                       {sendingReply && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      <Mail className="w-4 h-4 mr-1" /> Enviar por e-mail
+                      <Mail className="w-4 h-4 mr-1" /> Enviar
                     </Button>
                   </div>
                 </div>
               </div>
+
 
 
 
