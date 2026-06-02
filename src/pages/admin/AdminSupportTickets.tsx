@@ -487,12 +487,14 @@ export default function AdminSupportTickets() {
     setReplyFiles((prev) => [...prev, ...valid]);
   };
 
+  const updatePriority = async (priority: string) => {
     if (!selected) return;
     const { error } = await supabase.from("support_tickets").update({ priority }).eq("id", selected.id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     setSelected({ ...selected, priority });
     fetchTickets();
   };
+
 
   const handleAddFiles = (files: FileList | null) => {
     if (!files) return;
