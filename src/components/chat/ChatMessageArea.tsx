@@ -27,7 +27,12 @@ interface ChatMessageAreaProps {
   messagesEndRef: React.RefObject<HTMLDivElement>;
   onReopenConversation?: (templateName: string) => void;
   fetchTemplates?: () => Promise<any[]>;
+  members?: { user_id: string; name: string | null; email: string | null }[];
+  canChangeResponsible?: boolean;
+  onTransferResponsible?: (conversationId: string, userId: string | null) => Promise<void>;
+  currentUserId?: string;
 }
+
 
 function MessageStatus({ status }: { status: string }) {
   if (status === "pending") {
