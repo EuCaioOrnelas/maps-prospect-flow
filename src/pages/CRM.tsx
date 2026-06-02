@@ -495,6 +495,11 @@ export default function CRM() {
                     availableTags={availableTags}
                     whatsappNumbers={whatsappNumbers}
                     availableOrigins={availableOrigins}
+                    showResponsibleFilter={!isOperational}
+                    responsibleFilter={responsibleFilter}
+                    onResponsibleFilterChange={setResponsibleFilter}
+                    responsibleMembers={responsibleMembers}
+                    currentUserId={user?.id ?? null}
                   />
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">
