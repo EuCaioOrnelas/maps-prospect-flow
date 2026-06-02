@@ -83,7 +83,10 @@ function fmtBRL(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 }
 
-export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
+export function useMetaDashboard(
+  range: MetaDashboardRange,
+  responsibleUserId?: string | null,
+): MetaDashboardData {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Omit<MetaDashboardData, "loading">>(() => emptyData());
@@ -93,6 +96,7 @@ export function useMetaDashboard(range: MetaDashboardRange): MetaDashboardData {
   const periodMs = range.end.getTime() - range.start.getTime();
   const prevStart = new Date(range.start.getTime() - periodMs);
   const prevEnd = range.start;
+
 
   useEffect(() => {
     if (!user) return;
