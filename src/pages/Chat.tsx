@@ -293,23 +293,35 @@ const Chat = () => {
               </div>
             ) : hasConnection ? (
               <>
-                <div className="w-[360px] shrink-0 wa-sidebar-border">
-                  <ChatSidebar
-                    conversations={chat.conversations}
-                    activeConversationId={chat.activeConversationId}
-                    onSelectConversation={chat.setActiveConversationId}
-                    searchQuery={chat.searchQuery}
-                    onSearchChange={chat.setSearchQuery}
-                    connections={chat.connections}
-                    activeConnectionId={chat.activeConnectionId}
-                    onConnectionChange={chat.setActiveConnectionId}
-                    onTogglePin={chat.togglePin}
-                    onArchive={chat.archiveConversation}
-                    onToggleMute={chat.toggleMute}
-                    loading={chat.loading}
-                    onNewConversation={chat.startNewConversation}
-                    connectionHealth={chat.connectionHealth}
-                  />
+                <div className="w-[360px] shrink-0 wa-sidebar-border flex flex-col">
+                  {(role === "owner" || role === "admin") && (
+                    <div className="px-3 py-2 border-b border-border bg-background/40">
+                      <CRMResponsibleFilter
+                        value={responsibleFilter}
+                        onChange={setResponsibleFilter}
+                        members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
+                        currentUserId={user?.id || ""}
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-h-0">
+                    <ChatSidebar
+                      conversations={filteredConversations}
+                      activeConversationId={chat.activeConversationId}
+                      onSelectConversation={chat.setActiveConversationId}
+                      searchQuery={chat.searchQuery}
+                      onSearchChange={chat.setSearchQuery}
+                      connections={chat.connections}
+                      activeConnectionId={chat.activeConnectionId}
+                      onConnectionChange={chat.setActiveConnectionId}
+                      onTogglePin={chat.togglePin}
+                      onArchive={chat.archiveConversation}
+                      onToggleMute={chat.toggleMute}
+                      loading={chat.loading}
+                      onNewConversation={chat.startNewConversation}
+                      connectionHealth={chat.connectionHealth}
+                    />
+                  </div>
                 </div>
                 <ChatMessageArea
                   conversation={chat.activeConversation}
@@ -322,8 +334,13 @@ const Chat = () => {
                     console.log("Reabrir conversa com template:", templateName);
                   }}
                   fetchTemplates={chat.fetchTemplates}
+                  members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
+                  canChangeResponsible={canChangeResponsible}
+                  onTransferResponsible={chat.transferConversation}
+                  currentUserId={user?.id || ""}
                 />
               </>
+
             ) : null}
           </div>
         </div>
