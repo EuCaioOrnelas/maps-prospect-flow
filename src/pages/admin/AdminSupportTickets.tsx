@@ -384,22 +384,51 @@ export default function AdminSupportTickets() {
     }
   };
 
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const b64 = result.includes(",") ? result.split(",")[1] : result;
+        resolve(b64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   const sendCustomerReply = async () => {
     if (!selected) return;
     const text = replyText.trim();
-    if (!text) { toast({ title: "Digite uma resposta", variant: "destructive" }); return; }
+    if (!text && replyFiles.length === 0) { toast({ title: "Digite uma resposta ou anexe um arquivo", variant: "destructive" }); return; }
     if (!selected.email) { toast({ title: "Ticket sem e-mail do cliente", variant: "destructive" }); return; }
     setSendingReply(true);
     try {
+      // Prepara anexos em base64
+      const attachments: { filename: string; content: string; content_type?: string }[] = [];
+      const uploadedRefs: { path: string; name: string; type?: string }[] = [];
+      for (const f of replyFiles) {
+        if (f.size > 10 * 1024 * 1024) throw new Error(`Arquivo ${f.name} excede 10MB`);
+        const content = await fileToBase64(f);
+        attachments.push({ filename: f.name, content, content_type: f.type });
+        // também salva no storage para ficar registrado no histórico
+        const ext = f.name.split(".").pop() || "bin";
+        const path = `${selected.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("support-attachments").upload(path, f, {
+          contentType: f.type, upsert: false,
+        });
+        if (!upErr) uploadedRefs.push({ path, name: f.name, type: f.type });
+      }
+
       const { error } = await supabase.functions.invoke("support-email-send", {
-        body: { type: "customer_reply", ticketId: selected.id, message: text },
+        body: { type: "customer_reply", ticketId: selected.id, message: text, attachments },
       });
       if (error) throw error;
+
       await supabase.from("support_messages").insert({
         ticket_id: selected.id,
         role: "assistant",
-        content: text,
-        metadata: { source: "support_email_reply" },
+        content: text || "(mensagem com anexos)",
+        metadata: { source: "support_email_reply", attachments: uploadedRefs, sent_by: "human" },
       });
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from("support_ticket_history").insert({
@@ -407,10 +436,12 @@ export default function AdminSupportTickets() {
         author_id: user?.id ?? null,
         author_name: user?.email ?? "Equipe",
         action_type: "support_email_reply",
-        content: text,
-        attachments: [],
+        content: text || "(mensagem com anexos)",
+        attachments: uploadedRefs,
       });
       setReplyText("");
+      setReplyFiles([]);
+      if (replyFileInputRef.current) replyFileInputRef.current.value = "";
       toast({ title: "Resposta enviada por e-mail", description: selected.email });
       const { data: msgs } = await supabase.from("support_messages").select("*").eq("ticket_id", selected.id).order("created_at", { ascending: true });
       setMessages((msgs as Message[]) || []);
@@ -422,7 +453,40 @@ export default function AdminSupportTickets() {
     }
   };
 
-  const updatePriority = async (priority: string) => {
+  const handleReplyPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const added: File[] = [];
+    for (const item of Array.from(items)) {
+      if (item.kind === "file") {
+        const f = item.getAsFile();
+        if (f) {
+          const ext = (f.type.split("/")[1] || "png").split("+")[0];
+          const named = f.name && f.name !== "image.png" ? f : new File([f], `colado-${Date.now()}.${ext}`, { type: f.type });
+          added.push(named);
+        }
+      }
+    }
+    if (added.length) {
+      e.preventDefault();
+      setReplyFiles((prev) => [...prev, ...added]);
+      toast({ title: `${added.length} imagem(ns) anexada(s) do clipboard` });
+    }
+  };
+
+  const handleReplyFiles = (files: FileList | null) => {
+    if (!files) return;
+    const valid: File[] = [];
+    Array.from(files).forEach((f) => {
+      if (f.size > 10 * 1024 * 1024) {
+        toast({ title: "Arquivo muito grande", description: `${f.name} excede 10MB`, variant: "destructive" });
+        return;
+      }
+      valid.push(f);
+    });
+    setReplyFiles((prev) => [...prev, ...valid]);
+  };
+
     if (!selected) return;
     const { error } = await supabase.from("support_tickets").update({ priority }).eq("id", selected.id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
