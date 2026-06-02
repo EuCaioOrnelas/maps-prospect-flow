@@ -315,6 +315,29 @@ const Upgrade = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [addOnsOpen, setAddOnsOpen] = useState(false);
   const [pendingBumps, setPendingBumps] = useState<OrderBumpSelection>(emptyBumpSelection());
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+  const comparisonRef = useRef<HTMLDivElement>(null);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(COMPARISON_GROUPS.map((g) => [g.title, true]))
+  );
+  const toggleGroup = (title: string) =>
+    setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
+  const allGroupsOpen = COMPARISON_GROUPS.every((g) => openGroups[g.title]);
+  const setAllGroups = (open: boolean) =>
+    setOpenGroups(Object.fromEntries(COMPARISON_GROUPS.map((g) => [g.title, open])));
+  const handleShowComparison = () => {
+    setComparisonOpen(true);
+    setTimeout(() => comparisonRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  };
+  const renderCell = (v: boolean | string) => {
+    if (typeof v === "string") return <span className="text-sm font-medium text-foreground">{v}</span>;
+    return v ? (
+      <Check size={18} className="text-primary mx-auto" strokeWidth={2.5} />
+    ) : (
+      <span className="text-muted-foreground/40 text-base">—</span>
+    );
+  };
+
 
   const currentPlan = profile?.plan || "free";
   const { trackScoreEvent } = useAutoScoreTracking("upgrade");
