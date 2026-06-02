@@ -419,34 +419,75 @@ export function ImportExportDialog({ leads, stages, origins, onAddOrigin, onImpo
                 </div>
 
                 {/* Mandatory formatting rules */}
-                <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-500" />
-                    <div className="text-sm font-semibold text-foreground">Regras obrigatórias de formatação</div>
+                <div className="rounded-xl border border-border bg-card overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                      <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-500" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-foreground leading-tight">Regras obrigatórias de formatação</div>
+                      <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">Siga este checklist para garantir uma importação sem erros</div>
+                    </div>
                   </div>
-                  <ul className="space-y-1.5 text-xs text-muted-foreground">
-                    <li className="flex gap-2">
-                      <Phone className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-                      <span><strong className="text-foreground">Telefone obrigatório</strong> com <strong>DDI 55 + DDD + número</strong> (12 a 13 dígitos, só números, sem "+", espaços ou parênteses). Ex.: <code className="px-1 py-0.5 rounded bg-muted/60 font-mono">5511999998888</code></span>
-                    </li>
-                    <li className="flex gap-2">
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-                      <span>Formatos aceitos: <strong>.xlsx, .xls, .csv</strong> (use a 1ª aba da planilha).</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-                      <span>Colunas reconhecidas: <strong>Nome, Telefone, Empresa, Nicho, Cidade, Região, Website</strong>. Outras colunas são ignoradas.</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500 mt-0.5 shrink-0" />
-                      <span>Linhas com telefone inválido são <strong>descartadas automaticamente</strong>. Duplicados não são reimportados.</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-                      <span><strong>Etapa do pipeline</strong> e <strong>origem</strong> são definidas no próximo passo (não na planilha).</span>
-                    </li>
-                  </ul>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border">
+                    <div className="flex items-start gap-3 p-3 bg-card">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <Phone className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-foreground mb-0.5">Telefone obrigatório</div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          DDI 55 + DDD + número (12 a 13 dígitos, só números). Ex.: <code className="px-1 py-0.5 rounded bg-muted/60 font-mono text-foreground">5511999998888</code>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 bg-card">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <FileSpreadsheet className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-foreground mb-0.5">Formatos aceitos</div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          <strong className="text-foreground">.xlsx, .xls, .csv</strong> — use a primeira aba da planilha.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 bg-card">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-foreground mb-0.5">Colunas reconhecidas</div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Nome, Telefone, Empresa, Nicho, Cidade, Região, Website. Outras são ignoradas.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 bg-card">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-500 flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-foreground mb-0.5">Validação automática</div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Telefones inválidos são descartados. Duplicados não são reimportados.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 bg-card sm:col-span-2">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-foreground mb-0.5">Etapa do pipeline e origem</div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Definidas no próximo passo da importação — não precisam estar na planilha.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
 
                 {/* Drag and drop area */}
                 <div
