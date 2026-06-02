@@ -192,15 +192,30 @@ const KanbanBoardWithScrollComponent = ({
 
   useEffect(() => {
     const el = containerRef.current;
+    const top = topScrollRef.current;
     if (!el) return;
-    const onScroll = () => updateScrollIndicators();
+    const onScroll = () => {
+      updateScrollIndicators();
+      if (syncingRef.current === 'top') { syncingRef.current = null; return; }
+      if (top) {
+        syncingRef.current = 'bottom';
+        top.scrollLeft = el.scrollLeft;
+      }
+    };
+    const onTopScroll = () => {
+      if (syncingRef.current === 'bottom') { syncingRef.current = null; return; }
+      syncingRef.current = 'top';
+      el.scrollLeft = top!.scrollLeft;
+    };
     const onResize = () => updateScrollIndicators();
     el.addEventListener('scroll', onScroll, { passive: true });
+    top?.addEventListener('scroll', onTopScroll, { passive: true });
     window.addEventListener('resize', onResize);
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateScrollIndicators) : null;
     if (ro) ro.observe(el);
     return () => {
       el.removeEventListener('scroll', onScroll);
+      top?.removeEventListener('scroll', onTopScroll);
       window.removeEventListener('resize', onResize);
       if (ro) ro.disconnect();
     };
