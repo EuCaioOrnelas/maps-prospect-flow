@@ -131,6 +131,10 @@ export default function AdminSupportTickets() {
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Email reply composer
+  const [replyText, setReplyText] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
+
   // Manual ticket modal
   const [manualOpen, setManualOpen] = useState(false);
   const [manualName, setManualName] = useState("");
@@ -363,6 +367,56 @@ export default function AdminSupportTickets() {
       attachments: [],
     });
     refreshHistory(selected.id);
+
+    // Dispara e-mail de avaliação ao resolver/fechar (se houver e-mail do cliente)
+    if ((status === "resolved" || status === "closed") && selected.email) {
+      try {
+        await supabase.functions.invoke("support-email-send", {
+          body: { type: "customer_rating_request", ticketId: selected.id },
+        });
+        toast({ title: "E-mail de avaliação enviado", description: selected.email });
+      } catch (e: any) {
+        toast({ title: "Falha ao enviar avaliação", description: String(e?.message || e), variant: "destructive" });
+      }
+    }
+  };
+
+  const sendCustomerReply = async () => {
+    if (!selected) return;
+    const text = replyText.trim();
+    if (!text) { toast({ title: "Digite uma resposta", variant: "destructive" }); return; }
+    if (!selected.email) { toast({ title: "Ticket sem e-mail do cliente", variant: "destructive" }); return; }
+    setSendingReply(true);
+    try {
+      const { error } = await supabase.functions.invoke("support-email-send", {
+        body: { type: "customer_reply", ticketId: selected.id, message: text },
+      });
+      if (error) throw error;
+      await supabase.from("support_messages").insert({
+        ticket_id: selected.id,
+        role: "assistant",
+        content: text,
+        metadata: { source: "support_email_reply" },
+      });
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("support_ticket_history").insert({
+        ticket_id: selected.id,
+        author_id: user?.id ?? null,
+        author_name: user?.email ?? "Equipe",
+        action_type: "support_email_reply",
+        content: text,
+        attachments: [],
+      });
+      setReplyText("");
+      toast({ title: "Resposta enviada por e-mail", description: selected.email });
+      const { data: msgs } = await supabase.from("support_messages").select("*").eq("ticket_id", selected.id).order("created_at", { ascending: true });
+      setMessages((msgs as Message[]) || []);
+      refreshHistory(selected.id);
+    } catch (e: any) {
+      toast({ title: "Erro ao enviar", description: String(e?.message || e), variant: "destructive" });
+    } finally {
+      setSendingReply(false);
+    }
   };
 
   const updatePriority = async (priority: string) => {
