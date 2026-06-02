@@ -119,6 +119,7 @@ Deno.serve(async (req) => {
       user_id: matchedUserId,
       customer_type: customerType,
       ai_summary: summary,
+      subject: (extra ? extra.slice(0, 160) : summary?.slice(0, 160)) || category,
       category,
       status: "escalated",
       phase: "escalated",
@@ -142,6 +143,20 @@ Deno.serve(async (req) => {
         ticket_id: ticketId, role: "user", content: extra,
         metadata: { type: "escalation_extra" },
       });
+    }
+
+    // Dispara notificação ao admin (wiize.app@gmail.com) — best-effort, não bloqueia
+    try {
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/support-email-send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({ type: "admin_new_ticket", ticketId }),
+      });
+    } catch (notifyErr) {
+      console.error("[support-escalate] admin notify failed", notifyErr);
     }
 
     return new Response(JSON.stringify({

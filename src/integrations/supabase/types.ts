@@ -5429,6 +5429,7 @@ export type Database = {
         Row: {
           ai_confidence: number | null
           ai_summary: string | null
+          autoclose_followup_sent_at: string | null
           category: string | null
           conversation_summary: string | null
           created_at: string
@@ -5439,13 +5440,18 @@ export type Database = {
           id: string
           internal_notes: string | null
           is_manual: boolean
+          last_customer_reply_at: string | null
+          last_support_reply_at: string | null
           name: string | null
           phase: string
           phone: string | null
           priority: string
+          rating_email_sent_at: string | null
+          rating_token: string | null
           resolved_at: string | null
           resolved_by: string | null
           status: string
+          subject: string | null
           summary_message_count: number
           ticket_number: string | null
           updated_at: string
@@ -5455,6 +5461,7 @@ export type Database = {
         Insert: {
           ai_confidence?: number | null
           ai_summary?: string | null
+          autoclose_followup_sent_at?: string | null
           category?: string | null
           conversation_summary?: string | null
           created_at?: string
@@ -5465,13 +5472,18 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           is_manual?: boolean
+          last_customer_reply_at?: string | null
+          last_support_reply_at?: string | null
           name?: string | null
           phase?: string
           phone?: string | null
           priority?: string
+          rating_email_sent_at?: string | null
+          rating_token?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           status?: string
+          subject?: string | null
           summary_message_count?: number
           ticket_number?: string | null
           updated_at?: string
@@ -5481,6 +5493,7 @@ export type Database = {
         Update: {
           ai_confidence?: number | null
           ai_summary?: string | null
+          autoclose_followup_sent_at?: string | null
           category?: string | null
           conversation_summary?: string | null
           created_at?: string
@@ -5491,13 +5504,18 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           is_manual?: boolean
+          last_customer_reply_at?: string | null
+          last_support_reply_at?: string | null
           name?: string | null
           phase?: string
           phone?: string | null
           priority?: string
+          rating_email_sent_at?: string | null
+          rating_token?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           status?: string
+          subject?: string | null
           summary_message_count?: number
           ticket_number?: string | null
           updated_at?: string

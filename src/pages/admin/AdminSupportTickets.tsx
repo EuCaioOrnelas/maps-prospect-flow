@@ -131,6 +131,10 @@ export default function AdminSupportTickets() {
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Email reply composer
+  const [replyText, setReplyText] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
+
   // Manual ticket modal
   const [manualOpen, setManualOpen] = useState(false);
   const [manualName, setManualName] = useState("");
@@ -363,6 +367,56 @@ export default function AdminSupportTickets() {
       attachments: [],
     });
     refreshHistory(selected.id);
+
+    // Dispara e-mail de avaliação ao resolver/fechar (se houver e-mail do cliente)
+    if ((status === "resolved" || status === "closed") && selected.email) {
+      try {
+        await supabase.functions.invoke("support-email-send", {
+          body: { type: "customer_rating_request", ticketId: selected.id },
+        });
+        toast({ title: "E-mail de avaliação enviado", description: selected.email });
+      } catch (e: any) {
+        toast({ title: "Falha ao enviar avaliação", description: String(e?.message || e), variant: "destructive" });
+      }
+    }
+  };
+
+  const sendCustomerReply = async () => {
+    if (!selected) return;
+    const text = replyText.trim();
+    if (!text) { toast({ title: "Digite uma resposta", variant: "destructive" }); return; }
+    if (!selected.email) { toast({ title: "Ticket sem e-mail do cliente", variant: "destructive" }); return; }
+    setSendingReply(true);
+    try {
+      const { error } = await supabase.functions.invoke("support-email-send", {
+        body: { type: "customer_reply", ticketId: selected.id, message: text },
+      });
+      if (error) throw error;
+      await supabase.from("support_messages").insert({
+        ticket_id: selected.id,
+        role: "assistant",
+        content: text,
+        metadata: { source: "support_email_reply" },
+      });
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("support_ticket_history").insert({
+        ticket_id: selected.id,
+        author_id: user?.id ?? null,
+        author_name: user?.email ?? "Equipe",
+        action_type: "support_email_reply",
+        content: text,
+        attachments: [],
+      });
+      setReplyText("");
+      toast({ title: "Resposta enviada por e-mail", description: selected.email });
+      const { data: msgs } = await supabase.from("support_messages").select("*").eq("ticket_id", selected.id).order("created_at", { ascending: true });
+      setMessages((msgs as Message[]) || []);
+      refreshHistory(selected.id);
+    } catch (e: any) {
+      toast({ title: "Erro ao enviar", description: String(e?.message || e), variant: "destructive" });
+    } finally {
+      setSendingReply(false);
+    }
   };
 
   const updatePriority = async (priority: string) => {
@@ -982,6 +1036,36 @@ export default function AdminSupportTickets() {
                   ))}
                 </div>
               </div>
+
+              {/* Responder por e-mail (thread bidirecional) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold">Responder ao cliente por e-mail</p>
+                  {selected.email && <Badge variant="outline" className="text-xs gap-1"><Mail className="w-3 h-3" />{selected.email}</Badge>}
+                </div>
+                <div className="rounded-lg border border-border bg-muted/10 p-3 space-y-2">
+                  <Textarea
+                    rows={4}
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder={selected.email
+                      ? "Sua resposta será enviada por e-mail ao cliente e registrada na conversa. Quando ele responder, volta automaticamente aqui."
+                      : "Este ticket não possui e-mail do cliente."}
+                    disabled={!selected.email}
+                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-muted-foreground">
+                      Assunto: <span className="font-mono">Suporte Wiize - {selected.category || "Atendimento"} - Ticket #{selected.ticket_number || selected.id.slice(0,8).toUpperCase()}</span>
+                    </p>
+                    <Button size="sm" onClick={sendCustomerReply} disabled={sendingReply || !selected.email}>
+                      {sendingReply && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      <Mail className="w-4 h-4 mr-1" /> Enviar por e-mail
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+
 
               {/* Histórico interno */}
               <div>

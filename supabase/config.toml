@@ -90,3 +90,20 @@ verify_jwt = false
 [functions.verify-ai-access]
 verify_jwt = false
 
+[functions.support-email-send]
+verify_jwt = false
+
+[functions.support-email-inbound]
+verify_jwt = false
+
+[functions.support-ticket-autoclose]
+verify_jwt = false
+
+[functions.support-rating-submit]
+verify_jwt = false
+
+[functions.support-rating-info]
+verify_jwt = false
+
+
+
