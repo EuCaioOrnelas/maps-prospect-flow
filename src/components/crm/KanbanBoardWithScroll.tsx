@@ -222,11 +222,19 @@ const KanbanBoardWithScrollComponent = ({
   }, [updateScrollIndicators]);
 
   return (
-    <div className="relative flex-1 h-full">
+    <div className="relative flex-1 h-full flex flex-col">
+      {/* Top horizontal scroll proxy */}
+      <div
+        ref={topScrollRef}
+        className="kanban-scroll overflow-x-auto overflow-y-hidden mb-1"
+        style={{ height: 8 }}
+      >
+        <div ref={topScrollInnerRef} style={{ height: 1 }} />
+      </div>
       <div
         ref={containerRef}
         className={cn(
-          "kanban-scroll flex gap-3 sm:gap-4 overflow-x-auto overflow-y-hidden pb-2 h-full snap-x snap-mandatory sm:snap-none",
+          "kanban-scroll-hide flex gap-3 sm:gap-4 overflow-x-auto overflow-y-hidden flex-1 snap-x snap-mandatory sm:snap-none",
           draggedLead && "cursor-grabbing select-none",
           filteredStageId && "justify-center"
         )}
