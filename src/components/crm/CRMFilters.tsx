@@ -16,11 +16,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Search, X, SlidersHorizontal, Smartphone, CalendarIcon, Layers, MessageCircle } from 'lucide-react';
+import { Search, X, SlidersHorizontal, Smartphone, CalendarIcon, Layers, MessageCircle, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import type { ResponsibleMember } from './ResponsibleAvatar';
+import type { ResponsibleFilter } from './CRMResponsibleFilter';
 
 export interface CRMFiltersState {
   search: string;
@@ -46,6 +48,11 @@ interface CRMFiltersProps {
   availableTags: string[];
   whatsappNumbers: WhatsAppNumber[];
   availableOrigins: string[];
+  responsibleFilter?: ResponsibleFilter;
+  onResponsibleFilterChange?: (value: ResponsibleFilter) => void;
+  responsibleMembers?: ResponsibleMember[];
+  currentUserId?: string | null;
+  showResponsibleFilter?: boolean;
 }
 
 export const CRMFilters = ({
@@ -55,6 +62,11 @@ export const CRMFilters = ({
   availableTags,
   whatsappNumbers,
   availableOrigins,
+  responsibleFilter,
+  onResponsibleFilterChange,
+  responsibleMembers = [],
+  currentUserId,
+  showResponsibleFilter = false,
 }: CRMFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [localSearch, setLocalSearch] = useState(filters.search);
@@ -75,6 +87,8 @@ export const CRMFilters = ({
     setLocalSearch(filters.search);
   }, [filters.search]);
 
+  const isResponsibleActive = showResponsibleFilter && responsibleFilter && responsibleFilter !== 'me';
+
   const activeFiltersCount = [
     filters.stage,
     filters.whatsappStatus,
@@ -82,6 +96,7 @@ export const CRMFilters = ({
     filters.whatsappNumberId,
     filters.dateFrom,
     filters.dateTo,
+    isResponsibleActive ? 'r' : '',
     ...filters.tags,
   ].filter(Boolean).length;
 
@@ -185,6 +200,42 @@ export const CRMFilters = ({
                 </Select>
               </div>
             </div>
+
+            {showResponsibleFilter && onResponsibleFilterChange && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <Users className="w-3 h-3" />
+                    Responsável
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                      Filtrar leads por responsável
+                    </label>
+                    <Select
+                      value={responsibleFilter ?? 'me'}
+                      onValueChange={(v) => onResponsibleFilterChange(v as ResponsibleFilter)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="me">Eu</SelectItem>
+                        <SelectItem value="all">Todos</SelectItem>
+                        {responsibleMembers
+                          .filter((m) => m.user_id !== currentUserId)
+                          .map((m) => (
+                            <SelectItem key={m.user_id} value={m.user_id}>
+                              {m.name || m.email || m.user_id.slice(0, 8)}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </>
+            )}
 
             <Separator />
 
