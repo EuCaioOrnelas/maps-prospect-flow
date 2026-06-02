@@ -201,6 +201,42 @@ export const CRMFilters = ({
               </div>
             </div>
 
+            {showResponsibleFilter && onResponsibleFilterChange && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <Users className="w-3 h-3" />
+                    Responsável
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                      Filtrar leads por responsável
+                    </label>
+                    <Select
+                      value={responsibleFilter ?? 'me'}
+                      onValueChange={(v) => onResponsibleFilterChange(v as ResponsibleFilter)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="me">Eu</SelectItem>
+                        <SelectItem value="all">Todos</SelectItem>
+                        {responsibleMembers
+                          .filter((m) => m.user_id !== currentUserId)
+                          .map((m) => (
+                            <SelectItem key={m.user_id} value={m.user_id}>
+                              {m.name || m.email || m.user_id.slice(0, 8)}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </>
+            )}
+
             <Separator />
 
             {/* WhatsApp Section */}
