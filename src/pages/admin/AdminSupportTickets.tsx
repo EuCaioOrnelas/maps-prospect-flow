@@ -1093,23 +1093,21 @@ export default function AdminSupportTickets() {
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-semibold">Conversa</p>
                   <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#d4f5e2] border border-[#a8e6b8]"></span>Suporte / Wian</span>
-                    <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-white border border-zinc-300"></span>Cliente</span>
+                    <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500"></span>Suporte / Wian</span>
+                    <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-zinc-200 border border-zinc-300"></span>Cliente</span>
                   </div>
                 </div>
-                <div className="landing-light rounded-xl border border-border overflow-hidden">
-                  <div className="wa-chat-bg wa-chat-pattern max-h-[480px] overflow-y-auto px-4 py-4 space-y-1">
+                <div className="rounded-xl border border-zinc-200 overflow-hidden bg-[#f7f8fa]">
+                  <div className="max-h-[480px] overflow-y-auto px-4 py-4 space-y-1">
                     {loadingMsgs ? (
-                      <div className="py-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-[#667781]" /></div>
+                      <div className="py-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-zinc-400" /></div>
                     ) : messages.length === 0 ? (
-                      <p className="text-[13px] text-[#667781] text-center py-6">Sem mensagens ainda.</p>
+                      <p className="text-[13px] text-zinc-500 text-center py-6">Sem mensagens ainda.</p>
                     ) : messages.map((m, idx) => {
-                      const isSupport = m.role === "assistant"; // resposta humana
+                      const isSupport = m.role === "assistant";
                       const isAI = m.role === "ai";
-                      // Suporte (humano) e Wian (IA) ficam no lado direito (bolha verde Wiize)
                       const isOut = isSupport || isAI;
                       const label = isSupport ? "Suporte" : isAI ? "Wian" : (selected.name || "Cliente");
-                      const labelColor = isSupport ? "text-emerald-700" : isAI ? "text-sky-700" : "text-zinc-600";
                       const atts: { path: string; name: string; type?: string }[] = Array.isArray(m.metadata?.attachments) ? m.metadata.attachments : [];
                       const created = new Date(m.created_at);
                       const prev = idx > 0 ? new Date(messages[idx - 1].created_at) : null;
@@ -1125,14 +1123,20 @@ export default function AdminSupportTickets() {
                         <div key={m.id}>
                           {showDate && (
                             <div className="flex justify-center my-3">
-                              <span className="wa-date-badge text-[11.5px] px-3 py-1 rounded-md font-medium shadow-sm select-none">{dateLabel}</span>
+                              <span className="text-[10.5px] tracking-wider px-2.5 py-0.5 rounded-full font-semibold select-none bg-zinc-200/70 text-zinc-600">{dateLabel}</span>
                             </div>
                           )}
-                          <div className={`flex ${isOut ? "justify-end" : "justify-start"} px-1`}>
-                            <div className={`relative max-w-[78%] ${isOut ? "wa-bubble-out" : "wa-bubble-in"} rounded-[7.5px] px-[9px] pt-[6px] pb-[8px] shadow-[0_1px_0.5px_rgba(11,20,26,.13)]`}>
-                              <div className={`text-[12px] font-semibold mb-0.5 ${labelColor}`}>{label}</div>
+                          <div className={`flex ${isOut ? "justify-end" : "justify-start"} px-1 py-0.5`}>
+                            <div
+                              className={`relative max-w-[78%] rounded-2xl px-3.5 py-2 shadow-sm ${
+                                isOut
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-white text-zinc-800 border border-zinc-200"
+                              }`}
+                            >
+                              <div className={`text-[11px] font-semibold mb-0.5 ${isOut ? "text-emerald-50/90" : "text-zinc-500"}`}>{label}</div>
                               {m.content && (
-                                <div className="text-[14.2px] leading-[19px] text-[#111b21] whitespace-pre-wrap break-words">
+                                <div className={`text-[14px] leading-[20px] whitespace-pre-wrap break-words ${isOut ? "text-white" : "text-zinc-800"}`}>
                                   {m.content}
                                 </div>
                               )}
@@ -1144,14 +1148,14 @@ export default function AdminSupportTickets() {
                                     if (isImg && url) {
                                       return <a key={i} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={a.name} className="h-24 w-24 object-cover rounded-md border border-black/10" /></a>;
                                     }
-                                    return <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-[12px] flex items-center gap-1 bg-black/5 text-[#111b21] px-2 py-1 rounded hover:bg-black/10"><Paperclip className="w-3 h-3" />{a.name}</a>;
+                                    return <a key={i} href={url} target="_blank" rel="noopener noreferrer" className={`text-[12px] flex items-center gap-1 px-2 py-1 rounded ${isOut ? "bg-white/15 text-white hover:bg-white/25" : "bg-black/5 text-zinc-700 hover:bg-black/10"}`}><Paperclip className="w-3 h-3" />{a.name}</a>;
                                   })}
                                 </div>
                               )}
                               {m.metadata?.has_image && atts.length === 0 && (
-                                <div className="mt-1 text-[11px] text-[#667781] italic">Cliente anexou imagem no chat</div>
+                                <div className={`mt-1 text-[11px] italic ${isOut ? "text-emerald-50/80" : "text-zinc-400"}`}>Cliente anexou imagem no chat</div>
                               )}
-                              <div className="mt-0.5 text-[10.5px] text-[#667781] text-right tabular-nums">
+                              <div className={`mt-0.5 text-[10.5px] text-right tabular-nums ${isOut ? "text-emerald-50/80" : "text-zinc-400"}`}>
                                 {created.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                               </div>
                             </div>
@@ -1161,6 +1165,7 @@ export default function AdminSupportTickets() {
                     })}
                   </div>
                 </div>
+
               </div>
 
               {/* Responder por e-mail (thread bidirecional) */}
