@@ -236,7 +236,9 @@ function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply
 
 export function ChatMessageArea({
   conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
+  members = [], canChangeResponsible = false, onTransferResponsible, currentUserId,
 }: ChatMessageAreaProps) {
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
