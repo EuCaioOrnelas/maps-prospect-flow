@@ -702,7 +702,7 @@ const Upgrade = () => {
                     </p>
                   )}
                   <p className="text-primary mt-1.5 text-xs sm:text-sm font-medium">
-                    Até {plan.opportunities} oportunidades/mês
+                    {plan.opportunities}
                   </p>
                 </div>
 
