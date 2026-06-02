@@ -267,7 +267,7 @@ export function WianChat() {
   const [phone, setPhone] = useState(formDraft.phone || "");
   const [extra, setExtra] = useState(formDraft.extra || "");
   const [category, setCategory] = useState<string>(formDraft.category || "");
-  const [formErrors, setFormErrors] = useState<{ name?: string; email?: string; category?: string }>({});
+  const [formErrors, setFormErrors] = useState<{ name?: string; email?: string; phone?: string; category?: string }>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [stars, setStars] = useState<number | null>(null);
   const [comment, setComment] = useState("");
@@ -813,12 +813,15 @@ export function WianChat() {
   const skipNps = () => setPhase(wasEscalated ? "done-escalated" : "done-resolved");
 
   const submitEscalation = async () => {
-    const errs: { name?: string; email?: string; category?: string } = {};
+    const errs: { name?: string; email?: string; phone?: string; category?: string } = {};
     if (!category) errs.category = "Selecione um tópico para o chamado.";
     if (!name.trim()) errs.name = "Informe seu nome.";
     const emailTrim = email.trim();
     if (!emailTrim) errs.email = "Informe seu email.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) errs.email = "Email inválido. Verifique e tente novamente.";
+    const phoneTrim = phone.trim();
+    if (!phoneTrim) errs.phone = "Informe seu telefone com DDD.";
+    else if (phoneTrim.replace(/\D/g, "").length < 10) errs.phone = "Telefone inválido. Inclua DDD.";
     setFormErrors(errs);
     if (Object.keys(errs).length > 0) {
       setSubmitError("Preencha os campos destacados em vermelho para continuar.");
@@ -1320,7 +1323,15 @@ export function WianChat() {
               {formErrors.email && <p className="text-[11px] text-destructive">{formErrors.email}</p>}
             </div>
 
-            <Input placeholder="Telefone (opcional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <div className="space-y-1">
+              <Input
+                placeholder="Telefone com DDD*"
+                value={phone}
+                onChange={(e) => { setPhone(e.target.value); setFormErrors((p) => ({ ...p, phone: undefined })); }}
+                className={formErrors.phone ? "border-destructive focus-visible:ring-destructive" : ""}
+              />
+              {formErrors.phone && <p className="text-[11px] text-destructive">{formErrors.phone}</p>}
+            </div>
 
             <Textarea
               placeholder="Algo a mais que queira contar? (opcional — a conversa acima já vai junto)"
