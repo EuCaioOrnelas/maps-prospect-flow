@@ -1097,7 +1097,7 @@ export default function AdminSupportTickets() {
                     <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-zinc-200 border border-zinc-300"></span>Cliente</span>
                   </div>
                 </div>
-                <div className="rounded-xl border border-zinc-200 overflow-hidden bg-[#f7f8fa]">
+                <div className="rounded-xl border border-zinc-200 overflow-hidden bg-[#eef0f2]">
                   <div className="max-h-[480px] overflow-y-auto px-4 py-4 space-y-1">
                     {loadingMsgs ? (
                       <div className="py-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-zinc-400" /></div>
