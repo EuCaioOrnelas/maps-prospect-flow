@@ -7,7 +7,7 @@
  * a seção Meta. Quando o módulo Evolution for descontinuado, basta retornar
  * `false` aqui que tudo some do menu sem migration.
  */
-export const EVOLUTION_LEGACY_CUTOFF_ISO = "2026-05-17T19:41:00Z";
+export const EVOLUTION_LEGACY_CUTOFF_ISO = "2026-06-02T23:59:59Z";
 
 export function isLegacyEvolutionUser(profile: { created_at?: string | null } | null | undefined): boolean {
   if (!profile?.created_at) return false;
