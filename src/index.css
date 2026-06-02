@@ -883,6 +883,15 @@
   background-color: hsl(var(--border) / 0.7);
 }
 
+/* Hide scrollbar on the main kanban container (top proxy handles display) */
+.kanban-scroll-hide {
+  scrollbar-width: none;
+}
+.kanban-scroll-hide::-webkit-scrollbar {
+  height: 0;
+  display: none;
+}
+
 /* Theme transition - lightweight and scoped to dashboard surfaces */
 :root.theme-transition,
 :root.theme-transition body,

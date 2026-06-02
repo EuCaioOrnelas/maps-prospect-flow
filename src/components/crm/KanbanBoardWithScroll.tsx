@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo, memo, useLayoutEffect } from 'react';
+
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { KanbanColumn, type ColumnWidth } from './KanbanColumn';
 import { cn } from '@/lib/utils';
@@ -45,6 +46,9 @@ const KanbanBoardWithScrollComponent = ({
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const topScrollInnerRef = useRef<HTMLDivElement>(null);
+  const syncingRef = useRef<'top' | 'bottom' | null>(null);
   const animationRef = useRef<number | null>(null);
   const scrollVelocity = useRef(0);
 
@@ -57,6 +61,9 @@ const KanbanBoardWithScrollComponent = ({
     const tolerance = 2;
     setCanScrollLeft(el.scrollLeft > tolerance);
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - tolerance);
+    if (topScrollInnerRef.current) {
+      topScrollInnerRef.current.style.width = `${el.scrollWidth}px`;
+    }
   }, []);
 
   const handleDragStart = useCallback((leadId: string) => {
@@ -185,26 +192,49 @@ const KanbanBoardWithScrollComponent = ({
 
   useEffect(() => {
     const el = containerRef.current;
+    const top = topScrollRef.current;
     if (!el) return;
-    const onScroll = () => updateScrollIndicators();
+    const onScroll = () => {
+      updateScrollIndicators();
+      if (syncingRef.current === 'top') { syncingRef.current = null; return; }
+      if (top) {
+        syncingRef.current = 'bottom';
+        top.scrollLeft = el.scrollLeft;
+      }
+    };
+    const onTopScroll = () => {
+      if (syncingRef.current === 'bottom') { syncingRef.current = null; return; }
+      syncingRef.current = 'top';
+      el.scrollLeft = top!.scrollLeft;
+    };
     const onResize = () => updateScrollIndicators();
     el.addEventListener('scroll', onScroll, { passive: true });
+    top?.addEventListener('scroll', onTopScroll, { passive: true });
     window.addEventListener('resize', onResize);
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateScrollIndicators) : null;
     if (ro) ro.observe(el);
     return () => {
       el.removeEventListener('scroll', onScroll);
+      top?.removeEventListener('scroll', onTopScroll);
       window.removeEventListener('resize', onResize);
       if (ro) ro.disconnect();
     };
   }, [updateScrollIndicators]);
 
   return (
-    <div className="relative flex-1 h-full">
+    <div className="relative flex-1 h-full flex flex-col">
+      {/* Top horizontal scroll proxy */}
+      <div
+        ref={topScrollRef}
+        className="kanban-scroll overflow-x-auto overflow-y-hidden mb-1"
+        style={{ height: 8 }}
+      >
+        <div ref={topScrollInnerRef} style={{ height: 1 }} />
+      </div>
       <div
         ref={containerRef}
         className={cn(
-          "kanban-scroll flex gap-3 sm:gap-4 overflow-x-auto overflow-y-hidden pb-2 h-full snap-x snap-mandatory sm:snap-none",
+          "kanban-scroll-hide flex gap-3 sm:gap-4 overflow-x-auto overflow-y-hidden flex-1 snap-x snap-mandatory sm:snap-none",
           draggedLead && "cursor-grabbing select-none",
           filteredStageId && "justify-center"
         )}
