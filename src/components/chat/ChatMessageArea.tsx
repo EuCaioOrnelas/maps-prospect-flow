@@ -1,13 +1,15 @@
 import { useRef, useEffect, useState } from "react";
-import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, Trash2, Ban, Reply, Forward, Copy, ChevronDown } from "lucide-react";
+import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
 import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import logoIconNew from "@/assets/logo-icon-new.png";
 import { toast } from "sonner";
+
 
 function formatPhoneDisplay(phone: string): string {
   const digits = phone.replace(/\D/g, "");
