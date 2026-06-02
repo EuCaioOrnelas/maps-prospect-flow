@@ -1,13 +1,15 @@
 import { useRef, useEffect, useState } from "react";
-import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, Trash2, Ban, Reply, Forward, Copy, ChevronDown } from "lucide-react";
+import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
 import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import logoIconNew from "@/assets/logo-icon-new.png";
 import { toast } from "sonner";
+
 
 function formatPhoneDisplay(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -27,7 +29,12 @@ interface ChatMessageAreaProps {
   messagesEndRef: React.RefObject<HTMLDivElement>;
   onReopenConversation?: (templateName: string) => void;
   fetchTemplates?: () => Promise<any[]>;
+  members?: { user_id: string; name: string | null; email: string | null }[];
+  canChangeResponsible?: boolean;
+  onTransferResponsible?: (conversationId: string, userId: string | null) => Promise<void>;
+  currentUserId?: string;
 }
+
 
 function MessageStatus({ status }: { status: string }) {
   if (status === "pending") {
@@ -231,7 +238,9 @@ function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply
 
 export function ChatMessageArea({
   conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
+  members = [], canChangeResponsible = false, onTransferResponsible, currentUserId,
 }: ChatMessageAreaProps) {
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
@@ -308,12 +317,68 @@ export function ChatMessageArea({
               }
             </p>
           </div>
-          <div className="flex items-center gap-[20px]">
+          <div className="flex items-center gap-[16px]">
+            {canChangeResponsible && onTransferResponsible && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="wa-icon-button p-1 flex items-center gap-1.5"
+                    title={
+                      conversation.responsible_user_id
+                        ? `Responsável: ${members.find(m => m.user_id === conversation.responsible_user_id)?.name || "atribuído"}`
+                        : "Sem responsável"
+                    }
+                  >
+                    <UserCog size={18} className="wa-chat-header-icon" />
+                    <span className="text-[12px] wa-chat-header-sub max-w-[100px] truncate">
+                      {conversation.responsible_user_id
+                        ? (members.find(m => m.user_id === conversation.responsible_user_id)?.name?.split(" ")[0]
+                            || members.find(m => m.user_id === conversation.responsible_user_id)?.email
+                            || "Atribuído")
+                        : "Sem resp."}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-64 p-1 bg-popover">
+                  <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Transferir conversa
+                  </div>
+                  <button
+                    className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted text-muted-foreground"
+                    onClick={async () => {
+                      try { await onTransferResponsible(conversation.id, null); toast.success("Sem responsável definido"); }
+                      catch { toast.error("Erro ao transferir"); }
+                    }}
+                  >
+                    Sem responsável
+                  </button>
+                  <div className="max-h-56 overflow-y-auto">
+                    {members.map((m) => (
+                      <button
+                        key={m.user_id}
+                        className={cn(
+                          "w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted",
+                          m.user_id === conversation.responsible_user_id && "bg-muted font-medium"
+                        )}
+                        onClick={async () => {
+                          try { await onTransferResponsible(conversation.id, m.user_id); toast.success("Conversa transferida"); }
+                          catch { toast.error("Erro ao transferir"); }
+                        }}
+                      >
+                        {m.name || m.email || m.user_id.slice(0, 8)}
+                        {m.user_id === currentUserId && <span className="text-[10px] text-muted-foreground ml-1">(você)</span>}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
             <button className="wa-icon-button p-1" onClick={() => setShowSearch(!showSearch)}>
               <Search size={20} className="wa-chat-header-icon" />
             </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
+
                 <button className="wa-icon-button p-1">
                   <MoreVertical size={20} className="wa-chat-header-icon" />
                 </button>

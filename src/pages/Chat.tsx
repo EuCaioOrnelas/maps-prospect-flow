@@ -3,10 +3,14 @@ import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatMessageArea } from "@/components/chat/ChatMessageArea";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAccountRole } from "@/hooks/useAccountRole";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { CRMResponsibleFilter, type ResponsibleFilter } from "@/components/crm/CRMResponsibleFilter";
+
 import {
   RefreshCw,
   WifiOff,
@@ -39,10 +43,27 @@ const Chat = () => {
   const chat = useChat();
   const webhookGate = useWebhookGate();
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
+  const { role } = useAccountRole();
+  const { members } = useAccountMembers();
+  const canChangeResponsible = role === "owner" || role === "admin";
+  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>(
+    role === "operational" ? "me" : "me"
+  );
+  const filteredConversations = useMemo(() => {
+    if (responsibleFilter === "all") return chat.conversations;
+    if (responsibleFilter === "me") {
+      return chat.conversations.filter(c => c.responsible_user_id === user?.id || !c.responsible_user_id);
+    }
+    return chat.conversations.filter(c => c.responsible_user_id === responsibleFilter);
+  }, [chat.conversations, responsibleFilter, user?.id]);
 
   useEffect(() => {
     if (!webhookGate.loading && webhookGate.blocked) setWebhookDialogOpen(true);
   }, [webhookGate.loading, webhookGate.blocked]);
+
+  // Remove the duplicated effect below by skipping it
+  void 0;
+
 
   useEffect(() => {
     if (!user) return;
@@ -272,23 +293,35 @@ const Chat = () => {
               </div>
             ) : hasConnection ? (
               <>
-                <div className="w-[360px] shrink-0 wa-sidebar-border">
-                  <ChatSidebar
-                    conversations={chat.conversations}
-                    activeConversationId={chat.activeConversationId}
-                    onSelectConversation={chat.setActiveConversationId}
-                    searchQuery={chat.searchQuery}
-                    onSearchChange={chat.setSearchQuery}
-                    connections={chat.connections}
-                    activeConnectionId={chat.activeConnectionId}
-                    onConnectionChange={chat.setActiveConnectionId}
-                    onTogglePin={chat.togglePin}
-                    onArchive={chat.archiveConversation}
-                    onToggleMute={chat.toggleMute}
-                    loading={chat.loading}
-                    onNewConversation={chat.startNewConversation}
-                    connectionHealth={chat.connectionHealth}
-                  />
+                <div className="w-[360px] shrink-0 wa-sidebar-border flex flex-col">
+                  {(role === "owner" || role === "admin") && (
+                    <div className="px-3 py-2 border-b border-border bg-background/40">
+                      <CRMResponsibleFilter
+                        value={responsibleFilter}
+                        onChange={setResponsibleFilter}
+                        members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
+                        currentUserId={user?.id || ""}
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-h-0">
+                    <ChatSidebar
+                      conversations={filteredConversations}
+                      activeConversationId={chat.activeConversationId}
+                      onSelectConversation={chat.setActiveConversationId}
+                      searchQuery={chat.searchQuery}
+                      onSearchChange={chat.setSearchQuery}
+                      connections={chat.connections}
+                      activeConnectionId={chat.activeConnectionId}
+                      onConnectionChange={chat.setActiveConnectionId}
+                      onTogglePin={chat.togglePin}
+                      onArchive={chat.archiveConversation}
+                      onToggleMute={chat.toggleMute}
+                      loading={chat.loading}
+                      onNewConversation={chat.startNewConversation}
+                      connectionHealth={chat.connectionHealth}
+                    />
+                  </div>
                 </div>
                 <ChatMessageArea
                   conversation={chat.activeConversation}
@@ -301,8 +334,13 @@ const Chat = () => {
                     console.log("Reabrir conversa com template:", templateName);
                   }}
                   fetchTemplates={chat.fetchTemplates}
+                  members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
+                  canChangeResponsible={canChangeResponsible}
+                  onTransferResponsible={chat.transferConversation}
+                  currentUserId={user?.id || ""}
                 />
               </>
+
             ) : null}
           </div>
         </div>
