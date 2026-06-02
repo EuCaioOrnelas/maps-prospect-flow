@@ -335,10 +335,23 @@ export default function AdminSupportTickets() {
         supabase.from("support_ratings").select("*").eq("ticket_id", t.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       ]);
       if (msgErr) throw msgErr;
-      setMessages((msgs as Message[]) || []);
+      const msgList = (msgs as Message[]) || [];
+      setMessages(msgList);
       setUserPlan((planRes as any)?.data?.plan ?? null);
       setRating((ratingRes as any)?.data ?? null);
+      // Pré-assina anexos referenciados nas mensagens (anexos do suporte enviados por e-mail)
+      const msgAttPaths = msgList.flatMap((m) => {
+        const arr = Array.isArray((m as any).metadata?.attachments) ? (m as any).metadata.attachments : [];
+        return arr.map((a: any) => a.path).filter(Boolean);
+      });
+      if (msgAttPaths.length) {
+        const { data: signed } = await supabase.storage.from("support-attachments").createSignedUrls(msgAttPaths, 60 * 60);
+        const partial: Record<string, string> = {};
+        signed?.forEach((s, i) => { if (s.signedUrl) partial[msgAttPaths[i]] = s.signedUrl; });
+        setSignedUrls((prev) => ({ ...prev, ...partial }));
+      }
       await refreshHistory(t.id);
+
     } catch (e: any) {
       toast({ title: "Erro ao carregar mensagens", description: e.message, variant: "destructive" });
     } finally {
