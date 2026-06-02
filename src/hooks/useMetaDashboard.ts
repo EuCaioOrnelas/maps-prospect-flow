@@ -374,7 +374,7 @@ export function useMetaDashboard(
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [user?.id, startISO, endISO]);
+  }, [user?.id, startISO, endISO, responsibleUserId]);
 
   return useMemo(() => ({ loading, ...data }), [loading, data]);
 }
