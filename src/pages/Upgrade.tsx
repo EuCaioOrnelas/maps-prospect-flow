@@ -806,7 +806,138 @@ const Upgrade = () => {
           </div>
         </div>
 
+        {/* Toggle comparison link */}
+        <div className="flex justify-center mb-10">
+          {!comparisonOpen ? (
+            <button
+              onClick={handleShowComparison}
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-colors"
+            >
+              <Table2 size={15} />
+              Veja a comparação detalhada dos planos
+            </button>
+          ) : (
+            <button
+              onClick={() => setComparisonOpen(false)}
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground underline underline-offset-4 decoration-muted-foreground/40 hover:text-foreground transition-colors"
+            >
+              <Table2 size={15} />
+              Ocultar comparação detalhada
+            </button>
+          )}
+        </div>
+
+        {/* Detailed comparison table */}
+        <div ref={comparisonRef} className="scroll-mt-24">
+          {comparisonOpen && (
+            <div className="mb-16 rounded-3xl border border-border/60 bg-gradient-to-b from-card/60 to-card/20 overflow-hidden shadow-[0_8px_40px_-12px_rgba(0,0,0,0.15)] animate-fade-in max-w-6xl mx-auto">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 p-6 md:p-8 border-b border-border/60">
+                <div>
+                  <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground tracking-tight">
+                    Comparação detalhada
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1.5">
+                    Compare cada recurso, lado a lado, e escolha o plano ideal.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setAllGroups(!allGroupsOpen)}
+                  className="self-start sm:self-auto inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-full border border-border/60 hover:border-border"
+                >
+                  <ChevronDown size={14} className={`transition-transform ${allGroupsOpen ? '' : '-rotate-90'}`} />
+                  {allGroupsOpen ? "Recolher todos" : "Expandir todos"}
+                </button>
+              </div>
+
+              {/* Plans header row */}
+              <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-4 md:px-6 py-5 md:py-6 border-b border-border/60 bg-background/40">
+                <div className="flex items-end">
+                  <span className="font-display text-base md:text-lg font-bold text-foreground">Planos</span>
+                </div>
+                {[
+                  { name: "Atendimento", price: plans[0].price, popular: false },
+                  { name: "Growth IA", price: plans[1].price, popular: true },
+                  { name: "Enterprise", price: "Sob medida", popular: false, custom: true },
+                ].map((col) => (
+                  <div key={col.name} className="text-center px-1 relative">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <span className="text-xs md:text-sm font-semibold text-foreground/80">{col.name}</span>
+                      {col.popular && (
+                        <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wide bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">
+                          popular
+                        </span>
+                      )}
+                    </div>
+                    {col.custom ? (
+                      <p className="font-display text-lg md:text-2xl font-bold text-foreground tracking-tight">Sob medida</p>
+                    ) : (
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="font-display text-xl md:text-3xl font-bold text-foreground tabular-nums tracking-tight">
+                          R$ {col.price}
+                        </span>
+                        <span className="text-[10px] md:text-xs font-medium text-muted-foreground">/ mês</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Groups */}
+              <div className="divide-y divide-border/60">
+                {COMPARISON_GROUPS.map((group) => {
+                  const isOpen = openGroups[group.title];
+                  const Icon = group.icon;
+                  return (
+                    <div key={group.title}>
+                      <button
+                        onClick={() => toggleGroup(group.title)}
+                        className="w-full grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-4 hover:bg-muted/30 transition-colors group"
+                      >
+                        <div className="flex items-center gap-3 text-left">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 group-hover:bg-primary/15 transition-colors">
+                            <Icon size={16} />
+                          </div>
+                          <span className="font-display font-bold text-sm md:text-base text-foreground">
+                            {group.title}
+                          </span>
+                        </div>
+                        <div className="col-span-3 flex items-center justify-end gap-3">
+                          <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                            {isOpen ? "Recolher" : `${group.rows.length} recursos`}
+                          </span>
+                          <ChevronDown
+                            size={18}
+                            className={`text-muted-foreground transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                          />
+                        </div>
+                      </button>
+
+                      {isOpen && (
+                        <div className="pb-2 animate-fade-in">
+                          {group.rows.map((row, i) => (
+                            <div
+                              key={i}
+                              className="grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-3 text-sm hover:bg-muted/20 transition-colors"
+                            >
+                              <span className="text-foreground/90 text-xs md:text-sm pl-12">{row.label}</span>
+                              <div className="text-center">{renderCell(row.start)}</div>
+                              <div className="text-center bg-primary/[0.04] rounded-md py-1.5">{renderCell(row.growth)}</div>
+                              <div className="text-center">{renderCell(row.scale)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* How upgrades work — simple, plain-language explainer (only for paid users) */}
+
         {hasPaidPlan && (
           <div className="max-w-5xl mx-auto mb-12 animate-fade-in">
             <div className="text-center mb-6">
