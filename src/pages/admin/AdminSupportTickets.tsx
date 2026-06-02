@@ -133,7 +133,10 @@ export default function AdminSupportTickets() {
 
   // Email reply composer
   const [replyText, setReplyText] = useState("");
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
   const [sendingReply, setSendingReply] = useState(false);
+  const replyFileInputRef = useRef<HTMLInputElement>(null);
+
 
   // Manual ticket modal
   const [manualOpen, setManualOpen] = useState(false);
