@@ -46,6 +46,9 @@ const KanbanBoardWithScrollComponent = ({
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const topScrollInnerRef = useRef<HTMLDivElement>(null);
+  const syncingRef = useRef<'top' | 'bottom' | null>(null);
   const animationRef = useRef<number | null>(null);
   const scrollVelocity = useRef(0);
 
@@ -58,6 +61,9 @@ const KanbanBoardWithScrollComponent = ({
     const tolerance = 2;
     setCanScrollLeft(el.scrollLeft > tolerance);
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - tolerance);
+    if (topScrollInnerRef.current) {
+      topScrollInnerRef.current.style.width = `${el.scrollWidth}px`;
+    }
   }, []);
 
   const handleDragStart = useCallback((leadId: string) => {
