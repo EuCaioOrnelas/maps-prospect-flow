@@ -238,9 +238,8 @@ const KanbanBoardWithScrollComponent = ({
           />
         ))}
       </div>
-      <div className={cn("kanban-scroll-fade-left", canScrollLeft && "visible")} />
-      <div className={cn("kanban-scroll-fade-right", canScrollRight && "visible")} />
     </div>
+
   );
 };
 
