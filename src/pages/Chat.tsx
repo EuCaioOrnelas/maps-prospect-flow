@@ -43,10 +43,27 @@ const Chat = () => {
   const chat = useChat();
   const webhookGate = useWebhookGate();
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
+  const { role } = useAccountRole();
+  const { members } = useAccountMembers();
+  const canChangeResponsible = role === "owner" || role === "admin";
+  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>(
+    role === "operational" ? "me" : "me"
+  );
+  const filteredConversations = useMemo(() => {
+    if (responsibleFilter === "all") return chat.conversations;
+    if (responsibleFilter === "me") {
+      return chat.conversations.filter(c => c.responsible_user_id === user?.id || !c.responsible_user_id);
+    }
+    return chat.conversations.filter(c => c.responsible_user_id === responsibleFilter);
+  }, [chat.conversations, responsibleFilter, user?.id]);
 
   useEffect(() => {
     if (!webhookGate.loading && webhookGate.blocked) setWebhookDialogOpen(true);
   }, [webhookGate.loading, webhookGate.blocked]);
+
+  // Remove the duplicated effect below by skipping it
+  void 0;
+
 
   useEffect(() => {
     if (!user) return;
