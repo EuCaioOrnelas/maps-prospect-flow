@@ -105,8 +105,8 @@ export function useMetaDashboard(
       setLoading(true);
       const uid = user.id;
       const respFilter = responsibleUserId || null;
-      const withResp = <T extends { eq: (col: string, val: any) => any }>(q: T): T =>
-        respFilter ? (q.eq("responsible_user_id", respFilter) as T) : q;
+      const withResp = (q: any): any => (respFilter ? q.eq("responsible_user_id", respFilter) : q);
+
       const [
         campaignsRes,
         prevCampaignsRes,
