@@ -1088,62 +1088,78 @@ export default function AdminSupportTickets() {
                 </div>
               )}
 
-              {/* Conversa unificada: Cliente ↔ Wian ↔ Suporte */}
+              {/* Conversa unificada estilo Wian (WhatsApp): Cliente ↔ Wian ↔ Suporte */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-semibold">Conversa</p>
-                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#dcf8c6] border border-[#b6e8a0]"></span>Suporte</span>
-                    <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#e7f0fb] border border-[#c9dcf4]"></span>Wian</span>
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                    <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#d4f5e2] border border-[#a8e6b8]"></span>Suporte / Wian</span>
                     <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-white border border-zinc-300"></span>Cliente</span>
                   </div>
                 </div>
-                <div className="rounded-xl border border-border bg-[#f4f1ec] dark:bg-zinc-900 max-h-[460px] overflow-y-auto p-4 space-y-2">
-                  {loadingMsgs ? (
-                    <div className="py-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" /></div>
-                  ) : messages.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">Sem mensagens ainda.</p>
-                  ) : messages.map((m) => {
-                    const isSupport = m.role === "assistant"; // resposta humana via e-mail
-                    const isAI = m.role === "ai";
-                    const isCustomer = m.role === "user";
-                    const align = isSupport ? "justify-end" : "justify-start";
-                    const bubble = isSupport
-                      ? "bg-[#dcf8c6] text-zinc-900 border border-[#cdebb6] dark:bg-emerald-900/40 dark:text-emerald-50 dark:border-emerald-700/40"
-                      : isAI
-                        ? "bg-[#e7f0fb] text-zinc-900 border border-[#cfdff5] dark:bg-sky-950/40 dark:text-sky-50 dark:border-sky-800/40"
-                        : "bg-white text-zinc-900 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700";
-                    const label = isSupport ? "Suporte" : isAI ? "Wian (IA)" : "Cliente";
-                    const labelColor = isSupport ? "text-emerald-700 dark:text-emerald-300" : isAI ? "text-sky-700 dark:text-sky-300" : "text-zinc-500 dark:text-zinc-400";
-                    const atts: { path: string; name: string; type?: string }[] = Array.isArray(m.metadata?.attachments) ? m.metadata.attachments : [];
-                    return (
-                      <div key={m.id} className={`flex ${align}`}>
-                        <div className={`max-w-[78%] rounded-2xl px-3.5 py-2 shadow-sm ${bubble}`}>
-                          <div className={`text-[10px] font-semibold uppercase tracking-wide mb-1 flex items-center gap-1 ${labelColor}`}>
-                            {label}
-                            {m.metadata?.has_image && <ImageIcon className="w-3 h-3" />}
-                          </div>
-                          <div className="text-[13.5px] leading-relaxed whitespace-pre-wrap">{m.content}</div>
-                          {atts.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              {atts.map((a, i) => {
-                                const url = signedUrls[a.path];
-                                const isImg = a.type?.startsWith("image/");
-                                if (isImg && url) {
-                                  return <a key={i} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={a.name} className="h-20 w-20 object-cover rounded-md border border-black/10" /></a>;
-                                }
-                                return <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] flex items-center gap-1 bg-black/5 px-2 py-1 rounded hover:bg-black/10"><Paperclip className="w-3 h-3" />{a.name}</a>;
-                              })}
+                <div className="landing-light rounded-xl border border-border overflow-hidden">
+                  <div className="wa-chat-bg wa-chat-pattern max-h-[480px] overflow-y-auto px-4 py-4 space-y-1">
+                    {loadingMsgs ? (
+                      <div className="py-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-[#667781]" /></div>
+                    ) : messages.length === 0 ? (
+                      <p className="text-[13px] text-[#667781] text-center py-6">Sem mensagens ainda.</p>
+                    ) : messages.map((m, idx) => {
+                      const isSupport = m.role === "assistant"; // resposta humana
+                      const isAI = m.role === "ai";
+                      // Suporte (humano) e Wian (IA) ficam no lado direito (bolha verde Wiize)
+                      const isOut = isSupport || isAI;
+                      const label = isSupport ? "Suporte" : isAI ? "Wian" : (selected.name || "Cliente");
+                      const labelColor = isSupport ? "text-emerald-700" : isAI ? "text-sky-700" : "text-zinc-600";
+                      const atts: { path: string; name: string; type?: string }[] = Array.isArray(m.metadata?.attachments) ? m.metadata.attachments : [];
+                      const created = new Date(m.created_at);
+                      const prev = idx > 0 ? new Date(messages[idx - 1].created_at) : null;
+                      const showDate = !prev || prev.toDateString() !== created.toDateString();
+                      const dateLabel = (() => {
+                        const today = new Date();
+                        const y = new Date(); y.setDate(today.getDate() - 1);
+                        if (created.toDateString() === today.toDateString()) return "HOJE";
+                        if (created.toDateString() === y.toDateString()) return "ONTEM";
+                        return created.toLocaleDateString("pt-BR");
+                      })();
+                      return (
+                        <div key={m.id}>
+                          {showDate && (
+                            <div className="flex justify-center my-3">
+                              <span className="wa-date-badge text-[11.5px] px-3 py-1 rounded-md font-medium shadow-sm select-none">{dateLabel}</span>
                             </div>
                           )}
-                          {m.metadata?.has_image && atts.length === 0 && (
-                            <div className="mt-1 text-[10px] opacity-70 italic">Cliente anexou imagem no chat</div>
-                          )}
-                          <div className="mt-1 text-[10px] opacity-50 text-right">{formatDistanceToNow(new Date(m.created_at), { addSuffix: true, locale: ptBR })}</div>
+                          <div className={`flex ${isOut ? "justify-end" : "justify-start"} px-1`}>
+                            <div className={`relative max-w-[78%] ${isOut ? "wa-bubble-out" : "wa-bubble-in"} rounded-[7.5px] px-[9px] pt-[6px] pb-[8px] shadow-[0_1px_0.5px_rgba(11,20,26,.13)]`}>
+                              <div className={`text-[12px] font-semibold mb-0.5 ${labelColor}`}>{label}</div>
+                              {m.content && (
+                                <div className="text-[14.2px] leading-[19px] text-[#111b21] whitespace-pre-wrap break-words">
+                                  {m.content}
+                                </div>
+                              )}
+                              {atts.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {atts.map((a, i) => {
+                                    const url = signedUrls[a.path];
+                                    const isImg = a.type?.startsWith("image/");
+                                    if (isImg && url) {
+                                      return <a key={i} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={a.name} className="h-24 w-24 object-cover rounded-md border border-black/10" /></a>;
+                                    }
+                                    return <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-[12px] flex items-center gap-1 bg-black/5 text-[#111b21] px-2 py-1 rounded hover:bg-black/10"><Paperclip className="w-3 h-3" />{a.name}</a>;
+                                  })}
+                                </div>
+                              )}
+                              {m.metadata?.has_image && atts.length === 0 && (
+                                <div className="mt-1 text-[11px] text-[#667781] italic">Cliente anexou imagem no chat</div>
+                              )}
+                              <div className="mt-0.5 text-[10.5px] text-[#667781] text-right tabular-nums">
+                                {created.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
