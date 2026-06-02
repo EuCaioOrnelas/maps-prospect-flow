@@ -1037,6 +1037,36 @@ export default function AdminSupportTickets() {
                 </div>
               </div>
 
+              {/* Responder por e-mail (thread bidirecional) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold">Responder ao cliente por e-mail</p>
+                  {selected.email && <Badge variant="outline" className="text-xs gap-1"><Mail className="w-3 h-3" />{selected.email}</Badge>}
+                </div>
+                <div className="rounded-lg border border-border bg-muted/10 p-3 space-y-2">
+                  <Textarea
+                    rows={4}
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder={selected.email
+                      ? "Sua resposta será enviada por e-mail ao cliente e registrada na conversa. Quando ele responder, volta automaticamente aqui."
+                      : "Este ticket não possui e-mail do cliente."}
+                    disabled={!selected.email}
+                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-muted-foreground">
+                      Assunto: <span className="font-mono">Suporte Wiize - {selected.category || "Atendimento"} - Ticket #{selected.ticket_number || selected.id.slice(0,8).toUpperCase()}</span>
+                    </p>
+                    <Button size="sm" onClick={sendCustomerReply} disabled={sendingReply || !selected.email}>
+                      {sendingReply && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      <Mail className="w-4 h-4 mr-1" /> Enviar por e-mail
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+
+
               {/* Histórico interno */}
               <div>
                 <div className="flex items-center justify-between mb-2">
