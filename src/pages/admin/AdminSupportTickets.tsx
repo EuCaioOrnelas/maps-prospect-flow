@@ -1130,7 +1130,7 @@ export default function AdminSupportTickets() {
                             <div
                               className={`relative max-w-[78%] rounded-2xl px-3.5 py-2 shadow-sm ${
                                 isOut
-                                  ? "bg-emerald-50/60 border border-emerald-50"
+                                  ? "bg-emerald-100/70 border border-emerald-200"
                                   : "bg-white text-zinc-800 border border-zinc-200"
                               }`}
                             >
