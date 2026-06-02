@@ -813,12 +813,15 @@ export function WianChat() {
   const skipNps = () => setPhase(wasEscalated ? "done-escalated" : "done-resolved");
 
   const submitEscalation = async () => {
-    const errs: { name?: string; email?: string; category?: string } = {};
+    const errs: { name?: string; email?: string; phone?: string; category?: string } = {};
     if (!category) errs.category = "Selecione um tópico para o chamado.";
     if (!name.trim()) errs.name = "Informe seu nome.";
     const emailTrim = email.trim();
     if (!emailTrim) errs.email = "Informe seu email.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) errs.email = "Email inválido. Verifique e tente novamente.";
+    const phoneTrim = phone.trim();
+    if (!phoneTrim) errs.phone = "Informe seu telefone com DDD.";
+    else if (phoneTrim.replace(/\D/g, "").length < 10) errs.phone = "Telefone inválido. Inclua DDD.";
     setFormErrors(errs);
     if (Object.keys(errs).length > 0) {
       setSubmitError("Preencha os campos destacados em vermelho para continuar.");
