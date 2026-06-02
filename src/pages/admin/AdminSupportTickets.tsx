@@ -1097,7 +1097,7 @@ export default function AdminSupportTickets() {
                     <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-zinc-200 border border-zinc-300"></span>Cliente</span>
                   </div>
                 </div>
-                <div className="rounded-xl border border-zinc-200 overflow-hidden bg-[#f7f8fa]">
+                <div className="rounded-xl border border-zinc-200 overflow-hidden bg-[#eef0f2]">
                   <div className="max-h-[480px] overflow-y-auto px-4 py-4 space-y-1">
                     {loadingMsgs ? (
                       <div className="py-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-zinc-400" /></div>
@@ -1130,13 +1130,13 @@ export default function AdminSupportTickets() {
                             <div
                               className={`relative max-w-[78%] rounded-2xl px-3.5 py-2 shadow-sm ${
                                 isOut
-                                  ? "bg-emerald-600 text-white"
+                                  ? "bg-emerald-50 border border-emerald-200"
                                   : "bg-white text-zinc-800 border border-zinc-200"
                               }`}
                             >
-                              <div className={`text-[11px] font-semibold mb-0.5 ${isOut ? "text-emerald-50/90" : "text-zinc-500"}`}>{label}</div>
+                              <div className={`text-[11px] font-semibold mb-0.5 ${isOut ? "text-emerald-700" : "text-zinc-500"}`}>{label}</div>
                               {m.content && (
-                                <div className={`text-[14px] leading-[20px] whitespace-pre-wrap break-words ${isOut ? "text-white" : "text-zinc-800"}`}>
+                                <div className={`text-[14px] leading-[20px] whitespace-pre-wrap break-words ${isOut ? "text-zinc-800" : "text-zinc-800"}`}>
                                   {m.content}
                                 </div>
                               )}
@@ -1148,14 +1148,14 @@ export default function AdminSupportTickets() {
                                     if (isImg && url) {
                                       return <a key={i} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={a.name} className="h-24 w-24 object-cover rounded-md border border-black/10" /></a>;
                                     }
-                                    return <a key={i} href={url} target="_blank" rel="noopener noreferrer" className={`text-[12px] flex items-center gap-1 px-2 py-1 rounded ${isOut ? "bg-white/15 text-white hover:bg-white/25" : "bg-black/5 text-zinc-700 hover:bg-black/10"}`}><Paperclip className="w-3 h-3" />{a.name}</a>;
+                                    return <a key={i} href={url} target="_blank" rel="noopener noreferrer" className={`text-[12px] flex items-center gap-1 px-2 py-1 rounded ${isOut ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200" : "bg-black/5 text-zinc-700 hover:bg-black/10"}`}><Paperclip className="w-3 h-3" />{a.name}</a>;
                                   })}
                                 </div>
                               )}
                               {m.metadata?.has_image && atts.length === 0 && (
-                                <div className={`mt-1 text-[11px] italic ${isOut ? "text-emerald-50/80" : "text-zinc-400"}`}>Cliente anexou imagem no chat</div>
+                                <div className={`mt-1 text-[11px] italic ${isOut ? "text-emerald-600" : "text-zinc-400"}`}>Cliente anexou imagem no chat</div>
                               )}
-                              <div className={`mt-0.5 text-[10.5px] text-right tabular-nums ${isOut ? "text-emerald-50/80" : "text-zinc-400"}`}>
+                              <div className={`mt-0.5 text-[10.5px] text-right tabular-nums ${isOut ? "text-emerald-600" : "text-zinc-400"}`}>
                                 {created.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                               </div>
                             </div>
