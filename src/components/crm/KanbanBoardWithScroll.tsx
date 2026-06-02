@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo, memo, useLayoutEffect } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { KanbanColumn, type ColumnWidth } from './KanbanColumn';
 import { cn } from '@/lib/utils';
@@ -47,6 +47,17 @@ const KanbanBoardWithScrollComponent = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | null>(null);
   const scrollVelocity = useRef(0);
+
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollIndicators = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const tolerance = 2;
+    setCanScrollLeft(el.scrollLeft > tolerance);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - tolerance);
+  }, []);
 
   const handleDragStart = useCallback((leadId: string) => {
     setDraggedLead(leadId);
@@ -168,43 +179,67 @@ const KanbanBoardWithScrollComponent = ({
     [stages, filteredStageId]
   );
 
+  useEffect(() => {
+    updateScrollIndicators();
+  }, [displayedStages, updateScrollIndicators]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onScroll = () => updateScrollIndicators();
+    const onResize = () => updateScrollIndicators();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateScrollIndicators) : null;
+    if (ro) ro.observe(el);
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+      if (ro) ro.disconnect();
+    };
+  }, [updateScrollIndicators]);
+
   return (
-    <div 
-      ref={containerRef}
-      className={cn(
-        "flex gap-3 sm:gap-4 overflow-x-auto pb-4 h-full snap-x snap-mandatory sm:snap-none",
-        draggedLead && "cursor-grabbing select-none",
-        filteredStageId && "justify-center"
-      )}
-      onDragOver={handleContainerDragOver}
-    >
-      {displayedStages.map((stage) => (
-        <KanbanColumn
-          key={stage.id}
-          stage={stage}
-          leads={leadsByStage.get(stage.id) || []}
-          onLeadClick={onLeadClick}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragOver={() => handleDragOver(stage.id)}
-          onDrop={() => handleDrop(stage.id)}
-          isDragOver={dragOverStage === stage.id}
-          isDragging={!!draggedLead}
-          isExpanded={!!filteredStageId}
-          selectedLeadId={selectedLead?.id}
-          bulkSelectMode={bulkSelectMode}
-          selectedLeadIds={selectedLeadIds}
-          onSelectAllInColumn={onSelectAllInColumn}
-          onUpdateLeadName={onUpdateLeadName}
-          columnWidth={columnWidth}
-          isAgentSilenced={agentSilencedStages?.has(stage.name)}
-          onAddLead={onAddLead}
-          members={members}
-          onChangeResponsible={onChangeResponsible}
-          canChangeResponsible={canChangeResponsible}
-          hideValue={hideValue}
-        />
-      ))}
+    <div className="relative flex-1 h-full">
+      <div
+        ref={containerRef}
+        className={cn(
+          "kanban-scroll flex gap-3 sm:gap-4 overflow-x-auto overflow-y-hidden pb-2 h-full snap-x snap-mandatory sm:snap-none",
+          draggedLead && "cursor-grabbing select-none",
+          filteredStageId && "justify-center"
+        )}
+        onDragOver={handleContainerDragOver}
+      >
+        {displayedStages.map((stage) => (
+          <KanbanColumn
+            key={stage.id}
+            stage={stage}
+            leads={leadsByStage.get(stage.id) || []}
+            onLeadClick={onLeadClick}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragOver={() => handleDragOver(stage.id)}
+            onDrop={() => handleDrop(stage.id)}
+            isDragOver={dragOverStage === stage.id}
+            isDragging={!!draggedLead}
+            isExpanded={!!filteredStageId}
+            selectedLeadId={selectedLead?.id}
+            bulkSelectMode={bulkSelectMode}
+            selectedLeadIds={selectedLeadIds}
+            onSelectAllInColumn={onSelectAllInColumn}
+            onUpdateLeadName={onUpdateLeadName}
+            columnWidth={columnWidth}
+            isAgentSilenced={agentSilencedStages?.has(stage.name)}
+            onAddLead={onAddLead}
+            members={members}
+            onChangeResponsible={onChangeResponsible}
+            canChangeResponsible={canChangeResponsible}
+            hideValue={hideValue}
+          />
+        ))}
+      </div>
+      <div className={cn("kanban-scroll-fade-left", canScrollLeft && "visible")} />
+      <div className={cn("kanban-scroll-fade-right", canScrollRight && "visible")} />
     </div>
   );
 };

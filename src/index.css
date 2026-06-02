@@ -864,6 +864,53 @@
   background: hsl(158 72% 38%) !important;
 }
 
+/* Kanban horizontal scroll - clean, thin, visible */
+.kanban-scroll::-webkit-scrollbar {
+  height: 5px;
+}
+
+.kanban-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 0 8px;
+}
+
+.kanban-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.22);
+  border-radius: 10px;
+}
+
+.kanban-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.55);
+}
+
+/* Edge fade indicators for horizontal scroll */
+.kanban-scroll-fade-left,
+.kanban-scroll-fade-right {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.kanban-scroll-fade-left {
+  left: 0;
+  background: linear-gradient(to right, hsl(var(--background) / 0.85), transparent);
+}
+
+.kanban-scroll-fade-right {
+  right: 0;
+  background: linear-gradient(to left, hsl(var(--background) / 0.85), transparent);
+}
+
+.kanban-scroll-fade-left.visible,
+.kanban-scroll-fade-right.visible {
+  opacity: 1;
+}
+
 /* Theme transition - lightweight and scoped to dashboard surfaces */
 :root.theme-transition,
 :root.theme-transition body,
