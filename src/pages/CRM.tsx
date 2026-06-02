@@ -607,7 +607,7 @@ export default function CRM() {
           </div>
 
           {/* Kanban Board */}
-          <div className="flex-1 p-2 sm:p-4 lg:p-6 h-[640px]">
+          <div className="flex-1 p-2 sm:p-4 lg:p-6 h-[600px]">
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
