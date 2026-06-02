@@ -1323,7 +1323,15 @@ export function WianChat() {
               {formErrors.email && <p className="text-[11px] text-destructive">{formErrors.email}</p>}
             </div>
 
-            <Input placeholder="Telefone (opcional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <div className="space-y-1">
+              <Input
+                placeholder="Telefone com DDD*"
+                value={phone}
+                onChange={(e) => { setPhone(e.target.value); setFormErrors((p) => ({ ...p, phone: undefined })); }}
+                className={formErrors.phone ? "border-destructive focus-visible:ring-destructive" : ""}
+              />
+              {formErrors.phone && <p className="text-[11px] text-destructive">{formErrors.phone}</p>}
+            </div>
 
             <Textarea
               placeholder="Algo a mais que queira contar? (opcional — a conversa acima já vai junto)"
