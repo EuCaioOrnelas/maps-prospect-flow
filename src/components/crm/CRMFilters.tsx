@@ -87,6 +87,8 @@ export const CRMFilters = ({
     setLocalSearch(filters.search);
   }, [filters.search]);
 
+  const isResponsibleActive = showResponsibleFilter && responsibleFilter && responsibleFilter !== 'me';
+
   const activeFiltersCount = [
     filters.stage,
     filters.whatsappStatus,
@@ -94,6 +96,7 @@ export const CRMFilters = ({
     filters.whatsappNumberId,
     filters.dateFrom,
     filters.dateTo,
+    isResponsibleActive ? 'r' : '',
     ...filters.tags,
   ].filter(Boolean).length;
 
