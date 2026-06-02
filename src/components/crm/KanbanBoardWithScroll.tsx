@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo, memo, useLayoutEffect } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { KanbanColumn, type ColumnWidth } from './KanbanColumn';
 import { cn } from '@/lib/utils';
