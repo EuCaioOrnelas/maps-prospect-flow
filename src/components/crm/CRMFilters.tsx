@@ -48,6 +48,11 @@ interface CRMFiltersProps {
   availableTags: string[];
   whatsappNumbers: WhatsAppNumber[];
   availableOrigins: string[];
+  responsibleFilter?: ResponsibleFilter;
+  onResponsibleFilterChange?: (value: ResponsibleFilter) => void;
+  responsibleMembers?: ResponsibleMember[];
+  currentUserId?: string | null;
+  showResponsibleFilter?: boolean;
 }
 
 export const CRMFilters = ({
@@ -57,6 +62,11 @@ export const CRMFilters = ({
   availableTags,
   whatsappNumbers,
   availableOrigins,
+  responsibleFilter,
+  onResponsibleFilterChange,
+  responsibleMembers = [],
+  currentUserId,
+  showResponsibleFilter = false,
 }: CRMFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [localSearch, setLocalSearch] = useState(filters.search);
