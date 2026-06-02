@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, X, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, Rocket, TrendingUp, Building2, Calculator, Calendar, Gift, LogOut } from "lucide-react";
+import { Check, X, Sparkles, Crown, Loader2, Settings, AlertTriangle, Shield, Clock, CreditCard, Rocket, TrendingUp, Building2, Calculator, Calendar, Gift, LogOut, Headphones, Users, Bot, Target, Table2, ChevronDown } from "lucide-react";
+
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,42 +57,45 @@ type PlanDef = {
 const mainPlans: Record<string, PlanDef[]> = {
   monthly: [
     {
-      name: "Start",
+      name: "Atendimento",
       key: "start",
-      price: "296",
-      anchorPrice: "592",
-      opportunities: "1.000",
-      description: "Para validar e começar a gerar oportunidades",
+      price: "196",
+      anchorPrice: "392",
+      opportunities: "Até 1.000 contatos no CRM",
+      description: "Para organizar atendimento, CRM e campanhas no WhatsApp com IA.",
       features: [
-        { text: "Geração de mensagens com IA" },
-        { text: "IA analisa cada lead e identifica oportunidades reais" },
-        { text: "CRM integrado" },
-        { text: "Campanhas via Meta API oficial" },
-        { text: "Até 2 números WhatsApp" },
-        { text: "Suporte via email" },
-        { text: "Sem automação", disabled: true },
-        { text: "Sem follow-up", disabled: true },
-        { text: "Sem agente", disabled: true },
+        { text: "Chat ao vivo centralizado para todos os números" },
+        { text: "Atendimento contínuo com IA operacional no WhatsApp oficial" },
+        { text: "CRM Comercial com IA de Intenção de Compra" },
+        { text: "Campanhas inteligentes em escala via Meta API" },
+        { text: "Fluxos Inteligentes com Wiize AI" },
+        { text: "Cockpit Executivo de operação comercial" },
+        { text: "Integração com Google Calendar, Sheets e Gmail" },
+        { text: "Até 2 números WhatsApp conectados" },
+        { text: "Até 2 usuários da conta (multiusuário)" },
+        { text: "Suporte por email" },
       ],
       popular: false,
-      icon: Rocket,
+      icon: Headphones,
     },
     {
-      name: "Growth",
+      name: "Growth IA",
       key: "growth",
       price: "696",
       anchorPrice: "1.392",
-      opportunities: "3.000",
-      description: "Para escalar e converter oportunidades com IA",
+      opportunities: "Até 10.000 contatos no CRM",
+      description: "Para prospectar, qualificar e converter oportunidades B2B com Wiize AI.",
       features: [
-        { text: "Geração de mensagens com IA" },
-        { text: "IA analisa cada lead e identifica oportunidades reais" },
-        { text: "CRM integrado" },
-        { text: "Campanhas via Meta API oficial" },
-        { text: "Até 5 números WhatsApp" },
-        { text: "Automação de atendimento" },
-        { text: "Follow-up inteligente" },
-        { text: "Agente de IA operacional" },
+        { text: "Tudo do plano Atendimento" },
+        { text: "SDR IA para prospecção B2B por nicho e território" },
+        { text: "Até 3.000 oportunidades qualificadas / mês" },
+        { text: "Diagnóstico Comercial com IA de cada lead" },
+        { text: "Geração de abordagens personalizadas por contexto" },
+        { text: "Follow-up inteligente com contexto comercial" },
+        { text: "Copiloto Comercial IA Closer em conversas" },
+        { text: "Fluxos Operacionais com Wiize AI" },
+        { text: "Até 5 números WhatsApp conectados" },
+        { text: "Até 5 usuários da conta (multiusuário)" },
         { text: "Suporte prioritário" },
       ],
       popular: true,
@@ -100,42 +104,45 @@ const mainPlans: Record<string, PlanDef[]> = {
   ],
   annual: [
     {
-      name: "Start",
+      name: "Atendimento",
       key: "start",
-      price: "246",
-      anchorPrice: "592",
-      opportunities: "1.000",
-      description: "Para validar e começar a gerar oportunidades",
+      price: "157",
+      anchorPrice: "392",
+      opportunities: "Até 1.000 contatos no CRM",
+      description: "Para organizar atendimento, CRM e campanhas no WhatsApp com IA.",
       features: [
-        { text: "Geração de mensagens com IA" },
-        { text: "IA analisa cada lead e identifica oportunidades reais" },
-        { text: "CRM integrado" },
-        { text: "Campanhas via Meta API oficial" },
-        { text: "Até 2 números WhatsApp" },
-        { text: "Suporte via email" },
-        { text: "Sem automação", disabled: true },
-        { text: "Sem follow-up", disabled: true },
-        { text: "Sem agente", disabled: true },
+        { text: "Chat ao vivo centralizado para todos os números" },
+        { text: "Atendimento contínuo com IA operacional no WhatsApp oficial" },
+        { text: "CRM Comercial com IA de Intenção de Compra" },
+        { text: "Campanhas inteligentes em escala via Meta API" },
+        { text: "Fluxos Inteligentes com Wiize AI" },
+        { text: "Cockpit Executivo de operação comercial" },
+        { text: "Integração com Google Calendar, Sheets e Gmail" },
+        { text: "Até 2 números WhatsApp conectados" },
+        { text: "Até 2 usuários da conta (multiusuário)" },
+        { text: "Suporte por email" },
       ],
       popular: false,
-      icon: Rocket,
+      icon: Headphones,
     },
     {
-      name: "Growth",
+      name: "Growth IA",
       key: "growth",
       price: "596",
       anchorPrice: "1.392",
-      opportunities: "3.000",
-      description: "Para escalar e converter oportunidades com IA",
+      opportunities: "Até 10.000 contatos no CRM",
+      description: "Para prospectar, qualificar e converter oportunidades B2B com Wiize AI.",
       features: [
-        { text: "Geração de mensagens com IA" },
-        { text: "IA analisa cada lead e identifica oportunidades reais" },
-        { text: "CRM integrado" },
-        { text: "Campanhas via Meta API oficial" },
-        { text: "Até 5 números WhatsApp" },
-        { text: "Automação de atendimento" },
-        { text: "Follow-up inteligente" },
-        { text: "Agente de IA operacional" },
+        { text: "Tudo do plano Atendimento" },
+        { text: "SDR IA para prospecção B2B por nicho e território" },
+        { text: "Até 3.000 oportunidades qualificadas / mês" },
+        { text: "Diagnóstico Comercial com IA de cada lead" },
+        { text: "Geração de abordagens personalizadas por contexto" },
+        { text: "Follow-up inteligente com contexto comercial" },
+        { text: "Copiloto Comercial IA Closer em conversas" },
+        { text: "Fluxos Operacionais com Wiize AI" },
+        { text: "Até 5 números WhatsApp conectados" },
+        { text: "Até 5 usuários da conta (multiusuário)" },
         { text: "Suporte prioritário" },
       ],
       popular: true,
@@ -147,21 +154,152 @@ const mainPlans: Record<string, PlanDef[]> = {
 const scalePlan = {
   name: "Enterprise",
   key: "scale",
-  price: "Personalizado",
-  opportunities: "Personalizado",
-  description: "Um plano sob medida para a sua operação. Estrutura, volume e suporte dedicado para empresas que precisam de uma solução exclusiva.",
+  price: "Sob medida",
+  opportunities: "Sob demanda",
+  description: "Para escalar operações comerciais com infraestrutura e IA sob medida.",
   features: [
-    { text: "Tudo do Growth incluso" },
-    { text: "Estrutura 100% personalizada", isNew: true },
-    { text: "Número de oportunidades sob demanda" },
-    { text: "Fluxos e automações sob medida" },
-    { text: "Onboarding dedicado com especialista" },
+    { text: "Tudo do plano Growth IA" },
+    { text: "Operação Comercial dedicada com Wiize AI", isNew: true },
+    { text: "Volume de oportunidades sob demanda" },
+    { text: "Fluxos e Inteligências sob medida" },
+    { text: "Onboarding com especialista Wiize" },
     { text: "Processamento com prioridade máxima" },
     { text: "Números WhatsApp ilimitados" },
+    { text: "Usuários da conta ilimitados (multiusuário)" },
     { text: "Gerente de conta exclusivo" },
   ] as PlanFeature[],
   icon: Building2,
 };
+
+// Matriz de comparação detalhada — espelha PricingSection da landing
+const COMPARISON_GROUPS: Array<{
+  title: string;
+  icon: typeof Headphones;
+  rows: Array<{ label: ReactNode; start: boolean | string; growth: boolean | string; scale: boolean | string }>;
+}> = [
+  {
+    title: "Atendimento e chat",
+    icon: Headphones,
+    rows: [
+      { label: "Chat ao vivo centralizado (todos os números)", start: true, growth: true, scale: true },
+      { label: "Atendimento contínuo com IA operacional", start: true, growth: true, scale: true },
+      { label: "Respostas automáticas com contexto do lead", start: true, growth: true, scale: true },
+      { label: "Múltiplos atendentes no mesmo número", start: true, growth: true, scale: true },
+      { label: "Áudio, imagem, documentos e mídias", start: true, growth: true, scale: true },
+      { label: "Templates aprovados na Meta", start: true, growth: true, scale: true },
+      { label: "Janela de 24h e reabertura automática via template", start: true, growth: true, scale: true },
+      { label: "Handoff inteligente: IA passa para humano na hora certa", start: false, growth: true, scale: true },
+      { label: "Atendimento dedicado com IA treinada para seu negócio", start: false, growth: false, scale: true },
+    ],
+  },
+  {
+    title: "CRM e priorização",
+    icon: Users,
+    rows: [
+      { label: "Contatos totais no CRM", start: "Até 1.000", growth: "Até 10.000", scale: "Sob medida" },
+      { label: "CRM completo com kanban e pipeline visual", start: true, growth: true, scale: true },
+      { label: "Score de Intenção de Compra prioriza quem está pronto pra fechar", start: true, growth: true, scale: true },
+      { label: "Controle de engajamento por lead em tempo real", start: true, growth: true, scale: true },
+      { label: "Identifica leads prontos para upgrade e recompra", start: true, growth: true, scale: true },
+      { label: "Detecção de leads frios e reativação automática", start: true, growth: true, scale: true },
+      { label: "Tags, filtros avançados e segmentação dinâmica", start: true, growth: true, scale: true },
+      { label: "Histórico unificado de conversas e interações", start: true, growth: true, scale: true },
+      { label: "Importação e exportação de leads (CSV)", start: true, growth: true, scale: true },
+      { label: "Funis personalizados por time e produto", start: false, growth: true, scale: true },
+      { label: "Múltiplos pipelines simultâneos", start: false, growth: false, scale: true },
+    ],
+  },
+  {
+    title: "Automação e fluxos",
+    icon: Bot,
+    rows: [
+      { label: "Construtor visual de fluxos (drag & drop)", start: true, growth: true, scale: true },
+      { label: "Follow-up inteligente com contexto comercial", start: true, growth: true, scale: true },
+      { label: "Gatilhos por palavra-chave, status e evento", start: true, growth: true, scale: true },
+      { label: "Fluxos completos gerados com Wiize AI", start: false, growth: true, scale: true },
+      { label: "Coleta de dados estruturados via conversa (IA)", start: false, growth: true, scale: true },
+      { label: "A/B testing de mensagens e fluxos", start: false, growth: true, scale: true },
+      { label: "Fluxos sob medida desenhados pela Wiize", start: false, growth: false, scale: true },
+    ],
+  },
+  {
+    title: "Campanhas WhatsApp e Meta Ads",
+    icon: Target,
+    rows: [
+      { label: "Campanhas via Meta Cloud API (WhatsApp oficial)", start: true, growth: true, scale: true },
+      { label: "Campanhas outbound em escala", start: true, growth: true, scale: true },
+      { label: "Integração com Meta Ads", start: true, growth: true, scale: true },
+      { label: "Disparos agendados e em lote com delays seguros", start: true, growth: true, scale: true },
+      { label: "Campanhas geradas e otimizadas por IA", start: false, growth: true, scale: true },
+      { label: "Volume de disparos sob medida", start: false, growth: false, scale: true },
+    ],
+  },
+  {
+    title: "SDR IA · Captação e Diagnóstico",
+    icon: Target,
+    rows: [
+      { label: "SDR IA para captação de empresas por nicho e região", start: false, growth: true, scale: true },
+      { label: "Diagnóstico de leads com IA (porte, dores, maturidade)", start: false, growth: true, scale: true },
+      { label: "Geração de mensagens personalizadas por contexto (IA)", start: false, growth: true, scale: true },
+      { label: "Enriquecimento inteligente de empresas e contatos", start: false, growth: true, scale: true },
+      { label: "Segmentação por nicho, região e porte da empresa", start: false, growth: true, scale: true },
+      { label: "Oportunidades com alto potencial de fechamento", start: false, growth: true, scale: true },
+      { label: "Volume de oportunidades captadas / mês", start: "Não incluso", growth: "3.000", scale: "Sob demanda" },
+    ],
+  },
+  {
+    title: "IA Closer Wiize",
+    icon: Bot,
+    rows: [
+      { label: "IA Closer treinada com seu negócio", start: false, growth: true, scale: true },
+      { label: "Qualifica, agenda e conduz conversas com contexto comercial", start: false, growth: true, scale: true },
+      { label: "Contexto comercial contínuo por conversa", start: false, growth: true, scale: true },
+      { label: "Testes e simulações antes de ativar", start: false, growth: true, scale: true },
+      { label: "Múltiplas IAs Closer para diferentes produtos e times", start: false, growth: false, scale: true },
+    ],
+  },
+  {
+    title: "Análises e crescimento",
+    icon: Users,
+    rows: [
+      { label: "Dashboard de crescimento (cockpit executivo)", start: true, growth: true, scale: true },
+      { label: "Funil de conversão por etapa do CRM", start: true, growth: true, scale: true },
+      { label: "Relatórios por número, campanha e fluxo", start: true, growth: true, scale: true },
+      { label: "Alertas inteligentes de oportunidades quentes", start: false, growth: true, scale: true },
+      { label: "Projeção de receita por probabilidade", start: false, growth: true, scale: true },
+      { label: "Métricas detalhadas da IA Closer", start: false, growth: true, scale: true },
+      { label: "Relatórios personalizados e exportação avançada", start: false, growth: false, scale: true },
+    ],
+  },
+  {
+    title: "Integrações",
+    icon: Target,
+    rows: [
+      { label: "Meta Business e WhatsApp Cloud API oficial", start: true, growth: true, scale: true },
+      { label: "Google Drive nas oportunidades e negócios", start: true, growth: true, scale: true },
+      { label: "Google Calendar (agendamento automático)", start: false, growth: true, scale: true },
+      { label: "Google Sheets (entrada e saída de dados)", start: false, growth: true, scale: true },
+      { label: "Gmail (envio de e-mails pelo fluxo)", start: false, growth: true, scale: true },
+      { label: "Integrações personalizadas sob demanda", start: false, growth: false, scale: true },
+    ],
+  },
+  {
+    title: "Infraestrutura e suporte",
+    icon: Headphones,
+    rows: [
+      { label: "Números WhatsApp conectados", start: "Até 2", growth: "Até 5", scale: "Ilimitados" },
+      { label: "Usuários da conta (multiusuário)", start: "Até 2", growth: "Até 5", scale: "Ilimitados" },
+      { label: "Proxy dedicado e rotação automática", start: true, growth: true, scale: true },
+      { label: "Backup de conversas e dados", start: true, growth: true, scale: true },
+      { label: "Suporte", start: "Email", growth: "Prioritário", scale: "Gerente dedicado" },
+      { label: "Onboarding com especialista", start: false, growth: false, scale: true },
+      { label: "Treinamento da equipe ao vivo", start: false, growth: false, scale: true },
+      { label: "SLA garantido e estrutura personalizada", start: false, growth: false, scale: true },
+      { label: "Processamento com prioridade máxima", start: false, growth: false, scale: true },
+    ],
+  },
+];
+
 
 const Upgrade = () => {
   const navigate = useNavigate();
@@ -177,6 +315,29 @@ const Upgrade = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [addOnsOpen, setAddOnsOpen] = useState(false);
   const [pendingBumps, setPendingBumps] = useState<OrderBumpSelection>(emptyBumpSelection());
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+  const comparisonRef = useRef<HTMLDivElement>(null);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(COMPARISON_GROUPS.map((g) => [g.title, true]))
+  );
+  const toggleGroup = (title: string) =>
+    setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
+  const allGroupsOpen = COMPARISON_GROUPS.every((g) => openGroups[g.title]);
+  const setAllGroups = (open: boolean) =>
+    setOpenGroups(Object.fromEntries(COMPARISON_GROUPS.map((g) => [g.title, open])));
+  const handleShowComparison = () => {
+    setComparisonOpen(true);
+    setTimeout(() => comparisonRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  };
+  const renderCell = (v: boolean | string) => {
+    if (typeof v === "string") return <span className="text-sm font-medium text-foreground">{v}</span>;
+    return v ? (
+      <Check size={18} className="text-primary mx-auto" strokeWidth={2.5} />
+    ) : (
+      <span className="text-muted-foreground/40 text-base">—</span>
+    );
+  };
+
 
   const currentPlan = profile?.plan || "free";
   const { trackScoreEvent } = useAutoScoreTracking("upgrade");
@@ -541,7 +702,7 @@ const Upgrade = () => {
                     </p>
                   )}
                   <p className="text-primary mt-1.5 text-xs sm:text-sm font-medium">
-                    Até {plan.opportunities} oportunidades/mês
+                    {plan.opportunities}
                   </p>
                 </div>
 
@@ -645,7 +806,138 @@ const Upgrade = () => {
           </div>
         </div>
 
+        {/* Toggle comparison link */}
+        <div className="flex justify-center mb-10">
+          {!comparisonOpen ? (
+            <button
+              onClick={handleShowComparison}
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-colors"
+            >
+              <Table2 size={15} />
+              Veja a comparação detalhada dos planos
+            </button>
+          ) : (
+            <button
+              onClick={() => setComparisonOpen(false)}
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground underline underline-offset-4 decoration-muted-foreground/40 hover:text-foreground transition-colors"
+            >
+              <Table2 size={15} />
+              Ocultar comparação detalhada
+            </button>
+          )}
+        </div>
+
+        {/* Detailed comparison table */}
+        <div ref={comparisonRef} className="scroll-mt-24">
+          {comparisonOpen && (
+            <div className="mb-16 rounded-3xl border border-border/60 bg-gradient-to-b from-card/60 to-card/20 overflow-hidden shadow-[0_8px_40px_-12px_rgba(0,0,0,0.15)] animate-fade-in max-w-6xl mx-auto">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 p-6 md:p-8 border-b border-border/60">
+                <div>
+                  <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground tracking-tight">
+                    Comparação detalhada
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1.5">
+                    Compare cada recurso, lado a lado, e escolha o plano ideal.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setAllGroups(!allGroupsOpen)}
+                  className="self-start sm:self-auto inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-full border border-border/60 hover:border-border"
+                >
+                  <ChevronDown size={14} className={`transition-transform ${allGroupsOpen ? '' : '-rotate-90'}`} />
+                  {allGroupsOpen ? "Recolher todos" : "Expandir todos"}
+                </button>
+              </div>
+
+              {/* Plans header row */}
+              <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-4 md:px-6 py-5 md:py-6 border-b border-border/60 bg-background/40">
+                <div className="flex items-end">
+                  <span className="font-display text-base md:text-lg font-bold text-foreground">Planos</span>
+                </div>
+                {[
+                  { name: "Atendimento", price: plans[0].price, popular: false },
+                  { name: "Growth IA", price: plans[1].price, popular: true },
+                  { name: "Enterprise", price: "Sob medida", popular: false, custom: true },
+                ].map((col) => (
+                  <div key={col.name} className="text-center px-1 relative">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <span className="text-xs md:text-sm font-semibold text-foreground/80">{col.name}</span>
+                      {col.popular && (
+                        <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wide bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">
+                          popular
+                        </span>
+                      )}
+                    </div>
+                    {col.custom ? (
+                      <p className="font-display text-lg md:text-2xl font-bold text-foreground tracking-tight">Sob medida</p>
+                    ) : (
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="font-display text-xl md:text-3xl font-bold text-foreground tabular-nums tracking-tight">
+                          R$ {col.price}
+                        </span>
+                        <span className="text-[10px] md:text-xs font-medium text-muted-foreground">/ mês</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Groups */}
+              <div className="divide-y divide-border/60">
+                {COMPARISON_GROUPS.map((group) => {
+                  const isOpen = openGroups[group.title];
+                  const Icon = group.icon;
+                  return (
+                    <div key={group.title}>
+                      <button
+                        onClick={() => toggleGroup(group.title)}
+                        className="w-full grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-4 hover:bg-muted/30 transition-colors group"
+                      >
+                        <div className="flex items-center gap-3 text-left">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 group-hover:bg-primary/15 transition-colors">
+                            <Icon size={16} />
+                          </div>
+                          <span className="font-display font-bold text-sm md:text-base text-foreground">
+                            {group.title}
+                          </span>
+                        </div>
+                        <div className="col-span-3 flex items-center justify-end gap-3">
+                          <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                            {isOpen ? "Recolher" : `${group.rows.length} recursos`}
+                          </span>
+                          <ChevronDown
+                            size={18}
+                            className={`text-muted-foreground transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                          />
+                        </div>
+                      </button>
+
+                      {isOpen && (
+                        <div className="pb-2 animate-fade-in">
+                          {group.rows.map((row, i) => (
+                            <div
+                              key={i}
+                              className="grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-3 text-sm hover:bg-muted/20 transition-colors"
+                            >
+                              <span className="text-foreground/90 text-xs md:text-sm pl-12">{row.label}</span>
+                              <div className="text-center">{renderCell(row.start)}</div>
+                              <div className="text-center bg-primary/[0.04] rounded-md py-1.5">{renderCell(row.growth)}</div>
+                              <div className="text-center">{renderCell(row.scale)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* How upgrades work — simple, plain-language explainer (only for paid users) */}
+
         {hasPaidPlan && (
           <div className="max-w-5xl mx-auto mb-12 animate-fade-in">
             <div className="text-center mb-6">
