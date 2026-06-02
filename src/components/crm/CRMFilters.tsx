@@ -153,7 +153,7 @@ export const CRMFilters = ({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80" align="end">
+        <PopoverContent className="w-80 max-h-[80vh] overflow-y-auto overflow-x-hidden scrollbar-thin" align="end">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-medium text-sm">Filtros</h4>
