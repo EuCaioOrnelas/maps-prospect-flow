@@ -59,26 +59,6 @@ const KanbanBoardWithScrollComponent = ({
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - tolerance);
   }, []);
 
-  useLayoutEffect(() => {
-    updateScrollIndicators();
-  }, [displayedStages, updateScrollIndicators]);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const onScroll = () => updateScrollIndicators();
-    const onResize = () => updateScrollIndicators();
-    el.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateScrollIndicators) : null;
-    if (ro) ro.observe(el);
-    return () => {
-      el.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
-      if (ro) ro.disconnect();
-    };
-  }, [updateScrollIndicators]);
-
   const handleDragStart = useCallback((leadId: string) => {
     setDraggedLead(leadId);
   }, []);
