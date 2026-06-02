@@ -412,7 +412,7 @@ export default function CRM() {
       <MobileNav profile={profile || sidebarProfile} />
 
       <main className="lg:pl-[72px] pt-[42px] lg:pt-0 min-h-screen">
-        <div className="h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col">
           {/* Header */}
           <div className="flex-shrink-0 border-b border-border/50 relative z-10">
             <div className="px-3 pt-2 pb-3 sm:p-4 lg:p-6">
@@ -615,7 +615,7 @@ export default function CRM() {
           </div>
 
           {/* Kanban Board */}
-          <div className="flex-1 overflow-hidden p-2 sm:p-4 lg:p-6">
+          <div className="flex-1 p-2 sm:p-4 lg:p-6 min-h-[720px]">
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
