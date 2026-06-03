@@ -37,108 +37,131 @@ export const OpportunitySection = () => {
         />
 
 
-        {/* Comparison grid - headers */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-          {/* Traditional header */}
-          <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            animate={isVisible ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="rounded-t-2xl border border-b-0 border-border bg-muted/30 px-6 sm:px-8 pt-6 sm:pt-8 pb-5"
-          >
+        {/* ===== DESKTOP: tabela comparativa em 2 colunas ===== */}
+        <div className="hidden md:block">
+          <div className="grid grid-cols-2 gap-6">
+            {/* Traditional header */}
             <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={isVisible ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="mb-4"
+              initial={{ opacity: 0, x: -24 }}
+              animate={isVisible ? { opacity: 1, x: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="rounded-t-2xl border border-b-0 border-border bg-muted/30 px-8 pt-8 pb-5"
             >
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider bg-muted text-muted-foreground/70 border border-border">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider bg-muted text-muted-foreground/70 border border-border mb-4">
                 Menos eficiente
               </span>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
+                Modelo tradicional
+              </h3>
             </motion.div>
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
-              Modelo tradicional
-            </h3>
-          </motion.div>
 
-          {/* Wiize header */}
-          <motion.div
-            initial={{ opacity: 0, x: 24 }}
-            animate={isVisible ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="rounded-t-2xl border border-b-0 border-primary/20 bg-white dark:bg-card px-6 sm:px-8 pt-6 sm:pt-8 pb-5 relative overflow-hidden"
-          >
-            <div className="absolute -top-10 -right-10 w-48 h-48 bg-primary/[0.08] rounded-full blur-[60px] pointer-events-none" />
-            <div className="absolute -bottom-8 -left-8 w-36 h-36 bg-primary/[0.05] rounded-full blur-[50px] pointer-events-none" />
+            {/* Wiize header */}
             <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={isVisible ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="mb-4"
+              initial={{ opacity: 0, x: 24 }}
+              animate={isVisible ? { opacity: 1, x: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="rounded-t-2xl border border-b-0 border-primary/20 bg-white dark:bg-card px-8 pt-8 pb-5 relative overflow-hidden"
             >
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-primary/10 text-primary border border-primary/15">
+              <div className="absolute -top-10 -right-10 w-48 h-48 bg-primary/[0.08] rounded-full blur-[60px] pointer-events-none" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-primary/10 text-primary border border-primary/15 mb-4">
                 <Sparkles size={12} />
                 Mais eficiente
               </span>
-            </motion.div>
-            <div className="flex items-center gap-3">
-              <img src={logoIconNew} alt="Wiize" className="w-9 h-9 rounded-xl" />
-              <h3 className="text-sm font-semibold text-primary uppercase tracking-widest">Modelo com Wiize</h3>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Rows aligned */}
-        {comparisons.map((c, i) => (
-          <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-            {/* Traditional item */}
-            <motion.div
-              initial={{ opacity: 0, x: -12 }}
-              animate={isVisible ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.4, delay: 0.3 + i * 0.06 }}
-              className={`border-x border-border bg-muted/30 px-6 sm:px-8 py-3 group cursor-default ${i === comparisons.length - 1 ? 'border-b rounded-b-2xl pb-6' : ''}`}
-            >
-              <div className="flex items-center gap-3 min-h-[32px]">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={isVisible ? { scale: 1 } : {}}
-                  transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.4 + i * 0.06 }}
-                  className="w-5 h-5 rounded-full bg-destructive/12 flex items-center justify-center flex-shrink-0"
-                >
-                  <X size={11} className="text-destructive" strokeWidth={2.5} />
-                </motion.div>
-                <p className="text-sm text-muted-foreground leading-snug transition-colors duration-300 group-hover:text-foreground/70">
-                  {c.old} <span className="text-muted-foreground/50">{c.oldSub}</span>
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Wiize item */}
-            <motion.div
-              initial={{ opacity: 0, x: 12 }}
-              animate={isVisible ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.4, delay: 0.4 + i * 0.06 }}
-              className={`border-x border-primary/20 bg-white dark:bg-card px-6 sm:px-8 py-3 group cursor-default relative overflow-hidden ${i === comparisons.length - 1 ? 'border-b rounded-b-2xl pb-6' : ''}`}
-            >
-              <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-primary/[0.08] rounded-full blur-[60px] pointer-events-none" />
-              <div className="absolute -top-8 -right-8 w-32 h-32 bg-primary/[0.05] rounded-full blur-[50px] pointer-events-none" />
-              <div className="flex items-center gap-3 min-h-[32px] relative">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={isVisible ? { scale: 1 } : {}}
-                  transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.5 + i * 0.06 }}
-                  className="w-5 h-5 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0"
-                >
-                  <CheckIcon />
-                </motion.div>
-                <p className="text-sm text-foreground leading-snug transition-colors duration-300 group-hover:text-foreground">
-                  <span className="font-medium">{c.new}</span>{" "}
-                  <span className="text-muted-foreground">{c.newSub}</span>
-                </p>
+              <div className="flex items-center gap-3">
+                <img src={logoIconNew} alt="Wiize" className="w-9 h-9 rounded-xl" />
+                <h3 className="text-sm font-semibold text-primary uppercase tracking-widest">Modelo com Wiize</h3>
               </div>
             </motion.div>
           </div>
-        ))}
+
+          {comparisons.map((c, i) => (
+            <div key={i} className="grid grid-cols-2 gap-6">
+              <motion.div
+                initial={{ opacity: 0, x: -12 }}
+                animate={isVisible ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.4, delay: 0.3 + i * 0.06 }}
+                className={`border-x border-border bg-muted/30 px-8 py-3 ${i === comparisons.length - 1 ? 'border-b rounded-b-2xl pb-6' : ''}`}
+              >
+                <div className="flex items-center gap-3 min-h-[32px]">
+                  <div className="w-5 h-5 rounded-full bg-destructive/12 flex items-center justify-center flex-shrink-0">
+                    <X size={11} className="text-destructive" strokeWidth={2.5} />
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-snug">
+                    {c.old} <span className="text-muted-foreground/50">{c.oldSub}</span>
+                  </p>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 12 }}
+                animate={isVisible ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.4, delay: 0.4 + i * 0.06 }}
+                className={`border-x border-primary/20 bg-white dark:bg-card px-8 py-3 relative overflow-hidden ${i === comparisons.length - 1 ? 'border-b rounded-b-2xl pb-6' : ''}`}
+              >
+                <div className="flex items-center gap-3 min-h-[32px] relative">
+                  <div className="w-5 h-5 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                    <CheckIcon />
+                  </div>
+                  <p className="text-sm text-foreground leading-snug">
+                    <span className="font-medium">{c.new}</span>{" "}
+                    <span className="text-muted-foreground">{c.newSub}</span>
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+          ))}
+        </div>
+
+        {/* ===== MOBILE: cards pareados antes → depois ===== */}
+        <div className="md:hidden space-y-4">
+          {comparisons.map((c, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 16 }}
+              animate={isVisible ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.4, delay: 0.15 + i * 0.05 }}
+              className="rounded-2xl border border-border bg-card/40 overflow-hidden"
+            >
+              {/* Antes */}
+              <div className="px-4 py-3 bg-muted/30 border-b border-border/60">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider bg-muted text-muted-foreground/80">
+                    Antes
+                  </span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <div className="w-4 h-4 rounded-full bg-destructive/12 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <X size={9} className="text-destructive" strokeWidth={2.5} />
+                  </div>
+                  <p className="text-[13px] text-muted-foreground leading-snug">
+                    {c.old} <span className="text-muted-foreground/60">{c.oldSub}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Com Wiize */}
+              <div className="px-4 py-3 relative overflow-hidden">
+                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/[0.08] rounded-full blur-[50px] pointer-events-none" />
+                <div className="flex items-center gap-2 mb-1.5 relative">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider bg-primary/10 text-primary">
+                    <Sparkles size={9} />
+                    Com Wiize
+                  </span>
+                </div>
+                <div className="flex items-start gap-2.5 relative">
+                  <div className="w-4 h-4 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <CheckIcon />
+                  </div>
+                  <p className="text-[13px] text-foreground leading-snug">
+                    <span className="font-medium">{c.new}</span>{" "}
+                    <span className="text-muted-foreground">{c.newSub}</span>
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
       </div>
     </section>
   );
