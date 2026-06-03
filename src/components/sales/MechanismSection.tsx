@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Search, ScanSearch, Brain, Sparkles, Send, Bot, RefreshCw, CalendarCheck, LayoutGrid } from "lucide-react";
 import { useRef } from "react";
 import { useInView } from "framer-motion";
+import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const steps = [
   { icon: Search, title: "IA de Captação por Localização e Nicho", desc: "Encontra empresas prontas para comprar com base em região e segmento", micro: "Prospecção contínua" },
