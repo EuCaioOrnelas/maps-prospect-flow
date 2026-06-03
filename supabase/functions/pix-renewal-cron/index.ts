@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
       // CRITICAL: card-renewal-cron já cuida de stripe/asaas. Sem este filtro,
       // usuários de cartão recebem 2 emails (um de cada cron) com idempotency keys
       // diferentes (`card_renewal_...` vs `renewal_...`), escapando do dedup.
-      .or("payment_provider.is.null,payment_provider.eq.pix,payment_provider.eq.abacate");
+      .or("payment_provider.is.null,payment_provider.not.in.(stripe,asaas)");
 
     if (error) {
       logStep("Error querying users", { error: error.message });
