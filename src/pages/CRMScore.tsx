@@ -1668,10 +1668,12 @@ const CRMScore = () => {
       <BackgroundGlow />
       <SEO title="Score CRM - Wiize" description="Análise de score de engajamento dos seus leads via WhatsApp" />
       <AppSidebar profile={profile || sidebarProfile} />
-      <MobileNav profile={profile || sidebarProfile} />
 
-      <main className="lg:pl-[72px] pt-[42px] lg:pt-0 min-h-screen">
-        <div className="container mx-auto px-4 py-6 space-y-6">
+      <main className="lg:pl-[72px] min-h-screen">
+        <div className="lg:hidden">
+          <AppHeader profile={profile || sidebarProfile} />
+        </div>
+        <div className="container mx-auto px-4 py-4 lg:py-6 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
@@ -1700,24 +1702,26 @@ const CRMScore = () => {
             </div>
           ) : (
             <Tabs defaultValue="dashboard" className="space-y-4">
-              <TabsList className="bg-muted/50 p-1">
-                <TabsTrigger value="dashboard" className="gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  Dashboard
-                </TabsTrigger>
-                <TabsTrigger value="users" className="gap-2">
-                  <Users className="h-4 w-4" />
-                  Contatos
-                </TabsTrigger>
-                <TabsTrigger value="ranking" className="gap-2">
-                  <Trophy className="h-4 w-4" />
-                  Ranking
-                </TabsTrigger>
-                <TabsTrigger value="rules" className="gap-2">
-                  <Settings className="h-4 w-4" />
-                  Regras
-                </TabsTrigger>
-              </TabsList>
+              <div className="-mx-4 px-4 overflow-x-auto">
+                <TabsList className="bg-muted/50 p-1 inline-flex w-max max-w-full">
+                  <TabsTrigger value="dashboard" className="gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    Dashboard
+                  </TabsTrigger>
+                  <TabsTrigger value="users" className="gap-2">
+                    <Users className="h-4 w-4" />
+                    Contatos
+                  </TabsTrigger>
+                  <TabsTrigger value="ranking" className="gap-2">
+                    <Trophy className="h-4 w-4" />
+                    Ranking
+                  </TabsTrigger>
+                  <TabsTrigger value="rules" className="gap-2 hidden lg:inline-flex">
+                    <Settings className="h-4 w-4" />
+                    Regras
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="dashboard">
                 <ScoreDashboard leads={leads} />
