@@ -827,15 +827,15 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
           {/* LEFT */}
           <div className="text-center xl:text-left">
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
-              <div className="flex -space-x-1.5">
-                <img src={avatar1} alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" width={28} height={28} />
-                <img src={avatar2} alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" width={28} height={28} />
-                <img src={avatar3} alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" width={28} height={28} />
-                <img src={avatar4} alt="" className="w-7 h-7 rounded-full border-2 border-background object-cover" width={28} height={28} />
+            <div className="inline-flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-4 py-1 sm:py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
+              <div className="flex -space-x-1 sm:-space-x-1.5">
+                <img src={avatar1} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
+                <img src={avatar2} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
+                <img src={avatar3} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
+                <img src={avatar4} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
                 
               </div>
-              <span className="text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
+              <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
             </div>
             <h1 className="font-display font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.08] tracking-tight" style={{ animationDelay: "0.1s" }}>
               <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">IA comercial que</span>

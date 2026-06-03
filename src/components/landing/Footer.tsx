@@ -34,7 +34,7 @@ export const Footer = () => {
           {/* Selos de qualidade - acima do aviso */}
           <div className="border-t border-border/50 pt-6 w-full">
             <p className="text-[10px] sm:text-xs text-muted-foreground/40 text-center max-w-3xl mx-auto leading-relaxed">
-              <strong className="text-muted-foreground/50">Aviso importante:</strong> O uso de ferramentas de automação para WhatsApp envolve riscos inerentes, incluindo possível bloqueio de números pelo WhatsApp. O Wiize oferece recursos de proteção e limites inteligentes para ajudar a reduzir esses riscos, mas não garante a ausência de bloqueios. Ao utilizar nossos serviços, você concorda em assumir total responsabilidade pelo uso da plataforma.
+              <strong className="text-muted-foreground/50">Aviso importante:</strong> A Wiize utiliza integrações oficiais e recomenda o uso da plataforma em conformidade com as políticas dos canais de comunicação utilizados. O cliente é responsável pelos contatos e conteúdos enviados através da plataforma.
             </p>
           </div>
         </div>
