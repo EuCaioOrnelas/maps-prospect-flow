@@ -394,12 +394,12 @@ async function processPendingSteps(
     // Get user info
     const { data: user } = await supabase
       .from("profiles")
-      .select("id, email, name, plan")
+      .select("id, email, name, plan, trial_auto_charge_cancelled")
       .eq("id", state.user_id)
       .maybeSingle();
 
-    if (!user || user.plan !== "free") {
-      // User converted, complete automation
+    if (!user || user.plan !== "free" || user.trial_auto_charge_cancelled === true) {
+      // User converted OR cancelou ativação automática do trial — encerra fluxo sem enviar
       await supabase
         .from("trial_user_automation_state")
         .update({ status: "completed", completed_at: now })
