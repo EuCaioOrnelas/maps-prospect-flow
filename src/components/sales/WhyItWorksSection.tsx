@@ -48,7 +48,6 @@ export const WhyItWorksSection = () => {
           eyebrow="Por que funciona"
           title="Por que esse sistema gera"
           highlight="mais vendas consistentes"
-          highlightFit="tight"
           description="Não é sobre trabalhar mais. É sobre ter o processo certo em cada etapa e deixar a estrutura fazer o trabalho pesado por você."
           isVisible={isVisible}
         />
