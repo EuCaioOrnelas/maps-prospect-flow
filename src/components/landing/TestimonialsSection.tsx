@@ -150,23 +150,6 @@ export const TestimonialsSection = () => {
       <div className="absolute inset-0 bg-gradient-glow opacity-20" />
 
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
-        {/* Social proof chip acima do título */}
-        <div
-          className={`flex justify-center mb-6 transition-all duration-700 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/15 bg-primary/5">
-            <div className="flex -space-x-2">
-              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=40&h=40&fit=crop&crop=face" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" loading="lazy" />
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" loading="lazy" />
-              <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" loading="lazy" />
-              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" loading="lazy" />
-            </div>
-            <span className="text-xs font-medium text-foreground tracking-tight">+500 empresas já utilizam a Wiize</span>
-          </div>
-        </div>
-
         <SectionHeading
           eyebrow="Depoimentos"
           title="O que nossos"
