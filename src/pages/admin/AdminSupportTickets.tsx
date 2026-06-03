@@ -851,6 +851,21 @@ export default function AdminSupportTickets() {
                   <TableCell className="text-sm text-muted-foreground">{t.category || "—"}</TableCell>
                   <TableCell><Badge variant="outline" className={STATUS_COLORS[t.status] || ""}>{STATUS_LABELS[t.status] || t.status}</Badge></TableCell>
                   <TableCell>
+                    {(() => {
+                      if (["resolved", "closed"].includes(t.status)) {
+                        return <span className="text-xs text-muted-foreground">—</span>;
+                      }
+                      const cust = t.last_customer_reply_at ? new Date(t.last_customer_reply_at).getTime() : 0;
+                      const sup = t.last_support_reply_at ? new Date(t.last_support_reply_at).getTime() : 0;
+                      if (!cust && !sup) return <span className="text-xs text-muted-foreground">—</span>;
+                      if (cust > sup) {
+                        return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30 text-[10px]">Respondeu</Badge>;
+                      }
+                      return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px]">Mensagem enviada</Badge>;
+                    })()}
+                  </TableCell>
+
+                  <TableCell>
                     {score != null ? (
                       <Badge variant="outline" className={`${ratingColor(score)} gap-1`}>
                         <Star className="w-3 h-3" /> {score}/10
