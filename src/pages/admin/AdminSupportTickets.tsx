@@ -42,7 +42,10 @@ type Ticket = {
   is_manual: boolean | null;
   frustration_score: number | null;
   phase: string | null;
+  last_customer_reply_at: string | null;
+  last_support_reply_at: string | null;
 };
+
 
 type Message = {
   id: string;
@@ -818,17 +821,20 @@ export default function AdminSupportTickets() {
                 <TableHead className="w-[32%] text-xs font-medium uppercase tracking-wide text-muted-foreground">Contato</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Categoria</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Última mensagem</TableHead>
+
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Avaliação</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Prioridade</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tempo de resposta</TableHead>
+
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Criado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-12"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-12"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
               ) : tickets.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Nenhum ticket encontrado.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">Nenhum ticket encontrado.</TableCell></TableRow>
               ) : tickets.map((t) => {
                 const r = ticketRatings[t.id];
                 const score = r ? (r.nps_score ?? (r.stars != null ? r.stars * 2 : null)) : null;
@@ -844,6 +850,21 @@ export default function AdminSupportTickets() {
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{t.category || "—"}</TableCell>
                   <TableCell><Badge variant="outline" className={STATUS_COLORS[t.status] || ""}>{STATUS_LABELS[t.status] || t.status}</Badge></TableCell>
+                  <TableCell>
+                    {(() => {
+                      if (["resolved", "closed"].includes(t.status)) {
+                        return <span className="text-xs text-muted-foreground">—</span>;
+                      }
+                      const cust = t.last_customer_reply_at ? new Date(t.last_customer_reply_at).getTime() : 0;
+                      const sup = t.last_support_reply_at ? new Date(t.last_support_reply_at).getTime() : 0;
+                      if (!cust && !sup) return <span className="text-xs text-muted-foreground">—</span>;
+                      if (cust > sup) {
+                        return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30 text-[10px]">Respondeu</Badge>;
+                      }
+                      return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px]">Mensagem enviada</Badge>;
+                    })()}
+                  </TableCell>
+
                   <TableCell>
                     {score != null ? (
                       <Badge variant="outline" className={`${ratingColor(score)} gap-1`}>
