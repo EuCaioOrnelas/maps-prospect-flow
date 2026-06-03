@@ -779,26 +779,28 @@ export const PricingSection = () => {
                   ))}
                 </div>
 
-                <div className="md:hidden space-y-3">
-                  {[
-                    { icon: Lock, title: "Dados Protegidos", description: "Criptografia ponta a ponta" },
-                    { icon: CreditCard, title: "Pagamento Seguro", description: "Processamento certificado" },
-                    { icon: Server, title: "Uptime 99.9%", description: "Disponibilidade contínua" },
-                    { icon: FileCheck, title: "LGPD Compliant", description: "Proteção de dados" },
-                    { icon: ShieldCheck, title: "100% Seguro", description: "Pagamento certificado" },
-                    { icon: BadgeCheck, title: "Cancele quando quiser", description: "Sem fidelidade" },
-                    { icon: RotateCcw, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-background/60 border border-border/50">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                        <item.icon className="h-4 w-4 text-primary" />
+                <div className="md:hidden">
+                  <div className="rounded-2xl border border-border/60 bg-background/40 overflow-hidden divide-y divide-border/50">
+                    {[
+                      { icon: Lock, title: "Dados Protegidos", description: "Criptografia ponta a ponta" },
+                      { icon: CreditCard, title: "Pagamento Seguro", description: "Processamento certificado" },
+                      { icon: Server, title: "Uptime 99.9%", description: "Disponibilidade contínua" },
+                      { icon: FileCheck, title: "LGPD Compliant", description: "Proteção de dados" },
+                      { icon: ShieldCheck, title: "100% Seguro", description: "Pagamento certificado" },
+                      { icon: BadgeCheck, title: "Cancele quando quiser", description: "Sem fidelidade" },
+                      { icon: RotateCcw, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-3 px-4 py-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                          <item.icon className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground text-[13px] leading-tight">{item.title}</p>
+                          <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{item.description}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-foreground text-sm">{item.title}</p>
-                        <p className="text-xs text-muted-foreground">{item.description}</p>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
