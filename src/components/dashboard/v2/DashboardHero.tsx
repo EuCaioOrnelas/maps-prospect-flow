@@ -112,8 +112,8 @@ export function DashboardHero({
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground leading-tight">
                 Seu comercial gerou{" "}
-                <span className="text-primary">
-                  R$ {fmt(financialImpact)}
+                <span className="text-primary whitespace-nowrap">
+                  R$&nbsp;{fmt(financialImpact)}
                 </span>{" "}
                 {showOpportunities ? "em oportunidades" : "em atendimentos"}
               </h2>
