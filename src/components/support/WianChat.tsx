@@ -1239,7 +1239,7 @@ export function WianChat() {
             />
 
             <div className="flex gap-2">
-              <Button size="sm" onClick={submitNps} disabled={npsScore === null && npsRecommend === null} className="flex-1">
+              <Button size="sm" onClick={submitNps} disabled={npsRecommend === null} className="flex-1">
                 Enviar feedback
               </Button>
               <Button size="sm" variant="ghost" onClick={skipNps}>
