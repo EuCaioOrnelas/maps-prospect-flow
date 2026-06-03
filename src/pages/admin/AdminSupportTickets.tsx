@@ -42,7 +42,10 @@ type Ticket = {
   is_manual: boolean | null;
   frustration_score: number | null;
   phase: string | null;
+  last_customer_reply_at: string | null;
+  last_support_reply_at: string | null;
 };
+
 
 type Message = {
   id: string;
