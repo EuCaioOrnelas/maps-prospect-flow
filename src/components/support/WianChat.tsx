@@ -61,18 +61,18 @@ type Phase =
   | "done-escalated"
   | "blocked";
 
-// Cores específicas por categoria (visual mais profissional, sem quadrado cinza)
+// Ícones uniformes — todos na mesma cor neutra para visual clean
 const CATEGORY_COLORS: Record<string, string> = {
-  campanhas: "text-orange-500",
-  whatsapp: "text-emerald-500",
-  meta: "text-blue-500",
-  ia: "text-violet-500",
-  crm: "text-pink-500",
-  flows: "text-cyan-500",
-  financeiro: "text-amber-500",
-  planos: "text-indigo-500",
-  relatorios: "text-sky-500",
-  suporte: "text-rose-500",
+  campanhas: "text-foreground/80",
+  whatsapp: "text-foreground/80",
+  meta: "text-foreground/80",
+  ia: "text-foreground/80",
+  crm: "text-foreground/80",
+  flows: "text-foreground/80",
+  financeiro: "text-foreground/80",
+  planos: "text-foreground/80",
+  relatorios: "text-foreground/80",
+  suporte: "text-foreground/80",
 };
 
 type TriageContext = {
@@ -1572,7 +1572,7 @@ export function WianChat() {
                 onClick={openTicketDirect}
                 className="w-full text-left px-5 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3.5 border-t border-border/60 bg-muted/20"
               >
-                <Headphones className="w-5 h-5 shrink-0 text-primary" strokeWidth={2} />
+                <Headphones className="w-5 h-5 shrink-0 text-foreground/80" strokeWidth={2} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">Falar direto com o time</p>
                   <p className="text-[11px] text-muted-foreground">Pular triagem e abrir um chamado humano</p>

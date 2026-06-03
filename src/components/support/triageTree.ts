@@ -314,13 +314,6 @@ export const TRIAGE_TREE: Category[] = [
       },
     ],
   },
-  {
-    id: "suporte",
-    label: "Falar com suporte humano",
-    emoji: "🧑‍💻",
-    directEscalate: true,
-    problems: [],
-  },
 ];
 
 export const findCategory = (id: string) => TRIAGE_TREE.find((c) => c.id === id);
