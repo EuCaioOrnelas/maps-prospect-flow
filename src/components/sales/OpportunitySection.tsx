@@ -28,22 +28,14 @@ export const OpportunitySection = () => {
     <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative">
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={isVisible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-14 sm:mb-20"
-        >
-          <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary mb-4">
-            A oportunidade
-          </span>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-5">
-            O novo padrão para <span className="text-shimmer-highlight">vender B2B</span>
-          </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Empresas que crescem mais rápido não vendem mais, vendem melhor, com processos, dados e inteligência.
-          </p>
-        </motion.div>
+        <SectionHeading
+          eyebrow="A oportunidade"
+          title="O novo padrão para"
+          highlight="vender B2B"
+          description="Empresas que crescem mais rápido não vendem mais — vendem melhor, com processo, dados e inteligência."
+          isVisible={isVisible}
+        />
+
 
         {/* Comparison grid - headers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
