@@ -421,7 +421,7 @@ export const PricingSection = () => {
                   delay: index * 0.15,
                   ease: [0.25, 0.46, 0.45, 0.94]
                 }}
-                className={`group relative rounded-2xl flex flex-col overflow-hidden transition-transform duration-300 md:hover:-translate-y-2 ${plan.popular ? 'md:hover:scale-[1.02]' : 'md:hover:scale-[1.03]'} ${
+                className={`group relative rounded-2xl flex flex-col overflow-visible transition-transform duration-300 md:hover:-translate-y-2 ${plan.popular ? 'md:hover:scale-[1.02]' : 'md:hover:scale-[1.03]'} ${
                   plan.popular
                     ? "bg-gradient-card border-2 border-primary shadow-glow p-3 sm:p-5 md:p-6 md:z-10"
                     : "glass p-3 sm:p-5 md:p-6"
@@ -432,19 +432,19 @@ export const PricingSection = () => {
                     : "inset 0 1px 0 0 hsl(var(--primary) / 0.12), inset 0 0 60px -30px hsl(var(--primary) / 0.18)",
                 }}
               >
+                {plan.popular && (
+                  <span className="absolute -top-2.5 sm:-top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 bg-primary text-primary-foreground text-[9px] sm:text-[11px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap shadow-md z-20">
+                    <Sparkles size={10} />
+                    <span className="hidden sm:inline">mais popular</span>
+                    <span className="sm:hidden">popular</span>
+                  </span>
+                )}
                 <div className="mb-4 sm:mb-6">
                   <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
                     <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/15">
                       <plan.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                     </div>
                     <h3 className="font-display font-bold text-[15px] sm:text-lg md:text-xl">{plan.name}</h3>
-                    {plan.popular && (
-                      <span className="inline-flex items-center gap-1 bg-primary/15 text-primary text-[9px] sm:text-[11px] font-bold px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
-                        <Sparkles size={10} />
-                        <span className="hidden sm:inline">mais popular</span>
-                        <span className="sm:hidden">popular</span>
-                      </span>
-                    )}
                   </div>
                   <p className="text-muted-foreground text-[10.5px] sm:text-sm leading-snug min-h-[2.5rem] md:min-h-[2.75rem]">{plan.description}</p>
                 </div>
