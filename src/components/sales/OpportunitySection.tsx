@@ -2,6 +2,7 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
 import { X, Sparkles } from "lucide-react";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const comparisons = [
   { old: "Buscar leads manualmente", oldSub: "e perder horas todos os dias", new: "SDR IA encontra e qualifica leads", newSub: "prontos para comprar" },
