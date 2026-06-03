@@ -60,12 +60,14 @@ async function processTimeBasedAutomations(
 
   if (!automations?.length) return;
 
-  // Get all free trial users
+  // Get all free trial users — exclui quem cancelou a ativação automática do trial
+  // (se cancelou, não queremos enviar lembretes/cobranças)
   const { data: trialUsers } = await supabase
     .from("profiles")
-    .select("id, email, name, plan, trial_start_at, created_at, updated_at")
+    .select("id, email, name, plan, trial_start_at, created_at, updated_at, trial_auto_charge_cancelled")
     .eq("plan", "free")
-    .not("trial_start_at", "is", null);
+    .not("trial_start_at", "is", null)
+    .or("trial_auto_charge_cancelled.is.null,trial_auto_charge_cancelled.eq.false");
 
   if (!trialUsers?.length) return;
 
