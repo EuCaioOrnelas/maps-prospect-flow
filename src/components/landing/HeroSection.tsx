@@ -877,7 +877,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 <Button
                   variant="ghost"
                   size="lg"
-                  className="demo-shine rounded-full text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 border border-border/60 bg-background/60 hover:bg-background/80 hover:border-foreground/30 hover:-translate-y-1 hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.18)] transition-all duration-300"
+                  className="demo-shine rounded-full text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 border border-border/60 bg-transparent hover:bg-muted/60 hover:border-foreground/20 hover:-translate-y-1 hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.15)] transition-all duration-300"
                 >
                   Ver Demonstração
                 </Button>
