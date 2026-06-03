@@ -21,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SEO } from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
@@ -1070,8 +1071,8 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <Card className="w-full max-w-2xl bg-card max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4" onClick={onClose}>
+      <Card className="w-full max-w-2xl bg-card max-h-[95vh] sm:max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Detalhe do Contato</CardTitle>
@@ -1082,14 +1083,14 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
         </CardHeader>
         <CardContent className="flex-1 overflow-y-auto space-y-4">
           {/* Lead Header */}
-          <div className="flex items-start justify-between p-4 rounded-xl bg-muted/20 border border-border/30">
-            <div className="space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-4 rounded-xl bg-muted/20 border border-border/30">
+            <div className="space-y-2 min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <p className="font-bold">{lead.name || fmtPhone(lead.phone_e164)}</p>
+                <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                <p className="font-bold truncate">{lead.name || fmtPhone(lead.phone_e164)}</p>
               </div>
               <p className="text-sm text-muted-foreground">{fmtPhone(lead.phone_e164)}</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-x-3 gap-y-1">
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   Último evento: {new Date(lead.last_activity_at).toLocaleDateString('pt-BR')}
@@ -1100,19 +1101,21 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                 </div>
               </div>
             </div>
-            <div className="flex flex-col items-center gap-1">
-              <p className={`text-4xl font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</p>
-              <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
-                {BUCKET_SHORT_LABELS[bucket]}
-              </Badge>
-              <div className="flex items-center gap-1 mt-1">
-                {lead.score_risk < -50 ? (
-                  <><TrendingDown className="h-3.5 w-3.5 text-destructive" /><span className="text-[10px] text-destructive">Em queda</span></>
-                ) : lead.score_engagement > 20 || lead.score_intent > 0 ? (
-                  <><TrendingUp className="h-3.5 w-3.5 text-emerald-400" /><span className="text-[10px] text-emerald-400">Em alta</span></>
-                ) : (
-                  <><Minus className="h-3.5 w-3.5 text-muted-foreground" /><span className="text-[10px] text-muted-foreground">Estável</span></>
-                )}
+            <div className="flex sm:flex-col items-center justify-between sm:justify-center gap-2 sm:gap-1 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/40">
+              <p className={`text-3xl sm:text-4xl font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</p>
+              <div className="flex flex-col items-center gap-1">
+                <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
+                  {BUCKET_SHORT_LABELS[bucket]}
+                </Badge>
+                <div className="flex items-center gap-1">
+                  {lead.score_risk < -50 ? (
+                    <><TrendingDown className="h-3.5 w-3.5 text-destructive" /><span className="text-[10px] text-destructive">Em queda</span></>
+                  ) : lead.score_engagement > 20 || lead.score_intent > 0 ? (
+                    <><TrendingUp className="h-3.5 w-3.5 text-emerald-400" /><span className="text-[10px] text-emerald-400">Em alta</span></>
+                  ) : (
+                    <><Minus className="h-3.5 w-3.5 text-muted-foreground" /><span className="text-[10px] text-muted-foreground">Estável</span></>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1668,10 +1671,12 @@ const CRMScore = () => {
       <BackgroundGlow />
       <SEO title="Score CRM - Wiize" description="Análise de score de engajamento dos seus leads via WhatsApp" />
       <AppSidebar profile={profile || sidebarProfile} />
-      <MobileNav profile={profile || sidebarProfile} />
 
-      <main className="lg:pl-[72px] pt-[42px] lg:pt-0 min-h-screen">
-        <div className="container mx-auto px-4 py-6 space-y-6">
+      <main className="lg:pl-[72px] min-h-screen">
+        <div className="lg:hidden">
+          <AppHeader profile={profile || sidebarProfile} />
+        </div>
+        <div className="container mx-auto px-4 py-4 lg:py-6 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
@@ -1700,24 +1705,26 @@ const CRMScore = () => {
             </div>
           ) : (
             <Tabs defaultValue="dashboard" className="space-y-4">
-              <TabsList className="bg-muted/50 p-1">
-                <TabsTrigger value="dashboard" className="gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  Dashboard
-                </TabsTrigger>
-                <TabsTrigger value="users" className="gap-2">
-                  <Users className="h-4 w-4" />
-                  Contatos
-                </TabsTrigger>
-                <TabsTrigger value="ranking" className="gap-2">
-                  <Trophy className="h-4 w-4" />
-                  Ranking
-                </TabsTrigger>
-                <TabsTrigger value="rules" className="gap-2">
-                  <Settings className="h-4 w-4" />
-                  Regras
-                </TabsTrigger>
-              </TabsList>
+              <div className="-mx-4 px-4 overflow-x-auto">
+                <TabsList className="bg-muted/50 p-1 inline-flex w-max max-w-full">
+                  <TabsTrigger value="dashboard" className="gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    Dashboard
+                  </TabsTrigger>
+                  <TabsTrigger value="users" className="gap-2">
+                    <Users className="h-4 w-4" />
+                    Contatos
+                  </TabsTrigger>
+                  <TabsTrigger value="ranking" className="gap-2">
+                    <Trophy className="h-4 w-4" />
+                    Ranking
+                  </TabsTrigger>
+                  <TabsTrigger value="rules" className="gap-2 hidden lg:inline-flex">
+                    <Settings className="h-4 w-4" />
+                    Regras
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="dashboard">
                 <ScoreDashboard leads={leads} />

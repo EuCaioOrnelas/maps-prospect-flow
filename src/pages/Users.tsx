@@ -18,6 +18,9 @@ import { getPlanDisplayName } from "@/lib/planAccess";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 const formatDate = (s: string | null | undefined) => {
   if (!s) return "—";
@@ -76,19 +79,25 @@ export default function Users() {
   return (
     <>
       <Helmet><title>Usuários · Wiize</title></Helmet>
-      <div className="min-h-screen bg-background pl-[72px]">
-        <div className="max-w-6xl mx-auto p-6 space-y-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground">Usuários</h1>
-              <p className="text-muted-foreground text-sm mt-1">
-                Gerencie quem tem acesso à sua conta Wiize.
-              </p>
-            </div>
-            <Button onClick={() => setAddOpen(true)} disabled={!canAdd}>
-              <UserPlus size={16} className="mr-2" /> Adicionar Usuário
-            </Button>
+      <div className="min-h-screen bg-background relative">
+        <BackgroundGlow />
+        <AppSidebar profile={profile as any} />
+        <div className="lg:pl-[72px]">
+          <div className="lg:hidden">
+            <AppHeader profile={profile as any} />
           </div>
+          <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
+              <div>
+                <h1 className="text-2xl font-semibold text-foreground">Usuários</h1>
+                <p className="text-muted-foreground text-sm mt-1">
+                  Gerencie quem tem acesso à sua conta Wiize.
+                </p>
+              </div>
+              <Button onClick={() => setAddOpen(true)} disabled={!canAdd} className="w-full sm:w-auto">
+                <UserPlus size={16} className="mr-2" /> Adicionar Usuário
+              </Button>
+            </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="rounded-xl border border-border/60 bg-card p-4">
@@ -180,6 +189,7 @@ export default function Users() {
                 ))}
               </TableBody>
             </Table>
+          </div>
           </div>
         </div>
       </div>
