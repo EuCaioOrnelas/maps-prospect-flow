@@ -837,10 +837,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               </div>
               <span className="text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
             </div>
-            <h1 className="font-display text-[1.85rem] xs:text-[2rem] sm:text-[2.6rem] md:text-[3.2rem] lg:text-[3.6rem] xl:text-[4rem] font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.13] tracking-tight" style={{ animationDelay: "0.1s" }}>
-              <span className="block whitespace-nowrap">IA comercial que</span>
-              <span className="block whitespace-nowrap">transforma leads em</span>
-              <span className="block whitespace-nowrap text-shimmer-highlight">oportunidades reais</span>
+            <h1 className="font-display font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.08] tracking-tight" style={{ animationDelay: "0.1s" }}>
+              <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">IA comercial que</span>
+              <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">transforma leads em</span>
+              <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[2rem] sm:text-[3.05rem] md:text-[3.85rem] lg:text-[4.4rem] xl:text-[4.9rem] leading-[1.02] mt-1 sm:mt-2">oportunidades reais</span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
               IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.

@@ -48,11 +48,11 @@ export const ProblemSection = () => {
           <BentoGridShowcase
             className="auto-rows-[minmax(110px,auto)]"
             integration={
-              <div className={`${cardBase} !p-0 min-h-[300px] sm:min-h-[340px]`}>
+              <div className={`${cardBase} !p-0 min-h-[360px] sm:min-h-[340px]`}>
                 <div className={cardGlowSecondary} />
                 <div className="absolute bottom-[-5rem] left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-destructive/14 blur-[78px] pointer-events-none opacity-100" />
 
-                <div className="relative z-20 p-3 sm:p-3.5 pb-28 sm:pb-32">
+                <div className="relative z-20 p-3 sm:p-3.5 pb-44 sm:pb-32">
                   <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
                     <MessageSquareOff size={18} className="text-destructive" />
                   </div>
@@ -62,7 +62,7 @@ export const ProblemSection = () => {
                   </p>
                 </div>
 
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] sm:h-[60%] overflow-hidden z-0">
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[48%] sm:h-[60%] overflow-hidden z-0">
                   <img
                     src={whatsappPhoneMockup}
                     alt="Ilustração de conversa no WhatsApp"
