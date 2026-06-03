@@ -846,8 +846,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </div>
             <h1 className="font-display font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.08] tracking-tight" style={{ animationDelay: "0.1s" }}>
               <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">IA comercial que</span>
-              <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">transforma leads em</span>
-              <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[1.95rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">oportunidades reais</span>
+              <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">Transforma leads em</span>
+              <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[1.95rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">Oportunidades reais</span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
               IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.
@@ -877,7 +877,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 <Button
                   variant="ghost"
                   size="lg"
-                  className="demo-shine rounded-full text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 border border-border/60 bg-background/60 hover:bg-background/80 hover:border-foreground/30 hover:-translate-y-1 hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.18)] transition-all duration-300"
+                  className="demo-shine rounded-full text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 border border-border/60 bg-transparent hover:bg-muted/60 hover:border-foreground/20 hover:-translate-y-1 hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.15)] transition-all duration-300"
                 >
                   Ver Demonstração
                 </Button>
