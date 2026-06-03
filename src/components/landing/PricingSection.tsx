@@ -408,8 +408,8 @@ export const PricingSection = () => {
             <div className="h-8" />
           </div>
 
-          {/* Start + Growth + Enterprise */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch mb-8">
+          {/* Start + Growth + Enterprise — mobile: 2 cols (start/growth) + Enterprise full width abaixo */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 items-stretch mb-6 sm:mb-8">
             {plans.map((plan, index) => (
               <motion.div
                 key={plan.key}
@@ -428,8 +428,8 @@ export const PricingSection = () => {
                 }}
                 className={`group relative rounded-2xl flex flex-col overflow-hidden ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-6 md:z-10"
-                    : "glass p-5 md:p-6"
+                    ? "bg-gradient-card border-2 border-primary shadow-glow p-3 sm:p-5 md:p-6 md:z-10"
+                    : "glass p-3 sm:p-5 md:p-6"
                 }`}
                 style={{
                   boxShadow: plan.popular
@@ -437,34 +437,35 @@ export const PricingSection = () => {
                     : "inset 0 1px 0 0 hsl(var(--primary) / 0.12), inset 0 0 60px -30px hsl(var(--primary) / 0.18)",
                 }}
               >
-                <div className="mb-6">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-                      <plan.icon className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
+                <div className="mb-4 sm:mb-6">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/15">
+                      <plan.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                     </div>
-                    <h3 className="font-display font-bold text-lg md:text-xl">{plan.name}</h3>
+                    <h3 className="font-display font-bold text-base sm:text-lg md:text-xl">{plan.name}</h3>
                     {plan.popular && (
-                      <span className="ml-auto inline-flex items-center gap-1 bg-primary/15 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
-                        <Sparkles size={11} />
-                        mais popular
+                      <span className="inline-flex items-center gap-1 bg-primary/15 text-primary text-[9px] sm:text-[11px] font-bold px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
+                        <Sparkles size={10} />
+                        <span className="hidden sm:inline">mais popular</span>
+                        <span className="sm:hidden">popular</span>
                       </span>
                     )}
                   </div>
-                  <p className="text-muted-foreground text-xs sm:text-sm min-h-[2.5rem] md:min-h-[2.75rem]">{plan.description}</p>
+                  <p className="text-muted-foreground text-[11px] sm:text-sm leading-snug min-h-[2.5rem] md:min-h-[2.75rem]">{plan.description}</p>
                 </div>
 
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 text-sm">R$ {plan.anchorPrice}</span>
+                <div className="mb-4 sm:mb-6">
+                  <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                    <span className="text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 text-[11px] sm:text-sm">R$ {plan.anchorPrice}</span>
                   </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-sm font-medium text-muted-foreground">R$</span>
-                    <span className="font-display font-bold text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
+                  <div className="flex items-baseline gap-1 sm:gap-1.5 flex-wrap">
+                    <span className="text-xs sm:text-sm font-medium text-muted-foreground">R$</span>
+                    <span className="font-display font-bold text-[1.85rem] sm:text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
                       <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
                     </span>
-                    <span className="text-sm font-medium text-muted-foreground">/ mês</span>
+                    <span className="text-[11px] sm:text-sm font-medium text-muted-foreground">/ mês</span>
                   </div>
-                  <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
+                  <p className="text-primary mt-1.5 sm:mt-2 text-[11px] sm:text-sm font-medium">
                     {plan.usageLabel}
                   </p>
                 </div>
@@ -488,7 +489,7 @@ export const PricingSection = () => {
                 <Button
                   variant={plan.popular ? "hero" : "outline"}
                   size="lg"
-                  className="w-full mt-auto"
+                  className="w-full mt-auto h-10 sm:h-11 text-xs sm:text-sm px-2"
                   onClick={() => handlePlanClick(plan)}
                   disabled={loadingPlan === plan.key}
                 >
@@ -498,9 +499,15 @@ export const PricingSection = () => {
                       Processando...
                     </>
                   ) : plan.popular ? (
-                    "Escalar com Wiize IA"
+                    <>
+                      <span className="hidden sm:inline">Escalar com Wiize IA</span>
+                      <span className="sm:hidden">Escalar agora</span>
+                    </>
                   ) : (
-                    "Começar Agora"
+                    <>
+                      <span className="hidden sm:inline">Começar Agora</span>
+                      <span className="sm:hidden">Começar</span>
+                    </>
                   )}
                 </Button>
               </motion.div>
@@ -514,34 +521,34 @@ export const PricingSection = () => {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
               whileHover={{ y: -8, scale: 1.03, transition: { duration: 0.3 } }}
-              className="group relative rounded-2xl flex flex-col overflow-hidden glass p-5 md:p-6"
+              className="group relative col-span-2 md:col-span-1 rounded-2xl flex flex-col overflow-hidden glass p-3 sm:p-5 md:p-6"
               style={{
                 boxShadow:
                   "inset 0 1px 0 0 hsl(var(--primary) / 0.12), inset 0 0 60px -30px hsl(var(--primary) / 0.18)",
               }}
             >
-              <div className="mb-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-                    <Building2 className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
+              <div className="mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                  <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/15">
+                    <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                   </div>
-                  <h3 className="font-display font-bold text-lg md:text-xl">Enterprise</h3>
+                  <h3 className="font-display font-bold text-base sm:text-lg md:text-xl">Enterprise</h3>
                 </div>
-                <p className="text-muted-foreground text-xs sm:text-sm min-h-[2.5rem] md:min-h-[2.75rem]">
+                <p className="text-muted-foreground text-[11px] sm:text-sm leading-snug min-h-[2.5rem] md:min-h-[2.75rem]">
                   {scalePlan.description}
                 </p>
               </div>
 
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-2 invisible" aria-hidden="true">
+              <div className="mb-4 sm:mb-6">
+                <div className="hidden sm:flex items-center gap-2 mb-2 invisible" aria-hidden="true">
                   <span className="text-sm">R$ —</span>
                 </div>
-                <div className="flex items-end gap-1.5 h-[2.75rem] md:h-[3.5rem]">
-                  <span className="font-display font-bold text-[2rem] md:text-[2.5rem] tabular-nums text-foreground leading-none whitespace-nowrap">
+                <div className="flex items-end gap-1.5 h-auto sm:h-[2.75rem] md:h-[3.5rem]">
+                  <span className="font-display font-bold text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] tabular-nums text-foreground leading-none whitespace-nowrap">
                     Sob medida
                   </span>
                 </div>
-                <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
+                <p className="text-primary mt-1.5 sm:mt-2 text-[11px] sm:text-sm font-medium">
                   Oportunidades sob demanda
                 </p>
               </div>
@@ -563,15 +570,13 @@ export const PricingSection = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full mt-auto"
+                className="w-full mt-auto h-10 sm:h-11 text-xs sm:text-sm"
                 onClick={() => navigate("/enterprise")}
               >
                 Falar com Especialista
               </Button>
             </motion.div>
           </div>
-
-          {/* Toggle comparison link */}
           <div className="flex justify-center mb-10">
             {!expanded ? (
               <button
@@ -722,21 +727,21 @@ export const PricingSection = () => {
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
-            <div className="relative overflow-hidden rounded-2xl border border-border/50 p-6 md:p-10">
+            <div className="relative overflow-hidden rounded-2xl border border-border/50 p-4 sm:p-6 md:p-10">
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-2xl" />
               
               <div className="relative z-10">
-                <div className="text-center mb-10">
-                  <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-                    <Shield className="h-4 w-4" />
+                <div className="text-center mb-6 sm:mb-10">
+                  <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-sm font-medium mb-3 sm:mb-4">
+                    <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     Infraestrutura Profissional
                   </div>
                   
-                  <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
+                  <h3 className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2 sm:mb-3">
                     Segurança e confiança em cada etapa
                   </h3>
-                  <p className="text-muted-foreground max-w-xl mx-auto">
+                  <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
                     Sua operação protegida por padrões de mercado, com transparência total e suporte dedicado.
                   </p>
                 </div>
@@ -774,26 +779,28 @@ export const PricingSection = () => {
                   ))}
                 </div>
 
-                <div className="md:hidden space-y-3">
-                  {[
-                    { icon: Lock, title: "Dados Protegidos", description: "Criptografia ponta a ponta" },
-                    { icon: CreditCard, title: "Pagamento Seguro", description: "Processamento certificado" },
-                    { icon: Server, title: "Uptime 99.9%", description: "Disponibilidade contínua" },
-                    { icon: FileCheck, title: "LGPD Compliant", description: "Proteção de dados" },
-                    { icon: ShieldCheck, title: "100% Seguro", description: "Pagamento certificado" },
-                    { icon: BadgeCheck, title: "Cancele quando quiser", description: "Sem fidelidade" },
-                    { icon: RotateCcw, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-background/60 border border-border/50">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                        <item.icon className="h-4 w-4 text-primary" />
+                <div className="md:hidden">
+                  <div className="rounded-2xl border border-border/60 bg-background/40 overflow-hidden divide-y divide-border/50">
+                    {[
+                      { icon: Lock, title: "Dados Protegidos", description: "Criptografia ponta a ponta" },
+                      { icon: CreditCard, title: "Pagamento Seguro", description: "Processamento certificado" },
+                      { icon: Server, title: "Uptime 99.9%", description: "Disponibilidade contínua" },
+                      { icon: FileCheck, title: "LGPD Compliant", description: "Proteção de dados" },
+                      { icon: ShieldCheck, title: "100% Seguro", description: "Pagamento certificado" },
+                      { icon: BadgeCheck, title: "Cancele quando quiser", description: "Sem fidelidade" },
+                      { icon: RotateCcw, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-3 px-4 py-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                          <item.icon className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground text-[13px] leading-tight">{item.title}</p>
+                          <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{item.description}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-foreground text-sm">{item.title}</p>
-                        <p className="text-xs text-muted-foreground">{item.description}</p>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
