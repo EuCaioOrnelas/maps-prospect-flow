@@ -1,49 +1,37 @@
 import { motion } from "framer-motion";
-import { Shield, Zap, Brain, Search } from "lucide-react";
+import { Zap, Brain, Search, Sparkles } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const pillars = [
   {
     icon: Search,
-    title: "Dados reais, não achismo",
-    subtitle: "Prospecção baseada em evidências",
-    description: "A plataforma cruza dados de atividade, nicho e presença digital para encontrar empresas com potencial real de compra, eliminando leads frios da sua operação.",
+    eyebrow: "Dados reais",
+    title: "Prospecção baseada em evidências",
+    description:
+      "A plataforma cruza dados de atividade, nicho e presença digital para encontrar empresas com potencial real de compra, eliminando leads frios da sua operação.",
   },
   {
     icon: Brain,
-    title: "IA que entende contexto",
-    subtitle: "Abordagem sob medida",
-    description: "Cada mensagem é construída com base no perfil real da empresa. Não é template genérico, é comunicação que parece humana e relevante desde o primeiro contato.",
+    eyebrow: "IA contextual",
+    title: "Abordagem sob medida para cada lead",
+    description:
+      "Cada mensagem é construída com base no perfil real da empresa. Não é template genérico, é comunicação que parece humana e relevante desde o primeiro contato.",
   },
   {
     icon: Zap,
-    title: "Processo que escala sozinho",
-    subtitle: "Operação autônoma",
-    description: "Do primeiro contato ao follow-up, a estrutura opera sem depender de esforço manual. Você configura uma vez e o sistema executa de forma consistente.",
+    eyebrow: "Operação autônoma",
+    title: "Processo comercial que escala sozinho",
+    description:
+      "Do primeiro contato ao follow-up, a estrutura opera sem depender de esforço manual. Você configura uma vez e o sistema executa de forma consistente.",
   },
 ];
 
 const results = [
-  {
-    metric: "3x",
-    label: "mais respostas",
-    description: "Mensagens contextuais geram engajamento real",
-  },
-  {
-    metric: "24/7",
-    label: "operação contínua",
-    description: "Leads contatados no momento certo, sem espera",
-  },
-  {
-    metric: "100%",
-    label: "follow-up garantido",
-    description: "Nenhuma oportunidade esquecida no funil",
-  },
-  {
-    metric: "Total",
-    label: "visibilidade do funil",
-    description: "Dados reais para decisões baseadas em evidências",
-  },
+  { metric: "3x", label: "mais respostas", description: "Mensagens contextuais geram engajamento real" },
+  { metric: "24/7", label: "operação contínua", description: "Leads contatados no momento certo, sem espera" },
+  { metric: "100%", label: "follow-up garantido", description: "Nenhuma oportunidade esquecida no funil" },
+  { metric: "Total", label: "visibilidade do funil", description: "Dados reais para decisões baseadas em evidências" },
 ];
 
 export const WhyItWorksSection = () => {
@@ -54,77 +42,76 @@ export const WhyItWorksSection = () => {
       className="py-12 sm:py-20 relative overflow-hidden w-full"
       ref={ref as React.RefObject<HTMLElement>}
     >
-
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
-        {/* Header */}
-        <div
-          className={`text-center mb-12 md:mb-14 transition-all duration-700 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          }`}
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 mb-6">
-            <Shield size={16} className="text-primary" />
-            <span className="text-sm text-muted-foreground font-medium">Por que funciona</span>
-          </div>
+        {/* Header padronizado */}
+        <SectionHeading
+          eyebrow="Por que funciona"
+          title="Por que esse sistema gera"
+          highlight="mais vendas consistentes"
+          highlightFit="tight"
+          description="Não é sobre trabalhar mais. É sobre ter o processo certo em cada etapa e deixar a estrutura fazer o trabalho pesado por você."
+          isVisible={isVisible}
+        />
 
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold mb-5 leading-tight text-foreground">
-            Por que esse sistema gera<br />
-            <span className="text-shimmer-highlight">mais vendas consistentes</span>
-          </h2>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Não é sobre trabalhar mais. É sobre ter o processo certo em cada etapa
-            e deixar a estrutura fazer o trabalho pesado por você.
-          </p>
-        </div>
+        {/* 3 Pilares — mesmo padrão visual dos cards da section anterior */}
+        <div className="relative grid md:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+          {pillars.map((pillar, index) => {
+            const Icon = pillar.icon;
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.12 }}
+                className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm p-4 sm:p-5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+              >
+                <div className="absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] blur-[70px] pointer-events-none" />
+                <div className="absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] blur-[56px] pointer-events-none" />
 
-        {/* 3 Pillars */}
-        <div className="relative grid md:grid-cols-3 gap-5 lg:gap-6">
-          {pillars.map((pillar, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.12 }}
-              className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-7 hover:border-primary/30 hover:bg-card/80 transition-all duration-300"
-            >
-              <div className="absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] blur-[70px] pointer-events-none" />
-              <div className="absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] blur-[56px] pointer-events-none" />
-
-              <div className="relative z-10">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
-                  <pillar.icon className="w-6 h-6 text-primary" />
+                <div className="relative z-10">
+                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">
+                    {pillar.eyebrow}
+                  </span>
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                      <Icon size={16} className="text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-foreground text-base leading-tight">{pillar.title}</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{pillar.description}</p>
                 </div>
-                <h3 className="font-display text-lg font-semibold text-foreground mb-1">{pillar.title}</h3>
-                <p className="text-sm text-primary/80 font-medium mb-3">{pillar.subtitle}</p>
-                <p className="text-sm text-muted-foreground leading-relaxed">{pillar.description}</p>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
 
-        {/* Results - visually connected, no gap */}
+        {/* Bloco de resultados */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="relative mt-5 lg:mt-6 overflow-hidden rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm p-8 md:p-10"
+          className="relative mt-4 sm:mt-6 overflow-hidden rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm p-5 sm:p-8 md:p-10"
         >
           <div className="absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] blur-[70px] pointer-events-none" />
           <div className="absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] blur-[56px] pointer-events-none" />
 
           <div className="relative z-10">
-            <div className="text-center mb-8">
-              <h3 className="font-display text-xl md:text-2xl font-bold text-foreground mb-2">
-                O que isso muda na prática
+            <div className="text-center mb-6 sm:mb-8">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-primary/80 bg-primary/5 px-2.5 py-0.5 rounded-full mb-3 uppercase tracking-wider">
+                <Sparkles size={11} />
+                Resultados na prática
+              </span>
+              <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-2">
+                O que isso muda no dia a dia
               </h3>
               <p className="text-sm text-muted-foreground max-w-xl mx-auto">
                 Cada etapa do processo foi desenhada para eliminar gargalos e maximizar conversão.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
               {results.map((result, index) => (
                 <motion.div
                   key={index}
@@ -132,15 +119,15 @@ export const WhyItWorksSection = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.08 }}
-                  className="text-center p-5 rounded-xl hover:bg-card/60 transition-all duration-300"
+                  className="text-center p-3 sm:p-5 rounded-xl border border-border/40 bg-background/40 hover:border-primary/30 hover:bg-card/60 transition-all duration-300"
                 >
-                  <span className="font-display text-3xl md:text-4xl font-bold text-primary block mb-1">
+                  <span className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-primary block mb-1">
                     {result.metric}
                   </span>
-                  <span className="text-sm font-semibold text-foreground block mb-2">
+                  <span className="text-xs sm:text-sm font-semibold text-foreground block mb-1.5">
                     {result.label}
                   </span>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                  <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
                     {result.description}
                   </p>
                 </motion.div>
