@@ -169,8 +169,9 @@ async function evaluateBehaviourTriggers(supabase: any, results: any) {
 
   const { data: trialUsers } = await supabase
     .from("profiles")
-    .select("id, email, name, plan, trial_start_at, created_at, updated_at")
-    .eq("plan", "free");
+    .select("id, email, name, plan, trial_start_at, created_at, updated_at, trial_auto_charge_cancelled")
+    .eq("plan", "free")
+    .or("trial_auto_charge_cancelled.is.null,trial_auto_charge_cancelled.eq.false");
 
   if (!trialUsers?.length) return;
 
