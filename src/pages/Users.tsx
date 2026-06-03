@@ -190,6 +190,7 @@ export default function Users() {
               </TableBody>
             </Table>
           </div>
+          </div>
         </div>
       </div>
 
