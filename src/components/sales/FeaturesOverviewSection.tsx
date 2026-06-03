@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import flowBuilderPreview from "@/assets/flow-builder-preview.png";
+import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const cardBase =
   "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-primary/5";
@@ -58,24 +59,13 @@ export const FeaturesOverviewSection = () => {
       className="py-12 sm:py-20 w-full relative scroll-mt-24"
     >
       <div className="container mx-auto px-4 max-w-6xl">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={isVisible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary mb-4">
-            Plataforma completa
-          </span>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Uma máquina integrada de
-            <br />
-            <span className="text-shimmer-highlight">geração de oportunidades B2B</span>
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Da captação ao fechamento, cada etapa do processo comercial conectada por dados, IA e automação, sem depender de operação manual.
-          </p>
-        </motion.div>
+        <SectionHeading
+          eyebrow="Plataforma completa"
+          title="Uma máquina integrada de"
+          highlight="geração de oportunidades B2B"
+          description="Da captação ao fechamento, cada etapa do processo comercial conectada por dados, IA e automação, sem depender de operação manual."
+          isVisible={isVisible}
+        />
 
         {isVisible && (
           <motion.div
