@@ -1029,7 +1029,11 @@ export function WianChat() {
               transition={{ duration: 0.2 }}
               className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              {m.role === "ai" && <AiAvatar />}
+              {m.role === "ai" && (
+                messages[i - 1]?.role !== "ai"
+                  ? <AiAvatar />
+                  : <div className="w-10 h-10 shrink-0" aria-hidden />
+              )}
               <div className={`flex flex-col gap-2 max-w-[78%] ${m.role === "user" ? "items-end" : "items-start"}`}>
                 {m.role === "ai" && m.toolCalls?.length ? (
                   <div className="flex flex-wrap gap-1.5">
