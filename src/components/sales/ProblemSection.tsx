@@ -34,10 +34,10 @@ export const ProblemSection = () => {
           <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-destructive/10 text-destructive mb-4">
             O problema
           </span>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Seu processo comercial está
-            <br />
-            <span className="text-muted-foreground">fazendo você perder clientes</span>
+          <h2 className="font-display text-[1.75rem] sm:text-4xl md:text-5xl font-bold text-foreground mb-4 leading-[1.15] tracking-tight">
+            Seu processo comercial<br className="hidden sm:block" />
+            <span className="sm:hidden"> </span>
+            <span className="text-muted-foreground">está perdendo clientes</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Enquanto sua operação depende de processos manuais, leads esfriam, respostas atrasam e oportunidades deixam de virar vendas.
