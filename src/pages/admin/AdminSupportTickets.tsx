@@ -270,9 +270,11 @@ export default function AdminSupportTickets() {
         const ids = list.map((t) => t.id);
         const { data: rs } = await supabase
           .from("support_ratings")
-          .select("ticket_id,stars,nps_score,nps_recommend")
-          .in("ticket_id", ids);
+          .select("ticket_id,stars,nps_score,nps_recommend,created_at")
+          .in("ticket_id", ids)
+          .order("created_at", { ascending: true });
         const map: Record<string, any> = {};
+        // Order ASC ⇒ a última iteração sobrescreve ⇒ fica a avaliação mais recente
         (rs || []).forEach((r: any) => { map[r.ticket_id] = r; });
         setTicketRatings(map);
       } else {
