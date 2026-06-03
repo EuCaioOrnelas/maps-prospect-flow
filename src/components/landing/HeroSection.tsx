@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { 
   ArrowRight, ArrowDown, Search, Zap, TrendingUp, MessageCircle, Users, Send, Check, 
   ChevronDown, Bot, Star, CalendarCheck, LayoutGrid, Sparkles, Clock,
-  BadgeCheck, Brain, MousePointer2, Plus, MapPin, Lock
+  BadgeCheck, Brain, MousePointer2, Plus, MapPin, Lock, Play, Rocket
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
