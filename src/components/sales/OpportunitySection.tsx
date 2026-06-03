@@ -32,7 +32,7 @@ export const OpportunitySection = () => {
           eyebrow="A oportunidade"
           title="O novo padrão para"
           highlight="vender B2B"
-          description="Empresas que crescem mais rápido não vendem mais — vendem melhor, com processo, dados e inteligência."
+          description="Empresas que crescem mais rápido não vendem mais. Vendem melhor, com processo, dados e inteligência."
           isVisible={isVisible}
         />
 
