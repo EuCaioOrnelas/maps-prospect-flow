@@ -158,8 +158,27 @@ export const MechanismSection = () => {
             )}
           </div>
 
-          {/* Mobile vertical line */}
-          <div className="absolute left-[15px] top-0 bottom-0 w-px bg-gradient-to-b from-primary/40 via-primary/20 to-primary/40 md:hidden" />
+          {/* Mobile vertical line — fade nas pontas + dot animado */}
+          <div className="absolute left-[15px] top-12 bottom-12 w-px overflow-visible md:hidden">
+            <motion.div
+              initial={{ scaleY: 0 }}
+              animate={isVisible ? { scaleY: 1 } : {}}
+              transition={{ duration: 2, delay: 0.3, ease: "easeOut" }}
+              className="w-full h-full origin-top"
+              style={{
+                background:
+                  "linear-gradient(to bottom, transparent 0%, hsl(var(--primary)/0.35) 12%, hsl(var(--primary)/0.2) 50%, hsl(var(--primary)/0.35) 88%, transparent 100%)",
+              }}
+            />
+            {isVisible && (
+              <motion.div
+                initial={{ top: "0%" }}
+                animate={{ top: ["0%", "100%"] }}
+                transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                className="absolute left-1/2 -translate-x-1/2 w-1 h-10 rounded-full bg-gradient-to-b from-primary/0 via-primary/50 to-primary/0"
+              />
+            )}
+          </div>
 
           {/* Input badge */}
           <motion.div
