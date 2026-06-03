@@ -31,11 +31,11 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
             <span className="text-sm text-muted-foreground">Comece em menos de 1 minuto</span>
           </div>
           <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6 text-foreground">
-            Comece agora<br />
-            <span className="text-shimmer-highlight">sem compromisso</span>
+            Ative sua operação<br />
+            <span className="text-shimmer-highlight">comercial com IA</span>
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Teste a Wiize por 7 dias com acesso completo. Captação, IA, CRM, automações e campanhas, tudo liberado. Cadastre seu cartão como garantia, não cobramos nos primeiros 7 dias e você cancela quando quiser.
+            Experimente a Wiize por 7 dias com acesso total: SDR IA, atendimento, CRM, fluxos e campanhas. Cartão apenas como garantia, sem cobrança no período de teste e cancelamento direto na plataforma a qualquer momento.
           </p>
           {TRIAL_DISABLED ? (
             <>
