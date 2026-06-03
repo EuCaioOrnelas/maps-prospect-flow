@@ -112,54 +112,66 @@ export const OpportunitySection = () => {
           ))}
         </div>
 
-        {/* ===== MOBILE: cards pareados antes → depois ===== */}
-        <div className="md:hidden space-y-4">
-          {comparisons.map((c, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 16 }}
-              animate={isVisible ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.4, delay: 0.15 + i * 0.05 }}
-              className="rounded-2xl border border-border bg-card/40 overflow-hidden"
-            >
-              {/* Antes */}
-              <div className="px-4 py-3 bg-muted/30 border-b border-border/60">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider bg-muted text-muted-foreground/80">
-                    Antes
-                  </span>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-destructive/12 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <X size={9} className="text-destructive" strokeWidth={2.5} />
-                  </div>
-                  <p className="text-[13px] text-muted-foreground leading-snug">
-                    {c.old} <span className="text-muted-foreground/60">{c.oldSub}</span>
-                  </p>
+        {/* ===== MOBILE: tabela compacta 2 colunas ===== */}
+        <div className="md:hidden">
+          <div className="rounded-2xl border border-border overflow-hidden">
+            {/* Headers */}
+            <div className="grid grid-cols-2">
+              <div className="bg-muted/40 px-3 py-3 border-r border-border">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider bg-muted text-muted-foreground/80 mb-1.5">
+                  Antes
+                </span>
+                <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Modelo tradicional
+                </h3>
+              </div>
+              <div className="bg-white dark:bg-card px-3 py-3 relative overflow-hidden">
+                <div className="absolute -top-8 -right-8 w-24 h-24 bg-primary/[0.08] rounded-full blur-[40px] pointer-events-none" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider bg-primary/10 text-primary mb-1.5 relative">
+                  <Sparkles size={9} />
+                  Com Wiize
+                </span>
+                <div className="flex items-center gap-1.5 relative">
+                  <img src={logoIconNew} alt="Wiize" className="w-5 h-5 rounded-md" />
+                  <h3 className="text-[11px] font-semibold text-primary uppercase tracking-wider">Modelo Wiize</h3>
                 </div>
               </div>
+            </div>
 
-              {/* Com Wiize */}
-              <div className="px-4 py-3 relative overflow-hidden">
-                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/[0.08] rounded-full blur-[50px] pointer-events-none" />
-                <div className="flex items-center gap-2 mb-1.5 relative">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider bg-primary/10 text-primary">
-                    <Sparkles size={9} />
-                    Com Wiize
-                  </span>
-                </div>
-                <div className="flex items-start gap-2.5 relative">
-                  <div className="w-4 h-4 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <CheckIcon />
+            {/* Rows */}
+            {comparisons.map((c, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={isVisible ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.35, delay: 0.1 + i * 0.04 }}
+                className="grid grid-cols-2 border-t border-border"
+              >
+                <div className="bg-muted/30 px-3 py-3 border-r border-border">
+                  <div className="flex items-start gap-2">
+                    <div className="w-4 h-4 rounded-full bg-destructive/12 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <X size={9} className="text-destructive" strokeWidth={2.5} />
+                    </div>
+                    <p className="text-[12px] text-muted-foreground leading-snug">
+                      {c.old}{" "}
+                      <span className="text-muted-foreground/60">{c.oldSub}</span>
+                    </p>
                   </div>
-                  <p className="text-[13px] text-foreground leading-snug">
-                    <span className="font-medium">{c.new}</span>{" "}
-                    <span className="text-muted-foreground">{c.newSub}</span>
-                  </p>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+                <div className="bg-white dark:bg-card px-3 py-3 relative overflow-hidden">
+                  <div className="flex items-start gap-2 relative">
+                    <div className="w-4 h-4 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <CheckIcon />
+                    </div>
+                    <p className="text-[12px] text-foreground leading-snug">
+                      <span className="font-medium">{c.new}</span>{" "}
+                      <span className="text-muted-foreground">{c.newSub}</span>
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
 
       </div>
