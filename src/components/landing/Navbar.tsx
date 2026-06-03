@@ -163,60 +163,63 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             </button>
           </div>
 
-          {/* Mobile menu - always available */}
-          {mobileMenuOpen && (
-            <div
-              className="sm:hidden mt-4 animate-fade-in rounded-2xl"
-              style={{
-                backgroundColor: 'hsl(var(--background))',
-                border: '1px solid hsl(var(--border) / 0.6)',
-                boxShadow: '0 12px 40px hsl(var(--background) / 0.4)',
-                padding: '16px',
-                transition: 'background-color 300ms ease-out, opacity 300ms ease-out',
-              }}
-            >
-              <div className="flex flex-col gap-4 max-w-[1280px] mx-auto">
-                {navLinks.map(link => (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    className="text-muted-foreground hover:text-foreground transition-colors py-2 cursor-pointer"
-                    onClick={(e) => handleNavLinkClick(e, link.href)}
-                  >
-                    {link.label}
-                  </a>
-                ))}
-                <div className="flex flex-col gap-2 pt-2 border-t border-border">
-                  <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="ghost" size="sm" className="w-full justify-center">
-                      Entrar
-                    </Button>
-                  </Link>
-                  {TRIAL_DISABLED ? (
-                    <Button
-                      variant="hero"
-                      size="sm"
-                      className="w-full justify-center opacity-60 cursor-not-allowed"
-                      disabled
-                      aria-disabled="true"
-                      onClick={(e) => { e.preventDefault(); notifyTrialDisabled(); }}
-                    >
-                      <Lock size={14} className="mr-1" />
-                      Indisponível
-                    </Button>
-                  ) : (
-                    <a href="/#pricing" onClick={handlePricingClick}>
-                      <Button variant="hero" size="sm" className="w-full justify-center">
-                        Gerar vendas
-                      </Button>
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </nav>
+
+      {/* Mobile menu - rendered outside the glass container so it isn't affected by backdrop-blur */}
+      {mobileMenuOpen && (
+        <div
+          className="sm:hidden fixed left-4 right-4 z-50 animate-fade-in rounded-2xl"
+          style={{
+            top: scrolled ? '74px' : '72px',
+            backgroundColor: 'hsl(var(--background))',
+            border: '1px solid hsl(var(--border) / 0.6)',
+            boxShadow: '0 12px 40px hsl(var(--background) / 0.4)',
+            padding: '16px',
+            transition: 'top 300ms ease-out',
+          }}
+        >
+          <div className="flex flex-col gap-4">
+            {navLinks.map(link => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="text-muted-foreground hover:text-foreground transition-colors py-2 cursor-pointer"
+                onClick={(e) => handleNavLinkClick(e, link.href)}
+              >
+                {link.label}
+              </a>
+            ))}
+            <div className="flex flex-col gap-2 pt-2 border-t border-border">
+              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="ghost" size="sm" className="w-full justify-center">
+                  Entrar
+                </Button>
+              </Link>
+              {TRIAL_DISABLED ? (
+                <Button
+                  variant="hero"
+                  size="sm"
+                  className="w-full justify-center opacity-60 cursor-not-allowed"
+                  disabled
+                  aria-disabled="true"
+                  onClick={(e) => { e.preventDefault(); notifyTrialDisabled(); }}
+                >
+                  <Lock size={14} className="mr-1" />
+                  Indisponível
+                </Button>
+              ) : (
+                <a href="/#pricing" onClick={handlePricingClick}>
+                  <Button variant="hero" size="sm" className="w-full justify-center">
+                    Gerar vendas
+                  </Button>
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Spacer */}
       <div className="h-[72px] sm:h-[80px]" />
