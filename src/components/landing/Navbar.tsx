@@ -171,7 +171,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         <div
           className="sm:hidden fixed left-4 right-4 z-50 animate-fade-in rounded-2xl"
           style={{
-            top: scrolled ? '74px' : '72px',
+            top: scrolled ? '90px' : '88px',
             backgroundColor: 'hsl(var(--background))',
             border: '1px solid hsl(var(--border) / 0.6)',
             boxShadow: '0 12px 40px hsl(var(--background) / 0.4)',
