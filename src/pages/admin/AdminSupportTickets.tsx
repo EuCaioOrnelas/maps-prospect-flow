@@ -821,6 +821,8 @@ export default function AdminSupportTickets() {
                 <TableHead className="w-[32%] text-xs font-medium uppercase tracking-wide text-muted-foreground">Contato</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Categoria</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Última mensagem</TableHead>
+
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Avaliação</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Prioridade</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tempo de resposta</TableHead>
