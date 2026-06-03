@@ -173,7 +173,10 @@ Deno.serve(async (req) => {
         headers: {
           "X-Wiize-Ticket": ticketNumber,
           "List-Unsubscribe": `<mailto:${replyTo}?subject=unsubscribe>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          "X-Entity-Ref-ID": ticketNumber,
         },
+
       };
       if (attachments && attachments.length) {
         payload.attachments = attachments.map((a) => ({
