@@ -421,12 +421,7 @@ export const PricingSection = () => {
                   delay: index * 0.15,
                   ease: [0.25, 0.46, 0.45, 0.94]
                 }}
-                whileHover={{ 
-                  y: -8, 
-                  scale: plan.popular ? 1.02 : 1.03,
-                  transition: { duration: 0.3 }
-                }}
-                className={`group relative rounded-2xl flex flex-col overflow-hidden ${
+                className={`group relative rounded-2xl flex flex-col overflow-hidden transition-transform duration-300 md:hover:-translate-y-2 ${plan.popular ? 'md:hover:scale-[1.02]' : 'md:hover:scale-[1.03]'} ${
                   plan.popular
                     ? "bg-gradient-card border-2 border-primary shadow-glow p-3 sm:p-5 md:p-6 md:z-10"
                     : "glass p-3 sm:p-5 md:p-6"
@@ -442,7 +437,7 @@ export const PricingSection = () => {
                     <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/15">
                       <plan.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                     </div>
-                    <h3 className="font-display font-bold text-base sm:text-lg md:text-xl">{plan.name}</h3>
+                    <h3 className="font-display font-bold text-[15px] sm:text-lg md:text-xl">{plan.name}</h3>
                     {plan.popular && (
                       <span className="inline-flex items-center gap-1 bg-primary/15 text-primary text-[9px] sm:text-[11px] font-bold px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
                         <Sparkles size={10} />
@@ -451,33 +446,33 @@ export const PricingSection = () => {
                       </span>
                     )}
                   </div>
-                  <p className="text-muted-foreground text-[11px] sm:text-sm leading-snug min-h-[2.5rem] md:min-h-[2.75rem]">{plan.description}</p>
+                  <p className="text-muted-foreground text-[10.5px] sm:text-sm leading-snug min-h-[2.5rem] md:min-h-[2.75rem]">{plan.description}</p>
                 </div>
 
                 <div className="mb-4 sm:mb-6">
                   <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                    <span className="text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 text-[11px] sm:text-sm">R$ {plan.anchorPrice}</span>
+                    <span className="text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 text-[10.5px] sm:text-sm">R$ {plan.anchorPrice}</span>
                   </div>
                   <div className="flex items-baseline gap-1 sm:gap-1.5 flex-wrap">
-                    <span className="text-xs sm:text-sm font-medium text-muted-foreground">R$</span>
-                    <span className="font-display font-bold text-[1.85rem] sm:text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
+                    <span className="text-[11px] sm:text-sm font-medium text-muted-foreground">R$</span>
+                    <span className="font-display font-bold text-[1.7rem] sm:text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
                       <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
                     </span>
-                    <span className="text-[11px] sm:text-sm font-medium text-muted-foreground">/ mês</span>
+                    <span className="text-[10.5px] sm:text-sm font-medium text-muted-foreground">/ mês</span>
                   </div>
-                  <p className="text-primary mt-1.5 sm:mt-2 text-[11px] sm:text-sm font-medium">
+                  <p className="text-primary mt-1.5 sm:mt-2 text-[10.5px] sm:text-sm font-medium">
                     {plan.usageLabel}
                   </p>
                 </div>
 
                 {expanded && (
-                  <ul className="space-y-3 mb-8 text-sm flex-grow">
+                  <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8 flex-grow">
                     {plan.features.map((feature, i) => (
-                      <li key={i} className={`flex items-start gap-3 text-sm ${feature.disabled ? 'opacity-50' : ''}`}>
+                      <li key={i} className={`flex items-start gap-2 sm:gap-3 text-[11px] sm:text-sm leading-snug ${feature.disabled ? 'opacity-50' : ''}`}>
                         {feature.disabled ? (
-                          <X size={16} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                          <X size={14} className="text-muted-foreground flex-shrink-0 mt-0.5" />
                         ) : (
-                          <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                          <Check size={14} className="text-primary flex-shrink-0 mt-0.5" />
                         )}
                         <span className="text-muted-foreground">{feature.text}</span>
                       </li>
@@ -489,7 +484,7 @@ export const PricingSection = () => {
                 <Button
                   variant={plan.popular ? "hero" : "outline"}
                   size="lg"
-                  className="w-full mt-auto h-10 sm:h-11 text-xs sm:text-sm px-2"
+                  className="w-full mt-auto h-10 sm:h-11 text-[11px] sm:text-sm px-2"
                   onClick={() => handlePlanClick(plan)}
                   disabled={loadingPlan === plan.key}
                 >
@@ -520,8 +515,7 @@ export const PricingSection = () => {
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-              whileHover={{ y: -8, scale: 1.03, transition: { duration: 0.3 } }}
-              className="group relative col-span-2 md:col-span-1 rounded-2xl flex flex-col overflow-hidden glass p-3 sm:p-5 md:p-6"
+              className="group relative col-span-2 md:col-span-1 rounded-2xl flex flex-col overflow-hidden glass p-3 sm:p-5 md:p-6 transition-transform duration-300 md:hover:-translate-y-2 md:hover:scale-[1.03]"
               style={{
                 boxShadow:
                   "inset 0 1px 0 0 hsl(var(--primary) / 0.12), inset 0 0 60px -30px hsl(var(--primary) / 0.18)",
@@ -532,9 +526,9 @@ export const PricingSection = () => {
                   <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/15">
                     <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                   </div>
-                  <h3 className="font-display font-bold text-base sm:text-lg md:text-xl">Enterprise</h3>
+                  <h3 className="font-display font-bold text-[15px] sm:text-lg md:text-xl">Enterprise</h3>
                 </div>
-                <p className="text-muted-foreground text-[11px] sm:text-sm leading-snug min-h-[2.5rem] md:min-h-[2.75rem]">
+                <p className="text-muted-foreground text-[10.5px] sm:text-sm leading-snug min-h-[2.5rem] md:min-h-[2.75rem]">
                   {scalePlan.description}
                 </p>
               </div>
@@ -548,16 +542,16 @@ export const PricingSection = () => {
                     Sob medida
                   </span>
                 </div>
-                <p className="text-primary mt-1.5 sm:mt-2 text-[11px] sm:text-sm font-medium">
+                <p className="text-primary mt-1.5 sm:mt-2 text-[10.5px] sm:text-sm font-medium">
                   Oportunidades sob demanda
                 </p>
               </div>
 
               {expanded && (
-                <ul className="space-y-3 mb-8 text-sm flex-grow">
+                <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8 flex-grow">
                   {scalePlan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm">
-                      <Check size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                    <li key={i} className="flex items-start gap-2 sm:gap-3 text-[11px] sm:text-sm leading-snug">
+                      <Check size={14} className="text-primary flex-shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">
                         {feature.text}
                       </span>
@@ -570,7 +564,7 @@ export const PricingSection = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full mt-auto h-10 sm:h-11 text-xs sm:text-sm"
+                className="w-full mt-auto h-10 sm:h-11 text-[11px] sm:text-sm"
                 onClick={() => navigate("/enterprise")}
               >
                 Falar com Especialista
@@ -626,16 +620,16 @@ export const PricingSection = () => {
                 </div>
 
                 {/* Plans header row */}
-                <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-4 md:px-6 py-5 md:py-6 border-b border-border/60 bg-background/40">
+                <div className="grid grid-cols-[1.6fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-4 md:px-6 py-5 md:py-6 border-b border-border/60 bg-background/40">
                   <div className="flex items-end">
                     <span className="font-display text-base md:text-lg font-bold text-foreground">Planos</span>
                   </div>
                   {[
-                    { name: "Atendimento", price: plans[0].price, popular: false },
-                    { name: "Growth IA", price: plans[1].price, popular: true },
-                    { name: "Enterprise", price: "Sob medida", popular: false, custom: true },
+                    { name: "Atendimento", price: plans[0].price, popular: false, mobile: true },
+                    { name: "Growth IA", price: plans[1].price, popular: true, mobile: true },
+                    { name: "Enterprise", price: "Sob medida", popular: false, custom: true, mobile: false },
                   ].map((col) => (
-                    <div key={col.name} className="text-center px-1 relative">
+                    <div key={col.name} className={`text-center px-1 relative ${col.mobile ? '' : 'hidden md:block'}`}>
                       <div className="flex items-center justify-center gap-2 mb-2">
                         <span className="text-xs md:text-sm font-semibold text-foreground/80">{col.name}</span>
                         {col.popular && (
@@ -672,7 +666,7 @@ export const PricingSection = () => {
                       <div key={group.title}>
                         <button
                           onClick={() => toggleGroup(group.title)}
-                          className="w-full grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-4 hover:bg-muted/30 transition-colors group"
+                          className="w-full grid grid-cols-[1.6fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-4 hover:bg-muted/30 transition-colors group"
                         >
                           <div className="flex items-center gap-3 text-left">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 group-hover:bg-primary/15 transition-colors">
@@ -703,12 +697,12 @@ export const PricingSection = () => {
                             {group.rows.map((row, i) => (
                               <div
                                 key={i}
-                                className="grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-3 text-sm hover:bg-muted/20 transition-colors"
+                                className="grid grid-cols-[1.6fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-3 text-sm hover:bg-muted/20 transition-colors"
                               >
-                                <span className="text-foreground/90 text-xs md:text-sm pl-12">{row.label}</span>
+                                <span className="text-foreground/90 text-[11px] md:text-sm pl-2 md:pl-12 leading-snug">{row.label}</span>
                                 <div className="text-center">{renderCell(row.start)}</div>
                                 <div className="text-center bg-primary/[0.04] rounded-md py-1.5">{renderCell(row.growth)}</div>
-                                <div className="text-center">{renderCell(row.scale)}</div>
+                                <div className="hidden md:block text-center">{renderCell(row.scale)}</div>
                               </div>
                             ))}
                           </div>
