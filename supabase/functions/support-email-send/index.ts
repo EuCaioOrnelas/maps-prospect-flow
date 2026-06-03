@@ -73,7 +73,7 @@ function htmlToText(html: string) {
 function buildSubject(category: string, ticketNumber: string, override?: string) {
   if (override) return override;
   // Assunto neutro, sem promessas/emojis (reduz spam score)
-  return `Re: Chamado #${ticketNumber} - Suporte Wiize`;
+  return `Re: Chamado ${ticketNumber} - Suporte Wiize`;
 }
 
 async function sendResend(payload: any) {
@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
       await sendResend({
         from: FROM,
         to: [ADMIN_INBOX],
-        subject: `Novo chamado #${ticketNumber} - ${customerName}`,
+        subject: `Novo chamado ${ticketNumber} - ${customerName}`,
         html,
         text: htmlToText(bodyHtml) + `\n\nAbrir no painel: ${APP_URL}/admin/suporte/tickets`,
       });
@@ -155,14 +155,14 @@ Deno.serve(async (req) => {
       if (!msg && !(attachments && attachments.length)) throw new Error("message ou attachments obrigatórios");
       const bodyHtml = `
         <p style="margin:0 0 10px;">Olá ${esc(customerName)},</p>
-        <p style="margin:0 0 14px;color:#374151;">Segue retorno da nossa equipe sobre o seu chamado <strong>#${esc(ticketNumber)}</strong>.</p>
+        <p style="margin:0 0 14px;color:#374151;">Segue retorno da nossa equipe sobre o seu chamado <strong>${esc(ticketNumber)}</strong>.</p>
         <div style="padding:12px 14px;background:#f7f9fb;border:1px solid #e6e8eb;border-radius:6px;margin:0 0 16px;">
           <p style="margin:0;color:#1f2328;white-space:pre-wrap;">${nl2br(msg || "(mensagem com anexos)")}</p>
         </div>
         <p style="margin:0 0 6px;color:#374151;font-size:14px;">Para continuar, basta responder este e-mail — sua mensagem entra automaticamente no chamado.</p>
         <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize</p>
       `;
-      const html = layout(subject, bodyHtml, `Retorno sobre o seu chamado #${ticketNumber}`);
+      const html = layout(subject, bodyHtml, `Retorno sobre o seu chamado ${ticketNumber}`);
       const payload: any = {
         from: FROM,
         to: [customerEmail],
@@ -195,15 +195,15 @@ Deno.serve(async (req) => {
         await sb.from("support_tickets").update({ rating_token: token }).eq("id", ticketId);
       }
       const ratingUrl = `${APP_URL}/avaliacao/${token}`;
-      const ratingSubject = `Avaliação do seu atendimento - Chamado #${ticketNumber}`;
+      const ratingSubject = `Avaliação do seu atendimento - Chamado ${ticketNumber}`;
       const bodyHtml = `
         <p style="margin:0 0 10px;font-size:16px;font-weight:600;color:#0f172a;">Como foi o seu atendimento?</p>
         <p style="margin:0 0 10px;">Olá ${esc(customerName)},</p>
-        <p style="margin:0 0 14px;color:#374151;">Concluímos o seu chamado <strong>#${esc(ticketNumber)}</strong>. Sua avaliação leva menos de 30 segundos e nos ajuda a melhorar.</p>
+        <p style="margin:0 0 14px;color:#374151;">Concluímos o seu chamado <strong>${esc(ticketNumber)}</strong>. Sua avaliação leva menos de 30 segundos e nos ajuda a melhorar.</p>
         <p style="margin:18px 0;"><a href="${ratingUrl}" style="display:inline-block;padding:11px 22px;background:${BRAND};color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Avaliar atendimento</a></p>
         <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize</p>
       `;
-      const html = layout(ratingSubject, bodyHtml, `Avalie o seu atendimento #${ticketNumber}`);
+      const html = layout(ratingSubject, bodyHtml, `Avalie o seu atendimento ${ticketNumber}`);
       await sendResend({
         from: FROM,
         to: [customerEmail],
@@ -225,15 +225,15 @@ Deno.serve(async (req) => {
         await sb.from("support_tickets").update({ rating_token: token }).eq("id", ticketId);
       }
       const ratingUrl = `${APP_URL}/avaliacao/${token}`;
-      const followupSubject = `Chamado #${ticketNumber} encerrado por inatividade`;
+      const followupSubject = `Chamado ${ticketNumber} encerrado por inatividade`;
       const bodyHtml = `
         <p style="margin:0 0 10px;">Olá ${esc(customerName)},</p>
-        <p style="margin:0 0 12px;color:#374151;">Como não tivemos retorno nas últimas 72 horas, encerramos o seu chamado <strong>#${esc(ticketNumber)}</strong>. Se ainda precisar de algo, basta responder este e-mail e o chamado é reaberto automaticamente.</p>
+        <p style="margin:0 0 12px;color:#374151;">Como não tivemos retorno nas últimas 72 horas, encerramos o seu chamado <strong>${esc(ticketNumber)}</strong>. Se ainda precisar de algo, basta responder este e-mail e o chamado é reaberto automaticamente.</p>
         <p style="margin:0 0 14px;color:#374151;">Se puder, deixe uma avaliação rápida:</p>
         <p style="margin:18px 0;"><a href="${ratingUrl}" style="display:inline-block;padding:11px 22px;background:${BRAND};color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Avaliar atendimento</a></p>
         <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize</p>
       `;
-      const html = layout(followupSubject, bodyHtml, `Encerramos seu chamado #${ticketNumber} por inatividade`);
+      const html = layout(followupSubject, bodyHtml, `Encerramos seu chamado ${ticketNumber} por inatividade`);
       await sendResend({
         from: FROM,
         to: [customerEmail],
