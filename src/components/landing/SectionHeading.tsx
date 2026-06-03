@@ -4,8 +4,13 @@ import { ReactNode } from "react";
 interface SectionHeadingProps {
   eyebrow: string;
   eyebrowTone?: "primary" | "destructive" | "muted";
-  title: ReactNode; // primeira parte do título (neutro)
-  highlight: string; // parte destacada com shimmer
+  title: ReactNode;
+  highlight: string;
+  /**
+   * "default" → tamanho hero (frases curtas).
+   * "tight"   → menor + nowrap, garante 1 linha no mobile p/ frases longas.
+   */
+  highlightFit?: "default" | "tight";
   description?: ReactNode;
   isVisible?: boolean;
   align?: "center" | "left";
@@ -18,25 +23,24 @@ const toneMap = {
   muted: "bg-muted text-muted-foreground",
 } as const;
 
-/**
- * Padrão visual unificado para títulos de section da Landing Page.
- * - Eyebrow chip
- * - Título h2 com linha de destaque maior + shimmer
- * - Descrição opcional
- *
- * Responsivo: garante mobile sem palavras órfãs e destaque claramente maior.
- */
 export const SectionHeading = ({
   eyebrow,
   eyebrowTone = "primary",
   title,
   highlight,
+  highlightFit = "default",
   description,
   isVisible = true,
   align = "center",
   className = "",
 }: SectionHeadingProps) => {
   const alignClass = align === "center" ? "text-center mx-auto" : "text-left";
+
+  const highlightClass =
+    highlightFit === "tight"
+      ? "whitespace-nowrap text-[1.35rem] xs:text-[1.55rem] sm:text-[2.1rem] md:text-[2.6rem] lg:text-[2.9rem]"
+      : "text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.4rem]";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -53,7 +57,7 @@ export const SectionHeading = ({
         <span className="block text-[1.65rem] sm:text-[2.25rem] md:text-[2.75rem] lg:text-[3rem]">
           {title}
         </span>
-        <span className="block font-extrabold text-shimmer-highlight text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.4rem] leading-[1.02] mt-1">
+        <span className={`block font-extrabold text-shimmer-highlight leading-[1.02] mt-1 ${highlightClass}`}>
           {highlight}
         </span>
       </h2>
