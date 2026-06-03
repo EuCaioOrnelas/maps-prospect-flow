@@ -95,12 +95,16 @@ Deno.serve(async (req) => {
 
     const { data: targetUsers, error } = await supabaseClient
       .from("profiles")
-      .select("id, email, name, plan, billing_period, subscription_current_period_end, is_blocked, subscription_price_cents")
+      .select("id, email, name, plan, billing_period, subscription_current_period_end, is_blocked, subscription_price_cents, payment_provider")
       .neq("plan", "free")
       .not("subscription_current_period_end", "is", null)
       .lt("subscription_current_period_end", sevenDaysFromNow.toISOString())
       .gt("subscription_current_period_end", oneDayAgo.toISOString())
-      .eq("admin_assigned_plan", false);
+      .eq("admin_assigned_plan", false)
+      // CRITICAL: card-renewal-cron já cuida de stripe/asaas. Sem este filtro,
+      // usuários de cartão recebem 2 emails (um de cada cron) com idempotency keys
+      // diferentes (`card_renewal_...` vs `renewal_...`), escapando do dedup.
+      .or("payment_provider.is.null,payment_provider.eq.pix,payment_provider.eq.abacate");
 
     if (error) {
       logStep("Error querying users", { error: error.message });
