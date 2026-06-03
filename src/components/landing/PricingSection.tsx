@@ -489,7 +489,7 @@ export const PricingSection = () => {
                 <Button
                   variant={plan.popular ? "hero" : "outline"}
                   size="lg"
-                  className="w-full mt-auto"
+                  className="w-full mt-auto h-10 sm:h-11 text-xs sm:text-sm px-2"
                   onClick={() => handlePlanClick(plan)}
                   disabled={loadingPlan === plan.key}
                 >
@@ -499,9 +499,15 @@ export const PricingSection = () => {
                       Processando...
                     </>
                   ) : plan.popular ? (
-                    "Escalar com Wiize IA"
+                    <>
+                      <span className="hidden sm:inline">Escalar com Wiize IA</span>
+                      <span className="sm:hidden">Escalar agora</span>
+                    </>
                   ) : (
-                    "Começar Agora"
+                    <>
+                      <span className="hidden sm:inline">Começar Agora</span>
+                      <span className="sm:hidden">Começar</span>
+                    </>
                   )}
                 </Button>
               </motion.div>
