@@ -99,6 +99,7 @@ export default function AdminSupportIntelligence() {
           .from("support_ratings")
           .select("ticket_id, nps_score, stars, created_at")
           .gte("created_at", sinceISO)
+          .order("created_at", { ascending: true })
           .limit(2000),
         supabase
           .from("ai_logs")
