@@ -150,7 +150,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full bg-card/95 backdrop-blur-sm border-b border-border animate-fade-in z-50 max-h-[calc(100vh-57px)] overflow-y-auto">
+        <div className="absolute left-0 right-0 top-full bg-card border-b border-border shadow-xl animate-fade-in z-50 max-h-[calc(100vh-57px)] overflow-y-auto">
           <div className="container mx-auto px-3 py-4">
             <div className="flex flex-col gap-3">
               {showTrialIndicator && (
