@@ -34,10 +34,10 @@ export const ProblemSection = () => {
           <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-destructive/10 text-destructive mb-4">
             O problema
           </span>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Seu processo comercial está
-            <br />
-            <span className="text-muted-foreground">fazendo você perder clientes</span>
+          <h2 className="font-display text-[1.75rem] sm:text-4xl md:text-5xl font-bold text-foreground mb-4 leading-[1.15] tracking-tight">
+            Seu processo comercial<br className="hidden sm:block" />
+            <span className="sm:hidden"> </span>
+            <span className="text-muted-foreground">está perdendo clientes</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Enquanto sua operação depende de processos manuais, leads esfriam, respostas atrasam e oportunidades deixam de virar vendas.
@@ -48,11 +48,11 @@ export const ProblemSection = () => {
           <BentoGridShowcase
             className="auto-rows-[minmax(110px,auto)]"
             integration={
-              <div className={`${cardBase} !p-0`}>
+              <div className={`${cardBase} !p-0 min-h-[300px] sm:min-h-[340px]`}>
                 <div className={cardGlowSecondary} />
                 <div className="absolute bottom-[-5rem] left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-destructive/14 blur-[78px] pointer-events-none opacity-100" />
 
-                <div className="relative z-10 p-3 sm:p-3.5 pb-28 sm:pb-32">
+                <div className="relative z-20 p-3 sm:p-3.5 pb-28 sm:pb-32">
                   <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
                     <MessageSquareOff size={18} className="text-destructive" />
                   </div>
@@ -62,7 +62,7 @@ export const ProblemSection = () => {
                   </p>
                 </div>
 
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[61%] sm:h-[62%] overflow-hidden">
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] sm:h-[60%] overflow-hidden z-0">
                   <img
                     src={whatsappPhoneMockup}
                     alt="Ilustração de conversa no WhatsApp"
