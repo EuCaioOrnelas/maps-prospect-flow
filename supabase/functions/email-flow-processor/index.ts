@@ -85,7 +85,13 @@ async function enrollEligibleLeads(supabase: any, results: any) {
     }
 
     // ── Standard profile-based triggers ──
-    let query = supabase.from("profiles").select("id, email, name, plan, trial_start_at, created_at, updated_at").eq("is_blocked", false);
+    let query = supabase.from("profiles").select("id, email, name, plan, trial_start_at, created_at, updated_at, trial_auto_charge_cancelled").eq("is_blocked", false);
+
+    // Exclui usuários que cancelaram a ativação automática do trial em qualquer audiência
+    // baseada em trial — eles pediram para NÃO receber nada de cobrança/lembrete.
+    if (audienceType === "trial_active" || audienceType === "trial_expired") {
+      query = query.or("trial_auto_charge_cancelled.is.null,trial_auto_charge_cancelled.eq.false");
+    }
 
     switch (audienceType) {
       case "all": break;

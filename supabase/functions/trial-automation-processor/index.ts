@@ -60,12 +60,14 @@ async function processTimeBasedAutomations(
 
   if (!automations?.length) return;
 
-  // Get all free trial users
+  // Get all free trial users — exclui quem cancelou a ativação automática do trial
+  // (se cancelou, não queremos enviar lembretes/cobranças)
   const { data: trialUsers } = await supabase
     .from("profiles")
-    .select("id, email, name, plan, trial_start_at, created_at, updated_at")
+    .select("id, email, name, plan, trial_start_at, created_at, updated_at, trial_auto_charge_cancelled")
     .eq("plan", "free")
-    .not("trial_start_at", "is", null);
+    .not("trial_start_at", "is", null)
+    .or("trial_auto_charge_cancelled.is.null,trial_auto_charge_cancelled.eq.false");
 
   if (!trialUsers?.length) return;
 
@@ -167,8 +169,9 @@ async function evaluateBehaviourTriggers(supabase: any, results: any) {
 
   const { data: trialUsers } = await supabase
     .from("profiles")
-    .select("id, email, name, plan, trial_start_at, created_at, updated_at")
-    .eq("plan", "free");
+    .select("id, email, name, plan, trial_start_at, created_at, updated_at, trial_auto_charge_cancelled")
+    .eq("plan", "free")
+    .or("trial_auto_charge_cancelled.is.null,trial_auto_charge_cancelled.eq.false");
 
   if (!trialUsers?.length) return;
 
@@ -391,12 +394,12 @@ async function processPendingSteps(
     // Get user info
     const { data: user } = await supabase
       .from("profiles")
-      .select("id, email, name, plan")
+      .select("id, email, name, plan, trial_auto_charge_cancelled")
       .eq("id", state.user_id)
       .maybeSingle();
 
-    if (!user || user.plan !== "free") {
-      // User converted, complete automation
+    if (!user || user.plan !== "free" || user.trial_auto_charge_cancelled === true) {
+      // User converted OR cancelou ativação automática do trial — encerra fluxo sem enviar
       await supabase
         .from("trial_user_automation_state")
         .update({ status: "completed", completed_at: now })
