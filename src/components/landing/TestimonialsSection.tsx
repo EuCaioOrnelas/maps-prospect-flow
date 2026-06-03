@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { Quote } from "lucide-react";
+import { SectionHeading } from "@/components/landing/SectionHeading";
 
 interface Testimonial {
   text: string;
