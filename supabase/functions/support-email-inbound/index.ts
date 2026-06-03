@@ -9,46 +9,80 @@ const corsHeaders = {
 
 function extractTicketNumber(input: string | null | undefined): string | null {
   if (!input) return null;
-  // Padrão suporte+WIZ-123@... ou Ticket #WIZ-123 / #WIZ-123
   const reAddr = /suporte\+([A-Z0-9-]+)@/i;
   const m1 = input.match(reAddr);
   if (m1) return m1[1].toUpperCase();
-  const reSubj = /#\s*([A-Z]{2,4}-?\d+|WIZ-\d+|[A-Z0-9]{4,})/i;
+  const reSubj = /#?\s*(WIZ-?\d+|[A-Z]{2,4}-?\d+)/i;
   const m2 = input.match(reSubj);
-  if (m2) return m2[1].toUpperCase();
+  if (m2) return m2[1].toUpperCase().replace(/^WIZ(\d)/, "WIZ-$1");
   return null;
 }
 
-function cleanReplyText(raw: string): string {
+// Converte HTML em texto preservando quebras, removendo blocos citados (gmail_quote, blockquote, "Em ... escreveu:")
+function htmlToCleanText(html: string): string {
+  if (!html) return "";
+  let s = html;
+  // Remove blocos citados típicos
+  s = s.replace(/<blockquote[\s\S]*?<\/blockquote>/gi, "");
+  s = s.replace(/<div[^>]*class="?gmail_quote"?[\s\S]*?<\/div>/gi, "");
+  s = s.replace(/<div[^>]*class="?gmail_attr"?[\s\S]*?<\/div>/gi, "");
+  s = s.replace(/<div[^>]*id="?(divRplyFwdMsg|appendonsend)"?[\s\S]*$/gi, "");
+  // Quebras de linha
+  s = s.replace(/<br\s*\/?>(?!\n)/gi, "\n");
+  s = s.replace(/<\/(p|div|tr|li|h[1-6])>/gi, "\n");
+  // Remove style/script
+  s = s.replace(/<style[\s\S]*?<\/style>/gi, "");
+  s = s.replace(/<script[\s\S]*?<\/script>/gi, "");
+  // Strip tags
+  s = s.replace(/<[^>]+>/g, " ");
+  // Decode common entities
+  s = s.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<")
+       .replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  return s;
+}
+
+function stripQuotedLines(raw: string): string {
   if (!raw) return "";
-  // Remove quoted history (linhas começando com >, "Em ... escreveu", "On ... wrote")
   const lines = raw.split(/\r?\n/);
   const out: string[] = [];
   for (const ln of lines) {
-    if (/^\s*>/.test(ln)) break;
-    if (/^(em|on)\s.+(escreveu|wrote):\s*$/i.test(ln.trim())) break;
-    if (/^-{2,}\s*forwarded message\s*-{2,}/i.test(ln)) break;
+    const t = ln.trim();
+    if (/^>/.test(t)) break;
+    if (/^(em|on)\s.+(escreveu|wrote):\s*$/i.test(t)) break;
+    if (/^-{2,}\s*forwarded message\s*-{2,}/i.test(t)) break;
+    if (/^De:\s/i.test(t) && out.length > 0) break; // header de email citado
     out.push(ln);
   }
-  return out.join("\n").trim();
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function extractBody(text: string, html: string): string {
+  // 1) Tenta texto puro
+  const fromText = stripQuotedLines(text || "");
+  if (fromText && fromText.length > 1) return fromText;
+  // 2) Cai para HTML limpo
+  const fromHtml = stripQuotedLines(htmlToCleanText(html || ""));
+  return fromHtml;
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const payload = await req.json().catch(() => ({}));
-    // Resend inbound formato: { from, to, subject, text, html, ...} ou { data: {...} }
     const data = payload?.data ?? payload;
     const to = Array.isArray(data.to) ? data.to.join(",") : String(data.to || "");
     const from = String(data.from || data.sender || "");
     const subject = String(data.subject || "");
-    const text = String(data.text || data.body_plain || "");
+    const text = String(data.text || data.body_plain || data.plain || "");
     const html = String(data.html || data.body_html || "");
 
     const ticketNumber =
       extractTicketNumber(to) ||
       extractTicketNumber(subject) ||
-      extractTicketNumber(data?.headers?.["In-Reply-To"] || "");
+      extractTicketNumber(data?.headers?.["In-Reply-To"] || "") ||
+      extractTicketNumber(data?.headers?.["References"] || "");
+
+    console.log("[support-email-inbound] received", { to, subject, ticketNumber, hasText: !!text, hasHtml: !!html });
 
     if (!ticketNumber) {
       console.warn("[support-email-inbound] sem ticket number identificado", { to, subject });
@@ -71,8 +105,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const cleaned = cleanReplyText(text || html.replace(/<[^>]+>/g, " "));
-    const content = cleaned || "(mensagem sem texto)";
+    const extracted = extractBody(text, html);
+    const content = extracted || "(mensagem sem texto)";
+    console.log("[support-email-inbound] extracted body length:", extracted.length);
 
     await sb.from("support_messages").insert({
       ticket_id: ticket.id,
@@ -81,7 +116,6 @@ Deno.serve(async (req) => {
       metadata: { source: "email_inbound", from, subject },
     });
 
-    // Reabrir se fechado, atualizar last reply
     const update: any = {
       last_customer_reply_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
