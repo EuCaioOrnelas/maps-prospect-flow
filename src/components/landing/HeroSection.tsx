@@ -861,15 +861,15 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
               ) : (
                 <Link to="/signup/escolher-plano" className="shrink-0" onClick={onSignupClick}>
                   <Button variant="hero" size="lg" className="group rounded-full text-base px-8 h-12">
+                    <Rocket size={18} className="mr-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                     {hasWatchedVideo ? "Testar grátis" : "Gerar vendas"}
-                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
               )}
               <button onClick={() => setVideoOpen(true)} className="group shrink-0">
                 <Button variant="ghost" size="lg" className="rounded-full text-base px-8 h-12 border border-transparent hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all">
+                  <Play size={16} className="mr-1 fill-current" />
                   Ver Demonstração
-                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </button>
             </div>
