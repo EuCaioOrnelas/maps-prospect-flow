@@ -1032,7 +1032,7 @@ export function WianChat() {
               {m.role === "ai" && (
                 messages[i - 1]?.role !== "ai"
                   ? <AiAvatar />
-                  : <div className="w-8 h-8 shrink-0" aria-hidden />
+                  : <div className="w-10 h-10 shrink-0" aria-hidden />
               )}
               <div className={`flex flex-col gap-2 max-w-[78%] ${m.role === "user" ? "items-end" : "items-start"}`}>
                 {m.role === "ai" && m.toolCalls?.length ? (
