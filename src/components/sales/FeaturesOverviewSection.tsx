@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import flowBuilderPreview from "@/assets/flow-builder-preview.png";
+import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const cardBase =
   "group rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-primary/5";
