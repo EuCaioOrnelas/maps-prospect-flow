@@ -832,9 +832,9 @@ export default function AdminSupportTickets() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-12"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-12"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
               ) : tickets.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Nenhum ticket encontrado.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">Nenhum ticket encontrado.</TableCell></TableRow>
               ) : tickets.map((t) => {
                 const r = ticketRatings[t.id];
                 const score = r ? (r.nps_score ?? (r.stars != null ? r.stars * 2 : null)) : null;
