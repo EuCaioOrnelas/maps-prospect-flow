@@ -163,9 +163,18 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             </button>
           </div>
 
-          {/* Mobile menu - only when not scrolled */}
-          {mobileMenuOpen && !scrolled && (
-            <div className="sm:hidden mt-4 pb-4 border-t border-border pt-4 animate-fade-in">
+          {/* Mobile menu - always available */}
+          {mobileMenuOpen && (
+            <div
+              className="sm:hidden mt-4 animate-fade-in rounded-2xl"
+              style={{
+                backgroundColor: 'hsl(var(--background))',
+                border: '1px solid hsl(var(--border) / 0.6)',
+                boxShadow: '0 12px 40px hsl(var(--background) / 0.4)',
+                padding: '16px',
+                transition: 'background-color 300ms ease-out, opacity 300ms ease-out',
+              }}
+            >
               <div className="flex flex-col gap-4 max-w-[1280px] mx-auto">
                 {navLinks.map(link => (
                   <a
