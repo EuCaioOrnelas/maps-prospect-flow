@@ -70,9 +70,6 @@ export const WhyItWorksSection = () => {
                 <div className="absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] blur-[56px] pointer-events-none" />
 
                 <div className="relative z-10">
-                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">
-                    {pillar.eyebrow}
-                  </span>
                   <div className="flex items-center gap-2.5 mb-2">
                     <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
                       <Icon size={16} className="text-primary" />

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { Quote } from "lucide-react";
+import { SectionHeading } from "@/components/landing/SectionHeading";
 
 interface Testimonial {
   text: string;
@@ -149,27 +150,30 @@ export const TestimonialsSection = () => {
       <div className="absolute inset-0 bg-gradient-glow opacity-20" />
 
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
+        {/* Social proof chip acima do título */}
         <div
-          className={`text-center mb-12 md:mb-16 transition-all duration-700 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          className={`flex justify-center mb-6 transition-all duration-700 ${
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           }`}
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass mb-6 border border-primary/10">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/15 bg-primary/5">
             <div className="flex -space-x-2">
               <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=40&h=40&fit=crop&crop=face" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" loading="lazy" />
               <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" loading="lazy" />
               <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" loading="lazy" />
               <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face" alt="" className="w-5 h-5 rounded-full border-2 border-background object-cover" loading="lazy" />
             </div>
-            <span className="text-xs font-medium text-foreground tracking-tight">+500 pessoas já utilizam a Wiize</span>
+            <span className="text-xs font-medium text-foreground tracking-tight">+500 empresas já utilizam a Wiize</span>
           </div>
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-foreground">
-            O que nossos clientes dizem
-          </h2>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
-            Descubra como empresas estão convertendo mais com prospecção inteligente e mensagens personalizadas por IA
-          </p>
         </div>
+
+        <SectionHeading
+          eyebrow="Depoimentos"
+          title="O que nossos"
+          highlight="clientes dizem"
+          description="Veja como empresas estão convertendo mais com prospecção inteligente e mensagens personalizadas por IA."
+          isVisible={isVisible}
+        />
 
         {/* Desktop: 3 columns */}
         <div className="hidden lg:grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto h-[600px] mask-gradient">
