@@ -86,7 +86,7 @@ function TestsSection() {
             stage,
             payment_method: paymentMethod,
           },
-          idempotency_key: `test_renewal_${paymentMethod}_${billingPeriod}_${stage}_${Date.now()}`,
+          idempotency_key: `test_renewal_${paymentMethod}_${billingPeriod}_${stage}_${new Date().toISOString().slice(0,13).replace(/[-T:]/g,'')}`,
         },
       });
 
