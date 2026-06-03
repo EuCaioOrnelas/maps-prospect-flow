@@ -826,6 +826,7 @@ export default function AdminSupportTickets() {
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Avaliação</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Prioridade</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tempo de resposta</TableHead>
+
                 <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Criado</TableHead>
               </TableRow>
             </TableHeader>
