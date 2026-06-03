@@ -157,7 +157,7 @@ export function PixInvoicesTab() {
             user_name: invoice.user_name || "Cliente",
             stage: invoice.renewal_stage || "D0",
           },
-          idempotency_key: `manual_resend_${invoice.id}_${Date.now()}`,
+          idempotency_key: `manual_resend_${invoice.id}_${new Date().toISOString().slice(0,13).replace(/[-T:]/g,'')}`,
         },
       });
       if (error) throw error;
@@ -229,7 +229,7 @@ export function PixInvoicesTab() {
             user_name: invoice.user_name || "Cliente",
             stage: "D0",
           },
-          idempotency_key: `new_charge_${invoice.user_id}_${Date.now()}`,
+          idempotency_key: `new_charge_${invoice.user_id}_${new Date().toISOString().slice(0,13).replace(/[-T:]/g,'')}`,
         },
       });
 
