@@ -721,7 +721,7 @@ export const PricingSection = () => {
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
-            <div className="relative overflow-hidden rounded-2xl border border-border/50 p-4 sm:p-6 md:p-10">
+            <div className="relative overflow-hidden md:rounded-2xl md:border md:border-border/50 p-0 md:p-6 lg:p-10">
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-2xl" />
               
