@@ -110,8 +110,9 @@ export function DashboardHero({
                   </UITooltip>
                 </TooltipProvider>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground leading-tight">
-                Seu comercial gerou{" "}
+              <h2 className="text-lg sm:text-2xl lg:text-3xl font-extrabold text-foreground leading-tight whitespace-nowrap">
+                <span className="hidden sm:inline">Seu comercial gerou </span>
+                <span className="sm:hidden">Gerou </span>
                 <span className="text-primary whitespace-nowrap">
                   R$&nbsp;{fmt(financialImpact)}
                 </span>{" "}
