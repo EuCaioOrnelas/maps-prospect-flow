@@ -697,12 +697,12 @@ export const PricingSection = () => {
                             {group.rows.map((row, i) => (
                               <div
                                 key={i}
-                                className="grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-3 text-sm hover:bg-muted/20 transition-colors"
+                                className="grid grid-cols-[1.6fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-3 text-sm hover:bg-muted/20 transition-colors"
                               >
-                                <span className="text-foreground/90 text-xs md:text-sm pl-12">{row.label}</span>
+                                <span className="text-foreground/90 text-[11px] md:text-sm pl-2 md:pl-12 leading-snug">{row.label}</span>
                                 <div className="text-center">{renderCell(row.start)}</div>
                                 <div className="text-center bg-primary/[0.04] rounded-md py-1.5">{renderCell(row.growth)}</div>
-                                <div className="text-center">{renderCell(row.scale)}</div>
+                                <div className="hidden md:block text-center">{renderCell(row.scale)}</div>
                               </div>
                             ))}
                           </div>
