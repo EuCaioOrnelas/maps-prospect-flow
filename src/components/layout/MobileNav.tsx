@@ -195,8 +195,9 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                 {can("crm") && (
                   <TopLink to="/crm/score" icon={Trophy} label="Score de leads" />
                 )}
+                <TopLink to="/meta" icon={BarChart3} label="Meta (WhatsApp)" />
                 {isAdmin && (
-                  <TopLink to="/users" icon={Users} label="Usuários" />
+                  <TopLink to="/usuarios" icon={Users} label="Usuários" />
                 )}
 
                 <div className="mt-2 px-3 py-2 rounded-lg bg-muted/40 border border-border/60 text-[11px] text-muted-foreground leading-relaxed">
