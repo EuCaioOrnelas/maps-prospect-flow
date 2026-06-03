@@ -188,70 +188,25 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
               </div>
 
               <div className="flex flex-col gap-1 pt-2 border-t border-border">
-                {/* Dashboard - single link, no submenu */}
-                <TopLink to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
-
-
-                {/* Oportunidades */}
-                {can("oportunidades") && (
-                  <>
-                    <SectionHeader icon={Search} label="Oportunidades" sectionKey="oportunidades" />
-                    {openSection === "oportunidades" && (
-                      <div className="flex flex-col">
-                        <SubLink to="/oportunidades" icon={Search} label="Buscar" />
-                        <SubLink to="/oportunidades/gestao" icon={BarChart3} label="Gestão" />
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Campanha — Evolution só para usuários legacy */}
-                {can("campaigns") && canEvolution && (
-                  <>
-                    <SectionHeader icon={Megaphone} label="Campanha" sectionKey="campanhas" />
-                    {openSection === "campanhas" && (
-                      <div className="flex flex-col">
-                        <SubLink to="/whatsapp" icon={Send} label="Prospecção" />
-                        
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* CRM */}
+                <p className="px-3 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                  Análise
+                </p>
+                <TopLink to="/dashboard" icon={LayoutDashboard} label="Cockpit" />
                 {can("crm") && (
-                  <>
-                    <SectionHeader icon={Users} label="CRM" sectionKey="crm" />
-                    {openSection === "crm" && (
-                      <div className="flex flex-col">
-                        <SubLink to="/crm" icon={Users} label="Pipeline" />
-                        <SubLink to="/crm/score" icon={Trophy} label="Score" />
-                      </div>
-                    )}
-                  </>
+                  <TopLink to="/crm/score" icon={Trophy} label="Score de leads" />
+                )}
+                {isAdmin && (
+                  <TopLink to="/users" icon={Users} label="Usuários" />
                 )}
 
-                {/* Chat */}
-                {can("chat") && (
-                  <TopLink to="/chat" icon={MessageCircle} label="Chat" />
-                )}
-
-                {/* Automação */}
-                {(can("flows") || can("agents") || can("warming")) && (
-                  <>
-                    <SectionHeader icon={Workflow} label="Automação" sectionKey="automacao" />
-                    {openSection === "automacao" && (
-                      <div className="flex flex-col">
-                        {can("flows") && <SubLink to="/fluxos" icon={Workflow} label="Fluxos" />}
-                        {can("agents") && <SubLink to="/agents" icon={Bot} label="Agentes IA" />}
-                        {can("warming") && <SubLink to="/warming" icon={Flame} label="Aquecimento" />}
-                      </div>
-                    )}
-                  </>
-                )}
+                <div className="mt-2 px-3 py-2 rounded-lg bg-muted/40 border border-border/60 text-[11px] text-muted-foreground leading-relaxed">
+                  📱 No celular você acessa só os dashboards.
+                  Para operar campanhas, fluxos e CRM, use o computador.
+                </div>
               </div>
 
               <div className="flex flex-col gap-1 pt-2 border-t border-border">
+                <TopLink to="/profile" icon={Users} label="Meu perfil" />
                 <TopLink to="/ajuda" icon={HelpCircle} label="Central de Ajuda" />
                 {profile?.plan !== "scale" && (
                   <TopLink to="/upgrade" icon={Crown} label="Fazer Upgrade" highlight />
