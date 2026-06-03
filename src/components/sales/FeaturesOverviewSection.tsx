@@ -62,7 +62,7 @@ export const FeaturesOverviewSection = () => {
         <SectionHeading
           eyebrow="Plataforma completa"
           title="Uma máquina integrada de"
-          highlight="geração de oportunidades B2B"
+          highlight="geração de oportunidades"
           highlightFit="tight"
           description="Da captação ao fechamento, cada etapa do processo comercial conectada por dados, IA e automação, sem depender de operação manual."
           isVisible={isVisible}
