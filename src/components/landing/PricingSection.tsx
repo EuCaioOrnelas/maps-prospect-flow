@@ -727,21 +727,21 @@ export const PricingSection = () => {
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
-            <div className="relative overflow-hidden rounded-2xl border border-border/50 p-6 md:p-10">
+            <div className="relative overflow-hidden rounded-2xl border border-border/50 p-4 sm:p-6 md:p-10">
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-2xl" />
               
               <div className="relative z-10">
-                <div className="text-center mb-10">
-                  <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-                    <Shield className="h-4 w-4" />
+                <div className="text-center mb-6 sm:mb-10">
+                  <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-sm font-medium mb-3 sm:mb-4">
+                    <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     Infraestrutura Profissional
                   </div>
                   
-                  <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
+                  <h3 className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2 sm:mb-3">
                     Segurança e confiança em cada etapa
                   </h3>
-                  <p className="text-muted-foreground max-w-xl mx-auto">
+                  <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
                     Sua operação protegida por padrões de mercado, com transparência total e suporte dedicado.
                   </p>
                 </div>
