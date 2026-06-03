@@ -428,8 +428,8 @@ export const PricingSection = () => {
                 }}
                 className={`group relative rounded-2xl flex flex-col overflow-hidden ${
                   plan.popular
-                    ? "bg-gradient-card border-2 border-primary shadow-glow p-5 md:p-6 md:z-10"
-                    : "glass p-5 md:p-6"
+                    ? "bg-gradient-card border-2 border-primary shadow-glow p-3 sm:p-5 md:p-6 md:z-10"
+                    : "glass p-3 sm:p-5 md:p-6"
                 }`}
                 style={{
                   boxShadow: plan.popular
@@ -437,34 +437,35 @@ export const PricingSection = () => {
                     : "inset 0 1px 0 0 hsl(var(--primary) / 0.12), inset 0 0 60px -30px hsl(var(--primary) / 0.18)",
                 }}
               >
-                <div className="mb-6">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-                      <plan.icon className="h-5 w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
+                <div className="mb-4 sm:mb-6">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/15">
+                      <plan.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
                     </div>
-                    <h3 className="font-display font-bold text-lg md:text-xl">{plan.name}</h3>
+                    <h3 className="font-display font-bold text-base sm:text-lg md:text-xl">{plan.name}</h3>
                     {plan.popular && (
-                      <span className="ml-auto inline-flex items-center gap-1 bg-primary/15 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
-                        <Sparkles size={11} />
-                        mais popular
+                      <span className="inline-flex items-center gap-1 bg-primary/15 text-primary text-[9px] sm:text-[11px] font-bold px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
+                        <Sparkles size={10} />
+                        <span className="hidden sm:inline">mais popular</span>
+                        <span className="sm:hidden">popular</span>
                       </span>
                     )}
                   </div>
-                  <p className="text-muted-foreground text-xs sm:text-sm min-h-[2.5rem] md:min-h-[2.75rem]">{plan.description}</p>
+                  <p className="text-muted-foreground text-[11px] sm:text-sm leading-snug min-h-[2.5rem] md:min-h-[2.75rem]">{plan.description}</p>
                 </div>
 
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 text-sm">R$ {plan.anchorPrice}</span>
+                <div className="mb-4 sm:mb-6">
+                  <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                    <span className="text-muted-foreground line-through decoration-muted-foreground/50 decoration-2 text-[11px] sm:text-sm">R$ {plan.anchorPrice}</span>
                   </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-sm font-medium text-muted-foreground">R$</span>
-                    <span className="font-display font-bold text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
+                  <div className="flex items-baseline gap-1 sm:gap-1.5 flex-wrap">
+                    <span className="text-xs sm:text-sm font-medium text-muted-foreground">R$</span>
+                    <span className="font-display font-bold text-[1.85rem] sm:text-[2.75rem] md:text-[3.5rem] tabular-nums text-foreground leading-none">
                       <AnimatedPrice targetPrice={plan.price} anchorPrice={plan.anchorPrice} isVisible={isVisible} />
                     </span>
-                    <span className="text-sm font-medium text-muted-foreground">/ mês</span>
+                    <span className="text-[11px] sm:text-sm font-medium text-muted-foreground">/ mês</span>
                   </div>
-                  <p className="text-primary mt-2 text-xs sm:text-sm font-medium">
+                  <p className="text-primary mt-1.5 sm:mt-2 text-[11px] sm:text-sm font-medium">
                     {plan.usageLabel}
                   </p>
                 </div>
