@@ -36,9 +36,14 @@ export const SectionHeading = ({
 }: SectionHeadingProps) => {
   const alignClass = align === "center" ? "text-center mx-auto" : "text-left";
 
+  const titleClass =
+    highlightFit === "tight"
+      ? "text-[1.25rem] sm:text-[1.9rem] md:text-[2.3rem] lg:text-[2.5rem]"
+      : "text-[1.65rem] sm:text-[2.25rem] md:text-[2.75rem] lg:text-[3rem]";
+
   const highlightClass =
     highlightFit === "tight"
-      ? "whitespace-nowrap text-[1.35rem] xs:text-[1.55rem] sm:text-[2.1rem] md:text-[2.6rem] lg:text-[2.9rem]"
+      ? "whitespace-nowrap text-[1.6rem] xs:text-[1.85rem] sm:text-[2.4rem] md:text-[2.95rem] lg:text-[3.25rem]"
       : "text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.4rem]";
 
   return (
@@ -54,9 +59,7 @@ export const SectionHeading = ({
         {eyebrow}
       </span>
       <h2 className="font-display font-bold text-foreground leading-[1.08] tracking-tight mb-4 sm:mb-5">
-        <span className="block text-[1.65rem] sm:text-[2.25rem] md:text-[2.75rem] lg:text-[3rem]">
-          {title}
-        </span>
+        <span className={`block ${titleClass}`}>{title}</span>
         <span className={`block font-extrabold text-shimmer-highlight leading-[1.02] mt-1 ${highlightClass}`}>
           {highlight}
         </span>
