@@ -666,7 +666,7 @@ export const PricingSection = () => {
                       <div key={group.title}>
                         <button
                           onClick={() => toggleGroup(group.title)}
-                          className="w-full grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-4 hover:bg-muted/30 transition-colors group"
+                          className="w-full grid grid-cols-[1.6fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-4 hover:bg-muted/30 transition-colors group"
                         >
                           <div className="flex items-center gap-3 text-left">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 group-hover:bg-primary/15 transition-colors">
