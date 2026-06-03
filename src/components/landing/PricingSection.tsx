@@ -620,16 +620,16 @@ export const PricingSection = () => {
                 </div>
 
                 {/* Plans header row */}
-                <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-4 md:px-6 py-5 md:py-6 border-b border-border/60 bg-background/40">
+                <div className="grid grid-cols-[1.6fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-4 md:px-6 py-5 md:py-6 border-b border-border/60 bg-background/40">
                   <div className="flex items-end">
                     <span className="font-display text-base md:text-lg font-bold text-foreground">Planos</span>
                   </div>
                   {[
-                    { name: "Atendimento", price: plans[0].price, popular: false },
-                    { name: "Growth IA", price: plans[1].price, popular: true },
-                    { name: "Enterprise", price: "Sob medida", popular: false, custom: true },
+                    { name: "Atendimento", price: plans[0].price, popular: false, mobile: true },
+                    { name: "Growth IA", price: plans[1].price, popular: true, mobile: true },
+                    { name: "Enterprise", price: "Sob medida", popular: false, custom: true, mobile: false },
                   ].map((col) => (
-                    <div key={col.name} className="text-center px-1 relative">
+                    <div key={col.name} className={`text-center px-1 relative ${col.mobile ? '' : 'hidden md:block'}`}>
                       <div className="flex items-center justify-center gap-2 mb-2">
                         <span className="text-xs md:text-sm font-semibold text-foreground/80">{col.name}</span>
                         {col.popular && (
