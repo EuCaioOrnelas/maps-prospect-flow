@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Search, ScanSearch, Brain, Sparkles, Send, Bot, RefreshCw, CalendarCheck, LayoutGrid } from "lucide-react";
 import { useRef } from "react";
 import { useInView } from "framer-motion";
+import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const steps = [
   { icon: Search, title: "IA de Captação por Localização e Nicho", desc: "Encontra empresas prontas para comprar com base em região e segmento", micro: "Prospecção contínua" },
@@ -129,24 +130,13 @@ export const MechanismSection = () => {
 
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={isVisible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-14"
-        >
-          <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary mb-4">
-            Como funciona
-          </span>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-foreground mb-4 leading-tight">
-            O sistema por trás das{" "}
-            <br className="hidden sm:block" />
-            <span className="text-shimmer-highlight">vendas em escala</span>
-          </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
-            Um fluxo contínuo que transforma leads em clientes, sem depender de operação manual.
-          </p>
-        </motion.div>
+        <SectionHeading
+          eyebrow="Como funciona"
+          title="O sistema por trás das"
+          highlight="vendas em escala"
+          description="Um fluxo contínuo que transforma leads em clientes, sem depender de operação manual."
+          isVisible={isVisible}
+        />
 
         {/* Timeline */}
         <div className="relative">
