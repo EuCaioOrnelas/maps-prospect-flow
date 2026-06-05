@@ -166,6 +166,9 @@ const PartnersApply = lazyWithRetry(() => import("./pages/partners/PartnersApply
 const PartnersTerms = lazyWithRetry(() => import("./pages/partners/PartnersTerms"), "PartnersTerms");
 const AdminPartnersApplications = lazyWithRetry(() => import("./pages/admin/AdminPartnersApplications"), "AdminPartnersApplications");
 const AdminPartnersMaterials = lazyWithRetry(() => import("./pages/admin/AdminPartnersMaterials"), "AdminPartnersMaterials");
+const AdminBlogList = lazyWithRetry(() => import("./pages/admin/AdminBlogList"), "AdminBlogList");
+const AdminBlogEditor = lazyWithRetry(() => import("./pages/admin/AdminBlogEditor"), "AdminBlogEditor");
+const AdminBlogCategories = lazyWithRetry(() => import("./pages/admin/AdminBlogCategories"), "AdminBlogCategories");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -345,6 +348,11 @@ const App = () => (
                   <Route path="auditoria" element={<AdminAuditoria />} />
                   <Route path="insights" element={<UserInsights />} />
                   <Route path="onboarding" element={<AdminOnboarding />} />
+                  {/* Blog */}
+                  <Route path="blog" element={<AdminBlogList />} />
+                  <Route path="blog/categorias" element={<AdminBlogCategories />} />
+                  <Route path="blog/novo" element={<AdminBlogEditor />} />
+                  <Route path="blog/:id" element={<AdminBlogEditor />} />
                   {/* Suporte */}
                   <Route path="suporte/tickets" element={<AdminSupportTickets />} />
                   <Route path="suporte/mind-ia" element={<AdminSupportMindIA />} />
