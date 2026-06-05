@@ -392,6 +392,8 @@ export default function Blog() {
           )}
         </section>
       </main>
+      </div>
     </div>
   );
 }
+
