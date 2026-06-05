@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog } from "lucide-react";
+import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
@@ -33,6 +33,7 @@ interface ChatMessageAreaProps {
   canChangeResponsible?: boolean;
   onTransferResponsible?: (conversationId: string, userId: string | null) => Promise<void>;
   currentUserId?: string;
+  onBack?: () => void;
 }
 
 
@@ -238,7 +239,7 @@ function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply
 
 export function ChatMessageArea({
   conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
-  members = [], canChangeResponsible = false, onTransferResponsible, currentUserId,
+  members = [], canChangeResponsible = false, onTransferResponsible, currentUserId, onBack,
 }: ChatMessageAreaProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -291,6 +292,15 @@ export function ChatMessageArea({
       <div className="flex-1 flex flex-col min-w-0">
         {/* Chat Header */}
         <div className="h-[58px] min-h-[58px] flex items-center gap-[10px] px-[16px] wa-chat-header-bg wa-border-header-bottom shrink-0">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="wa-icon-button -ml-1 p-1.5 rounded-full hover:bg-white/5 lg:hidden"
+              aria-label="Voltar"
+            >
+              <ArrowLeft size={22} className="wa-chat-header-icon" />
+            </button>
+          )}
           <div className={cn(
             "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-light",
             avatarColor
@@ -417,7 +427,7 @@ export function ChatMessageArea({
           <div className="wa-chat-glow" />
 
           <div className="flex-1 overflow-y-auto wa-scrollbar relative z-[1]" ref={scrollContainerRef}>
-            <div className="px-[63px] py-[4px] min-h-full flex flex-col justify-end">
+            <div className="px-3 sm:px-6 lg:px-[63px] py-[4px] min-h-full flex flex-col justify-end">
               {loading ? (
                 <div className="flex items-center justify-center py-16">
                   <div className="h-8 w-8 rounded-full border-[3px] border-[#00a884]/20 border-t-[#00a884] animate-spin" />
