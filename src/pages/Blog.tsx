@@ -169,21 +169,17 @@ export default function Blog() {
 
         {/* Categorias */}
         <nav aria-label="Categorias do blog" className="flex flex-wrap gap-2 justify-center mb-12">
-          <Button
-            variant={!categorySlug ? "default" : "outline"}
-            size="sm"
-            onClick={() => updateParams({ categoria: null, page: null })}
-          >
-            Todas
+          <Button asChild variant={!categorySlug ? "default" : "outline"} size="sm">
+            <Link to="/blog">Todas</Link>
           </Button>
           {categories.map((c) => (
             <Button
               key={c.id}
+              asChild
               variant={categorySlug === c.slug ? "default" : "outline"}
               size="sm"
-              onClick={() => updateParams({ categoria: c.slug, page: null })}
             >
-              {c.name}
+              <Link to={`/blog/categoria/${c.slug}`}>{c.name}</Link>
             </Button>
           ))}
         </nav>
