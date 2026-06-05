@@ -99,6 +99,8 @@ const MetaNumeros = lazyWithRetry(() => import("./pages/meta/MetaNumeros"), "Met
 const MetaConfiguracoes = lazyWithRetry(() => import("./pages/meta/MetaConfiguracoes"), "MetaConfiguracoes");
 
 const EnterpriseContact = lazyWithRetry(() => import("./pages/EnterpriseContact"), "EnterpriseContact");
+const Blog = lazyWithRetry(() => import("./pages/Blog"), "Blog");
+const BlogPost = lazyWithRetry(() => import("./pages/BlogPost"), "BlogPost");
 const TrialExpired = lazyWithRetry(() => import("./pages/TrialExpired"), "TrialExpired");
 const ManageSubscription = lazyWithRetry(() => import("./pages/ManageSubscription"), "ManageSubscription");
 const Onboarding = lazyWithRetry(() => import("./pages/Onboarding"), "Onboarding");
@@ -232,6 +234,9 @@ const App = () => (
                 <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />
                 
                 <Route path="/enterprise" element={<LightThemeWrapper><EnterpriseContact /></LightThemeWrapper>} />
+                <Route path="/blog" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><Blog /></Suspense></LightThemeWrapper>} />
+                <Route path="/blog/categoria/:categorySlug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><Blog /></Suspense></LightThemeWrapper>} />
+                <Route path="/blog/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><BlogPost /></Suspense></LightThemeWrapper>} />
                 <Route path="/login" element={<LightThemeWrapper><Login /></LightThemeWrapper>} />
                 <Route path="/signup" element={<LightThemeWrapper><Signup /></LightThemeWrapper>} />
                 <Route path="/signup/escolher-plano" element={<LightThemeWrapper><SignupChoosePlan /></LightThemeWrapper>} />

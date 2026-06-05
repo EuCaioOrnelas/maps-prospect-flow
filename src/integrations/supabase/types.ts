@@ -567,6 +567,209 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      blog_post_tags: {
+        Row: {
+          post_id: string
+          tag_id: string
+        }
+        Insert: {
+          post_id: string
+          tag_id: string
+        }
+        Update: {
+          post_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_post_tags_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_post_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "blog_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_posts: {
+        Row: {
+          ai_entities: string[] | null
+          ai_questions: Json | null
+          ai_related_topics: string[] | null
+          ai_short_answer: string | null
+          ai_summary: string | null
+          author_avatar_url: string | null
+          author_bio: string | null
+          author_name: string
+          canonical_url: string | null
+          category_id: string | null
+          content: string
+          cover_image_alt: string | null
+          cover_image_url: string | null
+          created_at: string
+          created_by: string | null
+          excerpt: string | null
+          faq: Json | null
+          featured: boolean
+          id: string
+          og_image_url: string | null
+          published_at: string | null
+          reading_time_minutes: number | null
+          robots_follow: boolean
+          robots_index: boolean
+          scheduled_for: string | null
+          seo_description: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
+          slug: string
+          status: string
+          subtitle: string | null
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          ai_entities?: string[] | null
+          ai_questions?: Json | null
+          ai_related_topics?: string[] | null
+          ai_short_answer?: string | null
+          ai_summary?: string | null
+          author_avatar_url?: string | null
+          author_bio?: string | null
+          author_name?: string
+          canonical_url?: string | null
+          category_id?: string | null
+          content?: string
+          cover_image_alt?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          faq?: Json | null
+          featured?: boolean
+          id?: string
+          og_image_url?: string | null
+          published_at?: string | null
+          reading_time_minutes?: number | null
+          robots_follow?: boolean
+          robots_index?: boolean
+          scheduled_for?: string | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          slug: string
+          status?: string
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          ai_entities?: string[] | null
+          ai_questions?: Json | null
+          ai_related_topics?: string[] | null
+          ai_short_answer?: string | null
+          ai_summary?: string | null
+          author_avatar_url?: string | null
+          author_bio?: string | null
+          author_name?: string
+          canonical_url?: string | null
+          category_id?: string | null
+          content?: string
+          cover_image_alt?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          faq?: Json | null
+          featured?: boolean
+          id?: string
+          og_image_url?: string | null
+          published_at?: string | null
+          reading_time_minutes?: number | null
+          robots_follow?: boolean
+          robots_index?: boolean
+          scheduled_for?: string | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          slug?: string
+          status?: string
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "blog_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       campaign_daily_reservations: {
         Row: {
           campaign_id: string
