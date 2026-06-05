@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { trackBlogCtaClick } from "@/lib/blogAttribution";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -408,7 +410,7 @@ export default function BlogPost() {
           ) : (
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
           )}
-        />
+        </div>
 
 
         {/* FAQ */}
