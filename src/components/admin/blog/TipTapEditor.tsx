@@ -1,0 +1,89 @@
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
+import Placeholder from "@tiptap/extension-placeholder";
+import { Button } from "@/components/ui/button";
+import {
+  Bold, Italic, Strikethrough, Code, Heading1, Heading2, Heading3,
+  List, ListOrdered, Quote, Undo, Redo, Link as LinkIcon, Image as ImageIcon, Minus,
+} from "lucide-react";
+import { useEffect } from "react";
+
+interface Props {
+  value: string;
+  onChange: (html: string) => void;
+  placeholder?: string;
+}
+
+export function TipTapEditor({ value, onChange, placeholder }: Props) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+      Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" } }),
+      Image.configure({ HTMLAttributes: { class: "rounded-lg my-4 max-w-full" } }),
+      Placeholder.configure({ placeholder: placeholder || "Escreva seu conteúdo..." }),
+    ],
+    content: value || "",
+    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    editorProps: {
+      attributes: {
+        class: "prose prose-sm sm:prose-base dark:prose-invert max-w-none focus:outline-none min-h-[400px] px-4 py-3",
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      editor.commands.setContent(value || "", { emitUpdate: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  if (!editor) return null;
+
+  const Btn = ({ onClick, active, children, title }: any) => (
+    <Button type="button" variant={active ? "secondary" : "ghost"} size="sm" onClick={onClick} title={title} className="h-8 w-8 p-0">
+      {children}
+    </Button>
+  );
+
+  const addLink = () => {
+    const url = window.prompt("URL do link:");
+    if (url === null) return;
+    if (url === "") return editor.chain().focus().unsetLink().run();
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+  };
+
+  const addImage = () => {
+    const url = window.prompt("URL da imagem:");
+    if (url) editor.chain().focus().setImage({ src: url }).run();
+  };
+
+  return (
+    <div className="border rounded-lg bg-background">
+      <div className="flex flex-wrap gap-1 p-2 border-b bg-muted/30">
+        <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} title="H1"><Heading1 className="h-4 w-4" /></Btn>
+        <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })} title="H2"><Heading2 className="h-4 w-4" /></Btn>
+        <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })} title="H3"><Heading3 className="h-4 w-4" /></Btn>
+        <div className="w-px bg-border mx-1" />
+        <Btn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} title="Negrito"><Bold className="h-4 w-4" /></Btn>
+        <Btn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} title="Itálico"><Italic className="h-4 w-4" /></Btn>
+        <Btn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} title="Tachado"><Strikethrough className="h-4 w-4" /></Btn>
+        <Btn onClick={() => editor.chain().focus().toggleCode().run()} active={editor.isActive("code")} title="Código"><Code className="h-4 w-4" /></Btn>
+        <div className="w-px bg-border mx-1" />
+        <Btn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} title="Lista"><List className="h-4 w-4" /></Btn>
+        <Btn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} title="Lista ordenada"><ListOrdered className="h-4 w-4" /></Btn>
+        <Btn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Citação"><Quote className="h-4 w-4" /></Btn>
+        <Btn onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Linha"><Minus className="h-4 w-4" /></Btn>
+        <div className="w-px bg-border mx-1" />
+        <Btn onClick={addLink} active={editor.isActive("link")} title="Link"><LinkIcon className="h-4 w-4" /></Btn>
+        <Btn onClick={addImage} title="Imagem (URL)"><ImageIcon className="h-4 w-4" /></Btn>
+        <div className="w-px bg-border mx-1" />
+        <Btn onClick={() => editor.chain().focus().undo().run()} title="Desfazer"><Undo className="h-4 w-4" /></Btn>
+        <Btn onClick={() => editor.chain().focus().redo().run()} title="Refazer"><Redo className="h-4 w-4" /></Btn>
+      </div>
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
