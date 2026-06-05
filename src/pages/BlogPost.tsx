@@ -354,12 +354,9 @@ export default function BlogPost() {
         </Breadcrumb>
 
         <header className="mb-8">
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground leading-tight">
+          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight">
             {post.title}
           </h1>
-          {post.subtitle && (
-            <p className="mt-4 text-xl text-muted-foreground">{post.subtitle}</p>
-          )}
 
           <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
@@ -391,36 +388,53 @@ export default function BlogPost() {
                 {post.reading_time_minutes} min de leitura
               </span>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1 ml-auto"
-                  onClick={async (e) => {
-                    // Try native share first on mobile; if it fires, prevent the menu
-                    const used = await shareNative();
-                    if (used) e.preventDefault();
-                  }}
-                >
-                  <Share2 className="h-4 w-4" /> Compartilhar
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-popover">
-                <DropdownMenuItem onClick={() => shareTo("whatsapp")}>
-                  <Share2 className="h-4 w-4 mr-2 text-emerald-500" /> WhatsApp
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => shareTo("twitter")}>
-                  <Twitter className="h-4 w-4 mr-2" /> X / Twitter
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => shareTo("linkedin")}>
-                  <Linkedin className="h-4 w-4 mr-2" /> LinkedIn
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={copyLink}>
-                  <Link2 className="h-4 w-4 mr-2" /> Copiar link
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleLike}
+                aria-pressed={liked}
+                aria-label={liked ? "Remover curtida" : "Curtir artigo"}
+                title={liked ? "Você curtiu" : "Gostei"}
+                className={`group inline-flex h-10 items-center gap-2 rounded-full border border-border bg-background pl-2.5 pr-3.5 text-sm font-medium transition-all hover:border-foreground/30 hover:bg-muted ${liked ? "text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30" : "text-foreground"}`}
+              >
+                <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${liked ? "bg-rose-500/15" : "bg-muted"}`}>
+                  <Heart className={`h-3.5 w-3.5 transition-transform ${liked ? "fill-rose-600 text-rose-600 scale-110" : "text-foreground"}`} />
+                </span>
+                <span className="tabular-nums">{likeCount}</span>
+              </button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Compartilhar"
+                    title="Compartilhar"
+                    onClick={async (e) => {
+                      const used = await shareNative();
+                      if (used) e.preventDefault();
+                    }}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground transition-all hover:border-foreground/30 hover:bg-muted"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-popover">
+                  <DropdownMenuItem onClick={() => shareTo("whatsapp")}>
+                    <Share2 className="h-4 w-4 mr-2 text-emerald-500" /> WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => shareTo("twitter")}>
+                    <Twitter className="h-4 w-4 mr-2" /> X / Twitter
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => shareTo("linkedin")}>
+                    <Linkedin className="h-4 w-4 mr-2" /> LinkedIn
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={copyLink}>
+                    <Link2 className="h-4 w-4 mr-2" /> Copiar link
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </header>
 
