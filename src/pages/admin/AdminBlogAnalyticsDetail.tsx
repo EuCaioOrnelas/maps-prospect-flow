@@ -8,26 +8,40 @@ import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft, ExternalLink, Eye, Clock, Award, Sparkles, Target,
   TrendingUp, Users, AlertTriangle, CheckCircle2, Lightbulb, Pencil, Search,
+  MousePointerClick, UserPlus, CreditCard,
 } from "lucide-react";
 import { computeWiizeScore, ScorePill } from "./AdminBlogAnalytics";
+
+type FunnelCounts = { cta_click: number; trial_started: number; purchased: number };
 
 export default function AdminBlogAnalyticsDetail() {
   const { id } = useParams();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [funnel, setFunnel] = useState<FunnelCounts>({ cta_click: 0, trial_started: 0, purchased: 0 });
 
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const { data } = await supabase
-        .from("blog_posts")
-        .select(`id,slug,title,subtitle,excerpt,content,cover_image_url,status,view_count,
-                 published_at,reading_time_minutes,seo_title,seo_description,seo_keywords,
-                 canonical_url,robots_index,ai_short_answer,ai_entities,faq,featured,
-                 author_name,category:blog_categories(name)`)
-        .eq("id", id)
-        .maybeSingle();
+      const [{ data }, { data: attrs }] = await Promise.all([
+        supabase
+          .from("blog_posts")
+          .select(`id,slug,title,subtitle,excerpt,content,cover_image_url,status,view_count,
+                   published_at,reading_time_minutes,seo_title,seo_description,seo_keywords,
+                   canonical_url,robots_index,ai_short_answer,ai_entities,faq,featured,
+                   author_name,category:blog_categories(name)`)
+          .eq("id", id).maybeSingle(),
+        supabase
+          .from("blog_post_attributions")
+          .select("event")
+          .eq("post_id", id),
+      ]);
       setPost(data);
+      const counts: FunnelCounts = { cta_click: 0, trial_started: 0, purchased: 0 };
+      (attrs || []).forEach((r: any) => {
+        if (r.event in counts) counts[r.event as keyof FunnelCounts]++;
+      });
+      setFunnel(counts);
       setLoading(false);
     })();
   }, [id]);
@@ -37,9 +51,12 @@ export default function AdminBlogAnalyticsDetail() {
   if (loading) return <div className="p-8 text-muted-foreground">Carregando…</div>;
   if (!post) return <div className="p-8 text-muted-foreground">Publicação não encontrada.</div>;
 
-  const wordCount = (post.content || "").replace(/<[^>]*>/g, " ").split(/\s+/).filter(Boolean).length;
+  const views = post.view_count || 0;
+  const ctr = views > 0 ? (funnel.cta_click / views) * 100 : 0;
+  const trialRate = funnel.cta_click > 0 ? (funnel.trial_started / funnel.cta_click) * 100 : 0;
+  const purchaseRate = funnel.trial_started > 0 ? (funnel.purchased / funnel.trial_started) * 100 : 0;
 
-  // Recomendações IA (heurísticas)
+  // Recomendações IA — only the meaningful ones
   const recs: Array<{ icon: any; title: string; suggestion: string; tone: "warn" | "info" | "ok" }> = [];
   if (!post.seo_title || (post.seo_title || "").length > 70) {
     recs.push({ icon: Search, title: "SEO Title fraco", suggestion: "Defina um SEO Title entre 30 e 60 caracteres com a palavra-chave principal no início.", tone: "warn" });
@@ -55,19 +72,17 @@ export default function AdminBlogAnalyticsDetail() {
   if (ents < 3) {
     recs.push({ icon: Sparkles, title: "Poucas entidades reconhecidas", suggestion: "Liste pelo menos 5 entidades (ex.: SDR IA, CRM, prospecção, WhatsApp Cloud API, automação comercial).", tone: "warn" });
   }
-  const faqLen = Array.isArray(post.faq) ? post.faq.length : 0;
-  if (faqLen < 3) {
-    recs.push({ icon: Lightbulb, title: "FAQ curto", suggestion: "Inclua 3+ perguntas frequentes — gera schema FAQ + amplia chances de citação por IA.", tone: "info" });
-  }
-  if (wordCount < 600) {
-    recs.push({ icon: Lightbulb, title: "Conteúdo curto", suggestion: `Artigo com ${wordCount} palavras. Ideal mínimo de 600 para SEO; 1200+ para autoridade.`, tone: "info" });
-  }
   if (!post.cover_image_url) {
     recs.push({ icon: AlertTriangle, title: "Sem imagem de capa", suggestion: "Capa aumenta CTR em buscadores e redes sociais. Use 1200×630px.", tone: "warn" });
   }
-  if (recs.length === 0) {
-    recs.push({ icon: CheckCircle2, title: "Tudo certo no on-page", suggestion: "Próximo passo: monitorar impressões no Google Search Console (em breve) e citações em IA.", tone: "ok" });
+  if (views >= 100 && ctr < 1) {
+    recs.push({ icon: MousePointerClick, title: "CTR do CTA baixo", suggestion: `Apenas ${ctr.toFixed(2)}% dos leitores clicaram no botão de trial. Teste posicionar um CTA também no meio do artigo.`, tone: "warn" });
   }
+  if (recs.length === 0) {
+    recs.push({ icon: CheckCircle2, title: "Tudo certo no on-page", suggestion: "Continue monitorando o funil de conversão abaixo.", tone: "ok" });
+  }
+
+  const wordCount = (post.content || "").replace(/<[^>]*>/g, " ").split(/\s+/).filter(Boolean).length;
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -113,20 +128,64 @@ export default function AdminBlogAnalyticsDetail() {
           </p>
         </CardHeader>
         <CardContent className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <ScoreSection icon={Target} label="SEO" value={score!.seo} max={25} tone="primary" />
-          <ScoreSection icon={Sparkles} label="GEO (IA)" value={score!.geo} max={25} tone="primary" />
-          <ScoreSection icon={Users} label="Engajamento" value={score!.engajamento} max={25} tone="primary" />
-          <ScoreSection icon={TrendingUp} label="Conversão" value={score!.conversao} max={25} tone="primary" />
+          <ScoreSection icon={Target} label="SEO" value={score!.seo} max={25} />
+          <ScoreSection icon={Sparkles} label="GEO (IA)" value={score!.geo} max={25} />
+          <ScoreSection icon={Users} label="Engajamento" value={score!.engajamento} max={25} />
+          <ScoreSection icon={TrendingUp} label="Conversão" value={score!.conversao} max={25} />
         </CardContent>
       </Card>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Kpi icon={Eye} label="Views totais" value={(post.view_count || 0).toLocaleString("pt-BR")} />
+        <Kpi icon={Eye} label="Views totais" value={views.toLocaleString("pt-BR")} />
         <Kpi icon={Clock} label="Leitura" value={post.reading_time_minutes ? `${post.reading_time_minutes} min` : "—"} />
         <Kpi icon={Sparkles} label="Entidades GEO" value={(post.ai_entities || []).length} />
         <Kpi icon={Lightbulb} label="Perguntas FAQ" value={Array.isArray(post.faq) ? post.faq.length : 0} />
       </div>
+
+      {/* Conversion funnel — REAL DATA */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-primary" /> Funil de conversão deste artigo
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Mede leitores → cliques no CTA "Iniciar teste grátis" → trials iniciados → assinaturas pagas.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <FunnelStep icon={Eye} label="Views" value={views} hint="100%" />
+            <FunnelStep
+              icon={MousePointerClick}
+              label="Clicaram no CTA"
+              value={funnel.cta_click}
+              hint={views > 0 ? `${ctr.toFixed(2)}% dos leitores` : "—"}
+              tone="primary"
+            />
+            <FunnelStep
+              icon={UserPlus}
+              label="Iniciaram trial"
+              value={funnel.trial_started}
+              hint={funnel.cta_click > 0 ? `${trialRate.toFixed(1)}% dos cliques` : "—"}
+              tone="primary"
+            />
+            <FunnelStep
+              icon={CreditCard}
+              label="Compraram"
+              value={funnel.purchased}
+              hint={funnel.trial_started > 0 ? `${purchaseRate.toFixed(1)}% dos trials` : "—"}
+              tone="success"
+            />
+          </div>
+
+          <div className="space-y-2 pt-2">
+            <FunnelBar label="View → CTA" value={ctr} />
+            <FunnelBar label="CTA → Trial" value={trialRate} />
+            <FunnelBar label="Trial → Compra" value={purchaseRate} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recomendações IA */}
       <Card>
@@ -159,14 +218,6 @@ export default function AdminBlogAnalyticsDetail() {
           })}
         </CardContent>
       </Card>
-
-      {/* Dados externos */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <ExternalCard icon={Target} title="Google Search Console" desc="Conecte o GSC para ver impressões, cliques, CTR, posição média e keywords ranqueadas deste artigo." />
-        <ExternalCard icon={Sparkles} title="Citações em IA" desc="Tracking de aparições em ChatGPT, Perplexity e Gemini em breve." />
-        <ExternalCard icon={Users} title="Profundidade de leitura" desc="Scroll depth (25/50/75/100%), tempo médio real, bounce rate e cliques internos." />
-        <ExternalCard icon={TrendingUp} title="Atribuição de conversão" desc="Leads gerados, trials iniciados, clientes pagantes e receita atribuídos a este artigo." />
-      </div>
 
       {/* On-page snapshot */}
       <Card>
@@ -202,36 +253,46 @@ function Kpi({ icon: Icon, label, value }: { icon: any; label: string; value: an
   );
 }
 
-function ScoreSection({ icon: Icon, label, value, max, tone }: { icon: any; label: string; value: number; max: number; tone: string }) {
+function FunnelStep({ icon: Icon, label, value, hint, tone }: { icon: any; label: string; value: number; hint: string; tone?: "primary" | "success" }) {
+  const bg = tone === "success" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+    : tone === "primary" ? "bg-primary/10 text-primary"
+    : "bg-muted text-muted-foreground";
+  return (
+    <div className="rounded-lg border border-border p-3">
+      <div className={`p-2 rounded-md w-fit ${bg}`}><Icon className="w-4 h-4" /></div>
+      <p className="text-xs text-muted-foreground mt-2">{label}</p>
+      <p className="text-2xl font-semibold tabular-nums mt-0.5">{value.toLocaleString("pt-BR")}</p>
+      <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>
+    </div>
+  );
+}
+
+function FunnelBar({ label, value }: { label: string; value: number }) {
+  const pct = Math.min(100, Math.max(0, value));
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-1">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-semibold tabular-nums">{pct.toFixed(2)}%</span>
+      </div>
+      <Progress value={pct} className="h-1.5" />
+    </div>
+  );
+}
+
+function ScoreSection({ icon: Icon, label, value, max }: { icon: any; label: string; value: number; max: number }) {
   const pct = Math.round((value / max) * 100);
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium flex items-center gap-1.5">
-          <Icon className={`w-4 h-4 text-${tone}`} /> {label}
+          <Icon className="w-4 h-4 text-primary" /> {label}
         </span>
         <span className="text-sm font-semibold tabular-nums">{pct}/100</span>
       </div>
       <Progress value={pct} className="h-2" />
       <p className="text-xs text-muted-foreground mt-2">{value}/{max} pontos</p>
     </div>
-  );
-}
-
-function ExternalCard({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) {
-  return (
-    <Card className="border-dashed">
-      <CardContent className="p-4 flex items-start gap-3">
-        <div className="p-2 rounded-md bg-primary/10 text-primary"><Icon className="w-4 h-4" /></div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold">{title}</h3>
-            <Badge variant="outline" className="text-xs flex-shrink-0">em breve</Badge>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">{desc}</p>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
