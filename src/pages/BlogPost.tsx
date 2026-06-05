@@ -496,7 +496,7 @@ export default function BlogPost() {
 
       {/* Relacionados — largura igual ao blog principal */}
       {related.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-20">
           <div className="pt-10 border-t border-border">
             <h2 className="text-2xl font-bold mb-6">Artigos relacionados</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
