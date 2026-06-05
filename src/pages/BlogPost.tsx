@@ -230,18 +230,31 @@ export default function BlogPost() {
       <Navbar />
 
       <article className="max-w-3xl mx-auto px-4 sm:px-6 pt-28 pb-20">
-        <nav className="mb-8 text-sm">
-          <Link to="/blog" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-            <ArrowLeft className="h-4 w-4" /> Voltar ao blog
-          </Link>
-        </nav>
+        <Breadcrumb className="mb-8">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/blog">Blog</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            {post.category && (
+              <>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to={`/blog/categoria/${post.category.slug}`}>{post.category.name}</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              </>
+            )}
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="line-clamp-1 max-w-[260px] sm:max-w-md">{post.title}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
         <header className="mb-8">
-          {post.category && (
-            <Link to={`/blog/categoria/${post.category.slug}`}>
-              <Badge variant="secondary" className="mb-4">{post.category.name}</Badge>
-            </Link>
-          )}
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground leading-tight">
             {post.title}
           </h1>
