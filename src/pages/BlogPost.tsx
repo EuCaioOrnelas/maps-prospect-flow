@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { trackBlogCtaClick } from "@/lib/blogAttribution";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -402,10 +404,13 @@ export default function BlogPost() {
           </aside>
         )}
 
-        <div
-          className="prose prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h3:text-xl sm:prose-h3:text-2xl prose-p:text-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:my-6 prose-ul:my-4 prose-ol:my-4 prose-li:my-1"
-          dangerouslySetInnerHTML={{ __html: post.content }}
-        />
+        <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h3:text-xl sm:prose-h3:text-2xl prose-p:text-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:my-6 prose-ul:my-4 prose-ol:my-4 prose-li:my-1">
+          {/^\s*</.test(post.content) ? (
+            <div dangerouslySetInnerHTML={{ __html: post.content }} />
+          ) : (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
+          )}
+        </div>
 
 
         {/* FAQ */}

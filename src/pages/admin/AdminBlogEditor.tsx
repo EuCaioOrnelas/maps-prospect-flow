@@ -337,10 +337,10 @@ export default function AdminBlogEditor() {
             </div>
           </Card>
 
-          <Card className="p-5 space-y-2">
+          <div className="space-y-2">
             <Label>Conteúdo</Label>
             <TipTapEditor value={form.content} onChange={(v) => set("content", v)} />
-          </Card>
+          </div>
 
           <Tabs defaultValue="seo">
             <TabsList>
