@@ -126,8 +126,16 @@ export default function BlogPost() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="max-w-3xl mx-auto px-4 pt-32 pb-16 text-muted-foreground">
-          Carregando artigo...
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-28 pb-20 animate-pulse">
+          <div className="h-3 w-40 bg-muted rounded mb-8" />
+          <div className="h-10 w-3/4 bg-muted rounded mb-4" />
+          <div className="h-6 w-2/3 bg-muted rounded mb-8" />
+          <div className="aspect-[16/9] w-full bg-muted rounded-xl mb-10" />
+          <div className="space-y-3">
+            <div className="h-4 w-full bg-muted rounded" />
+            <div className="h-4 w-11/12 bg-muted rounded" />
+            <div className="h-4 w-10/12 bg-muted rounded" />
+          </div>
         </div>
       </div>
     );
