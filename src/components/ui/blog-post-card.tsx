@@ -44,11 +44,11 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   const inner = (
     <article
       className={cn(
-        "group flex h-full flex-col rounded-2xl border border-border/60 bg-card p-2 sm:p-2.5 transition-transform duration-300 ease-out hover:-translate-y-1",
+        "group flex h-full flex-col rounded-2xl border border-border/60 bg-card p-2 sm:p-2.5 transform-gpu transition-transform duration-300 ease-out hover:-translate-y-1 will-change-transform [backface-visibility:hidden]",
         className
       )}
     >
-      {/* Cover — tighter padding, larger image */}
+      {/* Cover */}
       <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-muted">
         {cover ? (
           <img
@@ -63,7 +63,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       </div>
 
       {/* Title + excerpt */}
-      <div className="flex flex-1 flex-col px-2 pt-4">
+      <div className="flex flex-1 flex-col px-1 pt-4">
         <h3 className="text-base sm:text-lg font-semibold leading-snug tracking-tight text-foreground line-clamp-2 group-hover:text-primary transition-colors">
           {headline}
         </h3>
@@ -71,9 +71,9 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           {excerpt}
         </p>
 
-        {/* Author pill — harmonic border matching outer card, softer gray */}
+        {/* Author pill — full width, aligned with cover image */}
         <div className="mt-auto pt-4">
-          <div className="inline-flex items-center gap-2.5 rounded-2xl border border-border/60 bg-muted/30 pl-1.5 pr-3 py-1.5">
+          <div className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 pl-1.5 pr-3 py-1.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-background overflow-hidden ring-1 ring-border/60">
               {avatarSrc ? (
                 <img src={avatarSrc} alt={writer || "Wian"} className="h-full w-full object-cover" />
@@ -83,9 +83,9 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
                 </span>
               )}
             </span>
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold text-foreground">{writer || "Wian"}</span>
-              <span className="text-[11px] text-muted-foreground">
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="text-sm font-semibold text-foreground truncate">{writer || "Wian"}</span>
+              <span className="text-[11px] text-muted-foreground truncate">
                 {publishedAt && <>{formatDate(publishedAt)}</>}
                 {publishedAt && readingTime ? " • " : ""}
                 {readingTime ? formatReadTime(readingTime) : ""}
@@ -96,6 +96,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       </div>
     </article>
   );
+
 
   return href ? (
     <a href={href} className="block h-full">
