@@ -295,7 +295,7 @@ export default function BlogPost() {
 
       <Navbar />
 
-      <article className="max-w-3xl mx-auto px-4 sm:px-6 pt-28 pb-20">
+      <article className="max-w-4xl mx-auto px-4 sm:px-6 pt-28 pb-20">
         <Breadcrumb className="mb-8">
           <BreadcrumbList>
             <BreadcrumbItem>
