@@ -75,12 +75,23 @@ type Related = {
   category: { name: string; slug: string; color: string | null } | null;
 };
 
+const LIKED_KEY = "wiize_blog_liked_posts";
+const getLikedSet = (): Set<string> => {
+  try { return new Set(JSON.parse(localStorage.getItem(LIKED_KEY) || "[]")); }
+  catch { return new Set(); }
+};
+const saveLikedSet = (s: Set<string>) => {
+  try { localStorage.setItem(LIKED_KEY, JSON.stringify(Array.from(s))); } catch {}
+};
+
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<Post | null>(null);
   const [related, setRelated] = useState<Related[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [liked, setLiked] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
