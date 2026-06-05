@@ -9,7 +9,7 @@ import { trackBlogCtaClick } from "@/lib/blogAttribution";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap, Link2, Twitter, Linkedin, Home, Heart } from "lucide-react";
+import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap, Link2, Twitter, Linkedin, Home, ThumbsUp } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
 import { ArticleCard } from "@/components/ui/blog-post-card";
 import { Sparkles, ArrowRight } from "lucide-react";
