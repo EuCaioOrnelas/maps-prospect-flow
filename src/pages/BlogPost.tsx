@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, ArrowLeft, Share2 } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
+import { ArticleCard } from "@/components/ui/blog-post-card";
+import { Sparkles, ArrowRight } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -57,6 +59,10 @@ type Related = {
   title: string;
   excerpt: string | null;
   cover_image_url: string | null;
+  author_name: string;
+  published_at: string | null;
+  reading_time_minutes: number | null;
+  category: { name: string; slug: string; color: string | null } | null;
 };
 
 export default function BlogPost() {
@@ -101,7 +107,7 @@ export default function BlogPost() {
       if ((data as any).category_id) {
         const { data: rel } = await supabase
           .from("blog_posts")
-          .select("id,slug,title,excerpt,cover_image_url")
+          .select("id,slug,title,excerpt,cover_image_url,author_name,published_at,reading_time_minutes,category:blog_categories(name,slug,color)")
           .eq("status", "published")
           .eq("category_id", (data as any).category_id)
           .neq("id", (data as any).id)
@@ -349,37 +355,49 @@ export default function BlogPost() {
           </div>
         )}
 
-        {/* CTA */}
-        <div className="mt-12 p-8 rounded-2xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-center">
-          <h3 className="text-2xl font-bold">Acelere seu comercial B2B com a Wiize</h3>
-          <p className="mt-2 opacity-90">
-            Prospecção, CRM, WhatsApp e IA em uma plataforma só.
-          </p>
-          <Button asChild size="lg" variant="secondary" className="mt-5">
-            <Link to="/signup">Testar grátis</Link>
-          </Button>
+        {/* CTA — clean, Wiize hero style */}
+        <div className="mt-14 relative overflow-hidden rounded-3xl border border-border/60 bg-card p-8 sm:p-10">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-60"
+            style={{
+              background:
+                "radial-gradient(ellipse at top right, hsl(var(--primary) / 0.12), transparent 60%)",
+            }}
+          />
+          <div className="relative">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <Sparkles className="h-3.5 w-3.5" /> IA comercial assistida
+            </span>
+            <h3 className="mt-4 text-2xl sm:text-3xl font-semibold tracking-tight text-foreground leading-tight max-w-xl">
+              Venda mais com IA, <span className="text-primary">sem inflar seu time</span>.
+            </h3>
+            <p className="mt-3 text-muted-foreground max-w-lg">
+              A Wiize prospecta, qualifica e acelera suas vendas B2B em uma única plataforma — você fecha, a IA faz o resto.
+            </p>
+            <Button asChild size="lg" className="mt-6 rounded-full gap-2">
+              <Link to="/signup">Testar grátis <ArrowRight className="h-4 w-4" /></Link>
+            </Button>
+          </div>
         </div>
 
-        {/* Relacionados */}
+        {/* Relacionados — mesmo card do blog principal */}
         {related.length > 0 && (
           <section className="mt-16 pt-10 border-t border-border">
             <h2 className="text-2xl font-bold mb-6">Artigos relacionados</h2>
-            <div className="grid sm:grid-cols-3 gap-5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {related.map((r) => (
-                <Link
+                <ArticleCard
                   key={r.id}
-                  to={`/blog/${r.slug}`}
-                  className="group block rounded-lg border border-border overflow-hidden hover:shadow-md transition"
-                >
-                  {r.cover_image_url ? (
-                    <img src={r.cover_image_url} alt={r.title} loading="lazy" className="aspect-[16/9] w-full object-cover" />
-                  ) : (
-                    <div className="aspect-[16/9] bg-gradient-to-br from-primary/10 to-primary/30" />
-                  )}
-                  <div className="p-4">
-                    <h3 className="font-semibold line-clamp-2 group-hover:text-primary">{r.title}</h3>
-                  </div>
-                </Link>
+                  href={`/blog/${r.slug}`}
+                  cover={r.cover_image_url || undefined}
+                  tag={r.category?.name}
+                  tagColor={r.category?.color}
+                  readingTime={r.reading_time_minutes || undefined}
+                  headline={r.title}
+                  excerpt={r.excerpt || ""}
+                  writer={r.author_name}
+                  publishedAt={r.published_at || undefined}
+                />
               ))}
             </div>
           </section>
