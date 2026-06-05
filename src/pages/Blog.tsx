@@ -154,32 +154,32 @@ export default function Blog() {
         })}</script>
       </Helmet>
 
-      {/* Background — subtle dots over the whole page, glow concentrated behind the hero title */}
+      {/* Background — clean: soft gradient + subtle dots + very gentle glow behind title */}
       <div className="pointer-events-none absolute inset-0 z-0">
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, hsl(158 35% 98%) 0%, hsl(210 30% 99%) 35%, hsl(var(--background)) 100%)",
+              "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%)",
           }}
         />
         <div
-          className="absolute inset-0 opacity-[0.12]"
+          className="absolute inset-0 opacity-[0.08]"
           style={{
             backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`,
-            backgroundSize: "18px 18px",
+            backgroundSize: "22px 22px",
             maskImage:
-              "linear-gradient(180deg, black 0%, black 55%, transparent 90%)",
+              "linear-gradient(180deg, black 0%, black 40%, transparent 80%)",
             WebkitMaskImage:
-              "linear-gradient(180deg, black 0%, black 55%, transparent 90%)",
+              "linear-gradient(180deg, black 0%, black 40%, transparent 80%)",
           }}
         />
-        {/* Compact green glow concentrated behind the title */}
+        {/* Very soft glow behind the title only */}
         <div
-          className="absolute left-1/2 -translate-x-1/2 top-[120px] w-[780px] h-[480px]"
+          className="absolute left-1/2 -translate-x-1/2 top-[140px] w-[600px] h-[300px]"
           style={{
             background:
-              "radial-gradient(ellipse at center, hsl(158 70% 50% / 0.18) 0%, hsl(158 70% 50% / 0.07) 35%, transparent 65%)",
+              "radial-gradient(ellipse at center, hsl(158 65% 50% / 0.06) 0%, hsl(158 65% 50% / 0.02) 40%, transparent 70%)",
           }}
         />
       </div>
@@ -187,17 +187,16 @@ export default function Blog() {
       <div className="relative z-10">
       <Navbar />
 
-      {/* Hero */}
-      <section className="pt-[120px] sm:pt-[140px] pb-10 sm:pb-14">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <h1 className="font-display font-bold tracking-tight text-foreground text-5xl sm:text-6xl md:text-7xl leading-[1.05]">
-            Blog <span className="text-shimmer-highlight font-extrabold">Wiize</span>
+      {/* Hero — clean */}
+      <section className="pt-[110px] sm:pt-[130px] pb-8 sm:pb-12">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <h1 className="font-display font-semibold tracking-tight text-foreground text-4xl sm:text-5xl leading-[1.1]">
+            Blog <span className="text-primary">Wiize</span>
           </h1>
-          <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Bastidores, estratégias e playbooks de quem usa{" "}
-            <strong className="text-foreground">IA comercial assistida</strong> para prospectar,
-            qualificar e fechar mais oportunidades B2B sem inflar o time.
+          <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
+            Estratégias e playbooks de IA comercial assistida para vendas B2B.
           </p>
+
 
           {/* Search + Filter */}
           <form
