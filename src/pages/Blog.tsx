@@ -14,10 +14,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Search, Filter, Check } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
+import { Footer } from "@/components/landing/Footer";
 import { ArticleCard } from "@/components/ui/blog-post-card";
 
 const SITE_URL = "https://wiize.com.br";
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 6;
 
 type Category = { id: string; name: string; slug: string; color: string | null };
 type Post = {
@@ -153,52 +154,44 @@ export default function Blog() {
         })}</script>
       </Helmet>
 
-      {/* Full-page ambient background (dots + soft green glow) */}
+      {/* Background — subtle dots over the whole page, glow concentrated behind the hero title */}
       <div className="pointer-events-none absolute inset-0 z-0">
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, hsl(158 35% 98%) 0%, hsl(210 30% 99%) 40%, hsl(var(--background)) 100%)",
+              "linear-gradient(180deg, hsl(158 35% 98%) 0%, hsl(210 30% 99%) 35%, hsl(var(--background)) 100%)",
           }}
         />
         <div
-          className="absolute inset-0 opacity-[0.14]"
+          className="absolute inset-0 opacity-[0.12]"
           style={{
             backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`,
             backgroundSize: "18px 18px",
             maskImage:
-              "linear-gradient(180deg, black 0%, black 70%, transparent 100%)",
+              "linear-gradient(180deg, black 0%, black 55%, transparent 90%)",
             WebkitMaskImage:
-              "linear-gradient(180deg, black 0%, black 70%, transparent 100%)",
+              "linear-gradient(180deg, black 0%, black 55%, transparent 90%)",
           }}
         />
-        {/* Soft green glow — wide, centered, covering the page */}
+        {/* Compact green glow concentrated behind the title */}
         <div
-          className="absolute top-[5%] left-1/2 -translate-x-1/2 w-[1400px] h-[1100px]"
+          className="absolute left-1/2 -translate-x-1/2 top-[120px] w-[780px] h-[480px]"
           style={{
             background:
-              "radial-gradient(ellipse at center, hsl(158 60% 55% / 0.08) 0%, hsl(158 60% 55% / 0.03) 40%, transparent 70%)",
+              "radial-gradient(ellipse at center, hsl(158 70% 50% / 0.18) 0%, hsl(158 70% 50% / 0.07) 35%, transparent 65%)",
           }}
-        />
-        <div
-          className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full opacity-50"
-          style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.05) 0%, transparent 65%)" }}
-        />
-        <div
-          className="absolute top-[40%] -left-32 w-[600px] h-[600px] rounded-full opacity-40"
-          style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.04) 0%, transparent 65%)" }}
         />
       </div>
 
       <div className="relative z-10">
       <Navbar />
 
-      {/* Hero (no background here — uses page-level glow) */}
+      {/* Hero */}
       <section className="pt-[120px] sm:pt-[140px] pb-10 sm:pb-14">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <h1 className="font-display font-bold tracking-tight text-foreground text-4xl sm:text-5xl md:text-6xl leading-[1.05]">
-            Vender com IA <span className="text-shimmer-highlight font-extrabold">deixou de ser opcional</span>
+          <h1 className="font-display font-bold tracking-tight text-foreground text-5xl sm:text-6xl md:text-7xl leading-[1.05]">
+            Blog <span className="text-shimmer-highlight font-extrabold">Wiize</span>
           </h1>
           <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
             Bastidores, estratégias e playbooks de quem usa{" "}
@@ -206,21 +199,17 @@ export default function Blog() {
             qualificar e fechar mais oportunidades B2B sem inflar o time.
           </p>
 
-
           {/* Search + Filter */}
           <form
             onSubmit={onSearch}
             className="mt-8 max-w-2xl mx-auto flex items-center gap-2 p-1.5 rounded-full bg-card border border-border/70 shadow-sm focus-within:border-primary/40 focus-within:shadow-md transition-all"
           >
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Buscar por título, conteúdo, autor..."
-                className="pl-11 h-11 rounded-full border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-            </div>
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Buscar por título, conteúdo, autor..."
+              className="flex-1 h-11 px-4 rounded-full border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -260,8 +249,13 @@ export default function Blog() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button type="submit" className="rounded-full h-11 px-5">
-              Buscar
+            <Button
+              type="submit"
+              size="icon"
+              aria-label="Buscar"
+              className="rounded-full h-11 w-11 shrink-0"
+            >
+              <Search className="h-4 w-4" />
             </Button>
           </form>
 
@@ -392,8 +386,9 @@ export default function Blog() {
           )}
         </section>
       </main>
+
+      <Footer />
       </div>
     </div>
   );
 }
-

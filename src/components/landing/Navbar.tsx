@@ -101,7 +101,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         <div
           className="mx-auto"
           style={{
-            maxWidth: scrolled ? '720px' : '1280px',
+            maxWidth: scrolled ? '920px' : '1280px',
             borderRadius: scrolled ? '9999px' : '0px',
             backgroundColor: scrolled ? 'hsl(var(--background) / 0.55)' : 'transparent',
             backdropFilter: scrolled ? 'blur(16px) saturate(180%)' : 'none',
@@ -110,17 +110,17 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             boxShadow: scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
             paddingTop: scrolled ? '8px' : '16px',
             paddingBottom: scrolled ? '8px' : '16px',
-            paddingLeft: scrolled ? '20px' : '16px',
-            paddingRight: scrolled ? '20px' : '16px',
+            paddingLeft: scrolled ? '24px' : '16px',
+            paddingRight: scrolled ? '12px' : '16px',
             transition: 'max-width 500ms cubic-bezier(0.22,1,0.36,1), border-radius 300ms ease-out, background-color 300ms ease-out, box-shadow 300ms ease-out, padding 500ms cubic-bezier(0.22,1,0.36,1)',
             willChange: 'max-width, padding',
             transform: 'translateZ(0)',
           }}
         >
-          <div className="flex items-center justify-between mx-auto w-full">
+          <div className="flex items-center justify-between mx-auto w-full gap-8">
             <Logo size="md" mobileSize="md" />
             
-            <div className="hidden md:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-7">
               {navLinks.map(link => (
                 link.to ? (
                   <Link key={link.to} to={link.to} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
