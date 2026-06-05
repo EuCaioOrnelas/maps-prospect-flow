@@ -27,9 +27,10 @@ type Post = {
 
 export default function Blog() {
   const [params, setParams] = useSearchParams();
+  const routeParams = useParams<{ categorySlug?: string }>();
   const page = Math.max(1, parseInt(params.get("page") || "1", 10));
   const q = params.get("q") || "";
-  const categorySlug = params.get("categoria") || "";
+  const categorySlug = routeParams.categorySlug || params.get("categoria") || "";
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
