@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, ArrowLeft, Share2 } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
+import { ArticleCard } from "@/components/ui/blog-post-card";
+import { Sparkles, ArrowRight } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
