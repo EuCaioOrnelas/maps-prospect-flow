@@ -54,6 +54,7 @@ const empty = {
   ai_short_answer: "",
   ai_entities: "",
   faq: [] as FAQItem[],
+  reading_time_override: "" as string,
 };
 
 export default function AdminBlogEditor() {
@@ -89,6 +90,7 @@ export default function AdminBlogEditor() {
         seo_keywords: Array.isArray(data.seo_keywords) ? data.seo_keywords.join(", ") : "",
         ai_entities: Array.isArray(data.ai_entities) ? data.ai_entities.join(", ") : "",
         faq: Array.isArray(data.faq) ? (data.faq as any) : [],
+        reading_time_override: data.reading_time_minutes ? String(data.reading_time_minutes) : "",
       } as any);
       setLoading(false);
     })();
@@ -121,7 +123,9 @@ export default function AdminBlogEditor() {
       category_id: form.category_id || null,
       status,
       featured: form.featured,
-      reading_time_minutes: computedReading,
+      reading_time_minutes: form.reading_time_override
+        ? Math.max(1, parseInt(form.reading_time_override, 10) || computedReading)
+        : computedReading,
       published_at:
         status === "published"
           ? form.published_at ? new Date(form.published_at).toISOString() : new Date().toISOString()
