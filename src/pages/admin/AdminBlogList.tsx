@@ -12,7 +12,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, ExternalLink, Search, FileText, Type, Tag, Activity, CalendarDays, Eye, Heart, Settings2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, Search, FileText, Type, Tag, Activity, CalendarDays, Eye, ThumbsUp, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Post = {
@@ -110,7 +110,7 @@ export default function AdminBlogList() {
               <TableHead><span className="inline-flex items-center gap-2"><Activity className="h-3.5 w-3.5" /> Status</span></TableHead>
               <TableHead><span className="inline-flex items-center gap-2"><CalendarDays className="h-3.5 w-3.5" /> Publicado</span></TableHead>
               <TableHead className="text-right"><span className="inline-flex items-center gap-2 justify-end"><Eye className="h-3.5 w-3.5" /> Views</span></TableHead>
-              <TableHead className="text-right"><span className="inline-flex items-center gap-2 justify-end"><Heart className="h-3.5 w-3.5" /> Curtidas</span></TableHead>
+              <TableHead className="text-right"><span className="inline-flex items-center gap-2 justify-end"><ThumbsUp className="h-3.5 w-3.5" /> Curtidas</span></TableHead>
               <TableHead className="text-right"><span className="inline-flex items-center gap-2 justify-end"><Settings2 className="h-3.5 w-3.5" /> Ações</span></TableHead>
             </TableRow>
           </TableHeader>
@@ -139,7 +139,7 @@ export default function AdminBlogList() {
                   <TableCell className="text-right text-sm">{p.view_count}</TableCell>
                   <TableCell className="text-right text-sm">
                     <span className="inline-flex items-center gap-1 justify-end">
-                      <Heart className="h-3.5 w-3.5 text-rose-500" />
+                      <ThumbsUp className="h-3.5 w-3.5 text-emerald-600" />
                       {p.like_count ?? 0}
                     </span>
                   </TableCell>

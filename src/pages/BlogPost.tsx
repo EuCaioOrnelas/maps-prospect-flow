@@ -9,7 +9,7 @@ import { trackBlogCtaClick } from "@/lib/blogAttribution";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap, Link2, Twitter, Linkedin, Home, Heart } from "lucide-react";
+import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap, Link2, Twitter, Linkedin, Home, ThumbsUp } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
 import { ArticleCard } from "@/components/ui/blog-post-card";
 import { Sparkles, ArrowRight } from "lucide-react";
@@ -396,10 +396,10 @@ export default function BlogPost() {
                 aria-pressed={liked}
                 aria-label={liked ? "Remover curtida" : "Curtir artigo"}
                 title={liked ? "Você curtiu" : "Gostei"}
-                className={`group inline-flex h-10 items-center gap-2 rounded-full border border-border bg-background pl-2.5 pr-3.5 text-sm font-medium transition-all hover:border-foreground/30 hover:bg-muted ${liked ? "text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30" : "text-foreground"}`}
+                className={`group inline-flex h-10 items-center gap-2 rounded-full border bg-background pl-2.5 pr-3.5 text-sm font-medium transition-all ${liked ? "text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/30" : "border-border text-foreground hover:border-foreground/30 hover:bg-muted"}`}
               >
-                <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${liked ? "bg-rose-500/15" : "bg-muted"}`}>
-                  <Heart className={`h-3.5 w-3.5 transition-transform ${liked ? "fill-rose-600 text-rose-600 scale-110" : "text-foreground"}`} />
+                <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${liked ? "bg-emerald-500/15" : "bg-muted"}`}>
+                  <ThumbsUp className={`h-3.5 w-3.5 transition-transform ${liked ? "fill-emerald-600 text-emerald-600 scale-110" : "text-foreground"}`} />
                 </span>
                 <span className="tabular-nums">{likeCount}</span>
               </button>
@@ -448,13 +448,6 @@ export default function BlogPost() {
           </figure>
         )}
 
-        {/* Resposta curta (GEO) */}
-        {post.ai_short_answer && (
-          <aside className="mb-8 p-5 rounded-xl border-l-4 border-primary bg-primary/5">
-            <p className="text-sm font-semibold text-primary mb-1">Resposta rápida</p>
-            <p className="text-base text-foreground">{post.ai_short_answer}</p>
-          </aside>
-        )}
 
         <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h3:text-xl sm:prose-h3:text-2xl prose-p:text-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:my-6 prose-ul:my-4 prose-ol:my-4 prose-li:my-1">
           {/^\s*</.test(post.content) ? (
