@@ -239,7 +239,7 @@ function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply
 
 export function ChatMessageArea({
   conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
-  members = [], canChangeResponsible = false, onTransferResponsible, currentUserId,
+  members = [], canChangeResponsible = false, onTransferResponsible, currentUserId, onBack,
 }: ChatMessageAreaProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
