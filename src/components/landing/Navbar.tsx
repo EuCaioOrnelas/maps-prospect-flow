@@ -77,11 +77,12 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
     scrollToPricing();
   };
 
-  const navLinks = [
+  const navLinks: Array<{ href?: string; to?: string; label: string }> = [
     { href: "#features", label: "Recursos" },
     { href: "#testimonials", label: "Depoimentos" },
     { href: "#pricing", label: "Planos" },
     { href: "#faq", label: "FAQ" },
+    { to: "/blog", label: "Blog" },
   ];
 
   return (
@@ -121,9 +122,15 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             
             <div className="hidden md:flex items-center gap-6">
               {navLinks.map(link => (
-                <a key={link.href} href={link.href} onClick={(e) => handleNavLinkClick(e, link.href)} className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                  {link.label}
-                </a>
+                link.to ? (
+                  <Link key={link.to} to={link.to} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a key={link.href} href={link.href} onClick={(e) => handleNavLinkClick(e, link.href!)} className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                    {link.label}
+                  </a>
+                )
               ))}
             </div>
 
@@ -181,14 +188,25 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         >
           <div className="flex flex-col gap-4">
             {navLinks.map(link => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-muted-foreground hover:text-foreground transition-colors py-2 cursor-pointer"
-                onClick={(e) => handleNavLinkClick(e, link.href)}
-              >
-                {link.label}
-              </a>
+              link.to ? (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-muted-foreground hover:text-foreground transition-colors py-2 cursor-pointer"
+                  onClick={(e) => handleNavLinkClick(e, link.href!)}
+                >
+                  {link.label}
+                </a>
+              )
             ))}
             <div className="flex flex-col gap-2 pt-2 border-t border-border">
               <Link to="/login" onClick={() => setMobileMenuOpen(false)}>

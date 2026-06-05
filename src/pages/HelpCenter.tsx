@@ -9,6 +9,7 @@ const HelpCenter = () => {
   const navigate = useNavigate();
 
   const usefulLinks = [
+    { label: "Blog Wiize", path: "/blog" },
     { label: "Segurança e Proteção de Dados", hash: "seguranca" },
     { label: "API Oficial do Meta (Inbound)", hash: "meta-api" },
     { label: "Prospecção Outbound via Evolution API", hash: "whatsapp" },
