@@ -48,6 +48,7 @@ const Chat = () => {
   const { role } = useAccountRole();
   const { members } = useAccountMembers();
   const canChangeResponsible = role === "owner" || role === "admin";
+  const isMobile = useIsMobile();
   const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>(
     role === "operational" ? "me" : "me"
   );
