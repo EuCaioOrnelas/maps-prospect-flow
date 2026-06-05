@@ -1,12 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams, useParams } from "react-router-dom";
+import { Link, useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Clock, Calendar, ArrowRight } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, Filter, Check } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
+import { ArticleCard } from "@/components/ui/blog-post-card";
 
 const SITE_URL = "https://wiize.com.br";
 const PAGE_SIZE = 9;
@@ -28,6 +36,7 @@ type Post = {
 export default function Blog() {
   const [params, setParams] = useSearchParams();
   const routeParams = useParams<{ categorySlug?: string }>();
+  const navigate = useNavigate();
   const page = Math.max(1, parseInt(params.get("page") || "1", 10));
   const q = params.get("q") || "";
   const categorySlug = routeParams.categorySlug || params.get("categoria") || "";
@@ -118,11 +127,12 @@ export default function Blog() {
     return `/blog${qs ? `?${qs}` : ""}`;
   }, [categorySlug, page]);
 
-  const pageTitle = categorySlug
-    ? `Blog Wiize — ${categories.find((c) => c.slug === categorySlug)?.name || "Categoria"}`
-    : "Blog Wiize — Inteligência comercial, vendas B2B e IA";
+  const activeCategory = categories.find((c) => c.slug === categorySlug);
+  const pageTitle = activeCategory
+    ? `Blog Wiize — ${activeCategory.name}`
+    : "Blog Wiize — IA comercial assistida para vendas B2B";
   const pageDescription =
-    "Conteúdo prático sobre prospecção, CRM, WhatsApp, IA comercial e automação para times B2B de alta performance.";
+    "Insights, estratégias e bastidores da Wiize: IA comercial assistida que prospecta, qualifica e acelera vendas B2B sem inflar o time.";
 
   return (
     <div className="min-h-screen bg-background">
@@ -145,52 +155,167 @@ export default function Blog() {
 
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-32 pb-16">
-        {/* Hero */}
-        <header className="mb-10 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
-            Blog Wiize
+      {/* Hero with dots + glow (Wiize style) */}
+      <section className="relative -mt-[72px] sm:-mt-[80px] pt-[120px] sm:pt-[140px] pb-12 sm:pb-16 overflow-hidden">
+        {/* Base gradient backdrop */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, hsl(158 35% 97.5%) 0%, hsl(210 30% 99%) 60%, hsl(var(--background)) 100%)",
+          }}
+        />
+        {/* Dotted texture */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.18]"
+          style={{
+            backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`,
+            backgroundSize: "18px 18px",
+            maskImage:
+              "radial-gradient(ellipse 60% 70% at center, black 30%, transparent 75%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 60% 70% at center, black 30%, transparent 75%)",
+          }}
+        />
+        {/* Soft primary glow */}
+        <div
+          className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[900px] pointer-events-none"
+          style={{
+            transform: "translateX(-50%)",
+            background:
+              "radial-gradient(ellipse at center, hsl(158 60% 55% / 0.10) 0%, hsl(158 60% 55% / 0.03) 45%, transparent 70%)",
+          }}
+        />
+        {/* Accent blobs */}
+        <div
+          className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full pointer-events-none opacity-50"
+          style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.06) 0%, transparent 65%)" }}
+        />
+        <div
+          className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full pointer-events-none opacity-40"
+          style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.05) 0%, transparent 65%)" }}
+        />
+
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass border border-primary/15 mb-6 text-xs font-medium text-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            Blog Wiize · IA comercial assistida
+          </div>
+          <h1 className="font-display font-bold tracking-tight text-foreground text-4xl sm:text-5xl md:text-6xl leading-[1.05]">
+            Vender com IA <span className="text-shimmer-highlight font-extrabold">deixou de ser opcional</span>
           </h1>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Estratégias práticas de prospecção, CRM, WhatsApp e IA para acelerar
-            o comercial B2B.
+          <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+            Bastidores, estratégias e playbooks de quem usa <strong className="text-foreground">IA comercial assistida</strong> para
+            prospectar, qualificar e fechar mais oportunidades B2B — sem inflar o time.
           </p>
 
-          <form onSubmit={onSearch} className="mt-8 max-w-xl mx-auto relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Buscar por título, conteúdo, categoria..."
-              className="pl-9 h-12"
-            />
-          </form>
-        </header>
+          {/* Search + Filter */}
+          <form
+            onSubmit={onSearch}
+            className="mt-8 max-w-2xl mx-auto flex items-center gap-2 p-1.5 rounded-full bg-card border border-border/70 shadow-sm focus-within:border-primary/40 focus-within:shadow-md transition-all"
+          >
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Buscar por título, conteúdo, autor..."
+                className="pl-11 h-11 rounded-full border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+            </div>
 
-        {/* Categorias */}
-        <nav aria-label="Categorias do blog" className="flex flex-wrap gap-2 justify-center mb-12">
-          <Button asChild variant={!categorySlug ? "default" : "outline"} size="sm">
-            <Link to="/blog">Todas</Link>
-          </Button>
-          {categories.map((c) => (
-            <Button
-              key={c.id}
-              asChild
-              variant={categorySlug === c.slug ? "default" : "outline"}
-              size="sm"
-            >
-              <Link to={`/blog/categoria/${c.slug}`}>{c.name}</Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full h-11 px-4 gap-2 border-border/70 bg-background/50"
+                >
+                  <Filter className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {activeCategory ? activeCategory.name : "Categorias"}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-popover">
+                <DropdownMenuLabel>Filtrar por categoria</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/blog")} className="gap-2">
+                  {!categorySlug && <Check className="h-3.5 w-3.5" />}
+                  <span className={!categorySlug ? "font-medium" : ""}>Todas as categorias</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {categories.map((c) => (
+                  <DropdownMenuItem
+                    key={c.id}
+                    onClick={() => navigate(`/blog/categoria/${c.slug}`)}
+                    className="gap-2"
+                  >
+                    {categorySlug === c.slug && <Check className="h-3.5 w-3.5" />}
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: c.color || "hsl(var(--primary))" }}
+                    />
+                    <span className={categorySlug === c.slug ? "font-medium" : ""}>{c.name}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button type="submit" className="rounded-full h-11 px-5">
+              Buscar
             </Button>
-          ))}
-        </nav>
+          </form>
 
+          {/* Active filter pill */}
+          {(activeCategory || q) && (
+            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <span>Filtrando por:</span>
+              {activeCategory && (
+                <button
+                  onClick={() => navigate("/blog")}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-medium hover:bg-primary/20"
+                >
+                  {activeCategory.name} ✕
+                </button>
+              )}
+              {q && (
+                <button
+                  onClick={() => updateParams({ q: null })}
+                  className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium hover:bg-muted/70"
+                >
+                  "{q}" ✕
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
         {/* Destaques */}
         {featured.length > 0 && (
-          <section className="mb-12">
-            <h2 className="text-2xl font-semibold mb-6">Em destaque</h2>
+          <section className="mb-14">
+            <div className="flex items-end justify-between mb-6">
+              <h2 className="text-2xl font-semibold tracking-tight">Em destaque</h2>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                Selecionados pela equipe
+              </span>
+            </div>
             <div className="grid md:grid-cols-3 gap-6">
               {featured.map((p) => (
-                <PostCard key={p.id} post={p} />
+                <ArticleCard
+                  key={p.id}
+                  href={`/blog/${p.slug}`}
+                  cover={p.cover_image_url || undefined}
+                  tag={p.category?.name}
+                  tagColor={p.category?.color}
+                  readingTime={p.reading_time_minutes || undefined}
+                  headline={p.title}
+                  excerpt={p.excerpt || ""}
+                  writer={p.author_name}
+                  publishedAt={p.published_at || undefined}
+                />
               ))}
             </div>
           </section>
@@ -198,17 +323,45 @@ export default function Blog() {
 
         {/* Lista */}
         <section>
-          <h2 className="text-2xl font-semibold mb-6">
-            {q ? `Resultados para "${q}"` : "Últimas publicações"}
+          <h2 className="text-2xl font-semibold tracking-tight mb-6">
+            {q ? `Resultados para "${q}"` : activeCategory ? activeCategory.name : "Últimas publicações"}
           </h2>
           {loading ? (
-            <p className="text-muted-foreground">Carregando...</p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-xl border border-border/60 bg-card overflow-hidden animate-pulse">
+                  <div className="aspect-[16/9] bg-muted" />
+                  <div className="p-5 space-y-3">
+                    <div className="h-3 w-20 bg-muted rounded" />
+                    <div className="h-5 w-3/4 bg-muted rounded" />
+                    <div className="h-3 w-full bg-muted rounded" />
+                    <div className="h-3 w-5/6 bg-muted rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : posts.length === 0 ? (
-            <p className="text-muted-foreground">Nenhum artigo encontrado.</p>
+            <div className="text-center py-16 border border-dashed border-border rounded-xl">
+              <p className="text-muted-foreground">Nenhum artigo encontrado.</p>
+              <Button variant="outline" className="mt-4 rounded-full" onClick={() => navigate("/blog")}>
+                Limpar filtros
+              </Button>
+            </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {posts.map((p) => (
-                <PostCard key={p.id} post={p} />
+                <ArticleCard
+                  key={p.id}
+                  href={`/blog/${p.slug}`}
+                  cover={p.cover_image_url || undefined}
+                  tag={p.category?.name}
+                  tagColor={p.category?.color}
+                  readingTime={p.reading_time_minutes || undefined}
+                  headline={p.title}
+                  excerpt={p.excerpt || ""}
+                  writer={p.author_name}
+                  publishedAt={p.published_at || undefined}
+                />
               ))}
             </div>
           )}
@@ -219,6 +372,7 @@ export default function Blog() {
               <Button
                 variant="outline"
                 size="sm"
+                className="rounded-full"
                 disabled={page <= 1}
                 onClick={() => updateParams({ page: String(page - 1) })}
               >
@@ -230,6 +384,7 @@ export default function Blog() {
               <Button
                 variant="outline"
                 size="sm"
+                className="rounded-full"
                 disabled={page >= totalPages}
                 onClick={() => updateParams({ page: String(page + 1) })}
               >
@@ -240,58 +395,5 @@ export default function Blog() {
         </section>
       </main>
     </div>
-  );
-}
-
-function PostCard({ post }: { post: Post }) {
-  return (
-    <Link
-      to={`/blog/${post.slug}`}
-      className="group block rounded-xl border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow"
-    >
-      {post.cover_image_url ? (
-        <div className="aspect-[16/9] overflow-hidden bg-muted">
-          <img
-            src={post.cover_image_url}
-            alt={post.title}
-            loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        </div>
-      ) : (
-        <div className="aspect-[16/9] bg-gradient-to-br from-primary/10 to-primary/30" />
-      )}
-      <div className="p-5">
-        {post.category && (
-          <Badge variant="secondary" className="mb-3">
-            {post.category.name}
-          </Badge>
-        )}
-        <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
-          {post.title}
-        </h3>
-        {post.excerpt && (
-          <p className="mt-2 text-sm text-muted-foreground line-clamp-3">{post.excerpt}</p>
-        )}
-        <div className="mt-4 flex items-center gap-3 text-xs text-muted-foreground">
-          <span>{post.author_name}</span>
-          {post.published_at && (
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {new Date(post.published_at).toLocaleDateString("pt-BR")}
-            </span>
-          )}
-          {post.reading_time_minutes && (
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {post.reading_time_minutes} min
-            </span>
-          )}
-        </div>
-        <div className="mt-4 flex items-center text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-          Ler artigo <ArrowRight className="h-4 w-4 ml-1" />
-        </div>
-      </div>
-    </Link>
   );
 }
