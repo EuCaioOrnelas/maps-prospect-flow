@@ -24,6 +24,7 @@ type Post = {
   published_at: string | null;
   updated_at: string;
   view_count: number;
+  like_count: number;
   category: { name: string } | null;
 };
 
