@@ -64,9 +64,43 @@ export default function AdminBlogEditor() {
   const isNew = !id || id === "novo";
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
   const [form, setForm] = useState(empty);
   const [categories, setCategories] = useState<Category[]>([]);
   const [autoSlug, setAutoSlug] = useState(isNew);
+
+  const generateGeo = async () => {
+    if (!form.content) return toast.error("Adicione conteúdo antes de gerar");
+    setGeoLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-blog-geo", {
+        body: {
+          title: form.title,
+          subtitle: form.subtitle,
+          excerpt: form.excerpt,
+          content: form.content,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setForm((f) => ({
+        ...f,
+        ai_short_answer: (data as any).ai_short_answer || f.ai_short_answer,
+        ai_entities: Array.isArray((data as any).ai_entities) && (data as any).ai_entities.length
+          ? (data as any).ai_entities.join(", ")
+          : f.ai_entities,
+        faq: Array.isArray((data as any).faq) && (data as any).faq.length
+          ? (data as any).faq
+          : f.faq,
+      }));
+      toast.success("Conteúdo GEO gerado com IA");
+    } catch (e: any) {
+      toast.error("Falha ao gerar: " + (e?.message || "erro"));
+    } finally {
+      setGeoLoading(false);
+    }
+  };
+
 
   useEffect(() => {
     supabase.from("blog_categories").select("id,name").order("name")
@@ -354,6 +388,17 @@ export default function AdminBlogEditor() {
 
             <TabsContent value="geo">
               <Card className="p-5 space-y-4">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <h3 className="font-semibold text-sm flex items-center gap-1.5">
+                      <Sparkles className="h-4 w-4 text-primary" /> Otimização para IA (GEO)
+                    </h3>
+                    <p className="text-xs text-muted-foreground">Gere resposta curta, entidades e FAQ com base no conteúdo do artigo.</p>
+                  </div>
+                  <Button type="button" size="sm" variant="outline" disabled={geoLoading || !form.content} onClick={generateGeo}>
+                    {geoLoading ? "Gerando..." : (<><Sparkles className="h-3.5 w-3.5 mr-1.5" /> Gerar com IA</>)}
+                  </Button>
+                </div>
                 <div>
                   <Label>Resposta curta (para AI Overviews / Perplexity)</Label>
                   <Textarea value={form.ai_short_answer} onChange={(e) => set("ai_short_answer", e.target.value)} rows={3} placeholder="Resposta direta de 2-3 frases para a principal pergunta do artigo." />
@@ -367,6 +412,12 @@ export default function AdminBlogEditor() {
 
             <TabsContent value="faq">
               <Card className="p-5 space-y-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap pb-2">
+                  <p className="text-xs text-muted-foreground">FAQ aumenta chances de citação por IA + gera schema FAQPage.</p>
+                  <Button type="button" size="sm" variant="outline" disabled={geoLoading || !form.content} onClick={generateGeo}>
+                    {geoLoading ? "Gerando..." : (<><Sparkles className="h-3.5 w-3.5 mr-1.5" /> Gerar FAQ com IA</>)}
+                  </Button>
+                </div>
                 {form.faq.map((item, i) => (
                   <div key={i} className="border rounded-lg p-3 space-y-2">
                     <div className="flex gap-2">
@@ -393,6 +444,7 @@ export default function AdminBlogEditor() {
               </Card>
             </TabsContent>
           </Tabs>
+
         </div>
 
         <div className="space-y-4">

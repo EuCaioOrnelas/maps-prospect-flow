@@ -24,12 +24,16 @@ import { Confetti } from "@/components/ui/confetti";
 import { motion } from "framer-motion";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { markBlogAttribution } from "@/lib/blogAttribution";
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   useAutoScoreTracking("checkout_success");
+
+  useEffect(() => { markBlogAttribution("purchased", user?.id); }, [user?.id]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
