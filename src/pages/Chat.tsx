@@ -2,6 +2,7 @@ import { useChat } from "@/hooks/useChat";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatMessageArea } from "@/components/chat/ChatMessageArea";
 import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AppHeader } from "@/components/layout/AppHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { CRMResponsibleFilter, type ResponsibleFilter } from "@/components/crm/CRMResponsibleFilter";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import {
   RefreshCw,
