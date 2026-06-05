@@ -268,6 +268,24 @@ export default function BlogPost() {
     window.open(map[target], "_blank", "noopener,noreferrer");
   };
 
+  const toggleLike = async () => {
+    if (!post) return;
+    const set = getLikedSet();
+    if (liked) {
+      set.delete(post.id);
+      saveLikedSet(set);
+      setLiked(false);
+      setLikeCount((c) => Math.max(c - 1, 0));
+      await supabase.rpc("decrement_blog_post_like" as any, { _post_id: post.id });
+    } else {
+      set.add(post.id);
+      saveLikedSet(set);
+      setLiked(true);
+      setLikeCount((c) => c + 1);
+      await supabase.rpc("increment_blog_post_like" as any, { _post_id: post.id });
+    }
+  };
+
   const isWian = post.author_name?.toLowerCase() === "wian";
   const avatarSrc = post.author_avatar_url || (isWian ? wianAvatar : null);
 
