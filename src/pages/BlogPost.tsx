@@ -104,7 +104,7 @@ export default function BlogPost() {
            author_name,author_bio,author_avatar_url,category_id,published_at,updated_at,
            reading_time_minutes,seo_title,seo_description,seo_keywords,canonical_url,
            robots_index,robots_follow,og_image_url,ai_summary,ai_short_answer,
-           ai_entities,ai_related_topics,faq,
+           ai_entities,ai_related_topics,faq,like_count,
            category:blog_categories(id,name,slug),
            tags:blog_post_tags(tag:blog_tags(name,slug))`
         )
@@ -119,6 +119,8 @@ export default function BlogPost() {
         return;
       }
       setPost(data as any);
+      setLikeCount((data as any).like_count || 0);
+      setLiked(getLikedSet().has((data as any).id));
       setLoading(false);
 
       // Increment view count (fire-and-forget)
