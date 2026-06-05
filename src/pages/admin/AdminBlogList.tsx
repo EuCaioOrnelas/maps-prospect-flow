@@ -46,7 +46,7 @@ export default function AdminBlogList() {
     setLoading(true);
     const { data, error } = await supabase
       .from("blog_posts")
-      .select("id,slug,title,status,featured,published_at,updated_at,view_count,category:blog_categories(name)")
+      .select("id,slug,title,status,featured,published_at,updated_at,view_count,like_count,category:blog_categories(name)")
       .order("updated_at", { ascending: false });
     if (error) toast.error("Erro ao carregar: " + error.message);
     setPosts((data as any) || []);
