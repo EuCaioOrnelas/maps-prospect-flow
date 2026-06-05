@@ -123,11 +123,11 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             <div className="hidden md:flex items-center gap-7">
               {navLinks.map(link => (
                 link.to ? (
-                  <Link key={link.to} to={link.to} className="text-sm font-medium text-foreground/85 hover:text-foreground transition-colors [text-shadow:0_1px_2px_hsl(var(--background)/0.6)]">
+                  <Link key={link.to} to={link.to} className="text-sm font-medium text-foreground hover:text-foreground/80 transition-colors">
                     {link.label}
                   </Link>
                 ) : (
-                  <a key={link.href} href={link.href} onClick={(e) => handleNavLinkClick(e, link.href!)} className="text-sm font-medium text-foreground/85 hover:text-foreground transition-colors cursor-pointer [text-shadow:0_1px_2px_hsl(var(--background)/0.6)]">
+                  <a key={link.href} href={link.href} onClick={(e) => handleNavLinkClick(e, link.href!)} className="text-sm font-medium text-foreground hover:text-foreground/80 transition-colors cursor-pointer">
                     {link.label}
                   </a>
                 )
