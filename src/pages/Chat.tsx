@@ -299,7 +299,16 @@ const Chat = () => {
               </div>
             ) : hasConnection ? (
               <>
-                <div className="w-[360px] shrink-0 wa-sidebar-border flex flex-col">
+                <div
+                  className={cn(
+                    "wa-sidebar-border flex flex-col",
+                    isMobile
+                      ? chat.activeConversationId
+                        ? "hidden"
+                        : "flex-1 min-w-0"
+                      : "w-[360px] shrink-0"
+                  )}
+                >
                   {(role === "owner" || role === "admin") && (
                     <div className="px-3 py-2 border-b border-border bg-background/40">
                       <CRMResponsibleFilter
@@ -329,22 +338,30 @@ const Chat = () => {
                     />
                   </div>
                 </div>
-                <ChatMessageArea
-                  conversation={chat.activeConversation}
-                  messages={chat.messages}
-                  loading={chat.loadingMessages}
-                  onSendMessage={chat.sendMessage}
-                  onSendMedia={chat.sendMedia}
-                  messagesEndRef={chat.messagesEndRef as React.RefObject<HTMLDivElement>}
-                  onReopenConversation={(templateName) => {
-                    console.log("Reabrir conversa com template:", templateName);
-                  }}
-                  fetchTemplates={chat.fetchTemplates}
-                  members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
-                  canChangeResponsible={canChangeResponsible}
-                  onTransferResponsible={chat.transferConversation}
-                  currentUserId={user?.id || ""}
-                />
+                <div
+                  className={cn(
+                    "flex-1 flex min-w-0",
+                    isMobile && !chat.activeConversationId && "hidden"
+                  )}
+                >
+                  <ChatMessageArea
+                    conversation={chat.activeConversation}
+                    messages={chat.messages}
+                    loading={chat.loadingMessages}
+                    onSendMessage={chat.sendMessage}
+                    onSendMedia={chat.sendMedia}
+                    messagesEndRef={chat.messagesEndRef as React.RefObject<HTMLDivElement>}
+                    onReopenConversation={(templateName) => {
+                      console.log("Reabrir conversa com template:", templateName);
+                    }}
+                    fetchTemplates={chat.fetchTemplates}
+                    members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
+                    canChangeResponsible={canChangeResponsible}
+                    onTransferResponsible={chat.transferConversation}
+                    currentUserId={user?.id || ""}
+                    onBack={isMobile ? () => chat.setActiveConversationId(null) : undefined}
+                  />
+                </div>
               </>
 
             ) : null}
