@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import wianAvatar from "@/assets/wian-avatar.png";
 
 export interface ArticleCardProps {
   headline: string;
@@ -18,22 +19,13 @@ export interface ArticleCardProps {
 }
 
 const formatReadTime = (m?: number) =>
-  !m || m < 1 ? "1 min de leitura" : `${m} min de leitura`;
+  !m || m < 1 ? "1 min. de leitura" : `${m} min. de leitura`;
 
 const formatDate = (d?: Date | string | null) => {
   if (!d) return "";
   const date = typeof d === "string" ? new Date(d) : d;
-  return date
-    .toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" });
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" });
 };
-
-const initials = (name?: string) =>
-  (name || "W")
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
 export const ArticleCard: React.FC<ArticleCardProps> = ({
   cover,
@@ -46,21 +38,24 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   href,
   className,
 }) => {
+  const isWian = !writer || writer.toLowerCase() === "wian";
+  const avatarSrc = writerAvatar || (isWian ? wianAvatar : undefined);
+
   const inner = (
     <article
       className={cn(
-        "group flex h-full flex-col rounded-2xl border border-border/60 bg-card p-3 sm:p-4 transition-all duration-300 hover:border-primary/40 hover:shadow-lg",
+        "group flex h-full flex-col rounded-2xl border border-border/60 bg-card p-2 sm:p-2.5 transition-transform duration-300 ease-out hover:-translate-y-1",
         className
       )}
     >
-      {/* Cover */}
+      {/* Cover — tighter padding, larger image */}
       <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-muted">
         {cover ? (
           <img
             src={cover}
             alt={headline}
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover"
           />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-primary/15 via-primary/5 to-transparent" />
@@ -68,7 +63,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       </div>
 
       {/* Title + excerpt */}
-      <div className="flex flex-1 flex-col px-1 pt-4 sm:px-2">
+      <div className="flex flex-1 flex-col px-2 pt-4">
         <h3 className="text-base sm:text-lg font-semibold leading-snug tracking-tight text-foreground line-clamp-2 group-hover:text-primary transition-colors">
           {headline}
         </h3>
@@ -76,24 +71,26 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           {excerpt}
         </p>
 
-        {/* Author pill */}
+        {/* Author pill — harmonic border matching outer card, softer gray */}
         <div className="mt-auto pt-4">
-          <div className="inline-flex items-center gap-2.5 rounded-full bg-muted/60 px-2.5 py-1.5 text-xs text-muted-foreground">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary overflow-hidden">
-              {writerAvatar ? (
-                <img src={writerAvatar} alt={writer || "Autor"} className="h-full w-full object-cover" />
+          <div className="inline-flex items-center gap-2.5 rounded-2xl border border-border/60 bg-muted/30 pl-1.5 pr-3 py-1.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-background overflow-hidden ring-1 ring-border/60">
+              {avatarSrc ? (
+                <img src={avatarSrc} alt={writer || "Wian"} className="h-full w-full object-cover" />
               ) : (
-                initials(writer)
+                <span className="text-[11px] font-semibold text-primary">
+                  {(writer || "W").slice(0, 1).toUpperCase()}
+                </span>
               )}
             </span>
-            <span className="font-medium text-foreground">{writer || "Wian"}</span>
-            {publishedAt && <span className="opacity-60">{formatDate(publishedAt)}</span>}
-            {readingTime ? (
-              <>
-                <span className="opacity-40">•</span>
-                <span>{formatReadTime(readingTime)}</span>
-              </>
-            ) : null}
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-semibold text-foreground">{writer || "Wian"}</span>
+              <span className="text-[11px] text-muted-foreground">
+                {publishedAt && <>{formatDate(publishedAt)}</>}
+                {publishedAt && readingTime ? " • " : ""}
+                {readingTime ? formatReadTime(readingTime) : ""}
+              </span>
+            </div>
           </div>
         </div>
       </div>
