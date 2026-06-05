@@ -355,29 +355,35 @@ export default function BlogPost() {
           </div>
         )}
 
-        {/* CTA — clean, Wiize hero style */}
-        <div className="mt-14 relative overflow-hidden rounded-3xl border border-border/60 bg-card p-8 sm:p-10">
+        {/* CTA — centralizado, estilo hero da Wiize com shimmer */}
+        <div className="mt-14 relative overflow-hidden rounded-3xl border border-border/60 bg-card p-8 sm:p-12 text-center">
           <div
-            className="pointer-events-none absolute inset-0 opacity-60"
+            className="pointer-events-none absolute inset-0 opacity-70"
             style={{
               background:
-                "radial-gradient(ellipse at top right, hsl(var(--primary) / 0.12), transparent 60%)",
+                "radial-gradient(ellipse at center, hsl(var(--primary) / 0.14), transparent 65%)",
             }}
           />
-          <div className="relative">
+          <div className="relative flex flex-col items-center">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <Sparkles className="h-3.5 w-3.5" /> IA comercial assistida
             </span>
-            <h3 className="mt-4 text-2xl sm:text-3xl font-semibold tracking-tight text-foreground leading-tight max-w-xl">
-              Venda mais com IA, <span className="text-primary">sem inflar seu time</span>.
+            <h3 className="mt-5 text-3xl sm:text-4xl font-semibold tracking-tight text-foreground leading-tight max-w-2xl">
+              Sua operação comercial rodando com{" "}
+              <span className="text-shimmer-highlight">IA da Wiize</span>
             </h3>
-            <p className="mt-3 text-muted-foreground max-w-lg">
-              A Wiize prospecta, qualifica e acelera suas vendas B2B em uma única plataforma — você fecha, a IA faz o resto.
+            <p className="mt-4 text-muted-foreground max-w-xl">
+              Teste grátis por 7 dias, sem cartão de crédito. Prospecte, qualifique e venda mais com IA assistida em uma plataforma só.
             </p>
-            <Button asChild size="lg" className="mt-6 rounded-full gap-2">
-              <Link to="/signup">Testar grátis <ArrowRight className="h-4 w-4" /></Link>
+            <Button asChild size="lg" className="mt-7 rounded-full gap-2 btn-shine">
+              <Link to="/signup">Começar teste grátis <ArrowRight className="h-4 w-4" /></Link>
             </Button>
+            <p className="mt-3 text-xs text-muted-foreground">
+              7 dias grátis · sem cartão · cancele quando quiser
+            </p>
           </div>
+        </div>
+
         </div>
 
         {/* Relacionados — mesmo card do blog principal */}
