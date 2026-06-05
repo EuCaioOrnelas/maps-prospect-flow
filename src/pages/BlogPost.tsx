@@ -388,29 +388,30 @@ export default function BlogPost() {
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <Sparkles className="h-3.5 w-3.5" /> IA comercial assistida
             </span>
-            <h3 className="mt-5 text-3xl sm:text-4xl font-semibold tracking-tight text-foreground leading-tight max-w-2xl">
-              Sua operação comercial rodando com{" "}
-              <span className="text-shimmer-highlight">IA da Wiize</span>
+            <h3 className="mt-5 text-3xl sm:text-4xl font-semibold tracking-tight text-foreground leading-tight max-w-3xl">
+              Uma{" "}
+              <span className="text-shimmer-highlight whitespace-nowrap">IA trabalhando</span>{" "}
+              pelo crescimento da sua empresa.
             </h3>
-            <p className="mt-4 text-muted-foreground max-w-xl">
-              Teste grátis por 7 dias, sem cartão de crédito. Prospecte, qualifique e venda mais com IA assistida em uma plataforma só.
+            <p className="mt-5 text-muted-foreground max-w-2xl">
+              Prospecção inteligente, análise de engajamento e identificação de oportunidades em uma única plataforma criada para ajudar empresas a crescer mais rápido.
+            </p>
+            <p className="mt-3 text-muted-foreground max-w-2xl">
+              Experimente a Wiize gratuitamente por 7 dias.
             </p>
             <Button asChild size="lg" className="mt-7 rounded-full gap-2 btn-shine">
-              <Link to="/signup">Começar teste grátis <ArrowRight className="h-4 w-4" /></Link>
+              <Link to="/signup/escolher-plano">Iniciar teste grátis <ArrowRight className="h-4 w-4" /></Link>
             </Button>
-            <p className="mt-3 text-xs text-muted-foreground">
-              7 dias grátis · sem cartão · cancele quando quiser
-            </p>
           </div>
         </div>
+      </article>
 
-
-
-        {/* Relacionados — mesmo card do blog principal */}
-        {related.length > 0 && (
-          <section className="mt-16 pt-10 border-t border-border">
+      {/* Relacionados — largura igual ao blog principal */}
+      {related.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
+          <div className="pt-10 border-t border-border">
             <h2 className="text-2xl font-bold mb-6">Artigos relacionados</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {related.map((r) => (
                 <ArticleCard
                   key={r.id}
@@ -426,9 +427,9 @@ export default function BlogPost() {
                 />
               ))}
             </div>
-          </section>
-        )}
-      </article>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
