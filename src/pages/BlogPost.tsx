@@ -57,6 +57,10 @@ type Related = {
   title: string;
   excerpt: string | null;
   cover_image_url: string | null;
+  author_name: string;
+  published_at: string | null;
+  reading_time_minutes: number | null;
+  category: { name: string; slug: string; color: string | null } | null;
 };
 
 export default function BlogPost() {
