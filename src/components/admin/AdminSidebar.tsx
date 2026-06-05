@@ -105,6 +105,7 @@ const NAV_SECTIONS: NavSection[] = [
     icon: Rocket,
     items: [
       { title: "Growth Intel", url: "/admin/growth-intel", icon: Target },
+      { title: "Blog", url: "/admin/blog", icon: FileText },
       { title: "Emails", url: "/admin/email-tests", icon: Mail },
       { title: "Fluxos", url: "/admin/email-flows", icon: Workflow },
       { title: "Score Usuários", url: "/admin/user-scoring", icon: Trophy },
