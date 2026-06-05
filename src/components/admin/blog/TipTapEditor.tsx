@@ -8,7 +8,7 @@ import {
   Bold, Italic, Strikethrough, Code, Heading1, Heading2, Heading3,
   List, ListOrdered, Quote, Undo, Redo, Link as LinkIcon, Image as ImageIcon, Minus,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface Props {
   value: string;
@@ -17,6 +17,9 @@ interface Props {
 }
 
 export function TipTapEditor({ value, onChange, placeholder }: Props) {
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
@@ -25,7 +28,14 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
       Placeholder.configure({ placeholder: placeholder || "Escreva seu conteúdo..." }),
     ],
     content: value || "",
-    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    onUpdate: ({ editor }) => {
+      if (editor.isDestroyed) return;
+      try {
+        onChangeRef.current(editor.getHTML());
+      } catch {
+        /* ignore transient prosemirror serialization race */
+      }
+    },
     editorProps: {
       attributes: {
         class: "prose prose-sm sm:prose-base dark:prose-invert max-w-none focus:outline-none min-h-[400px] px-4 py-3",
@@ -34,11 +44,14 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
   });
 
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
+    if (!editor || editor.isDestroyed) return;
+    let current = "";
+    try { current = editor.getHTML(); } catch { return; }
+    if (value !== current) {
       editor.commands.setContent(value || "", { emitUpdate: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  }, [value, editor]);
 
   if (!editor) return null;
 
@@ -62,7 +75,7 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
 
   return (
     <div className="border rounded-lg bg-background">
-      <div className="flex flex-wrap gap-1 p-2 border-b bg-muted/30">
+      <div className="flex flex-wrap gap-1 p-2 border-b bg-muted/30 sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-muted/50 rounded-t-lg">
         <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} title="H1"><Heading1 className="h-4 w-4" /></Btn>
         <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })} title="H2"><Heading2 className="h-4 w-4" /></Btn>
         <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })} title="H3"><Heading3 className="h-4 w-4" /></Btn>
