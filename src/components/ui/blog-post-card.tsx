@@ -49,7 +49,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       )}
     >
       {/* Cover */}
-      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted">
+      <div className="relative aspect-[2/1] w-full overflow-hidden rounded-xl bg-muted">
         {cover ? (
           <img
             src={cover}
