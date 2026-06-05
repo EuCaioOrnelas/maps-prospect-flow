@@ -86,9 +86,6 @@ export default function BlogPost() {
       setPost(data as any);
       setLoading(false);
 
-      // Increment views (fire-and-forget; ignore errors due to RLS for anon)
-      supabase.rpc("blog_increment_views" as any, { p_id: (data as any).id }).then(() => {});
-
       // Related
       if ((data as any).category_id) {
         const { data: rel } = await supabase
