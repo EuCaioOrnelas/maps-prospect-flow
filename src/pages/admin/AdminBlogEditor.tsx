@@ -345,6 +345,19 @@ export default function AdminBlogEditor() {
               <Switch checked={form.featured} onCheckedChange={(v) => set("featured", v)} />
               <Label>Destacar na home do blog</Label>
             </div>
+            <div>
+              <Label>Tempo de leitura (min)</Label>
+              <Input
+                type="number"
+                min={1}
+                value={form.reading_time_override}
+                onChange={(e) => set("reading_time_override", e.target.value)}
+                placeholder={`Auto: ${computedReading} min`}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Deixe em branco para calcular automaticamente (~220 palavras/min).
+              </p>
+            </div>
           </Card>
 
           <Card className="p-5 space-y-4">
