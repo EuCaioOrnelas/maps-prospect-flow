@@ -110,6 +110,7 @@ export default function AdminBlogList() {
               <TableHead><span className="inline-flex items-center gap-2"><Activity className="h-3.5 w-3.5" /> Status</span></TableHead>
               <TableHead><span className="inline-flex items-center gap-2"><CalendarDays className="h-3.5 w-3.5" /> Publicado</span></TableHead>
               <TableHead className="text-right"><span className="inline-flex items-center gap-2 justify-end"><Eye className="h-3.5 w-3.5" /> Views</span></TableHead>
+              <TableHead className="text-right"><span className="inline-flex items-center gap-2 justify-end"><Heart className="h-3.5 w-3.5" /> Curtidas</span></TableHead>
               <TableHead className="text-right"><span className="inline-flex items-center gap-2 justify-end"><Settings2 className="h-3.5 w-3.5" /> Ações</span></TableHead>
             </TableRow>
           </TableHeader>
