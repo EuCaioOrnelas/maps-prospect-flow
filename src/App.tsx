@@ -348,6 +348,11 @@ const App = () => (
                   <Route path="auditoria" element={<AdminAuditoria />} />
                   <Route path="insights" element={<UserInsights />} />
                   <Route path="onboarding" element={<AdminOnboarding />} />
+                  {/* Blog */}
+                  <Route path="blog" element={<AdminBlogList />} />
+                  <Route path="blog/categorias" element={<AdminBlogCategories />} />
+                  <Route path="blog/novo" element={<AdminBlogEditor />} />
+                  <Route path="blog/:id" element={<AdminBlogEditor />} />
                   {/* Suporte */}
                   <Route path="suporte/tickets" element={<AdminSupportTickets />} />
                   <Route path="suporte/mind-ia" element={<AdminSupportMindIA />} />
