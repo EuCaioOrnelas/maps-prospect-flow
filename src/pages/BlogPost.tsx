@@ -86,6 +86,9 @@ export default function BlogPost() {
       setPost(data as any);
       setLoading(false);
 
+      // Increment view count (fire-and-forget)
+      supabase.rpc("increment_blog_post_view" as any, { _post_id: (data as any).id });
+
       // Related
       if ((data as any).category_id) {
         const { data: rel } = await supabase
