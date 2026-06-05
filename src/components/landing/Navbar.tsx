@@ -154,7 +154,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                 </Button>
               ) : (
                 <a href="/#pricing" onClick={handlePricingClick}>
-                  <Button variant="hero" size="sm" className="rounded-full">
+                  <Button variant="hero" size="sm" className="rounded-full border-transparent shadow-lg">
                     Gerar vendas
                   </Button>
                 </a>
