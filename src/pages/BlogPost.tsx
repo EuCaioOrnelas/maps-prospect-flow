@@ -384,7 +384,7 @@ export default function BlogPost() {
           </div>
         </div>
 
-        </div>
+
 
         {/* Relacionados — mesmo card do blog principal */}
         {related.length > 0 && (
