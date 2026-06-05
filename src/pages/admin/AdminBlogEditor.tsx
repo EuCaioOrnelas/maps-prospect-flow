@@ -473,8 +473,11 @@ export default function AdminBlogEditor() {
               <img src={form.cover_image_url} alt="" className="rounded-lg w-full aspect-video object-cover" />
             )}
           </Card>
+          </Card>
         </div>
+      </div>
       </div>
     </div>
   );
 }
+
