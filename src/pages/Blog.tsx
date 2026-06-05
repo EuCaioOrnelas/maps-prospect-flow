@@ -12,10 +12,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Filter, Check } from "lucide-react";
+import { Search, Filter, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { ArticleCard } from "@/components/ui/blog-post-card";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+} from "@/components/ui/pagination";
 
 const SITE_URL = "https://wiize.com.br";
 const PAGE_SIZE = 6;
@@ -333,31 +340,70 @@ export default function Blog() {
           )}
 
           {/* Paginação */}
-          {totalPages > 1 && (
-            <nav aria-label="Paginação" className="flex justify-center items-center gap-2 mt-12">
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-full"
-                disabled={page <= 1}
-                onClick={() => updateParams({ page: String(page - 1) })}
-              >
-                Anterior
-              </Button>
-              <span className="text-sm text-muted-foreground px-3">
-                Página {page} de {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-full"
-                disabled={page >= totalPages}
-                onClick={() => updateParams({ page: String(page + 1) })}
-              >
-                Próxima
-              </Button>
-            </nav>
-          )}
+          {totalPages > 1 && (() => {
+            const pages: (number | "...")[] = [];
+            const add = (n: number) => { if (!pages.includes(n)) pages.push(n); };
+            add(1);
+            for (let i = page - 1; i <= page + 1; i++) {
+              if (i > 1 && i < totalPages) add(i);
+            }
+            if (totalPages > 1) add(totalPages);
+            const withDots: (number | "...")[] = [];
+            (pages as number[]).sort((a, b) => a - b).forEach((n, i, arr) => {
+              if (i > 0 && (n as number) - (arr[i - 1] as number) > 1) withDots.push("...");
+              withDots.push(n);
+            });
+
+            return (
+              <div className="mt-12 flex flex-col items-center gap-3">
+                <p className="text-xs text-muted-foreground">
+                  Página {page} de {totalPages} • {total} publicações
+                </p>
+                <Pagination>
+                  <PaginationContent className="gap-1.5">
+                    <PaginationItem>
+                      <PaginationLink
+                        onClick={(e) => { e.preventDefault(); if (page > 1) updateParams({ page: String(page - 1) }); }}
+                        aria-disabled={page <= 1}
+                        className={`rounded-full ${page <= 1 ? "pointer-events-none opacity-40" : ""}`}
+                        href="#"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </PaginationLink>
+                    </PaginationItem>
+                    {withDots.map((n, i) =>
+                      n === "..." ? (
+                        <PaginationItem key={`d-${i}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      ) : (
+                        <PaginationItem key={n}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); updateParams({ page: String(n) }); }}
+                            isActive={n === page}
+                            className="rounded-full"
+                          >
+                            {n}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    )}
+                    <PaginationItem>
+                      <PaginationLink
+                        onClick={(e) => { e.preventDefault(); if (page < totalPages) updateParams({ page: String(page + 1) }); }}
+                        aria-disabled={page >= totalPages}
+                        className={`rounded-full ${page >= totalPages ? "pointer-events-none opacity-40" : ""}`}
+                        href="#"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </PaginationLink>
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            );
+          })()}
         </section>
       </main>
 
