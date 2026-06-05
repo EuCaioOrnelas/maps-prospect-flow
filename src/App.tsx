@@ -234,6 +234,9 @@ const App = () => (
                 <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />
                 
                 <Route path="/enterprise" element={<LightThemeWrapper><EnterpriseContact /></LightThemeWrapper>} />
+                <Route path="/blog" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><Blog /></Suspense></LightThemeWrapper>} />
+                <Route path="/blog/categoria/:categorySlug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><Blog /></Suspense></LightThemeWrapper>} />
+                <Route path="/blog/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><BlogPost /></Suspense></LightThemeWrapper>} />
                 <Route path="/login" element={<LightThemeWrapper><Login /></LightThemeWrapper>} />
                 <Route path="/signup" element={<LightThemeWrapper><Signup /></LightThemeWrapper>} />
                 <Route path="/signup/escolher-plano" element={<LightThemeWrapper><SignupChoosePlan /></LightThemeWrapper>} />
