@@ -494,8 +494,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Profile data (IP, fingerprint, terms) is now set by the handle_new_user trigger
     // via user metadata, so no separate update is needed.
 
+    if (!error && data?.user?.id) {
+      try {
+        const { markBlogAttribution } = await import("@/lib/blogAttribution");
+        markBlogAttribution("trial_started", data.user.id);
+      } catch (e) { console.debug("blog attr err", e); }
+    }
+
     return { error };
   };
+
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
