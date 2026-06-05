@@ -300,7 +300,9 @@ export default function BlogPost() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to="/blog">Blog</Link>
+                <Link to="/blog" aria-label="Blog" className="inline-flex items-center">
+                  <Home className="h-4 w-4" />
+                </Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             {post.category && (
