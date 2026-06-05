@@ -54,6 +54,7 @@ const empty = {
   ai_short_answer: "",
   ai_entities: "",
   faq: [] as FAQItem[],
+  reading_time_override: "" as string,
 };
 
 export default function AdminBlogEditor() {
@@ -89,6 +90,7 @@ export default function AdminBlogEditor() {
         seo_keywords: Array.isArray(data.seo_keywords) ? data.seo_keywords.join(", ") : "",
         ai_entities: Array.isArray(data.ai_entities) ? data.ai_entities.join(", ") : "",
         faq: Array.isArray(data.faq) ? (data.faq as any) : [],
+        reading_time_override: data.reading_time_minutes ? String(data.reading_time_minutes) : "",
       } as any);
       setLoading(false);
     })();
@@ -121,7 +123,9 @@ export default function AdminBlogEditor() {
       category_id: form.category_id || null,
       status,
       featured: form.featured,
-      reading_time_minutes: computedReading,
+      reading_time_minutes: form.reading_time_override
+        ? Math.max(1, parseInt(form.reading_time_override, 10) || computedReading)
+        : computedReading,
       published_at:
         status === "published"
           ? form.published_at ? new Date(form.published_at).toISOString() : new Date().toISOString()
@@ -340,6 +344,19 @@ export default function AdminBlogEditor() {
             <div className="flex items-center gap-2">
               <Switch checked={form.featured} onCheckedChange={(v) => set("featured", v)} />
               <Label>Destacar na home do blog</Label>
+            </div>
+            <div>
+              <Label>Tempo de leitura (min)</Label>
+              <Input
+                type="number"
+                min={1}
+                value={form.reading_time_override}
+                onChange={(e) => set("reading_time_override", e.target.value)}
+                placeholder={`Auto: ${computedReading} min`}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Deixe em branco para calcular automaticamente (~220 palavras/min).
+              </p>
             </div>
           </Card>
 
