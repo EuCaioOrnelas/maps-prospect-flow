@@ -71,10 +71,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           {excerpt}
         </p>
 
-        {/* Author pill — full width, aligned with cover image */}
+        {/* Author pill — no inner border, aligned with cover image */}
         <div className="mt-auto pt-4">
-          <div className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 pl-1.5 pr-3 py-1.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-background overflow-hidden ring-1 ring-border/60">
+          <div className="flex w-full items-center gap-3 rounded-2xl bg-muted/40 px-2 py-2">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-background overflow-hidden ring-1 ring-border/50">
               {avatarSrc ? (
                 <img src={avatarSrc} alt={writer || "Wian"} className="h-full w-full object-cover" />
               ) : (
