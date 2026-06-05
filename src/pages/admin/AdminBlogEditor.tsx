@@ -14,7 +14,8 @@ import {
   Tabs, TabsContent, TabsList, TabsTrigger,
 } from "@/components/ui/tabs";
 import { TipTapEditor } from "@/components/admin/blog/TipTapEditor";
-import { ArrowLeft, Save, Eye, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Save, Eye, Trash2, Plus, BarChart3, FileText, Search, Sparkles, HelpCircle, Image as ImageIcon, Settings2, Tag } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 const slugify = (s: string) =>
