@@ -396,10 +396,10 @@ export default function BlogPost() {
                 aria-pressed={liked}
                 aria-label={liked ? "Remover curtida" : "Curtir artigo"}
                 title={liked ? "Você curtiu" : "Gostei"}
-                className={`group inline-flex h-10 items-center gap-2 rounded-full border border-border bg-background pl-2.5 pr-3.5 text-sm font-medium transition-all hover:border-foreground/30 hover:bg-muted ${liked ? "text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30" : "text-foreground"}`}
+                className={`group inline-flex h-10 items-center gap-2 rounded-full border bg-background pl-2.5 pr-3.5 text-sm font-medium transition-all ${liked ? "text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/30" : "border-border text-foreground hover:border-foreground/30 hover:bg-muted"}`}
               >
-                <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${liked ? "bg-rose-500/15" : "bg-muted"}`}>
-                  <Heart className={`h-3.5 w-3.5 transition-transform ${liked ? "fill-rose-600 text-rose-600 scale-110" : "text-foreground"}`} />
+                <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${liked ? "bg-emerald-500/15" : "bg-muted"}`}>
+                  <ThumbsUp className={`h-3.5 w-3.5 transition-transform ${liked ? "fill-emerald-600 text-emerald-600 scale-110" : "text-foreground"}`} />
                 </span>
                 <span className="tabular-nums">{likeCount}</span>
               </button>
