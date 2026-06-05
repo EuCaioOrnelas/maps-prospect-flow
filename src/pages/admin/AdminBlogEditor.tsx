@@ -38,7 +38,7 @@ const empty = {
   content: "",
   cover_image_url: "",
   cover_image_alt: "",
-  author_name: "Equipe Wiize",
+  author_name: "Wian",
   category_id: "",
   status: "draft" as "draft" | "scheduled" | "published" | "archived",
   featured: false,

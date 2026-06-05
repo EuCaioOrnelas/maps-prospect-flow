@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export interface ArticleCardProps {
@@ -11,120 +9,102 @@ export interface ArticleCardProps {
   cover?: string;
   tag?: string;
   tagColor?: string | null;
-  readingTime?: number; // minutes
+  readingTime?: number;
   writer?: string;
+  writerAvatar?: string;
   publishedAt?: Date | string | null;
-  clampLines?: number;
   href?: string;
   className?: string;
 }
 
-export function formatReadTime(minutes?: number): string {
-  if (!minutes || minutes < 1) return "Menos de 1 min de leitura";
-  return `${minutes} min de leitura`;
-}
+const formatReadTime = (m?: number) =>
+  !m || m < 1 ? "1 min de leitura" : `${m} min de leitura`;
 
-export function formatPostDate(date: Date | string): string {
-  if (!date) return "";
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("pt-BR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
+const formatDate = (d?: Date | string | null) => {
+  if (!d) return "";
+  const date = typeof d === "string" ? new Date(d) : d;
+  return date
+    .toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" });
+};
+
+const initials = (name?: string) =>
+  (name || "W")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
 export const ArticleCard: React.FC<ArticleCardProps> = ({
   cover,
-  tag,
-  tagColor,
   readingTime,
   headline,
   excerpt,
   writer,
+  writerAvatar,
   publishedAt,
-  clampLines = 3,
   href,
   className,
 }) => {
-  const hasMeta = tag || readingTime;
-  const hasFooter = writer || publishedAt;
-
   const inner = (
-    <Card
+    <article
       className={cn(
-        "group h-full overflow-hidden border-border/60 bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-xl",
+        "group flex h-full flex-col rounded-2xl border border-border/60 bg-card p-3 sm:p-4 transition-all duration-300 hover:border-primary/40 hover:shadow-lg",
         className
       )}
     >
-      {cover ? (
-        <div className="relative aspect-[16/9] overflow-hidden bg-muted">
+      {/* Cover */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-muted">
+        {cover ? (
           <img
             src={cover}
             alt={headline}
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
-        </div>
-      ) : (
-        <div className="aspect-[16/9] bg-gradient-to-br from-primary/10 via-primary/5 to-transparent" />
-      )}
-
-      <CardHeader className="space-y-3 pb-3">
-        {hasMeta && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {tag && (
-              <Badge
-                variant="secondary"
-                className="rounded-full"
-                style={tagColor ? { backgroundColor: `${tagColor}20`, color: tagColor } : undefined}
-              >
-                {tag}
-              </Badge>
-            )}
-            {tag && readingTime ? <span className="opacity-50">•</span> : null}
-            {readingTime ? <span>{formatReadTime(readingTime)}</span> : null}
-          </div>
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-primary/15 via-primary/5 to-transparent" />
         )}
-        <h3 className="text-lg font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary line-clamp-2">
+      </div>
+
+      {/* Title + excerpt */}
+      <div className="flex flex-1 flex-col px-1 pt-4 sm:px-2">
+        <h3 className="text-base sm:text-lg font-semibold leading-snug tracking-tight text-foreground line-clamp-2 group-hover:text-primary transition-colors">
           {headline}
         </h3>
-      </CardHeader>
-
-      <CardContent className="pb-4">
-        <p
-          className={cn("text-sm leading-relaxed text-muted-foreground", clampLines > 0 && "line-clamp-3")}
-          style={clampLines ? { WebkitLineClamp: clampLines } : undefined}
-        >
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-3">
           {excerpt}
         </p>
-      </CardContent>
 
-      {hasFooter && (
-        <CardFooter className="mt-auto flex items-center justify-between border-t border-border/50 pt-4 text-xs">
-          {writer && (
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Por</span>
-              <span className="font-medium text-foreground">{writer}</span>
-            </div>
-          )}
-          {publishedAt && (
-            <div className="flex flex-col text-right">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Publicado</span>
-              <span className="font-medium text-foreground">{formatPostDate(publishedAt)}</span>
-            </div>
-          )}
-        </CardFooter>
-      )}
-    </Card>
+        {/* Author pill */}
+        <div className="mt-auto pt-4">
+          <div className="inline-flex items-center gap-2.5 rounded-full bg-muted/60 px-2.5 py-1.5 text-xs text-muted-foreground">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary overflow-hidden">
+              {writerAvatar ? (
+                <img src={writerAvatar} alt={writer || "Autor"} className="h-full w-full object-cover" />
+              ) : (
+                initials(writer)
+              )}
+            </span>
+            <span className="font-medium text-foreground">{writer || "Wian"}</span>
+            {publishedAt && <span className="opacity-60">{formatDate(publishedAt)}</span>}
+            {readingTime ? (
+              <>
+                <span className="opacity-40">•</span>
+                <span>{formatReadTime(readingTime)}</span>
+              </>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </article>
   );
 
-  if (href) {
-    return (
-      <a href={href} className="block h-full">
-        {inner}
-      </a>
-    );
-  }
-  return inner;
+  return href ? (
+    <a href={href} className="block h-full">
+      {inner}
+    </a>
+  ) : (
+    inner
+  );
 };
