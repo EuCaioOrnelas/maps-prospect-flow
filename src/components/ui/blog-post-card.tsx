@@ -67,7 +67,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         <h3 className="text-base sm:text-lg font-semibold leading-snug tracking-tight text-foreground line-clamp-2 group-hover:text-primary transition-colors">
           {headline}
         </h3>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-3">
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground line-clamp-3">
           {excerpt}
         </p>
 
