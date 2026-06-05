@@ -334,6 +334,11 @@ export default function BlogPost() {
                 <img
                   src={avatarSrc}
                   alt={post.author_name}
+                  width={24}
+                  height={24}
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
                   className="h-6 w-6 rounded-full object-cover ring-1 ring-border/60"
                 />
               )}
