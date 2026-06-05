@@ -3,6 +3,9 @@ project_id = "wgokhkawjdxsmvfuhazb"
 [functions.blog-sitemap]
 verify_jwt = false
 
+[functions.blog-scheduler]
+verify_jwt = false
+
 
 
 [functions.score-processor]

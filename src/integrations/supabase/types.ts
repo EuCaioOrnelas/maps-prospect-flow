@@ -7912,6 +7912,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_blog_post_view: {
+        Args: { _post_id: string }
+        Returns: undefined
+      }
       is_account_member: { Args: { _target_owner: string }; Returns: boolean }
       is_current_user_admin: { Args: never; Returns: boolean }
       is_user_blocked: { Args: { p_user_id: string }; Returns: boolean }
