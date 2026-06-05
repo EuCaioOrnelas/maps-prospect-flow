@@ -166,6 +166,9 @@ const PartnersApply = lazyWithRetry(() => import("./pages/partners/PartnersApply
 const PartnersTerms = lazyWithRetry(() => import("./pages/partners/PartnersTerms"), "PartnersTerms");
 const AdminPartnersApplications = lazyWithRetry(() => import("./pages/admin/AdminPartnersApplications"), "AdminPartnersApplications");
 const AdminPartnersMaterials = lazyWithRetry(() => import("./pages/admin/AdminPartnersMaterials"), "AdminPartnersMaterials");
+const AdminBlogList = lazyWithRetry(() => import("./pages/admin/AdminBlogList"), "AdminBlogList");
+const AdminBlogEditor = lazyWithRetry(() => import("./pages/admin/AdminBlogEditor"), "AdminBlogEditor");
+const AdminBlogCategories = lazyWithRetry(() => import("./pages/admin/AdminBlogCategories"), "AdminBlogCategories");
 
 const queryClient = new QueryClient({
   defaultOptions: {
