@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
+import { trackBlogCtaClick } from "@/lib/blogAttribution";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -402,9 +402,11 @@ export default function BlogPost() {
           </aside>
         )}
 
-        <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-24 prose-a:text-primary">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
-        </div>
+        <div
+          className="prose prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h3:text-xl sm:prose-h3:text-2xl prose-p:text-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:my-6 prose-ul:my-4 prose-ol:my-4 prose-li:my-1"
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
+
 
         {/* FAQ */}
         {post.faq && post.faq.length > 0 && (
@@ -456,8 +458,11 @@ export default function BlogPost() {
               Experimente a Wiize gratuitamente por 7 dias.
             </p>
             <Button asChild size="lg" className="mt-7 rounded-full gap-2 btn-shine">
-              <Link to="/signup/escolher-plano">Iniciar teste grátis <ArrowRight className="h-4 w-4" /></Link>
+              <Link to="/signup/escolher-plano" onClick={() => trackBlogCtaClick(post.id, post.slug)}>
+                Iniciar teste grátis <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
+
             <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl w-full">
               <div className="flex flex-col items-center gap-1.5 text-xs text-muted-foreground">
                 <ShieldCheck className="h-4 w-4 text-primary" />
