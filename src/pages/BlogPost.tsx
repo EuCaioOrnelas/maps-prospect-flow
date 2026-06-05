@@ -9,7 +9,7 @@ import { trackBlogCtaClick } from "@/lib/blogAttribution";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap, Link2, Twitter, Linkedin, Home } from "lucide-react";
+import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap, Link2, Twitter, Linkedin, Home, Heart } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
 import { ArticleCard } from "@/components/ui/blog-post-card";
 import { Sparkles, ArrowRight } from "lucide-react";
@@ -75,12 +75,23 @@ type Related = {
   category: { name: string; slug: string; color: string | null } | null;
 };
 
+const LIKED_KEY = "wiize_blog_liked_posts";
+const getLikedSet = (): Set<string> => {
+  try { return new Set(JSON.parse(localStorage.getItem(LIKED_KEY) || "[]")); }
+  catch { return new Set(); }
+};
+const saveLikedSet = (s: Set<string>) => {
+  try { localStorage.setItem(LIKED_KEY, JSON.stringify(Array.from(s))); } catch {}
+};
+
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<Post | null>(null);
   const [related, setRelated] = useState<Related[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [liked, setLiked] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -93,7 +104,7 @@ export default function BlogPost() {
            author_name,author_bio,author_avatar_url,category_id,published_at,updated_at,
            reading_time_minutes,seo_title,seo_description,seo_keywords,canonical_url,
            robots_index,robots_follow,og_image_url,ai_summary,ai_short_answer,
-           ai_entities,ai_related_topics,faq,
+           ai_entities,ai_related_topics,faq,like_count,
            category:blog_categories(id,name,slug),
            tags:blog_post_tags(tag:blog_tags(name,slug))`
         )
@@ -108,6 +119,8 @@ export default function BlogPost() {
         return;
       }
       setPost(data as any);
+      setLikeCount((data as any).like_count || 0);
+      setLiked(getLikedSet().has((data as any).id));
       setLoading(false);
 
       // Increment view count (fire-and-forget)
@@ -255,6 +268,24 @@ export default function BlogPost() {
     window.open(map[target], "_blank", "noopener,noreferrer");
   };
 
+  const toggleLike = async () => {
+    if (!post) return;
+    const set = getLikedSet();
+    if (liked) {
+      set.delete(post.id);
+      saveLikedSet(set);
+      setLiked(false);
+      setLikeCount((c) => Math.max(c - 1, 0));
+      await supabase.rpc("decrement_blog_post_like" as any, { _post_id: post.id });
+    } else {
+      set.add(post.id);
+      saveLikedSet(set);
+      setLiked(true);
+      setLikeCount((c) => c + 1);
+      await supabase.rpc("increment_blog_post_like" as any, { _post_id: post.id });
+    }
+  };
+
   const isWian = post.author_name?.toLowerCase() === "wian";
   const avatarSrc = post.author_avatar_url || (isWian ? wianAvatar : null);
 
@@ -323,12 +354,9 @@ export default function BlogPost() {
         </Breadcrumb>
 
         <header className="mb-8">
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground leading-tight">
+          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight">
             {post.title}
           </h1>
-          {post.subtitle && (
-            <p className="mt-4 text-xl text-muted-foreground">{post.subtitle}</p>
-          )}
 
           <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
@@ -360,36 +388,53 @@ export default function BlogPost() {
                 {post.reading_time_minutes} min de leitura
               </span>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1 ml-auto"
-                  onClick={async (e) => {
-                    // Try native share first on mobile; if it fires, prevent the menu
-                    const used = await shareNative();
-                    if (used) e.preventDefault();
-                  }}
-                >
-                  <Share2 className="h-4 w-4" /> Compartilhar
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-popover">
-                <DropdownMenuItem onClick={() => shareTo("whatsapp")}>
-                  <Share2 className="h-4 w-4 mr-2 text-emerald-500" /> WhatsApp
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => shareTo("twitter")}>
-                  <Twitter className="h-4 w-4 mr-2" /> X / Twitter
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => shareTo("linkedin")}>
-                  <Linkedin className="h-4 w-4 mr-2" /> LinkedIn
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={copyLink}>
-                  <Link2 className="h-4 w-4 mr-2" /> Copiar link
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleLike}
+                aria-pressed={liked}
+                aria-label={liked ? "Remover curtida" : "Curtir artigo"}
+                title={liked ? "Você curtiu" : "Gostei"}
+                className={`group inline-flex h-10 items-center gap-2 rounded-full border border-border bg-background pl-2.5 pr-3.5 text-sm font-medium transition-all hover:border-foreground/30 hover:bg-muted ${liked ? "text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30" : "text-foreground"}`}
+              >
+                <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${liked ? "bg-rose-500/15" : "bg-muted"}`}>
+                  <Heart className={`h-3.5 w-3.5 transition-transform ${liked ? "fill-rose-600 text-rose-600 scale-110" : "text-foreground"}`} />
+                </span>
+                <span className="tabular-nums">{likeCount}</span>
+              </button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Compartilhar"
+                    title="Compartilhar"
+                    onClick={async (e) => {
+                      const used = await shareNative();
+                      if (used) e.preventDefault();
+                    }}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground transition-all hover:border-foreground/30 hover:bg-muted"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-popover">
+                  <DropdownMenuItem onClick={() => shareTo("whatsapp")}>
+                    <Share2 className="h-4 w-4 mr-2 text-emerald-500" /> WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => shareTo("twitter")}>
+                    <Twitter className="h-4 w-4 mr-2" /> X / Twitter
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => shareTo("linkedin")}>
+                    <Linkedin className="h-4 w-4 mr-2" /> LinkedIn
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={copyLink}>
+                    <Link2 className="h-4 w-4 mr-2" /> Copiar link
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </header>
 
@@ -423,13 +468,14 @@ export default function BlogPost() {
         {post.faq && post.faq.length > 0 && (
           <section className="mt-12 pt-8 border-t border-border">
             <h2 className="text-2xl font-bold mb-6">Perguntas frequentes</h2>
-            <div className="space-y-4">
+            <div className="divide-y divide-border">
               {post.faq.map((f, i) => (
-                <details key={i} className="group rounded-lg border border-border p-4 open:bg-muted/30">
-                  <summary className="font-semibold cursor-pointer text-foreground">
-                    {f.question}
+                <details key={i} className="group py-4">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-foreground hover:text-primary transition-colors">
+                    <span>{f.question}</span>
+                    <span className="text-muted-foreground transition-transform group-open:rotate-45 text-xl leading-none">+</span>
                   </summary>
-                  <p className="mt-3 text-muted-foreground">{f.answer}</p>
+                  <p className="mt-3 text-muted-foreground leading-relaxed">{f.answer}</p>
                 </details>
               ))}
             </div>

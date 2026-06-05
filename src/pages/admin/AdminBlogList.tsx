@@ -12,7 +12,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, ExternalLink, Search, FileText, Type, Tag, Activity, CalendarDays, Eye, Settings2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, Search, FileText, Type, Tag, Activity, CalendarDays, Eye, Heart, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Post = {
@@ -24,6 +24,7 @@ type Post = {
   published_at: string | null;
   updated_at: string;
   view_count: number;
+  like_count: number;
   category: { name: string } | null;
 };
 
@@ -45,7 +46,7 @@ export default function AdminBlogList() {
     setLoading(true);
     const { data, error } = await supabase
       .from("blog_posts")
-      .select("id,slug,title,status,featured,published_at,updated_at,view_count,category:blog_categories(name)")
+      .select("id,slug,title,status,featured,published_at,updated_at,view_count,like_count,category:blog_categories(name)")
       .order("updated_at", { ascending: false });
     if (error) toast.error("Erro ao carregar: " + error.message);
     setPosts((data as any) || []);
@@ -109,14 +110,15 @@ export default function AdminBlogList() {
               <TableHead><span className="inline-flex items-center gap-2"><Activity className="h-3.5 w-3.5" /> Status</span></TableHead>
               <TableHead><span className="inline-flex items-center gap-2"><CalendarDays className="h-3.5 w-3.5" /> Publicado</span></TableHead>
               <TableHead className="text-right"><span className="inline-flex items-center gap-2 justify-end"><Eye className="h-3.5 w-3.5" /> Views</span></TableHead>
+              <TableHead className="text-right"><span className="inline-flex items-center gap-2 justify-end"><Heart className="h-3.5 w-3.5" /> Curtidas</span></TableHead>
               <TableHead className="text-right"><span className="inline-flex items-center gap-2 justify-end"><Settings2 className="h-3.5 w-3.5" /> Ações</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum post encontrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum post encontrado</TableCell></TableRow>
             ) : (
               filtered.map((p) => (
                 <TableRow key={p.id} className="hover:bg-transparent">
@@ -135,6 +137,12 @@ export default function AdminBlogList() {
                     {p.published_at ? new Date(p.published_at).toLocaleDateString("pt-BR") : "—"}
                   </TableCell>
                   <TableCell className="text-right text-sm">{p.view_count}</TableCell>
+                  <TableCell className="text-right text-sm">
+                    <span className="inline-flex items-center gap-1 justify-end">
+                      <Heart className="h-3.5 w-3.5 text-rose-500" />
+                      {p.like_count ?? 0}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       {p.status === "published" && (
