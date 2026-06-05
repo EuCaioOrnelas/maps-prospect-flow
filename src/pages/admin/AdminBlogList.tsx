@@ -116,9 +116,9 @@ export default function AdminBlogList() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum post encontrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum post encontrado</TableCell></TableRow>
             ) : (
               filtered.map((p) => (
                 <TableRow key={p.id} className="hover:bg-transparent">
@@ -137,6 +137,12 @@ export default function AdminBlogList() {
                     {p.published_at ? new Date(p.published_at).toLocaleDateString("pt-BR") : "—"}
                   </TableCell>
                   <TableCell className="text-right text-sm">{p.view_count}</TableCell>
+                  <TableCell className="text-right text-sm">
+                    <span className="inline-flex items-center gap-1 justify-end">
+                      <Heart className="h-3.5 w-3.5 text-rose-500" />
+                      {p.like_count ?? 0}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       {p.status === "published" && (
