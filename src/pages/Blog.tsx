@@ -135,7 +135,7 @@ export default function Blog() {
     "Insights, estratégias e bastidores da Wiize: IA comercial assistida que prospecta, qualifica e acelera vendas B2B sem inflar o time.";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background overflow-hidden">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
@@ -153,61 +153,59 @@ export default function Blog() {
         })}</script>
       </Helmet>
 
-      <Navbar />
-
-      {/* Hero with dots + glow (Wiize style) */}
-      <section className="relative -mt-[72px] sm:-mt-[80px] pt-[120px] sm:pt-[140px] pb-12 sm:pb-16 overflow-hidden">
-        {/* Base gradient backdrop */}
+      {/* Full-page ambient background (dots + soft green glow) */}
+      <div className="pointer-events-none absolute inset-0 z-0">
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, hsl(158 35% 97.5%) 0%, hsl(210 30% 99%) 60%, hsl(var(--background)) 100%)",
+              "linear-gradient(180deg, hsl(158 35% 98%) 0%, hsl(210 30% 99%) 40%, hsl(var(--background)) 100%)",
           }}
         />
-        {/* Dotted texture */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.18]"
+          className="absolute inset-0 opacity-[0.14]"
           style={{
             backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`,
             backgroundSize: "18px 18px",
             maskImage:
-              "radial-gradient(ellipse 60% 70% at center, black 30%, transparent 75%)",
+              "linear-gradient(180deg, black 0%, black 70%, transparent 100%)",
             WebkitMaskImage:
-              "radial-gradient(ellipse 60% 70% at center, black 30%, transparent 75%)",
+              "linear-gradient(180deg, black 0%, black 70%, transparent 100%)",
           }}
         />
-        {/* Soft primary glow */}
+        {/* Soft green glow — wide, centered, covering the page */}
         <div
-          className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[900px] pointer-events-none"
+          className="absolute top-[5%] left-1/2 -translate-x-1/2 w-[1400px] h-[1100px]"
           style={{
-            transform: "translateX(-50%)",
             background:
-              "radial-gradient(ellipse at center, hsl(158 60% 55% / 0.10) 0%, hsl(158 60% 55% / 0.03) 45%, transparent 70%)",
+              "radial-gradient(ellipse at center, hsl(158 60% 55% / 0.08) 0%, hsl(158 60% 55% / 0.03) 40%, transparent 70%)",
           }}
         />
-        {/* Accent blobs */}
         <div
-          className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full pointer-events-none opacity-50"
-          style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.06) 0%, transparent 65%)" }}
-        />
-        <div
-          className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full pointer-events-none opacity-40"
+          className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full opacity-50"
           style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.05) 0%, transparent 65%)" }}
         />
+        <div
+          className="absolute top-[40%] -left-32 w-[600px] h-[600px] rounded-full opacity-40"
+          style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.04) 0%, transparent 65%)" }}
+        />
+      </div>
 
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass border border-primary/15 mb-6 text-xs font-medium text-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            Blog Wiize · IA comercial assistida
-          </div>
+      <div className="relative z-10">
+      <Navbar />
+
+      {/* Hero (no background here — uses page-level glow) */}
+      <section className="pt-[120px] sm:pt-[140px] pb-10 sm:pb-14">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <h1 className="font-display font-bold tracking-tight text-foreground text-4xl sm:text-5xl md:text-6xl leading-[1.05]">
             Vender com IA <span className="text-shimmer-highlight font-extrabold">deixou de ser opcional</span>
           </h1>
           <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Bastidores, estratégias e playbooks de quem usa <strong className="text-foreground">IA comercial assistida</strong> para
-            prospectar, qualificar e fechar mais oportunidades B2B — sem inflar o time.
+            Bastidores, estratégias e playbooks de quem usa{" "}
+            <strong className="text-foreground">IA comercial assistida</strong> para prospectar,
+            qualificar e fechar mais oportunidades B2B sem inflar o time.
           </p>
+
 
           {/* Search + Filter */}
           <form
@@ -394,6 +392,8 @@ export default function Blog() {
           )}
         </section>
       </main>
+      </div>
     </div>
   );
 }
+
