@@ -516,6 +516,7 @@ export default function AdminBlogEditor() {
             <div>
               <Label>URL da imagem</Label>
               <Input value={form.cover_image_url} onChange={(e) => set("cover_image_url", e.target.value)} placeholder="https://..." />
+              <p className="text-xs text-muted-foreground mt-1">Recomendado: 1200 × 675 px (proporção 16:9)</p>
             </div>
             <div>
               <Label>Alt text</Label>
