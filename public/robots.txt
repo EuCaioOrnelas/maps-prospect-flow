@@ -23,3 +23,5 @@ Disallow: /checkout-*
 Disallow: /reset-password
 
 Sitemap: https://wiize.com.br/sitemap.xml
+Sitemap: https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/blog-sitemap
+
