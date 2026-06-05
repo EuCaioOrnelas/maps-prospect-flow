@@ -99,6 +99,8 @@ const MetaNumeros = lazyWithRetry(() => import("./pages/meta/MetaNumeros"), "Met
 const MetaConfiguracoes = lazyWithRetry(() => import("./pages/meta/MetaConfiguracoes"), "MetaConfiguracoes");
 
 const EnterpriseContact = lazyWithRetry(() => import("./pages/EnterpriseContact"), "EnterpriseContact");
+const Blog = lazyWithRetry(() => import("./pages/Blog"), "Blog");
+const BlogPost = lazyWithRetry(() => import("./pages/BlogPost"), "BlogPost");
 const TrialExpired = lazyWithRetry(() => import("./pages/TrialExpired"), "TrialExpired");
 const ManageSubscription = lazyWithRetry(() => import("./pages/ManageSubscription"), "ManageSubscription");
 const Onboarding = lazyWithRetry(() => import("./pages/Onboarding"), "Onboarding");
