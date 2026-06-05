@@ -103,10 +103,10 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           style={{
             maxWidth: scrolled ? '920px' : '1280px',
             borderRadius: scrolled ? '9999px' : '0px',
-            backgroundColor: scrolled ? 'hsl(var(--background) / 0.92)' : 'transparent',
-            backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
-            WebkitBackdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
-            border: scrolled ? '1px solid hsl(var(--border) / 0.6)' : '1px solid transparent',
+            backgroundColor: scrolled ? 'hsl(var(--background) / 0.55)' : 'transparent',
+            backdropFilter: scrolled ? 'blur(16px) saturate(180%)' : 'none',
+            WebkitBackdropFilter: scrolled ? 'blur(16px) saturate(180%)' : 'none',
+            border: scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
             boxShadow: scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
             paddingTop: scrolled ? '8px' : '16px',
             paddingBottom: scrolled ? '8px' : '16px',
@@ -123,11 +123,11 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             <div className="hidden md:flex items-center gap-7">
               {navLinks.map(link => (
                 link.to ? (
-                  <Link key={link.to} to={link.to} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <Link key={link.to} to={link.to} className="text-sm font-medium text-foreground/85 hover:text-foreground transition-colors [text-shadow:0_1px_2px_hsl(var(--background)/0.6)]">
                     {link.label}
                   </Link>
                 ) : (
-                  <a key={link.href} href={link.href} onClick={(e) => handleNavLinkClick(e, link.href!)} className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                  <a key={link.href} href={link.href} onClick={(e) => handleNavLinkClick(e, link.href!)} className="text-sm font-medium text-foreground/85 hover:text-foreground transition-colors cursor-pointer [text-shadow:0_1px_2px_hsl(var(--background)/0.6)]">
                     {link.label}
                   </a>
                 )
@@ -154,7 +154,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                 </Button>
               ) : (
                 <a href="/#pricing" onClick={handlePricingClick}>
-                  <Button variant="hero" size="sm" className="rounded-full">
+                  <Button variant="hero" size="sm" className="rounded-full border-transparent shadow-lg">
                     Gerar vendas
                   </Button>
                 </a>
