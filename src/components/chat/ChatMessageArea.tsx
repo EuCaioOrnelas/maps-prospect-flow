@@ -33,6 +33,7 @@ interface ChatMessageAreaProps {
   canChangeResponsible?: boolean;
   onTransferResponsible?: (conversationId: string, userId: string | null) => Promise<void>;
   currentUserId?: string;
+  onBack?: () => void;
 }
 
 
