@@ -127,6 +127,23 @@ export default function Blog() {
     updateParams({ q: searchInput || null, page: null });
   };
 
+  // Live search — debounce input changes into the URL
+  useEffect(() => {
+    const trimmed = searchInput.trim();
+    if (trimmed === q) return;
+    const id = setTimeout(() => {
+      updateParams({ q: trimmed || null, page: null });
+    }, 350);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput]);
+
+  // Keep input in sync if q changes externally (e.g. clearing pill)
+  useEffect(() => {
+    setSearchInput(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
+
   const canonicalPath = useMemo(() => {
     const sp = new URLSearchParams();
     if (categorySlug) sp.set("categoria", categorySlug);

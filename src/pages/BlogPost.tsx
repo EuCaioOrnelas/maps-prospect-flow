@@ -9,7 +9,7 @@ import { trackBlogCtaClick } from "@/lib/blogAttribution";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap, Link2, Twitter, Linkedin } from "lucide-react";
+import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap, Link2, Twitter, Linkedin, Home } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
 import { ArticleCard } from "@/components/ui/blog-post-card";
 import { Sparkles, ArrowRight } from "lucide-react";
@@ -300,7 +300,9 @@ export default function BlogPost() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to="/blog">Blog</Link>
+                <Link to="/blog" aria-label="Blog" className="inline-flex items-center">
+                  <Home className="h-4 w-4" />
+                </Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             {post.category && (
