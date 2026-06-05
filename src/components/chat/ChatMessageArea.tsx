@@ -427,7 +427,7 @@ export function ChatMessageArea({
           <div className="wa-chat-glow" />
 
           <div className="flex-1 overflow-y-auto wa-scrollbar relative z-[1]" ref={scrollContainerRef}>
-            <div className="px-[63px] py-[4px] min-h-full flex flex-col justify-end">
+            <div className="px-3 sm:px-6 lg:px-[63px] py-[4px] min-h-full flex flex-col justify-end">
               {loading ? (
                 <div className="flex items-center justify-center py-16">
                   <div className="h-8 w-8 rounded-full border-[3px] border-[#00a884]/20 border-t-[#00a884] animate-spin" />
