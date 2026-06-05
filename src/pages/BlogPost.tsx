@@ -448,6 +448,18 @@ export default function BlogPost() {
           </figure>
         )}
 
+        {/* Nota de atualização */}
+        {post.published_at && (
+          <aside className="mb-8 pl-4 border-l-2 border-primary">
+            <p className="text-sm font-semibold text-foreground mb-1">Nota</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              É importante lembrar que este artigo foi escrito em{" "}
+              {new Date(post.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+              . Dependendo da época em que for lido, as informações podem estar desatualizadas.
+            </p>
+          </aside>
+        )}
+
 
         <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h3:text-xl sm:prose-h3:text-2xl prose-p:text-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:my-6 prose-ul:my-4 prose-ol:my-4 prose-li:my-1">
           {/^\s*</.test(post.content) ? (
