@@ -210,11 +210,21 @@ export default function BlogPost() {
 
   const onShare = async () => {
     if (navigator.share) {
-      try { await navigator.share({ title: post.title, url }); } catch {}
+      try {
+        await navigator.share({ title: post.title, url });
+      } catch {}
     } else {
-      try { await navigator.clipboard.writeText(url); } catch {}
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success("Link copiado!", { description: "Compartilhe com quem precisa." });
+      } catch {
+        toast.error("Não foi possível copiar o link.");
+      }
     }
   };
+
+  const isWian = post.author_name?.toLowerCase() === "wian";
+  const avatarSrc = post.author_avatar_url || (isWian ? wianAvatar : null);
 
   return (
     <div className="min-h-screen bg-background">
