@@ -404,41 +404,39 @@ export default function BlogPost() {
           </aside>
         )}
 
-        <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-10 shadow-sm">
-          <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h3:text-xl sm:prose-h3:text-2xl prose-p:text-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:my-6 prose-ul:my-4 prose-ol:my-4 prose-li:my-1">
-            {/^\s*</.test(post.content) ? (
-              <div dangerouslySetInnerHTML={{ __html: post.content }} />
-            ) : (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
-            )}
-          </div>
-
-          {/* FAQ */}
-          {post.faq && post.faq.length > 0 && (
-            <section className="mt-12 pt-8 border-t border-border">
-              <h2 className="text-2xl font-bold mb-6">Perguntas frequentes</h2>
-              <div className="space-y-4">
-                {post.faq.map((f, i) => (
-                  <details key={i} className="group rounded-lg border border-border p-4 open:bg-muted/30">
-                    <summary className="font-semibold cursor-pointer text-foreground">
-                      {f.question}
-                    </summary>
-                    <p className="mt-3 text-muted-foreground">{f.answer}</p>
-                  </details>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Tags */}
-          {post.tags && post.tags.length > 0 && (
-            <div className="mt-10 flex flex-wrap gap-2">
-              {post.tags.map(({ tag }) => (
-                <Badge key={tag.slug} variant="outline">#{tag.name}</Badge>
-              ))}
-            </div>
+        <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h3:text-xl sm:prose-h3:text-2xl prose-p:text-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:my-6 prose-ul:my-4 prose-ol:my-4 prose-li:my-1">
+          {/^\s*</.test(post.content) ? (
+            <div dangerouslySetInnerHTML={{ __html: post.content }} />
+          ) : (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
           )}
         </div>
+
+        {/* FAQ */}
+        {post.faq && post.faq.length > 0 && (
+          <section className="mt-12 pt-8 border-t border-border">
+            <h2 className="text-2xl font-bold mb-6">Perguntas frequentes</h2>
+            <div className="space-y-4">
+              {post.faq.map((f, i) => (
+                <details key={i} className="group rounded-lg border border-border p-4 open:bg-muted/30">
+                  <summary className="font-semibold cursor-pointer text-foreground">
+                    {f.question}
+                  </summary>
+                  <p className="mt-3 text-muted-foreground">{f.answer}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Tags */}
+        {post.tags && post.tags.length > 0 && (
+          <div className="mt-10 flex flex-wrap gap-2">
+            {post.tags.map(({ tag }) => (
+              <Badge key={tag.slug} variant="outline">#{tag.name}</Badge>
+            ))}
+          </div>
+        )}
 
         {/* CTA — centralizado, estilo hero da Wiize com shimmer */}
         <div className="mt-14 relative overflow-hidden rounded-3xl border border-border/60 bg-card p-8 sm:p-12 text-center">
