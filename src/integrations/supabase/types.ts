@@ -689,6 +689,7 @@ export type Database = {
           faq: Json | null
           featured: boolean
           id: string
+          like_count: number
           og_image_url: string | null
           published_at: string | null
           reading_time_minutes: number | null
@@ -725,6 +726,7 @@ export type Database = {
           faq?: Json | null
           featured?: boolean
           id?: string
+          like_count?: number
           og_image_url?: string | null
           published_at?: string | null
           reading_time_minutes?: number | null
@@ -761,6 +763,7 @@ export type Database = {
           faq?: Json | null
           featured?: boolean
           id?: string
+          like_count?: number
           og_image_url?: string | null
           published_at?: string | null
           reading_time_minutes?: number | null
@@ -7900,6 +7903,10 @@ export type Database = {
       count_account_members: { Args: { _owner: string }; Returns: number }
       current_account_owner: { Args: never; Returns: string }
       current_account_role: { Args: never; Returns: string }
+      decrement_blog_post_like: {
+        Args: { _post_id: string }
+        Returns: undefined
+      }
       generate_partner_referral_code: {
         Args: { p_full_name: string }
         Returns: string
@@ -7949,6 +7956,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_blog_post_like: {
+        Args: { _post_id: string }
+        Returns: undefined
       }
       increment_blog_post_view: {
         Args: { _post_id: string }
