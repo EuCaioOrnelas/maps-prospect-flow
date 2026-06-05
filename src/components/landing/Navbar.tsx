@@ -77,7 +77,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
     scrollToPricing();
   };
 
-  const navLinks = [
+  const navLinks: Array<{ href?: string; to?: string; label: string }> = [
     { href: "#features", label: "Recursos" },
     { href: "#testimonials", label: "Depoimentos" },
     { href: "#pricing", label: "Planos" },
