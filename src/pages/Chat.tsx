@@ -132,6 +132,9 @@ const Chat = () => {
       <div className="h-screen flex w-full wa-app-bg overflow-hidden">
         <AppSidebar profile={profile} />
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px] bg-background">
+          <div className="lg:hidden">
+            <AppHeader profile={profile} />
+          </div>
           <div className="flex-1 flex overflow-hidden relative">
             {showDisconnectedOverlay && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
