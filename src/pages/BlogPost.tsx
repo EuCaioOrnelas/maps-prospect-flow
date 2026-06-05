@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Share2 } from "lucide-react";
+import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
 import { ArticleCard } from "@/components/ui/blog-post-card";
 import { Sparkles, ArrowRight } from "lucide-react";
@@ -389,8 +389,7 @@ export default function BlogPost() {
               <Sparkles className="h-3.5 w-3.5" /> IA comercial assistida
             </span>
             <h3 className="mt-5 text-3xl sm:text-4xl font-semibold tracking-tight text-foreground leading-tight max-w-3xl">
-              Uma{" "}
-              <span className="text-shimmer-highlight whitespace-nowrap">IA trabalhando</span>{" "}
+              <span className="text-shimmer-highlight whitespace-nowrap">Wiize trabalhando com IA</span>{" "}
               pelo crescimento da sua empresa.
             </h3>
             <p className="mt-5 text-muted-foreground max-w-2xl">
@@ -402,6 +401,24 @@ export default function BlogPost() {
             <Button asChild size="lg" className="mt-7 rounded-full gap-2 btn-shine">
               <Link to="/signup/escolher-plano">Iniciar teste grátis <ArrowRight className="h-4 w-4" /></Link>
             </Button>
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl w-full">
+              <div className="flex flex-col items-center gap-1.5 text-xs text-muted-foreground">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                <span>Garantia de 7 dias</span>
+              </div>
+              <div className="flex flex-col items-center gap-1.5 text-xs text-muted-foreground">
+                <Headphones className="h-4 w-4 text-primary" />
+                <span>Suporte 24 horas</span>
+              </div>
+              <div className="flex flex-col items-center gap-1.5 text-xs text-muted-foreground">
+                <CreditCard className="h-4 w-4 text-primary" />
+                <span>Cancele quando quiser</span>
+              </div>
+              <div className="flex flex-col items-center gap-1.5 text-xs text-muted-foreground">
+                <Zap className="h-4 w-4 text-primary" />
+                <span>Ativação imediata</span>
+              </div>
+            </div>
           </div>
         </div>
       </article>
