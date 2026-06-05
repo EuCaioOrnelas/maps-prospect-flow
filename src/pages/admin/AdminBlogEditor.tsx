@@ -14,7 +14,8 @@ import {
   Tabs, TabsContent, TabsList, TabsTrigger,
 } from "@/components/ui/tabs";
 import { TipTapEditor } from "@/components/admin/blog/TipTapEditor";
-import { ArrowLeft, Save, Eye, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Save, Eye, Trash2, Plus, BarChart3, FileText, Search, Sparkles, HelpCircle, Image as ImageIcon, Settings2, Tag } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 const slugify = (s: string) =>
@@ -166,38 +167,116 @@ export default function AdminBlogEditor() {
 
   if (loading) return <div className="p-8">Carregando...</div>;
 
+  const STATUS_LABEL: Record<string, string> = {
+    draft: "Rascunho", scheduled: "Agendado", published: "Publicado", archived: "Arquivado",
+  };
+  const STATUS_TONE: Record<string, string> = {
+    draft: "bg-muted text-muted-foreground",
+    scheduled: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
+    published: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
+    archived: "bg-destructive/15 text-destructive border-destructive/30",
+  };
+
+  // Live quality hints
+  const titleLen = form.title.length;
+  const seoTitleLen = (form.seo_title || form.title).length;
+  const descLen = (form.seo_description || form.excerpt || "").length;
+  const wordCount = form.content.replace(/<[^>]*>/g, " ").split(/\s+/).filter(Boolean).length;
+  const hints: Array<{ ok: boolean; msg: string }> = [
+    { ok: titleLen > 10 && titleLen <= 70, msg: `Título com ${titleLen} caracteres (ideal 30-70)` },
+    { ok: seoTitleLen > 0 && seoTitleLen <= 60, msg: `SEO title ${seoTitleLen}/60` },
+    { ok: descLen >= 80 && descLen <= 160, msg: `Meta description ${descLen}/160 (ideal 80-160)` },
+    { ok: !!form.cover_image_url, msg: form.cover_image_url ? "Imagem de capa definida" : "Adicione uma imagem de capa" },
+    { ok: !!form.ai_short_answer, msg: form.ai_short_answer ? "Resposta curta (GEO) preenchida" : "Adicione a resposta curta para IA" },
+    { ok: (form.ai_entities ? form.ai_entities.split(",").filter(Boolean).length : 0) >= 3, msg: "Pelo menos 3 entidades para GEO" },
+    { ok: form.faq.length >= 1, msg: form.faq.length >= 1 ? `${form.faq.length} pergunta(s) no FAQ` : "Adicione perguntas frequentes (FAQ)" },
+    { ok: wordCount >= 600, msg: `${wordCount} palavras (ideal 600+)` },
+  ];
+  const passingHints = hints.filter((h) => h.ok).length;
+  const qualityScore = Math.round((passingHints / hints.length) * 100);
+
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin/blog")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">{isNew ? "Novo post" : "Editar post"}</h1>
-            <p className="text-sm text-muted-foreground">
-              {computedReading} min de leitura • status: {form.status}
-            </p>
+    <div className="max-w-6xl mx-auto pb-12">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-20 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+        <div className="px-6 py-3 flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/admin/blog")}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg font-semibold truncate max-w-[50vw]">
+                  {form.title || (isNew ? "Novo post" : "Editar post")}
+                </h1>
+                <Badge variant="outline" className={STATUS_TONE[form.status]}>{STATUS_LABEL[form.status]}</Badge>
+                {form.featured && <Badge variant="outline">⭐ destaque</Badge>}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                <span>{computedReading} min · {wordCount} palavras</span>
+                <span>·</span>
+                <span className="truncate max-w-[40vw]">/{form.slug || "sem-slug"}</span>
+                <span>·</span>
+                <span className={qualityScore >= 80 ? "text-emerald-500" : qualityScore >= 50 ? "text-amber-500" : "text-destructive"}>
+                  Qualidade {qualityScore}%
+                </span>
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {!isNew && form.status === "published" && (
+              <Button variant="outline" asChild>
+                <a href={`/blog/${form.slug}`} target="_blank" rel="noreferrer">
+                  <Eye className="h-4 w-4 mr-2" /> Ver
+                </a>
+              </Button>
+            )}
+            {!isNew && (
+              <Button variant="outline" asChild>
+                <a href={`/admin/blog/analytics/${id}`}>
+                  <BarChart3 className="h-4 w-4 mr-2" /> Desempenho
+                </a>
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => handleSave(false)} disabled={saving}>
+              <Save className="h-4 w-4 mr-2" /> Salvar
+            </Button>
+            {form.status !== "published" && (
+              <Button onClick={() => handleSave(true)} disabled={saving}>
+                Publicar
+              </Button>
+            )}
           </div>
         </div>
-        <div className="flex gap-2">
-          {!isNew && form.status === "published" && (
-            <Button variant="outline" asChild>
-              <a href={`/blog/${form.slug}`} target="_blank" rel="noreferrer">
-                <Eye className="h-4 w-4 mr-2" /> Ver
-              </a>
-            </Button>
-          )}
-          <Button variant="outline" onClick={() => handleSave(false)} disabled={saving}>
-            <Save className="h-4 w-4 mr-2" /> Salvar
-          </Button>
-          {form.status !== "published" && (
-            <Button onClick={() => handleSave(true)} disabled={saving}>
-              Publicar
-            </Button>
-          )}
+
+        {/* Quality bar */}
+        <div className="px-6 pb-3">
+          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+            <div
+              className={`h-full transition-all ${qualityScore >= 80 ? "bg-emerald-500" : qualityScore >= 50 ? "bg-amber-500" : "bg-destructive"}`}
+              style={{ width: `${qualityScore}%` }}
+            />
+          </div>
         </div>
       </div>
+
+      <div className="p-6 space-y-6">
+        {/* Quality hints */}
+        <Card className="p-4 bg-muted/30">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold">Checklist de qualidade</h3>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
+            {hints.map((h, i) => (
+              <div key={i} className={`text-xs flex items-start gap-2 ${h.ok ? "text-muted-foreground" : "text-foreground"}`}>
+                <span className={`mt-0.5 inline-block h-1.5 w-1.5 rounded-full flex-shrink-0 ${h.ok ? "bg-emerald-500" : "bg-amber-500"}`} />
+                <span>{h.msg}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+
 
       <div className="grid lg:grid-cols-[1fr_320px] gap-6">
         <div className="space-y-4">
@@ -394,8 +473,11 @@ export default function AdminBlogEditor() {
               <img src={form.cover_image_url} alt="" className="rounded-lg w-full aspect-video object-cover" />
             )}
           </Card>
+
         </div>
+      </div>
       </div>
     </div>
   );
 }
+

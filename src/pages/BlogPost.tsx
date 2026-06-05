@@ -7,11 +7,17 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap } from "lucide-react";
+import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap, Link2, Twitter, Linkedin } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
 import { ArticleCard } from "@/components/ui/blog-post-card";
 import { Sparkles, ArrowRight } from "lucide-react";
 import wianAvatar from "@/assets/wian-avatar.png";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -208,19 +214,43 @@ export default function BlogPost() {
     post.robots_follow ? "follow" : "nofollow"
   }`;
 
-  const onShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: post.title, url });
-      } catch {}
-    } else {
-      try {
-        await navigator.clipboard.writeText(url);
-        toast.success("Link copiado!", { description: "Compartilhe com quem precisa." });
-      } catch {
-        toast.error("Não foi possível copiar o link.");
-      }
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copiado!", { description: "Compartilhe com quem precisa." });
+    } catch {
+      // Fallback for non-https / older browsers
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); toast.success("Link copiado!"); }
+      catch { toast.error("Não foi possível copiar o link."); }
+      document.body.removeChild(ta);
     }
+  };
+
+  const shareNative = async () => {
+    if (typeof navigator !== "undefined" && (navigator as any).share) {
+      try {
+        await (navigator as any).share({ title: post.title, text: description || post.title, url });
+        return true;
+      } catch { /* user cancelled or failed — fall through */ }
+    }
+    return false;
+  };
+
+  const shareTo = (target: "whatsapp" | "twitter" | "linkedin") => {
+    const t = encodeURIComponent(post.title);
+    const u = encodeURIComponent(url);
+    const map = {
+      whatsapp: `https://wa.me/?text=${t}%20${u}`,
+      twitter: `https://twitter.com/intent/tweet?text=${t}&url=${u}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${u}`,
+    } as const;
+    window.open(map[target], "_blank", "noopener,noreferrer");
   };
 
   const isWian = post.author_name?.toLowerCase() === "wian";
@@ -321,9 +351,36 @@ export default function BlogPost() {
                 {post.reading_time_minutes} min de leitura
               </span>
             )}
-            <Button variant="ghost" size="sm" onClick={onShare} className="gap-1 ml-auto">
-              <Share2 className="h-4 w-4" /> Compartilhar
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1 ml-auto"
+                  onClick={async (e) => {
+                    // Try native share first on mobile; if it fires, prevent the menu
+                    const used = await shareNative();
+                    if (used) e.preventDefault();
+                  }}
+                >
+                  <Share2 className="h-4 w-4" /> Compartilhar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-popover">
+                <DropdownMenuItem onClick={() => shareTo("whatsapp")}>
+                  <Share2 className="h-4 w-4 mr-2 text-emerald-500" /> WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => shareTo("twitter")}>
+                  <Twitter className="h-4 w-4 mr-2" /> X / Twitter
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => shareTo("linkedin")}>
+                  <Linkedin className="h-4 w-4 mr-2" /> LinkedIn
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={copyLink}>
+                  <Link2 className="h-4 w-4 mr-2" /> Copiar link
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 

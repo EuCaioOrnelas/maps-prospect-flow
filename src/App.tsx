@@ -170,6 +170,7 @@ const AdminBlogList = lazyWithRetry(() => import("./pages/admin/AdminBlogList"),
 const AdminBlogEditor = lazyWithRetry(() => import("./pages/admin/AdminBlogEditor"), "AdminBlogEditor");
 const AdminBlogCategories = lazyWithRetry(() => import("./pages/admin/AdminBlogCategories"), "AdminBlogCategories");
 const AdminBlogAnalytics = lazyWithRetry(() => import("./pages/admin/AdminBlogAnalytics"), "AdminBlogAnalytics");
+const AdminBlogAnalyticsDetail = lazyWithRetry(() => import("./pages/admin/AdminBlogAnalyticsDetail"), "AdminBlogAnalyticsDetail");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -352,6 +353,7 @@ const App = () => (
                   {/* Blog */}
                   <Route path="blog" element={<AdminBlogList />} />
                   <Route path="blog/analytics" element={<AdminBlogAnalytics />} />
+                  <Route path="blog/analytics/:id" element={<AdminBlogAnalyticsDetail />} />
                   <Route path="blog/categorias" element={<AdminBlogCategories />} />
                   <Route path="blog/novo" element={<AdminBlogEditor />} />
                   <Route path="blog/:id" element={<AdminBlogEditor />} />
