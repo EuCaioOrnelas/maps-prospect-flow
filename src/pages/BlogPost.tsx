@@ -468,13 +468,14 @@ export default function BlogPost() {
         {post.faq && post.faq.length > 0 && (
           <section className="mt-12 pt-8 border-t border-border">
             <h2 className="text-2xl font-bold mb-6">Perguntas frequentes</h2>
-            <div className="space-y-4">
+            <div className="divide-y divide-border">
               {post.faq.map((f, i) => (
-                <details key={i} className="group rounded-lg border border-border p-4 open:bg-muted/30">
-                  <summary className="font-semibold cursor-pointer text-foreground">
-                    {f.question}
+                <details key={i} className="group py-4">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-foreground hover:text-primary transition-colors">
+                    <span>{f.question}</span>
+                    <span className="text-muted-foreground transition-transform group-open:rotate-45 text-xl leading-none">+</span>
                   </summary>
-                  <p className="mt-3 text-muted-foreground">{f.answer}</p>
+                  <p className="mt-3 text-muted-foreground leading-relaxed">{f.answer}</p>
                 </details>
               ))}
             </div>
