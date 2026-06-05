@@ -119,7 +119,7 @@ export default function AdminBlogList() {
               <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum post encontrado</TableCell></TableRow>
             ) : (
               filtered.map((p) => (
-                <TableRow key={p.id}>
+                <TableRow key={p.id} className="hover:bg-transparent">
                   <TableCell>
                     <div className="font-medium">{p.title}</div>
                     <div className="text-xs text-muted-foreground">/{p.slug}</div>
