@@ -12,7 +12,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, ExternalLink, Search, FileText, Type, Tag, Activity, CalendarDays, Eye, Settings2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, Search, FileText, Type, Tag, Activity, CalendarDays, Eye, Heart, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Post = {
