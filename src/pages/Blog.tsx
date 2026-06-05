@@ -284,39 +284,14 @@ export default function Blog() {
       </section>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
-        {/* Destaques */}
-        {featured.length > 0 && (
-          <section className="mb-14">
-            <div className="flex items-end justify-between mb-6">
-              <h2 className="text-2xl font-semibold tracking-tight">Em destaque</h2>
-              <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                Selecionados pela equipe
-              </span>
-            </div>
-            <div className="grid md:grid-cols-3 gap-6">
-              {featured.map((p) => (
-                <ArticleCard
-                  key={p.id}
-                  href={`/blog/${p.slug}`}
-                  cover={p.cover_image_url || undefined}
-                  tag={p.category?.name}
-                  tagColor={p.category?.color}
-                  readingTime={p.reading_time_minutes || undefined}
-                  headline={p.title}
-                  excerpt={p.excerpt || ""}
-                  writer={p.author_name}
-                  publishedAt={p.published_at || undefined}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Lista */}
+        {/* Lista única — apenas as publicações */}
         <section>
-          <h2 className="text-2xl font-semibold tracking-tight mb-6">
-            {q ? `Resultados para "${q}"` : activeCategory ? activeCategory.name : "Últimas publicações"}
-          </h2>
+          {(q || activeCategory) && (
+            <h2 className="text-xl font-medium tracking-tight mb-6 text-muted-foreground">
+              {q ? `Resultados para "${q}"` : activeCategory?.name}
+            </h2>
+          )}
+
           {loading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
