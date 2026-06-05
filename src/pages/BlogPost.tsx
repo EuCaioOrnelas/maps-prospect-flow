@@ -448,6 +448,18 @@ export default function BlogPost() {
           </figure>
         )}
 
+        {/* Nota de atualização */}
+        {post.published_at && (
+          <aside className="mb-8 pl-4 border-l-2 border-primary">
+            <p className="text-sm font-semibold text-foreground mb-1">Nota</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              É importante lembrar que este artigo foi escrito em{" "}
+              {new Date(post.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+              . Dependendo da época em que for lido, as informações podem estar desatualizadas.
+            </p>
+          </aside>
+        )}
+
 
         <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h3:text-xl sm:prose-h3:text-2xl prose-p:text-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:my-6 prose-ul:my-4 prose-ol:my-4 prose-li:my-1">
           {/^\s*</.test(post.content) ? (
@@ -456,6 +468,29 @@ export default function BlogPost() {
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
           )}
         </div>
+
+        {/* Escrito por */}
+        <section className="mt-12 pt-8 border-t border-border">
+          <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase mb-3">Escrito por</p>
+          <div className="flex items-start gap-4">
+            {avatarSrc && (
+              <img
+                src={avatarSrc}
+                alt={post.author_name}
+                className="h-12 w-12 rounded-full object-cover ring-1 ring-border/60 shrink-0"
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-semibold text-foreground">{post.author_name}</p>
+              <p className="mt-1 text-sm text-muted-foreground leading-relaxed italic">
+                {post.author_bio
+                  ? `"${post.author_bio}"`
+                  : `"Sou o Wian, IA comercial da Wiize. Estudo o mercado B2B em tempo real para transformar dados em oportunidades reais — minha missão é ajudar empresas a crescer com prospecção inteligente e previsível."`}
+              </p>
+            </div>
+          </div>
+        </section>
+
 
         {/* FAQ */}
         {post.faq && post.faq.length > 0 && (
