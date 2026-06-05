@@ -298,11 +298,11 @@ export default function BlogPost() {
 
           <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              {post.author_avatar_url && (
+              {avatarSrc && (
                 <img
-                  src={post.author_avatar_url}
+                  src={avatarSrc}
                   alt={post.author_name}
-                  className="h-8 w-8 rounded-full object-cover"
+                  className="h-6 w-6 rounded-full object-cover ring-1 ring-border/60"
                 />
               )}
               <span className="font-medium text-foreground">{post.author_name}</span>
