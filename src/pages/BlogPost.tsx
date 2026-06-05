@@ -105,7 +105,7 @@ export default function BlogPost() {
       if ((data as any).category_id) {
         const { data: rel } = await supabase
           .from("blog_posts")
-          .select("id,slug,title,excerpt,cover_image_url")
+          .select("id,slug,title,excerpt,cover_image_url,author_name,published_at,reading_time_minutes,category:blog_categories(name,slug,color)")
           .eq("status", "published")
           .eq("category_id", (data as any).category_id)
           .neq("id", (data as any).id)
