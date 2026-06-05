@@ -103,13 +103,13 @@ export default function AdminBlogList() {
       <Card>
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Título</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Publicado</TableHead>
-              <TableHead className="text-right">Views</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead><span className="inline-flex items-center gap-2"><Type className="h-3.5 w-3.5" /> Título</span></TableHead>
+              <TableHead><span className="inline-flex items-center gap-2"><Tag className="h-3.5 w-3.5" /> Categoria</span></TableHead>
+              <TableHead><span className="inline-flex items-center gap-2"><Activity className="h-3.5 w-3.5" /> Status</span></TableHead>
+              <TableHead><span className="inline-flex items-center gap-2"><CalendarDays className="h-3.5 w-3.5" /> Publicado</span></TableHead>
+              <TableHead className="text-right"><span className="inline-flex items-center gap-2 justify-end"><Eye className="h-3.5 w-3.5" /> Views</span></TableHead>
+              <TableHead className="text-right"><span className="inline-flex items-center gap-2 justify-end"><Settings2 className="h-3.5 w-3.5" /> Ações</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
