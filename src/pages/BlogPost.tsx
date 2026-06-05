@@ -3,13 +3,15 @@ import { Link, useParams, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, ArrowLeft, Share2 } from "lucide-react";
+import { Calendar, Clock, Share2 } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
 import { ArticleCard } from "@/components/ui/blog-post-card";
 import { Sparkles, ArrowRight } from "lucide-react";
+import wianAvatar from "@/assets/wian-avatar.png";
 import {
   Breadcrumb,
   BreadcrumbItem,
