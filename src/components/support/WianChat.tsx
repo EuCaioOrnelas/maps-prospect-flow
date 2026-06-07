@@ -778,24 +778,10 @@ export function WianChat() {
       return;
     }
     try {
-      await supabase.from("support_ratings").insert({ ticket_id: ticketId, stars, comment, resolved_by: wasEscalated ? "human" : "ai" });
-      // Registra a avaliação como mensagem do ticket pra aparecer no admin.
-      const ratingMsg = `⭐ **Avaliação do atendimento:** ${stars}/10${comment.trim() ? `\n\n💬 **Como posso melhorar:** ${comment.trim()}` : ""}`;
-      await supabase.from("support_messages").insert({ ticket_id: ticketId, role: "user", content: ratingMsg });
-      // Só marca como resolvido se a IA realmente resolveu (não em escalonamento humano).
-      if (!wasEscalated) {
-        await supabase.from("support_tickets").update({ status: "resolved", phase: "rated", resolved_by: "ai", resolved_at: new Date().toISOString() }).eq("id", ticketId);
-        await supabase.from("support_ticket_events").insert({
-          ticket_id: ticketId, from_phase: "waiting_user_confirmation", to_phase: "rated",
-          triggered_by: "user", metadata: { stars, has_comment: !!comment.trim() },
-        });
-      } else {
-        await supabase.from("support_tickets").update({ phase: "rated" }).eq("id", ticketId);
-        await supabase.from("support_ticket_events").insert({
-          ticket_id: ticketId, from_phase: "escalated", to_phase: "rated",
-          triggered_by: "user", metadata: { stars, has_comment: !!comment.trim() },
-        });
-      }
+      const { error } = await supabase.functions.invoke("support-feedback-submit", {
+        body: { ticketId, visitorSession: visitorSessionRef.current, type: "rating", score: stars, comment, wasEscalated },
+      });
+      if (error) throw error;
       setPhase("nps");
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
@@ -810,14 +796,10 @@ export function WianChat() {
     }
     try {
       if (ticketId) {
-        await supabase.from("support_ratings").insert({
-          ticket_id: ticketId,
-          stars: null,
-          nps_score: npsScore,
-          nps_recommend: npsRecommend,
-          nps_comment: npsComment || null,
-          resolved_by: wasEscalated ? "human" : "ai",
+        const { error } = await supabase.functions.invoke("support-feedback-submit", {
+          body: { ticketId, visitorSession: visitorSessionRef.current, type: "nps", npsScore, npsRecommend, npsComment, wasEscalated },
         });
+        if (error) throw error;
       }
       toast({ title: "Obrigado pelo feedback! 🙌" });
       setPhase(finalPhase);
