@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
     let matchedUserId: string | null = existing?.user_id ?? null;
 
     // Se ainda é guest, tenta achar usuário pelo email
+    let matchedPlan: string | null = null;
     if (customerType === "guest" && email) {
       const { data: profile } = await sb
         .from("profiles")
@@ -47,6 +48,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (profile) {
         matchedUserId = profile.id;
+        matchedPlan = profile.plan ?? null;
         const activePlan = profile.plan && profile.plan !== "free" && profile.plan !== "trial";
         const activeSub = profile.subscription_current_period_end
           ? new Date(profile.subscription_current_period_end).getTime() > Date.now()
@@ -59,6 +61,15 @@ Deno.serve(async (req) => {
           priority = "medium";
         }
       }
+    }
+    // Se já tinha user_id mas plano desconhecido, busca para enviar no e-mail de comprovante
+    if (!matchedPlan && matchedUserId) {
+      const { data: prof2 } = await sb
+        .from("profiles")
+        .select("plan")
+        .eq("id", matchedUserId)
+        .maybeSingle();
+      matchedPlan = prof2?.plan ?? null;
     }
 
     // Transcrição
