@@ -1594,7 +1594,7 @@ export function WianChat() {
                 onClick={openTicketDirect}
                 className="w-full text-left px-5 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3.5 border-t border-border/60 bg-muted/20"
               >
-                <Headphones className="w-5 h-5 shrink-0 text-foreground/80" strokeWidth={2} />
+                <Headphones className="w-5 h-5 shrink-0 text-primary" strokeWidth={2} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">Falar direto com o time</p>
                   <p className="text-[11px] text-muted-foreground">Pular triagem e abrir um chamado humano</p>
