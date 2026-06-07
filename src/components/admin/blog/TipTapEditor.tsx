@@ -18,6 +18,7 @@ interface Props {
 
 export function TipTapEditor({ value, onChange, placeholder }: Props) {
   const onChangeRef = useRef(onChange);
+  const selectionRef = useRef<{ from: number; to: number; text: string } | null>(null);
   onChangeRef.current = onChange;
 
   const editor = useEditor({
@@ -41,16 +42,16 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
         class:
           "prose prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[500px] px-4 sm:px-6 py-8 " +
           "prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground " +
-          "prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:leading-tight " +
-          "prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 " +
-          "prose-h3:text-xl sm:prose-h3:text-2xl " +
+          "prose-h1:text-4xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h1:mt-8 prose-h1:mb-5 prose-h1:pb-3 prose-h1:border-b prose-h1:border-border " +
+          "prose-h2:text-3xl sm:prose-h2:text-4xl prose-h2:mt-10 prose-h2:mb-4 " +
+          "prose-h3:text-2xl sm:prose-h3:text-3xl prose-h3:mt-8 prose-h3:mb-3 " +
           "prose-p:text-foreground prose-p:leading-relaxed " +
-          "prose-a:text-primary prose-a:no-underline hover:prose-a:underline " +
+          "prose-a:text-primary prose-a:underline prose-a:decoration-primary/50 prose-a:underline-offset-4 hover:prose-a:decoration-primary " +
           "prose-strong:text-foreground " +
           "prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic " +
           "prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none " +
           "prose-img:rounded-xl prose-img:my-6 " +
-          "prose-ul:my-4 prose-ol:my-4 prose-li:my-1",
+          "prose-ul:my-4 prose-ol:my-4 prose-li:my-1 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_li::marker]:text-primary",
       },
     },
   });
@@ -69,7 +70,13 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
   const [, setTick] = useState(0);
   useEffect(() => {
     if (!editor) return;
-    const handler = () => setTick((t) => t + 1);
+    const handler = () => {
+      const { from, to, empty } = editor.state.selection;
+      const text = empty ? "" : editor.state.doc.textBetween(from, to, " ").trim();
+      selectionRef.current = !empty && text ? { from, to, text } : null;
+      setTick((t) => t + 1);
+    };
+    handler();
     editor.on("selectionUpdate", handler);
     editor.on("transaction", handler);
     return () => {
@@ -80,7 +87,20 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
 
   if (!editor) return null;
 
-  const hasSelection = !editor.state.selection.empty;
+  const hasSelection = !!selectionRef.current;
+
+  const withSelectedText = (command: (chain: any) => boolean) => {
+    const selection = selectionRef.current;
+    if (!selection) return false;
+    return command(editor.chain().focus().setTextSelection({ from: selection.from, to: selection.to }));
+  };
+
+  const normalizeUrl = (url: string) => {
+    const trimmed = url.trim();
+    if (!trimmed) return "";
+    if (/^(https?:|mailto:|tel:)/i.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+  };
 
   const Btn = ({ onClick, active, children, title, disabled, requireSelection = true }: any) => {
     const isDisabled = disabled || (requireSelection && !hasSelection);
@@ -108,36 +128,42 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
   };
 
   const addLink = () => {
-    const url = window.prompt("URL do link:");
+    const selection = selectionRef.current;
+    if (!selection) return;
+    const url = window.prompt("URL do link:", editor.getAttributes("link")?.href || "https://");
     if (url === null) return;
-    if (url === "") return editor.chain().focus().unsetLink().run();
-    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+    const href = normalizeUrl(url);
+    const chain = editor.chain().focus().setTextSelection({ from: selection.from, to: selection.to });
+    if (!href) return chain.unsetLink().run();
+    chain.setLink({ href }).run();
   };
 
   const addImage = () => {
+    const selection = selectionRef.current;
+    if (!selection) return;
     const url = window.prompt("URL da imagem:");
-    if (url) editor.chain().focus().setImage({ src: url }).run();
+    if (url) editor.chain().focus().setTextSelection({ from: selection.from, to: selection.to }).deleteSelection().setImage({ src: normalizeUrl(url) }).run();
   };
 
   return (
     <div className="border rounded-lg bg-background">
       <div className="flex flex-wrap gap-1 p-2 border-b bg-muted/30 sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-muted/50 rounded-t-lg">
-        <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} title="H1"><Heading1 className="h-4 w-4" /></Btn>
-        <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })} title="H2"><Heading2 className="h-4 w-4" /></Btn>
-        <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })} title="H3"><Heading3 className="h-4 w-4" /></Btn>
+        <Btn onClick={() => withSelectedText((chain) => chain.toggleHeading({ level: 1 }).run())} active={editor.isActive("heading", { level: 1 })} title="H1"><Heading1 className="h-4 w-4" /></Btn>
+        <Btn onClick={() => withSelectedText((chain) => chain.toggleHeading({ level: 2 }).run())} active={editor.isActive("heading", { level: 2 })} title="H2"><Heading2 className="h-4 w-4" /></Btn>
+        <Btn onClick={() => withSelectedText((chain) => chain.toggleHeading({ level: 3 }).run())} active={editor.isActive("heading", { level: 3 })} title="H3"><Heading3 className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
-        <Btn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} title="Negrito"><Bold className="h-4 w-4" /></Btn>
-        <Btn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} title="Itálico"><Italic className="h-4 w-4" /></Btn>
-        <Btn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} title="Tachado"><Strikethrough className="h-4 w-4" /></Btn>
-        <Btn onClick={() => editor.chain().focus().toggleCode().run()} active={editor.isActive("code")} title="Código"><Code className="h-4 w-4" /></Btn>
+        <Btn onClick={() => withSelectedText((chain) => chain.toggleBold().run())} active={editor.isActive("bold")} title="Negrito"><Bold className="h-4 w-4" /></Btn>
+        <Btn onClick={() => withSelectedText((chain) => chain.toggleItalic().run())} active={editor.isActive("italic")} title="Itálico"><Italic className="h-4 w-4" /></Btn>
+        <Btn onClick={() => withSelectedText((chain) => chain.toggleStrike().run())} active={editor.isActive("strike")} title="Tachado"><Strikethrough className="h-4 w-4" /></Btn>
+        <Btn onClick={() => withSelectedText((chain) => chain.toggleCode().run())} active={editor.isActive("code")} title="Código"><Code className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
-        <Btn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} title="Lista"><List className="h-4 w-4" /></Btn>
-        <Btn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} title="Lista ordenada"><ListOrdered className="h-4 w-4" /></Btn>
-        <Btn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Citação"><Quote className="h-4 w-4" /></Btn>
-        <Btn onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Linha" requireSelection={false}><Minus className="h-4 w-4" /></Btn>
+        <Btn onClick={() => withSelectedText((chain) => chain.toggleBulletList().run())} active={editor.isActive("bulletList")} title="Lista"><List className="h-4 w-4" /></Btn>
+        <Btn onClick={() => withSelectedText((chain) => chain.toggleOrderedList().run())} active={editor.isActive("orderedList")} title="Lista ordenada"><ListOrdered className="h-4 w-4" /></Btn>
+        <Btn onClick={() => withSelectedText((chain) => chain.toggleBlockquote().run())} active={editor.isActive("blockquote")} title="Citação"><Quote className="h-4 w-4" /></Btn>
+        <Btn onClick={() => withSelectedText((chain) => chain.deleteSelection().setHorizontalRule().run())} title="Linha"><Minus className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
         <Btn onClick={addLink} active={editor.isActive("link")} title="Link"><LinkIcon className="h-4 w-4" /></Btn>
-        <Btn onClick={addImage} title="Imagem (URL)" requireSelection={false}><ImageIcon className="h-4 w-4" /></Btn>
+        <Btn onClick={addImage} title="Imagem (URL)"><ImageIcon className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
         <Btn onClick={() => editor.chain().focus().undo().run()} title="Desfazer" requireSelection={false} disabled={!editor.can().undo()}><Undo className="h-4 w-4" /></Btn>
         <Btn onClick={() => editor.chain().focus().redo().run()} title="Refazer" requireSelection={false} disabled={!editor.can().redo()}><Redo className="h-4 w-4" /></Btn>
