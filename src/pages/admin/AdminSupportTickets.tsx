@@ -370,18 +370,67 @@ export default function AdminSupportTickets() {
 
   const updateStatus = async (status: string) => {
     if (!selected) return;
-    const { data, error } = await supabase.functions.invoke("admin-support-ticket-update", {
-      body: { ticketId: selected.id, status },
-    });
+    const applyLocalUpdate = async () => {
+      const update: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+      if (status === "resolved" || status === "closed") {
+        update.resolved_at = new Date().toISOString();
+        update.resolved_by = "human";
+        update.phase = status;
+      } else if (status === "escalated") {
+        update.phase = "escalated";
+        update.resolved_at = null;
+        update.resolved_by = null;
+      } else if (status === "in_progress") {
+        update.phase = "human_assigned";
+        update.resolved_at = null;
+        update.resolved_by = null;
+      } else {
+        update.phase = "triage";
+        update.resolved_at = null;
+        update.resolved_by = null;
+      }
+      const { data: ticket, error: updateError } = await supabase
+        .from("support_tickets")
+        .update(update)
+        .eq("id", selected.id)
+        .select("*")
+        .maybeSingle();
+      if (updateError) throw updateError;
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("support_ticket_history").insert({
+        ticket_id: selected.id,
+        author_id: user?.id ?? null,
+        author_name: user?.email ?? "Equipe",
+        action_type: "status_change",
+        content: `Status alterado para "${status}"`,
+        attachments: [],
+      });
+      if ((status === "resolved" || status === "closed") && selected.email) {
+        await supabase.functions.invoke("support-email-send", { body: { type: "customer_rating_request", ticketId: selected.id } });
+      }
+      return ticket as Ticket;
+    };
+
+    let updatedTicket: Ticket | null = null;
+    let ratingEmailSent = false;
+    const { data, error } = await supabase.functions.invoke("admin-support-ticket-update", { body: { ticketId: selected.id, status } });
     if (error || data?.error) {
-      toast({ title: "Erro", description: data?.error || error?.message || "Não foi possível atualizar o status", variant: "destructive" });
-      return;
+      try {
+        updatedTicket = await applyLocalUpdate();
+        ratingEmailSent = status === "resolved" || status === "closed";
+      } catch (fallbackError: any) {
+        toast({ title: "Erro", description: data?.error || fallbackError?.message || error?.message || "Não foi possível atualizar o status", variant: "destructive" });
+        return;
+      }
+    } else {
+      updatedTicket = (data?.ticket as Ticket) || null;
+      ratingEmailSent = !!data?.ratingEmailSent;
     }
     toast({ title: "Status atualizado" });
-    setSelected((data?.ticket as Ticket) || { ...selected, status });
+    setSelected(updatedTicket || { ...selected, status });
     fetchStats(); fetchTickets();
     refreshHistory(selected.id);
-    if (data?.ratingEmailSent && selected.email) {
+    if (ratingEmailSent && selected.email) {
       toast({ title: "E-mail de avaliação enviado", description: selected.email });
     }
   };
@@ -486,11 +535,32 @@ export default function AdminSupportTickets() {
       body: { ticketId: selected.id, priority },
     });
     if (error || data?.error) {
-      toast({ title: "Erro", description: data?.error || error?.message || "Não foi possível atualizar a prioridade", variant: "destructive" });
-      return;
+      try {
+        const { data: ticket, error: updateError } = await supabase
+          .from("support_tickets")
+          .update({ priority, updated_at: new Date().toISOString() })
+          .eq("id", selected.id)
+          .select("*")
+          .maybeSingle();
+        if (updateError) throw updateError;
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from("support_ticket_history").insert({
+          ticket_id: selected.id,
+          author_id: user?.id ?? null,
+          author_name: user?.email ?? "Equipe",
+          action_type: "priority_change",
+          content: `Prioridade alterada para "${priority}"`,
+          attachments: [],
+        });
+        setSelected((ticket as Ticket) || { ...selected, priority });
+      } catch (fallbackError: any) {
+        toast({ title: "Erro", description: data?.error || fallbackError?.message || error?.message || "Não foi possível atualizar a prioridade", variant: "destructive" });
+        return;
+      }
+    } else {
+      setSelected((data?.ticket as Ticket) || { ...selected, priority });
     }
     toast({ title: "Prioridade atualizada" });
-    setSelected((data?.ticket as Ticket) || { ...selected, priority });
     fetchTickets();
     refreshHistory(selected.id);
   };
