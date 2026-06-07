@@ -271,7 +271,7 @@ Deno.serve(async (req) => {
       const channelTitle = isWhatsapp ? "WhatsApp" : "e-mail";
       const channelExplain = isWhatsapp
         ? `Por você ser cliente <strong>Growth</strong>, nosso time vai retornar diretamente pelo <strong>WhatsApp</strong> no número informado no chamado (${esc(ticket.phone || "—")}). Se preferir continuar por e-mail, basta responder esta mensagem.`
-        : `Como você está no plano <strong>Start / Atendimento</strong>, o retorno será feito por <strong>e-mail</strong>, neste mesmo endereço (${esc(customerEmail)}). Basta responder este e-mail que sua mensagem entra automaticamente no chamado.`;
+        : `Como você está no plano <strong>Start / Atendimento</strong>, o retorno será feito por <strong>e-mail</strong>, neste mesmo endereço (${esc(customerEmail)}). Basta responder este e-mail que sua mensagem entra automaticamente no chamado. Se não encontrar nossa confirmação na caixa de entrada, confira também o <strong>Spam</strong> ou <strong>Lixo eletrônico</strong>.`;
 
       const receiptSubject = `Confirmação de abertura do chamado ${ticketNumber}`;
       const bodyHtml = `

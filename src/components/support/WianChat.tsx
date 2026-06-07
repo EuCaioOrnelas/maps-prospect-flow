@@ -853,7 +853,7 @@ export function WianChat() {
         ...prev,
         {
           role: "ai",
-          content: `✅ Pronto! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nAntes de finalizar, como você avalia o atendimento que tive com você até aqui? ⭐`,
+          content: `✅ Pronto! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nVocê vai receber a confirmação no e-mail informado. Se estiver no plano Atendimento, o retorno também será por e-mail — confira a caixa de entrada, Spam ou Lixo eletrônico.\n\nAntes de finalizar, como você avalia o atendimento que tive com você até aqui? ⭐`,
         },
       ]);
       setPhase("nps");
