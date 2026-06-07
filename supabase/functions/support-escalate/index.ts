@@ -63,20 +63,18 @@ Deno.serve(async (req) => {
     // Carrega ticket atual para preservar customer_type já definido
     const { data: existing } = await sb
       .from("support_tickets")
-      .select("customer_type, user_id, priority, phase")
+      .select("customer_type, user_id, priority, phase, visitor_session")
       .eq("id", resolvedTicketId)
       .maybeSingle();
     if (!existing) throw new Error("ticket not found");
     if (existing.user_id && existing.user_id !== requesterUserId) throw new Error("ticket access denied");
     if (!existing.user_id && !createdTicketNow) {
       if (!visitorSession || typeof visitorSession !== "string") throw new Error("ticket session required");
-      const { data: sessionTicket } = await sb
-        .from("support_tickets")
-        .select("id")
-        .eq("id", resolvedTicketId)
-        .eq("visitor_session", visitorSession)
-        .maybeSingle();
-      if (!sessionTicket) throw new Error("ticket session mismatch");
+      if (!existing.visitor_session) {
+        await sb.from("support_tickets").update({ visitor_session: visitorSession }).eq("id", resolvedTicketId);
+      } else if (existing.visitor_session !== visitorSession) {
+        throw new Error("ticket session mismatch");
+      }
     }
     const previousPhase = existing?.phase ?? "ai_investigating";
 
