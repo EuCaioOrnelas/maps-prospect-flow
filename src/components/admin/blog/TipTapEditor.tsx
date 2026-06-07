@@ -201,16 +201,56 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
         <div className="w-px bg-border mx-1" />
         <Btn onClick={() => selectedChain()?.toggleBulletList().run()} active={editor.isActive("bulletList")} title="Lista"><List className="h-4 w-4" /></Btn>
         <Btn onClick={() => selectedChain()?.toggleOrderedList().run()} active={editor.isActive("orderedList")} title="Lista ordenada"><ListOrdered className="h-4 w-4" /></Btn>
-        <Btn onClick={() => selectedChain()?.toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Citação"><Quote className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleNode("paragraph", "paragraph").toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Citação"><Quote className="h-4 w-4" /></Btn>
         <Btn onClick={() => selectedChain()?.deleteSelection().setHorizontalRule().run()} title="Linha"><Minus className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
         <Btn onClick={addLink} active={editor.isActive("link")} title="Link"><LinkIcon className="h-4 w-4" /></Btn>
-        <Btn onClick={addImage} title="Imagem (URL)"><ImageIcon className="h-4 w-4" /></Btn>
+        <Btn onClick={addImage} title="Imagem (URL)" requireSelection={false}><ImageIcon className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
         <Btn onClick={() => editor.chain().focus().undo().run()} title="Desfazer" requireSelection={false} disabled={!editor.can().undo()}><Undo className="h-4 w-4" /></Btn>
         <Btn onClick={() => editor.chain().focus().redo().run()} title="Refazer" requireSelection={false} disabled={!editor.can().redo()}><Redo className="h-4 w-4" /></Btn>
       </div>
       <EditorContent editor={editor} />
+
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar link</DialogTitle>
+            <DialogDescription>Informe a URL que será aplicada ao texto selecionado.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="blog-link-url">URL</Label>
+            <Input id="blog-link-url" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://wiize.com.br" autoFocus />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setLinkDialogOpen(false)}>Cancelar</Button>
+            <Button type="button" onClick={applyLink}>Aplicar link</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Adicionar imagem</DialogTitle>
+            <DialogDescription>Informe a URL e o texto alternativo da imagem.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="blog-image-url">URL da imagem</Label>
+              <Input id="blog-image-url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." autoFocus />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="blog-image-alt">Alt text</Label>
+              <Input id="blog-image-alt" value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} placeholder="Descreva a imagem" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setImageDialogOpen(false)}>Cancelar</Button>
+            <Button type="button" onClick={applyImage} disabled={!imageUrl.trim()}>Adicionar imagem</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
