@@ -580,7 +580,7 @@ export function WianChat() {
 
   const autoOpenEscalation = async (resolvedTicketId: string, inferredCategory: string) => {
     const { data: escResp, error } = await supabase.functions.invoke("support-escalate", {
-      body: { ticketId: resolvedTicketId, name: name.trim(), email: email.trim(), phone: phone.trim() || null, extra: null, category: inferredCategory },
+      body: { ticketId: resolvedTicketId, name: name.trim(), email: email.trim(), phone: phone.trim() || null, extra: null, category: inferredCategory, visitorSession: visitorSessionRef.current },
     });
     if (error) throw error;
     if (escResp?.ticketNumber) setTicketNumber(escResp.ticketNumber);
@@ -633,6 +633,7 @@ export function WianChat() {
       const { data, error } = await supabase.functions.invoke("support-chat", {
         body: {
           ticketId,
+          visitorSession: visitorSessionRef.current,
           message: combined || "(usuário enviou apenas anexos)",
           history: messages.slice(-12).map((m) => ({ role: m.role, content: m.content })),
           imageDataUrl: imageAttachment?.dataUrl ?? null,
