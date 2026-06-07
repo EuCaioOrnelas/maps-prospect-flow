@@ -76,7 +76,9 @@ type Rating = {
   created_at: string;
 };
 
-const ACTIVE_STATUSES = ["open", "in_progress", "escalated"];
+// "open" = chat iniciado mas usuário não escalou (não conta como ticket real).
+// Tickets reais começam em "escalated" (via formulário) ou "in_progress" (manual).
+const ACTIVE_STATUSES = ["in_progress", "escalated"];
 
 const STATUS_LABELS: Record<string, string> = {
   open: "Aberto",
