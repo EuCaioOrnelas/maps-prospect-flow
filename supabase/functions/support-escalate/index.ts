@@ -8,6 +8,40 @@ const corsHeaders = {
 };
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
+const BUSINESS_START_HOUR = 9;
+const BUSINESS_END_HOUR = 17;
+const SLA_BUSINESS_HOURS = 48;
+
+function addBusinessHours(start: Date, hours: number): Date {
+  let remaining = hours * 60 * 60 * 1000;
+  const cursor = new Date(start.getTime());
+  while (remaining > 0) {
+    const day = cursor.getDay();
+    if (day === 0 || day === 6) {
+      cursor.setDate(cursor.getDate() + (day === 0 ? 1 : 2));
+      cursor.setHours(BUSINESS_START_HOUR, 0, 0, 0);
+      continue;
+    }
+    const startOfDay = new Date(cursor); startOfDay.setHours(BUSINESS_START_HOUR, 0, 0, 0);
+    const endOfDay = new Date(cursor); endOfDay.setHours(BUSINESS_END_HOUR, 0, 0, 0);
+    if (cursor.getTime() < startOfDay.getTime()) { cursor.setTime(startOfDay.getTime()); continue; }
+    if (cursor.getTime() >= endOfDay.getTime()) {
+      cursor.setDate(cursor.getDate() + 1);
+      cursor.setHours(BUSINESS_START_HOUR, 0, 0, 0);
+      continue;
+    }
+    const available = endOfDay.getTime() - cursor.getTime();
+    if (remaining <= available) {
+      cursor.setTime(cursor.getTime() + remaining);
+      remaining = 0;
+    } else {
+      remaining -= available;
+      cursor.setDate(cursor.getDate() + 1);
+      cursor.setHours(BUSINESS_START_HOUR, 0, 0, 0);
+    }
+  }
+  return cursor;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -182,7 +216,7 @@ Deno.serve(async (req) => {
       phase: "escalated",
       priority,
       internal_notes: internalNote,
-      due_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+      due_at: addBusinessHours(new Date(), SLA_BUSINESS_HOURS).toISOString(),
     }).eq("id", resolvedTicketId).select("ticket_number").maybeSingle();
     if (updErr) throw updErr;
 
