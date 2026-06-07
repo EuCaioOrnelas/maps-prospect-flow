@@ -440,7 +440,7 @@ export function WianChat() {
 
   const onSolutionResolved = (resolved: boolean) => {
     if (resolved) {
-      setPhase("rate");
+      setPhase("nps");
       return;
     }
     // Não resolveu → entra na IA com contexto da triagem
@@ -576,7 +576,7 @@ export function WianChat() {
       role: "ai",
       content: `✅ Pronto${name.trim() ? `, **${name.trim().split(/\s+/)[0]}**` : ""}! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nO time já recebeu o histórico completo da conversa. Antes de finalizar, como você avalia meu atendimento até aqui? ⭐`,
     }]);
-    setPhase("rate");
+    setPhase("nps");
   };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
@@ -745,7 +745,7 @@ export function WianChat() {
 
   const onResolved = (resolved: boolean) => {
     if (resolved) {
-      setPhase("rate");
+      setPhase("nps");
     } else {
       setPhase("chat");
       setMessages((prev) => [
@@ -884,7 +884,7 @@ export function WianChat() {
           content: `✅ Pronto! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nAntes de finalizar, como você avalia o atendimento que tive com você até aqui? ⭐`,
         },
       ]);
-      setPhase("rate");
+      setPhase("nps");
     } catch (e: any) {
       const msg = e?.message || "Não conseguimos abrir seu chamado agora. Tente novamente em instantes.";
       setSubmitError(msg);
@@ -1209,10 +1209,29 @@ export function WianChat() {
         {phase === "nps" && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-4">
             <div>
-              <p className="text-sm font-semibold mb-1">Mais uma rapidinha 🙏</p>
-              <p className="text-xs text-muted-foreground">Sua resposta ajuda a gente a melhorar o atendimento.</p>
+              <p className="text-sm font-semibold mb-1">Como foi o atendimento? 🙏</p>
+              <p className="text-xs text-muted-foreground">Sua resposta ajuda a gente a melhorar.</p>
             </div>
 
+            <div>
+              <p className="text-sm font-medium mb-2">De 0 a 10, o quanto este atendimento te ajudou?</p>
+              <div className="flex flex-wrap gap-1.5">
+                {Array.from({ length: 11 }, (_, n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setNpsScore(n)}
+                    className={`w-8 h-8 text-xs rounded-md border transition-colors ${
+                      npsScore === n
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border hover:border-primary/50 hover:bg-muted"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div>
               <p className="text-sm font-medium mb-2">De 0 a 10, qual a chance de você indicar a Wiize para um amigo próximo?</p>
@@ -1242,7 +1261,7 @@ export function WianChat() {
             />
 
             <div className="flex gap-2">
-              <Button size="sm" onClick={submitNps} disabled={npsRecommend === null} className="flex-1">
+              <Button size="sm" onClick={submitNps} disabled={npsScore === null || npsRecommend === null} className="flex-1">
                 Enviar feedback
               </Button>
               <Button size="sm" variant="ghost" onClick={skipNps}>
