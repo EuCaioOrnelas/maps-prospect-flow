@@ -14,7 +14,7 @@ function extractTicketNumber(input: string | null | undefined): string | null {
   const reAddr = /suporte\+([A-Z0-9-]+)@/i;
   const m1 = input.match(reAddr);
   if (m1) return m1[1].toUpperCase();
-  const reSubj = /#?\s*(WIZ-?\d+|[A-Z]{2,4}-?\d+)/i;
+  const reSubj = /(?:^|\b)(WIZ-?\d{3,}|TEST-?\d{8,})(?:\b|$)/i;
   const m2 = input.match(reSubj);
   if (m2) return m2[1].toUpperCase().replace(/^WIZ(\d)/, "WIZ-$1");
   return null;
