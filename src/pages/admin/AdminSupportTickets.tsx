@@ -368,11 +368,6 @@ export default function AdminSupportTickets() {
 
   const updateStatus = async (status: string) => {
     if (!selected) return;
-    const update: any = { status };
-    if (status === "resolved" || status === "closed") {
-      update.resolved_at = new Date().toISOString();
-      update.resolved_by = "human";
-    }
     const { data, error } = await supabase.functions.invoke("admin-support-ticket-update", {
       body: { ticketId: selected.id, status },
     });
@@ -381,7 +376,7 @@ export default function AdminSupportTickets() {
       return;
     }
     toast({ title: "Status atualizado" });
-    setSelected((data?.ticket as Ticket) || { ...selected, ...update });
+    setSelected((data?.ticket as Ticket) || { ...selected, status });
     fetchStats(); fetchTickets();
     refreshHistory(selected.id);
     if (data?.ratingEmailSent && selected.email) {
@@ -494,10 +489,17 @@ export default function AdminSupportTickets() {
 
   const updatePriority = async (priority: string) => {
     if (!selected) return;
-    const { error } = await supabase.from("support_tickets").update({ priority }).eq("id", selected.id);
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
-    setSelected({ ...selected, priority });
+    const { data, error } = await supabase.functions.invoke("admin-support-ticket-update", {
+      body: { ticketId: selected.id, priority },
+    });
+    if (error || data?.error) {
+      toast({ title: "Erro", description: data?.error || error?.message || "Não foi possível atualizar a prioridade", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Prioridade atualizada" });
+    setSelected((data?.ticket as Ticket) || { ...selected, priority });
     fetchTickets();
+    refreshHistory(selected.id);
   };
 
 
@@ -848,7 +850,7 @@ export default function AdminSupportTickets() {
                       if (cust > sup) {
                         return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30 text-[10px]">Respondeu</Badge>;
                       }
-                      return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px]">Mensagem enviada</Badge>;
+                      return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px]">Enviada</Badge>;
                     })()}
                   </TableCell>
 
@@ -895,7 +897,7 @@ export default function AdminSupportTickets() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 flex-wrap">
               {selected?.ticket_number || `Ticket #${selected?.id.slice(0, 8)}`}
-              {selected && <Badge variant="outline" className={STATUS_COLORS[selected.status] || ""}>{selected.status}</Badge>}
+              {selected && <Badge variant="outline" className={STATUS_COLORS[selected.status] || ""}>{STATUS_LABELS[selected.status] || selected.status}</Badge>}
               {selected?.is_manual && <Badge variant="outline" className="bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/30">Manual</Badge>}
               {selected?.phase && <Badge variant="outline" className="text-[10px]">{selected.phase}</Badge>}
               {typeof selected?.frustration_score === "number" && selected.frustration_score >= 40 && (

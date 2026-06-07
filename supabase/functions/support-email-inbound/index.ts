@@ -7,12 +7,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
+
 function extractTicketNumber(input: string | null | undefined): string | null {
   if (!input) return null;
   const reAddr = /suporte\+([A-Z0-9-]+)@/i;
   const m1 = input.match(reAddr);
   if (m1) return m1[1].toUpperCase();
-  const reSubj = /#?\s*(WIZ-?\d+|[A-Z]{2,4}-?\d+)/i;
+  const reSubj = /(?:^|\b)(WIZ-?\d{3,}|TEST-?\d{8,})(?:\b|$)/i;
   const m2 = input.match(reSubj);
   if (m2) return m2[1].toUpperCase().replace(/^WIZ(\d)/, "WIZ-$1");
   return null;
@@ -65,11 +67,32 @@ function extractBody(text: string, html: string): string {
   return fromHtml;
 }
 
+async function fetchReceivedEmail(data: any) {
+  const hasBody = !!(data?.text || data?.body_plain || data?.plain || data?.html || data?.body_html);
+  const emailId = data?.email_id || data?.id;
+  if (hasBody || !emailId || !RESEND_API_KEY) return data;
+
+  const res = await fetch(`https://api.resend.com/emails/receiving/${encodeURIComponent(emailId)}`, {
+    headers: { Authorization: `Bearer ${RESEND_API_KEY}` },
+  });
+  const detail = await res.json().catch(() => null);
+  if (!res.ok || !detail) {
+    console.warn("[support-email-inbound] failed to fetch email content", { emailId, status: res.status, detail });
+    return data;
+  }
+  return { ...data, ...detail };
+}
+
+function isOwnSupportEmail(from: string, subject: string) {
+  const lower = `${from} ${subject}`.toLowerCase();
+  return /suporte@wiize\.com\.br/.test(lower) && /(confirmação de abertura|novo chamado|avaliação do seu atendimento|encerrado por inatividade|suporte wiize)/i.test(subject);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const payload = await req.json().catch(() => ({}));
-    const data = payload?.data ?? payload;
+    const data = await fetchReceivedEmail(payload?.data ?? payload);
     const to = Array.isArray(data.to) ? data.to.join(",") : String(data.to || "");
     const from = String(data.from || data.sender || "");
     const subject = String(data.subject || "");
@@ -83,6 +106,13 @@ Deno.serve(async (req) => {
       extractTicketNumber(data?.headers?.["References"] || "");
 
     console.log("[support-email-inbound] received", { to, subject, ticketNumber, hasText: !!text, hasHtml: !!html });
+
+    if (isOwnSupportEmail(from, subject)) {
+      console.log("[support-email-inbound] ignored own support email", { from, subject, ticketNumber });
+      return new Response(JSON.stringify({ ok: true, ignored: "own_support_email" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!ticketNumber) {
       console.warn("[support-email-inbound] sem ticket number identificado", { to, subject });

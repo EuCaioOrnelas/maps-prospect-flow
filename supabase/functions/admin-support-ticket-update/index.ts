@@ -6,6 +6,7 @@ const corsHeaders = {
 };
 
 const ALLOWED_STATUSES = new Set(["open", "in_progress", "escalated", "resolved", "closed"]);
+const ALLOWED_PRIORITIES = new Set(["low", "medium", "high", "urgent"]);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -48,31 +49,49 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { ticketId, status } = await req.json();
-    if (!ticketId || !ALLOWED_STATUSES.has(status)) {
+    const { ticketId, status, priority } = await req.json();
+    const hasStatus = typeof status === "string" && status.length > 0;
+    const hasPriority = typeof priority === "string" && priority.length > 0;
+    if (!ticketId || (!hasStatus && !hasPriority)) {
+      return new Response(JSON.stringify({ error: "Informe o ticket e o campo que deseja atualizar" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (hasStatus && !ALLOWED_STATUSES.has(status)) {
       return new Response(JSON.stringify({ error: "Status inválido" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    if (hasPriority && !ALLOWED_PRIORITIES.has(priority)) {
+      return new Response(JSON.stringify({ error: "Prioridade inválida" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    const update: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
-    if (status === "resolved" || status === "closed") {
-      update.resolved_at = new Date().toISOString();
-      update.resolved_by = "human";
-      update.phase = status;
-    } else if (status === "escalated") {
-      update.phase = "escalated";
-      update.resolved_at = null;
-      update.resolved_by = null;
-    } else if (status === "in_progress") {
-      update.phase = "human_assigned";
-      update.resolved_at = null;
-      update.resolved_by = null;
-    } else {
-      update.phase = "triage";
-      update.resolved_at = null;
-      update.resolved_by = null;
+    const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (hasPriority) update.priority = priority;
+    if (hasStatus) {
+      update.status = status;
+      if (status === "resolved" || status === "closed") {
+        update.resolved_at = new Date().toISOString();
+        update.resolved_by = "human";
+        update.phase = status;
+      } else if (status === "escalated") {
+        update.phase = "escalated";
+        update.resolved_at = null;
+        update.resolved_by = null;
+      } else if (status === "in_progress") {
+        update.phase = "human_assigned";
+        update.resolved_at = null;
+        update.resolved_by = null;
+      } else {
+        update.phase = "triage";
+        update.resolved_at = null;
+        update.resolved_by = null;
+      }
     }
 
     const { data: ticket, error: updateError } = await admin
@@ -94,13 +113,13 @@ Deno.serve(async (req) => {
       ticket_id: ticketId,
       author_id: authData.user.id,
       author_name: authData.user.email ?? "Equipe",
-      action_type: "status_change",
-      content: `Status alterado para "${status}"`,
+      action_type: hasStatus ? "status_change" : "priority_change",
+      content: hasStatus ? `Status alterado para "${status}"` : `Prioridade alterada para "${priority}"`,
       attachments: [],
     });
 
     let ratingEmailSent = false;
-    if ((status === "resolved" || status === "closed") && ticket.email) {
+    if (hasStatus && (status === "resolved" || status === "closed") && ticket.email) {
       try {
         const emailRes = await fetch(`${supabaseUrl}/functions/v1/support-email-send`, {
           method: "POST",
