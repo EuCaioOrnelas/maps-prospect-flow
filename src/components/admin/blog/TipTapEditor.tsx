@@ -4,6 +4,11 @@ import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Bold, Italic, Strikethrough, Code, Heading1, Heading2, Heading3,
   List, ListOrdered, Quote, Undo, Redo, Link as LinkIcon, Image as ImageIcon, Minus,
@@ -19,14 +24,20 @@ interface Props {
 
 export function TipTapEditor({ value, onChange, placeholder }: Props) {
   const onChangeRef = useRef(onChange);
+  const rangeRef = useRef<{ from: number; to: number } | null>(null);
   const selectionRef = useRef<{ from: number; to: number; text: string } | null>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("https://");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
   onChangeRef.current = onChange;
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" } }),
-      Image.configure({ HTMLAttributes: { class: "rounded-lg my-4 max-w-full" } }),
+      Image.configure({ HTMLAttributes: { class: "w-full aspect-video object-cover rounded-xl my-6" } }),
       Placeholder.configure({ placeholder: placeholder || "Escreva seu conteúdo..." }),
     ],
     content: value || "",
@@ -43,16 +54,16 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
         class:
           "prose prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[500px] px-4 sm:px-6 py-8 " +
           "prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground " +
-          "prose-h1:text-4xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h1:mt-8 prose-h1:mb-5 prose-h1:pb-3 prose-h1:border-b prose-h1:border-border " +
-          "prose-h2:text-3xl sm:prose-h2:text-4xl prose-h2:mt-10 prose-h2:mb-4 " +
-          "prose-h3:text-2xl sm:prose-h3:text-3xl prose-h3:mt-8 prose-h3:mb-3 " +
+          "prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h1:mt-8 prose-h1:mb-5 " +
+          "prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h2:mb-4 " +
+          "prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-3 " +
           "prose-p:text-foreground prose-p:leading-relaxed " +
           "prose-a:text-primary prose-a:underline prose-a:decoration-primary/50 prose-a:underline-offset-4 hover:prose-a:decoration-primary " +
           "prose-strong:text-foreground " +
-          "prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic " +
+          "prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:text-foreground " +
           "prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none " +
-          "prose-img:rounded-xl prose-img:my-6 " +
-          "prose-ul:my-4 prose-ol:my-4 prose-li:my-1 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_li::marker]:text-primary",
+          "prose-img:w-full prose-img:aspect-video prose-img:object-cover prose-img:rounded-xl prose-img:my-6 " +
+          "prose-ul:my-4 prose-ol:my-4 prose-li:my-1 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_li::marker]:text-foreground",
       },
     },
   });
@@ -93,6 +104,11 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
     const selection = selectionRef.current;
     if (!selection) return null;
     return editor.chain().focus().setTextSelection({ from: selection.from, to: selection.to });
+  };
+
+  const currentRange = () => {
+    rangeRef.current = { from: editor.state.selection.from, to: editor.state.selection.to };
+    return rangeRef.current;
   };
 
   const normalizeUrl = (url: string) => {
@@ -139,19 +155,36 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
   const addLink = () => {
     const selection = selectionRef.current;
     if (!selection) return;
-    const url = window.prompt("URL do link:", editor.getAttributes("link")?.href || "https://");
-    if (url === null) return;
-    const href = normalizeUrl(url);
-    const chain = editor.chain().focus().setTextSelection({ from: selection.from, to: selection.to });
-    if (!href) return chain.unsetLink().run();
-    chain.setLink({ href }).run();
+    rangeRef.current = { from: selection.from, to: selection.to };
+    setLinkUrl(editor.getAttributes("link")?.href || "https://");
+    setLinkDialogOpen(true);
+  };
+
+  const applyLink = () => {
+    const range = rangeRef.current;
+    if (!range) return;
+    const href = normalizeUrl(linkUrl);
+    const chain = editor.chain().focus().setTextSelection(range);
+    if (!href) chain.unsetLink().run();
+    else chain.setLink({ href }).run();
+    setLinkDialogOpen(false);
   };
 
   const addImage = () => {
-    const selection = selectionRef.current;
-    if (!selection) return;
-    const url = window.prompt("URL da imagem:");
-    if (url) editor.chain().focus().setTextSelection({ from: selection.from, to: selection.to }).deleteSelection().setImage({ src: normalizeUrl(url) }).run();
+    currentRange();
+    setImageUrl("");
+    setImageAlt("");
+    setImageDialogOpen(true);
+  };
+
+  const applyImage = () => {
+    const src = normalizeUrl(imageUrl);
+    if (!src) return;
+    const range = rangeRef.current;
+    const chain = editor.chain().focus();
+    if (range) chain.setTextSelection(range);
+    chain.setImage({ src, alt: imageAlt.trim() || undefined }).run();
+    setImageDialogOpen(false);
   };
 
   return (
@@ -168,16 +201,56 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
         <div className="w-px bg-border mx-1" />
         <Btn onClick={() => selectedChain()?.toggleBulletList().run()} active={editor.isActive("bulletList")} title="Lista"><List className="h-4 w-4" /></Btn>
         <Btn onClick={() => selectedChain()?.toggleOrderedList().run()} active={editor.isActive("orderedList")} title="Lista ordenada"><ListOrdered className="h-4 w-4" /></Btn>
-        <Btn onClick={() => selectedChain()?.toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Citação"><Quote className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleNode("paragraph", "paragraph").toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Citação"><Quote className="h-4 w-4" /></Btn>
         <Btn onClick={() => selectedChain()?.deleteSelection().setHorizontalRule().run()} title="Linha"><Minus className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
         <Btn onClick={addLink} active={editor.isActive("link")} title="Link"><LinkIcon className="h-4 w-4" /></Btn>
-        <Btn onClick={addImage} title="Imagem (URL)"><ImageIcon className="h-4 w-4" /></Btn>
+        <Btn onClick={addImage} title="Imagem (URL)" requireSelection={false}><ImageIcon className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
         <Btn onClick={() => editor.chain().focus().undo().run()} title="Desfazer" requireSelection={false} disabled={!editor.can().undo()}><Undo className="h-4 w-4" /></Btn>
         <Btn onClick={() => editor.chain().focus().redo().run()} title="Refazer" requireSelection={false} disabled={!editor.can().redo()}><Redo className="h-4 w-4" /></Btn>
       </div>
       <EditorContent editor={editor} />
+
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar link</DialogTitle>
+            <DialogDescription>Informe a URL que será aplicada ao texto selecionado.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="blog-link-url">URL</Label>
+            <Input id="blog-link-url" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://wiize.com.br" autoFocus />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setLinkDialogOpen(false)}>Cancelar</Button>
+            <Button type="button" onClick={applyLink}>Aplicar link</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Adicionar imagem</DialogTitle>
+            <DialogDescription>Informe a URL e o texto alternativo da imagem.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="blog-image-url">URL da imagem</Label>
+              <Input id="blog-image-url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." autoFocus />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="blog-image-alt">Alt text</Label>
+              <Input id="blog-image-alt" value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} placeholder="Descreva a imagem" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setImageDialogOpen(false)}>Cancelar</Button>
+            <Button type="button" onClick={applyImage} disabled={!imageUrl.trim()}>Adicionar imagem</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
