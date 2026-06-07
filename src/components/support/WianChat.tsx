@@ -84,6 +84,7 @@ type TriageContext = {
 
 const STORAGE_KEY = "wian_chat_v4";
 const FORM_KEY = "wian_form_draft_v1";
+const VISITOR_SESSION_KEY = "wian_visitor_session_v1";
 const RESPONSE_DELAY_MS = 10000; // aguarda 10s após a última mensagem do user (reseta a cada nova mensagem); "digitando" aparece durante a espera
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const MAX_ATTACHMENTS_PER_SEND = 3;
@@ -103,6 +104,18 @@ function loadState() {
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
+  }
+}
+
+function getVisitorSession() {
+  try {
+    const existing = localStorage.getItem(VISITOR_SESSION_KEY);
+    if (existing) return existing;
+    const generated = crypto.randomUUID ? crypto.randomUUID() : `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(VISITOR_SESSION_KEY, generated);
+    return generated;
+  } catch {
+    return `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 }
 
@@ -285,6 +298,7 @@ export function WianChat() {
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const queueRef = useRef<{ texts: string[]; attachments: Attachment[] }>({ texts: [], attachments: [] });
   const { toast } = useToast();
+  const visitorSessionRef = useRef(getVisitorSession());
 
   useEffect(() => {
     const lite = messages.map((m) => ({
