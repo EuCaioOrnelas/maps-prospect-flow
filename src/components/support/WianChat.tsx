@@ -1563,7 +1563,7 @@ export function WianChat() {
                     onClick={() => pickUsageHelp(activeCategory)}
                     className="w-full text-left px-5 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3.5 border-t border-border/60 bg-muted/20"
                   >
-                    <Lightbulb className="w-5 h-5 shrink-0 text-amber-500" strokeWidth={2} />
+                    <Lightbulb className="w-5 h-5 shrink-0 text-primary" strokeWidth={2} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground">Tenho uma dúvida de uso</p>
                       <p className="text-[11px] text-muted-foreground">Quero entender como funciona / como configurar</p>
