@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
     let matchedUserId: string | null = existing?.user_id ?? null;
 
     // Se ainda é guest, tenta achar usuário pelo email
+    let matchedPlan: string | null = null;
     if (customerType === "guest" && email) {
       const { data: profile } = await sb
         .from("profiles")
@@ -47,6 +48,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (profile) {
         matchedUserId = profile.id;
+        matchedPlan = profile.plan ?? null;
         const activePlan = profile.plan && profile.plan !== "free" && profile.plan !== "trial";
         const activeSub = profile.subscription_current_period_end
           ? new Date(profile.subscription_current_period_end).getTime() > Date.now()
@@ -59,6 +61,15 @@ Deno.serve(async (req) => {
           priority = "medium";
         }
       }
+    }
+    // Se já tinha user_id mas plano desconhecido, busca para enviar no e-mail de comprovante
+    if (!matchedPlan && matchedUserId) {
+      const { data: prof2 } = await sb
+        .from("profiles")
+        .select("plan")
+        .eq("id", matchedUserId)
+        .maybeSingle();
+      matchedPlan = prof2?.plan ?? null;
     }
 
     // Transcrição
@@ -157,6 +168,20 @@ Deno.serve(async (req) => {
       });
     } catch (notifyErr) {
       console.error("[support-escalate] admin notify failed", notifyErr);
+    }
+
+    // Dispara comprovante para o cliente — best-effort
+    try {
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/support-email-send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({ type: "customer_ticket_receipt", ticketId, plan: matchedPlan }),
+      });
+    } catch (receiptErr) {
+      console.error("[support-escalate] customer receipt failed", receiptErr);
     }
 
     return new Response(JSON.stringify({

@@ -94,12 +94,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json();
-    const { type, ticketId, message, subjectOverride, attachments } = body as {
-      type: "admin_new_ticket" | "customer_reply" | "customer_rating_request" | "customer_autoclose_followup";
+    const { type, ticketId, message, subjectOverride, attachments, plan: planOverride } = body as {
+      type: "admin_new_ticket" | "customer_reply" | "customer_rating_request" | "customer_autoclose_followup" | "customer_ticket_receipt";
       ticketId: string;
       message?: string;
       subjectOverride?: string;
       attachments?: { filename: string; content: string; content_type?: string }[];
+      plan?: string | null;
     };
     if (!type || !ticketId) {
       return new Response(JSON.stringify({ error: "type and ticketId are required" }), {
@@ -252,6 +253,73 @@ Deno.serve(async (req) => {
         })
         .eq("id", ticketId);
       return new Response(JSON.stringify({ ok: true, ratingUrl }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (type === "customer_ticket_receipt") {
+      // Determina canal de retorno conforme plano
+      let planLabel: string | null = (planOverride || "").toLowerCase() || null;
+      if (!planLabel && ticket.user_id) {
+        const { data: prof } = await sb
+          .from("profiles")
+          .select("plan")
+          .eq("id", ticket.user_id)
+          .maybeSingle();
+        planLabel = (prof?.plan || "").toLowerCase() || null;
+      }
+      // growth/scale/enterprise => WhatsApp; demais (start/atendimento/trial/null) => email
+      const isWhatsapp = !!planLabel && /(growth|scale|enterprise|premium|pro)/.test(planLabel);
+      const channelTitle = isWhatsapp ? "WhatsApp" : "e-mail";
+      const channelExplain = isWhatsapp
+        ? `Por você ser cliente <strong>Growth</strong>, nosso time vai retornar diretamente pelo <strong>WhatsApp</strong> no número informado no chamado (${esc(ticket.phone || "—")}). Se preferir continuar por e-mail, basta responder esta mensagem.`
+        : `Como você está no plano <strong>Start / Atendimento</strong>, o retorno será feito por <strong>e-mail</strong>, neste mesmo endereço (${esc(customerEmail)}). Basta responder este e-mail que sua mensagem entra automaticamente no chamado.`;
+
+      const receiptSubject = `Confirmação de abertura do chamado ${ticketNumber}`;
+      const bodyHtml = `
+        <p style="margin:0 0 10px;font-size:16px;font-weight:600;color:#0f172a;">Recebemos o seu chamado</p>
+        <p style="margin:0 0 12px;">Olá ${esc(customerName)},</p>
+        <p style="margin:0 0 14px;color:#374151;">Confirmamos a abertura do seu chamado de suporte. Abaixo estão os dados de protocolo para sua referência:</p>
+        <table style="width:100%;border-collapse:collapse;margin:0 0 16px;">
+          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;width:130px;">Protocolo</td><td style="padding:5px 0;font-weight:600;">${esc(ticketNumber)}</td></tr>
+          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Assunto</td><td style="padding:5px 0;">${esc(ticket.subject || category)}</td></tr>
+          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Categoria</td><td style="padding:5px 0;">${esc(category)}</td></tr>
+          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Aberto em</td><td style="padding:5px 0;">${new Date(ticket.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td></tr>
+        </table>
+
+        <div style="padding:14px 16px;background:${BRAND_SOFT};border-radius:6px;border-left:3px solid ${BRAND};margin:0 0 16px;">
+          <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#0f172a;">Prazo de retorno</p>
+          <p style="margin:0;color:#1f2328;font-size:14px;line-height:1.55;">Nossa equipe responde em <strong>até 48 horas úteis</strong> (segunda a sexta, das 9h às 18h, horário de Brasília). Casos mais simples costumam ser respondidos no mesmo dia útil.</p>
+        </div>
+
+        <div style="padding:14px 16px;background:#f7f9fb;border:1px solid #e6e8eb;border-radius:6px;margin:0 0 16px;">
+          <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#0f172a;">Como você vai receber o retorno: ${channelTitle}</p>
+          <p style="margin:0;color:#374151;font-size:14px;line-height:1.55;">${channelExplain}</p>
+        </div>
+
+        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Se precisar adicionar alguma informação ao chamado, basta responder este e-mail — mantenha o número do protocolo no assunto para agilizar.</p>
+        <p style="margin:14px 0 0;color:#6b7280;font-size:13px;">Obrigado pela confiança,<br>Equipe de Suporte Wiize</p>
+      `;
+      const html = layout(receiptSubject, bodyHtml, `Chamado ${ticketNumber} aberto - retorno em até 48h úteis`);
+      await sendResend({
+        from: FROM,
+        to: [customerEmail],
+        subject: receiptSubject,
+        html,
+        text: htmlToText(bodyHtml),
+        reply_to: replyTo,
+        headers: {
+          "X-Wiize-Ticket": ticketNumber,
+          "List-Unsubscribe": `<mailto:${replyTo}?subject=unsubscribe>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          "X-Entity-Ref-ID": ticketNumber,
+        },
+      });
+      // best-effort: registra envio (ignora se coluna não existir)
+      try {
+        await sb.from("support_tickets")
+          .update({ receipt_email_sent_at: new Date().toISOString() })
+          .eq("id", ticketId);
+      } catch (_) { /* coluna opcional */ }
+      return new Response(JSON.stringify({ ok: true, channel: isWhatsapp ? "whatsapp" : "email" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     return new Response(JSON.stringify({ error: "unknown type" }), {
