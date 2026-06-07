@@ -170,6 +170,20 @@ Deno.serve(async (req) => {
       console.error("[support-escalate] admin notify failed", notifyErr);
     }
 
+    // Dispara comprovante para o cliente — best-effort
+    try {
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/support-email-send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({ type: "customer_ticket_receipt", ticketId, plan: matchedPlan }),
+      });
+    } catch (receiptErr) {
+      console.error("[support-escalate] customer receipt failed", receiptErr);
+    }
+
     return new Response(JSON.stringify({
       ok: true,
       ticketId,
