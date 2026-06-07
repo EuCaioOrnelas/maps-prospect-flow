@@ -586,7 +586,7 @@ export function WianChat() {
     setWasEscalated(true);
     setMessages((prev) => [...prev, {
       role: "ai",
-      content: `✅ Pronto${name.trim() ? `, **${name.trim().split(/\s+/)[0]}**` : ""}! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nO time já recebeu o histórico completo da conversa. Antes de finalizar, como você avalia meu atendimento até aqui? ⭐`,
+      content: `✅ Pronto${name.trim() ? `, **${name.trim().split(/\s+/)[0]}**` : ""}! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nVocê vai receber a confirmação no e-mail informado. O retorno acontece em até **48 horas úteis**. Se estiver no plano Atendimento, confira também Spam ou Lixo eletrônico.\n\nAntes de finalizar, como você avalia meu atendimento até aqui? ⭐`,
     }]);
     setPhase("nps");
   };
@@ -853,7 +853,7 @@ export function WianChat() {
         ...prev,
         {
           role: "ai",
-          content: `✅ Pronto! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nVocê vai receber a confirmação no e-mail informado. Se estiver no plano Atendimento, o retorno também será por e-mail — confira a caixa de entrada, Spam ou Lixo eletrônico.\n\nAntes de finalizar, como você avalia o atendimento que tive com você até aqui? ⭐`,
+          content: `✅ Pronto! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nVocê vai receber a confirmação no e-mail informado. O retorno acontece em até **48 horas úteis**. Se estiver no plano Atendimento, o retorno também será por e-mail. Confira a caixa de entrada, Spam ou Lixo eletrônico.\n\nAntes de finalizar, como você avalia o atendimento que tive com você até aqui? ⭐`,
         },
       ]);
       setPhase("nps");
