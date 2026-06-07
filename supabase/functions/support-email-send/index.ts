@@ -199,15 +199,31 @@ Deno.serve(async (req) => {
         await sb.from("support_tickets").update({ rating_token: token }).eq("id", ticketId);
       }
       const ratingUrl = `${APP_URL}/avaliacao/${token}`;
-      const ratingSubject = `Avaliação do seu atendimento | Chamado ${ticketNumber}`;
+      const ratingSubject = `Como foi o seu atendimento? | Chamado ${ticketNumber}`;
+      const firstName = esc((customerName || "").split(" ")[0] || "");
       const bodyHtml = `
-        <p style="margin:0 0 10px;font-size:16px;font-weight:600;color:#0f172a;">Como foi o seu atendimento?</p>
-        <p style="margin:0 0 10px;">Olá ${esc(customerName)},</p>
-        <p style="margin:0 0 14px;color:#374151;">Concluímos o seu chamado <strong>${esc(ticketNumber)}</strong>. Sua avaliação leva menos de 30 segundos e nos ajuda a melhorar.</p>
-        <p style="margin:18px 0;"><a href="${ratingUrl}" style="display:inline-block;padding:11px 22px;background:${BRAND};color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Avaliar atendimento</a></p>
-        <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize</p>
+        <div style="text-align:center;font-size:28px;letter-spacing:6px;color:#F5B301;margin:4px 0 14px;line-height:1;">★ ★ ★ ★ ★</div>
+        <h1 style="margin:0 0 6px;font-size:22px;font-weight:700;color:#0f172a;text-align:center;letter-spacing:-0.2px;">Como foi o seu atendimento?</h1>
+        <p style="margin:0 0 18px;color:#6b7280;text-align:center;font-size:14px;">Sua opinião molda o nosso suporte. Leva menos de 30 segundos.</p>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND_SOFT};border:1px solid #d4ead9;border-radius:10px;margin:0 0 22px;">
+          <tr><td style="padding:18px 20px;">
+            <p style="margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:0.6px;color:${BRAND};font-weight:700;">Chamado concluído</p>
+            <p style="margin:0;font-size:17px;font-weight:600;color:#0f172a;font-family:'SF Mono',Menlo,Consolas,monospace;">${esc(ticketNumber)}</p>
+          </td></tr>
+        </table>
+
+        <p style="margin:0 0 18px;color:#374151;font-size:15px;line-height:1.6;">Olá${firstName ? ` <strong>${firstName}</strong>` : ""}, encerramos o seu chamado e gostaríamos de saber a sua experiência com o nosso time. A sua avaliação é o que nos faz melhorar a cada dia.</p>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 20px;"><tr><td align="center">
+          <a href="${ratingUrl}" style="display:inline-block;padding:15px 38px;background:${BRAND};color:#ffffff;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:0.2px;box-shadow:0 4px 12px rgba(14,124,58,0.25);">Avaliar atendimento →</a>
+        </td></tr></table>
+
+        <p style="margin:0 0 18px;text-align:center;color:#9ca3af;font-size:12px;">Leva menos de 30 segundos · Apenas 2 perguntas</p>
+
+        <p style="margin:18px 0 0;color:#6b7280;font-size:13px;">Obrigado por confiar na Wiize.<br><strong style="color:#0f172a;">Equipe de Suporte</strong></p>
       `;
-      const html = layout(ratingSubject, bodyHtml, `Avalie o seu atendimento ${ticketNumber}`);
+      const html = layout(ratingSubject, bodyHtml, `Avalie o seu atendimento ${ticketNumber} — leva 30 segundos`);
       await sendResend({
         from: FROM,
         to: [customerEmail],
