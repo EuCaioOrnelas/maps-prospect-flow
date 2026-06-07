@@ -94,12 +94,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json();
-    const { type, ticketId, message, subjectOverride, attachments } = body as {
-      type: "admin_new_ticket" | "customer_reply" | "customer_rating_request" | "customer_autoclose_followup";
+    const { type, ticketId, message, subjectOverride, attachments, plan: planOverride } = body as {
+      type: "admin_new_ticket" | "customer_reply" | "customer_rating_request" | "customer_autoclose_followup" | "customer_ticket_receipt";
       ticketId: string;
       message?: string;
       subjectOverride?: string;
       attachments?: { filename: string; content: string; content_type?: string }[];
+      plan?: string | null;
     };
     if (!type || !ticketId) {
       return new Response(JSON.stringify({ error: "type and ticketId are required" }), {
