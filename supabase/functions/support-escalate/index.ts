@@ -68,7 +68,8 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!existing) throw new Error("ticket not found");
     if (existing.user_id && existing.user_id !== requesterUserId) throw new Error("ticket access denied");
-    if (!existing.user_id && !createdTicketNow && visitorSession && typeof visitorSession === "string") {
+    if (!existing.user_id && !createdTicketNow) {
+      if (!visitorSession || typeof visitorSession !== "string") throw new Error("ticket session required");
       const { data: sessionTicket } = await sb
         .from("support_tickets")
         .select("id")
