@@ -61,18 +61,18 @@ type Phase =
   | "done-escalated"
   | "blocked";
 
-// Ícones uniformes — todos na mesma cor neutra para visual clean
+// Ícones uniformes — todos no verde da Wiize (primary).
 const CATEGORY_COLORS: Record<string, string> = {
-  campanhas: "text-foreground/80",
-  whatsapp: "text-foreground/80",
-  meta: "text-foreground/80",
-  ia: "text-foreground/80",
-  crm: "text-foreground/80",
-  flows: "text-foreground/80",
-  financeiro: "text-foreground/80",
-  planos: "text-foreground/80",
-  relatorios: "text-foreground/80",
-  suporte: "text-foreground/80",
+  campanhas: "text-primary",
+  whatsapp: "text-primary",
+  meta: "text-primary",
+  ia: "text-primary",
+  crm: "text-primary",
+  flows: "text-primary",
+  financeiro: "text-primary",
+  planos: "text-primary",
+  relatorios: "text-primary",
+  suporte: "text-primary",
 };
 
 type TriageContext = {
@@ -1563,7 +1563,7 @@ export function WianChat() {
                     onClick={() => pickUsageHelp(activeCategory)}
                     className="w-full text-left px-5 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3.5 border-t border-border/60 bg-muted/20"
                   >
-                    <Lightbulb className="w-5 h-5 shrink-0 text-amber-500" strokeWidth={2} />
+                    <Lightbulb className="w-5 h-5 shrink-0 text-primary" strokeWidth={2} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground">Tenho uma dúvida de uso</p>
                       <p className="text-[11px] text-muted-foreground">Quero entender como funciona / como configurar</p>
@@ -1594,7 +1594,7 @@ export function WianChat() {
                 onClick={openTicketDirect}
                 className="w-full text-left px-5 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3.5 border-t border-border/60 bg-muted/20"
               >
-                <Headphones className="w-5 h-5 shrink-0 text-foreground/80" strokeWidth={2} />
+                <Headphones className="w-5 h-5 shrink-0 text-primary" strokeWidth={2} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">Falar direto com o time</p>
                   <p className="text-[11px] text-muted-foreground">Pular triagem e abrir um chamado humano</p>
