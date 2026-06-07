@@ -313,9 +313,12 @@ Deno.serve(async (req) => {
           "X-Entity-Ref-ID": ticketNumber,
         },
       });
-      await sb.from("support_tickets")
-        .update({ receipt_email_sent_at: new Date().toISOString() })
-        .eq("id", ticketId);
+      // best-effort: registra envio (ignora se coluna não existir)
+      try {
+        await sb.from("support_tickets")
+          .update({ receipt_email_sent_at: new Date().toISOString() })
+          .eq("id", ticketId);
+      } catch (_) { /* coluna opcional */ }
       return new Response(JSON.stringify({ ok: true, channel: isWhatsapp ? "whatsapp" : "email" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
