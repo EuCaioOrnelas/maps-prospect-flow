@@ -4,6 +4,11 @@ import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Bold, Italic, Strikethrough, Code, Heading1, Heading2, Heading3,
   List, ListOrdered, Quote, Undo, Redo, Link as LinkIcon, Image as ImageIcon, Minus,
@@ -19,14 +24,20 @@ interface Props {
 
 export function TipTapEditor({ value, onChange, placeholder }: Props) {
   const onChangeRef = useRef(onChange);
+  const rangeRef = useRef<{ from: number; to: number } | null>(null);
   const selectionRef = useRef<{ from: number; to: number; text: string } | null>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("https://");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
   onChangeRef.current = onChange;
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" } }),
-      Image.configure({ HTMLAttributes: { class: "rounded-lg my-4 max-w-full" } }),
+      Image.configure({ HTMLAttributes: { class: "w-full aspect-video object-cover rounded-xl my-6" } }),
       Placeholder.configure({ placeholder: placeholder || "Escreva seu conteúdo..." }),
     ],
     content: value || "",
@@ -43,16 +54,16 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
         class:
           "prose prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[500px] px-4 sm:px-6 py-8 " +
           "prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground " +
-          "prose-h1:text-4xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h1:mt-8 prose-h1:mb-5 prose-h1:pb-3 prose-h1:border-b prose-h1:border-border " +
-          "prose-h2:text-3xl sm:prose-h2:text-4xl prose-h2:mt-10 prose-h2:mb-4 " +
-          "prose-h3:text-2xl sm:prose-h3:text-3xl prose-h3:mt-8 prose-h3:mb-3 " +
+          "prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h1:mt-8 prose-h1:mb-5 " +
+          "prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h2:mb-4 " +
+          "prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-3 " +
           "prose-p:text-foreground prose-p:leading-relaxed " +
           "prose-a:text-primary prose-a:underline prose-a:decoration-primary/50 prose-a:underline-offset-4 hover:prose-a:decoration-primary " +
           "prose-strong:text-foreground " +
-          "prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic " +
+          "prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:text-foreground " +
           "prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none " +
-          "prose-img:rounded-xl prose-img:my-6 " +
-          "prose-ul:my-4 prose-ol:my-4 prose-li:my-1 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_li::marker]:text-primary",
+          "prose-img:w-full prose-img:aspect-video prose-img:object-cover prose-img:rounded-xl prose-img:my-6 " +
+          "prose-ul:my-4 prose-ol:my-4 prose-li:my-1 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_li::marker]:text-foreground",
       },
     },
   });
