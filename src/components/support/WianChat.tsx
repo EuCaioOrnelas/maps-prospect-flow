@@ -440,7 +440,7 @@ export function WianChat() {
 
   const onSolutionResolved = (resolved: boolean) => {
     if (resolved) {
-      setPhase("rate");
+      setPhase("nps");
       return;
     }
     // Não resolveu → entra na IA com contexto da triagem
@@ -576,7 +576,7 @@ export function WianChat() {
       role: "ai",
       content: `✅ Pronto${name.trim() ? `, **${name.trim().split(/\s+/)[0]}**` : ""}! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nO time já recebeu o histórico completo da conversa. Antes de finalizar, como você avalia meu atendimento até aqui? ⭐`,
     }]);
-    setPhase("rate");
+    setPhase("nps");
   };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
@@ -745,7 +745,7 @@ export function WianChat() {
 
   const onResolved = (resolved: boolean) => {
     if (resolved) {
-      setPhase("rate");
+      setPhase("nps");
     } else {
       setPhase("chat");
       setMessages((prev) => [
@@ -884,7 +884,7 @@ export function WianChat() {
           content: `✅ Pronto! Seu chamado foi aberto${escResp?.ticketNumber ? ` (protocolo **${escResp.ticketNumber}**)` : ""}.\n\nAntes de finalizar, como você avalia o atendimento que tive com você até aqui? ⭐`,
         },
       ]);
-      setPhase("rate");
+      setPhase("nps");
     } catch (e: any) {
       const msg = e?.message || "Não conseguimos abrir seu chamado agora. Tente novamente em instantes.";
       setSubmitError(msg);
