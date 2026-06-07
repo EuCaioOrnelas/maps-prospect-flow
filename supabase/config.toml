@@ -104,9 +104,6 @@ verify_jwt = false
 [functions.support-email-inbound]
 verify_jwt = false
 
-[functions.admin-support-ticket-update]
-verify_jwt = false
-
 [functions.support-ticket-autoclose]
 verify_jwt = false
 
