@@ -61,18 +61,18 @@ type Phase =
   | "done-escalated"
   | "blocked";
 
-// Ícones uniformes — todos na mesma cor neutra para visual clean
+// Ícones uniformes — todos no verde da Wiize (primary).
 const CATEGORY_COLORS: Record<string, string> = {
-  campanhas: "text-foreground/80",
-  whatsapp: "text-foreground/80",
-  meta: "text-foreground/80",
-  ia: "text-foreground/80",
-  crm: "text-foreground/80",
-  flows: "text-foreground/80",
-  financeiro: "text-foreground/80",
-  planos: "text-foreground/80",
-  relatorios: "text-foreground/80",
-  suporte: "text-foreground/80",
+  campanhas: "text-primary",
+  whatsapp: "text-primary",
+  meta: "text-primary",
+  ia: "text-primary",
+  crm: "text-primary",
+  flows: "text-primary",
+  financeiro: "text-primary",
+  planos: "text-primary",
+  relatorios: "text-primary",
+  suporte: "text-primary",
 };
 
 type TriageContext = {
