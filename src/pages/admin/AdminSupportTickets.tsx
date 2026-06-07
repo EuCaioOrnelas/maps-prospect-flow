@@ -642,6 +642,7 @@ export default function AdminSupportTickets() {
           status: "in_progress",
           is_manual: true,
           customer_type: "paid_client",
+          due_at: addBusinessHours(new Date(), SLA_BUSINESS_HOURS).toISOString(),
         })
         .select()
         .single();
@@ -709,7 +710,7 @@ export default function AdminSupportTickets() {
   // Horário de atendimento: Seg-Sex, 09:00–17:00 (8h úteis/dia)
   const BUSINESS_START_HOUR = 9;
   const BUSINESS_END_HOUR = 17;
-  const SLA_BUSINESS_HOURS = 24; // 24h úteis = 3 dias úteis
+  const SLA_BUSINESS_HOURS = 48; // 48h úteis = 6 dias úteis
 
   // Adiciona N horas úteis a uma data, respeitando 09–17 Seg-Sex
   const addBusinessHours = (start: Date, hours: number): Date => {
@@ -763,7 +764,7 @@ export default function AdminSupportTickets() {
       const label = `Resolvido em ${formatDistanceStrict(new Date(t.created_at), new Date(t.resolved_at), { locale: ptBR })}`;
       return { label, color };
     }
-    // Aberto: mostra prazo de retorno (24h úteis a partir da criação)
+    // Aberto: mostra prazo de retorno (48h úteis a partir da criação)
     const due = computeDueAt(t);
     const now = new Date();
     const overdue = due.getTime() < now.getTime();
