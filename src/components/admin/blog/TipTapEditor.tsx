@@ -67,11 +67,32 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
 
   if (!editor) return null;
 
-  const Btn = ({ onClick, active, children, title }: any) => (
-    <Button type="button" variant={active ? "secondary" : "ghost"} size="sm" onClick={onClick} title={title} className="h-8 w-8 p-0">
-      {children}
-    </Button>
-  );
+  const hasSelection = !editor.state.selection.empty;
+
+  const Btn = ({ onClick, active, children, title, disabled, requireSelection = true }: any) => {
+    const isDisabled = disabled || (requireSelection && !hasSelection);
+    return (
+      <Button
+        type="button"
+        variant={active ? "secondary" : "ghost"}
+        size="sm"
+        disabled={isDisabled}
+        onMouseDown={(e) => {
+          // Prevent the editor from losing selection when clicking the toolbar
+          e.preventDefault();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          if (isDisabled) return;
+          onClick?.();
+        }}
+        title={isDisabled && requireSelection ? `${title} (selecione um texto primeiro)` : title}
+        className="h-8 w-8 p-0"
+      >
+        {children}
+      </Button>
+    );
+  };
 
   const addLink = () => {
     const url = window.prompt("URL do link:");
@@ -100,13 +121,13 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
         <Btn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} title="Lista"><List className="h-4 w-4" /></Btn>
         <Btn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} title="Lista ordenada"><ListOrdered className="h-4 w-4" /></Btn>
         <Btn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Citação"><Quote className="h-4 w-4" /></Btn>
-        <Btn onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Linha"><Minus className="h-4 w-4" /></Btn>
+        <Btn onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Linha" requireSelection={false}><Minus className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
         <Btn onClick={addLink} active={editor.isActive("link")} title="Link"><LinkIcon className="h-4 w-4" /></Btn>
-        <Btn onClick={addImage} title="Imagem (URL)"><ImageIcon className="h-4 w-4" /></Btn>
+        <Btn onClick={addImage} title="Imagem (URL)" requireSelection={false}><ImageIcon className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
-        <Btn onClick={() => editor.chain().focus().undo().run()} title="Desfazer"><Undo className="h-4 w-4" /></Btn>
-        <Btn onClick={() => editor.chain().focus().redo().run()} title="Refazer"><Redo className="h-4 w-4" /></Btn>
+        <Btn onClick={() => editor.chain().focus().undo().run()} title="Desfazer" requireSelection={false} disabled={!editor.can().undo()}><Undo className="h-4 w-4" /></Btn>
+        <Btn onClick={() => editor.chain().focus().redo().run()} title="Refazer" requireSelection={false} disabled={!editor.can().redo()}><Redo className="h-4 w-4" /></Btn>
       </div>
       <EditorContent editor={editor} />
     </div>
