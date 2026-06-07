@@ -24,7 +24,16 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const auth = req.headers.get("Authorization");
+    let requesterUserId: string | null = null;
+    if (auth) {
+      const token = auth.replace("Bearer ", "");
+      const { data: { user } } = await sb.auth.getUser(token);
+      requesterUserId = user?.id ?? null;
+    }
+
     let resolvedTicketId: string | null = ticketId || null;
+    let createdTicketNow = false;
 
     if (!resolvedTicketId) {
       const { data: created, error: createErr } = await sb.from("support_tickets").insert({
@@ -39,6 +48,7 @@ Deno.serve(async (req) => {
       }).select("id").single();
       if (createErr) throw createErr;
       resolvedTicketId = created.id;
+      createdTicketNow = true;
 
       await sb.from("support_messages").insert({
         ticket_id: resolvedTicketId,
@@ -56,6 +66,17 @@ Deno.serve(async (req) => {
       .select("customer_type, user_id, priority, phase")
       .eq("id", resolvedTicketId)
       .maybeSingle();
+    if (!existing) throw new Error("ticket not found");
+    if (existing.user_id && existing.user_id !== requesterUserId) throw new Error("ticket access denied");
+    if (!existing.user_id && !createdTicketNow && visitorSession && typeof visitorSession === "string") {
+      const { data: sessionTicket } = await sb
+        .from("support_tickets")
+        .select("id")
+        .eq("id", resolvedTicketId)
+        .eq("visitor_session", visitorSession)
+        .maybeSingle();
+      if (!sessionTicket) throw new Error("ticket session mismatch");
+    }
     const previousPhase = existing?.phase ?? "ai_investigating";
 
     let customerType: "paid_client" | "trial_user" | "guest" =
@@ -175,7 +196,7 @@ Deno.serve(async (req) => {
       metadata: { reason: "manual_escalation_form", category, customer_type: customerType },
     });
 
-    if (extra) {
+    if (extra && !createdTicketNow) {
       await sb.from("support_messages").insert({
         ticket_id: resolvedTicketId, role: "user", content: extra,
         metadata: { type: "escalation_extra" },
