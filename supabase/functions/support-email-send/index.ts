@@ -16,17 +16,17 @@ const FROM = "Suporte Wiize <suporte@wiize.com.br>";
 const REPLY_DOMAIN = "wiize.com.br";
 const ADMIN_INBOX = "wiize.app@gmail.com";
 const APP_URL = "https://wiize.com.br";
+const LOGO_URL = `${APP_URL}/assets/logo_wiize.png`;
 const BRAND = "#0E7C3A"; // verde sóbrio, alto contraste
 const BRAND_SOFT = "#E8F5EE";
 
-// Layout limpo, alto ratio texto/HTML, sem imagens externas (melhor deliverability).
-// Logo Wiize renderizado em SVG inline (alta deliverability, sem bloqueio de imagens).
+// Layout limpo, alto ratio texto/HTML.
+// Logo oficial da Wiize em imagem pública para evitar o placeholder textual "W".
 function wiizeLogoSvg() {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="92" height="22" viewBox="0 0 184 44" role="img" aria-label="Wiize">
-  <rect x="0" y="8" width="28" height="28" rx="6" fill="${BRAND}"/>
-  <text x="14" y="29" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-weight="800" font-size="18" fill="#ffffff">W</text>
-  <text x="40" y="30" font-family="Helvetica,Arial,sans-serif" font-weight="700" font-size="22" fill="#0f172a" letter-spacing="-0.5">Wiize</text>
-</svg>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td style="vertical-align:middle;"><img src="${LOGO_URL}" width="38" height="38" alt="Wiize" style="display:block;border:0;border-radius:8px;width:38px;height:38px;object-fit:cover;"></td>
+    <td style="vertical-align:middle;padding-left:10px;font-family:Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:#0f172a;letter-spacing:0;">Wiize</td>
+  </tr></table>`;
 }
 
 function layout(title: string, bodyHtml: string, preheader: string) {
@@ -53,7 +53,7 @@ function layout(title: string, bodyHtml: string, preheader: string) {
 <tr><td style="padding:18px 28px 26px;">
   <hr style="border:none;border-top:1px solid #eef0f2;margin:0 0 14px;">
   <p style="margin:0;font-size:12px;color:#6b7280;line-height:1.5;">
-    Wiize Tecnologia &mdash; <a href="${APP_URL}" style="color:${BRAND};text-decoration:none;">wiize.com.br</a><br>
+    Wiize Tecnologia · <a href="${APP_URL}" style="color:${BRAND};text-decoration:none;">wiize.com.br</a><br>
     Você está recebendo este e-mail porque possui um chamado ativo no nosso suporte.
   </p>
 </td></tr>
@@ -73,7 +73,7 @@ function htmlToText(html: string) {
 function buildSubject(category: string, ticketNumber: string, override?: string) {
   if (override) return override;
   // Assunto neutro, sem promessas/emojis (reduz spam score)
-  return `Re: Chamado ${ticketNumber} - Suporte Wiize`;
+  return `Re: Chamado ${ticketNumber} | Suporte Wiize`;
 }
 
 async function sendResend(payload: any) {
@@ -126,10 +126,10 @@ Deno.serve(async (req) => {
         <table style="width:100%;border-collapse:collapse;margin:0 0 14px;">
           <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;width:120px;">Protocolo</td><td style="padding:5px 0;font-weight:600;">${esc(ticketNumber)}</td></tr>
           <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Cliente</td><td style="padding:5px 0;">${esc(customerName)}</td></tr>
-          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">E-mail</td><td style="padding:5px 0;">${esc(customerEmail || "—")}</td></tr>
-          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Telefone</td><td style="padding:5px 0;">${esc(ticket.phone || "—")}</td></tr>
+          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">E-mail</td><td style="padding:5px 0;">${esc(customerEmail || "Não informado")}</td></tr>
+          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Telefone</td><td style="padding:5px 0;">${esc(ticket.phone || "Não informado")}</td></tr>
           <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Categoria</td><td style="padding:5px 0;">${esc(category)}</td></tr>
-          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Assunto</td><td style="padding:5px 0;">${esc(ticket.subject || "—")}</td></tr>
+          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Assunto</td><td style="padding:5px 0;">${esc(ticket.subject || "Não informado")}</td></tr>
           <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Aberto em</td><td style="padding:5px 0;">${new Date(ticket.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td></tr>
         </table>
         <div style="padding:12px 14px;background:${BRAND_SOFT};border-radius:6px;border-left:3px solid ${BRAND};">
@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
       await sendResend({
         from: FROM,
         to: [ADMIN_INBOX],
-        subject: `Novo chamado ${ticketNumber} - ${customerName}`,
+        subject: `Novo chamado ${ticketNumber} | ${customerName}`,
         html,
         text: htmlToText(bodyHtml) + `\n\nAbrir no painel: ${APP_URL}/admin/suporte/tickets`,
       });
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
         <div style="padding:12px 14px;background:#f7f9fb;border:1px solid #e6e8eb;border-radius:6px;margin:0 0 16px;">
           <p style="margin:0;color:#1f2328;white-space:pre-wrap;">${nl2br(msg || "(mensagem com anexos)")}</p>
         </div>
-        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Para continuar, basta responder este e-mail — sua mensagem entra automaticamente no chamado.</p>
+        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Para continuar, basta responder este e-mail. Sua mensagem entra automaticamente no chamado.</p>
         <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize</p>
       `;
       const html = layout(subject, bodyHtml, `Retorno sobre o seu chamado ${ticketNumber}`);
@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
         await sb.from("support_tickets").update({ rating_token: token }).eq("id", ticketId);
       }
       const ratingUrl = `${APP_URL}/avaliacao/${token}`;
-      const ratingSubject = `Avaliação do seu atendimento - Chamado ${ticketNumber}`;
+      const ratingSubject = `Avaliação do seu atendimento | Chamado ${ticketNumber}`;
       const bodyHtml = `
         <p style="margin:0 0 10px;font-size:16px;font-weight:600;color:#0f172a;">Como foi o seu atendimento?</p>
         <p style="margin:0 0 10px;">Olá ${esc(customerName)},</p>
@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
       const isWhatsapp = !!planLabel && /(growth|scale|enterprise|premium|pro)/.test(planLabel);
       const channelTitle = isWhatsapp ? "WhatsApp" : "e-mail";
       const channelExplain = isWhatsapp
-        ? `Por você ser cliente <strong>Growth</strong>, nosso time vai retornar diretamente pelo <strong>WhatsApp</strong> no número informado no chamado (${esc(ticket.phone || "—")}). Se preferir continuar por e-mail, basta responder esta mensagem.`
+        ? `Por você ser cliente <strong>Growth</strong>, nosso time vai retornar diretamente pelo <strong>WhatsApp</strong> no número informado no chamado (${esc(ticket.phone || "Não informado")}). Se preferir continuar por e-mail, basta responder esta mensagem.`
         : `Como você está no plano <strong>Start / Atendimento</strong>, o retorno será feito por <strong>e-mail</strong>, neste mesmo endereço (${esc(customerEmail)}). Basta responder este e-mail que sua mensagem entra automaticamente no chamado. Se não encontrar nossa confirmação na caixa de entrada, confira também o <strong>Spam</strong> ou <strong>Lixo eletrônico</strong>.`;
 
       const receiptSubject = `Confirmação de abertura do chamado ${ticketNumber}`;
@@ -295,10 +295,10 @@ Deno.serve(async (req) => {
           <p style="margin:0;color:#374151;font-size:14px;line-height:1.55;">${channelExplain}</p>
         </div>
 
-        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Se precisar adicionar alguma informação ao chamado, basta responder este e-mail — mantenha o número do protocolo no assunto para agilizar.</p>
+        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Se precisar adicionar alguma informação ao chamado, basta responder este e-mail. Mantenha o número do protocolo no assunto para agilizar.</p>
         <p style="margin:14px 0 0;color:#6b7280;font-size:13px;">Obrigado pela confiança,<br>Equipe de Suporte Wiize</p>
       `;
-      const html = layout(receiptSubject, bodyHtml, `Chamado ${ticketNumber} aberto - retorno em até 48h úteis`);
+      const html = layout(receiptSubject, bodyHtml, `Chamado ${ticketNumber} aberto | retorno em até 48h úteis`);
       await sendResend({
         from: FROM,
         to: [customerEmail],

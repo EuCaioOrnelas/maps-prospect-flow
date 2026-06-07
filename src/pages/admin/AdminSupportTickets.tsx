@@ -312,7 +312,9 @@ export default function AdminSupportTickets() {
       .select("*")
       .eq("ticket_id", ticketId)
       .order("created_at", { ascending: false });
-    const entries = (data as any as HistoryEntry[]) || [];
+    const entries = ((data as any as HistoryEntry[]) || []).filter((entry) =>
+      ["note", "status_change", "priority_change", "internal_note"].includes(entry.action_type),
+    );
     setHistory(entries);
     // sign attachments
     const allPaths = entries.flatMap((e) => (e.attachments || []).map((a) => a.path));
@@ -368,18 +370,67 @@ export default function AdminSupportTickets() {
 
   const updateStatus = async (status: string) => {
     if (!selected) return;
-    const { data, error } = await supabase.functions.invoke("admin-support-ticket-update", {
-      body: { ticketId: selected.id, status },
-    });
+    const applyLocalUpdate = async () => {
+      const update: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+      if (status === "resolved" || status === "closed") {
+        update.resolved_at = new Date().toISOString();
+        update.resolved_by = "human";
+        update.phase = status;
+      } else if (status === "escalated") {
+        update.phase = "escalated";
+        update.resolved_at = null;
+        update.resolved_by = null;
+      } else if (status === "in_progress") {
+        update.phase = "human_assigned";
+        update.resolved_at = null;
+        update.resolved_by = null;
+      } else {
+        update.phase = "triage";
+        update.resolved_at = null;
+        update.resolved_by = null;
+      }
+      const { data: ticket, error: updateError } = await supabase
+        .from("support_tickets")
+        .update(update)
+        .eq("id", selected.id)
+        .select("*")
+        .maybeSingle();
+      if (updateError) throw updateError;
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("support_ticket_history").insert({
+        ticket_id: selected.id,
+        author_id: user?.id ?? null,
+        author_name: user?.email ?? "Equipe",
+        action_type: "status_change",
+        content: `Status alterado para "${status}"`,
+        attachments: [],
+      });
+      if ((status === "resolved" || status === "closed") && selected.email) {
+        await supabase.functions.invoke("support-email-send", { body: { type: "customer_rating_request", ticketId: selected.id } });
+      }
+      return ticket as Ticket;
+    };
+
+    let updatedTicket: Ticket | null = null;
+    let ratingEmailSent = false;
+    const { data, error } = await supabase.functions.invoke("admin-support-ticket-update", { body: { ticketId: selected.id, status } });
     if (error || data?.error) {
-      toast({ title: "Erro", description: data?.error || error?.message || "Não foi possível atualizar o status", variant: "destructive" });
-      return;
+      try {
+        updatedTicket = await applyLocalUpdate();
+        ratingEmailSent = status === "resolved" || status === "closed";
+      } catch (fallbackError: any) {
+        toast({ title: "Erro", description: data?.error || fallbackError?.message || error?.message || "Não foi possível atualizar o status", variant: "destructive" });
+        return;
+      }
+    } else {
+      updatedTicket = (data?.ticket as Ticket) || null;
+      ratingEmailSent = !!data?.ratingEmailSent;
     }
     toast({ title: "Status atualizado" });
-    setSelected((data?.ticket as Ticket) || { ...selected, status });
+    setSelected(updatedTicket || { ...selected, status });
     fetchStats(); fetchTickets();
     refreshHistory(selected.id);
-    if (data?.ratingEmailSent && selected.email) {
+    if (ratingEmailSent && selected.email) {
       toast({ title: "E-mail de avaliação enviado", description: selected.email });
     }
   };
@@ -429,15 +480,6 @@ export default function AdminSupportTickets() {
         role: "assistant",
         content: text || "(mensagem com anexos)",
         metadata: { source: "support_email_reply", attachments: uploadedRefs, sent_by: "human" },
-      });
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("support_ticket_history").insert({
-        ticket_id: selected.id,
-        author_id: user?.id ?? null,
-        author_name: user?.email ?? "Equipe",
-        action_type: "support_email_reply",
-        content: text || "(mensagem com anexos)",
-        attachments: uploadedRefs,
       });
       setReplyText("");
       setReplyFiles([]);
@@ -493,11 +535,32 @@ export default function AdminSupportTickets() {
       body: { ticketId: selected.id, priority },
     });
     if (error || data?.error) {
-      toast({ title: "Erro", description: data?.error || error?.message || "Não foi possível atualizar a prioridade", variant: "destructive" });
-      return;
+      try {
+        const { data: ticket, error: updateError } = await supabase
+          .from("support_tickets")
+          .update({ priority, updated_at: new Date().toISOString() })
+          .eq("id", selected.id)
+          .select("*")
+          .maybeSingle();
+        if (updateError) throw updateError;
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from("support_ticket_history").insert({
+          ticket_id: selected.id,
+          author_id: user?.id ?? null,
+          author_name: user?.email ?? "Equipe",
+          action_type: "priority_change",
+          content: `Prioridade alterada para "${priority}"`,
+          attachments: [],
+        });
+        setSelected((ticket as Ticket) || { ...selected, priority });
+      } catch (fallbackError: any) {
+        toast({ title: "Erro", description: data?.error || fallbackError?.message || error?.message || "Não foi possível atualizar a prioridade", variant: "destructive" });
+        return;
+      }
+    } else {
+      setSelected((data?.ticket as Ticket) || { ...selected, priority });
     }
     toast({ title: "Prioridade atualizada" });
-    setSelected((data?.ticket as Ticket) || { ...selected, priority });
     fetchTickets();
     refreshHistory(selected.id);
   };
@@ -579,6 +642,7 @@ export default function AdminSupportTickets() {
           status: "in_progress",
           is_manual: true,
           customer_type: "paid_client",
+          due_at: addBusinessHours(new Date(), SLA_BUSINESS_HOURS).toISOString(),
         })
         .select()
         .single();
@@ -646,7 +710,7 @@ export default function AdminSupportTickets() {
   // Horário de atendimento: Seg-Sex, 09:00–17:00 (8h úteis/dia)
   const BUSINESS_START_HOUR = 9;
   const BUSINESS_END_HOUR = 17;
-  const SLA_BUSINESS_HOURS = 24; // 24h úteis = 3 dias úteis
+  const SLA_BUSINESS_HOURS = 48; // 48h úteis = 6 dias úteis
 
   // Adiciona N horas úteis a uma data, respeitando 09–17 Seg-Sex
   const addBusinessHours = (start: Date, hours: number): Date => {
@@ -700,7 +764,7 @@ export default function AdminSupportTickets() {
       const label = `Resolvido em ${formatDistanceStrict(new Date(t.created_at), new Date(t.resolved_at), { locale: ptBR })}`;
       return { label, color };
     }
-    // Aberto: mostra prazo de retorno (24h úteis a partir da criação)
+    // Aberto: mostra prazo de retorno (48h úteis a partir da criação)
     const due = computeDueAt(t);
     const now = new Date();
     const overdue = due.getTime() < now.getTime();

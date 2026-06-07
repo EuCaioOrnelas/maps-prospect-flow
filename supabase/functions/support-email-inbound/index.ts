@@ -158,15 +158,6 @@ Deno.serve(async (req) => {
     }
     await sb.from("support_tickets").update(update).eq("id", ticket.id);
 
-    await sb.from("support_ticket_history").insert({
-      ticket_id: ticket.id,
-      author_id: null,
-      author_name: from || "Cliente (e-mail)",
-      action_type: "customer_email_reply",
-      content,
-      attachments: [],
-    });
-
     return new Response(JSON.stringify({ ok: true, ticketId: ticket.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
