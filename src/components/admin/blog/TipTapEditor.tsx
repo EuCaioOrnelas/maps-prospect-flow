@@ -8,7 +8,7 @@ import {
   Bold, Italic, Strikethrough, Code, Heading1, Heading2, Heading3,
   List, ListOrdered, Quote, Undo, Redo, Link as LinkIcon, Image as ImageIcon, Minus,
 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   value: string;
