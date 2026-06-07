@@ -65,6 +65,19 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, editor]);
 
+  // Force re-render on selection changes so toolbar disabled state stays accurate
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!editor) return;
+    const handler = () => setTick((t) => t + 1);
+    editor.on("selectionUpdate", handler);
+    editor.on("transaction", handler);
+    return () => {
+      editor.off("selectionUpdate", handler);
+      editor.off("transaction", handler);
+    };
+  }, [editor]);
+
   if (!editor) return null;
 
   const hasSelection = !editor.state.selection.empty;
