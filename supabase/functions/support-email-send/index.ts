@@ -16,17 +16,17 @@ const FROM = "Suporte Wiize <suporte@wiize.com.br>";
 const REPLY_DOMAIN = "wiize.com.br";
 const ADMIN_INBOX = "wiize.app@gmail.com";
 const APP_URL = "https://wiize.com.br";
+const LOGO_URL = `${APP_URL}/assets/logo_wiize.png`;
 const BRAND = "#0E7C3A"; // verde sóbrio, alto contraste
 const BRAND_SOFT = "#E8F5EE";
 
-// Layout limpo, alto ratio texto/HTML, sem imagens externas (melhor deliverability).
-// Logo Wiize renderizado em SVG inline (alta deliverability, sem bloqueio de imagens).
+// Layout limpo, alto ratio texto/HTML.
+// Logo oficial da Wiize em imagem pública para evitar o placeholder textual "W".
 function wiizeLogoSvg() {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="92" height="22" viewBox="0 0 184 44" role="img" aria-label="Wiize">
-  <rect x="0" y="8" width="28" height="28" rx="6" fill="${BRAND}"/>
-  <text x="14" y="29" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-weight="800" font-size="18" fill="#ffffff">W</text>
-  <text x="40" y="30" font-family="Helvetica,Arial,sans-serif" font-weight="700" font-size="22" fill="#0f172a" letter-spacing="-0.5">Wiize</text>
-</svg>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td style="vertical-align:middle;"><img src="${LOGO_URL}" width="38" height="38" alt="Wiize" style="display:block;border:0;border-radius:8px;width:38px;height:38px;object-fit:cover;"></td>
+    <td style="vertical-align:middle;padding-left:10px;font-family:Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:#0f172a;letter-spacing:0;">Wiize</td>
+  </tr></table>`;
 }
 
 function layout(title: string, bodyHtml: string, preheader: string) {
@@ -53,7 +53,7 @@ function layout(title: string, bodyHtml: string, preheader: string) {
 <tr><td style="padding:18px 28px 26px;">
   <hr style="border:none;border-top:1px solid #eef0f2;margin:0 0 14px;">
   <p style="margin:0;font-size:12px;color:#6b7280;line-height:1.5;">
-    Wiize Tecnologia &mdash; <a href="${APP_URL}" style="color:${BRAND};text-decoration:none;">wiize.com.br</a><br>
+    Wiize Tecnologia · <a href="${APP_URL}" style="color:${BRAND};text-decoration:none;">wiize.com.br</a><br>
     Você está recebendo este e-mail porque possui um chamado ativo no nosso suporte.
   </p>
 </td></tr>
@@ -73,7 +73,7 @@ function htmlToText(html: string) {
 function buildSubject(category: string, ticketNumber: string, override?: string) {
   if (override) return override;
   // Assunto neutro, sem promessas/emojis (reduz spam score)
-  return `Re: Chamado ${ticketNumber} - Suporte Wiize`;
+  return `Re: Chamado ${ticketNumber} | Suporte Wiize`;
 }
 
 async function sendResend(payload: any) {
