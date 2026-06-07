@@ -381,7 +381,7 @@ export default function AdminSupportTickets() {
       return;
     }
     toast({ title: "Status atualizado" });
-    setSelected({ ...selected, ...update });
+    setSelected((data?.ticket as Ticket) || { ...selected, ...update });
     fetchStats(); fetchTickets();
     refreshHistory(selected.id);
     if (data?.ratingEmailSent && selected.email) {
