@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
       update.resolved_at = null;
       update.resolved_by = null;
     } else {
+      update.phase = "triage";
       update.resolved_at = null;
       update.resolved_by = null;
     }
@@ -78,7 +79,7 @@ Deno.serve(async (req) => {
       .from("support_tickets")
       .update(update)
       .eq("id", ticketId)
-      .select("id, email, status, ticket_number")
+      .select("*")
       .maybeSingle();
 
     if (updateError) throw updateError;
