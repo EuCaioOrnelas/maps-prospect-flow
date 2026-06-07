@@ -16,7 +16,7 @@ const FROM = "Suporte Wiize <suporte@wiize.com.br>";
 const REPLY_DOMAIN = "wiize.com.br";
 const ADMIN_INBOX = "wiize.app@gmail.com";
 const APP_URL = "https://wiize.com.br";
-const LOGO_URL = `${APP_URL}/assets/logo_wiize.png`;
+const LOGO_URL = "https://www.wiize.com.br/__l5e/assets-v1/c1316496-9ea5-4ee1-864d-4a0400483aea/wiize-logo.png";
 const BRAND = "#0E7C3A"; // verde sóbrio, alto contraste
 const BRAND_SOFT = "#E8F5EE";
 
