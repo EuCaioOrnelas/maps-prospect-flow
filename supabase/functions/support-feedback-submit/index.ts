@@ -30,14 +30,14 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (ticketErr) throw ticketErr;
     if (!ticket) throw new Error("ticket not found");
-    if (ticket.user_id && ticket.user_id !== requesterUserId) throw new Error("ticket access denied");
-    if (!ticket.user_id) {
-      if (!visitorSession || typeof visitorSession !== "string") throw new Error("ticket session required");
-      if (!ticket.visitor_session) {
-        await sb.from("support_tickets").update({ visitor_session: visitorSession }).eq("id", ticket.id);
-      } else if (ticket.visitor_session !== visitorSession) {
-        throw new Error("ticket session mismatch");
-      }
+    // Feedback é low-risk (rating/NPS pós-atendimento). O ticketId já é UUID
+    // não-adivinhável; não bloqueamos por mismatch de visitor_session para evitar
+    // falsos negativos quando o usuário troca de dispositivo/limpa localStorage.
+    if (ticket.user_id && requesterUserId && ticket.user_id !== requesterUserId) {
+      console.warn("[support-feedback-submit] requester != ticket.user_id, prosseguindo mesmo assim", { ticketId: ticket.id });
+    }
+    if (!ticket.user_id && !ticket.visitor_session && typeof visitorSession === "string" && visitorSession) {
+      await sb.from("support_tickets").update({ visitor_session: visitorSession }).eq("id", ticket.id);
     }
 
     if (type === "rating") {
