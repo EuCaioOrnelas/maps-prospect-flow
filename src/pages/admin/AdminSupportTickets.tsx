@@ -373,34 +373,19 @@ export default function AdminSupportTickets() {
       update.resolved_at = new Date().toISOString();
       update.resolved_by = "human";
     }
-    const { error } = await supabase.from("support_tickets").update(update).eq("id", selected.id);
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    const { data, error } = await supabase.functions.invoke("admin-support-ticket-update", {
+      body: { ticketId: selected.id, status },
+    });
+    if (error || data?.error) {
+      toast({ title: "Erro", description: data?.error || error?.message || "Não foi possível atualizar o status", variant: "destructive" });
+      return;
+    }
     toast({ title: "Status atualizado" });
     setSelected({ ...selected, ...update });
     fetchStats(); fetchTickets();
-
-    // log status change in history
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("support_ticket_history").insert({
-      ticket_id: selected.id,
-      author_id: user?.id ?? null,
-      author_name: user?.email ?? "Equipe",
-      action_type: "status_change",
-      content: `Status alterado para "${status}"`,
-      attachments: [],
-    });
     refreshHistory(selected.id);
-
-    // Dispara e-mail de avaliação ao resolver/fechar (se houver e-mail do cliente)
-    if ((status === "resolved" || status === "closed") && selected.email) {
-      try {
-        await supabase.functions.invoke("support-email-send", {
-          body: { type: "customer_rating_request", ticketId: selected.id },
-        });
-        toast({ title: "E-mail de avaliação enviado", description: selected.email });
-      } catch (e: any) {
-        toast({ title: "Falha ao enviar avaliação", description: String(e?.message || e), variant: "destructive" });
-      }
+    if (data?.ratingEmailSent && selected.email) {
+      toast({ title: "E-mail de avaliação enviado", description: selected.email });
     }
   };
 
