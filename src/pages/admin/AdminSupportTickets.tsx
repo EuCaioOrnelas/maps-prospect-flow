@@ -312,7 +312,9 @@ export default function AdminSupportTickets() {
       .select("*")
       .eq("ticket_id", ticketId)
       .order("created_at", { ascending: false });
-    const entries = (data as any as HistoryEntry[]) || [];
+    const entries = ((data as any as HistoryEntry[]) || []).filter((entry) =>
+      ["note", "status_change", "priority_change", "internal_note"].includes(entry.action_type),
+    );
     setHistory(entries);
     // sign attachments
     const allPaths = entries.flatMap((e) => (e.attachments || []).map((a) => a.path));
@@ -429,15 +431,6 @@ export default function AdminSupportTickets() {
         role: "assistant",
         content: text || "(mensagem com anexos)",
         metadata: { source: "support_email_reply", attachments: uploadedRefs, sent_by: "human" },
-      });
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("support_ticket_history").insert({
-        ticket_id: selected.id,
-        author_id: user?.id ?? null,
-        author_name: user?.email ?? "Equipe",
-        action_type: "support_email_reply",
-        content: text || "(mensagem com anexos)",
-        attachments: uploadedRefs,
       });
       setReplyText("");
       setReplyFiles([]);
