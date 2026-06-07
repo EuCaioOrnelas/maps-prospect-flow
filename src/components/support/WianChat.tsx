@@ -847,47 +847,24 @@ export function WianChat() {
     setSubmitError(null);
     setLoading(true);
     try {
-      // Garante ticket criado mesmo sem IA
-      let tId = ticketId;
-      if (!tId) {
-        const triageSummary = triage.category
-          ? `Triagem: ${triage.category}${triage.subcategory ? ` → ${triage.subcategory}` : ""}`
-          : "Atendimento direto (sem triagem).";
-        const { data: t, error: tErr } = await supabase
-          .from("support_tickets")
-          .insert({
-            user_id: userId,
-            name: name.trim(),
-            email: email.trim(),
-            phone: phone.trim() || null,
-            status: "open",
-            priority: "medium",
-            customer_type: isAuthed ? "trial_user" : "guest",
-            phase: "ai_investigating",
-          })
-          .select("id")
-          .single();
-        if (tErr) throw tErr;
-        tId = t.id;
-        await supabase.from("support_messages").insert({
-          ticket_id: tId,
-          role: "user",
-          content: `${triageSummary}\n\n${extra.trim() || "(sem detalhes adicionais)"}`,
-        });
-        setTicketId(tId);
-      }
+      const triageSummary = triage.category
+        ? `Triagem: ${triage.category}${triage.subcategory ? ` → ${triage.subcategory}` : ""}`
+        : "Atendimento direto com o time.";
 
       const { data: escResp, error } = await supabase.functions.invoke("support-escalate", {
         body: {
-          ticketId: tId,
+          ticketId,
+          visitorSession: visitorSessionRef.current,
           name: name.trim(),
           email: email.trim(),
           phone: phone.trim() || null,
           extra: extra.trim() || null,
+          initialMessage: `${triageSummary}\n\n${extra.trim() || "(sem detalhes adicionais)"}`,
           category,
         },
       });
       if (error) throw error;
+      if (escResp?.ticketId) setTicketId(escResp.ticketId);
       if (escResp?.ticketNumber) setTicketNumber(escResp.ticketNumber);
       // Limpa rascunho do form depois que o chamado foi aberto com sucesso
       try { localStorage.removeItem(FORM_KEY); } catch {}
