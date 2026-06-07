@@ -316,13 +316,11 @@ export function WianChat() {
     } catch {}
   }, [name, email, phone, extra, category]);
 
-  const [userId, setUserId] = useState<string | null>(null);
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setIsAuthed(true);
-        setUserId(user.id);
         const { data: profile } = await supabase
           .from("profiles")
           .select("name, email, phone")
