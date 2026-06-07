@@ -817,7 +817,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const stage = stages[currentStage];
 
   return (
-    <section ref={sectionRef} className="relative -mt-[72px] sm:-mt-[80px] min-h-[85vh] flex items-center justify-center pt-[88px] sm:pt-[96px] pb-10 overflow-x-clip overflow-y-visible w-full">
+    <section ref={sectionRef} className="relative -mt-[72px] sm:-mt-[80px] min-h-[85vh] flex items-center justify-center pt-[104px] sm:pt-[120px] pb-16 sm:pb-20 overflow-x-clip overflow-y-visible w-full">
       {/* Base gradient backdrop */}
       <div className="absolute inset-0 will-change-transform" style={{ transform: `translateY(${parallaxOffset * 0.5}px)`, background: "linear-gradient(180deg, hsl(158 35% 97.5%) 0%, hsl(210 30% 99%) 60%, hsl(var(--background)) 100%)" }} />
       {/* Dotted texture */}
