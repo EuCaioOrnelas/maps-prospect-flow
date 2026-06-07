@@ -621,7 +621,7 @@ export function WianChat() {
     const otherAttachments = attachments.filter((a) => !a.type.startsWith("image/") && !a.textContent);
 
     if (textAttachments.length) {
-      combined += "\n\n" + textAttachments.map((a) => `--- Arquivo: ${a.name} ---\n${a.textContent}`).join("\n\n");
+      combined += "\n\n" + textAttachments.map((a) => `Arquivo anexado: ${a.name}\n${a.textContent}`).join("\n\n");
     }
     if (otherAttachments.length) {
       combined += "\n\n(usuário anexou: " + otherAttachments.map((a) => `${a.name} [${a.type || "?"}]`).join(", ") + ")";
