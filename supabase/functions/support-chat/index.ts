@@ -333,6 +333,18 @@ Deno.serve(async (req) => {
       currentTicket = t;
     }
 
+    if (!currentTicket) throw new Error("ticket not found");
+    if (currentTicket.user_id && currentTicket.user_id !== userId) throw new Error("ticket access denied");
+    if (!currentTicket.user_id) {
+      if (!visitorSession || typeof visitorSession !== "string") throw new Error("visitor session required");
+      if (!currentTicket.visitor_session) {
+        await sb.from("support_tickets").update({ visitor_session: visitorSession }).eq("id", ticketId);
+        currentTicket.visitor_session = visitorSession;
+      } else if (currentTicket.visitor_session !== visitorSession) {
+        throw new Error("ticket session mismatch");
+      }
+    }
+
     const previousFrustration = currentTicket?.frustration_score ?? 0;
     const previousPhase = currentTicket?.phase ?? "triage";
 

@@ -12,8 +12,8 @@ const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const { ticketId, name, email, phone, extra, category: userCategory } = await req.json();
-    if (!ticketId || !name || !email) {
+    const { ticketId, name, email, phone, extra, category: userCategory, visitorSession, initialMessage } = await req.json();
+    if (!name || !email) {
       return new Response(JSON.stringify({ error: "missing fields" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -24,12 +24,58 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const auth = req.headers.get("Authorization");
+    let requesterUserId: string | null = null;
+    if (auth) {
+      const token = auth.replace("Bearer ", "");
+      const { data: { user } } = await sb.auth.getUser(token);
+      requesterUserId = user?.id ?? null;
+    }
+
+    let resolvedTicketId: string | null = ticketId || null;
+    let createdTicketNow = false;
+
+    if (!resolvedTicketId) {
+      const { data: created, error: createErr } = await sb.from("support_tickets").insert({
+        visitor_session: typeof visitorSession === "string" ? visitorSession : null,
+        name,
+        email,
+        phone: phone ?? null,
+        status: "open",
+        priority: "medium",
+        customer_type: "guest",
+        phase: "ai_investigating",
+      }).select("id").single();
+      if (createErr) throw createErr;
+      resolvedTicketId = created.id;
+      createdTicketNow = true;
+
+      await sb.from("support_messages").insert({
+        ticket_id: resolvedTicketId,
+        role: "user",
+        content: typeof initialMessage === "string" && initialMessage.trim()
+          ? initialMessage.trim()
+          : (extra ? String(extra) : "Atendimento direto com o time."),
+        metadata: { type: "initial_escalation" },
+      });
+    }
+
     // Carrega ticket atual para preservar customer_type já definido
     const { data: existing } = await sb
       .from("support_tickets")
-      .select("customer_type, user_id, priority, phase")
-      .eq("id", ticketId)
+      .select("customer_type, user_id, priority, phase, visitor_session")
+      .eq("id", resolvedTicketId)
       .maybeSingle();
+    if (!existing) throw new Error("ticket not found");
+    if (existing.user_id && existing.user_id !== requesterUserId) throw new Error("ticket access denied");
+    if (!existing.user_id && !createdTicketNow) {
+      if (!visitorSession || typeof visitorSession !== "string") throw new Error("ticket session required");
+      if (!existing.visitor_session) {
+        await sb.from("support_tickets").update({ visitor_session: visitorSession }).eq("id", resolvedTicketId);
+      } else if (existing.visitor_session !== visitorSession) {
+        throw new Error("ticket session mismatch");
+      }
+    }
     const previousPhase = existing?.phase ?? "ai_investigating";
 
     let customerType: "paid_client" | "trial_user" | "guest" =
@@ -76,7 +122,7 @@ Deno.serve(async (req) => {
     const { data: msgs } = await sb
       .from("support_messages")
       .select("role, content")
-      .eq("ticket_id", ticketId)
+      .eq("ticket_id", resolvedTicketId)
       .order("created_at", { ascending: true });
 
     const transcript = (msgs ?? [])
@@ -137,21 +183,21 @@ Deno.serve(async (req) => {
       priority,
       internal_notes: internalNote,
       due_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
-    }).eq("id", ticketId).select("ticket_number").maybeSingle();
+    }).eq("id", resolvedTicketId).select("ticket_number").maybeSingle();
     if (updErr) throw updErr;
 
     // Audita transição de estado
     await sb.from("support_ticket_events").insert({
-      ticket_id: ticketId,
+      ticket_id: resolvedTicketId,
       from_phase: previousPhase,
       to_phase: "escalated",
       triggered_by: "user",
       metadata: { reason: "manual_escalation_form", category, customer_type: customerType },
     });
 
-    if (extra) {
+    if (extra && !createdTicketNow) {
       await sb.from("support_messages").insert({
-        ticket_id: ticketId, role: "user", content: extra,
+        ticket_id: resolvedTicketId, role: "user", content: extra,
         metadata: { type: "escalation_extra" },
       });
     }
@@ -164,7 +210,7 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
         },
-        body: JSON.stringify({ type: "admin_new_ticket", ticketId }),
+        body: JSON.stringify({ type: "admin_new_ticket", ticketId: resolvedTicketId }),
       });
     } catch (notifyErr) {
       console.error("[support-escalate] admin notify failed", notifyErr);
@@ -178,7 +224,7 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
         },
-        body: JSON.stringify({ type: "customer_ticket_receipt", ticketId, plan: matchedPlan }),
+        body: JSON.stringify({ type: "customer_ticket_receipt", ticketId: resolvedTicketId, plan: matchedPlan }),
       });
     } catch (receiptErr) {
       console.error("[support-escalate] customer receipt failed", receiptErr);
@@ -186,7 +232,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       ok: true,
-      ticketId,
+      ticketId: resolvedTicketId,
       ticketNumber: updated?.ticket_number ?? null,
       summary,
       category,

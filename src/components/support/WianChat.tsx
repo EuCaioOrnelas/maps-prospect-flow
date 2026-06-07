@@ -84,6 +84,7 @@ type TriageContext = {
 
 const STORAGE_KEY = "wian_chat_v4";
 const FORM_KEY = "wian_form_draft_v1";
+const VISITOR_SESSION_KEY = "wian_visitor_session_v1";
 const RESPONSE_DELAY_MS = 10000; // aguarda 10s após a última mensagem do user (reseta a cada nova mensagem); "digitando" aparece durante a espera
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const MAX_ATTACHMENTS_PER_SEND = 3;
@@ -103,6 +104,18 @@ function loadState() {
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
+  }
+}
+
+function getVisitorSession() {
+  try {
+    const existing = localStorage.getItem(VISITOR_SESSION_KEY);
+    if (existing) return existing;
+    const generated = crypto.randomUUID ? crypto.randomUUID() : `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(VISITOR_SESSION_KEY, generated);
+    return generated;
+  } catch {
+    return `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 }
 
@@ -285,6 +298,7 @@ export function WianChat() {
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const queueRef = useRef<{ texts: string[]; attachments: Attachment[] }>({ texts: [], attachments: [] });
   const { toast } = useToast();
+  const visitorSessionRef = useRef(getVisitorSession());
 
   useEffect(() => {
     const lite = messages.map((m) => ({
@@ -302,13 +316,11 @@ export function WianChat() {
     } catch {}
   }, [name, email, phone, extra, category]);
 
-  const [userId, setUserId] = useState<string | null>(null);
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setIsAuthed(true);
-        setUserId(user.id);
         const { data: profile } = await supabase
           .from("profiles")
           .select("name, email, phone")
@@ -566,7 +578,7 @@ export function WianChat() {
 
   const autoOpenEscalation = async (resolvedTicketId: string, inferredCategory: string) => {
     const { data: escResp, error } = await supabase.functions.invoke("support-escalate", {
-      body: { ticketId: resolvedTicketId, name: name.trim(), email: email.trim(), phone: phone.trim() || null, extra: null, category: inferredCategory },
+      body: { ticketId: resolvedTicketId, name: name.trim(), email: email.trim(), phone: phone.trim() || null, extra: null, category: inferredCategory, visitorSession: visitorSessionRef.current },
     });
     if (error) throw error;
     if (escResp?.ticketNumber) setTicketNumber(escResp.ticketNumber);
@@ -619,6 +631,7 @@ export function WianChat() {
       const { data, error } = await supabase.functions.invoke("support-chat", {
         body: {
           ticketId,
+          visitorSession: visitorSessionRef.current,
           message: combined || "(usuário enviou apenas anexos)",
           history: messages.slice(-12).map((m) => ({ role: m.role, content: m.content })),
           imageDataUrl: imageAttachment?.dataUrl ?? null,
@@ -763,24 +776,10 @@ export function WianChat() {
       return;
     }
     try {
-      await supabase.from("support_ratings").insert({ ticket_id: ticketId, stars, comment, resolved_by: wasEscalated ? "human" : "ai" });
-      // Registra a avaliação como mensagem do ticket pra aparecer no admin.
-      const ratingMsg = `⭐ **Avaliação do atendimento:** ${stars}/10${comment.trim() ? `\n\n💬 **Como posso melhorar:** ${comment.trim()}` : ""}`;
-      await supabase.from("support_messages").insert({ ticket_id: ticketId, role: "user", content: ratingMsg });
-      // Só marca como resolvido se a IA realmente resolveu (não em escalonamento humano).
-      if (!wasEscalated) {
-        await supabase.from("support_tickets").update({ status: "resolved", phase: "rated", resolved_by: "ai", resolved_at: new Date().toISOString() }).eq("id", ticketId);
-        await supabase.from("support_ticket_events").insert({
-          ticket_id: ticketId, from_phase: "waiting_user_confirmation", to_phase: "rated",
-          triggered_by: "user", metadata: { stars, has_comment: !!comment.trim() },
-        });
-      } else {
-        await supabase.from("support_tickets").update({ phase: "rated" }).eq("id", ticketId);
-        await supabase.from("support_ticket_events").insert({
-          ticket_id: ticketId, from_phase: "escalated", to_phase: "rated",
-          triggered_by: "user", metadata: { stars, has_comment: !!comment.trim() },
-        });
-      }
+      const { error } = await supabase.functions.invoke("support-feedback-submit", {
+        body: { ticketId, visitorSession: visitorSessionRef.current, type: "rating", score: stars, comment, wasEscalated },
+      });
+      if (error) throw error;
       setPhase("nps");
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
@@ -795,14 +794,10 @@ export function WianChat() {
     }
     try {
       if (ticketId) {
-        await supabase.from("support_ratings").insert({
-          ticket_id: ticketId,
-          stars: null,
-          nps_score: npsScore,
-          nps_recommend: npsRecommend,
-          nps_comment: npsComment || null,
-          resolved_by: wasEscalated ? "human" : "ai",
+        const { error } = await supabase.functions.invoke("support-feedback-submit", {
+          body: { ticketId, visitorSession: visitorSessionRef.current, type: "nps", npsScore, npsRecommend, npsComment, wasEscalated },
         });
+        if (error) throw error;
       }
       toast({ title: "Obrigado pelo feedback! 🙌" });
       setPhase(finalPhase);
@@ -832,47 +827,24 @@ export function WianChat() {
     setSubmitError(null);
     setLoading(true);
     try {
-      // Garante ticket criado mesmo sem IA
-      let tId = ticketId;
-      if (!tId) {
-        const triageSummary = triage.category
-          ? `Triagem: ${triage.category}${triage.subcategory ? ` → ${triage.subcategory}` : ""}`
-          : "Atendimento direto (sem triagem).";
-        const { data: t, error: tErr } = await supabase
-          .from("support_tickets")
-          .insert({
-            user_id: userId,
-            name: name.trim(),
-            email: email.trim(),
-            phone: phone.trim() || null,
-            status: "open",
-            priority: "medium",
-            customer_type: isAuthed ? "trial_user" : "guest",
-            phase: "ai_investigating",
-          })
-          .select("id")
-          .single();
-        if (tErr) throw tErr;
-        tId = t.id;
-        await supabase.from("support_messages").insert({
-          ticket_id: tId,
-          role: "user",
-          content: `${triageSummary}\n\n${extra.trim() || "(sem detalhes adicionais)"}`,
-        });
-        setTicketId(tId);
-      }
+      const triageSummary = triage.category
+        ? `Triagem: ${triage.category}${triage.subcategory ? ` → ${triage.subcategory}` : ""}`
+        : "Atendimento direto com o time.";
 
       const { data: escResp, error } = await supabase.functions.invoke("support-escalate", {
         body: {
-          ticketId: tId,
+          ticketId,
+          visitorSession: visitorSessionRef.current,
           name: name.trim(),
           email: email.trim(),
           phone: phone.trim() || null,
           extra: extra.trim() || null,
+          initialMessage: `${triageSummary}\n\n${extra.trim() || "(sem detalhes adicionais)"}`,
           category,
         },
       });
       if (error) throw error;
+      if (escResp?.ticketId) setTicketId(escResp.ticketId);
       if (escResp?.ticketNumber) setTicketNumber(escResp.ticketNumber);
       // Limpa rascunho do form depois que o chamado foi aberto com sucesso
       try { localStorage.removeItem(FORM_KEY); } catch {}
