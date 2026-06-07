@@ -106,6 +106,11 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
     return editor.chain().focus().setTextSelection({ from: selection.from, to: selection.to });
   };
 
+  const currentRange = () => {
+    rangeRef.current = { from: editor.state.selection.from, to: editor.state.selection.to };
+    return rangeRef.current;
+  };
+
   const normalizeUrl = (url: string) => {
     const trimmed = url.trim();
     if (!trimmed) return "";
@@ -150,19 +155,36 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
   const addLink = () => {
     const selection = selectionRef.current;
     if (!selection) return;
-    const url = window.prompt("URL do link:", editor.getAttributes("link")?.href || "https://");
-    if (url === null) return;
-    const href = normalizeUrl(url);
-    const chain = editor.chain().focus().setTextSelection({ from: selection.from, to: selection.to });
-    if (!href) return chain.unsetLink().run();
-    chain.setLink({ href }).run();
+    rangeRef.current = { from: selection.from, to: selection.to };
+    setLinkUrl(editor.getAttributes("link")?.href || "https://");
+    setLinkDialogOpen(true);
+  };
+
+  const applyLink = () => {
+    const range = rangeRef.current;
+    if (!range) return;
+    const href = normalizeUrl(linkUrl);
+    const chain = editor.chain().focus().setTextSelection(range);
+    if (!href) chain.unsetLink().run();
+    else chain.setLink({ href }).run();
+    setLinkDialogOpen(false);
   };
 
   const addImage = () => {
-    const selection = selectionRef.current;
-    if (!selection) return;
-    const url = window.prompt("URL da imagem:");
-    if (url) editor.chain().focus().setTextSelection({ from: selection.from, to: selection.to }).deleteSelection().setImage({ src: normalizeUrl(url) }).run();
+    currentRange();
+    setImageUrl("");
+    setImageAlt("");
+    setImageDialogOpen(true);
+  };
+
+  const applyImage = () => {
+    const src = normalizeUrl(imageUrl);
+    if (!src) return;
+    const range = rangeRef.current;
+    const chain = editor.chain().focus();
+    if (range) chain.setTextSelection(range);
+    chain.setImage({ src, alt: imageAlt.trim() || undefined }).run();
+    setImageDialogOpen(false);
   };
 
   return (
