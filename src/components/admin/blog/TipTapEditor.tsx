@@ -8,6 +8,7 @@ import {
   Bold, Italic, Strikethrough, Code, Heading1, Heading2, Heading3,
   List, ListOrdered, Quote, Undo, Redo, Link as LinkIcon, Image as ImageIcon, Minus,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 interface Props {
@@ -63,7 +64,6 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
     if (value !== current) {
       editor.commands.setContent(value || "", { emitUpdate: false });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, editor]);
 
   // Force re-render on selection changes so toolbar disabled state stays accurate
@@ -89,10 +89,10 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
 
   const hasSelection = !!selectionRef.current;
 
-  const withSelectedText = (command: (chain: any) => boolean) => {
+  const selectedChain = () => {
     const selection = selectionRef.current;
-    if (!selection) return false;
-    return command(editor.chain().focus().setTextSelection({ from: selection.from, to: selection.to }));
+    if (!selection) return null;
+    return editor.chain().focus().setTextSelection({ from: selection.from, to: selection.to });
   };
 
   const normalizeUrl = (url: string) => {
@@ -102,7 +102,16 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
     return `https://${trimmed}`;
   };
 
-  const Btn = ({ onClick, active, children, title, disabled, requireSelection = true }: any) => {
+  type ToolbarButtonProps = {
+    onClick: () => void | boolean;
+    active?: boolean;
+    children: ReactNode;
+    title: string;
+    disabled?: boolean;
+    requireSelection?: boolean;
+  };
+
+  const Btn = ({ onClick, active, children, title, disabled, requireSelection = true }: ToolbarButtonProps) => {
     const isDisabled = disabled || (requireSelection && !hasSelection);
     return (
       <Button
@@ -148,19 +157,19 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
   return (
     <div className="border rounded-lg bg-background">
       <div className="flex flex-wrap gap-1 p-2 border-b bg-muted/30 sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-muted/50 rounded-t-lg">
-        <Btn onClick={() => withSelectedText((chain) => chain.toggleHeading({ level: 1 }).run())} active={editor.isActive("heading", { level: 1 })} title="H1"><Heading1 className="h-4 w-4" /></Btn>
-        <Btn onClick={() => withSelectedText((chain) => chain.toggleHeading({ level: 2 }).run())} active={editor.isActive("heading", { level: 2 })} title="H2"><Heading2 className="h-4 w-4" /></Btn>
-        <Btn onClick={() => withSelectedText((chain) => chain.toggleHeading({ level: 3 }).run())} active={editor.isActive("heading", { level: 3 })} title="H3"><Heading3 className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} title="H1"><Heading1 className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })} title="H2"><Heading2 className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })} title="H3"><Heading3 className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
-        <Btn onClick={() => withSelectedText((chain) => chain.toggleBold().run())} active={editor.isActive("bold")} title="Negrito"><Bold className="h-4 w-4" /></Btn>
-        <Btn onClick={() => withSelectedText((chain) => chain.toggleItalic().run())} active={editor.isActive("italic")} title="Itálico"><Italic className="h-4 w-4" /></Btn>
-        <Btn onClick={() => withSelectedText((chain) => chain.toggleStrike().run())} active={editor.isActive("strike")} title="Tachado"><Strikethrough className="h-4 w-4" /></Btn>
-        <Btn onClick={() => withSelectedText((chain) => chain.toggleCode().run())} active={editor.isActive("code")} title="Código"><Code className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleBold().run()} active={editor.isActive("bold")} title="Negrito"><Bold className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleItalic().run()} active={editor.isActive("italic")} title="Itálico"><Italic className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleStrike().run()} active={editor.isActive("strike")} title="Tachado"><Strikethrough className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleCode().run()} active={editor.isActive("code")} title="Código"><Code className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
-        <Btn onClick={() => withSelectedText((chain) => chain.toggleBulletList().run())} active={editor.isActive("bulletList")} title="Lista"><List className="h-4 w-4" /></Btn>
-        <Btn onClick={() => withSelectedText((chain) => chain.toggleOrderedList().run())} active={editor.isActive("orderedList")} title="Lista ordenada"><ListOrdered className="h-4 w-4" /></Btn>
-        <Btn onClick={() => withSelectedText((chain) => chain.toggleBlockquote().run())} active={editor.isActive("blockquote")} title="Citação"><Quote className="h-4 w-4" /></Btn>
-        <Btn onClick={() => withSelectedText((chain) => chain.deleteSelection().setHorizontalRule().run())} title="Linha"><Minus className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleBulletList().run()} active={editor.isActive("bulletList")} title="Lista"><List className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleOrderedList().run()} active={editor.isActive("orderedList")} title="Lista ordenada"><ListOrdered className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Citação"><Quote className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.deleteSelection().setHorizontalRule().run()} title="Linha"><Minus className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
         <Btn onClick={addLink} active={editor.isActive("link")} title="Link"><LinkIcon className="h-4 w-4" /></Btn>
         <Btn onClick={addImage} title="Imagem (URL)"><ImageIcon className="h-4 w-4" /></Btn>
