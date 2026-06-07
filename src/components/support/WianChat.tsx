@@ -1379,7 +1379,7 @@ export function WianChat() {
               <p>
                 Nossa equipe já recebeu o histórico <strong>completo da sua conversa</strong> com o Wian, junto com os
                 detalhes que você informou. Vamos analisar o seu caso com calma e entrar em contato pelo email cadastrado
-                em até <strong>24h úteis</strong> (segunda a sexta, das 9h às 18h).
+                em até <strong>48 horas úteis</strong> (segunda a sexta, das 9h às 18h).
               </p>
               <p>
                 Se for algo urgente, pode responder esse email assim que ele chegar que continuamos por lá mesmo.
