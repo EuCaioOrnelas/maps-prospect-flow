@@ -37,7 +37,7 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" } }),
-      Image.configure({ HTMLAttributes: { class: "w-full aspect-video object-cover rounded-xl my-6" } }),
+      Image.configure({ allowBase64: true, HTMLAttributes: { class: "blog-content-image" } }),
       Placeholder.configure({ placeholder: placeholder || "Escreva seu conteúdo..." }),
     ],
     content: value || "",
@@ -52,18 +52,7 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
     editorProps: {
       attributes: {
         class:
-          "prose prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[500px] px-4 sm:px-6 py-8 " +
-          "prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground " +
-          "prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:leading-tight prose-h1:mt-8 prose-h1:mb-5 " +
-          "prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h2:mb-4 " +
-          "prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-3 " +
-          "prose-p:text-foreground prose-p:leading-relaxed " +
-          "prose-a:text-primary prose-a:underline prose-a:decoration-primary/50 prose-a:underline-offset-4 hover:prose-a:decoration-primary " +
-          "prose-strong:text-foreground " +
-          "prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:text-foreground " +
-          "prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none " +
-          "prose-img:w-full prose-img:aspect-video prose-img:object-cover prose-img:rounded-xl prose-img:my-6 " +
-          "prose-ul:my-4 prose-ol:my-4 prose-li:my-1 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_li::marker]:text-foreground",
+          "blog-content blog-content-editor max-w-none focus:outline-none min-h-[500px] px-4 sm:px-6 py-8",
       },
     },
   });
@@ -114,7 +103,7 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
   const normalizeUrl = (url: string) => {
     const trimmed = url.trim();
     if (!trimmed) return "";
-    if (/^(https?:|mailto:|tel:)/i.test(trimmed)) return trimmed;
+    if (/^(https?:|mailto:|tel:|data:image\/|blob:)/i.test(trimmed)) return trimmed;
     return `https://${trimmed}`;
   };
 
@@ -183,7 +172,10 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
     const range = rangeRef.current;
     const chain = editor.chain().focus();
     if (range) chain.setTextSelection(range);
-    chain.setImage({ src, alt: imageAlt.trim() || undefined }).run();
+    chain.deleteSelection().insertContent({
+      type: "image",
+      attrs: { src, alt: imageAlt.trim() || "" },
+    }).run();
     setImageDialogOpen(false);
   };
 
@@ -201,7 +193,7 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
         <div className="w-px bg-border mx-1" />
         <Btn onClick={() => selectedChain()?.toggleBulletList().run()} active={editor.isActive("bulletList")} title="Lista"><List className="h-4 w-4" /></Btn>
         <Btn onClick={() => selectedChain()?.toggleOrderedList().run()} active={editor.isActive("orderedList")} title="Lista ordenada"><ListOrdered className="h-4 w-4" /></Btn>
-        <Btn onClick={() => selectedChain()?.toggleNode("paragraph", "paragraph").toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Citação"><Quote className="h-4 w-4" /></Btn>
+        <Btn onClick={() => selectedChain()?.toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Citação"><Quote className="h-4 w-4" /></Btn>
         <Btn onClick={() => selectedChain()?.deleteSelection().setHorizontalRule().run()} title="Linha"><Minus className="h-4 w-4" /></Btn>
         <div className="w-px bg-border mx-1" />
         <Btn onClick={addLink} active={editor.isActive("link")} title="Link"><LinkIcon className="h-4 w-4" /></Btn>
