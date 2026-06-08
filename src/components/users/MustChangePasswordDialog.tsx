@@ -28,9 +28,11 @@ export const MustChangePasswordDialog = ({ open, onCompleted }: Props) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  const allRulesMet = passwordRules.every((r) => r.test(password));
+
   const handleSubmit = async () => {
-    if (password.length < 8) {
-      toast({ title: "Senha muito curta", description: "Use no mínimo 8 caracteres.", variant: "destructive" });
+    if (!allRulesMet) {
+      toast({ title: "Senha não atende aos requisitos", description: "Verifique as regras abaixo e tente novamente.", variant: "destructive" });
       return;
     }
     if (password !== confirm) {
