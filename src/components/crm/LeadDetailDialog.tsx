@@ -1437,37 +1437,6 @@ export const LeadDetailDialog = ({
                   </Select>
                 </div>
 
-                {/* Responsible Section */}
-                <div className="space-y-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                    <User className="w-3 h-3" />
-                    Responsável
-                  </span>
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-card">
-                    <ResponsibleAvatar
-                      responsibleId={lead.responsible_user_id}
-                      members={members}
-                      size="xl"
-                      canEdit={!!onChangeResponsible}
-                      onChange={async (uid) => {
-                        if (onChangeResponsible) {
-                          await onChangeResponsible(lead.id, uid);
-                        }
-                      }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-foreground truncate">
-                        {(() => {
-                          const m = members.find((x) => x.user_id === lead.responsible_user_id);
-                          return m ? (m.name || m.email || 'Sem nome') : 'Sem responsável';
-                        })()}
-                      </div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {onChangeResponsible ? 'Clique no avatar para alterar' : 'Você não pode alterar'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Negotiation Value with Close Deal Button */}
                 <div className="space-y-2">
