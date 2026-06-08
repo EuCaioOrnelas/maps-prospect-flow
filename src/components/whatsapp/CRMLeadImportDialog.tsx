@@ -83,7 +83,7 @@ export const CRMLeadImportDialog = ({
   onImportLeads,
   onImportPhones,
 }: CRMLeadImportDialogProps) => {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
@@ -102,10 +102,10 @@ export const CRMLeadImportDialog = ({
   const [selectAll, setSelectAll] = useState(false);
 
   useEffect(() => {
-    if (open && user) {
+    if (open && user && accountOwnerId) {
       loadData();
     }
-  }, [open, user]);
+  }, [open, user, accountOwnerId]);
 
   // Reset on close
   useEffect(() => {
@@ -133,25 +133,25 @@ export const CRMLeadImportDialog = ({
   const getPhoneKey = (phone: string) => phone.replace(/\D/g, "").slice(-8);
 
   const loadData = async () => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     setLoading(true);
     try {
       const [leadsRes, stagesRes, scoresRes] = await Promise.all([
         supabase
           .from("leads")
           .select("id, company_name, contact_name, phone, pipeline_stage_id, tags, ai_score")
-          .eq("user_id", user.id)
+          .eq("owner_user_id", accountOwnerId)
           .not("phone", "is", null)
           .limit(5000),
         supabase
           .from("pipeline_stages")
           .select("id, name, color")
-          .eq("user_id", user.id)
+          .eq("owner_user_id", accountOwnerId)
           .order("position"),
         supabase
           .from("revenue_leads")
           .select("phone_e164, score_total, status_bucket")
-          .eq("user_id", user.id),
+          .eq("owner_user_id", accountOwnerId),
       ]);
 
       if (leadsRes.error) throw leadsRes.error;
