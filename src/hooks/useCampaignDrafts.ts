@@ -65,7 +65,7 @@ export const useCampaignDrafts = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, accountOwnerId]);
 
   useEffect(() => {
     fetchDrafts();
