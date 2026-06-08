@@ -169,13 +169,12 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
   const applyImage = () => {
     const src = normalizeUrl(imageUrl);
     if (!src) return;
+    const alt = imageAlt.trim() || "";
     const range = rangeRef.current;
     const chain = editor.chain().focus();
     if (range) chain.setTextSelection(range);
-    chain.deleteSelection().insertContent({
-      type: "image",
-      attrs: { src, alt: imageAlt.trim() || "" },
-    }).run();
+    // setImage inserts as a block-level image so the preview styles (.blog-content img) apply
+    (chain as any).setImage({ src, alt }).run();
     setImageDialogOpen(false);
   };
 
