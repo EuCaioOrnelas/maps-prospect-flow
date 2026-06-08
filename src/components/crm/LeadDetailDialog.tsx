@@ -273,6 +273,8 @@ export const LeadDetailDialog = ({
   onDeleteOrigin,
   initialTab,
   initialRegisterSale = false,
+  members = [],
+  onChangeResponsible,
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
   const { user, accountOwnerId } = useAuth();
