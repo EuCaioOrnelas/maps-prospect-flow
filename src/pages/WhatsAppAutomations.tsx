@@ -54,7 +54,7 @@ const flowTemplates = [
 ];
 
 export default function WhatsAppAutomations() {
-  const { user, profile } = useAuth();
+  const { user, profile, accountOwnerId } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   useAutoScoreTracking("whatsapp_automations");
