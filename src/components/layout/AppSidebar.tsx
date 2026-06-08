@@ -348,6 +348,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             )}
 
             {/* Meta */}
+            {canRole("dashboard_meta") && (
             <li data-tour="sidebar-meta">
               <SidebarNavItem
                 title="Meta"
