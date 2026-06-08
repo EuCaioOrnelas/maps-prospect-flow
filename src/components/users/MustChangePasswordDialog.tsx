@@ -5,16 +5,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck, Check, X, Eye, EyeOff } from "lucide-react";
 
 interface Props {
   open: boolean;
   onCompleted: () => void;
 }
 
+const passwordRules = [
+  { label: "Mínimo 8 caracteres", test: (v: string) => v.length >= 8 },
+  { label: "Pelo menos 1 letra maiúscula", test: (v: string) => /[A-Z]/.test(v) },
+  { label: "Pelo menos 1 letra minúscula", test: (v: string) => /[a-z]/.test(v) },
+  { label: "Pelo menos 1 número", test: (v: string) => /\d/.test(v) },
+  { label: "Pelo menos 1 caractere especial", test: (v: string) => /[^A-Za-z0-9]/.test(v) },
+];
+
 export const MustChangePasswordDialog = ({ open, onCompleted }: Props) => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
