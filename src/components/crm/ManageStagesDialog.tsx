@@ -129,12 +129,11 @@ export const ManageStagesDialog = ({
       });
 
       // Sync missing tags to crm_tags table
-      const existingCrmNames = new Set(crmTagsRes.data?.map(t => t.name) || []);
-      const missingTags = Array.from(uniqueTags).filter(t => !existingCrmNames.has(t));
+      const existingCrmNames = new Set((crmTagsRes.data?.map(t => t.name) || []).map(t => t.toLowerCase()));
+      const missingTags = Array.from(uniqueTags).filter(t => !existingCrmNames.has(t.toLowerCase()));
       if (missingTags.length > 0) {
-        await supabase.from('crm_tags').upsert(
-          missingTags.map(name => ({ user_id: user.id, name })),
-          { onConflict: 'user_id,name' }
+        await supabase.from('crm_tags').insert(
+          missingTags.map(name => ({ user_id: user.id, owner_user_id: accountOwnerId, name }))
         );
       }
 
@@ -154,7 +153,7 @@ export const ManageStagesDialog = ({
       return;
     }
     try {
-      await supabase.from('crm_tags').insert({ user_id: user.id, name: trimmed });
+      await supabase.from('crm_tags').insert({ user_id: user.id, owner_user_id: accountOwnerId, name: trimmed });
       setAllTags(prev => [...prev, trimmed].sort((a, b) => a.localeCompare(b, 'pt-BR')));
       setNewTagValue('');
       toast.success('Tag criada!');

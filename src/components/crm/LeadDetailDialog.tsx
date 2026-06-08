@@ -400,6 +400,7 @@ export const LeadDetailDialog = ({
     await supabase.from('lead_deal_attachments').insert({
       deal_id: dealId,
       user_id: user.id,
+      owner_user_id: accountOwnerId,
       file_name: file.name,
       file_type: fileType,
       file_url: urlData.publicUrl,
@@ -494,6 +495,7 @@ export const LeadDetailDialog = ({
       await supabase.from('lead_files').insert({
         lead_id: lead.id,
         user_id: user.id,
+        owner_user_id: accountOwnerId,
         file_name: finalName,
         file_type: 'other',
         file_url: urlData.publicUrl,
@@ -718,11 +720,17 @@ export const LeadDetailDialog = ({
 
       setLocalTags(updatedTags);
 
-      // Also save to crm_tags table (upsert to avoid duplicates)
-      await supabase.from('crm_tags').upsert(
-        { user_id: user.id, name: normalizedTag },
-        { onConflict: 'user_id,name' }
-      );
+      // Also save to crm_tags table for the shared account
+      const { data: existingTag } = await supabase
+        .from('crm_tags')
+        .select('id')
+        .eq('owner_user_id', accountOwnerId)
+        .ilike('name', normalizedTag)
+        .maybeSingle();
+
+      if (!existingTag) {
+        await supabase.from('crm_tags').insert({ user_id: user.id, owner_user_id: accountOwnerId, name: normalizedTag });
+      }
 
       setAvailableTags((prev) => {
         if (prev.some((tag) => tag.toLowerCase() === normalizedTag.toLowerCase())) {

@@ -123,6 +123,7 @@ const DEFAULT_STAGES: Omit<PipelineStage, 'id' | 'user_id' | 'created_at' | 'upd
 export const useCRM = () => {
   const { user, accountOwnerId } = useAuth();
   const { role, ownerUserId } = useAccountRole();
+  const effectiveOwnerId = accountOwnerId || ownerUserId;
   const { trackScoreEvent } = useUserScoreTracking();
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -138,7 +139,7 @@ export const useCRM = () => {
       .select('*')
       .order('position', { ascending: true });
 
-    if (ownerUserId) query.eq('owner_user_id', ownerUserId);
+    if (effectiveOwnerId) query.eq('owner_user_id', effectiveOwnerId);
 
     const { data, error } = await query;
 
@@ -154,7 +155,7 @@ export const useCRM = () => {
     }
 
     setStages(data || []);
-  }, [user, ownerUserId, role]);
+  }, [user, effectiveOwnerId, role]);
 
   // Create default pipeline stages
   const createDefaultStages = async () => {
@@ -163,6 +164,7 @@ export const useCRM = () => {
     const stagesToInsert = DEFAULT_STAGES.map(stage => ({
       ...stage,
       user_id: user.id,
+      owner_user_id: effectiveOwnerId || user.id,
     }));
 
     const { data, error } = await supabase
@@ -190,7 +192,7 @@ export const useCRM = () => {
       `)
       .order('created_at', { ascending: false });
 
-    if (ownerUserId) query.eq('owner_user_id', ownerUserId);
+    if (effectiveOwnerId) query.eq('owner_user_id', effectiveOwnerId);
 
     const { data, error } = await query;
 
@@ -239,7 +241,7 @@ export const useCRM = () => {
 
     setLeads(uniqueLeads as Lead[]);
     setIsLoading(false);
-  }, [user, ownerUserId]);
+  }, [user, effectiveOwnerId]);
 
   // Validate phone number before creating lead
   const isValidPhoneNumber = (phone: string): boolean => {
@@ -295,6 +297,7 @@ export const useCRM = () => {
       .from('leads')
       .insert({
         user_id: user.id,
+        owner_user_id: effectiveOwnerId || user.id,
         phone: normalizedPhone,
         company_name: lead.company_name,
         contact_name: lead.contact_name,
@@ -411,6 +414,7 @@ export const useCRM = () => {
     await supabase.from('lead_activities').insert([{
       lead_id: leadId,
       user_id: user.id,
+      owner_user_id: effectiveOwnerId || user.id,
       activity_type: activityType,
       description,
       metadata: (metadata || {}) as Record<string, string | number | boolean | null>,
@@ -426,6 +430,7 @@ export const useCRM = () => {
       .insert({
         lead_id: leadId,
         user_id: user.id,
+        owner_user_id: effectiveOwnerId || user.id,
         content,
       })
       .select()
@@ -544,6 +549,7 @@ export const useCRM = () => {
       .from('pipeline_stages')
       .insert({
         user_id: user.id,
+        owner_user_id: effectiveOwnerId || user.id,
         name,
         color,
         position: newPosition,
