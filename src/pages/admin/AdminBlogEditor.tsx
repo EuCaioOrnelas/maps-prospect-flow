@@ -18,6 +18,7 @@ import { TipTapEditor } from "@/components/admin/blog/TipTapEditor";
 import { ArrowLeft, Save, Eye, Trash2, Plus, BarChart3, FileText, Search, Sparkles, HelpCircle, Image as ImageIcon, Settings2, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { uploadBlogImage } from "@/lib/blogImageUpload";
 
 const slugify = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
