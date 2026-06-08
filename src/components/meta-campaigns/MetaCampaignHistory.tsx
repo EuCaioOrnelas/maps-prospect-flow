@@ -47,7 +47,7 @@ function parseErrorDetails(details: any): { phone: string; message: string }[] {
 const ERRORS_PER_PAGE = 5;
 
 export const MetaCampaignHistory = ({ connections }: MetaCampaignHistoryProps) => {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCampaign, setSelectedCampaign] = useState<any | null>(null);
@@ -58,13 +58,13 @@ export const MetaCampaignHistory = ({ connections }: MetaCampaignHistoryProps) =
   useEffect(() => { setErrorPage(1); }, [selectedCampaign]);
 
   const fetchHistory = async () => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     setLoading(true);
     try {
       const { data } = await supabase
         .from("meta_campaigns")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("owner_user_id", accountOwnerId)
         .order("created_at", { ascending: false })
         .limit(50);
       setCampaigns(data || []);
