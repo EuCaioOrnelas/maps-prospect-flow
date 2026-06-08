@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { blogSupabase } from "@/integrations/blog/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +58,7 @@ export default function AdminBlogList() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    const { error } = await supabase.from("blog_posts").delete().eq("id", deleteId);
+    const { error } = await blogSupabase.from("blog_posts").delete().eq("id", deleteId);
     if (error) toast.error("Erro: " + error.message);
     else {
       toast.success("Post removido");

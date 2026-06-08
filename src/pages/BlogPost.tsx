@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import { trackBlogCtaClick } from "@/lib/blogAttribution";
 
 import { supabase } from "@/integrations/supabase/client";
+import { blogSupabase } from "@/integrations/blog/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap, Link2, Twitter, Linkedin, Home, ThumbsUp } from "lucide-react";
@@ -124,7 +125,7 @@ export default function BlogPost() {
       setLoading(false);
 
       // Increment view count (fire-and-forget)
-      supabase.rpc("increment_blog_post_view" as any, { _post_id: (data as any).id });
+      blogSupabase.rpc("increment_blog_post_view" as any, { _post_id: (data as any).id });
 
       // Related
       if ((data as any).category_id) {
@@ -276,13 +277,13 @@ export default function BlogPost() {
       saveLikedSet(set);
       setLiked(false);
       setLikeCount((c) => Math.max(c - 1, 0));
-      await supabase.rpc("decrement_blog_post_like" as any, { _post_id: post.id });
+      await blogSupabase.rpc("decrement_blog_post_like" as any, { _post_id: post.id });
     } else {
       set.add(post.id);
       saveLikedSet(set);
       setLiked(true);
       setLikeCount((c) => c + 1);
-      await supabase.rpc("increment_blog_post_like" as any, { _post_id: post.id });
+      await blogSupabase.rpc("increment_blog_post_like" as any, { _post_id: post.id });
     }
   };
 
