@@ -40,7 +40,7 @@ export function useAccountMembers() {
     // 2) buscar perfil do owner
     const { data: ownerProfile } = await supabase
       .from("profiles")
-      .select("id, name, email, created_at")
+      .select("id, name, email, avatar_url, created_at")
       .eq("id", owner)
       .maybeSingle();
 
@@ -51,6 +51,19 @@ export function useAccountMembers() {
       .eq("owner_user_id", owner)
       .order("created_at", { ascending: true });
 
+    // 3.1) buscar perfis (avatar) dos membros
+    const memberIds = (rawMembers || []).map((m: any) => m.user_id).filter(Boolean);
+    let avatarById: Record<string, string | null> = {};
+    if (memberIds.length > 0) {
+      const { data: memberProfiles } = await supabase
+        .from("profiles")
+        .select("id, avatar_url")
+        .in("id", memberIds);
+      avatarById = Object.fromEntries(
+        (memberProfiles || []).map((p: any) => [p.id, p.avatar_url || null])
+      );
+    }
+
     const list: AccountMember[] = [];
 
     if (ownerProfile) {
@@ -60,6 +73,7 @@ export function useAccountMembers() {
         user_id: owner,
         name: (ownerProfile as any).name,
         email: (ownerProfile as any).email,
+        avatar_url: (ownerProfile as any).avatar_url || null,
         role: "owner",
         status: "active",
         must_change_password: false,
@@ -75,6 +89,7 @@ export function useAccountMembers() {
         user_id: m.user_id,
         name: m.name,
         email: m.email,
+        avatar_url: avatarById[m.user_id] || null,
         role: m.role,
         status: m.status,
         must_change_password: !!m.must_change_password,
