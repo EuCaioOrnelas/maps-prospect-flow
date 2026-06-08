@@ -163,9 +163,9 @@ export const useSales = (leadId?: string) => {
 
   const uploadAttachment = useCallback(
     async (saleId: string, file: File, kind: "receipt" | "contract") => {
-      if (!user) throw new Error("not_authenticated");
+      if (!user || !accountOwnerId) throw new Error("not_authenticated");
       const ext = file.name.split(".").pop() || "bin";
-      const path = `${user.id}/${saleId}/${kind}-${Date.now()}.${ext}`;
+      const path = `${accountOwnerId}/${saleId}/${kind}-${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("sales-attachments").upload(path, file, {
         upsert: true,
         contentType: file.type || undefined,
@@ -173,7 +173,7 @@ export const useSales = (leadId?: string) => {
       if (error) throw error;
       return path;
     },
-    [user]
+    [user, accountOwnerId]
   );
 
   const getAttachmentUrl = useCallback(async (path: string) => {
