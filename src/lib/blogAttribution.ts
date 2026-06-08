@@ -1,4 +1,7 @@
-import { supabase } from "@/integrations/supabase/client";
+// O blog vive no banco externo do usuário (projeto Supabase separado).
+// Usamos o blogSupabase para que inserts em blog_post_attributions
+// realmente cheguem na tabela certa.
+import { blogSupabase } from "@/integrations/blog/client";
 
 const KEY = "wiize_blog_attribution";
 
@@ -34,7 +37,7 @@ export async function trackBlogCtaClick(post_id: string, slug: string) {
   const payload: Stored = { post_id, slug, ts: Date.now() };
   localStorage.setItem(KEY, JSON.stringify(payload));
   try {
-    await supabase.from("blog_post_attributions").insert({
+    await blogSupabase.from("blog_post_attributions").insert({
       post_id,
       session_id,
       event: "cta_click",
@@ -50,7 +53,7 @@ export async function markBlogAttribution(event: "trial_started" | "purchased", 
   if (!stored) return;
   const session_id = getSessionId();
   try {
-    await supabase.from("blog_post_attributions").insert({
+    await blogSupabase.from("blog_post_attributions").insert({
       post_id: stored.post_id,
       session_id,
       user_id: user_id || null,
