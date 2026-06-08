@@ -45,7 +45,7 @@ export const MessageTypeSelector = ({
   onNext,
   onLeadsUpdate,
 }: MessageTypeSelectorProps) => {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [loading, setLoading] = useState(false);
   const [aiLeads, setAiLeads] = useState<LeadWithAiMessage[]>([]);
   const [leadsWithMessage, setLeadsWithMessage] = useState<LeadWithAiMessage[]>([]);
@@ -59,7 +59,7 @@ export const MessageTypeSelector = ({
   }, [messageMode, user, selectedLeads]);
 
   const fetchAiMessages = async () => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     setLoading(true);
 
     try {
@@ -78,7 +78,7 @@ export const MessageTypeSelector = ({
       const { data, error } = await supabase
         .from("leads")
         .select("phone, company_name, contact_name, ai_approach_message")
-        .eq("user_id", user.id)
+        .eq("owner_user_id", accountOwnerId)
         .in("phone", phones);
 
       if (error) throw error;
