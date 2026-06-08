@@ -40,7 +40,7 @@ const META_PLAN_LIMITS: Record<string, number> = {
 };
 
 export default function MetaNumeros() {
-  const { user, profile } = useAuth();
+  const { user, accountOwnerId, profile } = useAuth();
   const { toast } = useToast();
   const { role } = useAccountRole();
   const { members } = useAccountMembers();
@@ -97,13 +97,13 @@ export default function MetaNumeros() {
   }, [validateConnectionToken]);
 
   const loadConnections = useCallback(async () => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     setLoading(true);
     try {
       const { data } = await supabase
         .from("user_waba_connections")
         .select("*")
-        .eq("user_id", user.id);
+        .eq("owner_user_id", accountOwnerId);
       const conns = (data || []) as unknown as WabaConnection[];
       setConnections(conns);
       if (conns.length) validateTokens(conns);
@@ -111,7 +111,7 @@ export default function MetaNumeros() {
     } finally {
       setLoading(false);
     }
-  }, [user, validateTokens]);
+  }, [user, accountOwnerId, validateTokens]);
 
   useEffect(() => { loadConnections(); }, [loadConnections]);
 
