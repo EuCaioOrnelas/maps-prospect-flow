@@ -116,9 +116,28 @@ export default function AdminBlogEditor() {
         navigate("/admin/blog");
         return;
       }
+      // Sanitize: DB returns null for empty text fields, but our form expects strings.
+      const safeStr = (v: any) => (typeof v === "string" ? v : "");
+      const safeBool = (v: any, fallback: boolean) => (typeof v === "boolean" ? v : fallback);
       setForm({
         ...empty,
-        ...data,
+        slug: safeStr(data.slug),
+        title: safeStr(data.title),
+        subtitle: safeStr(data.subtitle),
+        excerpt: safeStr(data.excerpt),
+        content: safeStr(data.content),
+        cover_image_url: safeStr(data.cover_image_url),
+        cover_image_alt: safeStr(data.cover_image_alt),
+        author_name: safeStr(data.author_name) || "Wian",
+        status: (data.status as any) || "draft",
+        featured: safeBool(data.featured, false),
+        seo_title: safeStr(data.seo_title),
+        seo_description: safeStr(data.seo_description),
+        canonical_url: safeStr(data.canonical_url),
+        og_image_url: safeStr(data.og_image_url),
+        ai_short_answer: safeStr(data.ai_short_answer),
+        robots_index: safeBool(data.robots_index, true),
+        robots_follow: safeBool(data.robots_follow, true),
         category_id: data.category_id || "",
         published_at: data.published_at ? data.published_at.slice(0, 16) : "",
         scheduled_for: data.scheduled_for ? data.scheduled_for.slice(0, 16) : "",
@@ -212,10 +231,10 @@ export default function AdminBlogEditor() {
   };
 
   // Live quality hints
-  const titleLen = form.title.length;
-  const seoTitleLen = (form.seo_title || form.title).length;
+  const titleLen = (form.title || "").length;
+  const seoTitleLen = (form.seo_title || form.title || "").length;
   const descLen = (form.seo_description || form.excerpt || "").length;
-  const wordCount = form.content.replace(/<[^>]*>/g, " ").split(/\s+/).filter(Boolean).length;
+  const wordCount = (form.content || "").replace(/<[^>]*>/g, " ").split(/\s+/).filter(Boolean).length;
   const hints: Array<{ ok: boolean; msg: string }> = [
     { ok: titleLen > 10 && titleLen <= 70, msg: `Título com ${titleLen} caracteres (ideal 30-70)` },
     { ok: seoTitleLen > 0 && seoTitleLen <= 60, msg: `SEO title ${seoTitleLen}/60` },
@@ -333,7 +352,7 @@ export default function AdminBlogEditor() {
             <div>
               <Label>Excerpt (resumo)</Label>
               <Textarea value={form.excerpt} onChange={(e) => set("excerpt", e.target.value)} rows={2} maxLength={300} />
-              <p className="text-xs text-muted-foreground mt-1">{form.excerpt.length}/300</p>
+              <p className="text-xs text-muted-foreground mt-1">{(form.excerpt || "").length}/300</p>
             </div>
           </Card>
 
@@ -354,12 +373,12 @@ export default function AdminBlogEditor() {
                 <div>
                   <Label>SEO Title (60 chars)</Label>
                   <Input value={form.seo_title} onChange={(e) => set("seo_title", e.target.value)} maxLength={70} />
-                  <p className="text-xs text-muted-foreground mt-1">{form.seo_title.length}/60</p>
+                  <p className="text-xs text-muted-foreground mt-1">{(form.seo_title || "").length}/60</p>
                 </div>
                 <div>
                   <Label>Meta Description (160 chars)</Label>
                   <Textarea value={form.seo_description} onChange={(e) => set("seo_description", e.target.value)} rows={2} maxLength={170} />
-                  <p className="text-xs text-muted-foreground mt-1">{form.seo_description.length}/160</p>
+                  <p className="text-xs text-muted-foreground mt-1">{(form.seo_description || "").length}/160</p>
                 </div>
                 <div>
                   <Label>Keywords (separadas por vírgula)</Label>
