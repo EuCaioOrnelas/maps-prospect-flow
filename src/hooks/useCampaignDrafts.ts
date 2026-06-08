@@ -170,7 +170,7 @@ export const useCampaignDrafts = () => {
       console.error('Error saving draft:', err);
       return null;
     }
-  }, [user, currentDraftId]);
+  }, [user, accountOwnerId, currentDraftId, drafts]);
 
   const deleteDraft = useCallback(async (draftId: string) => {
     try {
