@@ -21,7 +21,16 @@ export function useOnboardingModals() {
 
   const checkModals = async () => {
     if (!user || !profile) return;
-    
+
+    // Sub usuários (criados pelo owner) compartilham a conta do dono.
+    // Não devem ver onboarding nem feedback de trial.
+    if ((profile as any).parent_owner_id) {
+      setShowOnboarding(false);
+      setShowTrialFeedback(false);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       // Check if user has completed onboarding
