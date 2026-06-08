@@ -675,6 +675,8 @@ export default function CRM() {
         onAddOrigin={handleAddOrigin}
         onUpdateOrigin={handleUpdateOrigin}
         onDeleteOrigin={handleDeleteOrigin}
+        members={responsibleMembers}
+        onChangeResponsible={canChangeResponsible ? assignLeadResponsible : undefined}
       />
 
       <AddLeadDialog
