@@ -18,6 +18,12 @@ export interface AccountMember {
   last_login_at: string | null;
 }
 
+const withAvatarCacheBust = (url?: string | null, updatedAt?: string | null) => {
+  if (!url) return null;
+  if (url.includes("?v=")) return url;
+  return `${url}?v=${encodeURIComponent(updatedAt || "avatar")}`;
+};
+
 /**
  * Lista todos os membros da conta (owner + sub usuários).
  * O Owner é montado a partir do profile do dono e prependado à lista.
@@ -40,7 +46,7 @@ export function useAccountMembers() {
     // 2) buscar perfil do owner
     const { data: ownerProfile } = await supabase
       .from("profiles")
-      .select("id, name, email, avatar_url, created_at")
+      .select("id, name, email, avatar_url, created_at, updated_at")
       .eq("id", owner)
       .maybeSingle();
 
@@ -53,16 +59,16 @@ export function useAccountMembers() {
 
     // 3.1) buscar perfis reais dos membros (foto/nome/e-mail atualizados do Perfil)
     const memberIds = (rawMembers || []).map((m: any) => m.user_id).filter(Boolean);
-    let profileById: Record<string, { name: string | null; email: string | null; avatar_url: string | null }> = {};
+    let profileById: Record<string, { name: string | null; email: string | null; avatar_url: string | null; updated_at: string | null }> = {};
     if (memberIds.length > 0) {
       const { data: memberProfiles } = await supabase
         .from("profiles")
-        .select("id, name, email, avatar_url")
+        .select("id, name, email, avatar_url, updated_at")
         .in("id", memberIds);
       profileById = Object.fromEntries(
         (memberProfiles || []).map((p: any) => [
           p.id,
-          { name: p.name || null, email: p.email || null, avatar_url: p.avatar_url || null },
+          { name: p.name || null, email: p.email || null, avatar_url: p.avatar_url || null, updated_at: p.updated_at || null },
         ])
       );
     }
@@ -76,7 +82,7 @@ export function useAccountMembers() {
         user_id: owner,
         name: (ownerProfile as any).name,
         email: (ownerProfile as any).email,
-        avatar_url: (ownerProfile as any).avatar_url || null,
+        avatar_url: withAvatarCacheBust((ownerProfile as any).avatar_url, (ownerProfile as any).updated_at),
         role: "owner",
         status: "active",
         must_change_password: false,
@@ -93,7 +99,7 @@ export function useAccountMembers() {
         user_id: m.user_id,
         name: memberProfile?.name || m.name,
         email: memberProfile?.email || m.email,
-        avatar_url: memberProfile?.avatar_url || null,
+        avatar_url: withAvatarCacheBust(memberProfile?.avatar_url, memberProfile?.updated_at),
         role: m.role,
         status: m.status,
         must_change_password: !!m.must_change_password,
