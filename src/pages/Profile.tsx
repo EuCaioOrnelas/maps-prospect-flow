@@ -387,7 +387,7 @@ const Profile = () => {
 
     try {
       const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${user.id}/avatar.${fileExt}`;
+      const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -406,10 +406,14 @@ const Profile = () => {
 
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: avatarUrl } as any)
+        .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() } as any)
         .eq('id', user.id);
 
       if (updateError) throw updateError;
+
+      await supabase.auth.updateUser({
+        data: { avatar_url: avatarUrl, picture: avatarUrl },
+      });
 
       await refreshProfile();
 
@@ -426,6 +430,7 @@ const Profile = () => {
       });
     } finally {
       setIsUploadingPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
