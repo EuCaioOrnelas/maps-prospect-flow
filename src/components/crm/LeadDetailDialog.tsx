@@ -1230,29 +1230,80 @@ export const LeadDetailDialog = ({
                 {/* Contact Information Section */}
                 <div className="space-y-3">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Informações de Contato</span>
-                  
-                  <div className="bg-muted/40 rounded-lg divide-y divide-border/50">
-                    {/* Phone - Read only */}
-                    <div className="flex items-center gap-3 p-3">
-                      <Phone className="w-4 h-4 text-primary shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-muted-foreground">Telefone</p>
-                        <p className="text-sm font-medium">{formatPhoneNumber(lead.phone)}</p>
+
+                  <div className="bg-muted/40 rounded-lg overflow-hidden">
+                    <div className="divide-y divide-border/50">
+                      {/* Phone - Read only */}
+                      <div className="flex items-center gap-3 p-3">
+                        <Phone className="w-4 h-4 text-primary shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground">Telefone</p>
+                          <p className="text-sm font-medium">{formatPhoneNumber(lead.phone)}</p>
+                        </div>
                       </div>
+
+                      {/* Company Name - Editable */}
+                      <EditableInfoField
+                        icon={<Building2 className="w-4 h-4 text-muted-foreground" />}
+                        label="Empresa"
+                        value={formData.company_name}
+                        placeholder="Adicionar empresa"
+                        onChange={(value) => setFormData({ ...formData, company_name: value })}
+                        onSave={async () => {
+                          await onUpdate(lead.id, { company_name: formData.company_name });
+                          toast.success('Empresa atualizada!');
+                        }}
+                      />
                     </div>
 
-                    {/* Company Name - Editable */}
-                    <EditableInfoField
-                      icon={<Building2 className="w-4 h-4 text-muted-foreground" />}
-                      label="Empresa"
-                      value={formData.company_name}
-                      placeholder="Adicionar empresa"
-                      onChange={(value) => setFormData({ ...formData, company_name: value })}
-                      onSave={async () => {
-                        await onUpdate(lead.id, { company_name: formData.company_name });
-                        toast.success('Empresa atualizada!');
+                    {/* Score Inteligente — borda inferior limpa do card */}
+                    {(() => {
+                      const s = Math.max(0, Math.min(lead.ai_score || 0, 1000));
+                      const pct = (s / 1000) * 100;
+                      const bg = s >= 750 ? 'bg-emerald-500' : s >= 500 ? 'bg-blue-500' : s >= 250 ? 'bg-orange-500' : 'bg-red-500';
+                      const fg = s >= 750 ? 'text-emerald-500' : s >= 500 ? 'text-blue-500' : s >= 250 ? 'text-orange-500' : 'text-red-500';
+                      return (
+                        <div className="flex items-center gap-2 px-3 py-2 border-t border-border/50 bg-background/40">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0">Score</span>
+                          <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden">
+                            <div className={cn("h-full rounded-full transition-[width] duration-700", bg)} style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className={cn("text-xs font-semibold tabular-nums tracking-tight", fg)}>{s}</span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* Responsible Section */}
+                <div className="space-y-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    Responsável
+                  </span>
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-card">
+                    <ResponsibleAvatar
+                      responsibleId={lead.responsible_user_id}
+                      members={members}
+                      size="md"
+                      canEdit={!!onChangeResponsible}
+                      onChange={async (uid) => {
+                        if (onChangeResponsible) {
+                          await onChangeResponsible(lead.id, uid);
+                        }
                       }}
                     />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-foreground truncate">
+                        {(() => {
+                          const m = members.find((x) => x.user_id === lead.responsible_user_id);
+                          return m ? (m.name || m.email || 'Sem nome') : 'Sem responsável';
+                        })()}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {onChangeResponsible ? 'Clique no avatar para alterar' : 'Você não pode alterar'}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
