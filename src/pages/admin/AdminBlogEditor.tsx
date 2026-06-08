@@ -30,6 +30,17 @@ const readingTime = (html: string) => {
   return Math.max(1, Math.round(words / 220));
 };
 
+// Converte ISO UTC do banco para o formato datetime-local (horário local do navegador).
+// Sem isso, slice(0,16) trataria UTC como local e cada save deslocaria o horário pelo fuso,
+// jogando published_at para o futuro e sumindo o post do blog.
+const toLocalInput = (iso: string | null | undefined) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 type Category = { id: string; name: string };
 type FAQItem = { question: string; answer: string };
 
