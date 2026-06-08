@@ -123,6 +123,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error fetching profile:', error);
       return null;
     }
+
+    // Sub-users (created by an owner) inherit owner's billing/plan/trial/block state.
+    // They share the same account/subscription as the owner — funcionam como um segundo login da mesma conta.
+    if (data && (data as any).parent_owner_id) {
+      const { data: ownerData, error: ownerErr } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', (data as any).parent_owner_id)
+        .maybeSingle();
+      if (!ownerErr && ownerData) {
+        const inheritedKeys = [
+          'plan', 'is_blocked', 'trial_start_at', 'trial_end_at',
+          'trial_will_charge_at', 'subscription_status', 'subscription_id',
+          'subscription_provider', 'subscription_current_period_end',
+          'subscription_cancel_at', 'subscription_canceled_at',
+          'stripe_customer_id', 'asaas_customer_id', 'features',
+          'plan_features', 'custom_features', 'billing_cycle',
+        ];
+        for (const k of inheritedKeys) {
+          if (k in (ownerData as any)) (data as any)[k] = (ownerData as any)[k];
+        }
+      }
+    }
+
     return data as Profile | null;
   };
 
