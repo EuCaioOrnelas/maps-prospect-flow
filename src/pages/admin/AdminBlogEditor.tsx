@@ -378,7 +378,7 @@ export default function AdminBlogEditor() {
                 <div>
                   <Label>Meta Description (160 chars)</Label>
                   <Textarea value={form.seo_description} onChange={(e) => set("seo_description", e.target.value)} rows={2} maxLength={170} />
-                  <p className="text-xs text-muted-foreground mt-1">{form.seo_description.length}/160</p>
+                  <p className="text-xs text-muted-foreground mt-1">{(form.seo_description || "").length}/160</p>
                 </div>
                 <div>
                   <Label>Keywords (separadas por vírgula)</Label>
