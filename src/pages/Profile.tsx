@@ -356,6 +356,7 @@ const Profile = () => {
   };
 
   const handlePhotoClick = () => {
+    if (fileInputRef.current) fileInputRef.current.value = '';
     fileInputRef.current?.click();
   };
 
