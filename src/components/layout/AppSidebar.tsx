@@ -45,6 +45,7 @@ import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
 import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
 import { planHasFeature } from "@/lib/planAccess";
 import { useAccountRole } from "@/hooks/useAccountRole";
+import { roleHasPermission, type AccountPermission } from "@/lib/accountPermissions";
 
 interface AppSidebarProps {
   profile?: {
