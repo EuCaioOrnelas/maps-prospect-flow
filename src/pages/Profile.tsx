@@ -411,9 +411,13 @@ const Profile = () => {
 
       if (updateError) throw updateError;
 
-      await supabase.auth.updateUser({
+      const { error: authUpdateError } = await supabase.auth.updateUser({
         data: { avatar_url: avatarUrl, picture: avatarUrl },
       });
+
+      if (authUpdateError) {
+        console.warn('Auth metadata avatar update failed:', authUpdateError);
+      }
 
       await refreshProfile();
 
