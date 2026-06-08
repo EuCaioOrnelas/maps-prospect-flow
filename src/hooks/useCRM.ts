@@ -549,6 +549,7 @@ export const useCRM = () => {
       .from('pipeline_stages')
       .insert({
         user_id: user.id,
+        owner_user_id: effectiveOwnerId || user.id,
         name,
         color,
         position: newPosition,
