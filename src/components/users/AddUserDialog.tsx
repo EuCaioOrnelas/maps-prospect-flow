@@ -170,12 +170,57 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@empresa.com" />
             </div>
             <div className="space-y-1.5">
-              <Label>Senha</Label>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" />
+              <div className="flex items-center justify-between">
+                <Label>Senha</Label>
+                <button
+                  type="button"
+                  onClick={generatePassword}
+                  className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  <Wand2 size={12} /> Gerar
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Mínimo 8 caracteres"
+                  autoComplete="new-password"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Confirmar Senha</Label>
-              <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+              <div className="relative">
+                <Input
+                  type={showConfirm ? "text" : "password"}
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  autoComplete="new-password"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showConfirm ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {confirm.length > 0 && password.trim() !== confirm.trim() && (
+                <p className="text-xs text-destructive">As senhas não coincidem.</p>
+              )}
             </div>
             <div className="space-y-1.5 md:col-span-2">
               <Label>Cargo</Label>
