@@ -21,7 +21,8 @@ export interface AccountMember {
 const withAvatarCacheBust = (url?: string | null, updatedAt?: string | null) => {
   if (!url) return null;
   if (url.includes("?v=")) return url;
-  return `${url}?v=${encodeURIComponent(updatedAt || "avatar")}`;
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}v=${encodeURIComponent(updatedAt || "avatar")}`;
 };
 
 /**
