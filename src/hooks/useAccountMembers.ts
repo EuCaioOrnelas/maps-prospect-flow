@@ -10,6 +10,7 @@ export interface AccountMember {
   user_id: string;
   name: string | null;
   email: string | null;
+  avatar_url: string | null;
   role: AccountRole;
   status: "active" | "inactive";
   must_change_password: boolean;
