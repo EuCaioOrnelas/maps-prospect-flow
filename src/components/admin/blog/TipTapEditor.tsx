@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
+import { uploadBlogImage } from "@/lib/blogImageUpload";
+import { toast } from "sonner";
 
 interface Props {
   value: string;
@@ -229,7 +231,31 @@ export function TipTapEditor({ value, onChange, placeholder }: Props) {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="blog-image-url">URL da imagem</Label>
-              <Input id="blog-image-url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." autoFocus />
+              <div className="flex gap-2">
+                <Input id="blog-image-url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Cole uma URL ou faça upload" autoFocus />
+                <label className="inline-flex items-center justify-center rounded-md border bg-background px-3 text-sm font-medium cursor-pointer hover:bg-muted whitespace-nowrap">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      if (!file) return;
+                      const id = toast.loading("Enviando imagem...");
+                      try {
+                        const url = await uploadBlogImage(file);
+                        setImageUrl(url);
+                        toast.success("Imagem enviada", { id });
+                      } catch (err: any) {
+                        toast.error(err?.message || "Falha no upload", { id });
+                      }
+                    }}
+                  />
+                  Upload
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground">JPG, PNG, WEBP ou GIF. Máx. 8 MB.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="blog-image-alt">Alt text</Label>
