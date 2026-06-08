@@ -1258,7 +1258,9 @@ export default function OpportunitiesManagement() {
                   sortOrder !== "default",
                   filterCategory !== "all",
                   filterCity !== "all",
+                  responsibleFilter !== "me",
                 ].filter(Boolean).length;
+
 
                 return (
                   <div className="flex flex-col sm:flex-row gap-3">
