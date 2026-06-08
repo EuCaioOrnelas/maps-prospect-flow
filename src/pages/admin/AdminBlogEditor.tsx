@@ -541,9 +541,36 @@ export default function AdminBlogEditor() {
           <Card className="p-5 space-y-4">
             <h3 className="font-semibold">Capa</h3>
             <div>
-              <Label>URL da imagem</Label>
-              <Input value={form.cover_image_url} onChange={(e) => set("cover_image_url", e.target.value)} placeholder="https://..." />
-              <p className="text-xs text-muted-foreground mt-1">Recomendado: 1200 × 675 px (proporção 16:9)</p>
+              <Label>Imagem de capa</Label>
+              <div className="mt-1 flex gap-2">
+                <Input
+                  value={form.cover_image_url}
+                  onChange={(e) => set("cover_image_url", e.target.value)}
+                  placeholder="Cole uma URL ou faça upload"
+                />
+                <label className="inline-flex items-center justify-center rounded-md border bg-background px-3 text-sm font-medium cursor-pointer hover:bg-muted whitespace-nowrap">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      if (!file) return;
+                      const id = toast.loading("Enviando imagem...");
+                      try {
+                        const url = await uploadBlogImage(file);
+                        set("cover_image_url", url);
+                        toast.success("Imagem enviada", { id });
+                      } catch (err: any) {
+                        toast.error(err?.message || "Falha no upload", { id });
+                      }
+                    }}
+                  />
+                  Upload
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Recomendado: 1200 × 675 px (proporção 16:9). Máx. 8 MB.</p>
             </div>
             <div>
               <Label>Alt text</Label>
