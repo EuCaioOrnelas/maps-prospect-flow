@@ -231,10 +231,10 @@ export default function AdminBlogEditor() {
   };
 
   // Live quality hints
-  const titleLen = form.title.length;
-  const seoTitleLen = (form.seo_title || form.title).length;
+  const titleLen = (form.title || "").length;
+  const seoTitleLen = (form.seo_title || form.title || "").length;
   const descLen = (form.seo_description || form.excerpt || "").length;
-  const wordCount = form.content.replace(/<[^>]*>/g, " ").split(/\s+/).filter(Boolean).length;
+  const wordCount = (form.content || "").replace(/<[^>]*>/g, " ").split(/\s+/).filter(Boolean).length;
   const hints: Array<{ ok: boolean; msg: string }> = [
     { ok: titleLen > 10 && titleLen <= 70, msg: `Título com ${titleLen} caracteres (ideal 30-70)` },
     { ok: seoTitleLen > 0 && seoTitleLen <= 60, msg: `SEO title ${seoTitleLen}/60` },
