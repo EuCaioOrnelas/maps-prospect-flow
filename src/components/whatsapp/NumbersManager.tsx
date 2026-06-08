@@ -115,7 +115,7 @@ export const NumbersManager = ({
   // Warming sessions for each number
   const [warmingSessions, setWarmingSessions] = useState<Record<string, { warming_level: number; warming_status: string; status: string }>>({});
   
-  const { user, profile } = useAuth();
+  const { user, accountOwnerId, profile } = useAuth();
   const { toast } = useToast();
   const { trackScoreEvent } = useUserScoreTracking();
 

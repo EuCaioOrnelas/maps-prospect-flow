@@ -272,7 +272,7 @@ export const LeadDetailDialog = ({
   initialRegisterSale = false,
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files'>(initialTab || 'info');
   useEffect(() => {
     if (open && initialTab) setActiveTab(initialTab);

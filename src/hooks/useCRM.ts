@@ -121,7 +121,7 @@ const DEFAULT_STAGES: Omit<PipelineStage, 'id' | 'user_id' | 'created_at' | 'upd
 ];
 
 export const useCRM = () => {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const { role, ownerUserId } = useAccountRole();
   const { trackScoreEvent } = useUserScoreTracking();
   const [stages, setStages] = useState<PipelineStage[]>([]);

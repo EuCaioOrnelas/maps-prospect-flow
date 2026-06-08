@@ -59,7 +59,7 @@ export const PAYMENT_METHODS = [
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 export const useSales = (leadId?: string) => {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

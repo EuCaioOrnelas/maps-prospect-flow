@@ -19,7 +19,7 @@ interface CRMLead {
 }
 
 export function NewConversationDialog({ open, onOpenChange, onStartConversation }: NewConversationDialogProps) {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [search, setSearch] = useState("");
   const [leads, setLeads] = useState<CRMLead[]>([]);
   const [loading, setLoading] = useState(false);

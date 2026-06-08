@@ -13,7 +13,7 @@ export interface CompanyService {
 }
 
 export function useCompanyServices() {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: services = [], isLoading } = useQuery({

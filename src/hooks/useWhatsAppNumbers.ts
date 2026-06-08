@@ -69,7 +69,7 @@ export const useWhatsAppNumbers = () => {
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
-  const { user, profile } = useAuth();
+  const { user, accountOwnerId, profile } = useAuth();
   
   const userPlan = profile?.plan?.toLowerCase() || 'free';
   // Ensure free users always have access to at least 1 number

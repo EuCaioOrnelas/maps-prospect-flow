@@ -55,7 +55,7 @@ export interface WabaConnection {
 }
 
 export function useChat() {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);

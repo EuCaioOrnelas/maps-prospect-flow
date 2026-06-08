@@ -92,7 +92,7 @@ export const ManageStagesDialog = ({
   const [editTagValue, setEditTagValue] = useState('');
   const [deleteTagConfirm, setDeleteTagConfirm] = useState<string | null>(null);
   
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
 
   const sortedStages = [...stages].sort((a, b) => a.position - b.position);
   const prospectadoIndex = sortedStages.findIndex(s => s.name === 'Prospectado');

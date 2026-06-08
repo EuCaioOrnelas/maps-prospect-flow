@@ -10,7 +10,7 @@ export interface LeadScoreData {
 }
 
 export function useLeadScores() {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
 
   const { data: scoreMap = new Map<string, LeadScoreData>() } = useQuery({
     queryKey: ["lead-scores-map", user?.id],

@@ -51,7 +51,7 @@ interface ManageTemplatesDialogProps {
 }
 
 export function ManageTemplatesDialog({ open, onOpenChange }: ManageTemplatesDialogProps) {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);

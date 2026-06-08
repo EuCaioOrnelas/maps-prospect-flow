@@ -114,7 +114,7 @@ const getObjectiveLabel = (objective: string) => {
 };
 
 export default function AIAgents() {
-  const { user, profile } = useAuth();
+  const { user, accountOwnerId, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { trackScoreEvent } = useAutoScoreTracking("agents");

@@ -221,7 +221,7 @@ interface MessageLog {
 }
 
 export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsappNumbers = [] }: AgentDetailsDialogProps) {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
   
   const [conversations, setConversations] = useState<Conversation[]>([]);

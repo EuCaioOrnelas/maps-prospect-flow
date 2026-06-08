@@ -1625,7 +1625,7 @@ const ScoreRulesTab = ({ userId }: { userId: string }) => {
 // ═══════════════ MAIN PAGE ═══════════════
 
 const CRMScore = () => {
-  const { user, profile } = useAuth();
+  const { user, accountOwnerId, profile } = useAuth();
   const [searchParams] = useSearchParams();
   const [deepLinkPhone] = useState(() => searchParams.get("phone"));
   const [scoreInfoOpen, setScoreInfoOpen] = useState(false);

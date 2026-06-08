@@ -295,7 +295,7 @@ const STEPS = [
 ];
 
 export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent }: CreateAgentWizardProps) {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
   const { trackScoreEvent } = useUserScoreTracking();
   const navigate = useNavigate();

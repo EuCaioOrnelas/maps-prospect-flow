@@ -69,7 +69,7 @@ type SortKey = "score_total" | "score_engagement" | "score_intent" | "score_risk
 
 export const ScoreRankingTab = ({ leads: externalLeads }: ScoreRankingTabProps) => {
   const [sortBy, setSortBy] = useState<SortKey>("score_total");
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
 
   // Fallback: fetch from DB when leads prop is not provided (admin page)
   const { data: fetchedLeads = [], isLoading } = useQuery({
