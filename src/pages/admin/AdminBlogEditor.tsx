@@ -116,9 +116,28 @@ export default function AdminBlogEditor() {
         navigate("/admin/blog");
         return;
       }
+      // Sanitize: DB returns null for empty text fields, but our form expects strings.
+      const safeStr = (v: any) => (typeof v === "string" ? v : "");
+      const safeBool = (v: any, fallback: boolean) => (typeof v === "boolean" ? v : fallback);
       setForm({
         ...empty,
-        ...data,
+        slug: safeStr(data.slug),
+        title: safeStr(data.title),
+        subtitle: safeStr(data.subtitle),
+        excerpt: safeStr(data.excerpt),
+        content: safeStr(data.content),
+        cover_image_url: safeStr(data.cover_image_url),
+        cover_image_alt: safeStr(data.cover_image_alt),
+        author_name: safeStr(data.author_name) || "Wian",
+        status: (data.status as any) || "draft",
+        featured: safeBool(data.featured, false),
+        seo_title: safeStr(data.seo_title),
+        seo_description: safeStr(data.seo_description),
+        canonical_url: safeStr(data.canonical_url),
+        og_image_url: safeStr(data.og_image_url),
+        ai_short_answer: safeStr(data.ai_short_answer),
+        robots_index: safeBool(data.robots_index, true),
+        robots_follow: safeBool(data.robots_follow, true),
         category_id: data.category_id || "",
         published_at: data.published_at ? data.published_at.slice(0, 16) : "",
         scheduled_for: data.scheduled_for ? data.scheduled_for.slice(0, 16) : "",
