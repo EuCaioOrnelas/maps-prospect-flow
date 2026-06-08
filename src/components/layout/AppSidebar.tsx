@@ -396,6 +396,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 </div>
               )}
             </li>
+            )}
 
 
             {/* Campanhas with submenu — Evolution só para usuários legacy */}
