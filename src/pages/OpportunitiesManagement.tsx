@@ -84,7 +84,7 @@ export default function OpportunitiesManagement() {
   const { members: accountMembers } = useAccountMembers();
   const canChangeResponsible = role === "owner" || role === "admin";
   const responsibleMembers = useMemo(
-    () => accountMembers.map((m) => ({ user_id: m.user_id, name: m.name, email: m.email })),
+    () => accountMembers.map((m) => ({ user_id: m.user_id, name: m.name, email: m.email, avatar_url: m.avatar_url })),
     [accountMembers]
   );
 
@@ -1546,7 +1546,9 @@ export default function OpportunitiesManagement() {
                                   title={`Responsável: ${label}`}
                                   className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold border border-border/60 ${m ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}
                                 >
-                                  {initial}
+                                  {m?.avatar_url ? (
+                                    <img src={m.avatar_url} alt={label} className="h-full w-full rounded-full object-cover" />
+                                  ) : initial}
                                 </span>
                               );
                             })()}

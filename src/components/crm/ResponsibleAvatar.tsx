@@ -32,7 +32,7 @@ const Avatar = ({ member, dim }: { member: ResponsibleMember | null; dim: string
       <img
         src={member.avatar_url}
         alt={member.name || member.email || "Responsável"}
-        className={cn("rounded-full object-cover shrink-0 border border-border/60", dim)}
+        className={cn("rounded-full object-cover shrink-0", dim)}
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
       />
     );
@@ -46,7 +46,7 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
   const current = members.find((m) => m.user_id === responsibleId) || null;
   const label = current ? current.name || current.email || "Sem nome" : "Sem responsável";
 
-  const dim = size === "lg" ? "w-9 h-9 text-sm" : size === "md" ? "w-7 h-7 text-xs" : "w-6 h-6 text-[10px]";
+  const dim = size === "lg" ? "w-10 h-10 text-sm" : size === "md" ? "w-8 h-8 text-xs" : "w-7 h-7 text-[11px]";
 
   const filtered = members.filter((m) => {
     if (!query.trim()) return true;
@@ -140,9 +140,9 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
               }}
             >
               {m.avatar_url ? (
-                <img src={m.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover border border-border/60 shrink-0" />
+                <img src={m.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-border/60 shrink-0" />
               ) : (
-                <div className="w-7 h-7 rounded-full bg-primary/15 text-primary text-[11px] font-semibold flex items-center justify-center border border-border/60 shrink-0">
+                <div className="w-8 h-8 rounded-full bg-primary/15 text-primary text-[11px] font-semibold flex items-center justify-center border border-border/60 shrink-0">
                   {initials(m)}
                 </div>
               )}
