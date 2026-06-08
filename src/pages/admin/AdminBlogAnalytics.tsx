@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { blogSupabase } from "@/integrations/blog/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -102,7 +103,7 @@ export default function AdminBlogAnalytics() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
+      const { data } = await blogSupabase
         .from("blog_posts")
         .select(`id,slug,title,status,view_count,published_at,scheduled_for,
                  reading_time_minutes,seo_title,seo_description,seo_keywords,

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { blogSupabase } from "@/integrations/blog/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -103,14 +104,14 @@ export default function AdminBlogEditor() {
 
 
   useEffect(() => {
-    supabase.from("blog_categories").select("id,name").order("name")
+    blogSupabase.from("blog_categories").select("id,name").order("name")
       .then(({ data }) => setCategories((data as Category[]) || []));
   }, []);
 
   useEffect(() => {
     if (isNew) return;
     (async () => {
-      const { data, error } = await supabase.from("blog_posts").select("*").eq("id", id!).single();
+      const { data, error } = await blogSupabase.from("blog_posts").select("*").eq("id", id!).single();
       if (error || !data) {
         toast.error("Post não encontrado");
         navigate("/admin/blog");
@@ -204,7 +205,7 @@ export default function AdminBlogEditor() {
     if (isNew) {
       const { data: u } = await supabase.auth.getUser();
       payload.created_by = u.user?.id;
-      const { data, error } = await supabase.from("blog_posts").insert(payload).select("id").single();
+      const { data, error } = await blogSupabase.from("blog_posts").insert(payload).select("id").single();
       setSaving(false);
       if (error) {
         console.error("[BlogEditor] insert failed", error, payload);
@@ -213,7 +214,7 @@ export default function AdminBlogEditor() {
       toast.success(publishNow ? "Post publicado!" : "Post criado");
       navigate(`/admin/blog/${data.id}`);
     } else {
-      const { error } = await supabase.from("blog_posts").update(payload).eq("id", id!);
+      const { error } = await blogSupabase.from("blog_posts").update(payload).eq("id", id!);
       setSaving(false);
       if (error) {
         console.error("[BlogEditor] update failed", error, payload);

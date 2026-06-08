@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
+import { blogSupabase } from "@/integrations/blog/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,7 +66,7 @@ export default function Blog() {
   const [searchInput, setSearchInput] = useState(q);
 
   useEffect(() => {
-    supabase
+    blogSupabase
       .from("blog_categories")
       .select("id,name,slug,color")
       .order("sort_order", { ascending: true })
@@ -83,7 +84,7 @@ export default function Blog() {
       const to = from + PAGE_SIZE - 1;
       const categoryById = new Map(categories.map((category) => [category.id, category]));
 
-      let query = supabase
+      let query = blogSupabase
         .from("blog_posts")
         .select(
           "id,slug,title,excerpt,cover_image_url,author_name,category_id,published_at,reading_time_minutes,featured",
@@ -126,7 +127,7 @@ export default function Blog() {
       setLoading(false);
 
       if (page === 1 && !q && !categorySlug) {
-        const { data: fdata, error: featuredError } = await supabase
+        const { data: fdata, error: featuredError } = await blogSupabase
           .from("blog_posts")
           .select(
             "id,slug,title,excerpt,cover_image_url,author_name,category_id,published_at,reading_time_minutes,featured"
