@@ -55,7 +55,7 @@ interface MetaCustosPanelProps {
 }
 
 export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [templates, setTemplates] = useState<MetaTemplate[]>([]);
   const [tplLoading, setTplLoading] = useState(false);
   const [selectedTplId, setSelectedTplId] = useState<string>("__manual__");
@@ -65,14 +65,14 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
 
   // Carrega templates reais da primeira WABA conectada
   useEffect(() => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     let cancelled = false;
     (async () => {
       setTplLoading(true);
       const { data: conns } = await supabase
         .from("user_waba_connections")
         .select("waba_id,access_token")
-        .eq("user_id", user.id)
+        .eq("owner_user_id", accountOwnerId)
         .limit(1);
       const conn = conns?.[0];
       if (!conn) { setTplLoading(false); return; }
