@@ -130,7 +130,7 @@ export const ManageStagesDialog = ({
 
       // Sync missing tags to crm_tags table
       const existingCrmNames = new Set((crmTagsRes.data?.map(t => t.name) || []).map(t => t.toLowerCase()));
-      const missingTags = Array.from(uniqueTags).filter(t => !existingCrmNames.has(t));
+      const missingTags = Array.from(uniqueTags).filter(t => !existingCrmNames.has(t.toLowerCase()));
       if (missingTags.length > 0) {
         await supabase.from('crm_tags').insert(
           missingTags.map(name => ({ user_id: user.id, owner_user_id: accountOwnerId, name }))
