@@ -1692,23 +1692,37 @@ export const LeadDetailDialog = ({
               <div className="space-y-1">
                 {activities
                   .slice((historyPage - 1) * HISTORY_PER_PAGE, historyPage * HISTORY_PER_PAGE)
-                  .map((activity, index, arr) => (
-                  <div 
-                    key={activity.id} 
-                    className={cn(
-                      "flex gap-3 py-3",
-                      index !== arr.length - 1 && "border-b border-border/50"
-                    )}
-                  >
-                    <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm">{activity.description}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {format(new Date(activity.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  .map((activity, index, arr) => {
+                    const isResp = activity.activity_type === 'responsible_changed';
+                    const respId = isResp ? ((activity.metadata as any)?.responsible_user_id || null) : null;
+                    const respMember = respId ? members.find((m) => m.user_id === respId) : null;
+                    const respName = respMember ? (respMember.name || respMember.email) : null;
+                    const text = isResp
+                      ? respName
+                        ? `Responsável alterado para ${respName}`
+                        : 'Responsável removido'
+                      : activity.description;
+                    return (
+                      <div
+                        key={activity.id}
+                        className={cn(
+                          "flex gap-3 py-3",
+                          index !== arr.length - 1 && "border-b border-border/50"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-2 h-2 rounded-full mt-1.5 shrink-0",
+                          isResp ? "bg-amber-500" : "bg-primary"
+                        )} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm">{text}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {format(new Date(activity.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 {activities.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-6">
                     Nenhuma movimentação registrada
