@@ -168,7 +168,7 @@ export default function CRM() {
       .channel(`crm-ai-agents-${user.id}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'ai_agents', filter: `user_id=eq.${user.id}` },
+        { event: '*', schema: 'public', table: 'ai_agents', filter: `owner_user_id=eq.${accountOwnerId}` },
         () => { refetchSilencedStages(); }
       )
       .subscribe();

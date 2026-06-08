@@ -272,7 +272,7 @@ export function useChat() {
         event: "*",
         schema: "public",
         table: "chat_conversations",
-        filter: `user_id=eq.${user.id}`,
+        filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         if (payload.eventType === "INSERT") {
           setConversations(prev => [payload.new as ChatConversation, ...prev]);
@@ -291,7 +291,7 @@ export function useChat() {
         event: "INSERT",
         schema: "public",
         table: "chat_messages",
-        filter: `user_id=eq.${user.id}`,
+        filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         const newMsg = payload.new as ChatMessage;
         if (newMsg.conversation_id === activeConversationId) {
@@ -302,7 +302,7 @@ export function useChat() {
         event: "UPDATE",
         schema: "public",
         table: "chat_messages",
-        filter: `user_id=eq.${user.id}`,
+        filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         const updated = payload.new as ChatMessage;
         setMessages(prev => prev.map(m => m.id === updated.id ? updated : m));
