@@ -1193,29 +1193,31 @@ const Profile = () => {
           {/* Theme Toggle */}
           <ThemeToggle />
 
-          {/* Tour guiado */}
-          <Card className="border-border/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2">
-                <PlayCircle className="h-5 w-5 text-primary" />
-                Tour guiado
-              </CardTitle>
-              <CardDescription>
-                Refaça o passo a passo para entender melhor como a Wiize funciona
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <span className="font-medium">Reiniciar tutorial</span>
-                  <p className="text-sm text-muted-foreground">
-                    Veja novamente os 4 pilares e como usar cada um
-                  </p>
+          {/* Tour guiado — apenas owner. Subusuários compartilham a conta. */}
+          {!isSubUser && (
+            <Card className="border-border/50">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2">
+                  <PlayCircle className="h-5 w-5 text-primary" />
+                  Tour guiado
+                </CardTitle>
+                <CardDescription>
+                  Refaça o passo a passo para entender melhor como a Wiize funciona
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <span className="font-medium">Reiniciar tutorial</span>
+                    <p className="text-sm text-muted-foreground">
+                      Veja novamente os 4 pilares e como usar cada um
+                    </p>
+                  </div>
+                  <RestartTourButton />
                 </div>
-                <RestartTourButton />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-border/50">
             <CardHeader className="pb-4">

@@ -16,7 +16,7 @@ interface Props {
   members: ResponsibleMember[];
   onChange?: (userId: string | null) => Promise<void> | void;
   canEdit?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 const initials = (m?: ResponsibleMember | null) => {
@@ -46,7 +46,7 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
   const current = members.find((m) => m.user_id === responsibleId) || null;
   const label = current ? current.name || current.email || "Sem nome" : "Sem responsável";
 
-  const dim = size === "lg" ? "w-10 h-10 text-sm" : size === "md" ? "w-9 h-9 text-xs" : "w-8 h-8 text-xs";
+  const dim = size === "xl" ? "w-14 h-14 text-base" : size === "lg" ? "w-10 h-10 text-sm" : size === "md" ? "w-9 h-9 text-xs" : "w-8 h-8 text-xs";
 
   const filtered = members.filter((m) => {
     if (!query.trim()) return true;
