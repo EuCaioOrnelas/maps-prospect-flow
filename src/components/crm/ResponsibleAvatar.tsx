@@ -63,13 +63,14 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
       }}
       title={`Responsável: ${label}${canEdit ? " — clique para alterar" : ""}`}
       className={cn(
-        "relative rounded-full flex items-center justify-center font-semibold shrink-0 overflow-hidden border border-border/60 transition-all",
+        "relative rounded-full flex items-center justify-center font-semibold shrink-0 overflow-hidden border border-border/60 transition-transform duration-200 ease-out",
         current ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
         dim,
-        canEdit && "hover:ring-2 hover:ring-primary/50 hover:border-primary/50 cursor-pointer"
+        canEdit && "hover:ring-2 hover:ring-primary/50 hover:border-primary/50 hover:scale-110 cursor-pointer"
       )}
       aria-label={`Responsável: ${label}`}
     >
+
 
       {current?.avatar_url ? (
         <Avatar member={current} dim="w-full h-full" />
