@@ -67,6 +67,7 @@ export const ROLE_PERMISSIONS: Record<AccountRole, AccountPermission[]> = {
     "fluxos",
     "agentes_ia",
     "aquecimento",
+    "integracoes",
   ],
 };
 
