@@ -85,7 +85,7 @@ const LeadCardComponent = ({
     <div
       data-lead-id={lead.id}
       className={cn(
-        "w-full max-w-full overflow-hidden bg-card border border-border/60 rounded-[18px] p-5 cursor-pointer transition-all duration-200 relative",
+        "w-full max-w-full bg-card border border-border/60 rounded-[18px] p-5 cursor-pointer transition-all duration-200 relative",
         "shadow-sm hover:shadow-lg hover:border-primary/30 hover:-translate-y-px",
         isSelected && "ring-2 ring-inset ring-primary border-primary"
       )}
@@ -138,7 +138,7 @@ const LeadCardComponent = ({
             >
               {displayName}
             </h4>
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0 pr-0.5">
               {onUpdateName && (
                 <button
                   onClick={handleEditClick}
@@ -150,33 +150,23 @@ const LeadCardComponent = ({
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
               )}
+              <ResponsibleAvatar
+                responsibleId={lead.responsible_user_id}
+                members={members}
+                canEdit={canChangeResponsible && !!onChangeResponsible}
+                onChange={async (uid) => { if (onChangeResponsible) await onChangeResponsible(lead.id, uid); }}
+              />
             </div>
           </>
         )}
       </div>
 
       {/* Phone */}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2 min-w-0">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2.5 min-w-0">
         <Phone className="w-3 h-3 shrink-0" />
         <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
 
-      {/* Responsável */}
-      <div className="flex items-center gap-2 mb-2.5 min-w-0 py-1">
-        <ResponsibleAvatar
-          responsibleId={lead.responsible_user_id}
-          members={members}
-          canEdit={canChangeResponsible && !!onChangeResponsible}
-          onChange={async (uid) => { if (onChangeResponsible) await onChangeResponsible(lead.id, uid); }}
-          size="md"
-        />
-        <span className="text-[11px] text-muted-foreground truncate min-w-0">
-          {(() => {
-            const m = members.find((x) => x.user_id === lead.responsible_user_id);
-            return m ? (m.name || m.email || 'Responsável') : 'Sem responsável';
-          })()}
-        </span>
-      </div>
 
 
       {/* Score Inteligente — barra premium */}
