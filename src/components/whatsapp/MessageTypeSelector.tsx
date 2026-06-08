@@ -56,7 +56,7 @@ export const MessageTypeSelector = ({
     if (messageMode === "ai_generated" && user) {
       fetchAiMessages();
     }
-  }, [messageMode, user, selectedLeads]);
+  }, [messageMode, user, accountOwnerId, selectedLeads]);
 
   const fetchAiMessages = async () => {
     if (!user || !accountOwnerId) return;
