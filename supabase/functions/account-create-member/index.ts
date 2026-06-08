@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const name = (body.name || "").trim();
     const email = (body.email || "").trim().toLowerCase();
-    const password = body.password || "";
+    const password = String(body.password || "").trim();
     const memberRole = body.role === "admin" ? "admin" : "operational";
 
     if (!name || !email || password.length < 8) {

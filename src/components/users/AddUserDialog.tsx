@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, UserPlus, ArrowUpRight } from "lucide-react";
+import { Loader2, UserPlus, ArrowUpRight, Eye, EyeOff, Wand2 } from "lucide-react";
 import {
   AccountRole,
   ROLE_PERMISSIONS,
@@ -45,6 +45,8 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [role, setRole] = useState<Exclude<AccountRole, "owner">>("operational");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<{ email: string; password: string } | null>(null);
@@ -61,38 +63,54 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
   useEffect(() => {
     if (!open) {
       setName(""); setEmail(""); setPassword(""); setConfirm(""); setRole("operational");
+      setShowPassword(false); setShowConfirm(false);
     }
   }, [open]);
 
   const permissions = useMemo(() => ROLE_PERMISSIONS[role], [role]);
+
+  const generatePassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    let pw = "";
+    for (let i = 0; i < 12; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+    setPassword(pw);
+    setConfirm(pw);
+    setShowPassword(true);
+    setShowConfirm(true);
+  };
 
   const handleSubmit = async () => {
     if (!canAdd) {
       toast({ title: "Limite de usuários atingido", variant: "destructive" });
       return;
     }
-    if (!name.trim() || !email.trim()) {
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+    const cleanConfirm = confirm.trim();
+
+    if (!cleanName || !cleanEmail) {
       toast({ title: "Preencha nome e email", variant: "destructive" });
       return;
     }
-    if (password.length < 8) {
+    if (cleanPassword.length < 8) {
       toast({ title: "Senha muito curta", description: "Use no mínimo 8 caracteres.", variant: "destructive" });
       return;
     }
-    if (password !== confirm) {
-      toast({ title: "As senhas não coincidem", variant: "destructive" });
+    if (cleanPassword !== cleanConfirm) {
+      toast({ title: "As senhas não coincidem", description: "Verifique se não há espaços antes/depois.", variant: "destructive" });
       return;
     }
 
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("account-create-member", {
-        body: { name: name.trim(), email: email.trim().toLowerCase(), password, role },
+        body: { name: cleanName, email: cleanEmail, password: cleanPassword, role },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
 
-      setSuccess({ email: email.trim().toLowerCase(), password });
+      setSuccess({ email: cleanEmail, password: cleanPassword });
       onCreated();
     } catch (e: any) {
       toast({ title: "Erro ao criar usuário", description: e.message, variant: "destructive" });
@@ -152,12 +170,57 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@empresa.com" />
             </div>
             <div className="space-y-1.5">
-              <Label>Senha</Label>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" />
+              <div className="flex items-center justify-between">
+                <Label>Senha</Label>
+                <button
+                  type="button"
+                  onClick={generatePassword}
+                  className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  <Wand2 size={12} /> Gerar
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Mínimo 8 caracteres"
+                  autoComplete="new-password"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Confirmar Senha</Label>
-              <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+              <div className="relative">
+                <Input
+                  type={showConfirm ? "text" : "password"}
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  autoComplete="new-password"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showConfirm ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {confirm.length > 0 && password.trim() !== confirm.trim() && (
+                <p className="text-xs text-destructive">As senhas não coincidem.</p>
+              )}
             </div>
             <div className="space-y-1.5 md:col-span-2">
               <Label>Cargo</Label>
