@@ -373,7 +373,7 @@ export default function AdminBlogEditor() {
                 <div>
                   <Label>SEO Title (60 chars)</Label>
                   <Input value={form.seo_title} onChange={(e) => set("seo_title", e.target.value)} maxLength={70} />
-                  <p className="text-xs text-muted-foreground mt-1">{form.seo_title.length}/60</p>
+                  <p className="text-xs text-muted-foreground mt-1">{(form.seo_title || "").length}/60</p>
                 </div>
                 <div>
                   <Label>Meta Description (160 chars)</Label>
