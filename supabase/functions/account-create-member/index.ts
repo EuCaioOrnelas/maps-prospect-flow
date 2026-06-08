@@ -18,34 +18,96 @@ function planLimit(plan: string | null | undefined) {
   return PLAN_LIMITS[(plan || "").toLowerCase()] ?? Number.MAX_SAFE_INTEGER;
 }
 
+function escapeHtml(s: string) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+}
+
+function buildWelcomeEmail(name: string, email: string, password: string, url: string) {
+  const safeName = escapeHtml(name || "");
+  const safeEmail = escapeHtml(email);
+  const safePass = escapeHtml(password);
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sua conta Wiize foi criada</title></head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+        <tr><td style="padding:32px 40px 8px 40px;">
+          <div style="font-size:22px;font-weight:700;letter-spacing:-0.02em;color:#0f172a;">Wiize</div>
+        </td></tr>
+        <tr><td style="padding:8px 40px 0 40px;">
+          <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#0f172a;line-height:1.3;">Bem-vindo(a) à Wiize, ${safeName}</h1>
+          <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#475569;">Sua conta foi criada com sucesso. Use os dados abaixo para acessar a plataforma.</p>
+        </td></tr>
+        <tr><td style="padding:0 40px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;">
+            <tr><td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+              <div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:4px;">Email</div>
+              <div style="font-size:15px;color:#0f172a;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${safeEmail}</div>
+            </td></tr>
+            <tr><td style="padding:16px 20px;">
+              <div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:4px;">Senha temporária</div>
+              <div style="font-size:15px;color:#0f172a;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${safePass}</div>
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td align="center" style="padding:28px 40px 8px 40px;">
+          <a href="${url}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:14px 28px;border-radius:10px;">Acessar minha conta</a>
+        </td></tr>
+        <tr><td style="padding:16px 40px 8px 40px;">
+          <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6;">Por segurança, recomendamos alterar sua senha no primeiro login em <strong>Perfil → Segurança</strong>.</p>
+        </td></tr>
+        <tr><td style="padding:24px 40px 32px 40px;border-top:1px solid #f1f5f9;">
+          <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">Você recebeu este email porque um administrador da sua conta criou um acesso para você na Wiize. Se não reconhece esta ação, ignore esta mensagem ou responda este email.</p>
+          <p style="margin:8px 0 0;font-size:12px;color:#94a3b8;">Equipe Wiize · wiize.com.br</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const text = `Bem-vindo(a) à Wiize, ${name}
+
+Sua conta foi criada com sucesso.
+
+Email: ${email}
+Senha temporária: ${password}
+
+Acesse: ${url}
+
+Por segurança, altere sua senha no primeiro login.
+
+— Equipe Wiize`;
+
+  return { html, text };
+}
+
 async function sendWelcomeEmail(to: string, name: string, password: string, url: string) {
   if (!RESEND_API_KEY) return;
   try {
-    await fetch("https://api.resend.com/emails", {
+    const { html, text } = buildWelcomeEmail(name, to, password, url);
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Wiize <onboarding@resend.dev>",
+        from: "Wiize <no-reply@wiize.com.br>",
         to: [to],
-        subject: "Sua conta Wiize foi criada",
-        html: `
-          <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111">
-            <h2 style="margin:0 0 12px">Olá, ${name}</h2>
-            <p>Sua conta foi criada com sucesso.</p>
-            <div style="background:#f5f5f5;border-radius:8px;padding:16px;margin:16px 0">
-              <p style="margin:4px 0"><strong>Email:</strong> ${to}</p>
-              <p style="margin:4px 0"><strong>Senha:</strong> ${password}</p>
-            </div>
-            <p>Acesse: <a href="${url}">${url}</a></p>
-            <p style="color:#666;font-size:13px">Por segurança recomendamos alterar sua senha após o primeiro login.</p>
-            <p style="color:#999;font-size:12px;margin-top:32px">Equipe Wiize</p>
-          </div>
-        `,
+        reply_to: "suporte@wiize.com.br",
+        subject: `Bem-vindo(a) à Wiize, ${name.split(" ")[0] || ""}`.trim(),
+        html,
+        text,
+        headers: {
+          "List-Unsubscribe": "<mailto:suporte@wiize.com.br?subject=unsubscribe>",
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          "X-Entity-Ref-ID": crypto.randomUUID(),
+        },
+        tags: [{ name: "category", value: "account_welcome" }],
       }),
     });
+    if (!res.ok) console.error("[account-create-member] resend status:", res.status, await res.text());
   } catch (e) {
     console.error("[account-create-member] email failed:", e);
   }
