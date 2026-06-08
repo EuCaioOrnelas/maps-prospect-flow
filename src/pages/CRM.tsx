@@ -56,7 +56,7 @@ export default function CRM() {
   const { role } = useAccountRole();
   const { members: accountMembers } = useAccountMembers();
   const isOperational = role === 'operational';
-  const canChangeResponsible = role === 'owner' || role === 'admin';
+  const canChangeResponsible = !!user;
   const responsibleMembers = useMemo(
     () => accountMembers.map((m) => ({ user_id: m.user_id, name: m.name, email: m.email })),
     [accountMembers]
@@ -109,7 +109,7 @@ export default function CRM() {
 
   // Fetch custom origins
   const { data: customOrigins = [], refetch: refetchOrigins } = useQuery({
-    queryKey: ['lead-origins', user?.id],
+    queryKey: ['lead-origins', accountOwnerId],
     queryFn: async () => {
       if (!user) return [];
       const { data } = await supabase
@@ -119,12 +119,12 @@ export default function CRM() {
         .order('name');
       return data?.map(o => o.name) || [];
     },
-    enabled: !!user,
+    enabled: !!user && !!accountOwnerId,
   });
 
   // Fetch WhatsApp numbers for filter
   const { data: whatsappNumbers = [] } = useQuery({
-    queryKey: ['whatsapp-numbers', user?.id],
+    queryKey: ['whatsapp-numbers', accountOwnerId],
     queryFn: async () => {
       if (!user) return [];
       const { data } = await supabase
@@ -134,14 +134,14 @@ export default function CRM() {
         .order('name');
       return data || [];
     },
-    enabled: !!user,
+    enabled: !!user && !!accountOwnerId,
   });
 
   // Fetch agent-silenced stage names (columns where agents won't respond)
   // Só conta stages referenciadas por agentes ativos/pausados; se o agente foi
   // excluído ou trocou de stage, a coluna volta ao normal automaticamente.
   const { data: agentSilencedStages = new Set<string>(), refetch: refetchSilencedStages } = useQuery({
-    queryKey: ['agent-silenced-stages', user?.id],
+    queryKey: ['agent-silenced-stages', accountOwnerId],
     queryFn: async () => {
       if (!user) return new Set<string>();
       const { data } = await supabase
@@ -156,7 +156,7 @@ export default function CRM() {
       });
       return stageNames;
     },
-    enabled: !!user,
+    enabled: !!user && !!accountOwnerId,
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: 'always',
@@ -164,7 +164,7 @@ export default function CRM() {
 
   // Realtime: refetch sempre que ai_agents mudar (insert/update/delete)
   useEffect(() => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     const channel = supabase
       .channel(`crm-ai-agents-${user.id}`)
       .on(
@@ -174,7 +174,7 @@ export default function CRM() {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, refetchSilencedStages]);
+  }, [user, accountOwnerId, refetchSilencedStages]);
 
   // Open lead from navigation state (e.g. from /crm/vendas row click)
   useEffect(() => {
@@ -224,16 +224,16 @@ export default function CRM() {
   }, [leads, customOrigins]);
 
   const handleAddOrigin = useCallback(async (originName: string) => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     try {
       await supabase
         .from('lead_origins')
-        .insert({ user_id: user.id, name: originName });
+        .insert({ user_id: user.id, owner_user_id: accountOwnerId, name: originName });
       refetchOrigins();
     } catch (error) {
       console.error('Error adding origin:', error);
     }
-  }, [user, refetchOrigins]);
+  }, [user, accountOwnerId, refetchOrigins]);
 
   const handleUpdateOrigin = useCallback(async (oldName: string, newName: string) => {
     if (!user) return;
