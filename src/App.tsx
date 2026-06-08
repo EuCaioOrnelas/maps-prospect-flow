@@ -171,6 +171,8 @@ const AdminBlogEditor = lazyWithRetry(() => import("./pages/admin/AdminBlogEdito
 const AdminBlogCategories = lazyWithRetry(() => import("./pages/admin/AdminBlogCategories"), "AdminBlogCategories");
 const AdminBlogAnalytics = lazyWithRetry(() => import("./pages/admin/AdminBlogAnalytics"), "AdminBlogAnalytics");
 const AdminBlogAnalyticsDetail = lazyWithRetry(() => import("./pages/admin/AdminBlogAnalyticsDetail"), "AdminBlogAnalyticsDetail");
+const AdminBlogLogin = lazyWithRetry(() => import("./pages/admin/AdminBlogLogin"), "AdminBlogLogin");
+const BlogAdminGuard = lazyWithRetry(() => import("./components/admin/BlogAdminGuard"), "BlogAdminGuard");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -350,13 +352,16 @@ const App = () => (
                   <Route path="auditoria" element={<AdminAuditoria />} />
                   <Route path="insights" element={<UserInsights />} />
                   <Route path="onboarding" element={<AdminOnboarding />} />
-                  {/* Blog */}
-                  <Route path="blog" element={<AdminBlogList />} />
-                  <Route path="blog/analytics" element={<AdminBlogAnalytics />} />
-                  <Route path="blog/analytics/:id" element={<AdminBlogAnalyticsDetail />} />
-                  <Route path="blog/categorias" element={<AdminBlogCategories />} />
-                  <Route path="blog/novo" element={<AdminBlogEditor />} />
-                  <Route path="blog/:id" element={<AdminBlogEditor />} />
+                  {/* Blog — login separado no banco externo */}
+                  <Route path="blog/login" element={<AdminBlogLogin />} />
+                  <Route element={<BlogAdminGuard />}>
+                    <Route path="blog" element={<AdminBlogList />} />
+                    <Route path="blog/analytics" element={<AdminBlogAnalytics />} />
+                    <Route path="blog/analytics/:id" element={<AdminBlogAnalyticsDetail />} />
+                    <Route path="blog/categorias" element={<AdminBlogCategories />} />
+                    <Route path="blog/novo" element={<AdminBlogEditor />} />
+                    <Route path="blog/:id" element={<AdminBlogEditor />} />
+                  </Route>
                   {/* Suporte */}
                   <Route path="suporte/tickets" element={<AdminSupportTickets />} />
                   <Route path="suporte/mind-ia" element={<AdminSupportMindIA />} />
