@@ -144,7 +144,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           'subscription_cancel_at', 'subscription_canceled_at',
           'stripe_customer_id', 'asaas_customer_id', 'features',
           'plan_features', 'custom_features', 'billing_cycle',
+          // Limites/uso compartilhados com o owner — sub-usuários consomem da mesma cota
+          'searches_used', 'searches_limit', 'extra_opportunities_packs',
+          'bonus_searches', 'last_searches_reset',
         ];
+
+
         for (const k of inheritedKeys) {
           if (k in (ownerData as any)) (data as any)[k] = (ownerData as any)[k];
         }
