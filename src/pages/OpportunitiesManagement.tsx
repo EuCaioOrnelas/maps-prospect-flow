@@ -1271,13 +1271,8 @@ export default function OpportunitiesManagement() {
                         className="pl-9"
                       />
                     </div>
-                    <CRMResponsibleFilter
-                      value={responsibleFilter}
-                      onChange={(v) => { setResponsibleFilter(v); setCurrentPage(1); clearSelection(); }}
-                      members={responsibleMembers}
-                      currentUserId={user?.id ?? null}
-                    />
                     <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
+
                       <SelectTrigger className="w-[100px]">
                         <SelectValue />
                       </SelectTrigger>
