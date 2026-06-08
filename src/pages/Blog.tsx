@@ -370,6 +370,16 @@ export default function Blog() {
                 </div>
               ))}
             </div>
+          ) : blogError ? (
+            <div className="text-center py-16 border border-dashed border-destructive/40 rounded-xl bg-destructive/5 px-6">
+              <p className="font-medium text-destructive">{blogError.title}</p>
+              <p className="mt-2 text-sm text-muted-foreground max-w-2xl mx-auto">{blogError.message}</p>
+              {blogError.details && (
+                <p className="mt-3 text-xs text-muted-foreground/80 max-w-2xl mx-auto break-words">
+                  Erro: {blogError.details}
+                </p>
+              )}
+            </div>
           ) : posts.length === 0 ? (
             <div className="text-center py-16 border border-dashed border-border rounded-xl">
               <p className="text-muted-foreground">Nenhum artigo encontrado.</p>
