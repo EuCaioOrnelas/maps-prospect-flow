@@ -74,6 +74,15 @@ export function useChatCRMFilters() {
           return;
         }
 
+        // Resolve account owner (sub-users inherit owner's data)
+        const { data: profileRow } = await supabase
+          .from("profiles")
+          .select("parent_owner_id")
+          .eq("id", user.id)
+          .maybeSingle();
+        const accountOwnerId = (profileRow as any)?.parent_owner_id || user.id;
+
+
         const [stagesResponse, leadsResponse] = await Promise.all([
           supabase
             .from("pipeline_stages")
