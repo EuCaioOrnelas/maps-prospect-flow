@@ -45,7 +45,7 @@ export default function AdminBlogList() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await blogSupabase
       .from("blog_posts")
       .select("id,slug,title,status,featured,published_at,updated_at,view_count,like_count,category:blog_categories(name)")
       .order("updated_at", { ascending: false });

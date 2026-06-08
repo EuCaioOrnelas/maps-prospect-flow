@@ -25,14 +25,14 @@ export default function AdminBlogAnalyticsDetail() {
     if (!id) return;
     (async () => {
       const [{ data }, { data: attrs }] = await Promise.all([
-        supabase
+        blogSupabase
           .from("blog_posts")
           .select(`id,slug,title,subtitle,excerpt,content,cover_image_url,status,view_count,
                    published_at,reading_time_minutes,seo_title,seo_description,seo_keywords,
                    canonical_url,robots_index,ai_short_answer,ai_entities,faq,featured,
                    author_name,category:blog_categories(name)`)
           .eq("id", id).maybeSingle(),
-        supabase
+        blogSupabase
           .from("blog_post_attributions")
           .select("event")
           .eq("post_id", id),

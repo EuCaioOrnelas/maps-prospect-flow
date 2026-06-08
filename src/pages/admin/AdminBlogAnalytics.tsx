@@ -103,7 +103,7 @@ export default function AdminBlogAnalytics() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
+      const { data } = await blogSupabase
         .from("blog_posts")
         .select(`id,slug,title,status,view_count,published_at,scheduled_for,
                  reading_time_minutes,seo_title,seo_description,seo_keywords,

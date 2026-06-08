@@ -98,7 +98,7 @@ export default function BlogPost() {
     if (!slug) return;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await blogSupabase
         .from("blog_posts")
         .select(
           `id,slug,title,subtitle,excerpt,content,cover_image_url,cover_image_alt,
@@ -129,7 +129,7 @@ export default function BlogPost() {
 
       // Related
       if ((data as any).category_id) {
-        const { data: rel } = await supabase
+        const { data: rel } = await blogSupabase
           .from("blog_posts")
           .select("id,slug,title,excerpt,cover_image_url,author_name,published_at,reading_time_minutes,category:blog_categories(name,slug,color)")
           .eq("status", "published")
