@@ -206,13 +206,19 @@ export default function AdminBlogEditor() {
       payload.created_by = u.user?.id;
       const { data, error } = await supabase.from("blog_posts").insert(payload).select("id").single();
       setSaving(false);
-      if (error) return toast.error("Erro: " + error.message);
-      toast.success("Post criado");
+      if (error) {
+        console.error("[BlogEditor] insert failed", error, payload);
+        return toast.error("Erro ao salvar: " + error.message, { duration: 10000 });
+      }
+      toast.success(publishNow ? "Post publicado!" : "Post criado");
       navigate(`/admin/blog/${data.id}`);
     } else {
       const { error } = await supabase.from("blog_posts").update(payload).eq("id", id!);
       setSaving(false);
-      if (error) return toast.error("Erro: " + error.message);
+      if (error) {
+        console.error("[BlogEditor] update failed", error, payload);
+        return toast.error("Erro ao salvar: " + error.message, { duration: 10000 });
+      }
       toast.success(publishNow ? "Publicado!" : "Alterações salvas");
       if (publishNow) set("status", "published");
     }
