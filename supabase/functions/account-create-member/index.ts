@@ -108,7 +108,17 @@ Deno.serve(async (req) => {
       user_metadata: { name, full_name: name, account_member: true },
     });
     if (createErr || !created.user) {
-      return new Response(JSON.stringify({ error: createErr?.message || "Falha ao criar usuário" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const msg = (createErr?.message || "").toLowerCase();
+      let friendly = createErr?.message || "Falha ao criar usuário";
+      if (msg.includes("already") || msg.includes("registered") || msg.includes("exists") || msg.includes("duplicate")) {
+        friendly = "Este email já está cadastrado. Use outro email ou remova o usuário antigo.";
+      } else if (msg.includes("password")) {
+        friendly = "Senha inválida. Use no mínimo 8 caracteres.";
+      } else if (msg.includes("email")) {
+        friendly = "Email inválido.";
+      }
+      console.error("[account-create-member] createUser failed:", createErr);
+      return new Response(JSON.stringify({ error: friendly }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const newUserId = created.user.id;
 
