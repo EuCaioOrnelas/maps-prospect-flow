@@ -482,7 +482,7 @@ export default function CRM() {
                     availableTags={availableTags}
                     whatsappNumbers={whatsappNumbers}
                     availableOrigins={availableOrigins}
-                    showResponsibleFilter={!isOperational}
+                    showResponsibleFilter={true}
                     responsibleFilter={responsibleFilter}
                     onResponsibleFilterChange={setResponsibleFilter}
                     responsibleMembers={responsibleMembers}
