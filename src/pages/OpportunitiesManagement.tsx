@@ -1311,6 +1311,17 @@ export default function OpportunitiesManagement() {
                     <DialogDescription>Configure os filtros para refinar suas oportunidades</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-5 pt-2">
+                    {/* Responsável */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Responsável</label>
+                      <CRMResponsibleFilter
+                        value={responsibleFilter}
+                        onChange={(v) => { setResponsibleFilter(v); setCurrentPage(1); clearSelection(); }}
+                        members={responsibleMembers}
+                        currentUserId={user?.id ?? null}
+                      />
+                    </div>
+
                     {/* Ordenação */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Ordenar por</label>
@@ -1325,6 +1336,7 @@ export default function OpportunitiesManagement() {
                         </SelectContent>
                       </Select>
                     </div>
+
 
                     {/* Intenção */}
                     <div className="space-y-2">
