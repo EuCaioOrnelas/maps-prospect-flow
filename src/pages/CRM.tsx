@@ -61,7 +61,8 @@ export default function CRM() {
     () => accountMembers.map((m) => ({ user_id: m.user_id, name: m.name, email: m.email })),
     [accountMembers]
   );
-  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>(isOperational ? 'me' : 'me');
+  // Default: ver TODOS os leads (a conta inteira). Sub-user pode filtrar para "meus" se quiser.
+  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>('all');
 
   const {
     stages, 
