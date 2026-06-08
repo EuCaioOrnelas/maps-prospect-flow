@@ -560,6 +560,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         trialDaysRemaining,
         isTrialing: trialStatus.isTrialing,
         isBlocked,
+        accountOwnerId: ((profile as any)?.parent_owner_id as string) || user?.id || null,
+        isSubUser: Boolean((profile as any)?.parent_owner_id),
         signUp,
         signIn,
         signOut,
