@@ -127,6 +127,8 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
       }
       if ((data as any)?.error) throw new Error((data as any).error);
 
+      // Fecha o dialog de criação para o popup de sucesso ficar com foco total
+      onOpenChange(false);
       setSuccess({ email: cleanEmail, password: cleanPassword });
       onCreated();
     } catch (e: any) {
