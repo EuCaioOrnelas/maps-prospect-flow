@@ -107,7 +107,21 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
       const { data, error } = await supabase.functions.invoke("account-create-member", {
         body: { name: cleanName, email: cleanEmail, password: cleanPassword, role },
       });
-      if (error) throw error;
+      // supabase-js esconde o corpo em FunctionsHttpError. Buscamos o body manualmente.
+      if (error) {
+        let serverMsg = error.message;
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx && typeof ctx.json === "function") {
+            const parsed = await ctx.json();
+            if (parsed?.error) serverMsg = parsed.error;
+          } else if (ctx && typeof ctx.text === "function") {
+            const txt = await ctx.text();
+            try { serverMsg = JSON.parse(txt)?.error || txt || serverMsg; } catch { serverMsg = txt || serverMsg; }
+          }
+        } catch {}
+        throw new Error(serverMsg);
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
 
       setSuccess({ email: cleanEmail, password: cleanPassword });
