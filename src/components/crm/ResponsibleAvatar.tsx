@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
-import { Check, User as UserIcon } from "lucide-react";
+import { Check, User as UserIcon, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export interface ResponsibleMember {
   user_id: string;
   name: string | null;
   email: string | null;
+  avatar_url?: string | null;
 }
 
 interface Props {
@@ -16,82 +16,146 @@ interface Props {
   members: ResponsibleMember[];
   onChange?: (userId: string | null) => Promise<void> | void;
   canEdit?: boolean;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
 }
 
 const initials = (m?: ResponsibleMember | null) => {
   const s = (m?.name || m?.email || "?").trim();
-  return s.charAt(0).toUpperCase();
+  const parts = s.split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return s.slice(0, 2).toUpperCase();
+};
+
+const Avatar = ({ member, dim }: { member: ResponsibleMember | null; dim: string }) => {
+  if (member?.avatar_url) {
+    return (
+      <img
+        src={member.avatar_url}
+        alt={member.name || member.email || "Responsável"}
+        className={cn("rounded-full object-cover shrink-0 border border-border/60", dim)}
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+      />
+    );
+  }
+  return null;
 };
 
 export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = true, size = "sm" }: Props) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const current = members.find((m) => m.user_id === responsibleId) || null;
   const label = current ? current.name || current.email || "Sem nome" : "Sem responsável";
 
-  const dim = size === "sm" ? "w-6 h-6 text-[10px]" : "w-7 h-7 text-xs";
+  const dim = size === "lg" ? "w-9 h-9 text-sm" : size === "md" ? "w-7 h-7 text-xs" : "w-6 h-6 text-[10px]";
+
+  const filtered = members.filter((m) => {
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    return (m.name || "").toLowerCase().includes(q) || (m.email || "").toLowerCase().includes(q);
+  });
 
   const trigger = (
     <button
       type="button"
       onClick={(e) => {
         e.stopPropagation();
-        if (canEdit) setOpen(true);
+        if (canEdit) setOpen((o) => !o);
       }}
+      title={`Responsável: ${label}${canEdit ? " — clique para alterar" : ""}`}
       className={cn(
-        "rounded-full flex items-center justify-center font-semibold shrink-0 border border-border/60",
+        "relative rounded-full flex items-center justify-center font-semibold shrink-0 overflow-hidden border border-border/60 transition-all",
         current ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
         dim,
-        canEdit && "hover:ring-2 hover:ring-primary/30 transition"
+        canEdit && "hover:ring-2 hover:ring-primary/40 hover:border-primary/40 hover:scale-[1.06] cursor-pointer"
       )}
       aria-label={`Responsável: ${label}`}
     >
-      {current ? initials(current) : <UserIcon className="w-3 h-3" />}
+      {current?.avatar_url ? (
+        <Avatar member={current} dim="w-full h-full" />
+      ) : current ? (
+        <span>{initials(current)}</span>
+      ) : (
+        <UserIcon className="w-1/2 h-1/2" />
+      )}
     </button>
   );
 
-  const wrapped = (
-    <Tooltip>
-      <TooltipTrigger asChild>{trigger}</TooltipTrigger>
-      <TooltipContent side="left">Responsável: {label}</TooltipContent>
-    </Tooltip>
-  );
-
-  if (!canEdit) return wrapped;
+  if (!canEdit) return trigger;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>{wrapped}</PopoverTrigger>
-      <PopoverContent className="w-60 p-1" align="end" onClick={(e) => e.stopPropagation()}>
-        <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-          Trocar responsável
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent
+        className="w-72 p-0 overflow-hidden"
+        align="end"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-3 py-2.5 border-b border-border/60">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+            Responsável
+          </div>
+          <div className="text-sm font-medium text-foreground mt-0.5 truncate">{label}</div>
         </div>
-        <button
-          className="w-full flex items-center justify-between px-2 py-1.5 text-sm rounded hover:bg-muted"
-          onClick={async (e) => {
-            e.stopPropagation();
-            await onChange?.(null);
-            setOpen(false);
-          }}
-        >
-          <span className="text-muted-foreground">Sem responsável</span>
-          {!responsibleId && <Check className="w-3.5 h-3.5" />}
-        </button>
-        <div className="max-h-56 overflow-y-auto">
-          {members.map((m) => (
+
+        {members.length > 5 && (
+          <div className="p-2 border-b border-border/60">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <Input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar membro..."
+                className="pl-8 h-8 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="max-h-64 overflow-y-auto py-1">
+          <button
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-none hover:bg-muted transition-colors"
+            onClick={async (e) => {
+              e.stopPropagation();
+              await onChange?.(null);
+              setOpen(false);
+            }}
+          >
+            <div className={cn("rounded-full bg-muted text-muted-foreground flex items-center justify-center border border-border/60", "w-7 h-7")}>
+              <UserIcon className="w-3.5 h-3.5" />
+            </div>
+            <span className="flex-1 text-left text-muted-foreground">Sem responsável</span>
+            {!responsibleId && <Check className="w-4 h-4 text-primary" />}
+          </button>
+          {filtered.map((m) => (
             <button
               key={m.user_id}
-              className="w-full flex items-center justify-between px-2 py-1.5 text-sm rounded hover:bg-muted"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
               onClick={async (e) => {
                 e.stopPropagation();
                 await onChange?.(m.user_id);
                 setOpen(false);
               }}
             >
-              <span className="truncate">{m.name || m.email || m.user_id.slice(0, 8)}</span>
-              {responsibleId === m.user_id && <Check className="w-3.5 h-3.5 text-primary" />}
+              {m.avatar_url ? (
+                <img src={m.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover border border-border/60 shrink-0" />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-primary/15 text-primary text-[11px] font-semibold flex items-center justify-center border border-border/60 shrink-0">
+                  {initials(m)}
+                </div>
+              )}
+              <div className="flex-1 text-left min-w-0">
+                <div className="truncate text-foreground">{m.name || m.email || m.user_id.slice(0, 8)}</div>
+                {m.name && m.email && (
+                  <div className="truncate text-[11px] text-muted-foreground">{m.email}</div>
+                )}
+              </div>
+              {responsibleId === m.user_id && <Check className="w-4 h-4 text-primary shrink-0" />}
             </button>
           ))}
+          {filtered.length === 0 && (
+            <div className="px-3 py-6 text-center text-xs text-muted-foreground">Nenhum membro encontrado.</div>
+          )}
         </div>
       </PopoverContent>
     </Popover>

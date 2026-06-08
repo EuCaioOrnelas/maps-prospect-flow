@@ -58,6 +58,7 @@ import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 import { LeadSalesBlock } from '@/components/crm/LeadSalesBlock';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -98,6 +99,8 @@ interface LeadDetailDialogProps {
   onDeleteOrigin?: (name: string) => Promise<void>;
   initialTab?: 'info' | 'notes' | 'history' | 'deals' | 'files';
   initialRegisterSale?: boolean;
+  members?: ResponsibleMember[];
+  onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
 }
 
 // formatPhoneNumber is now imported from '@/lib/phoneUtils'
@@ -270,6 +273,8 @@ export const LeadDetailDialog = ({
   onDeleteOrigin,
   initialTab,
   initialRegisterSale = false,
+  members = [],
+  onChangeResponsible,
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
   const { user, accountOwnerId } = useAuth();
@@ -1381,6 +1386,38 @@ export const LeadDetailDialog = ({
                   </Select>
                 </div>
 
+                {/* Responsible Section */}
+                <div className="space-y-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    Responsável
+                  </span>
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-card">
+                    <ResponsibleAvatar
+                      responsibleId={lead.responsible_user_id}
+                      members={members}
+                      size="lg"
+                      canEdit={!!onChangeResponsible}
+                      onChange={async (uid) => {
+                        if (onChangeResponsible) {
+                          await onChangeResponsible(lead.id, uid);
+                        }
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-foreground truncate">
+                        {(() => {
+                          const m = members.find((x) => x.user_id === lead.responsible_user_id);
+                          return m ? (m.name || m.email || 'Sem nome') : 'Sem responsável';
+                        })()}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {onChangeResponsible ? 'Clique no avatar para alterar' : 'Você não pode alterar'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Negotiation Value with Close Deal Button */}
                 <div className="space-y-2">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
@@ -1655,23 +1692,37 @@ export const LeadDetailDialog = ({
               <div className="space-y-1">
                 {activities
                   .slice((historyPage - 1) * HISTORY_PER_PAGE, historyPage * HISTORY_PER_PAGE)
-                  .map((activity, index, arr) => (
-                  <div 
-                    key={activity.id} 
-                    className={cn(
-                      "flex gap-3 py-3",
-                      index !== arr.length - 1 && "border-b border-border/50"
-                    )}
-                  >
-                    <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm">{activity.description}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {format(new Date(activity.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  .map((activity, index, arr) => {
+                    const isResp = activity.activity_type === 'responsible_changed';
+                    const respId = isResp ? ((activity.metadata as any)?.responsible_user_id || null) : null;
+                    const respMember = respId ? members.find((m) => m.user_id === respId) : null;
+                    const respName = respMember ? (respMember.name || respMember.email) : null;
+                    const text = isResp
+                      ? respName
+                        ? `Responsável alterado para ${respName}`
+                        : 'Responsável removido'
+                      : activity.description;
+                    return (
+                      <div
+                        key={activity.id}
+                        className={cn(
+                          "flex gap-3 py-3",
+                          index !== arr.length - 1 && "border-b border-border/50"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-2 h-2 rounded-full mt-1.5 shrink-0",
+                          isResp ? "bg-amber-500" : "bg-primary"
+                        )} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm">{text}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {format(new Date(activity.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 {activities.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-6">
                     Nenhuma movimentação registrada
