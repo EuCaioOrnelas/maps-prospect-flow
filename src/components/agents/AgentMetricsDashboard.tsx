@@ -53,7 +53,7 @@ const CHART_COLORS = [
 ];
 
 export function AgentMetricsDashboard({ dateFilter = "30days" }: AgentMetricsDashboardProps) {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [selectedAgentId, setSelectedAgentId] = useState<string>("all");
   const [agents, setAgents] = useState<{ id: string; name: string }[]>([]);
@@ -70,7 +70,7 @@ export function AgentMetricsDashboard({ dateFilter = "30days" }: AgentMetricsDas
         const { data: agentsData } = await supabase
           .from('ai_agents')
           .select('id, name')
-          .eq('user_id', user.id);
+          .eq('owner_user_id', accountOwnerId);
 
         setAgents(agentsData || []);
 

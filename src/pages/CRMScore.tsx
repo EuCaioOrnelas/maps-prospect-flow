@@ -1625,7 +1625,7 @@ const ScoreRulesTab = ({ userId }: { userId: string }) => {
 // ═══════════════ MAIN PAGE ═══════════════
 
 const CRMScore = () => {
-  const { user, profile } = useAuth();
+  const { user, accountOwnerId, profile } = useAuth();
   const [searchParams] = useSearchParams();
   const [deepLinkPhone] = useState(() => searchParams.get("phone"));
   const [scoreInfoOpen, setScoreInfoOpen] = useState(false);
@@ -1649,7 +1649,7 @@ const CRMScore = () => {
       const { data, error } = await supabase
         .from("revenue_leads")
         .select("id, name, phone_e164, score_total, score_engagement, score_intent, score_risk, score_urgency, status_bucket, risk_state, last_activity_at, score_last_calc_at, first_seen_at, tags, source_number_instance_id")
-        .eq("user_id", user.id)
+        .eq("owner_user_id", accountOwnerId)
         .order("score_total", { ascending: false });
       if (error) throw error;
       return (data || []) as RevenueLead[];

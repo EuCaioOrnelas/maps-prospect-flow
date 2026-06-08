@@ -33,7 +33,7 @@ import { useWebhookGate } from "@/hooks/useWebhookGate";
 import { WebhookRequiredDialog } from "@/components/meta/WebhookRequiredDialog";
 
 const Chat = () => {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   useAutoScoreTracking("chat");
   const navigate = useNavigate();
   const { toast } = useToast();

@@ -92,7 +92,7 @@ export const ManageStagesDialog = ({
   const [editTagValue, setEditTagValue] = useState('');
   const [deleteTagConfirm, setDeleteTagConfirm] = useState<string | null>(null);
   
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
 
   const sortedStages = [...stages].sort((a, b) => a.position - b.position);
   const prospectadoIndex = sortedStages.findIndex(s => s.name === 'Prospectado');
@@ -117,8 +117,8 @@ export const ManageStagesDialog = ({
     try {
       // Load from crm_tags table + tags on leads (merge both)
       const [crmTagsRes, leadsRes] = await Promise.all([
-        supabase.from('crm_tags').select('name').eq('user_id', user.id),
-        supabase.from('leads').select('tags').eq('user_id', user.id).not('tags', 'is', null).range(0, 4999),
+        supabase.from('crm_tags').select('name').eq('owner_user_id', accountOwnerId),
+        supabase.from('leads').select('tags').eq('owner_user_id', accountOwnerId).not('tags', 'is', null).range(0, 4999),
       ]);
 
       const uniqueTags = new Set<string>();
@@ -173,12 +173,12 @@ export const ManageStagesDialog = ({
     setIsLoading(true);
     try {
       // Update crm_tags table
-      await supabase.from('crm_tags').update({ name: newName }).eq('user_id', user.id).eq('name', editingTag);
+      await supabase.from('crm_tags').update({ name: newName }).eq('owner_user_id', accountOwnerId).eq('name', editingTag);
       // Update all leads that have this tag
       const { data: leadsWithTag } = await supabase
         .from('leads')
         .select('id, tags')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .contains('tags', [editingTag]);
       
       if (leadsWithTag?.length) {
@@ -204,12 +204,12 @@ export const ManageStagesDialog = ({
     setIsLoading(true);
     try {
       // Delete from crm_tags table
-      await supabase.from('crm_tags').delete().eq('user_id', user.id).eq('name', deleteTagConfirm);
+      await supabase.from('crm_tags').delete().eq('owner_user_id', accountOwnerId).eq('name', deleteTagConfirm);
       // Remove from all leads
       const { data: leadsWithTag } = await supabase
         .from('leads')
         .select('id, tags')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .contains('tags', [deleteTagConfirm]);
       
       if (leadsWithTag?.length) {
@@ -280,7 +280,7 @@ export const ManageStagesDialog = ({
     if (isLockedStage(stage.name)) { toast.error('Esta coluna não pode ser excluída'); return; }
     if (user) {
       const { data: agents } = await supabase
-        .from('ai_agents').select('name').eq('user_id', user.id)
+        .from('ai_agents').select('name').eq('owner_user_id', accountOwnerId)
         .or(`crm_stage_on_new_lead.eq.${stage.name},crm_stage_on_reply.eq.${stage.name},crm_stage_on_end.eq.${stage.name},crm_stage_on_unknown.eq.${stage.name}`);
       setAgentsUsingStage(agents?.map(a => a.name) || []);
     }

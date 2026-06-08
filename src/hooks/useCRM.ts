@@ -121,7 +121,7 @@ const DEFAULT_STAGES: Omit<PipelineStage, 'id' | 'user_id' | 'created_at' | 'upd
 ];
 
 export const useCRM = () => {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const { role, ownerUserId } = useAccountRole();
   const { trackScoreEvent } = useUserScoreTracking();
   const [stages, setStages] = useState<PipelineStage[]>([]);
@@ -380,7 +380,7 @@ export const useCRM = () => {
       .from('leads')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('owner_user_id', accountOwnerId);
 
     if (error) {
       console.error('Error deleting lead:', error);
@@ -396,7 +396,7 @@ export const useCRM = () => {
       .from('leads')
       .delete()
       .in('id', ids)
-      .eq('user_id', user.id);
+      .eq('owner_user_id', accountOwnerId);
 
     if (error) {
       console.error('Error deleting leads:', error);
@@ -447,7 +447,7 @@ export const useCRM = () => {
       .from('lead_notes')
       .select('*')
       .eq('lead_id', leadId)
-      .eq('user_id', user.id)
+      .eq('owner_user_id', accountOwnerId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -466,7 +466,7 @@ export const useCRM = () => {
       .from('lead_activities')
       .select('*')
       .eq('lead_id', leadId)
-      .eq('user_id', user.id)
+      .eq('owner_user_id', accountOwnerId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -500,7 +500,7 @@ export const useCRM = () => {
       .from('pipeline_stages')
       .update(updates)
       .eq('id', id)
-      .eq('user_id', user.id)
+      .eq('owner_user_id', accountOwnerId)
       .select()
       .single();
 
@@ -537,7 +537,7 @@ export const useCRM = () => {
         .from('pipeline_stages')
         .update({ position: newPosition + 1 + i })
         .eq('id', lockedEndStages[i].id)
-        .eq('user_id', user.id);
+        .eq('owner_user_id', accountOwnerId);
     }
 
     const { data, error } = await supabase
@@ -586,7 +586,7 @@ export const useCRM = () => {
       .from('leads')
       .update({ pipeline_stage_id: targetStageId })
       .eq('pipeline_stage_id', stageId)
-      .eq('user_id', user.id);
+      .eq('owner_user_id', accountOwnerId);
 
     if (moveError) {
       console.error('Error moving leads:', moveError);
@@ -598,7 +598,7 @@ export const useCRM = () => {
       .from('pipeline_stages')
       .delete()
       .eq('id', stageId)
-      .eq('user_id', user.id);
+      .eq('owner_user_id', accountOwnerId);
 
     if (error) {
       console.error('Error deleting stage:', error);
@@ -648,13 +648,13 @@ export const useCRM = () => {
       .from('pipeline_stages')
       .update({ position: targetStage.position })
       .eq('id', stage.id)
-      .eq('user_id', user.id);
+      .eq('owner_user_id', accountOwnerId);
 
     await supabase
       .from('pipeline_stages')
       .update({ position: tempPosition })
       .eq('id', targetStage.id)
-      .eq('user_id', user.id);
+      .eq('owner_user_id', accountOwnerId);
 
     await fetchStages();
   };
@@ -685,7 +685,7 @@ export const useCRM = () => {
           .from('pipeline_stages')
           .update({ position: i })
           .eq('id', orderedStages[i].id)
-          .eq('user_id', user.id);
+          .eq('owner_user_id', accountOwnerId);
       }
     }
   };

@@ -221,7 +221,7 @@ interface MessageLog {
 }
 
 export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsappNumbers = [] }: AgentDetailsDialogProps) {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -281,7 +281,7 @@ export function AgentDetailsDialog({ agent, open, onOpenChange, onUpdate, whatsa
       const { data } = await supabase
         .from('pipeline_stages')
         .select('id, name')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .order('position');
       setPipelineStages(data || []);
     };

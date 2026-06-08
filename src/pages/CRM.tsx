@@ -45,7 +45,7 @@ import {
 export default function CRM() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, loading } = useAuth();
+  const { user, accountOwnerId, profile, loading } = useAuth();
   const { count: contactCount, limit: contactLimit, hasLimit: hasContactLimit, isAtLimit: contactsAtLimit, isNearLimit: contactsNearLimit } = useContactLimit();
   const isMobile = useIsMobile();
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("crm_beta_warning");
@@ -61,7 +61,8 @@ export default function CRM() {
     () => accountMembers.map((m) => ({ user_id: m.user_id, name: m.name, email: m.email })),
     [accountMembers]
   );
-  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>(isOperational ? 'me' : 'me');
+  // Default: ver TODOS os leads (a conta inteira). Sub-user pode filtrar para "meus" se quiser.
+  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>('all');
 
   const {
     stages, 
@@ -114,7 +115,7 @@ export default function CRM() {
       const { data } = await supabase
         .from('lead_origins')
         .select('name')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .order('name');
       return data?.map(o => o.name) || [];
     },
@@ -129,7 +130,7 @@ export default function CRM() {
       const { data } = await supabase
         .from('whatsapp_numbers')
         .select('id, name, phone_number')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .order('name');
       return data || [];
     },
@@ -146,7 +147,7 @@ export default function CRM() {
       const { data } = await supabase
         .from('ai_agents')
         .select('crm_stage_on_end, crm_stage_on_unknown')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .in('status', ['active', 'paused']);
       const stageNames = new Set<string>();
       data?.forEach(agent => {
@@ -168,7 +169,7 @@ export default function CRM() {
       .channel(`crm-ai-agents-${user.id}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'ai_agents', filter: `user_id=eq.${user.id}` },
+        { event: '*', schema: 'public', table: 'ai_agents', filter: `owner_user_id=eq.${accountOwnerId}` },
         () => { refetchSilencedStages(); }
       )
       .subscribe();
@@ -240,7 +241,7 @@ export default function CRM() {
       await supabase
         .from('lead_origins')
         .update({ name: newName })
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .eq('name', oldName);
       refetchOrigins();
     } catch (error) {
@@ -255,7 +256,7 @@ export default function CRM() {
       await supabase
         .from('lead_origins')
         .delete()
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .eq('name', name);
       refetchOrigins();
     } catch (error) {
@@ -270,7 +271,7 @@ export default function CRM() {
     const { data } = await supabase
       .from('leads')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('owner_user_id', accountOwnerId)
       .eq('phone', normalizedPhone)
       .limit(1);
     return (data?.length || 0) > 0;
@@ -482,7 +483,7 @@ export default function CRM() {
                     availableTags={availableTags}
                     whatsappNumbers={whatsappNumbers}
                     availableOrigins={availableOrigins}
-                    showResponsibleFilter={!isOperational}
+                    showResponsibleFilter={true}
                     responsibleFilter={responsibleFilter}
                     onResponsibleFilterChange={setResponsibleFilter}
                     responsibleMembers={responsibleMembers}

@@ -69,7 +69,7 @@ export const useWhatsAppNumbers = () => {
   const [selectedNumberId, setSelectedNumberId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
-  const { user, profile } = useAuth();
+  const { user, accountOwnerId, profile } = useAuth();
   
   const userPlan = profile?.plan?.toLowerCase() || 'free';
   // Ensure free users always have access to at least 1 number
@@ -87,7 +87,7 @@ export const useWhatsAppNumbers = () => {
       const { data, error } = await supabase
         .from('whatsapp_numbers')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;

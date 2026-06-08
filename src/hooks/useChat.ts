@@ -55,7 +55,7 @@ export interface WabaConnection {
 }
 
 export function useChat() {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -88,7 +88,7 @@ export function useChat() {
     const { data } = await supabase
       .from("user_waba_connections")
       .select("id, phone_number_id, display_phone_number, business_name, nickname, status, waba_id, access_token, token_expires_at")
-      .eq("user_id", user.id);
+      .eq("owner_user_id", accountOwnerId);
     if (!data || data.length === 0) {
       setConnections([]);
       setLoading(false);
@@ -162,7 +162,7 @@ export function useChat() {
       const { data } = await supabase
         .from("chat_conversations")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("owner_user_id", accountOwnerId)
         .eq("waba_connection_id", activeConnectionId)
         .eq("is_archived", false)
         .order("is_pinned", { ascending: false })
@@ -272,7 +272,7 @@ export function useChat() {
         event: "*",
         schema: "public",
         table: "chat_conversations",
-        filter: `user_id=eq.${user.id}`,
+        filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         if (payload.eventType === "INSERT") {
           setConversations(prev => [payload.new as ChatConversation, ...prev]);
@@ -291,7 +291,7 @@ export function useChat() {
         event: "INSERT",
         schema: "public",
         table: "chat_messages",
-        filter: `user_id=eq.${user.id}`,
+        filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         const newMsg = payload.new as ChatMessage;
         if (newMsg.conversation_id === activeConversationId) {
@@ -302,7 +302,7 @@ export function useChat() {
         event: "UPDATE",
         schema: "public",
         table: "chat_messages",
-        filter: `user_id=eq.${user.id}`,
+        filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         const updated = payload.new as ChatMessage;
         setMessages(prev => prev.map(m => m.id === updated.id ? updated : m));

@@ -39,6 +39,10 @@ interface AuthContextType {
   trialDaysRemaining: number;
   isTrialing: boolean;
   isBlocked: boolean;
+  /** ID do dono efetivo da conta (parent_owner_id || user.id). Usar como filtro `owner_user_id` em queries de dados compartilhados. */
+  accountOwnerId: string | null;
+  /** true se o usuário logado é um sub-usuário criado por um owner. */
+  isSubUser: boolean;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -556,6 +560,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         trialDaysRemaining,
         isTrialing: trialStatus.isTrialing,
         isBlocked,
+        accountOwnerId: ((profile as any)?.parent_owner_id as string) || user?.id || null,
+        isSubUser: Boolean((profile as any)?.parent_owner_id),
         signUp,
         signIn,
         signOut,

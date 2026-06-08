@@ -76,7 +76,7 @@ interface OpportunityLead {
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 60] as const;
 
 export default function OpportunitiesManagement() {
-  const { profile, user } = useAuth();
+  const { profile, user, accountOwnerId } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   useAutoScoreTracking("opportunities_management");
@@ -167,7 +167,7 @@ export default function OpportunitiesManagement() {
       const { data } = await supabase
         .from("company_profiles" as any)
         .select("*")
-        .eq("user_id", user.id)
+        .eq("owner_user_id", accountOwnerId)
         .maybeSingle();
 
       if (data) {
@@ -652,7 +652,7 @@ export default function OpportunitiesManagement() {
           enrichment_data: updatedEnrichment,
         })
         .eq('id', lead.id)
-        .eq('user_id', user.id);
+        .eq('owner_user_id', accountOwnerId);
 
       if (error) throw error;
 

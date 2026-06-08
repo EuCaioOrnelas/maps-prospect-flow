@@ -114,7 +114,7 @@ const getObjectiveLabel = (objective: string) => {
 };
 
 export default function AIAgents() {
-  const { user, profile } = useAuth();
+  const { user, accountOwnerId, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { trackScoreEvent } = useAutoScoreTracking("agents");
@@ -178,7 +178,7 @@ export default function AIAgents() {
           *,
           whatsapp_number:whatsapp_numbers(name, phone_number)
         `)
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -201,7 +201,7 @@ export default function AIAgents() {
     const { data } = await supabase
       .from('warming_sessions')
       .select('whatsapp_number_id, warming_status')
-      .eq('user_id', user.id);
+      .eq('owner_user_id', accountOwnerId);
     if (data) {
       const map: Record<string, string> = {};
       data.forEach(s => { map[s.whatsapp_number_id] = s.warming_status; });

@@ -45,6 +45,7 @@ import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
 import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
 import { planHasFeature } from "@/lib/planAccess";
 import { useAccountRole } from "@/hooks/useAccountRole";
+import { roleHasPermission, type AccountPermission } from "@/lib/accountPermissions";
 
 interface AppSidebarProps {
   profile?: {
@@ -72,7 +73,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const { signOut, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
   const { role: accountRole } = useAccountRole();
-  const canSeeUsers = isAdmin || accountRole === "owner" || accountRole === "admin";
+  const canRole = (perm: AccountPermission) => roleHasPermission(accountRole, perm);
+  const canSeeUsers = (isAdmin || accountRole === "owner" || accountRole === "admin") && canRole("usuarios");
   const can = (key: FeatureKey) =>
     isAdmin ||
     (profileHasFeature(authProfile as any, key) && planHasFeature(authProfile as any, key));
@@ -273,6 +275,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         <nav className="flex-1 py-4 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1 px-4">
             {/* Dashboard - single page, no submenu */}
+            {canRole("dashboard_main") && (
             <li>
               <SidebarNavItem
                 title="Dashboard"
@@ -283,9 +286,11 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 tooltip="Dashboard"
               />
             </li>
+            )}
+
 
             {/* Oportunidades with submenu */}
-            {can("oportunidades") && (
+            {can("oportunidades") && canRole("prospeccao") && (
             <li data-tour="sidebar-oportunidades">
               <SidebarNavItem
                 title="Prospecção IA"
@@ -343,6 +348,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             )}
 
             {/* Meta */}
+            {canRole("dashboard_meta") && (
             <li data-tour="sidebar-meta">
               <SidebarNavItem
                 title="Meta"
@@ -390,6 +396,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 </div>
               )}
             </li>
+            )}
 
 
             {/* Campanhas with submenu — Evolution só para usuários legacy */}
@@ -598,7 +605,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         <div className="py-4 border-t border-sidebar-border">
           <ul className="space-y-1 px-4">
             {/* Upgrade */}
-            {showUpgrade && (
+            {/* Upgrade — só para quem tem acesso a assinaturas (esconde para operacional) */}
+            {showUpgrade && canRole("assinaturas") && (
               <li>
                 <SidebarNavItem
                   title="Upgrade"
