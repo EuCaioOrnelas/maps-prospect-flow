@@ -503,6 +503,14 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const userId = user?.id;
   useEffect(() => {
     if (!userId || startedRef.current) return;
+    // Sub usuários (parent_owner_id) usam a conta do owner — nunca disparar o tour.
+    if ((profile as any)?.parent_owner_id) {
+      startedRef.current = true;
+      return;
+    }
+    // Se o usuário ainda precisa redefinir a senha (account_members), espera o fluxo
+    // de senha terminar antes de iniciar o guia para evitar conflito visual.
+    if ((profile as any)?.must_change_password) return;
     if (location.pathname !== "/dashboard") return;
     const LS_KEY = lsKeyFor(userId);
     // One-time migration: clear the legacy global flag so it doesn't block new users
