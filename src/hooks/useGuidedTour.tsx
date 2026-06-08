@@ -729,9 +729,29 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const NOOP_TOUR_CTX: GuidedTourContextValue = {
+  isActive: false,
+  currentStepIndex: 0,
+  steps: [],
+  direction: "next",
+  start: () => {
+    if (typeof console !== "undefined") {
+      console.warn("[useGuidedTour] start() called outside GuidedTourProvider — no-op");
+    }
+  },
+  next: () => {},
+  prev: () => {},
+  finish: () => {},
+};
+
 export function useGuidedTour() {
   const ctx = useContext(GuidedTourContext);
-  if (!ctx) throw new Error("useGuidedTour must be used within GuidedTourProvider");
+  if (!ctx) {
+    if (typeof console !== "undefined") {
+      console.warn("[useGuidedTour] Used outside GuidedTourProvider — returning no-op context");
+    }
+    return NOOP_TOUR_CTX;
+  }
   return ctx;
 }
 
