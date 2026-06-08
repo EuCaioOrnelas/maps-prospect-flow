@@ -45,6 +45,8 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [role, setRole] = useState<Exclude<AccountRole, "owner">>("operational");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<{ email: string; password: string } | null>(null);
@@ -61,38 +63,54 @@ export const AddUserDialog = ({ open, onOpenChange, onCreated, canAdd, remaining
   useEffect(() => {
     if (!open) {
       setName(""); setEmail(""); setPassword(""); setConfirm(""); setRole("operational");
+      setShowPassword(false); setShowConfirm(false);
     }
   }, [open]);
 
   const permissions = useMemo(() => ROLE_PERMISSIONS[role], [role]);
+
+  const generatePassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    let pw = "";
+    for (let i = 0; i < 12; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+    setPassword(pw);
+    setConfirm(pw);
+    setShowPassword(true);
+    setShowConfirm(true);
+  };
 
   const handleSubmit = async () => {
     if (!canAdd) {
       toast({ title: "Limite de usuários atingido", variant: "destructive" });
       return;
     }
-    if (!name.trim() || !email.trim()) {
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+    const cleanConfirm = confirm.trim();
+
+    if (!cleanName || !cleanEmail) {
       toast({ title: "Preencha nome e email", variant: "destructive" });
       return;
     }
-    if (password.length < 8) {
+    if (cleanPassword.length < 8) {
       toast({ title: "Senha muito curta", description: "Use no mínimo 8 caracteres.", variant: "destructive" });
       return;
     }
-    if (password !== confirm) {
-      toast({ title: "As senhas não coincidem", variant: "destructive" });
+    if (cleanPassword !== cleanConfirm) {
+      toast({ title: "As senhas não coincidem", description: "Verifique se não há espaços antes/depois.", variant: "destructive" });
       return;
     }
 
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("account-create-member", {
-        body: { name: name.trim(), email: email.trim().toLowerCase(), password, role },
+        body: { name: cleanName, email: cleanEmail, password: cleanPassword, role },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
 
-      setSuccess({ email: email.trim().toLowerCase(), password });
+      setSuccess({ email: cleanEmail, password: cleanPassword });
       onCreated();
     } catch (e: any) {
       toast({ title: "Erro ao criar usuário", description: e.message, variant: "destructive" });
