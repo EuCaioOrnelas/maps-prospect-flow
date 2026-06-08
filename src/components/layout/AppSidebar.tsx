@@ -690,9 +690,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                 )}
               >
-                <Avatar className="h-5 w-5 shrink-0 border border-sidebar-border">
+                <Avatar className="h-7 w-7 shrink-0 border border-sidebar-border">
                   <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-medium">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
