@@ -30,6 +30,17 @@ const readingTime = (html: string) => {
   return Math.max(1, Math.round(words / 220));
 };
 
+// Converte ISO UTC do banco para o formato datetime-local (horário local do navegador).
+// Sem isso, slice(0,16) trataria UTC como local e cada save deslocaria o horário pelo fuso,
+// jogando published_at para o futuro e sumindo o post do blog.
+const toLocalInput = (iso: string | null | undefined) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 type Category = { id: string; name: string };
 type FAQItem = { question: string; answer: string };
 
@@ -141,8 +152,8 @@ export default function AdminBlogEditor() {
         robots_index: safeBool(data.robots_index, true),
         robots_follow: safeBool(data.robots_follow, true),
         category_id: data.category_id || "",
-        published_at: data.published_at ? data.published_at.slice(0, 16) : "",
-        scheduled_for: data.scheduled_for ? data.scheduled_for.slice(0, 16) : "",
+        published_at: toLocalInput(data.published_at),
+        scheduled_for: toLocalInput(data.scheduled_for),
         seo_keywords: Array.isArray(data.seo_keywords) ? data.seo_keywords.join(", ") : "",
         ai_entities: Array.isArray(data.ai_entities) ? data.ai_entities.join(", ") : "",
         faq: Array.isArray(data.faq) ? (data.faq as any) : [],
