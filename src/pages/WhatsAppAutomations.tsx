@@ -114,7 +114,7 @@ export default function WhatsAppAutomations() {
     mutationFn: async (flow: any) => {
       const { data, error } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, name: `${flow.name} (cópia)`, description: flow.description })
+        .insert({ user_id: user!.id, owner_user_id: accountOwnerId || user!.id, name: `${flow.name} (cópia)`, description: flow.description })
         .select()
         .single();
       if (error) throw error;
