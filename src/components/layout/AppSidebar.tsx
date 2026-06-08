@@ -605,7 +605,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         <div className="py-4 border-t border-sidebar-border">
           <ul className="space-y-1 px-4">
             {/* Upgrade */}
-            {showUpgrade && (
+            {/* Upgrade — só para quem tem acesso a assinaturas (esconde para operacional) */}
+            {showUpgrade && canRole("assinaturas") && (
               <li>
                 <SidebarNavItem
                   title="Upgrade"
