@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, UserPlus, ArrowUpRight } from "lucide-react";
+import { Loader2, UserPlus, ArrowUpRight, Eye, EyeOff, Wand2 } from "lucide-react";
 import {
   AccountRole,
   ROLE_PERMISSIONS,
