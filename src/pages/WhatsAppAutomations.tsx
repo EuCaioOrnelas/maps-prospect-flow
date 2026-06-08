@@ -182,7 +182,7 @@ export default function WhatsAppAutomations() {
       // Create the flow
       const { data: flow, error: flowError } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, name: tpl.name, description: tpl.description })
+        .insert({ user_id: user!.id, owner_user_id: accountOwnerId || user!.id, name: tpl.name, description: tpl.description })
         .select()
         .single();
       if (flowError || !flow) throw flowError;
