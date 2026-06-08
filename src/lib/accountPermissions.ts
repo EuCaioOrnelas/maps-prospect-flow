@@ -107,6 +107,9 @@ export function getRolePermissionForPath(pathname: string): AccountPermission | 
   if (pathname.startsWith("/oportunidades") || pathname === "/prospeccao") return "prospeccao";
   if (pathname.startsWith("/crm")) return "crm";
   if (pathname.startsWith("/chat")) return "atendimento";
+  if (pathname.startsWith("/fluxos")) return "fluxos";
+  if (pathname.startsWith("/agents")) return "agentes_ia";
+  if (pathname.startsWith("/warming")) return "aquecimento";
   if (pathname.startsWith("/usuarios")) return "usuarios";
   if (pathname.startsWith("/minha-assinatura")) return "assinaturas";
   return null;
