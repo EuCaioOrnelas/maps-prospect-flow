@@ -44,7 +44,7 @@ function openMetaTemplateManager(wabaId?: string | null) {
 }
 
 export default function MetaTemplates({ embedded = false }: { embedded?: boolean } = {}) {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -66,12 +66,12 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
   const [tplCatPickerSearch, setTplCatPickerSearch] = useState("");
 
   const load = async () => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     setLoading(true);
     const [{ data: cats }, { data: tpls }, { data: conn }] = await Promise.all([
-      supabase.from("wiize_template_categories").select("*").eq("user_id", user.id).order("name"),
-      supabase.from("wiize_message_templates").select("*").eq("user_id", user.id).eq("archived", false).order("updated_at", { ascending: false }),
-      supabase.from("user_waba_connections").select("waba_id").eq("user_id", user.id).limit(1).maybeSingle(),
+      supabase.from("wiize_template_categories").select("*").eq("owner_user_id", accountOwnerId).order("name"),
+      supabase.from("wiize_message_templates").select("*").eq("owner_user_id", accountOwnerId).eq("archived", false).order("updated_at", { ascending: false }),
+      supabase.from("user_waba_connections").select("waba_id").eq("owner_user_id", accountOwnerId).limit(1).maybeSingle(),
     ]);
     setCategories((cats as Category[]) || []);
     setTemplates((tpls as Template[]) || []);
@@ -79,7 +79,7 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [user?.id]);
+  useEffect(() => { load(); }, [user?.id, accountOwnerId]);
 
   const filtered = useMemo(() => {
     let list = templates;
@@ -133,7 +133,7 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
   };
 
   const handleSaveCategory = async (data: { name: string; color: string; }) => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     const normalizedName = data.name.trim().toLowerCase();
     const duplicate = categories.some(
       (c) => c.name.trim().toLowerCase() === normalizedName && c.id !== editingCat?.id
@@ -146,7 +146,7 @@ export default function MetaTemplates({ embedded = false }: { embedded?: boolean
       const { error } = await supabase.from("wiize_template_categories").update(data).eq("id", editingCat.id);
       if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
-      const { error } = await supabase.from("wiize_template_categories").insert({ ...data, user_id: user.id });
+      const { error } = await supabase.from("wiize_template_categories").insert({ ...data, user_id: accountOwnerId, owner_user_id: accountOwnerId });
       if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
     }
     setCatDialogOpen(false);
