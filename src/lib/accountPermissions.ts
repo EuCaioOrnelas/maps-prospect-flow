@@ -22,6 +22,9 @@ export type AccountPermission =
   | "prospeccao"
   | "crm"
   | "atendimento"
+  | "fluxos"
+  | "agentes_ia"
+  | "aquecimento"
   | "usuarios"
   | "assinaturas"
   | "faturamento"
@@ -35,6 +38,9 @@ export const ROLE_PERMISSIONS: Record<AccountRole, AccountPermission[]> = {
     "prospeccao",
     "crm",
     "atendimento",
+    "fluxos",
+    "agentes_ia",
+    "aquecimento",
     "usuarios",
     "assinaturas",
     "faturamento",
@@ -47,11 +53,21 @@ export const ROLE_PERMISSIONS: Record<AccountRole, AccountPermission[]> = {
     "prospeccao",
     "crm",
     "atendimento",
+    "fluxos",
+    "agentes_ia",
+    "aquecimento",
     "usuarios",
     "configuracoes",
     "integracoes",
   ],
-  operational: ["prospeccao", "crm", "atendimento"],
+  operational: [
+    "prospeccao",
+    "crm",
+    "atendimento",
+    "fluxos",
+    "agentes_ia",
+    "aquecimento",
+  ],
 };
 
 export const ROLE_LABEL: Record<AccountRole, string> = {
@@ -66,6 +82,9 @@ export const PERMISSION_LABEL: Record<AccountPermission, string> = {
   prospeccao: "Prospecção IA",
   crm: "CRM",
   atendimento: "Atendimento (Chat)",
+  fluxos: "Fluxos de Automação",
+  agentes_ia: "Agentes IA",
+  aquecimento: "Aquecimento",
   usuarios: "Usuários",
   assinaturas: "Assinaturas",
   faturamento: "Faturamento",
@@ -88,6 +107,9 @@ export function getRolePermissionForPath(pathname: string): AccountPermission | 
   if (pathname.startsWith("/oportunidades") || pathname === "/prospeccao") return "prospeccao";
   if (pathname.startsWith("/crm")) return "crm";
   if (pathname.startsWith("/chat")) return "atendimento";
+  if (pathname.startsWith("/fluxos")) return "fluxos";
+  if (pathname.startsWith("/agents")) return "agentes_ia";
+  if (pathname.startsWith("/warming")) return "aquecimento";
   if (pathname.startsWith("/usuarios")) return "usuarios";
   if (pathname.startsWith("/minha-assinatura")) return "assinaturas";
   return null;
