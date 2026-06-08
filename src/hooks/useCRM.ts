@@ -297,6 +297,7 @@ export const useCRM = () => {
       .from('leads')
       .insert({
         user_id: user.id,
+        owner_user_id: effectiveOwnerId || user.id,
         phone: normalizedPhone,
         company_name: lead.company_name,
         contact_name: lead.contact_name,
@@ -413,6 +414,7 @@ export const useCRM = () => {
     await supabase.from('lead_activities').insert([{
       lead_id: leadId,
       user_id: user.id,
+      owner_user_id: effectiveOwnerId || user.id,
       activity_type: activityType,
       description,
       metadata: (metadata || {}) as Record<string, string | number | boolean | null>,
@@ -428,6 +430,7 @@ export const useCRM = () => {
       .insert({
         lead_id: leadId,
         user_id: user.id,
+        owner_user_id: effectiveOwnerId || user.id,
         content,
       })
       .select()
