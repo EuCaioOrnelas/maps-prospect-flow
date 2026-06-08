@@ -28,7 +28,7 @@ export const useCampaignDrafts = () => {
   const [drafts, setDrafts] = useState<CampaignDraft[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
 
   const fetchDrafts = useCallback(async () => {
     if (!user) {
@@ -38,11 +38,12 @@ export const useCampaignDrafts = () => {
     }
 
     try {
+      const ownerId = accountOwnerId || user.id;
       // Use type assertion since campaign_drafts may not be in generated types yet
       const { data, error } = await (supabase
         .from('campaign_drafts' as any)
         .select('*')
-        .eq('user_id', user.id)
+        .or(`owner_user_id.eq.${ownerId},user_id.eq.${ownerId}`)
         .order('updated_at', { ascending: false }) as any);
 
       if (error) throw error;
