@@ -275,6 +275,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         <nav className="flex-1 py-4 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1 px-4">
             {/* Dashboard - single page, no submenu */}
+            {canRole("dashboard_main") && (
             <li>
               <SidebarNavItem
                 title="Dashboard"
@@ -285,6 +286,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 tooltip="Dashboard"
               />
             </li>
+            )}
+
 
             {/* Oportunidades with submenu */}
             {can("oportunidades") && (
