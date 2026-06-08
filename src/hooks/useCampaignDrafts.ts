@@ -110,6 +110,7 @@ export const useCampaignDrafts = () => {
 
     const draftPayload = {
       user_id: user.id,
+      owner_user_id: accountOwnerId || user.id,
       name: draftData.campaignName || `Rascunho ${new Date().toLocaleDateString('pt-BR')}`,
       step: draftData.step,
       selected_leads: draftData.selectedLeads,
