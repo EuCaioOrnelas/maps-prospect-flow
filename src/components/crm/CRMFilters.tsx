@@ -87,7 +87,7 @@ export const CRMFilters = ({
     setLocalSearch(filters.search);
   }, [filters.search]);
 
-  const isResponsibleActive = showResponsibleFilter && responsibleFilter && responsibleFilter !== 'me';
+  const isResponsibleActive = showResponsibleFilter && responsibleFilter && responsibleFilter !== 'all';
 
   const activeFiltersCount = [
     filters.stage,
@@ -118,6 +118,7 @@ export const CRMFilters = ({
       dateFrom: undefined,
       dateTo: undefined,
     });
+    onResponsibleFilterChange?.('all');
   };
 
   const toggleTag = (tag: string) => {
@@ -214,7 +215,7 @@ export const CRMFilters = ({
                       Filtrar leads por responsável
                     </label>
                     <Select
-                      value={responsibleFilter ?? 'me'}
+                      value={responsibleFilter ?? 'all'}
                       onValueChange={(v) => onResponsibleFilterChange(v as ResponsibleFilter)}
                     >
                       <SelectTrigger>
