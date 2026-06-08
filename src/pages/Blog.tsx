@@ -35,10 +35,17 @@ type Post = {
   excerpt: string | null;
   cover_image_url: string | null;
   author_name: string;
+  category_id: string | null;
   category: Category | null;
   published_at: string | null;
   reading_time_minutes: number | null;
   featured: boolean;
+};
+
+type BlogError = {
+  title: string;
+  message: string;
+  details?: string;
 };
 
 export default function Blog() {
@@ -54,6 +61,7 @@ export default function Blog() {
   const [featured, setFeatured] = useState<Post[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [blogError, setBlogError] = useState<BlogError | null>(null);
   const [searchInput, setSearchInput] = useState(q);
 
   useEffect(() => {
@@ -61,19 +69,24 @@ export default function Blog() {
       .from("blog_categories")
       .select("id,name,slug,color")
       .order("sort_order", { ascending: true })
-      .then(({ data }) => setCategories((data as Category[]) || []));
+      .then(({ data, error }) => {
+        if (error) console.error("[Blog] Falha ao carregar categorias", error);
+        setCategories((data as Category[]) || []);
+      });
   }, []);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
+      setBlogError(null);
       const from = (page - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
+      const categoryById = new Map(categories.map((category) => [category.id, category]));
 
       let query = supabase
         .from("blog_posts")
         .select(
-          "id,slug,title,excerpt,cover_image_url,author_name,published_at,reading_time_minutes,featured,category:blog_categories(id,name,slug,color)",
+          "id,slug,title,excerpt,cover_image_url,author_name,category_id,published_at,reading_time_minutes,featured",
           { count: "exact" }
         )
         .eq("status", "published")
@@ -88,23 +101,50 @@ export default function Blog() {
         query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%,content.ilike.%${q}%`);
       }
 
-      const { data, count } = await query.range(from, to);
-      setPosts((data as any) || []);
+      const { data, count, error } = await query.range(from, to);
+
+      if (error) {
+        console.error("[Blog] Falha ao carregar posts publicados", error);
+        setPosts([]);
+        setTotal(0);
+        setFeatured([]);
+        setBlogError({
+          title: "Não foi possível carregar os posts publicados.",
+          message: "O banco externo bloqueou a leitura pública da tabela blog_posts ou não concedeu permissão SELECT para a chave pública usada no site.",
+          details: error.message,
+        });
+        setLoading(false);
+        return;
+      }
+
+      const rows = ((data as any[]) || []).map((post) => ({
+        ...post,
+        category: post.category_id ? categoryById.get(post.category_id) || null : null,
+      }));
+      setPosts(rows as Post[]);
       setTotal(count || 0);
       setLoading(false);
 
       if (page === 1 && !q && !categorySlug) {
-        const { data: fdata } = await supabase
+        const { data: fdata, error: featuredError } = await supabase
           .from("blog_posts")
           .select(
-            "id,slug,title,excerpt,cover_image_url,author_name,published_at,reading_time_minutes,featured,category:blog_categories(id,name,slug,color)"
+            "id,slug,title,excerpt,cover_image_url,author_name,category_id,published_at,reading_time_minutes,featured"
           )
           .eq("status", "published")
           .eq("featured", true)
           .lte("published_at", new Date().toISOString())
           .order("published_at", { ascending: false })
           .limit(3);
-        setFeatured((fdata as any) || []);
+        if (featuredError) {
+          console.error("[Blog] Falha ao carregar posts em destaque", featuredError);
+          setFeatured([]);
+        } else {
+          setFeatured((((fdata as any[]) || []).map((post) => ({
+            ...post,
+            category: post.category_id ? categoryById.get(post.category_id) || null : null,
+          }))) as Post[]);
+        }
       } else {
         setFeatured([]);
       }
@@ -329,6 +369,16 @@ export default function Blog() {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : blogError ? (
+            <div className="text-center py-16 border border-dashed border-destructive/40 rounded-xl bg-destructive/5 px-6">
+              <p className="font-medium text-destructive">{blogError.title}</p>
+              <p className="mt-2 text-sm text-muted-foreground max-w-2xl mx-auto">{blogError.message}</p>
+              {blogError.details && (
+                <p className="mt-3 text-xs text-muted-foreground/80 max-w-2xl mx-auto break-words">
+                  Erro: {blogError.details}
+                </p>
+              )}
             </div>
           ) : posts.length === 0 ? (
             <div className="text-center py-16 border border-dashed border-border rounded-xl">
