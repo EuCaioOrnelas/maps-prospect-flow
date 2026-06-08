@@ -1396,7 +1396,7 @@ export const LeadDetailDialog = ({
                     <ResponsibleAvatar
                       responsibleId={lead.responsible_user_id}
                       members={members}
-                      size="lg"
+                      size="xl"
                       canEdit={!!onChangeResponsible}
                       onChange={async (uid) => {
                         if (onChangeResponsible) {
