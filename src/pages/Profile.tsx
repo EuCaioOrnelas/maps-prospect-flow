@@ -70,7 +70,7 @@ import { useAccountRole } from "@/hooks/useAccountRole";
 
 
 const Profile = () => {
-  const { profile, user, refreshProfile, signOut } = useAuth();
+  const { profile, user, accountOwnerId, refreshProfile, signOut } = useAuth();
   const { role: accountRole } = useAccountRole();
   const isSubUser = accountRole === "admin" || accountRole === "operational";
   useAutoScoreTracking("profile");
@@ -125,12 +125,12 @@ const Profile = () => {
   // Load company profile
   useEffect(() => {
     const loadCompanyProfile = async () => {
-      if (!user) return;
+      if (!user || !accountOwnerId) return;
       try {
         const { data } = await supabase
           .from("company_profiles" as any)
           .select("*")
-          .eq("user_id", user.id)
+          .eq("owner_user_id", accountOwnerId)
           .maybeSingle();
         if (data) {
           setCompanyProfile(data);
@@ -151,20 +151,21 @@ const Profile = () => {
       }
     };
     loadCompanyProfile();
-  }, [user]);
+  }, [user, accountOwnerId]);
 
   const handleSaveCompanyProfile = async () => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     setIsSavingCompany(true);
     try {
       const { error } = await supabase
         .from("company_profiles" as any)
         .upsert({
-          user_id: user.id,
+          user_id: accountOwnerId,
+          owner_user_id: accountOwnerId,
           ...companyForm,
         } as any, { onConflict: "user_id" });
       if (error) throw error;
-      setCompanyProfile({ ...companyForm, user_id: user.id });
+      setCompanyProfile({ ...companyForm, user_id: accountOwnerId, owner_user_id: accountOwnerId });
       setIsEditingCompany(false);
       toast({ title: "Perfil da empresa salvo!", description: "Suas informações serão usadas para personalizar as mensagens de IA." });
     } catch (err: any) {

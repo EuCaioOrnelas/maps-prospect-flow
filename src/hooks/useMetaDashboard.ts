@@ -87,7 +87,7 @@ export function useMetaDashboard(
   range: MetaDashboardRange,
   responsibleUserId?: string | null,
 ): MetaDashboardData {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Omit<MetaDashboardData, "loading">>(() => emptyData());
 
@@ -103,7 +103,7 @@ export function useMetaDashboard(
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const uid = user.id;
+      const ownerId = accountOwnerId || user.id;
       const respFilter = responsibleUserId || null;
       const withResp = (q: any): any => (respFilter ? q.eq("responsible_user_id", respFilter) : q);
 
@@ -121,18 +121,18 @@ export function useMetaDashboard(
         chatInboundRes,
         prevChatInboundRes,
       ] = await Promise.all([
-        supabase.from("whatsapp_campaigns").select("id,name,status,sent_count,failed_count,total_responses,total_leads,created_at").eq("user_id", uid).gte("created_at", startISO).lte("created_at", endISO).order("created_at", { ascending: false }),
-        supabase.from("whatsapp_campaigns").select("sent_count,failed_count,total_responses,created_at").eq("user_id", uid).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
-        withResp(supabase.from("leads").select("id,first_message_sent,has_responded,pipeline_stage_id,estimated_value,opportunity_level,created_at,responded_at").eq("user_id", uid).gte("created_at", startISO).lte("created_at", endISO)),
-        withResp(supabase.from("leads").select("id,estimated_value,opportunity_level,first_message_sent,created_at").eq("user_id", uid).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString())),
-        withResp(supabase.from("leads").select("id", { count: "exact", head: true }).eq("user_id", uid).eq("has_responded", true).gte("responded_at", startISO).lte("responded_at", endISO)),
-        withResp(supabase.from("leads").select("id", { count: "exact", head: true }).eq("user_id", uid).eq("has_responded", true).gte("responded_at", prevStart.toISOString()).lt("responded_at", prevEnd.toISOString())),
-        supabase.from("lead_deals").select("value,closed_at").eq("user_id", uid).gte("closed_at", startISO).lte("closed_at", endISO),
-        supabase.from("lead_deals").select("value").eq("user_id", uid).gte("closed_at", prevStart.toISOString()).lt("closed_at", prevEnd.toISOString()),
-        supabase.from("wiize_message_templates").select("id,category_id").eq("user_id", uid).eq("archived", false),
-        supabase.from("wiize_template_categories").select("id,name,color").eq("user_id", uid),
-        supabase.from("chat_messages").select("created_at,conversation_id").eq("user_id", uid).eq("direction", "inbound").gte("created_at", startISO).lte("created_at", endISO),
-        supabase.from("chat_messages").select("created_at,conversation_id").eq("user_id", uid).eq("direction", "inbound").gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
+        supabase.from("whatsapp_campaigns").select("id,name,status,sent_count,failed_count,total_responses,total_leads,created_at").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO).order("created_at", { ascending: false }),
+        supabase.from("whatsapp_campaigns").select("sent_count,failed_count,total_responses,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
+        withResp(supabase.from("leads").select("id,first_message_sent,has_responded,pipeline_stage_id,estimated_value,opportunity_level,created_at,responded_at").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO)),
+        withResp(supabase.from("leads").select("id,estimated_value,opportunity_level,first_message_sent,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString())),
+        withResp(supabase.from("leads").select("id", { count: "exact", head: true }).eq("owner_user_id", ownerId).eq("has_responded", true).gte("responded_at", startISO).lte("responded_at", endISO)),
+        withResp(supabase.from("leads").select("id", { count: "exact", head: true }).eq("owner_user_id", ownerId).eq("has_responded", true).gte("responded_at", prevStart.toISOString()).lt("responded_at", prevEnd.toISOString())),
+        supabase.from("lead_deals").select("value,closed_at").eq("owner_user_id", ownerId).gte("closed_at", startISO).lte("closed_at", endISO),
+        supabase.from("lead_deals").select("value").eq("owner_user_id", ownerId).gte("closed_at", prevStart.toISOString()).lt("closed_at", prevEnd.toISOString()),
+        supabase.from("wiize_message_templates").select("id,category_id").eq("owner_user_id", ownerId).eq("archived", false),
+        supabase.from("wiize_template_categories").select("id,name,color").eq("owner_user_id", ownerId),
+        supabase.from("chat_messages").select("created_at,conversation_id").eq("owner_user_id", ownerId).eq("direction", "inbound").gte("created_at", startISO).lte("created_at", endISO),
+        supabase.from("chat_messages").select("created_at,conversation_id").eq("owner_user_id", ownerId).eq("direction", "inbound").gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
       ]);
       if (cancelled) return;
 
@@ -374,7 +374,7 @@ export function useMetaDashboard(
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [user?.id, startISO, endISO, responsibleUserId]);
+  }, [user?.id, accountOwnerId, startISO, endISO, responsibleUserId]);
 
   return useMemo(() => ({ loading, ...data }), [loading, data]);
 }

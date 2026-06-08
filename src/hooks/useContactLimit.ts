@@ -8,7 +8,7 @@ import { getContactLimit } from "@/lib/planAccess";
  * + add-ons (extra_contacts_packs * 1000).
  */
 export function useContactLimit() {
-  const { user, profile } = useAuth();
+  const { user, accountOwnerId, profile } = useAuth();
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
@@ -19,7 +19,7 @@ export function useContactLimit() {
   const limit = Number.isFinite(baseLimit) ? baseLimit + extraContacts : baseLimit;
 
   const refresh = useCallback(async () => {
-    if (!user?.id) {
+    if (!user?.id || !accountOwnerId) {
       setCount(0);
       setLoading(false);
       return;
@@ -28,10 +28,10 @@ export function useContactLimit() {
     const { count: c } = await supabase
       .from("leads")
       .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id);
+      .eq("owner_user_id", accountOwnerId);
     setCount(c || 0);
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, accountOwnerId]);
 
   useEffect(() => {
     refresh();

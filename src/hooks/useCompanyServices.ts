@@ -17,9 +17,9 @@ export function useCompanyServices() {
   const queryClient = useQueryClient();
 
   const { data: services = [], isLoading } = useQuery({
-    queryKey: ["company-services", user?.id],
+    queryKey: ["company-services", accountOwnerId],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || !accountOwnerId) return [];
       const { data, error } = await supabase
         .from("company_services")
         .select("*")
@@ -28,7 +28,7 @@ export function useCompanyServices() {
       if (error) throw error;
       return (data || []) as CompanyService[];
     },
-    enabled: !!user,
+    enabled: !!user && !!accountOwnerId,
     staleTime: 60_000,
   });
 
@@ -38,7 +38,7 @@ export function useCompanyServices() {
 
   const upsertServices = useMutation({
     mutationFn: async (newServices: { name: string; average_ticket: number; description: string }[]) => {
-      if (!user) throw new Error("Not authenticated");
+      if (!user || !accountOwnerId) throw new Error("Not authenticated");
 
       // Delete existing services
       await supabase
@@ -53,7 +53,8 @@ export function useCompanyServices() {
         .from("company_services")
         .insert(
           newServices.map((s) => ({
-            user_id: user.id,
+            user_id: accountOwnerId,
+            owner_user_id: accountOwnerId,
             name: s.name,
             average_ticket: s.average_ticket,
             description: s.description || null,

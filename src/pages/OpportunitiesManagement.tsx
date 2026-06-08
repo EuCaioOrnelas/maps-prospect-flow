@@ -208,6 +208,7 @@ export default function OpportunitiesManagement() {
       const { data, error } = await supabase
         .from("leads")
         .select("id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id, responsible_user_id, archived_at")
+        .eq("owner_user_id", accountOwnerId)
         .in("origin", ["oportunidades", "prospeccao"])
         .is("archived_at", null)
         .order("created_at", { ascending: false });
@@ -1732,6 +1733,7 @@ export default function OpportunitiesManagement() {
         <CompanyProfileOnboarding
           open={showOnboarding}
           userId={user.id}
+          ownerUserId={accountOwnerId}
           initialData={companyProfile}
           onClose={() => setShowOnboarding(false)}
           onComplete={(profile) => {
@@ -1762,7 +1764,7 @@ export default function OpportunitiesManagement() {
             phone_numbers: sendingLead.phone_numbers,
           }}
           message={sendingLead.ai_approach_message || ""}
-          userId={user.id}
+          userId={accountOwnerId || user.id}
           availableNumbers={numbers}
           onSent={() => {
             setSendCooldown(120);

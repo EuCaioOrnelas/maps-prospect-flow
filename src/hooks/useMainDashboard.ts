@@ -41,7 +41,7 @@ export interface DashboardMetrics {
 }
 
 export function useMainDashboard(periodDays: number): DashboardMetrics {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [rawData, setRawData] = useState({
     leadsProspected: 0,
@@ -69,12 +69,12 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     fetchData();
-  }, [user, periodDays]);
+  }, [user, accountOwnerId, periodDays]);
 
   const fetchData = async () => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     setLoading(true);
 
     const now = new Date();
@@ -93,54 +93,54 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         leadsFunnelRes,
       ] = await Promise.all([
         supabase.from('search_history').select('results_count')
-          .eq('user_id', user.id).gte('created_at', periodStart.toISOString()),
+          .eq('owner_user_id', accountOwnerId).gte('created_at', periodStart.toISOString()),
         supabase.from('search_history').select('results_count')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .gte('created_at', prevPeriodStart.toISOString())
           .lt('created_at', prevPeriodEnd.toISOString()),
         supabase.from('whatsapp_campaigns')
           .select('id, name, status, sent_count, failed_count, total_leads, total_responses, created_at, whatsapp_number_id')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .gte('created_at', periodStart.toISOString())
           .order('created_at', { ascending: false }),
         supabase.from('whatsapp_campaigns')
           .select('sent_count, failed_count, total_responses')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .gte('created_at', prevPeriodStart.toISOString())
           .lt('created_at', prevPeriodEnd.toISOString()),
         supabase.from('campaign_responses').select('responded_at')
-          .eq('user_id', user.id).gte('responded_at', periodStart.toISOString()),
+          .eq('owner_user_id', accountOwnerId).gte('responded_at', periodStart.toISOString()),
         supabase.from('campaign_responses').select('id')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .gte('responded_at', prevPeriodStart.toISOString())
           .lt('responded_at', prevPeriodEnd.toISOString()),
         supabase.from('whatsapp_numbers')
           .select('id, name, phone_number, is_connected, daily_sent_count, last_sent_at')
-          .eq('user_id', user.id),
+          .eq('owner_user_id', accountOwnerId),
         supabase.from('warming_sessions')
           .select('id, whatsapp_number_id, warming_level, warming_status, status, messages_sent_today, error_message')
-          .eq('user_id', user.id),
+          .eq('owner_user_id', accountOwnerId),
         supabase.from('campaign_incidents')
           .select('id, incident_type, detected_at, contact_phone')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .gte('created_at', periodStart.toISOString())
           .order('created_at', { ascending: false }).limit(20),
         (supabase.from('system_settings' as any).select('value')
           .eq('key', 'cpl_benchmark').maybeSingle() as unknown as Promise<any>),
         // All-time search data for cumulative metrics
         supabase.from('search_history').select('results_count, created_at')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .order('created_at', { ascending: true }),
-        supabase.from('profiles').select('created_at').eq('id', user.id).maybeSingle(),
+        supabase.from('profiles').select('created_at').eq('id', accountOwnerId).maybeSingle(),
         // All-time campaigns for monthly breakdown
         supabase.from('whatsapp_campaigns')
           .select('sent_count, created_at')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .order('created_at', { ascending: true }),
         // Leads do CRM no período — fonte única para o funil operacional (alinhado com Meta)
         supabase.from('leads')
           .select('id, opportunity_level, first_message_sent, has_responded')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .gte('created_at', periodStart.toISOString()),
       ]) as any;
 

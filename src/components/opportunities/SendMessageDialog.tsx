@@ -108,7 +108,7 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
       const { data } = await supabase
         .from("whatsapp_numbers")
         .select("id, instance_name, phone_number, name, is_connected")
-        .eq("user_id", userId);
+        .eq("owner_user_id", userId);
 
       applyNumberState(data || []);
     } catch (err) {
@@ -264,7 +264,7 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
       const { data: stages } = await supabase
         .from("pipeline_stages")
         .select("id, name, position")
-        .eq("user_id", userId)
+        .eq("owner_user_id", userId)
         .order("position", { ascending: true });
 
       // Find "mensagem enviada" stage or use the first one
@@ -283,7 +283,7 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
       const { data: existingLead } = await supabase
         .from("leads")
         .select("id, pipeline_stage_id")
-        .eq("user_id", userId)
+        .eq("owner_user_id", userId)
         .eq("id", leadId)
         .single();
 
@@ -302,6 +302,7 @@ export function SendMessageDialog({ open, onOpenChange, leadId, leadPhone, leadN
       await supabase.from("lead_activities").insert({
         lead_id: leadId,
         user_id: userId,
+        owner_user_id: userId,
         activity_type: "message_sent",
         description: `Mensagem de abordagem enviada via Oportunidades`,
       });

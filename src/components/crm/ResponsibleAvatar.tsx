@@ -55,31 +55,31 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
   });
 
   const trigger = (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        if (canEdit) setOpen((o) => !o);
-      }}
-      title={`Responsável: ${label}${canEdit ? " — clique para alterar" : ""}`}
-      className={cn(
-        "relative rounded-full flex items-center justify-center font-semibold shrink-0 overflow-hidden border border-border/60 transition-transform duration-200 ease-out",
-        current ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
-        dim,
-        canEdit && "hover:ring-2 hover:ring-primary/50 hover:border-primary/50 hover:scale-110 cursor-pointer"
-      )}
-      aria-label={`Responsável: ${label}`}
-    >
-
-
-      {current?.avatar_url ? (
-        <Avatar member={current} dim="w-full h-full" />
-      ) : current ? (
-        <span>{initials(current)}</span>
-      ) : (
-        <UserIcon className="w-1/2 h-1/2" />
-      )}
-    </button>
+    <span className="inline-flex p-1 -m-1 rounded-full overflow-visible shrink-0">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (canEdit) setOpen((o) => !o);
+        }}
+        title={`Responsável: ${label}${canEdit ? " — clique para alterar" : ""}`}
+        className={cn(
+          "relative rounded-full flex items-center justify-center font-semibold shrink-0 overflow-hidden border border-border/60 transition-transform duration-200 ease-out will-change-transform",
+          current ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+          dim,
+          canEdit && "hover:ring-2 hover:ring-primary/50 hover:border-primary/50 hover:scale-105 cursor-pointer"
+        )}
+        aria-label={`Responsável: ${label}`}
+      >
+        {current?.avatar_url ? (
+          <Avatar member={current} dim="w-full h-full" />
+        ) : current ? (
+          <span>{initials(current)}</span>
+        ) : (
+          <UserIcon className="w-1/2 h-1/2" />
+        )}
+      </button>
+    </span>
   );
 
   if (!canEdit) return trigger;

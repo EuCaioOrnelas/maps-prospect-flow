@@ -42,12 +42,12 @@ function getStatusFromScore(score: number): string {
 }
 
 export function useDashboardKPIs(periodDays: number): DashboardKPIData {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-kpis", user?.id, periodDays],
+    queryKey: ["dashboard-kpis", accountOwnerId, periodDays],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user || !accountOwnerId) return null;
 
       const now = new Date();
       const periodStart = subDays(now, periodDays);
@@ -77,45 +77,47 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         // Score growth in last 7 days per lead (for Radar)
         scoreGrowth7dRes,
       ] = await Promise.all([
-        supabase.from("leads").select("estimated_value").eq("user_id", user.id),
-        supabase.from("leads").select("estimated_value").eq("user_id", user.id)
+        supabase.from("leads").select("estimated_value").eq("owner_user_id", accountOwnerId),
+        supabase.from("leads").select("estimated_value").eq("owner_user_id", accountOwnerId)
           .gte("created_at", thirtyDaysAgo.toISOString()),
-        supabase.from("leads").select("estimated_value").eq("user_id", user.id)
+        supabase.from("leads").select("estimated_value").eq("owner_user_id", accountOwnerId)
           .gte("created_at", subDays(now, 60).toISOString())
           .lt("created_at", thirtyDaysAgo.toISOString()),
-        supabase.from("revenue_score_logs").select("lead_id, points_applied, created_at").eq("user_id", user.id)
+        supabase.from("revenue_score_logs").select("lead_id, points_applied, created_at").eq("owner_user_id", accountOwnerId)
           .gte("created_at", last24h.toISOString()),
-        supabase.from("revenue_score_logs").select("lead_id, points_applied").eq("user_id", user.id)
+        supabase.from("revenue_score_logs").select("lead_id, points_applied").eq("owner_user_id", accountOwnerId)
           .gte("created_at", last48h.toISOString())
           .lt("created_at", last24h.toISOString()),
-        supabase.from("search_history").select("results_count").eq("user_id", user.id)
+        supabase.from("search_history").select("results_count").eq("owner_user_id", accountOwnerId)
           .gte("created_at", periodStart.toISOString()),
         supabase.from("agent_conversations").select("id, agent_id")
+          .eq("owner_user_id", accountOwnerId)
           .in("status", ["active", "waiting_response"])
           .gte("updated_at", periodStart.toISOString()),
-        supabase.from("revenue_leads").select("id, score_total").eq("user_id", user.id)
+        supabase.from("revenue_leads").select("id, score_total").eq("owner_user_id", accountOwnerId)
           .gte("score_total", 601)
           .gte("created_at", periodStart.toISOString()),
         supabase.from("agent_message_logs").select("content, direction")
+          .eq("owner_user_id", accountOwnerId)
           .eq("direction", "outbound")
           .gte("created_at", periodStart.toISOString()),
-        supabase.from("wa_flow_executions" as any).select("id, node_history").eq("user_id", user.id)
+        supabase.from("wa_flow_executions" as any).select("id, node_history").eq("owner_user_id", accountOwnerId)
           .gte("created_at", periodStart.toISOString()),
         // All revenue leads for health + radar
-        supabase.from("revenue_leads").select("id, phone_e164, score_total, lead_name, status_bucket").eq("user_id", user.id),
+        supabase.from("revenue_leads").select("id, phone_e164, score_total, lead_name, status_bucket").eq("owner_user_id", accountOwnerId),
         // Recent opportunities (last 7 days)
-        supabase.from("search_history").select("results_count").eq("user_id", user.id)
+        supabase.from("search_history").select("results_count").eq("owner_user_id", accountOwnerId)
           .gte("created_at", sevenDaysAgo.toISOString()),
         // Negative score logs last 7 days
-        supabase.from("revenue_score_logs").select("lead_id, points_applied").eq("user_id", user.id)
+        supabase.from("revenue_score_logs").select("lead_id, points_applied").eq("owner_user_id", accountOwnerId)
           .lt("points_applied", 0)
           .gte("created_at", sevenDaysAgo.toISOString()),
         // Total prospected (all time)
-        supabase.from("search_history").select("results_count").eq("user_id", user.id),
+        supabase.from("search_history").select("results_count").eq("owner_user_id", accountOwnerId),
         // Total CRM leads
-        supabase.from("leads").select("id").eq("user_id", user.id),
+        supabase.from("leads").select("id").eq("owner_user_id", accountOwnerId),
         // Score logs last 7 days (all, for radar growth)
-        supabase.from("revenue_score_logs").select("lead_id, points_applied").eq("user_id", user.id)
+        supabase.from("revenue_score_logs").select("lead_id, points_applied").eq("owner_user_id", accountOwnerId)
           .gte("created_at", sevenDaysAgo.toISOString()),
       ]);
 
@@ -147,7 +149,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
       const leadsGeradosPeriodo = (leadsInPeriodRes.data || []).reduce((s, r) => s + (r.results_count || 0), 0);
 
       const agentConvos = activeConvosRes.data || [];
-      const { data: userAgents } = await supabase.from("ai_agents").select("id").eq("user_id", user.id);
+      const { data: userAgents } = await supabase.from("ai_agents").select("id").eq("owner_user_id", accountOwnerId);
       const userAgentIds = new Set((userAgents || []).map(a => a.id));
       const conversasAtivasPeriodo = agentConvos.filter(c => userAgentIds.has(c.agent_id)).length;
 
@@ -265,7 +267,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
       const { data: crmLeadsForRadar } = await supabase
         .from("leads")
         .select("id, company_name, phone, category, estimated_value")
-        .eq("user_id", user.id)
+        .eq("owner_user_id", accountOwnerId)
         .order("created_at", { ascending: false })
         .limit(500);
 
@@ -273,7 +275,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
       const { data: companyServices } = await supabase
         .from("company_services")
         .select("average_ticket")
-        .eq("user_id", user.id);
+        .eq("owner_user_id", accountOwnerId);
       const avgTicket = companyServices && companyServices.length > 0
         ? companyServices.reduce((s, sv) => s + (sv.average_ticket || 0), 0) / companyServices.length
         : 0;

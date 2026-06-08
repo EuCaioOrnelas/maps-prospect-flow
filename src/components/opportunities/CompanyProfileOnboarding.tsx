@@ -26,6 +26,7 @@ interface ServiceItem {
 interface Props {
   open: boolean;
   userId: string;
+  ownerUserId?: string | null;
   onComplete: (profile: CompanyProfile) => void;
   onClose?: () => void;
   initialData?: CompanyProfile | null;
@@ -65,8 +66,9 @@ const PROFILE_STEPS = [
 const TOTAL_STEPS = PROFILE_STEPS.length + 1;
 const SERVICES_STEP_INDEX = PROFILE_STEPS.length;
 
-export function CompanyProfileOnboarding({ open, userId, onComplete, onClose, initialData }: Props) {
+export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete, onClose, initialData }: Props) {
   const { toast } = useToast();
+  const effectiveOwnerId = ownerUserId || userId;
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const isEditing = !!initialData;
@@ -85,7 +87,7 @@ export function CompanyProfileOnboarding({ open, userId, onComplete, onClose, in
       const { data } = await supabase
         .from("company_services")
         .select("name, average_ticket, description")
-        .eq("user_id", userId)
+        .eq("owner_user_id", effectiveOwnerId)
         .order("created_at", { ascending: true });
       if (data && data.length > 0) {
         setServices(data.map(s => ({
@@ -98,7 +100,7 @@ export function CompanyProfileOnboarding({ open, userId, onComplete, onClose, in
       }
     };
     loadServices();
-  }, [initialData, open, userId]);
+  }, [effectiveOwnerId, initialData, open]);
 
   const isServiceStep = step === SERVICES_STEP_INDEX;
   const isProfileStep = step < PROFILE_STEPS.length;
@@ -150,7 +152,7 @@ export function CompanyProfileOnboarding({ open, userId, onComplete, onClose, in
         for (let attempt = 1; attempt <= 3; attempt++) {
           const { error } = await supabase
             .from("company_profiles" as any)
-            .upsert({ user_id: userId, ...form } as any, { onConflict: "user_id" });
+            .upsert({ user_id: effectiveOwnerId, owner_user_id: effectiveOwnerId, ...form } as any, { onConflict: "user_id" });
           if (!error) { profileSaved = true; break; }
           lastProfileErr = error;
           console.warn(`[CompanyProfileOnboarding] profile upsert attempt ${attempt} failed:`, error);
@@ -165,12 +167,13 @@ export function CompanyProfileOnboarding({ open, userId, onComplete, onClose, in
         const { data: oldServices } = await supabase
           .from("company_services")
           .select("id")
-          .eq("user_id", userId);
+          .eq("owner_user_id", effectiveOwnerId);
 
         if (validServices.length > 0) {
           const { error: svcError } = await supabase.from("company_services").insert(
             validServices.map(s => ({
-              user_id: userId,
+              user_id: effectiveOwnerId,
+              owner_user_id: effectiveOwnerId,
               name: s.name.trim(),
               average_ticket: s.average_ticket,
               description: s.description.trim() || null,

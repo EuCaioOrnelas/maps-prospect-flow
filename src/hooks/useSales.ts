@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -62,9 +62,10 @@ export const useSales = (leadId?: string) => {
   const { user, accountOwnerId } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const channelIdRef = useRef(crypto.randomUUID());
 
   const fetchSales = useCallback(async () => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     setIsLoading(true);
     let query = supabase
       .from("lead_deals")
@@ -82,35 +83,36 @@ export const useSales = (leadId?: string) => {
       setSales((data as unknown as Sale[]) || []);
     }
     setIsLoading(false);
-  }, [user, leadId]);
+  }, [user, accountOwnerId, leadId]);
 
   useEffect(() => {
     if (user) fetchSales();
   }, [user, fetchSales]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     const channel = supabase
-      .channel(`sales-changes-${user.id}-${leadId || "all"}`)
+      .channel(`sales-changes-${accountOwnerId}-${leadId || "all"}-${channelIdRef.current}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "lead_deals", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "lead_deals", filter: `owner_user_id=eq.${accountOwnerId}` },
         () => fetchSales()
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, leadId, fetchSales]);
+  }, [user, accountOwnerId, leadId, fetchSales]);
 
   const createSale = useCallback(
     async (input: SaleInput) => {
-      if (!user) throw new Error("not_authenticated");
+      if (!user || !accountOwnerId) throw new Error("not_authenticated");
       const contractMonths = input.sale_type === "recurring" ? input.contract_months ?? 1 : 1;
       const { data, error } = await supabase
         .from("lead_deals")
         .insert({
           user_id: user.id,
+          owner_user_id: accountOwnerId,
           lead_id: input.lead_id,
           title: input.title,
           description: input.description ?? null,
@@ -132,12 +134,12 @@ export const useSales = (leadId?: string) => {
       await fetchSales();
       return data as unknown as Sale;
     },
-    [user, fetchSales]
+    [user, accountOwnerId, fetchSales]
   );
 
   const updateSale = useCallback(
     async (id: string, updates: Partial<SaleInput & { status: SaleStatus }>) => {
-      if (!user) throw new Error("not_authenticated");
+      if (!user || !accountOwnerId) throw new Error("not_authenticated");
       const { error } = await supabase
         .from("lead_deals")
         .update(updates)
@@ -146,17 +148,17 @@ export const useSales = (leadId?: string) => {
       if (error) throw error;
       await fetchSales();
     },
-    [user, fetchSales]
+    [user, accountOwnerId, fetchSales]
   );
 
   const deleteSale = useCallback(
     async (id: string) => {
-      if (!user) throw new Error("not_authenticated");
+      if (!user || !accountOwnerId) throw new Error("not_authenticated");
       const { error } = await supabase.from("lead_deals").delete().eq("id", id).eq("owner_user_id", accountOwnerId);
       if (error) throw error;
       await fetchSales();
     },
-    [user, fetchSales]
+    [user, accountOwnerId, fetchSales]
   );
 
   const uploadAttachment = useCallback(
