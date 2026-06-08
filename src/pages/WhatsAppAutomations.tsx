@@ -89,7 +89,7 @@ export default function WhatsAppAutomations() {
     mutationFn: async () => {
       const { data, error } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, name: "Novo Fluxo" })
+        .insert({ user_id: user!.id, owner_user_id: accountOwnerId || user!.id, name: "Novo Fluxo" })
         .select()
         .single();
       if (error) throw error;
