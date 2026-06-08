@@ -58,7 +58,7 @@ export default function CRM() {
   const isOperational = role === 'operational';
   const canChangeResponsible = !!user;
   const responsibleMembers = useMemo(
-    () => accountMembers.map((m) => ({ user_id: m.user_id, name: m.name, email: m.email })),
+    () => accountMembers.map((m) => ({ user_id: m.user_id, name: m.name, email: m.email, avatar_url: m.avatar_url })),
     [accountMembers]
   );
   // Default: ver TODOS os leads (a conta inteira). Sub-user pode filtrar para "meus" se quiser.
