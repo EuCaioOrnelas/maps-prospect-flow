@@ -54,7 +54,7 @@ const flowTemplates = [
 ];
 
 export default function WhatsAppAutomations() {
-  const { user, profile } = useAuth();
+  const { user, profile, accountOwnerId } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   useAutoScoreTracking("whatsapp_automations");
@@ -89,7 +89,7 @@ export default function WhatsAppAutomations() {
     mutationFn: async () => {
       const { data, error } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, name: "Novo Fluxo" })
+        .insert({ user_id: user!.id, owner_user_id: accountOwnerId || user!.id, name: "Novo Fluxo" })
         .select()
         .single();
       if (error) throw error;
@@ -114,7 +114,7 @@ export default function WhatsAppAutomations() {
     mutationFn: async (flow: any) => {
       const { data, error } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, name: `${flow.name} (cópia)`, description: flow.description })
+        .insert({ user_id: user!.id, owner_user_id: accountOwnerId || user!.id, name: `${flow.name} (cópia)`, description: flow.description })
         .select()
         .single();
       if (error) throw error;
@@ -182,7 +182,7 @@ export default function WhatsAppAutomations() {
       // Create the flow
       const { data: flow, error: flowError } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, name: tpl.name, description: tpl.description })
+        .insert({ user_id: user!.id, owner_user_id: accountOwnerId || user!.id, name: tpl.name, description: tpl.description })
         .select()
         .single();
       if (flowError || !flow) throw flowError;
