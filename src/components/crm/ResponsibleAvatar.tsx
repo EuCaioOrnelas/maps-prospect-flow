@@ -16,7 +16,7 @@ interface Props {
   members: ResponsibleMember[];
   onChange?: (userId: string | null) => Promise<void> | void;
   canEdit?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 const initials = (m?: ResponsibleMember | null) => {
