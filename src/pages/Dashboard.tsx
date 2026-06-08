@@ -96,7 +96,7 @@ const Dashboard = () => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { profile, signOut, refreshProfile, user, isTrialExpired, trialDaysRemaining } = useAuth();
+  const { profile, signOut, refreshProfile, user, accountOwnerId, isTrialExpired, trialDaysRemaining } = useAuth();
   const { requestPermission, notifyCreditsExhausted, notifyLowCredits, isSupported, permission } = useNotifications();
   const { trackScoreEvent } = useAutoScoreTracking("dashboard");
 
@@ -1096,6 +1096,7 @@ const Dashboard = () => {
         <CompanyProfileOnboarding
           open={showCompanyOnboarding}
           userId={user.id}
+          ownerUserId={accountOwnerId}
           initialData={companyProfile}
           onClose={() => { setShowCompanyOnboarding(false); setPendingSearch(false); }}
           onComplete={(profile) => {

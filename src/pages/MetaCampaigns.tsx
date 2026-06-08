@@ -27,7 +27,7 @@ export interface WabaConnection {
 }
 
 const MetaCampaigns = () => {
-  const { user, profile } = useAuth();
+  const { user, accountOwnerId, profile } = useAuth();
   const navigate = useNavigate();
   useAutoScoreTracking("meta-campaigns");
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("meta_campaigns_beta_warning");
@@ -69,7 +69,7 @@ const MetaCampaigns = () => {
   }, [user]);
 
   const checkSetup = async () => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     setLoading(true);
     try {
       const { data: dismissed } = await supabase
@@ -85,7 +85,7 @@ const MetaCampaigns = () => {
       const { data: conns } = await supabase
         .from("user_waba_connections")
         .select("*")
-        .eq("user_id", user.id);
+        .eq("owner_user_id", accountOwnerId);
 
       if (conns && conns.length > 0) {
         const typed = conns as unknown as WabaConnection[];

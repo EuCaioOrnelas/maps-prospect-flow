@@ -70,7 +70,7 @@ import { useAccountRole } from "@/hooks/useAccountRole";
 
 
 const Profile = () => {
-  const { profile, user, refreshProfile, signOut } = useAuth();
+  const { profile, user, accountOwnerId, refreshProfile, signOut } = useAuth();
   const { role: accountRole } = useAccountRole();
   const isSubUser = accountRole === "admin" || accountRole === "operational";
   useAutoScoreTracking("profile");
@@ -125,12 +125,12 @@ const Profile = () => {
   // Load company profile
   useEffect(() => {
     const loadCompanyProfile = async () => {
-      if (!user) return;
+      if (!user || !accountOwnerId) return;
       try {
         const { data } = await supabase
           .from("company_profiles" as any)
           .select("*")
-          .eq("user_id", user.id)
+          .eq("owner_user_id", accountOwnerId)
           .maybeSingle();
         if (data) {
           setCompanyProfile(data);
@@ -151,20 +151,21 @@ const Profile = () => {
       }
     };
     loadCompanyProfile();
-  }, [user]);
+  }, [user, accountOwnerId]);
 
   const handleSaveCompanyProfile = async () => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     setIsSavingCompany(true);
     try {
       const { error } = await supabase
         .from("company_profiles" as any)
         .upsert({
-          user_id: user.id,
+          user_id: accountOwnerId,
+          owner_user_id: accountOwnerId,
           ...companyForm,
         } as any, { onConflict: "user_id" });
       if (error) throw error;
-      setCompanyProfile({ ...companyForm, user_id: user.id });
+      setCompanyProfile({ ...companyForm, user_id: accountOwnerId, owner_user_id: accountOwnerId });
       setIsEditingCompany(false);
       toast({ title: "Perfil da empresa salvo!", description: "Suas informações serão usadas para personalizar as mensagens de IA." });
     } catch (err: any) {
@@ -385,13 +386,13 @@ const Profile = () => {
     setIsUploadingPhoto(true);
 
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user.id}/avatar.${fileExt}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { upsert: true, contentType: file.type, cacheControl: '0' });
 
       if (uploadError) throw uploadError;
 
@@ -401,9 +402,11 @@ const Profile = () => {
         .getPublicUrl(fileName);
 
       // Update profile with avatar URL using raw query since type might not be updated yet
+      const avatarUrl = `${publicUrl}?v=${Date.now()}`;
+
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl } as any)
+        .update({ avatar_url: avatarUrl } as any)
         .eq('id', user.id);
 
       if (updateError) throw updateError;

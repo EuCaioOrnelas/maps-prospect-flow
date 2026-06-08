@@ -104,7 +104,7 @@ const LeadCardComponent = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header - Name and Score */}
-      <div className="flex items-start justify-between gap-2 mb-1.5 overflow-hidden">
+      <div className="flex items-start justify-between gap-2 mb-1.5 overflow-visible">
         {isEditingName ? (
           <div className="flex items-center gap-1 flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
             <Input

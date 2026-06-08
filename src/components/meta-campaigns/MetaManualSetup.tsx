@@ -29,7 +29,7 @@ interface MetaManualSetupProps {
 
 
 export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: MetaManualSetupProps) => {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
 
   // Draft persistido por usuário para não perder dados ao sair/voltar da página
@@ -143,7 +143,8 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
         .from("user_waba_connections")
         .upsert(
           {
-            user_id: user.id,
+            user_id: accountOwnerId || user.id,
+            owner_user_id: accountOwnerId || user.id,
             waba_id: cleanWaba,
             phone_number_id: cleanPhone,
             access_token: cleanToken,

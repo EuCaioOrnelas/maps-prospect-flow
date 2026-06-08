@@ -66,7 +66,7 @@ const STATUS_LABEL: Record<string, { label: string; tone: "default" | "secondary
 };
 
 export default function MetaCampanhas() {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -82,12 +82,12 @@ export default function MetaCampanhas() {
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
 
   const loadCampaigns = async () => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     setLoading(true);
     const { data } = await supabase
       .from("whatsapp_campaigns")
       .select("id,name,status,total_leads,sent_count,failed_count,total_responses,created_at,whatsapp_number_id,messages,leads,current_lead_index")
-      .eq("user_id", user.id)
+      .eq("owner_user_id", accountOwnerId)
       .order("created_at", { ascending: false })
       .limit(500);
     const rows = (data as CampaignRow[]) || [];
@@ -757,7 +757,7 @@ function TemplatePickerDialog({
 }: {
   open: boolean; onClose: () => void; onSelect: (t: Template | null) => void;
 }) {
-  const { user } = useAuth();
+  const { user, accountOwnerId } = useAuth();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filter, setFilter] = useState<string>("all");
@@ -765,17 +765,17 @@ function TemplatePickerDialog({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!open || !user) return;
+    if (!open || !user || !accountOwnerId) return;
     setLoading(true);
     Promise.all([
-      supabase.from("wiize_message_templates").select("*").eq("user_id", user.id).eq("archived", false).order("updated_at", { ascending: false }),
-      supabase.from("wiize_template_categories").select("*").eq("user_id", user.id).order("name"),
+      supabase.from("wiize_message_templates").select("*").eq("owner_user_id", accountOwnerId).eq("archived", false).order("updated_at", { ascending: false }),
+      supabase.from("wiize_template_categories").select("*").eq("owner_user_id", accountOwnerId).order("name"),
     ]).then(([{ data: tpls }, { data: cats }]) => {
       setTemplates((tpls as Template[]) || []);
       setCategories((cats as Category[]) || []);
       setLoading(false);
     });
-  }, [open, user?.id]);
+  }, [open, user?.id, accountOwnerId]);
 
   const filtered = useMemo(() => {
     let list = templates;

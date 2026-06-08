@@ -129,11 +129,11 @@ export const useWhatsAppNumbers = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, accountOwnerId]);
 
   // Subscribe to realtime updates for whatsapp_numbers
   useEffect(() => {
-    if (!user || !hasMassMessagingAccess) return;
+    if (!user || !accountOwnerId || !hasMassMessagingAccess) return;
 
     const channel = supabase
       .channel('whatsapp-numbers-changes')
@@ -143,7 +143,7 @@ export const useWhatsAppNumbers = () => {
           event: 'UPDATE',
           schema: 'public',
           table: 'whatsapp_numbers',
-          filter: `user_id=eq.${user.id}`
+          filter: `owner_user_id=eq.${accountOwnerId}`
         },
         (payload) => {
           console.log('Realtime update received:', payload);
@@ -176,7 +176,7 @@ export const useWhatsAppNumbers = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, hasMassMessagingAccess]);
+  }, [user, accountOwnerId, hasMassMessagingAccess]);
 
   useEffect(() => {
     if (user && hasMassMessagingAccess) {

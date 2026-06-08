@@ -147,7 +147,7 @@ export function useChat() {
     const healthyConn = data.find(c => healthMap[c.id] === true);
     setActiveConnectionId(healthyConn?.id || data[0].id);
     setLoading(false);
-  }, [user, validateToken]);
+  }, [user, accountOwnerId, validateToken]);
 
   useEffect(() => {
     if (!user) return;
@@ -199,7 +199,7 @@ export function useChat() {
       setLoading(false);
     };
     loadConversations();
-  }, [user, activeConnectionId]);
+  }, [user, accountOwnerId, activeConnectionId]);
 
   // Load messages for active conversation
   useEffect(() => {
@@ -265,9 +265,9 @@ export function useChat() {
 
   // Realtime subscriptions
   useEffect(() => {
-    if (!user) return;
+    if (!user || !accountOwnerId) return;
     const channel = supabase
-      .channel("chat-realtime")
+      .channel(`chat-realtime-${accountOwnerId}`)
       .on("postgres_changes", {
         event: "*",
         schema: "public",
@@ -310,7 +310,7 @@ export function useChat() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user, activeConversationId]);
+  }, [user, accountOwnerId, activeConversationId]);
 
   // Send text message
   const sendMessage = useCallback(async (text: string, replyToId?: string) => {
