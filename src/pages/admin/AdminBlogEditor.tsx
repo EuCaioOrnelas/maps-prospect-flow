@@ -352,7 +352,7 @@ export default function AdminBlogEditor() {
             <div>
               <Label>Excerpt (resumo)</Label>
               <Textarea value={form.excerpt} onChange={(e) => set("excerpt", e.target.value)} rows={2} maxLength={300} />
-              <p className="text-xs text-muted-foreground mt-1">{form.excerpt.length}/300</p>
+              <p className="text-xs text-muted-foreground mt-1">{(form.excerpt || "").length}/300</p>
             </div>
           </Card>
 
