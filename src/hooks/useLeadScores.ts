@@ -13,9 +13,9 @@ export function useLeadScores() {
   const { user, accountOwnerId } = useAuth();
 
   const { data: scoreMap = new Map<string, LeadScoreData>() } = useQuery({
-    queryKey: ["lead-scores-map", user?.id],
+    queryKey: ["lead-scores-map", accountOwnerId],
     queryFn: async () => {
-      if (!user) return new Map<string, LeadScoreData>();
+      if (!user || !accountOwnerId) return new Map<string, LeadScoreData>();
       const { data, error } = await supabase
         .from("revenue_leads")
         .select("id, phone_e164, score_total, status_bucket")
@@ -30,7 +30,7 @@ export function useLeadScores() {
       }
       return map;
     },
-    enabled: !!user,
+    enabled: !!user && !!accountOwnerId,
     staleTime: 60_000,
   });
 
