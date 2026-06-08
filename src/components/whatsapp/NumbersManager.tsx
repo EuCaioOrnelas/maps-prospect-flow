@@ -213,7 +213,7 @@ export const NumbersManager = ({
       const { data: existingLinkedSession } = await supabase
         .from('warming_sessions')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .eq('whatsapp_number_id', numberId)
         .maybeSingle();
 
@@ -221,7 +221,7 @@ export const NumbersManager = ({
         const { data: orphanedSessions } = await supabase
           .from('warming_sessions')
           .select('id, status')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .eq('phone_key', phoneKey)
           .is('whatsapp_number_id', null);
 
@@ -234,7 +234,7 @@ export const NumbersManager = ({
         const { data: fallbackOrphanedSessions } = await supabase
           .from('warming_sessions')
           .select('id, status')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .is('whatsapp_number_id', null)
           .order('updated_at', { ascending: false })
           .limit(2);
@@ -275,14 +275,14 @@ export const NumbersManager = ({
           await (supabase as any)
             .from('warming_search_assignments')
             .update({ whatsapp_number_id: numberId })
-            .eq('user_id', user.id)
+            .eq('owner_user_id', accountOwnerId)
             .eq('phone_key', phoneKey)
             .is('whatsapp_number_id', null);
         } else {
           const { data: orphanedAssignments } = await (supabase as any)
             .from('warming_search_assignments')
             .select('id')
-            .eq('user_id', user.id)
+            .eq('owner_user_id', accountOwnerId)
             .is('whatsapp_number_id', null)
             .limit(2);
 
@@ -302,7 +302,7 @@ export const NumbersManager = ({
       const { count: connectedNumbersCount } = await supabase
         .from('whatsapp_numbers')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .eq('is_connected', true);
 
       if ((connectedNumbersCount ?? 0) === 1) {
@@ -310,7 +310,7 @@ export const NumbersManager = ({
         const { data: orphanedCampaigns } = await supabase
           .from('whatsapp_campaigns')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .is('whatsapp_number_id', null)
           .in('status', ['paused', 'scheduled', 'postponed', 'pending', 'completed', 'failed'])
           .gte('updated_at', recentCutoff)

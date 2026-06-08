@@ -78,12 +78,12 @@ export function useChatCRMFilters() {
           supabase
             .from("pipeline_stages")
             .select("id, name, position")
-            .eq("user_id", user.id)
+            .eq("owner_user_id", accountOwnerId)
             .order("position"),
           supabase
             .from("leads")
             .select("phone, tags, whatsapp_status, pipeline_stage_id, ai_score, updated_at")
-            .eq("user_id", user.id)
+            .eq("owner_user_id", accountOwnerId)
             .range(0, 4999),
         ]);
 

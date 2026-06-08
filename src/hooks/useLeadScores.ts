@@ -19,7 +19,7 @@ export function useLeadScores() {
       const { data, error } = await supabase
         .from("revenue_leads")
         .select("id, phone_e164, score_total, status_bucket")
-        .eq("user_id", user.id);
+        .eq("owner_user_id", accountOwnerId);
       if (error) throw error;
 
       const map = new Map<string, LeadScoreData>();

@@ -88,7 +88,7 @@ export function useChat() {
     const { data } = await supabase
       .from("user_waba_connections")
       .select("id, phone_number_id, display_phone_number, business_name, nickname, status, waba_id, access_token, token_expires_at")
-      .eq("user_id", user.id);
+      .eq("owner_user_id", accountOwnerId);
     if (!data || data.length === 0) {
       setConnections([]);
       setLoading(false);
@@ -162,7 +162,7 @@ export function useChat() {
       const { data } = await supabase
         .from("chat_conversations")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("owner_user_id", accountOwnerId)
         .eq("waba_connection_id", activeConnectionId)
         .eq("is_archived", false)
         .order("is_pinned", { ascending: false })

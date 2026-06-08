@@ -483,7 +483,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
         const { data, error } = await supabase
           .from('whatsapp_numbers')
           .select('id, name, phone_number, is_connected')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .eq('is_connected', true);
 
         if (error) throw error;
@@ -539,7 +539,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
         const { data, error } = await supabase
           .from('agent_templates')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -556,7 +556,7 @@ export function CreateAgentWizard({ open, onOpenChange, onCreated, editingAgent 
       const { data } = await supabase
         .from('pipeline_stages')
         .select('id, name')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .order('position');
       setPipelineStages(data || []);
     };

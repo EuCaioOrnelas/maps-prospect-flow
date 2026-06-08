@@ -87,7 +87,7 @@ export const useWhatsAppNumbers = () => {
       const { data, error } = await supabase
         .from('whatsapp_numbers')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;

@@ -79,7 +79,7 @@ export const ScoreRankingTab = ({ leads: externalLeads }: ScoreRankingTabProps) 
       const { data, error } = await supabase
         .from("revenue_leads")
         .select("id, name, phone_e164, score_total, score_engagement, score_intent, score_risk, score_urgency, status_bucket")
-        .eq("user_id", user.id)
+        .eq("owner_user_id", accountOwnerId)
         .order("score_total", { ascending: false });
       if (error) throw error;
       return (data || []) as RevenueLead[];

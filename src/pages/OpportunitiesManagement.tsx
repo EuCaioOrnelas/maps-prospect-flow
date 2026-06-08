@@ -167,7 +167,7 @@ export default function OpportunitiesManagement() {
       const { data } = await supabase
         .from("company_profiles" as any)
         .select("*")
-        .eq("user_id", user.id)
+        .eq("owner_user_id", accountOwnerId)
         .maybeSingle();
 
       if (data) {
@@ -652,7 +652,7 @@ export default function OpportunitiesManagement() {
           enrichment_data: updatedEnrichment,
         })
         .eq('id', lead.id)
-        .eq('user_id', user.id);
+        .eq('owner_user_id', accountOwnerId);
 
       if (error) throw error;
 

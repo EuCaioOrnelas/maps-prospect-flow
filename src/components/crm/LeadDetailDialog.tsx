@@ -367,7 +367,7 @@ export const LeadDetailDialog = ({
     const { data } = await supabase
       .from('lead_deal_attachments')
       .select('id, deal_id, file_name, file_type, file_url')
-      .eq('user_id', user.id);
+      .eq('owner_user_id', accountOwnerId);
     if (data) {
       const grouped: Record<string, Array<{ id: string; file_name: string; file_type: string; file_url: string }>> = {};
       data.forEach((att) => {
@@ -384,7 +384,7 @@ export const LeadDetailDialog = ({
       .from('lead_files')
       .select('id, file_name, file_type, file_url, source, created_at')
       .eq('lead_id', lead.id)
-      .eq('user_id', user.id)
+      .eq('owner_user_id', accountOwnerId)
       .order('created_at', { ascending: false });
     if (data) setLeadFiles(data);
   };
@@ -415,7 +415,7 @@ export const LeadDetailDialog = ({
       const { data } = await supabase
         .from('user_drive_connections')
         .select('is_active, root_folder_id')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .maybeSingle();
 
       setDriveConnection(data);
@@ -553,7 +553,7 @@ export const LeadDetailDialog = ({
     const { data: agents } = await supabase
       .from('ai_agents')
       .select('id')
-      .eq('user_id', user.id);
+      .eq('owner_user_id', accountOwnerId);
     if (!agents?.length) { setAgentPauseStatus(null); return; }
     const { data: convs } = await supabase
       .from('agent_conversations')
@@ -603,7 +603,7 @@ export const LeadDetailDialog = ({
         const { data: agents } = await supabase
           .from('ai_agents')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('owner_user_id', accountOwnerId)
           .limit(1);
         if (agents?.length) {
           const { data: newConv } = await supabase

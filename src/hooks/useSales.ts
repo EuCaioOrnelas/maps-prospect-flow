@@ -69,7 +69,7 @@ export const useSales = (leadId?: string) => {
     let query = supabase
       .from("lead_deals")
       .select(`*, lead:leads(id, company_name, contact_name, phone)`)
-      .eq("user_id", user.id)
+      .eq("owner_user_id", accountOwnerId)
       .order("created_at", { ascending: false });
 
     if (leadId) query = query.eq("lead_id", leadId);
@@ -142,7 +142,7 @@ export const useSales = (leadId?: string) => {
         .from("lead_deals")
         .update(updates)
         .eq("id", id)
-        .eq("user_id", user.id);
+        .eq("owner_user_id", accountOwnerId);
       if (error) throw error;
       await fetchSales();
     },
@@ -152,7 +152,7 @@ export const useSales = (leadId?: string) => {
   const deleteSale = useCallback(
     async (id: string) => {
       if (!user) throw new Error("not_authenticated");
-      const { error } = await supabase.from("lead_deals").delete().eq("id", id).eq("user_id", user.id);
+      const { error } = await supabase.from("lead_deals").delete().eq("id", id).eq("owner_user_id", accountOwnerId);
       if (error) throw error;
       await fetchSales();
     },

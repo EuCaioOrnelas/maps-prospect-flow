@@ -23,7 +23,7 @@ export function useCompanyServices() {
       const { data, error } = await supabase
         .from("company_services")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("owner_user_id", accountOwnerId)
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data || []) as CompanyService[];
@@ -44,7 +44,7 @@ export function useCompanyServices() {
       await supabase
         .from("company_services")
         .delete()
-        .eq("user_id", user.id);
+        .eq("owner_user_id", accountOwnerId);
 
       if (newServices.length === 0) return;
 

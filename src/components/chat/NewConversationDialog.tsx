@@ -31,7 +31,7 @@ export function NewConversationDialog({ open, onOpenChange, onStartConversation 
       const { data } = await supabase
         .from("leads")
         .select("id, contact_name, company_name, phone")
-        .eq("user_id", user.id)
+        .eq("owner_user_id", accountOwnerId)
         .order("updated_at", { ascending: false })
         .limit(100);
       setLeads(data || []);

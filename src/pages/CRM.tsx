@@ -114,7 +114,7 @@ export default function CRM() {
       const { data } = await supabase
         .from('lead_origins')
         .select('name')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .order('name');
       return data?.map(o => o.name) || [];
     },
@@ -129,7 +129,7 @@ export default function CRM() {
       const { data } = await supabase
         .from('whatsapp_numbers')
         .select('id, name, phone_number')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .order('name');
       return data || [];
     },
@@ -146,7 +146,7 @@ export default function CRM() {
       const { data } = await supabase
         .from('ai_agents')
         .select('crm_stage_on_end, crm_stage_on_unknown')
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .in('status', ['active', 'paused']);
       const stageNames = new Set<string>();
       data?.forEach(agent => {
@@ -240,7 +240,7 @@ export default function CRM() {
       await supabase
         .from('lead_origins')
         .update({ name: newName })
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .eq('name', oldName);
       refetchOrigins();
     } catch (error) {
@@ -255,7 +255,7 @@ export default function CRM() {
       await supabase
         .from('lead_origins')
         .delete()
-        .eq('user_id', user.id)
+        .eq('owner_user_id', accountOwnerId)
         .eq('name', name);
       refetchOrigins();
     } catch (error) {
@@ -270,7 +270,7 @@ export default function CRM() {
     const { data } = await supabase
       .from('leads')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('owner_user_id', accountOwnerId)
       .eq('phone', normalizedPhone)
       .limit(1);
     return (data?.length || 0) > 0;
