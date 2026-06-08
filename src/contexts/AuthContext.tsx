@@ -39,6 +39,10 @@ interface AuthContextType {
   trialDaysRemaining: number;
   isTrialing: boolean;
   isBlocked: boolean;
+  /** ID do dono efetivo da conta (parent_owner_id || user.id). Usar como filtro `owner_user_id` em queries de dados compartilhados. */
+  accountOwnerId: string | null;
+  /** true se o usuário logado é um sub-usuário criado por um owner. */
+  isSubUser: boolean;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
