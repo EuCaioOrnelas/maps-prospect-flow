@@ -386,13 +386,13 @@ const Profile = () => {
     setIsUploadingPhoto(true);
 
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user.id}/avatar.${fileExt}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { upsert: true, contentType: file.type, cacheControl: '0' });
 
       if (uploadError) throw uploadError;
 
@@ -402,9 +402,11 @@ const Profile = () => {
         .getPublicUrl(fileName);
 
       // Update profile with avatar URL using raw query since type might not be updated yet
+      const avatarUrl = `${publicUrl}?v=${Date.now()}`;
+
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl } as any)
+        .update({ avatar_url: avatarUrl } as any)
         .eq('id', user.id);
 
       if (updateError) throw updateError;
