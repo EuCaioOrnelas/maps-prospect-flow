@@ -99,6 +99,8 @@ interface LeadDetailDialogProps {
   onDeleteOrigin?: (name: string) => Promise<void>;
   initialTab?: 'info' | 'notes' | 'history' | 'deals' | 'files';
   initialRegisterSale?: boolean;
+  members?: ResponsibleMember[];
+  onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
 }
 
 // formatPhoneNumber is now imported from '@/lib/phoneUtils'
