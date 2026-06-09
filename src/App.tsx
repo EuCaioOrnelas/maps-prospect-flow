@@ -326,6 +326,7 @@ const App = () => (
                   <Route path="forecast" element={<AdminForecast />} />
                   {/* Produto */}
                   <Route path="usuarios" element={<AdminUsuarios />} />
+                  <Route path="usuarios/:userId" element={<AdminUserDetail />} />
                   <Route path="ativacao" element={<AdminAtivacao />} />
                   <Route path="retencao" element={<AdminRetencao />} />
                   <Route path="landing-pages" element={<AdminLandingPages />} />
