@@ -47,7 +47,7 @@ const stagger = {
 
 const VIDEO_ID = "ZRzK42SYNFc";
 const VIDEO_THUMBNAIL = `https://img.youtube.com/vi/${VIDEO_ID}/maxresdefault.jpg`;
-const VIDEO_OVERSCAN_X = 1.075;
+const VIDEO_OVERSCAN_X = 1.052;
 
 const VideoCover = ({ className = "" }: { className?: string }) => (
   <img
@@ -114,7 +114,9 @@ const VideoModal = ({
               style={{ width: `${VIDEO_OVERSCAN_X * 100}%`, transform: "translateX(-50%)" }}
               src={`https://www.youtube.com/embed/${VIDEO_ID}?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1`}
               title="Wiize — Demonstração"
+              frameBorder="0"
               allow="autoplay; encrypted-media; picture-in-picture"
+              referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
             />
           )}
