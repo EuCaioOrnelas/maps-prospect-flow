@@ -169,20 +169,7 @@ const LeadCardComponent = ({
 
 
 
-      {/* Score — minimal label + number (progressbar fica como borda inferior) */}
-      {scoreData && scoreData.score_total > 0 && (() => {
-        const s = Math.max(0, Math.min(scoreData.score_total, 1000));
-        const fg = s >= 750 ? 'text-emerald-500' : s >= 500 ? 'text-blue-500' : s >= 250 ? 'text-orange-500' : 'text-red-500';
-        return (
-          <div
-            className="flex items-center gap-1.5 mb-2.5 cursor-pointer"
-            onClick={(e) => { e.stopPropagation(); navigate(`/crm/score?phone=${encodeURIComponent(lead.phone)}`); }}
-          >
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Score</span>
-            <span className={cn("text-xs font-semibold tabular-nums", fg)}>{s}</span>
-          </div>
-        );
-      })()}
+      {/* (Score movido para o rodapé do card) */}
 
       {/* Valor potencial — pill verde compacto */}
       {!hideValue && Number(lead.estimated_value) > 0 && (
