@@ -225,8 +225,14 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
 /*  Final CTA                                                         */
 /* ------------------------------------------------------------------ */
 
-const FinalCTA = () => (
-  <section className="relative w-full py-20 sm:py-28 overflow-hidden border-t border-border">
+const FinalCTA = ({ variant = "full" }: { variant?: "full" | "compact" }) => (
+  <section
+    className={
+      variant === "full"
+        ? "relative w-full pt-20 sm:pt-24 pb-10 sm:pb-12 overflow-hidden border-t border-border"
+        : "relative w-full pt-12 sm:pt-16 pb-16 sm:pb-20 overflow-hidden border-t border-border"
+    }
+  >
     <div className="absolute left-1/2 top-1/2 h-72 w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-glow opacity-30 blur-3xl" />
 
     <div className="container mx-auto px-4 max-w-3xl relative z-10">
@@ -237,12 +243,29 @@ const FinalCTA = () => (
         transition={{ duration: 0.6 }}
         className="text-center"
       >
-        <h2 className="font-display text-[1.75rem] sm:text-[2.25rem] md:text-[2.75rem] font-bold text-foreground leading-tight mb-7">
-          Pronto para escalar sua{" "}
-          <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">
-            Operação Comercial?
-          </span>
+        <h2 className="font-display text-[1.6rem] sm:text-[2rem] md:text-[2.4rem] font-bold text-foreground leading-tight mb-4">
+          {variant === "full" ? (
+            <>
+              Transforme prospecção fria em{" "}
+              <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">
+                pipeline previsível
+              </span>
+            </>
+          ) : (
+            <>
+              Pronto para colocar a{" "}
+              <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">
+                Wiize na sua operação?
+              </span>
+            </>
+          )}
         </h2>
+
+        <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed mb-7">
+          {variant === "full"
+            ? "Implante a máquina comercial assistida por IA da Wiize e gere oportunidades qualificadas todos os dias, sem depender de SDR humano."
+            : "Comece em poucos minutos e veja a IA prospectar, qualificar e atualizar seu CRM enquanto seu time foca em fechar negócios."}
+        </p>
 
         <div className="flex flex-col items-center justify-center gap-3">
           <Link to="/#pricing">
