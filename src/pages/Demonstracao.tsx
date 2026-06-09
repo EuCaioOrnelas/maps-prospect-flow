@@ -23,10 +23,6 @@ const OpportunitySection = lazy(() =>
 const FeaturesOverviewSection = lazy(() =>
   import("@/components/sales/FeaturesOverviewSection").then((m) => ({ default: m.FeaturesOverviewSection })),
 );
-const FAQSection = lazy(() =>
-  import("@/components/landing/FAQSection").then((m) => ({ default: m.FAQSection })),
-);
-void FAQSection;
 
 
 const SectionFallback = () => <div className="h-[40vh] w-full" aria-hidden="true" />;
