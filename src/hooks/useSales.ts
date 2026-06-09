@@ -48,6 +48,7 @@ export interface SaleInput {
   receipt_url?: string | null;
   contract_url?: string | null;
   notes?: string | null;
+  responsible_user_id?: string | null;
 }
 
 export const PAYMENT_METHODS = [
