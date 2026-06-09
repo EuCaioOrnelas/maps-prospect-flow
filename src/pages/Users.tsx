@@ -143,25 +143,39 @@ export default function Users() {
           <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Cargo</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Criado em</TableHead>
-                  <TableHead>Último login</TableHead>
-                  <TableHead className="w-[60px] text-right">Ações</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead><div className="flex items-center gap-1.5"><User size={13} /> Usuário</div></TableHead>
+                  <TableHead><div className="flex items-center gap-1.5"><Mail size={13} /> Email</div></TableHead>
+                  <TableHead><div className="flex items-center gap-1.5"><Briefcase size={13} /> Cargo</div></TableHead>
+                  <TableHead><div className="flex items-center gap-1.5"><Activity size={13} /> Status</div></TableHead>
+                  <TableHead><div className="flex items-center gap-1.5"><Calendar size={13} /> Criado em</div></TableHead>
+                  <TableHead><div className="flex items-center gap-1.5"><Clock size={13} /> Último login</div></TableHead>
+                  <TableHead className="w-[60px] text-right"><div className="flex items-center justify-end gap-1.5"><Settings2 size={13} /> Ações</div></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading && (
                   <TableRow><TableCell colSpan={7} className="text-center py-8"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
                 )}
-                {!loading && members.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium flex items-center gap-2">
-                      {m.role === "owner" && <Crown size={14} className="text-amber-500" />}
-                      {m.name || "—"}
+                {!loading && members.map((m) => {
+                  const initials = (m.name || m.email || "?").slice(0, 2).toUpperCase();
+                  return (
+                  <TableRow
+                    key={m.id}
+                    className="cursor-pointer hover:bg-muted/40"
+                    onClick={() => setSelected(m)}
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2.5">
+                        <Avatar className="h-7 w-7">
+                          {m.avatar_url && <AvatarImage src={m.avatar_url} />}
+                          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex items-center gap-1.5">
+                          {m.role === "owner" && <Crown size={13} className="text-amber-500" />}
+                          <span>{m.name || "—"}</span>
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{m.email}</TableCell>
                     <TableCell><Badge variant="secondary">{ROLE_LABEL[m.role]}</Badge></TableCell>
@@ -172,7 +186,7 @@ export default function Users() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{formatDate(m.created_at)}</TableCell>
                     <TableCell className="text-muted-foreground">{formatDate(m.last_login_at)}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       {m.role !== "owner" && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -192,7 +206,8 @@ export default function Users() {
                       )}
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
