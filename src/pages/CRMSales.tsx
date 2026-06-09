@@ -321,6 +321,7 @@ export default function CRMSales() {
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Calendar className="w-3 h-3" /> Início</span></th>
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><CalendarClock className="w-3 h-3" /> Expira</span></th>
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Activity className="w-3 h-3" /> Status</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><User className="w-3 h-3" /> Resp.</span></th>
                         <th className="px-4 py-2.5 font-medium text-right"><span className="inline-flex items-center gap-1.5"><Settings2 className="w-3 h-3" /> Ações</span></th>
 
                       </tr>
@@ -338,7 +339,7 @@ export default function CRMSales() {
                           >
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                                   {s.lead?.company_name ? (
                                     <Building2 className="w-3.5 h-3.5" />
                                   ) : (
@@ -388,34 +389,30 @@ export default function CRMSales() {
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <div className="flex items-center gap-2.5">
-                                <Badge variant="outline" className={st.tone}>
-                                  {st.label}
-                                </Badge>
-                                {(() => {
-                                  const r = s.responsible_user_id ? memberById[s.responsible_user_id] : null;
-                                  const label = r?.name || r?.email || "Sem responsável";
-                                  return (
-                                    <div
-                                      className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0"
-                                      title={`Responsável pela venda: ${label}`}
-                                    >
-                                      {r?.avatar_url ? (
-                                        <img
-                                          src={r.avatar_url}
-                                          alt=""
-                                          className="w-6 h-6 rounded-full object-cover border border-border/60 shrink-0"
-                                        />
-                                      ) : (
-                                        <div className="w-6 h-6 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center justify-center border border-border/60 shrink-0">
-                                          {r ? initialsOf(r.name, r.email) : <User className="w-3 h-3" />}
-                                        </div>
-                                      )}
-                                      <span className="truncate max-w-[120px]">{label}</span>
-                                    </div>
-                                  );
-                                })()}
-                              </div>
+                              <Badge variant="outline" className={st.tone}>
+                                {st.label}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3">
+                              {(() => {
+                                const r = s.responsible_user_id ? memberById[s.responsible_user_id] : null;
+                                const label = r?.name || r?.email || "Sem responsável";
+                                return (
+                                  <div title={label} className="inline-flex">
+                                    {r?.avatar_url ? (
+                                      <img
+                                        src={r.avatar_url}
+                                        alt={label}
+                                        className="w-7 h-7 rounded-lg object-cover border border-border/60 shrink-0"
+                                      />
+                                    ) : (
+                                      <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center border border-border/60 shrink-0">
+                                        {r ? initialsOf(r.name, r.email) : <User className="w-3.5 h-3.5" />}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1">
