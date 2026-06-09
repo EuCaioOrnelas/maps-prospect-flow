@@ -3,11 +3,14 @@ import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { KanbanColumn, type ColumnWidth } from './KanbanColumn';
 import { cn } from '@/lib/utils';
-import { MessageCircle, User as UserIcon } from 'lucide-react';
+import { MessageCircle, Phone } from 'lucide-react';
 import { formatPhoneShort } from '@/lib/phoneUtils';
 import { useLeadScores } from '@/hooks/useLeadScores';
+import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+type CardDragStartEvent = { clientX: number; clientY: number; currentTarget: HTMLDivElement };
 
 interface KanbanBoardWithScrollProps {
   stages: PipelineStage[];
@@ -49,6 +52,7 @@ const KanbanBoardWithScrollComponent = ({
   hideValue,
 }: KanbanBoardWithScrollProps) => {
   const { getScoreForPhone } = useLeadScores();
+  const { hidden: phoneHidden } = usePhonePrivacy();
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<{
@@ -106,7 +110,12 @@ const KanbanBoardWithScrollComponent = ({
     }
   }, [applyDragPreviewPosition]);
 
-  const handleDragStart = useCallback((leadId: string, event: React.DragEvent<HTMLDivElement>) => {
+  const getStageIdFromPoint = useCallback((x: number, y: number) => {
+    const element = document.elementFromPoint(x, y);
+    return element instanceof HTMLElement ? element.closest<HTMLElement>('[data-stage-id]')?.dataset.stageId || null : null;
+  }, []);
+
+  const handleDragStart = useCallback((leadId: string, event: CardDragStartEvent) => {
     const lead = leads.find((item) => item.id === leadId);
     const rect = event.currentTarget.getBoundingClientRect();
     const previewWidth = Math.min(240, rect.width);
@@ -152,12 +161,15 @@ const KanbanBoardWithScrollComponent = ({
     setDragOverStage((current) => current === stageId ? current : stageId);
   }, []);
 
-  const handleDrop = useCallback((stageId: string) => {
+  const handleDrop = useCallback((stageId: string | null) => {
     if (draggedLead) {
-      onLeadMove(draggedLead, stageId);
+      const lead = leads.find((item) => item.id === draggedLead);
+      if (stageId && lead?.pipeline_stage_id !== stageId) {
+        onLeadMove(draggedLead, stageId);
+      }
     }
     handleDragEnd();
-  }, [draggedLead, onLeadMove, handleDragEnd]);
+  }, [draggedLead, leads, onLeadMove, handleDragEnd]);
 
   // Memoize leads by stage to avoid recalculating on every render
   const leadsByStage = useMemo(() => {
@@ -217,42 +229,34 @@ const KanbanBoardWithScrollComponent = ({
     }
   }, [smoothScroll]);
 
-  const handleGlobalDragOver = useCallback((e: DragEvent) => {
-    e.preventDefault();
+  const handlePointerMove = useCallback((e: PointerEvent) => {
     if (draggedLead) {
-      if (e.clientX > 0 && e.clientY > 0) {
-        scheduleDragPreviewPosition(e.clientX, e.clientY);
-      }
-      calculateScrollVelocity(e.clientX);
-    }
-  }, [draggedLead, calculateScrollVelocity, scheduleDragPreviewPosition]);
-
-  const handleGlobalDrag = useCallback((e: DragEvent) => {
-    if (draggedLead && e.clientX > 0 && e.clientY > 0) {
+      e.preventDefault();
       scheduleDragPreviewPosition(e.clientX, e.clientY);
-    }
-  }, [draggedLead, scheduleDragPreviewPosition]);
-
-  const handleContainerDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (draggedLead) {
-      if (e.clientX > 0 && e.clientY > 0) {
-        scheduleDragPreviewPosition(e.clientX, e.clientY);
-      }
+      setDragOverStage((current) => {
+        const next = getStageIdFromPoint(e.clientX, e.clientY);
+        return current === next ? current : next;
+      });
       calculateScrollVelocity(e.clientX);
     }
-  }, [draggedLead, calculateScrollVelocity, scheduleDragPreviewPosition]);
+  }, [draggedLead, calculateScrollVelocity, getStageIdFromPoint, scheduleDragPreviewPosition]);
+
+  const handlePointerUp = useCallback((e: PointerEvent) => {
+    handleDrop(getStageIdFromPoint(e.clientX, e.clientY));
+  }, [getStageIdFromPoint, handleDrop]);
 
   useEffect(() => {
     if (draggedLead) {
-      document.addEventListener('drag', handleGlobalDrag);
-      document.addEventListener('dragover', handleGlobalDragOver);
+      document.addEventListener('pointermove', handlePointerMove, { passive: false });
+      document.addEventListener('pointerup', handlePointerUp, { once: true });
+      document.addEventListener('pointercancel', handleDragEnd, { once: true });
       return () => {
-        document.removeEventListener('drag', handleGlobalDrag);
-        document.removeEventListener('dragover', handleGlobalDragOver);
+        document.removeEventListener('pointermove', handlePointerMove);
+        document.removeEventListener('pointerup', handlePointerUp);
+        document.removeEventListener('pointercancel', handleDragEnd);
       };
     }
-  }, [draggedLead, handleGlobalDrag, handleGlobalDragOver]);
+  }, [draggedLead, handleDragEnd, handlePointerMove, handlePointerUp]);
 
   useEffect(() => {
     return () => {
@@ -262,10 +266,11 @@ const KanbanBoardWithScrollComponent = ({
       if (dragPreviewAnimationRef.current) {
         cancelAnimationFrame(dragPreviewAnimationRef.current);
       }
-      document.removeEventListener('drag', handleGlobalDrag);
-      document.removeEventListener('dragover', handleGlobalDragOver);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handleDragEnd);
     };
-  }, [handleGlobalDrag, handleGlobalDragOver]);
+  }, [handleDragEnd, handlePointerMove, handlePointerUp]);
 
   const displayedStages = useMemo(() => 
     filteredStageId 
@@ -311,6 +316,9 @@ const KanbanBoardWithScrollComponent = ({
 
   const previewDisplayName = dragPreview
     ? dragPreview.lead.contact_name || dragPreview.lead.company_name || formatPhoneShort(dragPreview.lead.phone)
+    : '';
+  const previewPhone = dragPreview
+    ? (phoneHidden ? maskPhoneTail(formatPhoneShort(dragPreview.lead.phone)) : formatPhoneShort(dragPreview.lead.phone))
     : '';
 
   return (
