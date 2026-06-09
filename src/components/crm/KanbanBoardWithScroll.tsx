@@ -69,6 +69,7 @@ const KanbanBoardWithScrollComponent = ({
   const dragPreviewRef = useRef<HTMLDivElement>(null);
   const dragPositionRef = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
   const dragScrollBoundsRef = useRef<{ left: number; right: number; viewportWidth: number } | null>(null);
+  const dragOverStageRef = useRef<string | null>(null);
   const syncingRef = useRef<'top' | 'bottom' | null>(null);
   const animationRef = useRef<number | null>(null);
   const dragPreviewAnimationRef = useRef<number | null>(null);
@@ -144,6 +145,7 @@ const KanbanBoardWithScrollComponent = ({
   const handleDragEnd = useCallback(() => {
     setDraggedLead(null);
     setDragOverStage(null);
+    dragOverStageRef.current = null;
     setDragPreview(null);
     dragScrollBoundsRef.current = null;
     scrollVelocity.current = 0;
@@ -158,7 +160,9 @@ const KanbanBoardWithScrollComponent = ({
   }, []);
 
   const handleDragOver = useCallback((stageId: string) => {
-    setDragOverStage((current) => current === stageId ? current : stageId);
+    if (dragOverStageRef.current === stageId) return;
+    dragOverStageRef.current = stageId;
+    setDragOverStage(stageId);
   }, []);
 
   const handleDrop = useCallback((stageId: string | null) => {
@@ -233,10 +237,11 @@ const KanbanBoardWithScrollComponent = ({
     if (draggedLead) {
       e.preventDefault();
       scheduleDragPreviewPosition(e.clientX, e.clientY);
-      setDragOverStage((current) => {
-        const next = getStageIdFromPoint(e.clientX, e.clientY);
-        return current === next ? current : next;
-      });
+      const nextStageId = getStageIdFromPoint(e.clientX, e.clientY);
+      if (dragOverStageRef.current !== nextStageId) {
+        dragOverStageRef.current = nextStageId;
+        setDragOverStage(nextStageId);
+      }
       calculateScrollVelocity(e.clientX);
     }
   }, [draggedLead, calculateScrollVelocity, getStageIdFromPoint, scheduleDragPreviewPosition]);
