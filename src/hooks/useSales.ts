@@ -72,7 +72,7 @@ export const useSales = (leadId?: string) => {
     setIsLoading(true);
     let query = supabase
       .from("lead_deals")
-      .select(`*, lead:leads(id, company_name, contact_name, phone)`)
+      .select(`*, lead:leads(id, company_name, contact_name, phone, responsible_user_id)`)
       .eq("owner_user_id", accountOwnerId)
       .order("created_at", { ascending: false });
 
