@@ -430,10 +430,13 @@ export default function PartnersLanding() {
                 <ShieldCheck size={13} /> Regras do programa
               </div>
               <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-3">
-                Regras claras. Sem vínculo trabalhista.
+                Uma parceria simples, transparente e sem burocracia.
               </h2>
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                O Wiize Partners é um programa de indicação <strong className="text-foreground">baseado em performance</strong>. Você participa como parceiro independente, sem vínculo empregatício, sem metas obrigatórias e sem qualquer custo de adesão — com total liberdade para indicar no seu ritmo.
+              </p>
               <p className="text-muted-foreground leading-relaxed mb-6">
-                Wiize Partners é um programa de indicação <strong className="text-foreground">por performance</strong>: você atua como parceiro independente, sem CLT, sem metas obrigatórias, sem custo. Vendeu e a venda caiu no sistema, você recebe. Não caiu, não recebe. <strong className="text-foreground">Ao se tornar parceiro, você concorda automaticamente com todas as regras do programa</strong> — mesmo sem assinar contrato físico.
+                A remuneração acontece sempre que uma indicação sua é convertida em venda confirmada pelo nosso sistema de rastreamento. Ao concluir seu cadastro, você adere de forma eletrônica aos termos do programa, o que dispensa a assinatura de contrato físico e garante a mesma validade jurídica.
               </p>
               <Link
                 to="/partners/terms"
