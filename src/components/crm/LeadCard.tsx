@@ -17,7 +17,7 @@ import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 interface LeadCardProps {
   lead: Lead;
   onClick: () => void;
-  onDragStart: () => void;
+  onDragStart: (event: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd: () => void;
   isSelected?: boolean;
   onUpdateName?: (leadId: string, newName: string) => Promise<void>;
@@ -89,7 +89,7 @@ const LeadCardComponent = ({
         "w-full max-w-full bg-card border border-border/60 rounded-[18px] p-5 cursor-pointer transition-all duration-200 relative",
         "shadow-sm hover:shadow-lg hover:border-primary/30 hover:-translate-y-px",
         isSelected && "ring-2 ring-inset ring-primary border-primary",
-        isDragging && "opacity-60 ring-2 ring-primary/50 shadow-none"
+        isDragging && "opacity-95 ring-2 ring-primary/35 shadow-md scale-[0.99]"
       )}
       onClick={onClick}
       draggable={!isEditingName}
@@ -99,34 +99,25 @@ const LeadCardComponent = ({
           return;
         }
         e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', lead.id);
 
-        // Build a fully-opaque, styled clone and keep it on-screen (just shifted
-        // far left) so Chrome actually rasterizes it as the drag image. Using
-        // top: -10000px causes Chrome to skip rendering and fall back to the
-        // native faded ghost. We append it BEFORE setDragImage and remove it
-        // after the snapshot is captured (next frame).
-        const target = e.currentTarget as HTMLElement;
-        const rect = target.getBoundingClientRect();
-        const clone = target.cloneNode(true) as HTMLElement;
-        clone.style.position = 'fixed';
-        clone.style.top = '0px';
-        clone.style.left = '0px';
-        clone.style.width = `${rect.width}px`;
-        clone.style.opacity = '1';
-        clone.style.pointerEvents = 'none';
-        clone.style.borderRadius = '18px';
-        clone.style.boxShadow = '0 24px 48px -12px rgba(0,0,0,0.35), 0 8px 16px -4px rgba(0,0,0,0.18)';
-        clone.style.transform = 'translate(-9999px, 0) rotate(-2deg)';
-        clone.style.zIndex = '99999';
-        clone.style.background = 'hsl(var(--card))';
-        document.body.appendChild(clone);
-        const offsetX = e.clientX - rect.left;
-        const offsetY = e.clientY - rect.top;
-        try { e.dataTransfer.setDragImage(clone, offsetX, offsetY); } catch {}
-        requestAnimationFrame(() => { clone.remove(); });
+        // Hide the browser-native drag ghost, which browsers force to ~50%
+        // opacity and render inconsistently. The board renders a custom fixed
+        // preview that stays crisp and stable over every column.
+        const transparentDragImage = document.createElement('div');
+        transparentDragImage.style.position = 'fixed';
+        transparentDragImage.style.top = '0px';
+        transparentDragImage.style.left = '0px';
+        transparentDragImage.style.width = '1px';
+        transparentDragImage.style.height = '1px';
+        transparentDragImage.style.opacity = '0';
+        transparentDragImage.style.pointerEvents = 'none';
+        document.body.appendChild(transparentDragImage);
+        try { e.dataTransfer.setDragImage(transparentDragImage, 0, 0); } catch {}
+        requestAnimationFrame(() => { transparentDragImage.remove(); });
 
         setIsDragging(true);
-        onDragStart();
+        onDragStart(e);
       }}
       onDragEnd={() => {
         setIsDragging(false);
