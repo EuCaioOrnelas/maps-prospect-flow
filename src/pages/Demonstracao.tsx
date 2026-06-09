@@ -172,11 +172,12 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
           className="font-display font-bold text-foreground leading-[1.05] tracking-tight"
         >
           <span className="block text-[1.85rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.5rem]">
-            Veja por dentro a operação
+            Como a Wiize gera reuniões B2B
           </span>
           <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[2rem] sm:text-[2.8rem] md:text-[3.35rem] lg:text-[3.75rem] mt-1 sm:mt-2">
-            que está vendendo mais
+            com SDR de IA no WhatsApp
           </span>
+
         </motion.h1>
 
         <motion.p
