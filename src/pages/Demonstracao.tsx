@@ -1,14 +1,13 @@
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Handshake, Play, X } from "lucide-react";
+import { ArrowRight, Handshake, Play } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
@@ -68,74 +67,6 @@ const VideoCover = ({ className = "", blurred = true }: { className?: string; bl
 );
 
 /* ------------------------------------------------------------------ */
-/*  Video Modal                                                       */
-/* ------------------------------------------------------------------ */
-
-const VideoModal = ({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-}) => {
-  const [playing, setPlaying] = useState(false);
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) setPlaying(false); onOpenChange(v); }}>
-      <DialogContent
-        className="w-[96vw] max-w-none max-h-[94vh] p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden"
-        style={{ width: "min(96vw, calc((100vh - 6rem) * 16 / 9), 1480px)" }}
-      >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card">
-          <div className="flex items-center gap-2">
-            <Play size={16} className="text-primary fill-primary" />
-            <span className="text-sm font-semibold">Demonstração — Wiize</span>
-          </div>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="p-2 rounded-lg hover:bg-secondary transition-colors"
-          >
-            <X size={16} />
-          </button>
-        </div>
-        <div className="relative w-full bg-card overflow-hidden" style={{ aspectRatio: "16 / 9" }}>
-          {!playing ? (
-            <button
-              type="button"
-              onClick={() => setPlaying(true)}
-              className="absolute inset-0 w-full h-full group"
-              aria-label="Reproduzir vídeo"
-            >
-              <VideoCover />
-
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
-                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
-                    <Play size={38} strokeWidth={1.5} className="ml-1" />
-                  </div>
-                </div>
-              </div>
-            </button>
-          ) : (
-            <iframe
-              className="absolute left-1/2 top-0 h-full origin-center border-0"
-              style={{ width: `${VIDEO_OVERSCAN_X * 100}%`, transform: "translateX(-50%)" }}
-              src={`https://www.youtube.com/embed/${VIDEO_ID}?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1`}
-              title="Wiize — Demonstração"
-              frameBorder="0"
-              allow="autoplay; encrypted-media; picture-in-picture"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-            />
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-/* ------------------------------------------------------------------ */
 /*  Hero — same background as LP Hero                                 */
 /* ------------------------------------------------------------------ */
 
@@ -192,7 +123,10 @@ const HeroBackdrop = () => (
   </>
 );
 
-const Hero = ({ onWatch }: { onWatch: () => void }) => (
+const Hero = () => {
+  const [playing, setPlaying] = useState(false);
+
+  return (
   <section className="relative w-full -mt-[72px] sm:-mt-[80px] pt-[104px] sm:pt-[120px] pb-12 sm:pb-16 overflow-x-clip">
     <HeroBackdrop />
 
@@ -241,30 +175,42 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, delay: 0.25 }}
-        className="mt-10 sm:mt-12 max-w-5xl mx-auto p-1 rounded-2xl bg-card/60 border border-border/50 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
+        className="mt-10 sm:mt-12 max-w-5xl mx-auto p-[3px] rounded-2xl bg-border/60 border border-border/70 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
       >
         <div
-          className="relative w-full rounded-2xl overflow-hidden bg-card cursor-pointer group ring-1 ring-border/40"
+          className="relative w-full rounded-[0.875rem] overflow-hidden bg-card group ring-1 ring-border/50"
           style={{ aspectRatio: "16 / 9" }}
-          onClick={onWatch}
         >
-          <VideoCover className="opacity-95 group-hover:opacity-100 transition-opacity" />
+          {!playing ? (
+            <button
+              type="button"
+              onClick={() => setPlaying(true)}
+              className="absolute inset-0 h-full w-full cursor-pointer"
+              aria-label="Reproduzir vídeo"
+            >
+              <VideoCover className="opacity-95 group-hover:opacity-100 transition-opacity" />
 
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 sm:gap-5">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
-                <Play size={38} strokeWidth={1.5} className="ml-1" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                    <Play size={38} strokeWidth={1.5} className="ml-1" />
+                  </div>
+                </div>
               </div>
-            </div>
-            <span className="text-sm sm:text-base font-medium text-foreground px-4 py-2 rounded-full bg-background/70 backdrop-blur-md border border-border/40 shadow-sm">
-              Aperte o play para ver a demonstração
-            </span>
-          </div>
-          <div className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/85 backdrop-blur border border-border">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-xs font-semibold">Tour da plataforma · 4 min</span>
-          </div>
+            </button>
+          ) : (
+            <iframe
+              className="absolute left-1/2 top-0 h-full origin-center border-0"
+              style={{ width: `${VIDEO_OVERSCAN_X * 100}%`, transform: "translateX(-50%)" }}
+              src={`https://www.youtube.com/embed/${VIDEO_ID}?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1`}
+              title="Wiize — Demonstração"
+              frameBorder="0"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          )}
         </div>
       </motion.div>
 
@@ -295,7 +241,8 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
       </motion.div>
     </div>
   </section>
-);
+  );
+};
 
 /* ------------------------------------------------------------------ */
 /*  Final CTA                                                         */
@@ -356,8 +303,6 @@ const FinalCTA = () => (
 /* ------------------------------------------------------------------ */
 
 export default function Demonstracao() {
-  const [videoOpen, setVideoOpen] = useState(false);
-
   return (
     <LightThemeWrapper>
       <SEO
@@ -367,7 +312,7 @@ export default function Demonstracao() {
       <div className="landing-light min-h-screen bg-background text-foreground overflow-x-hidden">
         <Navbar />
         <main>
-          <Hero onWatch={() => setVideoOpen(true)} />
+          <Hero />
           <TrustedBySection />
           <Suspense fallback={<SectionFallback />}>
             <ProblemSection />
@@ -378,7 +323,6 @@ export default function Demonstracao() {
 
         </main>
         <Footer />
-        <VideoModal open={videoOpen} onOpenChange={setVideoOpen} />
       </div>
     </LightThemeWrapper>
   );
