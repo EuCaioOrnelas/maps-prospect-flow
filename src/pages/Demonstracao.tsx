@@ -106,7 +106,7 @@ const VideoModal = ({
               aria-label="Reproduzir vídeo"
             >
               <VideoCover />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="relative">
                   <div className="absolute inset-0 rounded-full bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
