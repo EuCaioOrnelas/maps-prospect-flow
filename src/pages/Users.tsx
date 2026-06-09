@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Loader2, UserPlus, MoreHorizontal, ShieldAlert, Crown,
-  User, Mail, Briefcase, Activity, Calendar, Clock, Settings2,
+  User, Mail, Briefcase, Activity, Calendar, Clock, Settings2, TimerReset, BarChart3, Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -26,6 +27,7 @@ import { MemberDetailDialog } from "@/components/users/MemberDetailDialog";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { downloadCsv, fmtDuration, rangeToDates, toDateInputValue, type UserMonitoringRange } from "@/lib/userMonitoring";
 
 const formatDate = (s: string | null | undefined) => {
   if (!s) return "—";
@@ -34,13 +36,36 @@ const formatDate = (s: string | null | undefined) => {
 
 export default function Users() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const { role, loading: roleLoading } = useAccountRole();
   const { members, seat, loading, refresh } = useAccountMembers();
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [selected, setSelected] = useState<AccountMember | null>(null);
+  const [range, setRange] = useState<UserMonitoringRange>("30d");
+  const [customFrom, setCustomFrom] = useState(toDateInputValue(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)));
+  const [customTo, setCustomTo] = useState(toDateInputValue(new Date()));
+  const [summary, setSummary] = useState<any>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+
+  const dateRange = useMemo(() => rangeToDates(range, customFrom, customTo), [range, customFrom, customTo]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    setSummaryLoading(true);
+    (async () => {
+      try {
+        const { data, error } = await supabase.rpc("account_get_members_usage_summary", {
+          _from: dateRange.from.toISOString(),
+          _to: dateRange.to.toISOString(),
+        });
+        if (!error) setSummary(data || null);
+      } finally {
+        setSummaryLoading(false);
+      }
+    })();
+  }, [user?.id, dateRange.from, dateRange.to]);
 
   if (roleLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
@@ -105,27 +130,40 @@ export default function Users() {
               </Button>
             </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="rounded-xl border border-border/60 bg-card p-4">
-              <div className="text-xs text-muted-foreground">Plano atual</div>
-              <div className="text-lg font-semibold mt-1">{planLabel}</div>
+          <div className="rounded-xl border border-border/60 bg-card p-3 space-y-3">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+              <MonitoringRangeFilter
+                value={range}
+                onChange={setRange}
+                from={customFrom}
+                to={customTo}
+                onFromChange={setCustomFrom}
+                onToChange={setCustomTo}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs lg:w-auto"
+                onClick={() => downloadCsv(`usuarios-${toDateInputValue(dateRange.from)}_${toDateInputValue(dateRange.to)}.csv`, [
+                  {
+                    plano: planLabel,
+                    usuarios_total: summary?.total_users ?? seat.used,
+                    usuarios_ativos_periodo: summary?.active_users ?? 0,
+                    tempo_total: fmtDuration(summary?.total_seconds ?? 0),
+                    media_sessao: fmtDuration(summary?.avg_session_seconds ?? 0),
+                    ultimo_login: summary?.last_login_at ? new Date(summary.last_login_at).toLocaleString("pt-BR") : "—",
+                  },
+                ])}
+              >
+                <Download size={14} className="mr-1.5" /> Exportar
+              </Button>
             </div>
-            <div className="rounded-xl border border-border/60 bg-card p-4">
-              <div className="text-xs text-muted-foreground">Usuários utilizados</div>
-              <div className="text-lg font-semibold mt-1">
-                {seat.used} {seat.unlimited ? "" : `/ ${seat.limit}`}
-              </div>
-            </div>
-            <div className="rounded-xl border border-border/60 bg-card p-4">
-              <div className="text-xs text-muted-foreground">Vagas disponíveis</div>
-              <div className="text-lg font-semibold mt-1">
-                {seat.unlimited ? "Ilimitado" : seat.remaining}
-              </div>
-              {!canAdd && !seat.unlimited && (
-                <Button variant="link" className="px-0 h-auto" onClick={() => navigate("/upgrade")}>
-                  Fazer upgrade →
-                </Button>
-              )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+              <MetricCard icon={<User size={16} />} label="Usuários" value={summaryLoading ? "…" : String(summary?.total_users ?? seat.used)} detail={seat.unlimited ? planLabel : `${planLabel} · ${seat.used}/${seat.limit}`} />
+              <MetricCard icon={<Activity size={16} />} label="Ativos no período" value={summaryLoading ? "…" : String(summary?.active_users ?? 0)} detail="Com atividade rastreada" />
+              <MetricCard icon={<TimerReset size={16} />} label="Tempo total" value={summaryLoading ? "…" : fmtDuration(summary?.total_seconds ?? 0)} detail="Soma da equipe" />
+              <MetricCard icon={<BarChart3 size={16} />} label="Média por sessão" value={summaryLoading ? "…" : fmtDuration(summary?.avg_session_seconds ?? 0)} detail={summary?.last_login_at ? `Último login ${formatDate(summary.last_login_at)}` : "Sem login registrado"} />
             </div>
           </div>
 
@@ -229,5 +267,67 @@ export default function Users() {
         onOpenChange={(o) => { if (!o) setSelected(null); }}
       />
     </>
+  );
+}
+
+function MetricCard({ icon, label, value, detail }: { icon: ReactNode; label: string; value: string; detail?: string }) {
+  return (
+    <div className="rounded-lg border border-border/50 bg-background/60 p-3">
+      <div className="flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">{icon}</div>
+        <div className="min-w-0">
+          <div className="text-xs text-muted-foreground">{label}</div>
+          <div className="truncate text-lg font-semibold text-foreground">{value}</div>
+        </div>
+      </div>
+      {detail && <div className="mt-2 text-xs text-muted-foreground">{detail}</div>}
+    </div>
+  );
+}
+
+function MonitoringRangeFilter({
+  value,
+  onChange,
+  from,
+  to,
+  onFromChange,
+  onToChange,
+}: {
+  value: UserMonitoringRange;
+  onChange: (v: UserMonitoringRange) => void;
+  from: string;
+  to: string;
+  onFromChange: (v: string) => void;
+  onToChange: (v: string) => void;
+}) {
+  const options: { value: UserMonitoringRange; label: string }[] = [
+    { value: "7d", label: "7 dias" },
+    { value: "30d", label: "30 dias" },
+    { value: "90d", label: "90 dias" },
+    { value: "custom", label: "Início e fim" },
+  ];
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {options.map((option) => (
+        <Button
+          key={option.value}
+          type="button"
+          variant={value === option.value ? "default" : "outline"}
+          size="sm"
+          className="h-8 text-xs"
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </Button>
+      ))}
+      {value === "custom" && (
+        <div className="flex items-center gap-1.5">
+          <Input type="date" value={from} onChange={(e) => onFromChange(e.target.value)} className="h-8 w-[132px] text-xs" />
+          <span className="text-xs text-muted-foreground">até</span>
+          <Input type="date" value={to} onChange={(e) => onToChange(e.target.value)} className="h-8 w-[132px] text-xs" />
+        </div>
+      )}
+    </div>
   );
 }

@@ -5,13 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Clock, Activity, Users, DollarSign, Phone, MessageSquare,
-  Calendar, Mail, Crown, Loader2,
+  Calendar, Mail, Crown, Loader2, Download, TimerReset, BarChart3,
 } from "lucide-react";
 import { ROLE_LABEL } from "@/lib/accountPermissions";
 import type { AccountMember } from "@/hooks/useAccountMembers";
+import { downloadCsv, fmtDuration, rangeToDates, toDateInputValue, type UserMonitoringRange } from "@/lib/userMonitoring";
 
 interface Props {
   member: AccountMember | null;
@@ -19,38 +21,22 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-type Range = "today" | "7d" | "30d" | "90d";
-
-function rangeToDates(r: Range): { from: Date; to: Date } {
-  const to = new Date();
-  const from = new Date();
-  if (r === "today") from.setHours(0, 0, 0, 0);
-  else if (r === "7d") from.setDate(from.getDate() - 7);
-  else if (r === "30d") from.setDate(from.getDate() - 30);
-  else from.setDate(from.getDate() - 90);
-  return { from, to };
-}
-
 const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString("pt-BR") : "—");
 const fmtDateTime = (d?: string | null) => (d ? new Date(d).toLocaleString("pt-BR") : "—");
 const fmtMoney = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-function fmtDuration(seconds: number) {
-  if (!seconds || seconds < 60) return `${seconds || 0}s`;
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
 
 export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
-  const [range, setRange] = useState<Range>("30d");
+  const [range, setRange] = useState<UserMonitoringRange>("30d");
+  const [customFrom, setCustomFrom] = useState(toDateInputValue(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)));
+  const [customTo, setCustomTo] = useState(toDateInputValue(new Date()));
   const [loading, setLoading] = useState(false);
   const [sessions, setSessions] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
+  const [lastLogin, setLastLogin] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !member?.user_id) return;
-    const { from, to } = rangeToDates(range);
+    const { from, to } = rangeToDates(range, customFrom, customTo);
     setLoading(true);
     Promise.all([
       supabase.rpc("account_get_member_activity_sessions", {
@@ -63,13 +49,15 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
         _from: from.toISOString(),
         _to: to.toISOString(),
       }),
+      supabase.rpc("account_get_member_last_login", { _user_id: member.user_id }),
     ])
-      .then(([s, o]) => {
+      .then(([s, o, l]) => {
         setSessions((s.data as any[]) || []);
         setStats(o.data || null);
+        setLastLogin((l.data as string | null) || member.last_login_at || null);
       })
       .finally(() => setLoading(false));
-  }, [open, member?.user_id, range]);
+  }, [open, member?.user_id, member?.last_login_at, range, customFrom, customTo]);
 
   const totals = useMemo(() => {
     const totalSec = sessions.reduce((acc, s) => acc + (s.active_seconds || 0), 0);
@@ -83,6 +71,8 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
 
   if (!member) return null;
   const initials = (member.name || member.email || "?").slice(0, 2).toUpperCase();
+  const { from, to } = rangeToDates(range, customFrom, customTo);
+  const filenameRange = `${toDateInputValue(from)}_${toDateInputValue(to)}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -126,7 +116,7 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
               />
               <InfoCard icon={<Mail size={14} />} label="Email" value={member.email || "—"} />
               <InfoCard icon={<Calendar size={14} />} label="Criado em" value={fmtDate(member.created_at)} />
-              <InfoCard icon={<Clock size={14} />} label="Último login" value={fmtDateTime(member.last_login_at)} />
+              <InfoCard icon={<Clock size={14} />} label="Último login" value={fmtDateTime(lastLogin)} />
               <InfoCard
                 icon={<Activity size={14} />}
                 label="Trocar senha"
@@ -136,11 +126,28 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
           </TabsContent>
 
           <TabsContent value="time" className="space-y-4 mt-4">
-            <RangePicker value={range} onChange={setRange} />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <RangePicker value={range} onChange={setRange} from={customFrom} to={customTo} onFromChange={setCustomFrom} onToChange={setCustomTo} />
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs"
+                disabled={!sessions.length}
+                onClick={() => downloadCsv(`tempo-uso-${member.email || member.user_id}-${filenameRange}.csv`, sessions.map((s) => ({
+                  data: new Date(s.day).toLocaleDateString("pt-BR"),
+                  entrada: new Date(s.session_start).toLocaleString("pt-BR"),
+                  saida: new Date(s.session_end).toLocaleString("pt-BR"),
+                  tempo: fmtDuration(s.active_seconds),
+                  eventos: s.event_count,
+                })))}
+              >
+                <Download size={14} className="mr-1.5" /> Exportar
+              </Button>
+            </div>
             <div className="grid grid-cols-3 gap-3">
-              <KpiCard label="Tempo ativo" value={fmtDuration(totals.totalSec)} />
-              <KpiCard label="Dias ativos" value={String(totals.days)} />
-              <KpiCard label="Média/dia" value={fmtDuration(totals.avg)} />
+              <KpiCard icon={<TimerReset size={14} />} label="Tempo ativo" value={fmtDuration(totals.totalSec)} />
+              <KpiCard icon={<Calendar size={14} />} label="Dias ativos" value={String(totals.days)} />
+              <KpiCard icon={<BarChart3 size={14} />} label="Média/dia" value={fmtDuration(totals.avg)} />
             </div>
             <div className="rounded-lg border border-border/60 overflow-hidden">
               <div className="grid grid-cols-4 px-3 py-2 text-xs font-medium bg-muted/40 text-muted-foreground">
@@ -162,7 +169,28 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
           </TabsContent>
 
           <TabsContent value="ops" className="space-y-4 mt-4">
-            <RangePicker value={range} onChange={setRange} />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <RangePicker value={range} onChange={setRange} from={customFrom} to={customTo} onFromChange={setCustomFrom} onToChange={setCustomTo} />
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs"
+                disabled={!stats}
+                onClick={() => downloadCsv(`operacional-${member.email || member.user_id}-${filenameRange}.csv`, [{
+                  leads_prospectados: stats?.leads || 0,
+                  vendas_valor: Number(stats?.sales_value || 0),
+                  vendas_quantidade: stats?.sales_count || 0,
+                  numeros_conectados: stats?.numbers_connected || 0,
+                  numeros_total: stats?.numbers_total || 0,
+                  mensagens_chat: stats?.messages_chat || 0,
+                  mensagens_agentes: stats?.messages_agents || 0,
+                  mensagens_aquecimento: stats?.messages_warming || 0,
+                  mensagens_total: stats?.messages_total || 0,
+                }])}
+              >
+                <Download size={14} className="mr-1.5" /> Exportar
+              </Button>
+            </div>
             {loading || !stats ? (
               <div className="grid grid-cols-2 gap-3">
                 {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-20" />)}
@@ -186,42 +214,72 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
 
 function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-3">
-      <div className="text-xs text-muted-foreground flex items-center gap-1.5">{icon} {label}</div>
-      <div className="text-sm font-medium mt-1">{value}</div>
+    <div className="rounded-lg border border-border/60 bg-background/60 p-3">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">{icon}</span>
+        {label}
+      </div>
+      <div className="mt-2 text-sm font-medium">{value}</div>
     </div>
   );
 }
 
 function KpiCard({ icon, label, value }: { icon?: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-3">
-      <div className="text-xs text-muted-foreground flex items-center gap-1.5">{icon} {label}</div>
-      <div className="text-lg font-semibold mt-1">{value}</div>
+    <div className="rounded-lg border border-border/60 bg-background/60 p-3">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {icon && <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">{icon}</span>}
+        {label}
+      </div>
+      <div className="mt-2 text-lg font-semibold">{value}</div>
     </div>
   );
 }
 
-function RangePicker({ value, onChange }: { value: Range; onChange: (r: Range) => void }) {
-  const opts: { v: Range; label: string }[] = [
+function RangePicker({
+  value,
+  onChange,
+  from,
+  to,
+  onFromChange,
+  onToChange,
+}: {
+  value: UserMonitoringRange;
+  onChange: (r: UserMonitoringRange) => void;
+  from: string;
+  to: string;
+  onFromChange: (v: string) => void;
+  onToChange: (v: string) => void;
+}) {
+  const opts: { v: UserMonitoringRange; label: string }[] = [
     { v: "today", label: "Hoje" },
     { v: "7d", label: "7 dias" },
     { v: "30d", label: "30 dias" },
     { v: "90d", label: "90 dias" },
+    { v: "custom", label: "Personalizado" },
   ];
   return (
-    <div className="flex items-center gap-1.5">
-      {opts.map((o) => (
-        <Button
-          key={o.v}
-          size="sm"
-          variant={value === o.v ? "default" : "outline"}
-          className="h-7 text-xs"
-          onClick={() => onChange(o.v)}
-        >
-          {o.label}
-        </Button>
-      ))}
+    <div className="flex flex-wrap items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {opts.map((o) => (
+          <Button
+            key={o.v}
+            size="sm"
+            variant={value === o.v ? "default" : "outline"}
+            className="h-8 text-xs"
+            onClick={() => onChange(o.v)}
+          >
+            {o.label}
+          </Button>
+        ))}
+      </div>
+      {value === "custom" && (
+        <div className="flex items-center gap-1.5">
+          <Input type="date" value={from} onChange={(e) => onFromChange(e.target.value)} className="h-8 w-[132px] text-xs" />
+          <span className="text-xs text-muted-foreground">até</span>
+          <Input type="date" value={to} onChange={(e) => onToChange(e.target.value)} className="h-8 w-[132px] text-xs" />
+        </div>
+      )}
     </div>
   );
 }

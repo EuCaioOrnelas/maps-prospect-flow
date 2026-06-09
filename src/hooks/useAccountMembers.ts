@@ -109,7 +109,14 @@ export function useAccountMembers() {
       });
     }
 
-    setMembers(list);
+    const listWithLastLogin = await Promise.all(
+      list.map(async (member) => {
+        const { data, error } = await supabase.rpc("account_get_member_last_login", { _user_id: member.user_id });
+        return { ...member, last_login_at: error ? member.last_login_at : ((data as string | null) || member.last_login_at) };
+      })
+    );
+
+    setMembers(listWithLastLogin);
     setLoading(false);
   }, [user?.id]);
 
