@@ -145,7 +145,7 @@ const Hero = () => {
           style={{ fontSize: "clamp(1.75rem, 4.6vw, 3.4rem)" }}
         >
           Veja a Wiize gerando{" "}<br className="hidden sm:block" />
-          <span className="text-shimmer-highlight font-extrabold">oportunidades com IA</span> na prática
+          <span className="text-shimmer-highlight font-extrabold">Oportunidades com IA</span> na prática
         </motion.h1>
 
         {/* Video */}
