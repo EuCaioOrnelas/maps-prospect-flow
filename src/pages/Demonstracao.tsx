@@ -240,11 +240,12 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, delay: 0.25 }}
-        className="mt-10 sm:mt-12 relative w-full rounded-3xl overflow-hidden border border-border bg-card shadow-2xl cursor-pointer group max-w-5xl mx-auto"
+        className="mt-10 sm:mt-12 relative w-full rounded-3xl overflow-hidden bg-card cursor-pointer group max-w-5xl mx-auto ring-1 ring-border/60 shadow-[0_20px_60px_-30px_hsl(var(--primary)/0.25)]"
         style={{ aspectRatio: "16 / 9" }}
         onClick={onWatch}
       >
-        <VideoCover className="opacity-90 group-hover:opacity-100 transition-opacity" />
+        <VideoCover className="opacity-95 group-hover:opacity-100 transition-opacity" />
+
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative">
