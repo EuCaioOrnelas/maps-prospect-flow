@@ -206,6 +206,19 @@ const LeadCardComponent = ({
           <span className="text-[10px] text-muted-foreground">+{lead.tags.length - 2}</span>
         )}
 
+        {hasResponse && (
+          <span className="text-[10px] text-muted-foreground flex items-center gap-1 ml-auto min-w-0">
+            <MessageCircle className="w-3 h-3 shrink-0" />
+            <span className="truncate min-w-0">
+              {formatDistanceToNow(new Date(lead.last_response_at!), {
+                addSuffix: true,
+                locale: ptBR,
+              })}
+            </span>
+          </span>
+        )}
+      </div>
+
       {/* Score footer — divisor suave + Score + número + progressbar */}
       {scoreData && scoreData.score_total > 0 && (() => {
         const s = Math.max(0, Math.min(scoreData.score_total, 1000));
@@ -226,18 +239,6 @@ const LeadCardComponent = ({
                 <div className={cn("h-full rounded-full transition-[width] duration-700", bg)} style={{ width: `${pct}%` }} />
               </div>
             </div>
-          </div>
-        );
-      })()}
-
-      {/* Score progressbar — borda inferior rente ao card */}
-      {scoreData && scoreData.score_total > 0 && (() => {
-        const s = Math.max(0, Math.min(scoreData.score_total, 1000));
-        const pct = (s / 1000) * 100;
-        const bg = s >= 750 ? 'bg-emerald-500' : s >= 500 ? 'bg-blue-500' : s >= 250 ? 'bg-orange-500' : 'bg-red-500';
-        return (
-          <div className="absolute bottom-0 left-0 right-0 h-[3px] rounded-b-[18px] overflow-hidden bg-muted/40 pointer-events-none">
-            <div className={cn("h-full transition-[width] duration-700", bg)} style={{ width: `${pct}%` }} />
           </div>
         );
       })()}
