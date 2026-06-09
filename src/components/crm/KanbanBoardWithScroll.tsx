@@ -318,13 +318,13 @@ const KanbanBoardWithScrollComponent = ({
         const fg = s >= 750 ? 'text-emerald-500' : s >= 500 ? 'text-blue-500' : s >= 250 ? 'text-orange-500' : 'text-red-500';
         return (
           <div
-            className="pointer-events-none fixed left-0 top-0 z-[80] opacity-100 will-change-transform"
+            className="pointer-events-none fixed left-0 top-0 z-[80] will-change-transform"
             style={{
               width: dragPreview.width,
-              transform: `translate3d(${dragPreview.x - dragPreview.offsetX}px, ${dragPreview.y - dragPreview.offsetY}px, 0) rotate(-1deg)`,
+              transform: `translate3d(${dragPreview.x - dragPreview.offsetX}px, ${dragPreview.y - dragPreview.offsetY}px, 0) rotate(-0.5deg)`,
             }}
           >
-            <div className="rounded-[18px] border border-primary/35 bg-card p-5 shadow-2xl shadow-foreground/20 ring-2 ring-primary/20 overflow-hidden">
+            <div className="rounded-[18px] border border-border/60 bg-card p-5 shadow-lg shadow-foreground/10 overflow-hidden">
               <div className="flex items-start justify-between gap-2 mb-1.5">
                 <h4 className="font-medium text-sm text-foreground min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                   {previewDisplayName}
