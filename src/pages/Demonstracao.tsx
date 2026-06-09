@@ -170,24 +170,21 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
 
         <motion.h1
           variants={fadeUp}
-          className="font-display font-bold text-foreground leading-[1.05] tracking-tight"
+          className="font-display font-bold text-foreground leading-[1.08] tracking-tight"
         >
-          <span className="block text-[1.85rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.5rem]">
+          <span className="block text-[1.6rem] xs:text-[1.85rem] sm:text-[2.4rem] md:text-[2.9rem] lg:text-[3.3rem]">
             Transforme sua operação comercial
           </span>
-          <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[2rem] sm:text-[2.8rem] md:text-[3.35rem] lg:text-[3.75rem] mt-1 sm:mt-2">
+          <span className="block text-shimmer-highlight font-extrabold text-[1.75rem] xs:text-[2rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.55rem] mt-1 sm:mt-2">
             em uma máquina de oportunidades
           </span>
-
-
         </motion.h1>
 
         <motion.p
           variants={fadeUp}
-          className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto"
+          className="mt-5 sm:mt-6 text-sm sm:text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto px-2 sm:px-0"
         >
-          Veja como empresas estão usando Inteligência Comercial Assistida para
-          gerar oportunidades, automatizar processos e aumentar produtividade.
+          Conheça como a Wiize combina IA, automações e inteligência comercial para ajudar empresas a ganhar produtividade, reduzir processos manuais e ampliar sua capacidade comercial.
         </motion.p>
       </motion.div>
 
