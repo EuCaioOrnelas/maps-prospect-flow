@@ -73,10 +73,11 @@ const VideoModal = ({
           <X size={16} />
         </button>
       </div>
-      <div className="relative w-full bg-card" style={{ aspectRatio: "16 / 9" }}>
+      <div className="relative w-full bg-black overflow-hidden" style={{ aspectRatio: "16 / 9" }}>
         <iframe
-          className="absolute inset-0 h-full w-full"
-          src="https://www.youtube.com/embed/ZRzK42SYNFc?rel=0&modestbranding=1&autoplay=1&playsinline=1"
+          className="absolute inset-0 h-full w-full origin-center"
+          style={{ transform: "scaleX(1.055)" }}
+          src="https://www.youtube.com/embed/ZRzK42SYNFc?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1"
           title="Wiize — Demonstração"
           allow="autoplay; encrypted-media; picture-in-picture"
           allowFullScreen
