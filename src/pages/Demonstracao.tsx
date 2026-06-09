@@ -8,6 +8,7 @@ import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+
 import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
 import avatar3 from "@/assets/avatars/avatar3.jpg";
@@ -22,9 +23,7 @@ const OpportunitySection = lazy(() =>
 const FeaturesOverviewSection = lazy(() =>
   import("@/components/sales/FeaturesOverviewSection").then((m) => ({ default: m.FeaturesOverviewSection })),
 );
-const FAQSection = lazy(() =>
-  import("@/components/landing/FAQSection").then((m) => ({ default: m.FAQSection })),
-);
+
 
 const SectionFallback = () => <div className="h-[40vh] w-full" aria-hidden="true" />;
 
@@ -173,11 +172,12 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
           className="font-display font-bold text-foreground leading-[1.05] tracking-tight"
         >
           <span className="block text-[1.85rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.5rem]">
-            Veja por dentro a operação
+            Como a Wiize gera reuniões B2B
           </span>
           <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[2rem] sm:text-[2.8rem] md:text-[3.35rem] lg:text-[3.75rem] mt-1 sm:mt-2">
-            que está vendendo mais
+            com SDR de IA no WhatsApp
           </span>
+
         </motion.h1>
 
         <motion.p
@@ -225,14 +225,8 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
 /*  Final CTA                                                         */
 /* ------------------------------------------------------------------ */
 
-const FinalCTA = ({ variant = "full" }: { variant?: "full" | "compact" }) => (
-  <section
-    className={
-      variant === "full"
-        ? "relative w-full pt-20 sm:pt-24 pb-10 sm:pb-12 overflow-hidden border-t border-border"
-        : "relative w-full pt-12 sm:pt-16 pb-16 sm:pb-20 overflow-hidden border-t border-border"
-    }
-  >
+const FinalCTA = () => (
+  <section className="relative w-full pt-16 sm:pt-20 pb-20 sm:pb-24 overflow-hidden">
     <div className="absolute left-1/2 top-1/2 h-72 w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-glow opacity-30 blur-3xl" />
 
     <div className="container mx-auto px-4 max-w-3xl relative z-10">
@@ -244,27 +238,14 @@ const FinalCTA = ({ variant = "full" }: { variant?: "full" | "compact" }) => (
         className="text-center"
       >
         <h2 className="font-display text-[1.6rem] sm:text-[2rem] md:text-[2.4rem] font-bold text-foreground leading-tight mb-4">
-          {variant === "full" ? (
-            <>
-              Transforme prospecção fria em{" "}
-              <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">
-                pipeline previsível
-              </span>
-            </>
-          ) : (
-            <>
-              Pronto para colocar a{" "}
-              <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">
-                Wiize na sua operação?
-              </span>
-            </>
-          )}
+          Pronto para colocar a{" "}
+          <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">
+            Wiize na sua operação?
+          </span>
         </h2>
 
         <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed mb-7">
-          {variant === "full"
-            ? "Implante a máquina comercial assistida por IA da Wiize e gere oportunidades qualificadas todos os dias, sem depender de SDR humano."
-            : "Comece em poucos minutos e veja a IA prospectar, qualificar e atualizar seu CRM enquanto seu time foca em fechar negócios."}
+          Comece em poucos minutos e veja a IA prospectar, qualificar e atualizar seu CRM enquanto seu time foca em fechar negócios.
         </p>
 
         <div className="flex flex-col items-center justify-center gap-3">
@@ -286,6 +267,7 @@ const FinalCTA = ({ variant = "full" }: { variant?: "full" | "compact" }) => (
     </div>
   </section>
 );
+
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                              */
@@ -309,11 +291,8 @@ export default function Demonstracao() {
             <OpportunitySection />
             <FeaturesOverviewSection />
           </Suspense>
-          <FinalCTA variant="full" />
-          <Suspense fallback={<SectionFallback />}>
-            <FAQSection />
-          </Suspense>
-          <FinalCTA variant="compact" />
+          <FinalCTA />
+
         </main>
         <Footer />
         <VideoModal open={videoOpen} onOpenChange={setVideoOpen} />
