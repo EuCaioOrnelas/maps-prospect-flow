@@ -13,6 +13,7 @@ import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
 import avatar3 from "@/assets/avatars/avatar3.jpg";
 import avatar4 from "@/assets/avatars/avatar4.jpg";
+import demoCoverAsset from "@/assets/demo-cover.png.asset.json";
 
 const ProblemSection = lazy(() =>
   import("@/components/sales/ProblemSection").then((m) => ({ default: m.ProblemSection })),
@@ -46,16 +47,23 @@ const stagger = {
 };
 
 const VIDEO_ID = "ZRzK42SYNFc";
-const VIDEO_THUMBNAIL = `https://img.youtube.com/vi/${VIDEO_ID}/maxresdefault.jpg`;
+const VIDEO_THUMBNAIL = demoCoverAsset.url;
 const VIDEO_OVERSCAN_X = 1.052;
 
-const VideoCover = ({ className = "" }: { className?: string }) => (
-  <img
-    src={VIDEO_THUMBNAIL}
-    alt="Demonstração Wiize"
-    className={`absolute inset-0 h-full w-full object-cover ${className}`}
-    style={{ transform: `scaleX(${VIDEO_OVERSCAN_X})` }}
-  />
+const VideoCover = ({ className = "", blurred = true }: { className?: string; blurred?: boolean }) => (
+  <>
+    <img
+      src={VIDEO_THUMBNAIL}
+      alt="Demonstração Wiize"
+      className={`absolute inset-0 h-full w-full object-cover ${className}`}
+      style={{
+        filter: blurred ? "blur(6px) saturate(1.05)" : "none",
+        transform: blurred ? "scale(1.08)" : "none",
+      }}
+    />
+    {/* Light wash to keep the play button readable without harsh shadow */}
+    <div className="absolute inset-0 bg-background/30" />
+  </>
 );
 
 /* ------------------------------------------------------------------ */
@@ -98,7 +106,7 @@ const VideoModal = ({
               aria-label="Reproduzir vídeo"
             >
               <VideoCover />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="relative">
                   <div className="absolute inset-0 rounded-full bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
@@ -232,12 +240,13 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, delay: 0.25 }}
-        className="mt-10 sm:mt-12 relative w-full rounded-3xl overflow-hidden border border-border bg-card shadow-2xl cursor-pointer group max-w-5xl mx-auto"
+        className="mt-10 sm:mt-12 relative w-full rounded-3xl overflow-hidden bg-card cursor-pointer group max-w-5xl mx-auto ring-1 ring-border/60 shadow-[0_20px_60px_-30px_hsl(var(--primary)/0.25)]"
         style={{ aspectRatio: "16 / 9" }}
         onClick={onWatch}
       >
-        <VideoCover className="opacity-90 group-hover:opacity-100 transition-opacity" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+        <VideoCover className="opacity-95 group-hover:opacity-100 transition-opacity" />
+
+        
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
