@@ -13,6 +13,7 @@ import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
 import avatar3 from "@/assets/avatars/avatar3.jpg";
 import avatar4 from "@/assets/avatars/avatar4.jpg";
+import demoCoverAsset from "@/assets/demo-cover.png.asset.json";
 
 const ProblemSection = lazy(() =>
   import("@/components/sales/ProblemSection").then((m) => ({ default: m.ProblemSection })),
