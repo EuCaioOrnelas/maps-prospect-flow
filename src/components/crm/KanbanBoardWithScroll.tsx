@@ -1,8 +1,10 @@
 import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
 
-import { type Lead, type PipelineStage } from '@/hooks/useCRM';
+import { type Lead, type PipelineStage, WHATSAPP_STATUS_COLORS, WHATSAPP_STATUS_LABELS } from '@/hooks/useCRM';
 import { KanbanColumn, type ColumnWidth } from './KanbanColumn';
 import { cn } from '@/lib/utils';
+import { Phone } from 'lucide-react';
+import { formatPhoneShort } from '@/lib/phoneUtils';
 
 interface KanbanBoardWithScrollProps {
   stages: PipelineStage[];
@@ -244,6 +246,10 @@ const KanbanBoardWithScrollComponent = ({
     };
   }, [updateScrollIndicators]);
 
+  const previewDisplayName = dragPreview
+    ? dragPreview.lead.contact_name || dragPreview.lead.company_name || formatPhoneShort(dragPreview.lead.phone)
+    : '';
+
   return (
     <div className="relative flex-1 h-full flex flex-col">
       {/* Top horizontal scroll proxy */}
@@ -291,6 +297,38 @@ const KanbanBoardWithScrollComponent = ({
           />
         ))}
       </div>
+
+      {dragPreview && (
+        <div
+          className="pointer-events-none fixed left-0 top-0 z-[80] opacity-100 will-change-transform"
+          style={{
+            width: dragPreview.width,
+            transform: `translate3d(${dragPreview.x - dragPreview.offsetX}px, ${dragPreview.y - dragPreview.offsetY}px, 0) rotate(-1deg)`,
+          }}
+        >
+          <div className="rounded-[18px] border border-primary/35 bg-card p-5 shadow-2xl shadow-foreground/20 ring-2 ring-primary/20">
+            <div className="flex items-start justify-between gap-2 mb-1.5">
+              <h4 className="font-medium text-sm text-foreground min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                {previewDisplayName}
+              </h4>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2.5 min-w-0">
+              <Phone className="w-3 h-3 shrink-0" />
+              <span className="truncate min-w-0">{formatPhoneShort(dragPreview.lead.phone)}</span>
+            </div>
+            {dragPreview.lead.whatsapp_status && (
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full px-1.5 py-0 text-[10px] font-medium",
+                  WHATSAPP_STATUS_COLORS[dragPreview.lead.whatsapp_status]
+                )}
+              >
+                {WHATSAPP_STATUS_LABELS[dragPreview.lead.whatsapp_status]}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
 
   );
