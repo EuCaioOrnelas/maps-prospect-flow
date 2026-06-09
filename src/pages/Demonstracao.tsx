@@ -222,62 +222,6 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
 );
 
 /* ------------------------------------------------------------------ */
-/*  Máquina integrada de geração de oportunidades                     */
-/* ------------------------------------------------------------------ */
-
-const machineSteps = [
-  { icon: Search, title: "Captação por nicho", desc: "IA encontra empresas com perfil ideal por região e segmento." },
-  { icon: ScanSearch, title: "Análise profunda", desc: "Lê tamanho, demanda, maturidade e contexto de cada lead." },
-  { icon: Brain, title: "Diagnóstico IA", desc: "Identifica dores, necessidades e oportunidades reais." },
-  { icon: Sparkles, title: "Mensagem personalizada", desc: "Copy única gerada por IA para cada lead." },
-  { icon: Send, title: "Disparo inteligente", desc: "Envios pela Meta API Oficial, com cadência segura." },
-  { icon: Bot, title: "Atendimento 24/7", desc: "IA closer conduz, qualifica e responde sem pausas." },
-  { icon: RefreshCw, title: "Follow-up automático", desc: "Reengajamento contínuo de quem ia esfriar." },
-  { icon: CalendarCheck, title: "Conversão", desc: "Reuniões e oportunidades reais no pipeline." },
-  { icon: LayoutGrid, title: "CRM atualizado", desc: "Histórico centralizado, sem esforço manual." },
-];
-
-const MachineSection = () => (
-  <section className="relative w-full py-16 sm:py-24">
-    <div className="container mx-auto px-4 max-w-6xl">
-      <SectionHeading
-        eyebrow="Máquina comercial"
-        title="Uma máquina integrada de"
-        highlight="geração de oportunidades"
-        description="Da captação ao fechamento, cada etapa do processo comercial conectada por dados, IA e automação — sem depender de operação manual."
-      />
-
-      <motion.div
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-60px" }}
-        variants={stagger}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
-      >
-        {machineSteps.map((s, i) => (
-          <motion.div
-            key={s.title}
-            variants={fadeUp}
-            className="relative rounded-2xl border border-border bg-card p-5 sm:p-6 hover:border-primary/30 hover:shadow-md transition-all"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                <s.icon size={20} />
-              </div>
-              <span className="text-[11px] font-semibold text-muted-foreground tracking-widest uppercase">
-                Etapa {String(i + 1).padStart(2, "0")}
-              </span>
-            </div>
-            <h3 className="font-semibold text-foreground text-base mb-1.5">{s.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
-          </motion.div>
-        ))}
-      </motion.div>
-    </div>
-  </section>
-);
-
-/* ------------------------------------------------------------------ */
 /*  Final CTA                                                         */
 /* ------------------------------------------------------------------ */
 
@@ -296,19 +240,19 @@ const FinalCTA = () => (
         <h2 className="font-display text-[1.75rem] sm:text-[2.25rem] md:text-[2.75rem] font-bold text-foreground leading-tight mb-7">
           Pronto para escalar sua{" "}
           <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">
-            operação comercial?
+            Operação Comercial?
           </span>
         </h2>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link to="/signup">
+        <div className="flex flex-col items-center justify-center gap-3">
+          <Link to="/#pricing">
             <Button variant="hero" size="lg" className="rounded-full group px-8 h-12">
               Escalar operação com Wiize
               <ArrowRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
           <Link
-            to="/partners"
+            to="/parceiros"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
           >
             <Handshake size={15} />
