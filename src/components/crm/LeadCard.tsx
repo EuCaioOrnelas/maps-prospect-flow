@@ -206,18 +206,29 @@ const LeadCardComponent = ({
           <span className="text-[10px] text-muted-foreground">+{lead.tags.length - 2}</span>
         )}
 
-        {hasResponse && (
-          <span className="text-[10px] text-muted-foreground flex items-center gap-1 ml-auto min-w-0">
-            <MessageCircle className="w-3 h-3 shrink-0" />
-            <span className="truncate min-w-0">
-              {formatDistanceToNow(new Date(lead.last_response_at!), {
-                addSuffix: true,
-                locale: ptBR,
-              })}
-            </span>
-          </span>
-        )}
-      </div>
+      {/* Score footer — divisor suave + Score + número + progressbar */}
+      {scoreData && scoreData.score_total > 0 && (() => {
+        const s = Math.max(0, Math.min(scoreData.score_total, 1000));
+        const pct = (s / 1000) * 100;
+        const bg = s >= 750 ? 'bg-emerald-500' : s >= 500 ? 'bg-blue-500' : s >= 250 ? 'bg-orange-500' : 'bg-red-500';
+        const fg = s >= 750 ? 'text-emerald-500' : s >= 500 ? 'text-blue-500' : s >= 250 ? 'text-orange-500' : 'text-red-500';
+        return (
+          <div
+            className="-mx-5 -mb-5 mt-3 px-5 pt-2.5 pb-3 relative cursor-pointer rounded-b-[18px]"
+            onClick={(e) => { e.stopPropagation(); navigate(`/crm/score?phone=${encodeURIComponent(lead.phone)}`); }}
+          >
+            {/* divisor suave: forte no meio, fade nas pontas */}
+            <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Score</span>
+              <span className={cn("text-xs font-semibold tabular-nums", fg)}>{s}</span>
+              <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
+                <div className={cn("h-full rounded-full transition-[width] duration-700", bg)} style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Score progressbar — borda inferior rente ao card */}
       {scoreData && scoreData.score_total > 0 && (() => {
