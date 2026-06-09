@@ -240,24 +240,27 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, delay: 0.25 }}
-        className="mt-10 sm:mt-12 relative w-full rounded-3xl overflow-hidden bg-card cursor-pointer group max-w-5xl mx-auto ring-1 ring-border/60 shadow-[0_20px_60px_-30px_hsl(var(--primary)/0.25)]"
-        style={{ aspectRatio: "16 / 9" }}
-        onClick={onWatch}
+        className="mt-10 sm:mt-12 max-w-5xl mx-auto p-3 sm:p-4 rounded-[2rem] bg-background border border-border/60 shadow-[0_60px_160px_-40px_rgba(0,0,0,0.22),0_24px_80px_-20px_rgba(0,0,0,0.14)]"
       >
-        <VideoCover className="opacity-95 group-hover:opacity-100 transition-opacity" />
+        <div
+          className="relative w-full rounded-2xl overflow-hidden bg-card cursor-pointer group border-2 border-foreground/15 shadow-inner"
+          style={{ aspectRatio: "16 / 9" }}
+          onClick={onWatch}
+        >
+          <VideoCover className="opacity-95 group-hover:opacity-100 transition-opacity" />
 
-        
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
-              <Play size={38} strokeWidth={1.5} className="ml-1" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                <Play size={38} strokeWidth={1.5} className="ml-1" />
+              </div>
             </div>
           </div>
-        </div>
-        <div className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/85 backdrop-blur border border-border">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-          <span className="text-xs font-semibold">Tour da plataforma · 4 min</span>
+          <div className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/85 backdrop-blur border border-border">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            <span className="text-xs font-semibold">Tour da plataforma · 4 min</span>
+          </div>
         </div>
       </motion.div>
     </div>
