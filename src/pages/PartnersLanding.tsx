@@ -348,6 +348,76 @@ export default function PartnersLanding() {
         </div>
       </section>
 
+      {/* REGRAS / CONTRATO */}
+      <section id="regras" className="px-6 py-24 bg-card/30 border-y border-border/40">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4 ring-1 ring-primary/20">
+              <ShieldCheck size={13} /> Regras do programa
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Regras claras. Sem vínculo trabalhista.</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Wiize Partners é um programa de indicação <strong className="text-foreground">por performance</strong>. Você atua como colaborador parceiro independente — sem contrato CLT, sem metas obrigatórias, sem custo. Indicou e a venda caiu no sistema, você recebe. Não caiu, não recebe. Simples e transparente.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-5">
+            {[
+              {
+                icon: ShieldCheck,
+                title: "Relação jurídica",
+                desc: "Você é parceiro autônomo, não funcionário. Não há vínculo empregatício, CLT, férias, 13º, FGTS ou jornada fixa. Cada parceiro é responsável pela própria tributação (PF ou PJ) sobre as comissões recebidas.",
+              },
+              {
+                icon: Wallet,
+                title: "Pagamento por performance",
+                desc: "Comissão só é gerada quando a venda é confirmada e paga no nosso sistema. Sem venda confirmada, sem comissão — sem exceção. Estornos, chargebacks ou cancelamentos no prazo de proteção (30 dias) revertem a comissão.",
+              },
+              {
+                icon: Megaphone,
+                title: "Conduta de divulgação",
+                desc: "Proibido spam, compra de tráfego em palavras-chave da marca Wiize, falsas promessas, prints adulterados, fake news ou qualquer prática que prejudique a reputação da Wiize. Materiais oficiais do portal são a base recomendada.",
+              },
+              {
+                icon: Ban,
+                title: "Práticas proibidas",
+                desc: "Auto-indicação, indicar empresas que já são suas, criar múltiplas contas para burlar o sistema, ou fraudar conversões resulta em suspensão imediata e perda de todas as comissões pendentes.",
+              },
+              {
+                icon: ScrollText,
+                title: "Privacidade e LGPD",
+                desc: "Você não tem acesso a dados pessoais dos leads — apenas métricas agregadas no painel (cliques, conversões, comissões). A Wiize é controladora dos dados conforme LGPD. Confidencialidade total sobre informações comerciais que receber.",
+              },
+              {
+                icon: Scale,
+                title: "Encerramento do programa",
+                desc: "Qualquer das partes pode encerrar a relação a qualquer momento, sem multa. Comissões já creditadas e disponíveis para saque seguem sendo pagas. Novas indicações deixam de ser remuneradas a partir do encerramento.",
+              },
+            ].map((r) => (
+              <div key={r.title} className="flex gap-4 p-6 rounded-2xl border border-border/40 bg-card hover:border-primary/30 transition-all">
+                <div className="shrink-0 h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
+                  <r.icon size={18} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">{r.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{r.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
+            <Link
+              to="/partners/terms"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-primary/30 bg-primary/5 text-primary font-medium hover:bg-primary/10 transition"
+            >
+              <ScrollText size={16} /> Ler termos e contrato completo
+            </Link>
+            <span className="text-muted-foreground">Ao se candidatar, você concorda integralmente com os termos.</span>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section id="faq" className="px-6 py-24 border-t border-border/40">
         <div className="max-w-3xl mx-auto">
