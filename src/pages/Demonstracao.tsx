@@ -130,8 +130,8 @@ const Hero = () => {
   <section className="relative w-full -mt-[72px] sm:-mt-[80px] pt-[104px] sm:pt-[120px] pb-12 sm:pb-16 overflow-x-clip">
     <HeroBackdrop />
 
-    <div className="container mx-auto px-4 sm:px-6 max-w-7xl relative z-10">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.7fr] gap-8 lg:gap-10 xl:gap-12 items-center">
+    <div className="container mx-auto px-4 sm:px-6 max-w-[90rem] relative z-10">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-8 lg:gap-12 xl:gap-16 items-center">
         {/* Text — left */}
         <motion.div
           initial="hidden"
