@@ -1,4 +1,4 @@
-import { memo, useMemo, useCallback } from 'react';
+import { memo, useMemo } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { LeadCard } from './LeadCard';
 import { cn } from '@/lib/utils';
@@ -11,11 +11,10 @@ interface KanbanColumnProps {
   stage: PipelineStage;
   leads: Lead[];
   onLeadClick: (lead: Lead) => void;
-  onDragStart: (leadId: string, event: React.DragEvent<HTMLDivElement>) => void;
-  onDragEnd: () => void;
+  onDragStart: (leadId: string, event: { clientX: number; clientY: number; currentTarget: HTMLDivElement }) => void;
   onDragOver: () => void;
-  onDrop: () => void;
   isDragOver: boolean;
+  draggedLeadId?: string | null;
   selectedLeadId?: string;
   isDragging?: boolean;
   isExpanded?: boolean;
@@ -52,10 +51,9 @@ const KanbanColumnComponent = ({
   leads,
   onLeadClick,
   onDragStart,
-  onDragEnd,
   onDragOver,
-  onDrop,
   isDragOver,
+  draggedLeadId,
   selectedLeadId,
   isDragging = false,
   isExpanded = false,
@@ -82,24 +80,9 @@ const KanbanColumnComponent = ({
     [leads, selectedLeadIds]
   );
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    onDragOver();
-  }, [onDragOver]);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    onDrop();
-  }, [onDrop]);
-
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    onDragOver();
-  }, [onDragOver]);
-
   return (
     <div
+      data-stage-id={stage.id}
       className={cn(
         "flex flex-col bg-card rounded-xl border transition-colors duration-150 h-[600px] overflow-hidden",
         isDragOver
@@ -107,9 +90,7 @@ const KanbanColumnComponent = ({
           : "border-border/60",
         getColumnWidthClass(columnWidth, isExpanded),
       )}
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
-      onDrop={handleDrop}
+      onPointerEnter={() => isDragging && onDragOver()}
     >
       {/* Header */}
       <div className="p-3 border-b border-border/50 shrink-0">
@@ -174,7 +155,7 @@ const KanbanColumnComponent = ({
                 lead={lead}
                 onClick={() => onLeadClick(lead)}
                 onDragStart={(event) => onDragStart(lead.id, event)}
-                onDragEnd={onDragEnd}
+                isDragging={draggedLeadId === lead.id}
                 isSelected={bulkSelectMode ? selectedLeadIds?.has(lead.id) : selectedLeadId === lead.id}
                 onUpdateName={onUpdateLeadName}
                 members={members}

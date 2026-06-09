@@ -3,11 +3,14 @@ import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { KanbanColumn, type ColumnWidth } from './KanbanColumn';
 import { cn } from '@/lib/utils';
-import { MessageCircle, User as UserIcon } from 'lucide-react';
+import { MessageCircle, Phone } from 'lucide-react';
 import { formatPhoneShort } from '@/lib/phoneUtils';
 import { useLeadScores } from '@/hooks/useLeadScores';
+import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+type CardDragStartEvent = { clientX: number; clientY: number; currentTarget: HTMLDivElement };
 
 interface KanbanBoardWithScrollProps {
   stages: PipelineStage[];
@@ -49,6 +52,7 @@ const KanbanBoardWithScrollComponent = ({
   hideValue,
 }: KanbanBoardWithScrollProps) => {
   const { getScoreForPhone } = useLeadScores();
+  const { hidden: phoneHidden } = usePhonePrivacy();
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<{
@@ -65,6 +69,7 @@ const KanbanBoardWithScrollComponent = ({
   const dragPreviewRef = useRef<HTMLDivElement>(null);
   const dragPositionRef = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
   const dragScrollBoundsRef = useRef<{ left: number; right: number; viewportWidth: number } | null>(null);
+  const dragOverStageRef = useRef<string | null>(null);
   const syncingRef = useRef<'top' | 'bottom' | null>(null);
   const animationRef = useRef<number | null>(null);
   const dragPreviewAnimationRef = useRef<number | null>(null);
@@ -106,7 +111,12 @@ const KanbanBoardWithScrollComponent = ({
     }
   }, [applyDragPreviewPosition]);
 
-  const handleDragStart = useCallback((leadId: string, event: React.DragEvent<HTMLDivElement>) => {
+  const getStageIdFromPoint = useCallback((x: number, y: number) => {
+    const element = document.elementFromPoint(x, y);
+    return element instanceof HTMLElement ? element.closest<HTMLElement>('[data-stage-id]')?.dataset.stageId || null : null;
+  }, []);
+
+  const handleDragStart = useCallback((leadId: string, event: CardDragStartEvent) => {
     const lead = leads.find((item) => item.id === leadId);
     const rect = event.currentTarget.getBoundingClientRect();
     const previewWidth = Math.min(240, rect.width);
@@ -135,6 +145,7 @@ const KanbanBoardWithScrollComponent = ({
   const handleDragEnd = useCallback(() => {
     setDraggedLead(null);
     setDragOverStage(null);
+    dragOverStageRef.current = null;
     setDragPreview(null);
     dragScrollBoundsRef.current = null;
     scrollVelocity.current = 0;
@@ -149,15 +160,20 @@ const KanbanBoardWithScrollComponent = ({
   }, []);
 
   const handleDragOver = useCallback((stageId: string) => {
-    setDragOverStage((current) => current === stageId ? current : stageId);
+    if (dragOverStageRef.current === stageId) return;
+    dragOverStageRef.current = stageId;
+    setDragOverStage(stageId);
   }, []);
 
-  const handleDrop = useCallback((stageId: string) => {
+  const handleDrop = useCallback((stageId: string | null) => {
     if (draggedLead) {
-      onLeadMove(draggedLead, stageId);
+      const lead = leads.find((item) => item.id === draggedLead);
+      if (stageId && lead?.pipeline_stage_id !== stageId) {
+        onLeadMove(draggedLead, stageId);
+      }
     }
     handleDragEnd();
-  }, [draggedLead, onLeadMove, handleDragEnd]);
+  }, [draggedLead, leads, onLeadMove, handleDragEnd]);
 
   // Memoize leads by stage to avoid recalculating on every render
   const leadsByStage = useMemo(() => {
@@ -217,42 +233,35 @@ const KanbanBoardWithScrollComponent = ({
     }
   }, [smoothScroll]);
 
-  const handleGlobalDragOver = useCallback((e: DragEvent) => {
-    e.preventDefault();
+  const handlePointerMove = useCallback((e: PointerEvent) => {
     if (draggedLead) {
-      if (e.clientX > 0 && e.clientY > 0) {
-        scheduleDragPreviewPosition(e.clientX, e.clientY);
-      }
-      calculateScrollVelocity(e.clientX);
-    }
-  }, [draggedLead, calculateScrollVelocity, scheduleDragPreviewPosition]);
-
-  const handleGlobalDrag = useCallback((e: DragEvent) => {
-    if (draggedLead && e.clientX > 0 && e.clientY > 0) {
+      e.preventDefault();
       scheduleDragPreviewPosition(e.clientX, e.clientY);
-    }
-  }, [draggedLead, scheduleDragPreviewPosition]);
-
-  const handleContainerDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (draggedLead) {
-      if (e.clientX > 0 && e.clientY > 0) {
-        scheduleDragPreviewPosition(e.clientX, e.clientY);
+      const nextStageId = getStageIdFromPoint(e.clientX, e.clientY);
+      if (dragOverStageRef.current !== nextStageId) {
+        dragOverStageRef.current = nextStageId;
+        setDragOverStage(nextStageId);
       }
       calculateScrollVelocity(e.clientX);
     }
-  }, [draggedLead, calculateScrollVelocity, scheduleDragPreviewPosition]);
+  }, [draggedLead, calculateScrollVelocity, getStageIdFromPoint, scheduleDragPreviewPosition]);
+
+  const handlePointerUp = useCallback((e: PointerEvent) => {
+    handleDrop(getStageIdFromPoint(e.clientX, e.clientY));
+  }, [getStageIdFromPoint, handleDrop]);
 
   useEffect(() => {
     if (draggedLead) {
-      document.addEventListener('drag', handleGlobalDrag);
-      document.addEventListener('dragover', handleGlobalDragOver);
+      document.addEventListener('pointermove', handlePointerMove, { passive: false });
+      document.addEventListener('pointerup', handlePointerUp, { once: true });
+      document.addEventListener('pointercancel', handleDragEnd, { once: true });
       return () => {
-        document.removeEventListener('drag', handleGlobalDrag);
-        document.removeEventListener('dragover', handleGlobalDragOver);
+        document.removeEventListener('pointermove', handlePointerMove);
+        document.removeEventListener('pointerup', handlePointerUp);
+        document.removeEventListener('pointercancel', handleDragEnd);
       };
     }
-  }, [draggedLead, handleGlobalDrag, handleGlobalDragOver]);
+  }, [draggedLead, handleDragEnd, handlePointerMove, handlePointerUp]);
 
   useEffect(() => {
     return () => {
@@ -262,10 +271,11 @@ const KanbanBoardWithScrollComponent = ({
       if (dragPreviewAnimationRef.current) {
         cancelAnimationFrame(dragPreviewAnimationRef.current);
       }
-      document.removeEventListener('drag', handleGlobalDrag);
-      document.removeEventListener('dragover', handleGlobalDragOver);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handleDragEnd);
     };
-  }, [handleGlobalDrag, handleGlobalDragOver]);
+  }, [handleDragEnd, handlePointerMove, handlePointerUp]);
 
   const displayedStages = useMemo(() => 
     filteredStageId 
@@ -312,6 +322,9 @@ const KanbanBoardWithScrollComponent = ({
   const previewDisplayName = dragPreview
     ? dragPreview.lead.contact_name || dragPreview.lead.company_name || formatPhoneShort(dragPreview.lead.phone)
     : '';
+  const previewPhone = dragPreview
+    ? (phoneHidden ? maskPhoneTail(formatPhoneShort(dragPreview.lead.phone)) : formatPhoneShort(dragPreview.lead.phone))
+    : '';
 
   return (
     <div className="relative flex-1 h-full flex flex-col">
@@ -330,7 +343,6 @@ const KanbanBoardWithScrollComponent = ({
           draggedLead && "cursor-grabbing select-none",
           filteredStageId && "justify-center"
         )}
-        onDragOver={handleContainerDragOver}
       >
         {displayedStages.map((stage) => (
           <KanbanColumn
@@ -339,10 +351,9 @@ const KanbanBoardWithScrollComponent = ({
             leads={leadsByStage.get(stage.id) || []}
             onLeadClick={onLeadClick}
             onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
             onDragOver={() => handleDragOver(stage.id)}
-            onDrop={() => handleDrop(stage.id)}
             isDragOver={dragOverStage === stage.id}
+            draggedLeadId={draggedLead}
             isDragging={!!draggedLead}
             isExpanded={!!filteredStageId}
             selectedLeadId={selectedLead?.id}
@@ -363,13 +374,6 @@ const KanbanBoardWithScrollComponent = ({
 
       {dragPreview && (() => {
         const lead = dragPreview.lead;
-        const responsible = members?.find((m) => m.user_id === lead.responsible_user_id) || null;
-        const initials = (() => {
-          const s = (responsible?.name || responsible?.email || '').trim();
-          const parts = s.split(/\s+/);
-          if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-          return s.slice(0, 2).toUpperCase();
-        })();
         const score = getScoreForPhone(lead.phone);
         const s = score ? Math.max(0, Math.min(score.score_total, 1000)) : 0;
         const pct = (s / 1000) * 100;
@@ -385,23 +389,14 @@ const KanbanBoardWithScrollComponent = ({
             }}
           >
             <div className="rounded-xl border border-primary/30 bg-card px-3 py-2.5 shadow-md shadow-foreground/5 overflow-hidden">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="shrink-0">
-                  {responsible?.avatar_url ? (
-                    <img src={responsible.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover border border-border/60" />
-                  ) : responsible ? (
-                    <div className="w-7 h-7 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center justify-center border border-border/60">
-                      {initials}
-                    </div>
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-muted text-muted-foreground flex items-center justify-center border border-border/60">
-                      <UserIcon className="w-3.5 h-3.5" />
-                    </div>
-                  )}
-                </div>
+              <div className="flex flex-col gap-1 min-w-0">
                 <h4 className="font-medium text-sm text-foreground min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                   {previewDisplayName}
                 </h4>
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground min-w-0">
+                  <Phone className="w-3 h-3 shrink-0" />
+                  <span className="truncate min-w-0">{previewPhone}</span>
+                </div>
               </div>
               <div className="mt-2 flex items-center gap-2 min-w-0">
                 {score && score.score_total > 0 && (
