@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo, memo, useLayoutEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
 
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { KanbanColumn, type ColumnWidth } from './KanbanColumn';
@@ -45,6 +45,14 @@ const KanbanBoardWithScrollComponent = ({
 }: KanbanBoardWithScrollProps) => {
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
+  const [dragPreview, setDragPreview] = useState<{
+    lead: Lead;
+    x: number;
+    y: number;
+    offsetX: number;
+    offsetY: number;
+    width: number;
+  } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const topScrollInnerRef = useRef<HTMLDivElement>(null);
@@ -66,13 +74,26 @@ const KanbanBoardWithScrollComponent = ({
     }
   }, []);
 
-  const handleDragStart = useCallback((leadId: string) => {
+  const handleDragStart = useCallback((leadId: string, event: React.DragEvent<HTMLDivElement>) => {
+    const lead = leads.find((item) => item.id === leadId);
+    const rect = event.currentTarget.getBoundingClientRect();
     setDraggedLead(leadId);
-  }, []);
+    if (lead) {
+      setDragPreview({
+        lead,
+        x: event.clientX,
+        y: event.clientY,
+        offsetX: event.clientX - rect.left,
+        offsetY: event.clientY - rect.top,
+        width: rect.width,
+      });
+    }
+  }, [leads]);
 
   const handleDragEnd = useCallback(() => {
     setDraggedLead(null);
     setDragOverStage(null);
+    setDragPreview(null);
     scrollVelocity.current = 0;
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
@@ -150,6 +171,7 @@ const KanbanBoardWithScrollComponent = ({
   const handleGlobalDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
     if (draggedLead) {
+      setDragPreview((current) => current ? { ...current, x: e.clientX, y: e.clientY } : current);
       calculateScrollVelocity(e.clientX);
     }
   }, [draggedLead, calculateScrollVelocity]);
@@ -157,6 +179,7 @@ const KanbanBoardWithScrollComponent = ({
   const handleContainerDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     if (draggedLead) {
+      setDragPreview((current) => current ? { ...current, x: e.clientX, y: e.clientY } : current);
       calculateScrollVelocity(e.clientX);
     }
   }, [draggedLead, calculateScrollVelocity]);
