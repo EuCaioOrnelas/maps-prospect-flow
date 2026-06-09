@@ -127,78 +127,41 @@ const Hero = () => {
   const [playing, setPlaying] = useState(false);
 
   return (
-  <section className="relative w-full -mt-[72px] sm:-mt-[80px] pt-[104px] sm:pt-[120px] pb-12 sm:pb-16 overflow-x-clip">
+  <section className="relative w-full -mt-[72px] sm:-mt-[80px] pt-[104px] sm:pt-[120px] pb-4 sm:pb-6 overflow-x-clip">
     <HeroBackdrop />
 
-    <div className="container mx-auto px-4 sm:px-6 max-w-[90rem] relative z-10">
-      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-8 lg:gap-12 xl:gap-16 items-center">
-        {/* Text — left */}
+    <div className="container mx-auto px-4 sm:px-6 max-w-5xl relative z-10">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={stagger}
+        className="flex flex-col items-center text-center"
+      >
         <motion.div
-          initial="hidden"
-          animate="show"
-          variants={stagger}
-          className="order-2 lg:order-1 text-center lg:text-left"
+          variants={fadeUp}
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full glass mb-5 sm:mb-6 border border-primary/10"
         >
-          <motion.div
-            variants={fadeUp}
-            className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full glass mb-5 sm:mb-6 border border-primary/10"
-          >
-            <div className="flex -space-x-1 sm:-space-x-1.5">
-              <img src={avatar1} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-              <img src={avatar2} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-              <img src={avatar3} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-              <img src={avatar4} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-            </div>
-            <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
-          </motion.div>
-
-          <motion.h1
-            variants={fadeUp}
-            className="font-display font-bold text-foreground leading-[1.08] tracking-tight"
-            style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}
-          >
-            <span className="block">Transforme sua operação</span>
-            <span className="block">comercial em uma</span>
-            <span className="block text-shimmer-highlight font-extrabold">máquina de oportunidades</span>
-          </motion.h1>
-
-          <motion.p
-            variants={fadeUp}
-            className="mt-4 sm:mt-5 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl mx-auto lg:mx-0"
-          >
-            Veja como a Wiize combina IA, automações e inteligência comercial para ampliar sua capacidade comercial e reduzir o trabalho manual.
-          </motion.p>
-
-          <motion.div
-            variants={fadeUp}
-            className="mt-6 sm:mt-7 flex flex-col sm:flex-row items-center lg:items-center justify-center lg:justify-start gap-3 sm:gap-4"
-          >
-            <Link to="/#pricing" className="w-full sm:w-auto">
-              <Button
-                variant="hero"
-                size="lg"
-                className="rounded-full group h-11 sm:h-12 px-5 sm:px-6 text-sm font-semibold w-full sm:w-auto shadow-xl whitespace-nowrap"
-              >
-                Escalar Operação
-                <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <Link
-              to="/parceiros"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-2 whitespace-nowrap"
-            >
-              <Handshake size={14} />
-              Quero ser parceiro
-            </Link>
-          </motion.div>
+          <div className="flex -space-x-1 sm:-space-x-1.5">
+            <img src={avatar1} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
+            <img src={avatar2} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
+            <img src={avatar3} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
+            <img src={avatar4} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
+          </div>
+          <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
         </motion.div>
 
-        {/* Video — right */}
+        <motion.h1
+          variants={fadeUp}
+          className="font-display font-bold text-foreground leading-[1.08] tracking-tight"
+          style={{ fontSize: "clamp(1.75rem, 4.2vw, 3.25rem)" }}
+        >
+          Veja uma <span className="text-shimmer-highlight font-extrabold">demonstração</span> da Wiize
+        </motion.h1>
+
+        {/* Video */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65, delay: 0.15 }}
-          className="order-1 lg:order-2 w-full p-[3px] rounded-2xl bg-white/60 border border-white/80 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
+          variants={fadeUp}
+          className="w-full mt-8 sm:mt-10 p-[2px] rounded-2xl bg-border/60 border border-border/70 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
         >
           <div
             className="relative w-full rounded-[0.875rem] overflow-hidden bg-card group ring-1 ring-border/40"
@@ -215,8 +178,8 @@ const Hero = () => {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
                     <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
-                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
-                      <Play size={32} strokeWidth={1.5} className="ml-1 sm:size-9" />
+                    <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                      <Play size={22} strokeWidth={1.75} className="ml-0.5" />
                     </div>
                   </div>
                 </div>
@@ -235,20 +198,44 @@ const Hero = () => {
             )}
           </div>
         </motion.div>
-      </div>
 
-      {/* Scroll-down hint */}
+        {/* CTAs below video */}
+        <motion.div
+          variants={fadeUp}
+          className="mt-7 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
+        >
+          <Link to="/#pricing" className="w-full sm:w-auto">
+            <Button
+              variant="hero"
+              size="lg"
+              className="rounded-full group h-11 sm:h-12 px-5 sm:px-6 text-sm font-semibold w-full sm:w-auto shadow-xl whitespace-nowrap"
+            >
+              Escalar Operação
+              <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
+          <Link
+            to="/parceiros"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-2 whitespace-nowrap"
+          >
+            <Handshake size={14} />
+            Quero ser parceiro
+          </Link>
+        </motion.div>
+      </motion.div>
+
+      {/* Scroll-down arrow flush with carousel */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.8 }}
-        className="mt-4 sm:mt-6 flex flex-col items-center gap-2 text-muted-foreground"
+        className="mt-6 sm:mt-8 flex justify-center text-muted-foreground"
       >
-        <span className="text-[11px] sm:text-xs uppercase tracking-[0.18em]">Veja mais</span>
         <ArrowDown size={18} className="animate-bounce" />
       </motion.div>
     </div>
   </section>
+
   );
 };
 
