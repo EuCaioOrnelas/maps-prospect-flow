@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { type Lead, type PipelineStage, type LeadNote, type LeadActivity, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS, type WhatsAppStatus } from '@/hooks/useCRM';
+import { useLeadScores } from '@/hooks/useLeadScores';
 import { cn } from '@/lib/utils';
 import { formatPhoneNumber } from '@/lib/phoneUtils';
 import { Button } from '@/components/ui/button';
@@ -278,6 +279,7 @@ export const LeadDetailDialog = ({
 }: LeadDetailDialogProps) => {
   const navigate = useNavigate();
   const { user, accountOwnerId } = useAuth();
+  const { getScoreForPhone } = useLeadScores();
   const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files'>(initialTab || 'info');
   useEffect(() => {
     if (open && initialTab) setActiveTab(initialTab);
@@ -1258,7 +1260,8 @@ export const LeadDetailDialog = ({
 
                     {/* Score Inteligente — borda inferior limpa do card */}
                     {(() => {
-                      const s = Math.max(0, Math.min(lead.ai_score || 0, 1000));
+                      const scoreData = lead.phone ? getScoreForPhone(lead.phone) : undefined;
+                      const s = Math.max(0, Math.min(scoreData?.score_total ?? lead.ai_score ?? 0, 1000));
                       const pct = (s / 1000) * 100;
                       const bg = s >= 750 ? 'bg-emerald-500' : s >= 500 ? 'bg-blue-500' : s >= 250 ? 'bg-orange-500' : 'bg-red-500';
                       const fg = s >= 750 ? 'text-emerald-500' : s >= 500 ? 'text-blue-500' : s >= 250 ? 'text-orange-500' : 'text-red-500';
