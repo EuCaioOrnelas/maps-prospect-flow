@@ -389,9 +389,34 @@ export default function CRMSales() {
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <Badge variant="outline" className={st.tone}>
-                                {st.label}
-                              </Badge>
+                              <div className="flex items-center gap-2.5">
+                                <Badge variant="outline" className={st.tone}>
+                                  {st.label}
+                                </Badge>
+                                {(() => {
+                                  const r = s.responsible_user_id ? memberById[s.responsible_user_id] : null;
+                                  const label = r?.name || r?.email || "Sem responsável";
+                                  return (
+                                    <div
+                                      className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0"
+                                      title={`Responsável pela venda: ${label}`}
+                                    >
+                                      {r?.avatar_url ? (
+                                        <img
+                                          src={r.avatar_url}
+                                          alt=""
+                                          className="w-6 h-6 rounded-full object-cover border border-border/60 shrink-0"
+                                        />
+                                      ) : (
+                                        <div className="w-6 h-6 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center justify-center border border-border/60 shrink-0">
+                                          {r ? initialsOf(r.name, r.email) : <User className="w-3 h-3" />}
+                                        </div>
+                                      )}
+                                      <span className="truncate max-w-[120px]">{label}</span>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1">
