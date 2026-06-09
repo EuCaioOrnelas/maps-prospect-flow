@@ -83,14 +83,18 @@ const KanbanBoardWithScrollComponent = ({
     }
   }, []);
 
+  const getDragPreviewTransform = useCallback(() => {
+    const { x, y, offsetX, offsetY } = dragPositionRef.current;
+    return `translate3d(${Math.round(x - offsetX)}px, ${Math.round(y - offsetY)}px, 0) rotate(-0.5deg)`;
+  }, []);
+
   const applyDragPreviewPosition = useCallback(() => {
     dragPreviewAnimationRef.current = null;
     const preview = dragPreviewRef.current;
     if (!preview) return;
 
-    const { x, y, offsetX, offsetY } = dragPositionRef.current;
-    preview.style.transform = `translate3d(${Math.round(x - offsetX)}px, ${Math.round(y - offsetY)}px, 0) rotate(-0.5deg)`;
-  }, []);
+    preview.style.transform = getDragPreviewTransform();
+  }, [getDragPreviewTransform]);
 
   const scheduleDragPreviewPosition = useCallback((x: number, y: number) => {
     dragPositionRef.current.x = x;
@@ -207,7 +211,9 @@ const KanbanBoardWithScrollComponent = ({
   const handleGlobalDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
     if (draggedLead) {
-      scheduleDragPreviewPosition(e.clientX, e.clientY);
+      if (e.clientX > 0 && e.clientY > 0) {
+        scheduleDragPreviewPosition(e.clientX, e.clientY);
+      }
       calculateScrollVelocity(e.clientX);
     }
   }, [draggedLead, calculateScrollVelocity, scheduleDragPreviewPosition]);
@@ -221,7 +227,9 @@ const KanbanBoardWithScrollComponent = ({
   const handleContainerDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     if (draggedLead) {
-      scheduleDragPreviewPosition(e.clientX, e.clientY);
+      if (e.clientX > 0 && e.clientY > 0) {
+        scheduleDragPreviewPosition(e.clientX, e.clientY);
+      }
       calculateScrollVelocity(e.clientX);
     }
   }, [draggedLead, calculateScrollVelocity, scheduleDragPreviewPosition]);
@@ -364,7 +372,7 @@ const KanbanBoardWithScrollComponent = ({
             className="pointer-events-none fixed left-0 top-0 z-[80] will-change-transform"
             style={{
               width: dragPreview.width,
-              transform: `translate3d(${Math.round(dragPreview.x - dragPreview.offsetX)}px, ${Math.round(dragPreview.y - dragPreview.offsetY)}px, 0) rotate(-0.5deg)`,
+              transform: getDragPreviewTransform(),
             }}
           >
             <div className="rounded-[18px] border border-border/60 bg-card p-5 shadow-lg shadow-foreground/10 overflow-hidden">
