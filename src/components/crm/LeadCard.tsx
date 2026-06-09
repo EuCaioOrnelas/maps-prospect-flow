@@ -89,7 +89,7 @@ const LeadCardComponent = ({
         "w-full max-w-full bg-card border border-border/60 rounded-[18px] p-5 cursor-pointer transition-all duration-200 relative",
         "shadow-sm hover:shadow-lg hover:border-primary/30 hover:-translate-y-px",
         isSelected && "ring-2 ring-inset ring-primary border-primary",
-        isDragging && "opacity-50 ring-2 ring-primary/50 shadow-none"
+        isDragging && "opacity-60 ring-2 ring-primary/50 shadow-none"
       )}
       onClick={onClick}
       draggable={!isEditingName}
@@ -100,32 +100,35 @@ const LeadCardComponent = ({
         }
         e.dataTransfer.effectAllowed = 'move';
 
-        // Create a fully-opaque clone as the drag image so the ghost following
-        // the cursor stays clearly visible, independent of the source card's
-        // dragging styles.
+        // Build a fully-opaque, styled clone and keep it on-screen (just shifted
+        // far left) so Chrome actually rasterizes it as the drag image. Using
+        // top: -10000px causes Chrome to skip rendering and fall back to the
+        // native faded ghost. We append it BEFORE setDragImage and remove it
+        // after the snapshot is captured (next frame).
         const target = e.currentTarget as HTMLElement;
         const rect = target.getBoundingClientRect();
         const clone = target.cloneNode(true) as HTMLElement;
-        clone.style.position = 'absolute';
-        clone.style.top = '-10000px';
-        clone.style.left = '-10000px';
+        clone.style.position = 'fixed';
+        clone.style.top = '0px';
+        clone.style.left = '0px';
         clone.style.width = `${rect.width}px`;
         clone.style.opacity = '1';
-        clone.style.transform = 'rotate(-2deg)';
-        clone.style.boxShadow = '0 20px 40px -10px rgba(0,0,0,0.35), 0 8px 16px -4px rgba(0,0,0,0.2)';
         clone.style.pointerEvents = 'none';
         clone.style.borderRadius = '18px';
+        clone.style.boxShadow = '0 24px 48px -12px rgba(0,0,0,0.35), 0 8px 16px -4px rgba(0,0,0,0.18)';
+        clone.style.transform = 'translate(-9999px, 0) rotate(-2deg)';
+        clone.style.zIndex = '99999';
+        clone.style.background = 'hsl(var(--card))';
         document.body.appendChild(clone);
         const offsetX = e.clientX - rect.left;
         const offsetY = e.clientY - rect.top;
         try { e.dataTransfer.setDragImage(clone, offsetX, offsetY); } catch {}
-        // Cleanup after the browser has captured the snapshot
-        setTimeout(() => { clone.remove(); }, 0);
+        requestAnimationFrame(() => { clone.remove(); });
 
         setIsDragging(true);
         onDragStart();
       }}
-      onDragEnd={(e) => {
+      onDragEnd={() => {
         setIsDragging(false);
         onDragEnd();
       }}
