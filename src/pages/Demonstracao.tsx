@@ -141,10 +141,11 @@ const Hero = () => {
 
         <motion.h1
           variants={fadeUp}
-          className="font-display font-bold text-foreground leading-[1.08] tracking-tight text-balance max-w-[38rem]"
+          className="font-display font-bold text-foreground leading-[1.08] tracking-tight text-balance max-w-[42rem]"
           style={{ fontSize: "clamp(1.75rem, 4.8vw, 3.5rem)" }}
         >
-          Veja a Wiize gerando <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">oportunidades com IA</span> na prática
+          Veja a Wiize gerando{" "}<br className="hidden sm:block" />
+          <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">oportunidades com IA</span>{" "}na prática
         </motion.h1>
 
         {/* Video */}
