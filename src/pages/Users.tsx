@@ -40,6 +40,7 @@ export default function Users() {
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<AccountMember | null>(null);
 
   if (roleLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
