@@ -42,6 +42,7 @@ const LeadCardComponent = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.contact_name || '');
   const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const navigate = useNavigate();
   const { getScoreForPhone } = useLeadScores();
   const { hidden: phoneHidden } = usePhonePrivacy();
