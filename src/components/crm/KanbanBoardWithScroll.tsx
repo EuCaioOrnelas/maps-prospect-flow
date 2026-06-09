@@ -62,8 +62,11 @@ const KanbanBoardWithScrollComponent = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const topScrollInnerRef = useRef<HTMLDivElement>(null);
+  const dragPreviewRef = useRef<HTMLDivElement>(null);
+  const dragPositionRef = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
   const syncingRef = useRef<'top' | 'bottom' | null>(null);
   const animationRef = useRef<number | null>(null);
+  const dragPreviewAnimationRef = useRef<number | null>(null);
   const scrollVelocity = useRef(0);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -80,21 +83,44 @@ const KanbanBoardWithScrollComponent = ({
     }
   }, []);
 
+  const applyDragPreviewPosition = useCallback(() => {
+    dragPreviewAnimationRef.current = null;
+    const preview = dragPreviewRef.current;
+    if (!preview) return;
+
+    const { x, y, offsetX, offsetY } = dragPositionRef.current;
+    preview.style.transform = `translate3d(${Math.round(x - offsetX)}px, ${Math.round(y - offsetY)}px, 0) rotate(-0.5deg)`;
+  }, []);
+
+  const scheduleDragPreviewPosition = useCallback((x: number, y: number) => {
+    dragPositionRef.current.x = x;
+    dragPositionRef.current.y = y;
+
+    if (dragPreviewAnimationRef.current === null) {
+      dragPreviewAnimationRef.current = requestAnimationFrame(applyDragPreviewPosition);
+    }
+  }, [applyDragPreviewPosition]);
+
   const handleDragStart = useCallback((leadId: string, event: React.DragEvent<HTMLDivElement>) => {
     const lead = leads.find((item) => item.id === leadId);
     const rect = event.currentTarget.getBoundingClientRect();
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+
+    dragPositionRef.current = { x: event.clientX, y: event.clientY, offsetX, offsetY };
     setDraggedLead(leadId);
     if (lead) {
       setDragPreview({
         lead,
         x: event.clientX,
         y: event.clientY,
-        offsetX: event.clientX - rect.left,
-        offsetY: event.clientY - rect.top,
+        offsetX,
+        offsetY,
         width: rect.width,
       });
+      scheduleDragPreviewPosition(event.clientX, event.clientY);
     }
-  }, [leads]);
+  }, [leads, scheduleDragPreviewPosition]);
 
   const handleDragEnd = useCallback(() => {
     setDraggedLead(null);
@@ -105,10 +131,14 @@ const KanbanBoardWithScrollComponent = ({
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
     }
+    if (dragPreviewAnimationRef.current) {
+      cancelAnimationFrame(dragPreviewAnimationRef.current);
+      dragPreviewAnimationRef.current = null;
+    }
   }, []);
 
   const handleDragOver = useCallback((stageId: string) => {
-    setDragOverStage(stageId);
+    setDragOverStage((current) => current === stageId ? current : stageId);
   }, []);
 
   const handleDrop = useCallback((stageId: string) => {
@@ -177,18 +207,18 @@ const KanbanBoardWithScrollComponent = ({
   const handleGlobalDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
     if (draggedLead) {
-      setDragPreview((current) => current ? { ...current, x: e.clientX, y: e.clientY } : current);
+      scheduleDragPreviewPosition(e.clientX, e.clientY);
       calculateScrollVelocity(e.clientX);
     }
-  }, [draggedLead, calculateScrollVelocity]);
+  }, [draggedLead, calculateScrollVelocity, scheduleDragPreviewPosition]);
 
   const handleContainerDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     if (draggedLead) {
-      setDragPreview((current) => current ? { ...current, x: e.clientX, y: e.clientY } : current);
+      scheduleDragPreviewPosition(e.clientX, e.clientY);
       calculateScrollVelocity(e.clientX);
     }
-  }, [draggedLead, calculateScrollVelocity]);
+  }, [draggedLead, calculateScrollVelocity, scheduleDragPreviewPosition]);
 
   useEffect(() => {
     if (draggedLead) {
@@ -203,6 +233,9 @@ const KanbanBoardWithScrollComponent = ({
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
+      }
+      if (dragPreviewAnimationRef.current) {
+        cancelAnimationFrame(dragPreviewAnimationRef.current);
       }
       document.removeEventListener('dragover', handleGlobalDragOver);
     };
