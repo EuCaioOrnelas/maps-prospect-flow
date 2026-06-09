@@ -316,8 +316,11 @@ export default function PartnersLanding() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4 ring-1 ring-primary/20">
               <TrendingUp size={13} /> Plano de carreira
             </div>
-            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight mb-4">
-              Quanto mais você indica,<br /><span className="text-primary">mais você ganha</span>
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight mb-4 leading-[1.1]">
+              <span className="block">Quanto mais você indica,</span>
+              <span className="block text-shimmer-highlight font-extrabold whitespace-nowrap text-[clamp(1.4rem,5vw,3rem)]">
+                mais você ganha
+              </span>
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
               Níveis progressivos baseados em <strong className="text-foreground">clientes ativos</strong> indicados por você.
@@ -327,23 +330,43 @@ export default function PartnersLanding() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
             {tiers.map((t) => {
               const Icon = t.icon;
+              const isSignature = t.name === "Signature";
+              const isPrime = t.name === "Prime";
+              const cardClasses = isPrime
+                ? "relative overflow-hidden border-foreground/80 bg-foreground text-background transition-all hover:-translate-y-1 hover:shadow-xl"
+                : isSignature
+                ? "relative overflow-hidden border-primary/40 bg-primary/5 ring-1 ring-primary/20 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10"
+                : "relative overflow-hidden border-border/60 bg-card transition-all hover:-translate-y-1 hover:shadow-lg";
+              const iconWrapClasses = isPrime
+                ? "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-background/10 ring-1 ring-background/20 mb-4"
+                : isSignature
+                ? "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30 mb-4"
+                : "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-muted/60 ring-1 ring-border/60 mb-4";
+              const iconClasses = isPrime ? "text-background" : isSignature ? "text-primary" : "text-foreground/70";
+              const nameClasses = isPrime
+                ? "text-xs uppercase tracking-[0.2em] text-background/70 mb-2 font-semibold"
+                : isSignature
+                ? "text-xs uppercase tracking-[0.2em] text-primary mb-2 font-semibold"
+                : "text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2 font-semibold";
+              const subTextClasses = isPrime ? "text-xs text-background/70 mb-5" : "text-xs text-muted-foreground mb-5";
+              const dividerClasses = isPrime ? "pt-5 border-t border-background/20" : "pt-5 border-t border-border/50";
+              const rangeLabelClasses = isPrime
+                ? "text-[10px] uppercase tracking-wider text-background/60 mb-1"
+                : "text-[10px] uppercase tracking-wider text-muted-foreground mb-1";
               return (
-                <Card
-                  key={t.name}
-                  className="relative overflow-hidden border-border/60 bg-card transition-all hover:-translate-y-1 hover:shadow-lg"
-                >
+                <Card key={t.name} className={cardClasses}>
                   <CardContent className="relative p-7 text-center">
-                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-muted/60 ring-1 ring-border/60 mb-4">
-                      <Icon size={22} className="text-foreground/70" strokeWidth={2} />
+                    <div className={iconWrapClasses}>
+                      <Icon size={22} className={iconClasses} strokeWidth={2} />
                     </div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2 font-semibold">{t.name}</div>
+                    <div className={nameClasses}>{t.name}</div>
                     <div className="flex items-baseline justify-center gap-1 mb-1">
                       <span className="text-5xl font-bold tracking-tight">{t.percent}</span>
-                      <span className="text-xl font-semibold text-muted-foreground">%</span>
+                      <span className={isPrime ? "text-xl font-semibold text-background/70" : "text-xl font-semibold text-muted-foreground"}>%</span>
                     </div>
-                    <div className="text-xs text-muted-foreground mb-5">de comissão recorrente</div>
-                    <div className="pt-5 border-t border-border/50">
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Clientes ativos</div>
+                    <div className={subTextClasses}>de comissão recorrente</div>
+                    <div className={dividerClasses}>
+                      <div className={rangeLabelClasses}>Clientes ativos</div>
                       <div className="text-sm font-semibold">{t.range}</div>
                     </div>
                   </CardContent>
