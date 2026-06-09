@@ -48,7 +48,7 @@ const stagger = {
 
 const VIDEO_ID = "ZRzK42SYNFc";
 const VIDEO_THUMBNAIL = demoCoverAsset.url;
-const VIDEO_OVERSCAN_X = 1.052;
+const VIDEO_OVERSCAN_X = 1.012;
 
 const VideoCover = ({ className = "", blurred = true }: { className?: string; blurred?: boolean }) => (
   <>
@@ -57,12 +57,12 @@ const VideoCover = ({ className = "", blurred = true }: { className?: string; bl
       alt="Demonstração Wiize"
       className={`absolute inset-0 h-full w-full object-cover ${className}`}
       style={{
-        filter: blurred ? "blur(6px) saturate(1.05)" : "none",
-        transform: blurred ? "scale(1.08)" : "none",
+        filter: blurred ? "blur(2.5px) saturate(1.03)" : "none",
+        transform: blurred ? "scale(1.03)" : "none",
       }}
     />
     {/* Light wash to keep the play button readable without harsh shadow */}
-    <div className="absolute inset-0 bg-background/30" />
+    <div className="absolute inset-0 bg-background/20" />
   </>
 );
 
