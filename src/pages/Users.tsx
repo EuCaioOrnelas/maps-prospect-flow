@@ -26,14 +26,6 @@ import { MemberDetailDialog } from "@/components/users/MemberDetailDialog";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
-import { ROLE_LABEL } from "@/lib/accountPermissions";
-import { getPlanDisplayName } from "@/lib/planAccess";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { AddUserDialog } from "@/components/users/AddUserDialog";
-import { AppSidebar } from "@/components/layout/AppSidebar";
-import { AppHeader } from "@/components/layout/AppHeader";
-import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 
 const formatDate = (s: string | null | undefined) => {
   if (!s) return "—";
