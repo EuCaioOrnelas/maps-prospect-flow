@@ -101,12 +101,11 @@ const KanbanColumnComponent = ({
   return (
     <div
       className={cn(
-        "flex flex-col bg-card rounded-xl border border-border/60 transition-colors duration-200 h-[600px] overflow-hidden",
-        getColumnWidthClass(columnWidth, isExpanded),
+        "flex flex-col bg-card rounded-xl border transition-all duration-200 h-[600px] overflow-hidden",
         isDragOver
-          ? "border-primary bg-primary/5"
-          : "",
-        isDragging && !isDragOver && "opacity-70"
+          ? "border-primary/70 ring-2 ring-primary/20 shadow-[0_0_0_4px_hsl(var(--primary)/0.06)]"
+          : "border-border/60",
+        getColumnWidthClass(columnWidth, isExpanded),
       )}
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
