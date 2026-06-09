@@ -104,13 +104,12 @@ const LeadCardComponent = ({
         // Hide the browser-native drag ghost, which browsers force to ~50%
         // opacity and render inconsistently. The board renders a custom fixed
         // preview that stays crisp and stable over every column.
-        const transparentDragImage = document.createElement('div');
+        const transparentDragImage = document.createElement('canvas');
+        transparentDragImage.width = 1;
+        transparentDragImage.height = 1;
         transparentDragImage.style.position = 'fixed';
         transparentDragImage.style.top = '0px';
         transparentDragImage.style.left = '0px';
-        transparentDragImage.style.width = '1px';
-        transparentDragImage.style.height = '1px';
-        transparentDragImage.style.opacity = '0';
         transparentDragImage.style.pointerEvents = 'none';
         document.body.appendChild(transparentDragImage);
         try { e.dataTransfer.setDragImage(transparentDragImage, 0, 0); } catch {}
