@@ -23,6 +23,7 @@ export interface Sale {
   contract_url: string | null;
   closed_at: string;
   notes: string | null;
+  responsible_user_id: string | null;
   created_at: string;
   updated_at: string;
   // joined
@@ -31,6 +32,7 @@ export interface Sale {
     company_name: string | null;
     contact_name: string | null;
     phone: string;
+    responsible_user_id?: string | null;
   } | null;
 }
 
