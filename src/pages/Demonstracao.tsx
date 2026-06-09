@@ -73,10 +73,11 @@ const VideoModal = ({
           <X size={16} />
         </button>
       </div>
-      <div className="relative w-full bg-card" style={{ aspectRatio: "16 / 9" }}>
+      <div className="relative w-full bg-black overflow-hidden" style={{ aspectRatio: "16 / 9" }}>
         <iframe
-          className="absolute inset-0 h-full w-full"
-          src="https://www.youtube.com/embed/ZRzK42SYNFc?rel=0&modestbranding=1&autoplay=1&playsinline=1"
+          className="absolute inset-0 h-full w-full origin-center"
+          style={{ transform: "scaleX(1.055)" }}
+          src="https://www.youtube.com/embed/ZRzK42SYNFc?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1"
           title="Wiize — Demonstração"
           allow="autoplay; encrypted-media; picture-in-picture"
           allowFullScreen
@@ -169,24 +170,21 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
 
         <motion.h1
           variants={fadeUp}
-          className="font-display font-bold text-foreground leading-[1.05] tracking-tight"
+          className="font-display font-bold text-foreground leading-[1.08] tracking-tight"
         >
-          <span className="block text-[1.85rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.5rem]">
+          <span className="block text-[1.6rem] xs:text-[1.85rem] sm:text-[2.4rem] md:text-[2.9rem] lg:text-[3.3rem]">
             Transforme sua operação comercial
           </span>
-          <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[2rem] sm:text-[2.8rem] md:text-[3.35rem] lg:text-[3.75rem] mt-1 sm:mt-2">
+          <span className="block text-shimmer-highlight font-extrabold text-[1.75rem] xs:text-[2rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.55rem] mt-1 sm:mt-2">
             em uma máquina de oportunidades
           </span>
-
-
         </motion.h1>
 
         <motion.p
           variants={fadeUp}
-          className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto"
+          className="mt-5 sm:mt-6 text-sm sm:text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto px-2 sm:px-0"
         >
-          Veja como empresas estão usando Inteligência Comercial Assistida para
-          gerar oportunidades, automatizar processos e aumentar produtividade.
+          Conheça como a Wiize combina IA, automações e inteligência comercial para ajudar empresas a ganhar produtividade, reduzir processos manuais e ampliar sua capacidade comercial.
         </motion.p>
       </motion.div>
 
@@ -227,10 +225,10 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
 /* ------------------------------------------------------------------ */
 
 const FinalCTA = () => (
-  <section className="relative w-full pt-16 sm:pt-20 pb-20 sm:pb-24 overflow-hidden">
-    <div className="absolute left-1/2 top-1/2 h-72 w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-glow opacity-30 blur-3xl" />
+  <section className="relative w-full pt-20 sm:pt-28 pb-24 sm:pb-32 overflow-hidden">
+    <div className="absolute left-1/2 top-1/2 h-80 sm:h-96 w-[28rem] sm:w-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-glow opacity-40 blur-3xl" />
 
-    <div className="container mx-auto px-4 max-w-3xl relative z-10">
+    <div className="container mx-auto px-4 sm:px-6 max-w-4xl relative z-10">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -238,22 +236,26 @@ const FinalCTA = () => (
         transition={{ duration: 0.6 }}
         className="text-center"
       >
-        <h2 className="font-display text-[1.6rem] sm:text-[2rem] md:text-[2.4rem] font-bold text-foreground leading-tight mb-4">
+        <h2 className="font-display text-[1.85rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.4rem] font-bold text-foreground leading-[1.1] tracking-tight mb-5 sm:mb-6">
           Pronto para colocar a{" "}
-          <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">
-            Wiize na sua operação?
+          <span className="text-shimmer-highlight font-extrabold">
+            Wiize na sua Operação?
           </span>
         </h2>
 
-        <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed mb-7">
+        <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-10">
           Comece em poucos minutos e veja a IA prospectar, qualificar e atualizar seu CRM enquanto seu time foca em fechar negócios.
         </p>
 
-        <div className="flex flex-col items-center justify-center gap-3">
-          <Link to="/#pricing">
-            <Button variant="hero" size="lg" className="rounded-full group px-8 h-12">
-              Escalar operação com Wiize
-              <ArrowRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
+        <div className="flex flex-col items-center justify-center gap-4">
+          <Link to="/#pricing" className="w-full sm:w-auto">
+            <Button
+              variant="hero"
+              size="lg"
+              className="rounded-full group h-14 sm:h-16 px-8 sm:px-12 text-base sm:text-lg font-semibold w-full sm:w-auto shadow-xl"
+            >
+              Escalar Operação com Wiize
+              <ArrowRight size={20} className="ml-1 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
           <Link
