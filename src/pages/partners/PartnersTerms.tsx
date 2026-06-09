@@ -1,6 +1,18 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ShieldAlert, CheckCircle2, XCircle, Scale, Megaphone, Wallet, Ban } from "lucide-react";
+import {
+  ArrowLeft,
+  ShieldAlert,
+  CheckCircle2,
+  XCircle,
+  Scale,
+  Megaphone,
+  Wallet,
+  Ban,
+  Handshake,
+  FileText,
+  Lock,
+} from "lucide-react";
 
 /**
  * Termos & Condições do Programa de Parceiros Wiize.
@@ -37,7 +49,7 @@ const Bullet = ({ children, allowed }: { children: React.ReactNode; allowed?: bo
 );
 
 export default function PartnersTerms() {
-  const updatedAt = "26 de maio de 2026";
+  const updatedAt = "9 de junho de 2026";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
@@ -69,27 +81,47 @@ export default function PartnersTerms() {
             Termos do Programa de Parceiros Wiize
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Estes Termos regulam a relação entre você (Parceiro) e a Wiize. Ao aceitar a candidatura
-            ao Programa, você declara que leu, entendeu e concorda integralmente com todas as cláusulas
-            abaixo. Leia com atenção — o descumprimento pode levar a desclassificação, retenção de
-            comissões e exclusão definitiva do Programa.
+            Este documento regula a relação entre você (Parceiro) e a Wiize Tecnologia. Ao concluir
+            o cadastro no Programa, você declara que leu, compreendeu e concorda integralmente com
+            todas as cláusulas a seguir, o que possui plena validade jurídica nos termos do
+            art. 10, §2º da MP 2.200-2/2001, dispensando assinatura física.
           </p>
         </div>
 
-        <Section icon={CheckCircle2} title="1. Sobre o Programa">
+        <Section icon={Handshake} title="1. Natureza da Relação">
+          <p>
+            O Programa Wiize Partners é uma parceria comercial de indicação por performance,
+            estabelecida entre pessoas físicas ou jurídicas independentes. <strong className="text-foreground">
+            Não há, em nenhuma hipótese, vínculo empregatício</strong>, societário, de representação
+            exclusiva, agenciamento, franquia, mandato ou subordinação entre o Parceiro e a Wiize.
+          </p>
+          <p>
+            Não se aplicam ao Parceiro quaisquer dispositivos da Consolidação das Leis do Trabalho
+            (CLT), Lei nº 6.019/74, Lei nº 4.886/65 (representação comercial) ou normas correlatas.
+            O Parceiro <strong className="text-foreground">não cumpre jornada</strong>, não recebe
+            ordens, não possui exclusividade, não tem metas obrigatórias e atua com plena autonomia
+            sobre como, quando e onde divulgar a Wiize.
+          </p>
+          <p>
+            A adesão é gratuita, voluntária e pode ser encerrada por qualquer das partes a qualquer
+            tempo, sem multa, aviso prévio mínimo, indenização ou verbas rescisórias.
+          </p>
+        </Section>
+
+        <Section icon={CheckCircle2} title="2. Sobre o Programa">
           <p>
             O Programa de Parceiros Wiize é um programa de afiliação B2B que remunera parceiros
             aprovados por indicar novos clientes pagantes da plataforma Wiize, mediante o uso de
             links e cupons exclusivos atribuídos pela Wiize.
           </p>
           <p>
-            A participação é gratuita, sujeita à aprovação prévia de candidatura e à manutenção das
+            A participação está sujeita à aprovação prévia da candidatura e à manutenção das
             obrigações descritas neste documento. A Wiize pode, a seu critério, aceitar ou recusar
-            qualquer candidatura, sem necessidade de justificativa.
+            qualquer candidatura sem necessidade de justificativa.
           </p>
         </Section>
 
-        <Section icon={Megaphone} title="2. Regras de Divulgação">
+        <Section icon={Megaphone} title="3. Regras de Divulgação">
           <ul className="space-y-2.5">
             <Bullet allowed>
               Divulgar a Wiize de forma honesta, descrevendo benefícios reais, sem promessas de
@@ -114,7 +146,7 @@ export default function PartnersTerms() {
           </ul>
         </Section>
 
-        <Section icon={Ban} title="3. Condutas Proibidas">
+        <Section icon={Ban} title="4. Condutas Proibidas">
           <p className="font-medium text-foreground">
             As práticas abaixo são proibidas e podem gerar bloqueio imediato, perda de comissões
             acumuladas e medidas legais cabíveis:
@@ -168,11 +200,12 @@ export default function PartnersTerms() {
           </ul>
         </Section>
 
-        <Section icon={Wallet} title="4. Comissionamento, Níveis e Planos">
+        <Section icon={Wallet} title="5. Comissionamento, Níveis e Planos">
           <p className="text-foreground/90">
             A comissão é calculada sobre o valor líquido efetivamente pago pelo cliente indicado
             (plano + order bumps − descontos − impostos retidos pela operadora de pagamento) e segue
-            a estrutura de níveis abaixo, vigente a partir de 26/05/2026:
+            a estrutura de três níveis abaixo, vigente a partir de 09/06/2026. A comissão
+            <strong> máxima do programa é limitada a 20%</strong>.
           </p>
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-sm">
@@ -187,48 +220,61 @@ export default function PartnersTerms() {
                 <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Select</td><td className="px-4 py-2.5">10%</td><td className="px-4 py-2.5 text-muted-foreground">Nível inicial após aprovação</td></tr>
                 <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Signature</td><td className="px-4 py-2.5">15%</td><td className="px-4 py-2.5 text-muted-foreground">A partir de 5 clientes ativos</td></tr>
                 <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Prime</td><td className="px-4 py-2.5">20%</td><td className="px-4 py-2.5 text-muted-foreground">A partir de 15 clientes ativos</td></tr>
-                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Exclusive</td><td className="px-4 py-2.5">25%</td><td className="px-4 py-2.5 text-muted-foreground">A partir de 30 clientes ativos + curadoria Wiize</td></tr>
               </tbody>
             </table>
           </div>
           <ul className="space-y-2.5 pt-2">
             <Bullet>
-              A comissão incide sobre os <strong>planos pagos da Wiize</strong> (Atendimento, Growth e Enterprise),
-              incluindo <strong>order bumps</strong> e add-ons contratados no checkout. Não há comissão sobre o plano
-              gratuito, períodos de trial, créditos promocionais, taxas de gateway ou impostos.
+              A comissão incide sobre os <strong>planos pagos da Wiize</strong> (Atendimento, Growth
+              e Enterprise), incluindo <strong>order bumps</strong> e add-ons contratados no
+              checkout. Não há comissão sobre o plano gratuito, períodos de trial, créditos
+              promocionais, taxas de gateway ou impostos.
             </Bullet>
             <Bullet>
-              A recorrência é paga por até <strong>24 meses</strong> a partir da primeira fatura paga, desde que o
-              cliente permaneça ativo e adimplente.
+              A recorrência é paga por até <strong>24 meses</strong> a partir da primeira fatura
+              paga, desde que o cliente permaneça ativo e adimplente.
             </Bullet>
             <Bullet>
-              A comissão é paga apenas sobre vendas <strong>aprovadas e efetivamente pagas</strong>, após período de
-              carência (cooling-off) de <strong>14 dias</strong>, que cobre o direito de arrependimento, chargebacks
-              e reembolsos.
+              A atribuição é feita por <strong>last-click</strong> com janela de cookie de
+              <strong> 2 anos</strong>. Apenas vendas <strong>registradas, aprovadas e efetivamente
+              pagas</strong> no sistema da Wiize geram comissão.
             </Bullet>
             <Bullet>
-              Vendas canceladas, estornadas, fraudulentas ou que violem estes Termos são <strong>deduzidas
-              automaticamente</strong> do saldo do Parceiro, podendo gerar saldo negativo a ser compensado em ciclos
-              futuros. Após o pagamento de uma comissão, o valor é descontado do saldo disponível e o histórico fica
-              registrado no portal.
+              Toda comissão passa por período de carência (cooling-off) de <strong>14 dias</strong>,
+              que cobre o direito de arrependimento, chargebacks e reembolsos.
             </Bullet>
             <Bullet>
-              <strong>Saque mínimo de R$ 100</strong> via PIX, processado em até 5 dias úteis após aprovação. É
-              exigido cadastro e validação prévia da chave PIX no portal do Parceiro.
+              Vendas canceladas, estornadas, fraudulentas ou que violem estes Termos são
+              <strong> deduzidas automaticamente</strong> do saldo do Parceiro, podendo gerar saldo
+              negativo a ser compensado em ciclos futuros.
             </Bullet>
             <Bullet>
-              É responsabilidade do Parceiro emitir nota fiscal de prestação de serviços e recolher os tributos
-              devidos sobre as comissões recebidas. Para parceiros PF, valores acima de R$ 1.903,98/mês podem sofrer
-              retenção de IRRF conforme tabela vigente.
+              <strong>Saque mínimo de R$ 100</strong> via PIX, processado em até 5 dias úteis após
+              aprovação. É exigido cadastro e validação prévia da chave PIX no portal do Parceiro.
             </Bullet>
             <Bullet>
-              A Wiize pode ajustar percentuais, regras de atribuição (last-click, janela de cookies de 2 anos) e
-              estrutura de níveis com aviso prévio mínimo de 30 dias, sempre respeitando as comissões já apuradas.
+              É responsabilidade do Parceiro emitir nota fiscal de prestação de serviços e
+              recolher os tributos devidos sobre as comissões recebidas. Para parceiros PF, valores
+              acima de R$ 1.903,98/mês podem sofrer retenção de IRRF conforme tabela vigente.
+            </Bullet>
+            <Bullet>
+              A Wiize pode ajustar percentuais e regras de atribuição com aviso prévio mínimo de
+              30 dias, sempre respeitando as comissões já apuradas.
             </Bullet>
           </ul>
         </Section>
 
-        <Section icon={ShieldAlert} title="5. Auditoria, Suspensão e Encerramento">
+        <Section icon={CheckCircle2} title="6. Permissões do Parceiro">
+          <ul className="space-y-2.5">
+            <Bullet allowed>Criar conteúdo orgânico próprio (vídeos, posts, blogs, podcasts) divulgando a Wiize.</Bullet>
+            <Bullet allowed>Utilizar materiais oficiais fornecidos pela Wiize na área do Parceiro.</Bullet>
+            <Bullet allowed>Participar de outros programas de afiliados não concorrentes diretos da Wiize.</Bullet>
+            <Bullet allowed>Solicitar reembolsos, cancelamentos ou esclarecimentos sobre comissões no portal.</Bullet>
+            <Bullet allowed>Encerrar a participação no Programa a qualquer momento, sem ônus.</Bullet>
+          </ul>
+        </Section>
+
+        <Section icon={ShieldAlert} title="7. Auditoria, Suspensão e Encerramento">
           <ul className="space-y-2.5">
             <Bullet>
               A Wiize pode auditar a qualquer momento as vendas, materiais e canais de divulgação
@@ -251,7 +297,46 @@ export default function PartnersTerms() {
           </ul>
         </Section>
 
-        <Section icon={Scale} title="6. Propriedade Intelectual e Confidencialidade">
+        <Section icon={Lock} title="8. Proteções e Renúncias (Anti-Vínculo Trabalhista)">
+          <p>
+            O Parceiro reconhece e concorda expressamente que:
+          </p>
+          <ul className="space-y-2.5">
+            <Bullet>
+              Atua de forma <strong>autônoma e independente</strong>, sem qualquer subordinação
+              jurídica, hierárquica, técnica ou econômica perante a Wiize.
+            </Bullet>
+            <Bullet>
+              <strong>Não cumpre jornada de trabalho</strong>, não bate ponto, não recebe ordens
+              diretas, não tem chefia, não possui metas mandatórias e não está sujeito a regime
+              disciplinar.
+            </Bullet>
+            <Bullet>
+              A remuneração é <strong>exclusivamente por performance</strong> (comissão sobre
+              vendas confirmadas) e não constitui salário, pró-labore, honorário fixo ou qualquer
+              verba de natureza trabalhista.
+            </Bullet>
+            <Bullet>
+              Não fará jus a férias, 13º salário, FGTS, INSS patronal, aviso prévio, multa
+              rescisória, horas extras, adicional noturno, vale-transporte, vale-refeição ou
+              quaisquer outras verbas previstas na CLT ou em normas coletivas.
+            </Bullet>
+            <Bullet>
+              Eventual ajuizamento de reclamação trabalhista contra a Wiize será respondido com
+              base nestes Termos, que comprovam a natureza estritamente comercial da relação,
+              podendo o Parceiro ser responsabilizado pelos custos da defesa em caso de litigância
+              de má-fé.
+            </Bullet>
+            <Bullet>
+              O Parceiro <strong>isenta a Wiize</strong> de qualquer responsabilidade por
+              obrigações fiscais, previdenciárias e trabalhistas relacionadas à sua própria
+              atividade, equipe ou contratados, comprometendo-se a indenizar a Wiize por qualquer
+              autuação decorrente.
+            </Bullet>
+          </ul>
+        </Section>
+
+        <Section icon={Scale} title="9. Propriedade Intelectual e Confidencialidade">
           <ul className="space-y-2.5">
             <Bullet>
               A marca "Wiize", logotipos, layouts, textos e demais materiais são de propriedade
@@ -270,7 +355,7 @@ export default function PartnersTerms() {
           </ul>
         </Section>
 
-        <Section icon={CheckCircle2} title="7. LGPD e Tratamento de Dados">
+        <Section icon={FileText} title="10. LGPD e Tratamento de Dados">
           <p>
             O Parceiro atua como controlador independente dos dados pessoais que coleta em sua
             própria audiência. A Wiize trata os dados do Parceiro (nome, CPF/CNPJ, contato e dados
@@ -284,15 +369,16 @@ export default function PartnersTerms() {
           </p>
         </Section>
 
-        <Section icon={Scale} title="8. Disposições Gerais">
+        <Section icon={Scale} title="11. Aceite Eletrônico e Disposições Gerais">
           <ul className="space-y-2.5">
+            <Bullet>
+              A adesão ao Programa se dá por <strong>aceite eletrônico</strong> no cadastro, que
+              possui plena validade jurídica nos termos do art. 10, §2º da MP 2.200-2/2001,
+              dispensando contrato físico assinado.
+            </Bullet>
             <Bullet>
               Estes Termos podem ser atualizados a qualquer momento. Alterações relevantes serão
               comunicadas por e-mail e/ou na área do Parceiro com pelo menos 15 dias de antecedência.
-            </Bullet>
-            <Bullet>
-              A relação entre as partes é estritamente comercial, não configurando vínculo
-              empregatício, sociedade, mandato ou representação exclusiva.
             </Bullet>
             <Bullet>
               Fica eleito o foro da Comarca de Belo Horizonte/MG para dirimir quaisquer controvérsias
