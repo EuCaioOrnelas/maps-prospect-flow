@@ -1,34 +1,26 @@
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  Handshake,
-  Play,
-  X,
-  Search,
-  Brain,
-  Sparkles,
-  Send,
-  Bot,
-  RefreshCw,
-  CalendarCheck,
-  LayoutGrid,
-  ScanSearch,
-} from "lucide-react";
+import { ArrowRight, Handshake, Play, X } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
-import { SectionHeading } from "@/components/landing/SectionHeading";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import avatar1 from "@/assets/avatars/avatar1.jpg";
+import avatar2 from "@/assets/avatars/avatar2.jpg";
+import avatar3 from "@/assets/avatars/avatar3.jpg";
+import avatar4 from "@/assets/avatars/avatar4.jpg";
 
 const ProblemSection = lazy(() =>
   import("@/components/sales/ProblemSection").then((m) => ({ default: m.ProblemSection })),
 );
 const OpportunitySection = lazy(() =>
   import("@/components/sales/OpportunitySection").then((m) => ({ default: m.OpportunitySection })),
+);
+const FeaturesOverviewSection = lazy(() =>
+  import("@/components/sales/FeaturesOverviewSection").then((m) => ({ default: m.FeaturesOverviewSection })),
 );
 const FAQSection = lazy(() =>
   import("@/components/landing/FAQSection").then((m) => ({ default: m.FAQSection })),
@@ -163,22 +155,28 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
         variants={stagger}
         className="text-center max-w-4xl mx-auto"
       >
-        <motion.span
+        <motion.div
           variants={fadeUp}
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold tracking-widest uppercase mb-5 bg-primary/10 text-primary border border-primary/15"
+          className="inline-flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-4 py-1 sm:py-2 rounded-full glass mb-6 sm:mb-8 border border-primary/10"
         >
-          <Sparkles size={12} /> Demonstração ao vivo
-        </motion.span>
+          <div className="flex -space-x-1 sm:-space-x-1.5">
+            <img src={avatar1} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
+            <img src={avatar2} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
+            <img src={avatar3} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
+            <img src={avatar4} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
+          </div>
+          <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
+        </motion.div>
 
         <motion.h1
           variants={fadeUp}
           className="font-display font-bold text-foreground leading-[1.05] tracking-tight"
         >
           <span className="block text-[1.85rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.5rem]">
-            Conheça a
+            Veja por dentro a operação
           </span>
           <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[2rem] sm:text-[2.8rem] md:text-[3.35rem] lg:text-[3.75rem] mt-1 sm:mt-2">
-            Wiize em ação
+            que está vendendo mais
           </span>
         </motion.h1>
 
@@ -224,62 +222,6 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
 );
 
 /* ------------------------------------------------------------------ */
-/*  Máquina integrada de geração de oportunidades                     */
-/* ------------------------------------------------------------------ */
-
-const machineSteps = [
-  { icon: Search, title: "Captação por nicho", desc: "IA encontra empresas com perfil ideal por região e segmento." },
-  { icon: ScanSearch, title: "Análise profunda", desc: "Lê tamanho, demanda, maturidade e contexto de cada lead." },
-  { icon: Brain, title: "Diagnóstico IA", desc: "Identifica dores, necessidades e oportunidades reais." },
-  { icon: Sparkles, title: "Mensagem personalizada", desc: "Copy única gerada por IA para cada lead." },
-  { icon: Send, title: "Disparo inteligente", desc: "Envios pela Meta API Oficial, com cadência segura." },
-  { icon: Bot, title: "Atendimento 24/7", desc: "IA closer conduz, qualifica e responde sem pausas." },
-  { icon: RefreshCw, title: "Follow-up automático", desc: "Reengajamento contínuo de quem ia esfriar." },
-  { icon: CalendarCheck, title: "Conversão", desc: "Reuniões e oportunidades reais no pipeline." },
-  { icon: LayoutGrid, title: "CRM atualizado", desc: "Histórico centralizado, sem esforço manual." },
-];
-
-const MachineSection = () => (
-  <section className="relative w-full py-16 sm:py-24">
-    <div className="container mx-auto px-4 max-w-6xl">
-      <SectionHeading
-        eyebrow="Máquina comercial"
-        title="Uma máquina integrada de"
-        highlight="geração de oportunidades"
-        description="Da captação ao fechamento, cada etapa do processo comercial conectada por dados, IA e automação — sem depender de operação manual."
-      />
-
-      <motion.div
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-60px" }}
-        variants={stagger}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
-      >
-        {machineSteps.map((s, i) => (
-          <motion.div
-            key={s.title}
-            variants={fadeUp}
-            className="relative rounded-2xl border border-border bg-card p-5 sm:p-6 hover:border-primary/30 hover:shadow-md transition-all"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                <s.icon size={20} />
-              </div>
-              <span className="text-[11px] font-semibold text-muted-foreground tracking-widest uppercase">
-                Etapa {String(i + 1).padStart(2, "0")}
-              </span>
-            </div>
-            <h3 className="font-semibold text-foreground text-base mb-1.5">{s.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
-          </motion.div>
-        ))}
-      </motion.div>
-    </div>
-  </section>
-);
-
-/* ------------------------------------------------------------------ */
 /*  Final CTA                                                         */
 /* ------------------------------------------------------------------ */
 
@@ -298,19 +240,19 @@ const FinalCTA = () => (
         <h2 className="font-display text-[1.75rem] sm:text-[2.25rem] md:text-[2.75rem] font-bold text-foreground leading-tight mb-7">
           Pronto para escalar sua{" "}
           <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">
-            operação comercial?
+            Operação Comercial?
           </span>
         </h2>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link to="/signup">
+        <div className="flex flex-col items-center justify-center gap-3">
+          <Link to="/#pricing">
             <Button variant="hero" size="lg" className="rounded-full group px-8 h-12">
               Escalar operação com Wiize
               <ArrowRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
           <Link
-            to="/partners"
+            to="/parceiros"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
           >
             <Handshake size={15} />
@@ -342,12 +284,12 @@ export default function Demonstracao() {
           <Suspense fallback={<SectionFallback />}>
             <ProblemSection />
             <OpportunitySection />
+            <FeaturesOverviewSection />
           </Suspense>
-          <MachineSection />
+          <FinalCTA />
           <Suspense fallback={<SectionFallback />}>
             <FAQSection />
           </Suspense>
-          <FinalCTA />
         </main>
         <Footer />
         <VideoModal open={videoOpen} onOpenChange={setVideoOpen} />
