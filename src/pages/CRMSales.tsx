@@ -321,6 +321,7 @@ export default function CRMSales() {
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Calendar className="w-3 h-3" /> Início</span></th>
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><CalendarClock className="w-3 h-3" /> Expira</span></th>
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Activity className="w-3 h-3" /> Status</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><User className="w-3 h-3" /> Resp.</span></th>
                         <th className="px-4 py-2.5 font-medium text-right"><span className="inline-flex items-center gap-1.5"><Settings2 className="w-3 h-3" /> Ações</span></th>
 
                       </tr>
