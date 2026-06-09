@@ -155,22 +155,28 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
         variants={stagger}
         className="text-center max-w-4xl mx-auto"
       >
-        <motion.span
+        <motion.div
           variants={fadeUp}
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold tracking-widest uppercase mb-5 bg-primary/10 text-primary border border-primary/15"
+          className="inline-flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-4 py-1 sm:py-2 rounded-full glass mb-6 sm:mb-8 border border-primary/10"
         >
-          <Sparkles size={12} /> Demonstração ao vivo
-        </motion.span>
+          <div className="flex -space-x-1 sm:-space-x-1.5">
+            <img src={avatar1} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
+            <img src={avatar2} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
+            <img src={avatar3} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
+            <img src={avatar4} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
+          </div>
+          <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
+        </motion.div>
 
         <motion.h1
           variants={fadeUp}
           className="font-display font-bold text-foreground leading-[1.05] tracking-tight"
         >
           <span className="block text-[1.85rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.5rem]">
-            Conheça a
+            Veja por dentro a operação
           </span>
           <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[2rem] sm:text-[2.8rem] md:text-[3.35rem] lg:text-[3.75rem] mt-1 sm:mt-2">
-            Wiize em ação
+            que está vendendo mais
           </span>
         </motion.h1>
 
