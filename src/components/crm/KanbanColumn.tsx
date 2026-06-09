@@ -101,9 +101,9 @@ const KanbanColumnComponent = ({
   return (
     <div
       className={cn(
-        "flex flex-col bg-card rounded-xl border transition-all duration-200 h-[600px] overflow-hidden",
+        "flex flex-col bg-card rounded-xl border transition-colors duration-150 h-[600px] overflow-hidden",
         isDragOver
-          ? "border-primary/70 ring-2 ring-primary/20 shadow-[0_0_0_4px_hsl(var(--primary)/0.06)]"
+          ? "border-primary/70 bg-primary/5"
           : "border-border/60",
         getColumnWidthClass(columnWidth, isExpanded),
       )}
@@ -127,8 +127,7 @@ const KanbanColumnComponent = ({
             )}
             <div
               className={cn(
-                "w-3 h-3 rounded-full shrink-0 transition-transform duration-200",
-                isDragOver && "scale-125"
+                "w-3 h-3 rounded-full shrink-0"
               )}
               style={{ backgroundColor: stage.color }}
             />
