@@ -138,25 +138,14 @@ const Hero = () => {
         variants={stagger}
         className="flex flex-col items-center text-center"
       >
-        <motion.div
-          variants={fadeUp}
-          className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full glass mb-5 sm:mb-6 border border-primary/10"
-        >
-          <div className="flex -space-x-1 sm:-space-x-1.5">
-            <img src={avatar1} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-            <img src={avatar2} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-            <img src={avatar3} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-            <img src={avatar4} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-          </div>
-          <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
-        </motion.div>
 
         <motion.h1
           variants={fadeUp}
-          className="font-display font-bold text-foreground leading-[1.08] tracking-tight max-w-3xl"
-          style={{ fontSize: "clamp(1.5rem, 3.4vw, 2.5rem)" }}
+          className="font-display font-bold text-foreground leading-[1.08] tracking-tight text-balance max-w-[42rem]"
+          style={{ fontSize: "clamp(1.75rem, 4.8vw, 3.5rem)" }}
         >
-          Veja a Wiize gerando <span className="text-shimmer-highlight font-extrabold">oportunidades com IA</span> na prática
+          Veja a Wiize gerando{" "}<br className="hidden sm:block" />
+          <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">oportunidades com IA</span>{" "}na prática
         </motion.h1>
 
         {/* Video */}
