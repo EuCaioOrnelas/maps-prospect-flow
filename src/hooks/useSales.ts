@@ -128,6 +128,7 @@ export const useSales = (leadId?: string) => {
           receipt_url: input.receipt_url ?? null,
           contract_url: input.contract_url ?? null,
           notes: input.notes ?? null,
+          responsible_user_id: input.responsible_user_id ?? null,
           closed_at: new Date().toISOString(),
           status: "active",
         })
