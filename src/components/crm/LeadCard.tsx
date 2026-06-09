@@ -42,6 +42,7 @@ const LeadCardComponent = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.contact_name || '');
   const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const navigate = useNavigate();
   const { getScoreForPhone } = useLeadScores();
   const { hidden: phoneHidden } = usePhonePrivacy();
@@ -87,7 +88,8 @@ const LeadCardComponent = ({
       className={cn(
         "w-full max-w-full bg-card border border-border/60 rounded-[18px] p-5 cursor-pointer transition-all duration-200 relative",
         "shadow-sm hover:shadow-lg hover:border-primary/30 hover:-translate-y-px",
-        isSelected && "ring-2 ring-inset ring-primary border-primary"
+        isSelected && "ring-2 ring-inset ring-primary border-primary",
+        isDragging && "opacity-40 ring-2 ring-primary/40 shadow-none scale-[0.98]"
       )}
       onClick={onClick}
       draggable={!isEditingName}
@@ -97,9 +99,13 @@ const LeadCardComponent = ({
           return;
         }
         e.dataTransfer.effectAllowed = 'move';
+        setIsDragging(true);
         onDragStart();
       }}
-      onDragEnd={onDragEnd}
+      onDragEnd={(e) => {
+        setIsDragging(false);
+        onDragEnd();
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
