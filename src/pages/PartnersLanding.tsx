@@ -27,6 +27,10 @@ const DEFAULTS: Settings = {
   silverClients: 100, goldClients: 250, platinumClients: 500,
 };
 
+const MAX_COMMISSION = 20;
+const AVG_TICKET = 798;
+const MAX_PER_REFERRAL = Math.round(AVG_TICKET * (MAX_COMMISSION / 100) * 24); // R$ 3.830
+
 const benefits = [
   { icon: Wallet, title: "Comissão recorrente por 24 meses", desc: "Você ganha sobre cada renovação do cliente indicado, mês após mês, durante 2 anos." },
   { icon: TrendingUp, title: "Níveis progressivos", desc: "Quanto mais clientes ativos, maior sua porcentagem sobre cada venda — automaticamente." },
@@ -37,9 +41,31 @@ const benefits = [
 ];
 
 const steps = [
-  { n: "01", t: "Candidate-se", d: "Preencha o formulário oficial. Análise em até 48h úteis." },
-  { n: "02", t: "Receba seu link", d: "Acesso ao portal Wiize Partners e link único de indicação." },
-  { n: "03", t: "Indique e ganhe", d: "Cada venda gerada vira comissão recorrente no seu painel." },
+  {
+    n: "01",
+    t: "Candidate-se em 2 minutos",
+    d: "Preencha o formulário oficial com seus dados e canais de divulgação. Análise da equipe Wiize em até 48h úteis, sem custo nem mensalidade.",
+  },
+  {
+    n: "02",
+    t: "Receba seu link exclusivo",
+    d: "Aprovado, você ganha acesso ao portal Wiize Partners com um link único de indicação (ex.: wiize.com.br/?ref=seu-codigo). Toda venda que vier por ele fica vinculada a você por 2 anos via cookie last-click.",
+  },
+  {
+    n: "03",
+    t: "Divulgue onde quiser",
+    d: "Compartilhe o link em redes sociais, WhatsApp, e-mail, YouTube, blog ou comunidades. Use os materiais prontos do portal — banners, copies, posts e roteiros validados pelo time Wiize.",
+  },
+  {
+    n: "04",
+    t: "Acompanhe em tempo real",
+    d: "No painel você vê cliques, leads, conversões, comissões pendentes e disponíveis. Tudo transparente, atualizado direto do nosso sistema de pagamentos.",
+  },
+  {
+    n: "05",
+    t: "Receba via Pix",
+    d: "A cada renovação do cliente, sua comissão entra automática. Solicitou o saque com saldo mínimo de R$ 100? Cai no seu Pix em até 5 dias úteis.",
+  },
 ];
 
 const faq = [
