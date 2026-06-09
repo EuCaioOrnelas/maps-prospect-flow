@@ -284,12 +284,12 @@ export default function Demonstracao() {
           <Suspense fallback={<SectionFallback />}>
             <ProblemSection />
             <OpportunitySection />
+            <FeaturesOverviewSection />
           </Suspense>
-          <MachineSection />
+          <FinalCTA />
           <Suspense fallback={<SectionFallback />}>
             <FAQSection />
           </Suspense>
-          <FinalCTA />
         </main>
         <Footer />
         <VideoModal open={videoOpen} onOpenChange={setVideoOpen} />
