@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import Upgrade from "./pages/Upgrade";
 const Users = lazyWithRetry(() => import("./pages/Users"), "Users");
 const AccessDenied = lazyWithRetry(() => import("./pages/AccessDenied"), "AccessDenied");
+const Demonstracao = lazyWithRetry(() => import("./pages/Demonstracao"), "Demonstracao");
 
 // Lazy load all other pages
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"), "Dashboard");
