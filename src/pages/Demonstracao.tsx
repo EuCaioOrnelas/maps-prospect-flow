@@ -1,34 +1,26 @@
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  Handshake,
-  Play,
-  X,
-  Search,
-  Brain,
-  Sparkles,
-  Send,
-  Bot,
-  RefreshCw,
-  CalendarCheck,
-  LayoutGrid,
-  ScanSearch,
-} from "lucide-react";
+import { ArrowRight, Handshake, Play, X, Sparkles } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
-import { SectionHeading } from "@/components/landing/SectionHeading";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import avatar1 from "@/assets/avatars/avatar1.jpg";
+import avatar2 from "@/assets/avatars/avatar2.jpg";
+import avatar3 from "@/assets/avatars/avatar3.jpg";
+import avatar4 from "@/assets/avatars/avatar4.jpg";
 
 const ProblemSection = lazy(() =>
   import("@/components/sales/ProblemSection").then((m) => ({ default: m.ProblemSection })),
 );
 const OpportunitySection = lazy(() =>
   import("@/components/sales/OpportunitySection").then((m) => ({ default: m.OpportunitySection })),
+);
+const FeaturesOverviewSection = lazy(() =>
+  import("@/components/sales/FeaturesOverviewSection").then((m) => ({ default: m.FeaturesOverviewSection })),
 );
 const FAQSection = lazy(() =>
   import("@/components/landing/FAQSection").then((m) => ({ default: m.FAQSection })),
