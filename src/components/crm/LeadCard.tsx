@@ -43,6 +43,7 @@ const LeadCardComponent = ({
   const [editName, setEditName] = useState(lead.contact_name || '');
   const [isHovered, setIsHovered] = useState(false);
   const suppressNextClickRef = useRef(false);
+  const onDragStartRef = useRef(onDragStart);
   const navigate = useNavigate();
   const { getScoreForPhone } = useLeadScores();
   const { hidden: phoneHidden } = usePhonePrivacy();
@@ -52,6 +53,7 @@ const LeadCardComponent = ({
   const phoneDisplay = phoneHidden ? maskPhoneTail(phoneFormatted) : phoneFormatted;
   const displayName = lead.contact_name || lead.company_name || phoneDisplay;
   const hasResponse = !!lead.last_response_at;
+  onDragStartRef.current = onDragStart;
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -109,7 +111,7 @@ const LeadCardComponent = ({
       started = true;
       suppressNextClickRef.current = true;
       moveEvent.preventDefault();
-      onDragStart({ clientX: moveEvent.clientX, clientY: moveEvent.clientY, currentTarget: card });
+      onDragStartRef.current({ clientX: moveEvent.clientX, clientY: moveEvent.clientY, currentTarget: card });
       document.removeEventListener('pointermove', handlePointerMove);
     };
 
@@ -118,7 +120,7 @@ const LeadCardComponent = ({
     document.addEventListener('pointermove', handlePointerMove, { passive: false });
     document.addEventListener('pointerup', handlePointerUp, { once: true });
     document.addEventListener('pointercancel', handlePointerUp, { once: true });
-  }, [isEditingName, onDragStart]);
+  }, [isEditingName]);
 
   return (
     <div
