@@ -193,12 +193,12 @@ export default function PartnersLanding() {
             <Sparkles size={14} /> Programa oficial Wiize Partners
           </div>
           <h1 className="font-display font-bold tracking-tight leading-[1.05] mb-6 text-foreground">
-            <span className="block text-3xl sm:text-4xl md:text-5xl mb-2">Indique a Wiize.</span>
-            <span className="block text-shimmer-highlight font-extrabold text-[clamp(1.4rem,4.6vw,3.25rem)] whitespace-nowrap">
+            <span className="block text-2xl sm:text-4xl md:text-5xl mb-2">Indique a Wiize.</span>
+            <span className="block text-shimmer-highlight font-extrabold text-[clamp(1.05rem,5.4vw,3.25rem)] whitespace-nowrap">
               Receba até {displayMax}% por 24 meses.
             </span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
             Comissão recorrente sobre toda venda gerada pelo seu link.
             Atribuição last-click. Materiais prontos. Saque via Pix.
           </p>
@@ -212,21 +212,21 @@ export default function PartnersLanding() {
               <Button size="lg" variant="outline">Como funciona</Button>
             </a>
           </div>
-          <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+          <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 max-w-3xl mx-auto">
             {[
               { v: `${displayMax}%`, l: "comissão máxima" },
               { v: "24 meses", l: "recorrência" },
               { v: "R$ 100", l: "saque mínimo" },
-              { v: `R$ ${formattedMaxPerReferral}`, l: "por indicação¹" },
+              { v: `Até R$ ${formattedMaxPerReferral}`, l: "por indicação¹" },
             ].map((s) => (
-              <div key={s.l} className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm py-4">
-                <div className="text-2xl md:text-3xl font-bold tracking-tight">{s.v}</div>
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-1">{s.l}</div>
+              <div key={s.l} className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm py-4 px-2">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">{s.v}</div>
+                <div className="text-[10px] sm:text-[11px] uppercase tracking-wider text-muted-foreground mt-1">{s.l}</div>
               </div>
             ))}
           </div>
-          <p className="mt-4 text-[11px] text-muted-foreground/80 max-w-2xl mx-auto">
-            ¹ Projeção máxima: ticket médio de R$ {AVG_TICKET.toLocaleString("pt-BR")}/mês × {displayMax}% × 24 meses de recorrência por cliente indicado.
+          <p className="mt-4 text-[11px] text-muted-foreground/80 max-w-2xl mx-auto px-2">
+            ¹ Estimativa baseada no ticket médio de R$ {AVG_TICKET.toLocaleString("pt-BR")}/mês × {displayMax}% × 24 meses. Como temos planos que chegam a R$ 10 mil/mês, o ganho real por indicação pode ser significativamente maior.
           </p>
         </div>
       </section>
