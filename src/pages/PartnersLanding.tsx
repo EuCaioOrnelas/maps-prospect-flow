@@ -138,20 +138,16 @@ export default function PartnersLanding() {
       icon: Award,
     },
     {
-      name: "Prime", percent: settings.gold,
-      range: `${settings.goldClients} – ${settings.platinumClients - 1} clientes`,
+      name: "Prime", percent: Math.min(settings.gold, MAX_COMMISSION),
+      range: `${settings.goldClients}+ clientes`,
       icon: Rocket,
-      highlight: true,
-    },
-    {
-      name: "Exclusive", percent: settings.platinum,
-      range: `${settings.platinumClients}+ clientes`,
-      icon: Crown,
     },
   ];
 
-  const pageTitle = `Wiize Partners — Comissão recorrente até ${settings.platinum}% indicando a Wiize`;
-  const pageDescription = `Indique a Wiize, receba até ${settings.platinum}% de comissão recorrente por 24 meses. Atribuição last-click, materiais prontos e saque via Pix.`;
+  const displayMax = MAX_COMMISSION;
+  const formattedMaxPerReferral = MAX_PER_REFERRAL.toLocaleString("pt-BR");
+  const pageTitle = `Wiize Partners — Comissão recorrente até ${displayMax}% indicando a Wiize`;
+  const pageDescription = `Indique a Wiize, receba até ${displayMax}% de comissão recorrente por 24 meses. Atribuição last-click, materiais prontos e saque via Pix.`;
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
