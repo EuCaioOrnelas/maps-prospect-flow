@@ -13,7 +13,7 @@ import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
 import avatar3 from "@/assets/avatars/avatar3.jpg";
 import avatar4 from "@/assets/avatars/avatar4.jpg";
-import demoCoverAsset from "@/assets/demo-cover.png.asset.json";
+import demoCoverAsset from "@/assets/demo-cover-v2.png.asset.json";
 
 const ProblemSection = lazy(() =>
   import("@/components/sales/ProblemSection").then((m) => ({ default: m.ProblemSection })),
@@ -62,7 +62,8 @@ const VideoCover = ({ className = "", blurred = true }: { className?: string; bl
       }}
     />
     {/* Light wash to keep the play button readable without harsh shadow */}
-    <div className="absolute inset-0 bg-background/20" />
+    {blurred && <div className="absolute inset-0 bg-background/20" />}
+
   </>
 );
 
@@ -152,16 +153,16 @@ const Hero = () => {
 
         <motion.h1
           variants={fadeUp}
-          className="font-display font-bold text-foreground leading-[1.08] tracking-tight"
-          style={{ fontSize: "clamp(1.75rem, 4.2vw, 3.25rem)" }}
+          className="font-display font-bold text-foreground leading-[1.08] tracking-tight max-w-3xl"
+          style={{ fontSize: "clamp(1.5rem, 3.4vw, 2.5rem)" }}
         >
-          Veja uma <span className="text-shimmer-highlight font-extrabold">demonstração</span> da Wiize
+          Veja a Wiize gerando <span className="text-shimmer-highlight font-extrabold">oportunidades com IA</span> na prática
         </motion.h1>
 
         {/* Video */}
         <motion.div
           variants={fadeUp}
-          className="w-full mt-8 sm:mt-10 p-[2px] rounded-2xl bg-border/60 border border-border/70 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
+          className="w-full max-w-3xl mt-7 sm:mt-9 p-[2px] rounded-2xl bg-border/60 border border-border/70 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
         >
           <div
             className="relative w-full rounded-[0.875rem] overflow-hidden bg-card group ring-1 ring-border/40"
@@ -174,7 +175,8 @@ const Hero = () => {
                 className="absolute inset-0 h-full w-full cursor-pointer"
                 aria-label="Reproduzir vídeo"
               >
-                <VideoCover className="opacity-95 group-hover:opacity-100 transition-opacity" />
+                <VideoCover className="opacity-95 group-hover:opacity-100 transition-opacity" blurred={false} />
+
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
                     <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
