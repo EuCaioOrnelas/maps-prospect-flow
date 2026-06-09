@@ -223,6 +223,11 @@ export default function Users() {
         planLabel={planLabel}
         onCreated={refresh}
       />
+      <MemberDetailDialog
+        member={selected}
+        open={!!selected}
+        onOpenChange={(o) => { if (!o) setSelected(null); }}
+      />
     </>
   );
 }
