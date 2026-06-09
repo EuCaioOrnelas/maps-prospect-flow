@@ -48,7 +48,7 @@ const stagger = {
 
 const VIDEO_ID = "ZRzK42SYNFc";
 const VIDEO_THUMBNAIL = demoCoverAsset.url;
-const VIDEO_OVERSCAN_X = 1;
+const VIDEO_OVERSCAN_X = 1.025;
 
 const VideoCover = ({ className = "", blurred = true }: { className?: string; blurred?: boolean }) => (
   <>
@@ -141,11 +141,11 @@ const Hero = () => {
 
         <motion.h1
           variants={fadeUp}
-          className="font-display font-bold text-foreground leading-[1.1] tracking-tight text-balance max-w-[40rem] sm:max-w-[46rem]"
-          style={{ fontSize: "clamp(1.4rem, 4.2vw, 3.2rem)" }}
+          className="font-display font-bold text-foreground leading-[1.1] tracking-tight max-w-[56rem]"
+          style={{ fontSize: "clamp(1.25rem, 3.6vw, 3rem)" }}
         >
-          <span className="block">Veja a Wiize gerando</span>
-          <span className="block"><span className="text-shimmer-highlight font-extrabold">Oportunidades com IA</span> na prática</span>
+          <span className="block whitespace-nowrap">Veja a Wiize gerando</span>
+          <span className="block whitespace-nowrap"><span className="text-shimmer-highlight font-extrabold">Oportunidades com IA</span> na prática</span>
         </motion.h1>
 
         {/* Video */}
