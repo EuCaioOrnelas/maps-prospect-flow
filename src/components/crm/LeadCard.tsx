@@ -1,4 +1,4 @@
-import { useState, memo, useCallback } from 'react';
+import { useState, memo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
@@ -17,8 +17,8 @@ import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 interface LeadCardProps {
   lead: Lead;
   onClick: () => void;
-  onDragStart: (event: React.DragEvent<HTMLDivElement>) => void;
-  onDragEnd: () => void;
+  onDragStart: (event: { clientX: number; clientY: number; currentTarget: HTMLDivElement }) => void;
+  isDragging?: boolean;
   isSelected?: boolean;
   onUpdateName?: (leadId: string, newName: string) => Promise<void>;
   members?: ResponsibleMember[];
@@ -31,7 +31,7 @@ const LeadCardComponent = ({
   lead,
   onClick,
   onDragStart,
-  onDragEnd,
+  isDragging,
   isSelected,
   onUpdateName,
   members = [],
@@ -42,7 +42,7 @@ const LeadCardComponent = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.contact_name || '');
   const [isHovered, setIsHovered] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const suppressNextClickRef = useRef(false);
   const navigate = useNavigate();
   const { getScoreForPhone } = useLeadScores();
   const { hidden: phoneHidden } = usePhonePrivacy();
@@ -82,6 +82,44 @@ const LeadCardComponent = ({
     }
   };
 
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (isEditingName || e.button !== 0) return;
+
+    const target = e.target;
+    if (target instanceof HTMLElement && target.closest('button,input,textarea,select,a,[role="button"]')) {
+      return;
+    }
+
+    const card = e.currentTarget;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let started = false;
+
+    const cleanup = () => {
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerUp);
+    };
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      if (started) return;
+      const distance = Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY);
+      if (distance < 5) return;
+
+      started = true;
+      suppressNextClickRef.current = true;
+      moveEvent.preventDefault();
+      onDragStart({ clientX: moveEvent.clientX, clientY: moveEvent.clientY, currentTarget: card });
+      document.removeEventListener('pointermove', handlePointerMove);
+    };
+
+    const handlePointerUp = () => cleanup();
+
+    document.addEventListener('pointermove', handlePointerMove, { passive: false });
+    document.addEventListener('pointerup', handlePointerUp, { once: true });
+    document.addEventListener('pointercancel', handlePointerUp, { once: true });
+  }, [isEditingName, onDragStart]);
+
   return (
     <div
       data-lead-id={lead.id}
@@ -89,39 +127,19 @@ const LeadCardComponent = ({
         "w-full max-w-full bg-card border border-border/60 rounded-[18px] p-5 cursor-pointer transition-all duration-200 relative",
         "shadow-sm hover:shadow-lg hover:border-primary/30 hover:-translate-y-px",
         isSelected && "ring-2 ring-inset ring-primary border-primary",
-        isDragging && "opacity-95 ring-2 ring-primary/35 shadow-md scale-[0.99]"
+        isDragging && "opacity-60 ring-1 ring-primary/30 shadow-sm scale-[0.995]"
       )}
-      onClick={onClick}
-      draggable={!isEditingName}
-      onDragStart={(e) => {
-        if (isEditingName) {
+      onClick={(e) => {
+        if (suppressNextClickRef.current) {
+          suppressNextClickRef.current = false;
           e.preventDefault();
+          e.stopPropagation();
           return;
         }
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', lead.id);
-
-        // Hide the browser-native drag ghost, which browsers force to ~50%
-        // opacity and render inconsistently. The board renders a custom fixed
-        // preview that stays crisp and stable over every column.
-        const transparentDragImage = document.createElement('canvas');
-        transparentDragImage.width = 1;
-        transparentDragImage.height = 1;
-        transparentDragImage.style.position = 'fixed';
-        transparentDragImage.style.top = '0px';
-        transparentDragImage.style.left = '0px';
-        transparentDragImage.style.pointerEvents = 'none';
-        document.body.appendChild(transparentDragImage);
-        try { e.dataTransfer.setDragImage(transparentDragImage, 0, 0); } catch {}
-        requestAnimationFrame(() => { transparentDragImage.remove(); });
-
-        setIsDragging(true);
-        onDragStart(e);
+        onClick();
       }}
-      onDragEnd={() => {
-        setIsDragging(false);
-        onDragEnd();
-      }}
+      draggable={false}
+      onPointerDown={handlePointerDown}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
