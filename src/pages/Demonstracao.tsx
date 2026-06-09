@@ -309,10 +309,11 @@ export default function Demonstracao() {
             <OpportunitySection />
             <FeaturesOverviewSection />
           </Suspense>
-          <FinalCTA />
+          <FinalCTA variant="full" />
           <Suspense fallback={<SectionFallback />}>
             <FAQSection />
           </Suspense>
+          <FinalCTA variant="compact" />
         </main>
         <Footer />
         <VideoModal open={videoOpen} onOpenChange={setVideoOpen} />
