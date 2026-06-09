@@ -171,7 +171,7 @@ export default function AdminUsuarios() {
                 {filtered.map(user => {
                   const bucket = getProviderBucket(user.payment_provider);
                   return (
-                  <TableRow key={user.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedUserId(user.id)}>
+                  <TableRow key={user.id} className="cursor-pointer hover:bg-muted/40" onClick={() => navigate(`/admin/usuarios/${user.id}`)}>
                     <TableCell>
                       <div>
                         <p className="font-medium text-sm">{user.name || "—"}</p>
