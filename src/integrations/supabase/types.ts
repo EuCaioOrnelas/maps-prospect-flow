@@ -7870,6 +7870,20 @@ export type Database = {
       }
     }
     Functions: {
+      account_get_member_activity_sessions: {
+        Args: { _from: string; _to: string; _user_id: string }
+        Returns: {
+          active_seconds: number
+          day: string
+          event_count: number
+          session_end: string
+          session_start: string
+        }[]
+      }
+      account_get_member_operational_stats: {
+        Args: { _from: string; _to: string; _user_id: string }
+        Returns: Json
+      }
       admin_get_user_activity_sessions: {
         Args: { _from: string; _to: string; _user_id: string }
         Returns: {
