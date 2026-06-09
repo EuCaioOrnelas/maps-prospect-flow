@@ -2479,6 +2479,7 @@ export type Database = {
           owner_user_id: string | null
           payment_method: string | null
           receipt_url: string | null
+          responsible_user_id: string | null
           sale_type: string
           start_date: string
           status: string
@@ -2501,6 +2502,7 @@ export type Database = {
           owner_user_id?: string | null
           payment_method?: string | null
           receipt_url?: string | null
+          responsible_user_id?: string | null
           sale_type?: string
           start_date?: string
           status?: string
@@ -2523,6 +2525,7 @@ export type Database = {
           owner_user_id?: string | null
           payment_method?: string | null
           receipt_url?: string | null
+          responsible_user_id?: string | null
           sale_type?: string
           start_date?: string
           status?: string

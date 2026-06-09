@@ -28,7 +28,6 @@ import {
   ArrowLeft,
   Plus,
   Pencil,
-  Tag,
   CircleDollarSign,
   Layers,
   Activity,
@@ -38,8 +37,16 @@ import { CRMTabs } from "@/components/crm/CRMTabs";
 import { SalesKPIs } from "@/components/crm/SalesKPIs";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
 import { EditSaleDialog } from "@/components/crm/EditSaleDialog";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
 import type { Sale } from "@/hooks/useSales";
 import { toast } from "sonner";
+
+const initialsOf = (name?: string | null, email?: string | null) => {
+  const s = (name || email || "?").trim();
+  const parts = s.split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return s.slice(0, 2).toUpperCase();
+};
 
 
 const fmtMoney = (n: number) =>
@@ -59,6 +66,8 @@ export default function CRMSales() {
   const navigate = useNavigate();
   const location = useLocation();
   const { sales, metrics, deleteSale, getAttachmentUrl } = useSales();
+  const { members } = useAccountMembers();
+  const memberById = useMemo(() => Object.fromEntries(members.map((m) => [m.user_id, m])), [members]);
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -306,7 +315,6 @@ export default function CRMSales() {
                   <table className="w-full text-sm">
                     <thead className="text-left text-xs uppercase text-muted-foreground border-b border-border">
                       <tr>
-                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Tag className="w-3 h-3" /> Venda</span></th>
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Building2 className="w-3 h-3" /> Cliente</span></th>
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><CircleDollarSign className="w-3 h-3" /> Valor</span></th>
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Layers className="w-3 h-3" /> Tipo</span></th>
@@ -331,31 +339,23 @@ export default function CRMSales() {
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                                  <DollarSign className="w-3.5 h-3.5" />
+                                  {s.lead?.company_name ? (
+                                    <Building2 className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <User className="w-3.5 h-3.5" />
+                                  )}
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="font-medium truncate max-w-[220px] flex items-center gap-1">
-                                    {s.title || "—"}
+                                  <p className="font-medium truncate max-w-[260px] flex items-center gap-1 text-foreground">
+                                    {s.lead?.company_name || s.lead?.contact_name || "—"}
                                     <ArrowUpRight className="w-3 h-3 text-muted-foreground/50" />
                                   </p>
-                                  {s.description && (
-                                    <p className="text-xs text-muted-foreground truncate max-w-[220px]">
-                                      {s.description}
+                                  {s.title && (
+                                    <p className="text-xs text-muted-foreground truncate max-w-[260px]">
+                                      {s.title}
                                     </p>
                                   )}
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                {s.lead?.company_name ? (
-                                  <Building2 className="w-3.5 h-3.5 shrink-0" />
-                                ) : (
-                                  <User className="w-3.5 h-3.5 shrink-0" />
-                                )}
-                                <span className="truncate">
-                                  {s.lead?.company_name || s.lead?.contact_name || "—"}
-                                </span>
                               </div>
                             </td>
                             <td className="px-4 py-3 tabular-nums">
@@ -388,9 +388,34 @@ export default function CRMSales() {
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <Badge variant="outline" className={st.tone}>
-                                {st.label}
-                              </Badge>
+                              <div className="flex items-center gap-2.5">
+                                <Badge variant="outline" className={st.tone}>
+                                  {st.label}
+                                </Badge>
+                                {(() => {
+                                  const r = s.responsible_user_id ? memberById[s.responsible_user_id] : null;
+                                  const label = r?.name || r?.email || "Sem responsável";
+                                  return (
+                                    <div
+                                      className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0"
+                                      title={`Responsável pela venda: ${label}`}
+                                    >
+                                      {r?.avatar_url ? (
+                                        <img
+                                          src={r.avatar_url}
+                                          alt=""
+                                          className="w-6 h-6 rounded-full object-cover border border-border/60 shrink-0"
+                                        />
+                                      ) : (
+                                        <div className="w-6 h-6 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center justify-center border border-border/60 shrink-0">
+                                          {r ? initialsOf(r.name, r.email) : <User className="w-3 h-3" />}
+                                        </div>
+                                      )}
+                                      <span className="truncate max-w-[120px]">{label}</span>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1">

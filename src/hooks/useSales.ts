@@ -23,6 +23,7 @@ export interface Sale {
   contract_url: string | null;
   closed_at: string;
   notes: string | null;
+  responsible_user_id: string | null;
   created_at: string;
   updated_at: string;
   // joined
@@ -31,6 +32,7 @@ export interface Sale {
     company_name: string | null;
     contact_name: string | null;
     phone: string;
+    responsible_user_id?: string | null;
   } | null;
 }
 
@@ -46,6 +48,7 @@ export interface SaleInput {
   receipt_url?: string | null;
   contract_url?: string | null;
   notes?: string | null;
+  responsible_user_id?: string | null;
 }
 
 export const PAYMENT_METHODS = [
@@ -69,7 +72,7 @@ export const useSales = (leadId?: string) => {
     setIsLoading(true);
     let query = supabase
       .from("lead_deals")
-      .select(`*, lead:leads(id, company_name, contact_name, phone)`)
+      .select(`*, lead:leads(id, company_name, contact_name, phone, responsible_user_id)`)
       .eq("owner_user_id", accountOwnerId)
       .order("created_at", { ascending: false });
 
@@ -125,6 +128,7 @@ export const useSales = (leadId?: string) => {
           receipt_url: input.receipt_url ?? null,
           contract_url: input.contract_url ?? null,
           notes: input.notes ?? null,
+          responsible_user_id: input.responsible_user_id ?? null,
           closed_at: new Date().toISOString(),
           status: "active",
         })
