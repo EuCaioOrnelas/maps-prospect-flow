@@ -201,10 +201,10 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
           variants={fadeUp}
           className="font-display font-bold text-foreground leading-[1.08] tracking-tight"
         >
-          <span className="block text-[1.6rem] xs:text-[1.85rem] sm:text-[2.4rem] md:text-[2.9rem] lg:text-[3.3rem]">
+          <span className="block whitespace-nowrap" style={{ fontSize: "clamp(1.05rem, 5.4vw, 3.3rem)" }}>
             Transforme sua operação comercial
           </span>
-          <span className="block text-shimmer-highlight font-extrabold text-[1.75rem] xs:text-[2rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.55rem] mt-1 sm:mt-2">
+          <span className="block text-shimmer-highlight font-extrabold whitespace-nowrap mt-1 sm:mt-2" style={{ fontSize: "clamp(1.15rem, 5.9vw, 3.55rem)" }}>
             em uma máquina de oportunidades
           </span>
         </motion.h1>
