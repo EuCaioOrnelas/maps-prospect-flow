@@ -312,6 +312,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }, 500);
             }
 
+            // Update last_login_at on account_members (sub-user activity monitoring)
+            if (event === 'SIGNED_IN') {
+              supabase
+                .from('account_members')
+                .update({ last_login_at: new Date().toISOString() })
+                .eq('user_id', session.user.id)
+                .then(({ error }) => {
+                  if (error) console.debug('[AuthContext] last_login_at:', error.message);
+                });
+            }
+
             // Track signup completion for landing page analytics on first SIGNED_IN
             // This fires after email verification when the user actually becomes authenticated
             if (event === 'SIGNED_IN') {
