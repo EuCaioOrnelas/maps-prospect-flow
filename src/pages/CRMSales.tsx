@@ -359,18 +359,6 @@ export default function CRMSales() {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                {s.lead?.company_name ? (
-                                  <Building2 className="w-3.5 h-3.5 shrink-0" />
-                                ) : (
-                                  <User className="w-3.5 h-3.5 shrink-0" />
-                                )}
-                                <span className="truncate">
-                                  {s.lead?.company_name || s.lead?.contact_name || "—"}
-                                </span>
-                              </div>
-                            </td>
                             <td className="px-4 py-3 tabular-nums">
                               <div className="font-semibold">{fmtMoney(total)}</div>
                               {s.sale_type === "recurring" && (
