@@ -240,7 +240,7 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, delay: 0.25 }}
-        className="mt-10 sm:mt-12 relative w-full rounded-3xl overflow-hidden bg-card cursor-pointer group max-w-5xl mx-auto border-2 border-foreground/[0.18] shadow-[0_40px_120px_-32px_rgba(0,0,0,0.22),0_18px_56px_-14px_rgba(0,0,0,0.18)]"
+        className="mt-10 sm:mt-12 relative w-full rounded-3xl overflow-hidden bg-card cursor-pointer group max-w-5xl mx-auto border-[3px] border-foreground/25 shadow-[0_50px_140px_-36px_rgba(0,0,0,0.28),0_20px_64px_-16px_rgba(0,0,0,0.20)]"
         style={{ aspectRatio: "16 / 9" }}
         onClick={onWatch}
       >
