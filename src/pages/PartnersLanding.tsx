@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Award, TrendingUp, Users, Wallet, Sparkles, ArrowRight,
   Megaphone, Target, Rocket, ShieldCheck, Check,
-  Ban, ScrollText, Scale,
+  ScrollText, UserPlus, Link2, Share2, BarChart3, Banknote,
 } from "lucide-react";
 import wiizeLogo from "@/assets/logos/wiize-logo.png";
 
