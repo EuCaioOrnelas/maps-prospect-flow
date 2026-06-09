@@ -116,6 +116,7 @@ const AdminMrrAudit = lazyWithRetry(() => import("./pages/admin/AdminMrrAudit"),
 const AdminChurn = lazyWithRetry(() => import("./pages/admin/AdminChurn"), "AdminChurn");
 const AdminForecast = lazyWithRetry(() => import("./pages/admin/AdminForecast"), "AdminForecast");
 const AdminUsuarios = lazyWithRetry(() => import("./pages/admin/AdminUsuarios"), "AdminUsuarios");
+const AdminUserDetail = lazyWithRetry(() => import("./pages/admin/AdminUserDetail"), "AdminUserDetail");
 const AdminAtivacao = lazyWithRetry(() => import("./pages/admin/AdminAtivacao"), "AdminAtivacao");
 const AdminRetencao = lazyWithRetry(() => import("./pages/admin/AdminRetencao"), "AdminRetencao");
 const AdminIAAgentes = lazyWithRetry(() => import("./pages/admin/AdminIAAgentes"), "AdminIAAgentes");
