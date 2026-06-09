@@ -167,6 +167,7 @@ export default function PartnersLanding() {
           </Link>
           <div className="flex items-center gap-5">
             <a href="#tiers" className="text-sm text-muted-foreground hover:text-foreground transition hidden md:block">Comissões</a>
+            <a href="#regras" className="text-sm text-muted-foreground hover:text-foreground transition hidden md:block">Regras</a>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition hidden md:block">FAQ</a>
             <Link to="/partners/login" className="text-sm text-muted-foreground hover:text-foreground transition">
               Já sou parceiro
