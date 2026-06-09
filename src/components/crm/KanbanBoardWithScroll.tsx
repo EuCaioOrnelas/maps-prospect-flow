@@ -64,6 +64,7 @@ const KanbanBoardWithScrollComponent = ({
   const topScrollInnerRef = useRef<HTMLDivElement>(null);
   const dragPreviewRef = useRef<HTMLDivElement>(null);
   const dragPositionRef = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
+  const dragScrollBoundsRef = useRef<{ left: number; right: number; viewportWidth: number } | null>(null);
   const syncingRef = useRef<'top' | 'bottom' | null>(null);
   const animationRef = useRef<number | null>(null);
   const dragPreviewAnimationRef = useRef<number | null>(null);
@@ -113,6 +114,10 @@ const KanbanBoardWithScrollComponent = ({
     const offsetY = Math.min(Math.max(event.clientY - rect.top, 18), 44);
 
     dragPositionRef.current = { x: event.clientX, y: event.clientY, offsetX, offsetY };
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    dragScrollBoundsRef.current = containerRect
+      ? { left: containerRect.left, right: containerRect.right, viewportWidth: window.innerWidth }
+      : null;
     setDraggedLead(leadId);
     if (lead) {
       setDragPreview({
@@ -131,6 +136,7 @@ const KanbanBoardWithScrollComponent = ({
     setDraggedLead(null);
     setDragOverStage(null);
     setDragPreview(null);
+    dragScrollBoundsRef.current = null;
     scrollVelocity.current = 0;
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
@@ -179,25 +185,27 @@ const KanbanBoardWithScrollComponent = ({
   const calculateScrollVelocity = useCallback((mouseX: number) => {
     if (!containerRef.current) return;
     
-    const container = containerRef.current;
-    const rect = container.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
+    const bounds = dragScrollBoundsRef.current || (() => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      return rect ? { left: rect.left, right: rect.right, viewportWidth: window.innerWidth } : null;
+    })();
+    if (!bounds) return;
     const edgeThreshold = 110;
     const maxSpeed = 6;
     
     let targetVelocity = 0;
     
-    const leftEdge = Math.min(rect.left, edgeThreshold);
+    const leftEdge = Math.min(bounds.left, edgeThreshold);
     if (mouseX < leftEdge + edgeThreshold) {
       const distance = leftEdge + edgeThreshold - mouseX;
       const intensity = Math.min(1, distance / edgeThreshold);
       targetVelocity = -maxSpeed * intensity * intensity;
-    } else if (mouseX > viewportWidth - edgeThreshold) {
-      const distance = mouseX - (viewportWidth - edgeThreshold);
+    } else if (mouseX > bounds.viewportWidth - edgeThreshold) {
+      const distance = mouseX - (bounds.viewportWidth - edgeThreshold);
       const intensity = Math.min(1, distance / edgeThreshold);
       targetVelocity = maxSpeed * intensity * intensity;
-    } else if (mouseX > rect.right - edgeThreshold && mouseX <= rect.right) {
-      const distance = mouseX - (rect.right - edgeThreshold);
+    } else if (mouseX > bounds.right - edgeThreshold && mouseX <= bounds.right) {
+      const distance = mouseX - (bounds.right - edgeThreshold);
       const intensity = Math.min(1, distance / edgeThreshold);
       targetVelocity = maxSpeed * intensity * intensity;
     }
