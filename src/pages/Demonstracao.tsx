@@ -55,37 +55,66 @@ const VideoModal = ({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-}) => (
-  <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent
-      className="w-[96vw] max-w-none max-h-[94vh] p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden"
-      style={{ width: "min(96vw, calc((100vh - 6rem) * 16 / 9), 1480px)" }}
-    >
-      <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card">
-        <div className="flex items-center gap-2">
-          <Play size={16} className="text-primary fill-primary" />
-          <span className="text-sm font-semibold">Demonstração — Wiize</span>
+}) => {
+  const [playing, setPlaying] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) setPlaying(false); onOpenChange(v); }}>
+      <DialogContent
+        className="w-[96vw] max-w-none max-h-[94vh] p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden"
+        style={{ width: "min(96vw, calc((100vh - 6rem) * 16 / 9), 1480px)" }}
+      >
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card">
+          <div className="flex items-center gap-2">
+            <Play size={16} className="text-primary fill-primary" />
+            <span className="text-sm font-semibold">Demonstração — Wiize</span>
+          </div>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="p-2 rounded-lg hover:bg-secondary transition-colors"
+          >
+            <X size={16} />
+          </button>
         </div>
-        <button
-          onClick={() => onOpenChange(false)}
-          className="p-2 rounded-lg hover:bg-secondary transition-colors"
-        >
-          <X size={16} />
-        </button>
-      </div>
-      <div className="relative w-full bg-black overflow-hidden" style={{ aspectRatio: "16 / 9" }}>
-        <iframe
-          className="absolute inset-0 h-full w-full origin-center"
-          style={{ transform: "scaleX(1.055)" }}
-          src="https://www.youtube.com/embed/ZRzK42SYNFc?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1"
-          title="Wiize — Demonstração"
-          allow="autoplay; encrypted-media; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
-    </DialogContent>
-  </Dialog>
-);
+        <div className="relative w-full bg-card overflow-hidden" style={{ aspectRatio: "16 / 9" }}>
+          {!playing ? (
+            <button
+              type="button"
+              onClick={() => setPlaying(true)}
+              className="absolute inset-0 w-full h-full group"
+              aria-label="Reproduzir vídeo"
+            >
+              <img
+                src="https://img.youtube.com/vi/ZRzK42SYNFc/maxresdefault.jpg"
+                alt="Demonstração Wiize"
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ transform: "scale(1.08)" }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                    <Play size={38} strokeWidth={1.5} className="ml-1" />
+                  </div>
+                </div>
+              </div>
+            </button>
+          ) : (
+            <iframe
+              className="absolute inset-0 h-full w-full origin-center"
+              style={{ transform: "scale(1.08)" }}
+              src="https://www.youtube.com/embed/ZRzK42SYNFc?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1"
+              title="Wiize — Demonstração"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+            />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 /* ------------------------------------------------------------------ */
 /*  Hero — same background as LP Hero                                 */
