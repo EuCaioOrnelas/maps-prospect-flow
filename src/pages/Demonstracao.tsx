@@ -45,6 +45,19 @@ const stagger = {
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
 };
 
+const VIDEO_ID = "ZRzK42SYNFc";
+const VIDEO_THUMBNAIL = `https://img.youtube.com/vi/${VIDEO_ID}/maxresdefault.jpg`;
+const VIDEO_OVERSCAN_X = 1.052;
+
+const VideoCover = ({ className = "" }: { className?: string }) => (
+  <img
+    src={VIDEO_THUMBNAIL}
+    alt="Demonstração Wiize"
+    className={`absolute inset-0 h-full w-full object-cover ${className}`}
+    style={{ transform: `scaleX(${VIDEO_OVERSCAN_X})` }}
+  />
+);
+
 /* ------------------------------------------------------------------ */
 /*  Video Modal                                                       */
 /* ------------------------------------------------------------------ */
@@ -84,12 +97,7 @@ const VideoModal = ({
               className="absolute inset-0 w-full h-full group"
               aria-label="Reproduzir vídeo"
             >
-              <img
-                src="https://img.youtube.com/vi/ZRzK42SYNFc/maxresdefault.jpg"
-                alt="Demonstração Wiize"
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{ transform: "scale(1.08)" }}
-              />
+              <VideoCover />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="relative">
@@ -102,11 +110,13 @@ const VideoModal = ({
             </button>
           ) : (
             <iframe
-              className="absolute inset-0 h-full w-full origin-center"
-              style={{ transform: "scale(1.08)" }}
-              src="https://www.youtube.com/embed/ZRzK42SYNFc?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1"
+              className="absolute left-1/2 top-0 h-full origin-center border-0"
+              style={{ width: `${VIDEO_OVERSCAN_X * 100}%`, transform: "translateX(-50%)" }}
+              src={`https://www.youtube.com/embed/${VIDEO_ID}?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1`}
               title="Wiize — Demonstração"
+              frameBorder="0"
               allow="autoplay; encrypted-media; picture-in-picture"
+              referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
             />
           )}
@@ -226,11 +236,7 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
         style={{ aspectRatio: "16 / 9" }}
         onClick={onWatch}
       >
-        <img
-          src="https://img.youtube.com/vi/ZRzK42SYNFc/maxresdefault.jpg"
-          alt="Demonstração Wiize"
-          className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-        />
+        <VideoCover className="opacity-90 group-hover:opacity-100 transition-opacity" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative">
