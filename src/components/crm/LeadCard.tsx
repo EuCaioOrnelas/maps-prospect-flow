@@ -300,6 +300,7 @@ export const LeadCard = memo(LeadCardComponent, (prevProps, nextProps) => {
     prevProps.lead.responsible_user_id === nextProps.lead.responsible_user_id &&
     JSON.stringify(prevProps.lead.tags) === JSON.stringify(nextProps.lead.tags) &&
     prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isDragging === nextProps.isDragging &&
     prevProps.onClick === nextProps.onClick &&
     prevProps.members === nextProps.members &&
     prevProps.canChangeResponsible === nextProps.canChangeResponsible &&
