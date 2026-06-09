@@ -316,7 +316,7 @@ export default function CRMSales() {
                   <table className="w-full text-sm">
                     <thead className="text-left text-xs uppercase text-muted-foreground border-b border-border">
                       <tr>
-                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Tag className="w-3 h-3" /> Venda</span></th>
+                        <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Building2 className="w-3 h-3" /> Cliente</span></th>
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Building2 className="w-3 h-3" /> Cliente</span></th>
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><CircleDollarSign className="w-3 h-3" /> Valor</span></th>
                         <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-1.5"><Layers className="w-3 h-3" /> Tipo</span></th>
