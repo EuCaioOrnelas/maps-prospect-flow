@@ -48,7 +48,7 @@ const stagger = {
 
 const VIDEO_ID = "ZRzK42SYNFc";
 const VIDEO_THUMBNAIL = demoCoverAsset.url;
-const VIDEO_OVERSCAN_X = 1.012;
+const VIDEO_OVERSCAN_X = 1;
 
 const VideoCover = ({ className = "", blurred = true }: { className?: string; blurred?: boolean }) => (
   <>
@@ -141,20 +141,20 @@ const Hero = () => {
 
         <motion.h1
           variants={fadeUp}
-          className="font-display font-bold text-foreground leading-[1.08] tracking-tight text-balance max-w-[44rem]"
-          style={{ fontSize: "clamp(1.75rem, 4.6vw, 3.4rem)" }}
+          className="font-display font-bold text-foreground leading-[1.1] tracking-tight text-balance max-w-[40rem] sm:max-w-[46rem]"
+          style={{ fontSize: "clamp(1.4rem, 4.2vw, 3.2rem)" }}
         >
-          Veja a Wiize gerando{" "}<br className="hidden sm:block" />
-          <span className="text-shimmer-highlight font-extrabold">Oportunidades com IA</span> na prática
+          <span className="block">Veja a Wiize gerando</span>
+          <span className="block"><span className="text-shimmer-highlight font-extrabold">Oportunidades com IA</span> na prática</span>
         </motion.h1>
 
         {/* Video */}
         <motion.div
           variants={fadeUp}
-          className="w-full max-w-3xl mt-7 sm:mt-9 p-[3px] rounded-2xl bg-white border border-white shadow-[0_30px_80px_-30px_rgba(0,0,0,0.18),0_12px_40px_-15px_rgba(0,0,0,0.1)]"
+          className="w-full max-w-[44rem] mt-7 sm:mt-9 p-[3px] rounded-2xl bg-white border border-white"
         >
           <div
-            className="relative w-full rounded-[0.875rem] overflow-hidden bg-card group ring-1 ring-white"
+            className="relative w-full rounded-[0.875rem] overflow-hidden bg-white group"
             style={{ aspectRatio: "16 / 9" }}
           >
             {!playing ? (
