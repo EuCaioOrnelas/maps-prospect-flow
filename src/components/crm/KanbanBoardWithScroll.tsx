@@ -1,9 +1,9 @@
 import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
 
-import { type Lead, type PipelineStage, WHATSAPP_STATUS_COLORS, WHATSAPP_STATUS_LABELS } from '@/hooks/useCRM';
+import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { KanbanColumn, type ColumnWidth } from './KanbanColumn';
 import { cn } from '@/lib/utils';
-import { Phone, MessageCircle, User as UserIcon } from 'lucide-react';
+import { MessageCircle, User as UserIcon } from 'lucide-react';
 import { formatPhoneShort } from '@/lib/phoneUtils';
 import { useLeadScores } from '@/hooks/useLeadScores';
 import { formatDistanceToNow } from 'date-fns';
@@ -108,8 +108,9 @@ const KanbanBoardWithScrollComponent = ({
   const handleDragStart = useCallback((leadId: string, event: React.DragEvent<HTMLDivElement>) => {
     const lead = leads.find((item) => item.id === leadId);
     const rect = event.currentTarget.getBoundingClientRect();
-    const offsetX = event.clientX - rect.left;
-    const offsetY = event.clientY - rect.top;
+    const previewWidth = Math.min(240, rect.width);
+    const offsetX = Math.min(Math.max(event.clientX - rect.left, 28), previewWidth - 28);
+    const offsetY = Math.min(Math.max(event.clientY - rect.top, 18), 44);
 
     dragPositionRef.current = { x: event.clientX, y: event.clientY, offsetX, offsetY };
     setDraggedLead(leadId);
@@ -120,7 +121,7 @@ const KanbanBoardWithScrollComponent = ({
         y: event.clientY,
         offsetX,
         offsetY,
-        width: rect.width,
+        width: previewWidth,
       });
       scheduleDragPreviewPosition(event.clientX, event.clientY);
     }
@@ -181,8 +182,8 @@ const KanbanBoardWithScrollComponent = ({
     const container = containerRef.current;
     const rect = container.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
-    const edgeThreshold = 150;
-    const maxSpeed = 10;
+    const edgeThreshold = 110;
+    const maxSpeed = 6;
     
     let targetVelocity = 0;
     
@@ -201,7 +202,7 @@ const KanbanBoardWithScrollComponent = ({
       targetVelocity = maxSpeed * intensity * intensity;
     }
     
-    scrollVelocity.current += (targetVelocity - scrollVelocity.current) * 0.15;
+    scrollVelocity.current += (targetVelocity - scrollVelocity.current) * 0.08;
     
     if (!animationRef.current && Math.abs(scrollVelocity.current) > 0.1) {
       animationRef.current = requestAnimationFrame(smoothScroll);
