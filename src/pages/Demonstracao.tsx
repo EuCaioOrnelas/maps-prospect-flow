@@ -265,9 +265,11 @@ const FinalCTA = () => (
         transition={{ duration: 0.6 }}
         className="text-center"
       >
-        <h2 className="font-display text-[1.85rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.4rem] font-bold text-foreground leading-[1.1] tracking-tight mb-5 sm:mb-6">
-          Pronto para colocar a{" "}
-          <span className="text-shimmer-highlight font-extrabold">
+        <h2 className="font-display font-bold text-foreground leading-[1.1] tracking-tight mb-5 sm:mb-6">
+          <span className="block whitespace-nowrap" style={{ fontSize: "clamp(1.15rem, 5.4vw, 3.4rem)" }}>
+            Pronto para colocar a
+          </span>
+          <span className="block text-shimmer-highlight font-extrabold whitespace-nowrap mt-1 sm:mt-2" style={{ fontSize: "clamp(1.25rem, 5.8vw, 3.55rem)" }}>
             Wiize na sua Operação?
           </span>
         </h2>
