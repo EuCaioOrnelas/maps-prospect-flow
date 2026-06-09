@@ -211,7 +211,9 @@ const KanbanBoardWithScrollComponent = ({
   const handleGlobalDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
     if (draggedLead) {
-      scheduleDragPreviewPosition(e.clientX, e.clientY);
+      if (e.clientX > 0 && e.clientY > 0) {
+        scheduleDragPreviewPosition(e.clientX, e.clientY);
+      }
       calculateScrollVelocity(e.clientX);
     }
   }, [draggedLead, calculateScrollVelocity, scheduleDragPreviewPosition]);
@@ -225,7 +227,9 @@ const KanbanBoardWithScrollComponent = ({
   const handleContainerDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     if (draggedLead) {
-      scheduleDragPreviewPosition(e.clientX, e.clientY);
+      if (e.clientX > 0 && e.clientY > 0) {
+        scheduleDragPreviewPosition(e.clientX, e.clientY);
+      }
       calculateScrollVelocity(e.clientX);
     }
   }, [draggedLead, calculateScrollVelocity, scheduleDragPreviewPosition]);
