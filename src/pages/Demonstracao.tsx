@@ -48,7 +48,7 @@ const stagger = {
 
 const VIDEO_ID = "ZRzK42SYNFc";
 const VIDEO_THUMBNAIL = demoCoverAsset.url;
-const VIDEO_OVERSCAN_X = 1.025;
+const VIDEO_OVERSCAN_X = 1.06;
 
 const VideoCover = ({ className = "", blurred = true }: { className?: string; blurred?: boolean }) => (
   <>
@@ -151,7 +151,7 @@ const Hero = () => {
         {/* Video */}
         <motion.div
           variants={fadeUp}
-          className="w-full max-w-[44rem] mt-7 sm:mt-9 p-[3px] rounded-2xl bg-white border border-white"
+          className="w-full max-w-[48rem] mt-7 sm:mt-9 p-[3px] rounded-2xl bg-white border border-white"
         >
           <div
             className="relative w-full rounded-[0.875rem] overflow-hidden bg-white group"
