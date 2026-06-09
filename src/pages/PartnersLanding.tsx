@@ -333,26 +333,24 @@ export default function PartnersLanding() {
               const isSignature = t.name === "Signature";
               const isPrime = t.name === "Prime";
               const cardClasses = isPrime
-                ? "relative overflow-hidden border-foreground/80 bg-foreground text-background transition-all hover:-translate-y-1 hover:shadow-xl"
+                ? "relative overflow-hidden border-foreground/30 bg-card transition-all hover:-translate-y-1 hover:shadow-xl"
                 : isSignature
-                ? "relative overflow-hidden border-primary/40 bg-primary/5 ring-1 ring-primary/20 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10"
+                ? "relative overflow-hidden border-primary/40 bg-card ring-1 ring-primary/20 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10"
                 : "relative overflow-hidden border-border/60 bg-card transition-all hover:-translate-y-1 hover:shadow-lg";
               const iconWrapClasses = isPrime
-                ? "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-background/10 ring-1 ring-background/20 mb-4"
+                ? "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-foreground/10 ring-1 ring-foreground/20 mb-4"
                 : isSignature
                 ? "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30 mb-4"
                 : "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-muted/60 ring-1 ring-border/60 mb-4";
-              const iconClasses = isPrime ? "text-background" : isSignature ? "text-primary" : "text-foreground/70";
+              const iconClasses = isPrime ? "text-foreground" : isSignature ? "text-primary" : "text-foreground/70";
               const nameClasses = isPrime
-                ? "text-xs uppercase tracking-[0.2em] text-background/70 mb-2 font-semibold"
+                ? "text-xs uppercase tracking-[0.2em] text-foreground mb-2 font-semibold"
                 : isSignature
                 ? "text-xs uppercase tracking-[0.2em] text-primary mb-2 font-semibold"
                 : "text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2 font-semibold";
-              const subTextClasses = isPrime ? "text-xs text-background/70 mb-5" : "text-xs text-muted-foreground mb-5";
-              const dividerClasses = isPrime ? "pt-5 border-t border-background/20" : "pt-5 border-t border-border/50";
-              const rangeLabelClasses = isPrime
-                ? "text-[10px] uppercase tracking-wider text-background/60 mb-1"
-                : "text-[10px] uppercase tracking-wider text-muted-foreground mb-1";
+              const subTextClasses = "text-xs text-muted-foreground mb-5";
+              const dividerClasses = "pt-5 border-t border-border/50";
+              const rangeLabelClasses = "text-[10px] uppercase tracking-wider text-muted-foreground mb-1";
               return (
                 <Card key={t.name} className={cardClasses}>
                   <CardContent className="relative p-7 text-center">
@@ -362,8 +360,9 @@ export default function PartnersLanding() {
                     <div className={nameClasses}>{t.name}</div>
                     <div className="flex items-baseline justify-center gap-1 mb-1">
                       <span className="text-5xl font-bold tracking-tight">{t.percent}</span>
-                      <span className={isPrime ? "text-xl font-semibold text-background/70" : "text-xl font-semibold text-muted-foreground"}>%</span>
+                      <span className="text-xl font-semibold text-muted-foreground">%</span>
                     </div>
+
                     <div className={subTextClasses}>de comissão recorrente</div>
                     <div className={dividerClasses}>
                       <div className={rangeLabelClasses}>Clientes ativos</div>
