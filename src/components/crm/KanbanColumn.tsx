@@ -11,7 +11,7 @@ interface KanbanColumnProps {
   stage: PipelineStage;
   leads: Lead[];
   onLeadClick: (lead: Lead) => void;
-  onDragStart: (leadId: string) => void;
+  onDragStart: (leadId: string, event: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd: () => void;
   onDragOver: () => void;
   onDrop: () => void;
@@ -153,7 +153,7 @@ const KanbanColumnComponent = ({
       </div>
 
       {/* Cards */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin" style={{ scrollBehavior: 'smooth' }}>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-thin">
         <div className="p-2 space-y-3 w-full min-w-0">
           {leads.map((lead) => (
             <div key={lead.id} className="relative">
@@ -171,7 +171,7 @@ const KanbanColumnComponent = ({
               <LeadCard
                 lead={lead}
                 onClick={() => onLeadClick(lead)}
-                onDragStart={() => onDragStart(lead.id)}
+                onDragStart={(event) => onDragStart(lead.id, event)}
                 onDragEnd={onDragEnd}
                 isSelected={bulkSelectMode ? selectedLeadIds?.has(lead.id) : selectedLeadId === lead.id}
                 onUpdateName={onUpdateLeadName}
