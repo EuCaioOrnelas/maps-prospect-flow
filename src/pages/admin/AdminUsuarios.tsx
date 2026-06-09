@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Users, Search, Download } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
 import { getProviderLabel, getProviderBucket } from "@/lib/paymentProviderLabel";
 
 export default function AdminUsuarios() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -169,7 +171,7 @@ export default function AdminUsuarios() {
                 {filtered.map(user => {
                   const bucket = getProviderBucket(user.payment_provider);
                   return (
-                  <TableRow key={user.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setSelectedUserId(user.id)}>
+                  <TableRow key={user.id} className="cursor-pointer hover:bg-muted/40" onClick={() => navigate(`/admin/usuarios/${user.id}`)}>
                     <TableCell>
                       <div>
                         <p className="font-medium text-sm">{user.name || "—"}</p>

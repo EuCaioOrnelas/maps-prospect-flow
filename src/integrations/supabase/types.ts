@@ -7870,6 +7870,20 @@ export type Database = {
       }
     }
     Functions: {
+      admin_get_user_activity_sessions: {
+        Args: { _from: string; _to: string; _user_id: string }
+        Returns: {
+          active_seconds: number
+          day: string
+          event_count: number
+          session_end: string
+          session_start: string
+        }[]
+      }
+      admin_get_user_operational_stats: {
+        Args: { _from: string; _to: string; _user_id: string }
+        Returns: Json
+      }
       admin_update_searches_limit: {
         Args: { p_new_limit: number; p_user_email: string }
         Returns: undefined
