@@ -28,7 +28,6 @@ import {
   ArrowLeft,
   Plus,
   Pencil,
-  Tag,
   CircleDollarSign,
   Layers,
   Activity,
