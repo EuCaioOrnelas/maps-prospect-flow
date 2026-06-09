@@ -240,6 +240,8 @@ const App = () => (
               <PageVisitTracker />
               <Routes>
                 <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />
+                <Route path="/demonstracao" element={<Suspense fallback={<PageLoader />}><Demonstracao /></Suspense>} />
+                
                 
                 <Route path="/enterprise" element={<LightThemeWrapper><EnterpriseContact /></LightThemeWrapper>} />
                 <Route path="/blog" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><Blog /></Suspense></LightThemeWrapper>} />
