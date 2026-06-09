@@ -237,6 +237,7 @@ export default function PartnersLanding() {
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {steps.map((s) => (
               <Card key={s.n} className="border-border/50 bg-card/60 backdrop-blur-sm hover:border-primary/30 transition-colors">
                 <CardContent className="p-7">
@@ -246,6 +247,15 @@ export default function PartnersLanding() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+
+          <div className="mt-10 rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-7 text-sm text-muted-foreground leading-relaxed">
+            <p className="text-foreground font-semibold mb-2 flex items-center gap-2">
+              <Target size={16} className="text-primary" /> Sobre o link de divulgação
+            </p>
+            <p>
+              Cada parceiro recebe <strong className="text-foreground">um único link rastreável</strong> (ex.: <code className="px-1.5 py-0.5 rounded bg-card border border-border/60 text-foreground text-xs">wiize.com.br/?ref=seu-codigo</code>). Quando alguém clica, gravamos um cookie de <strong className="text-foreground">2 anos</strong> no navegador. Toda venda feita por esse usuário dentro desse período é creditada automaticamente a você — mesmo que ele cadastre por outro caminho depois. Sem código pra colar, sem integração, sem complicação.
+            </p>
           </div>
         </div>
       </section>
