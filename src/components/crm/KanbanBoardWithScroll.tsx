@@ -338,7 +338,6 @@ const KanbanBoardWithScrollComponent = ({
           draggedLead && "cursor-grabbing select-none",
           filteredStageId && "justify-center"
         )}
-        onDragOver={handleContainerDragOver}
       >
         {displayedStages.map((stage) => (
           <KanbanColumn
@@ -347,10 +346,9 @@ const KanbanBoardWithScrollComponent = ({
             leads={leadsByStage.get(stage.id) || []}
             onLeadClick={onLeadClick}
             onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
             onDragOver={() => handleDragOver(stage.id)}
-            onDrop={() => handleDrop(stage.id)}
             isDragOver={dragOverStage === stage.id}
+            draggedLeadId={draggedLead}
             isDragging={!!draggedLead}
             isExpanded={!!filteredStageId}
             selectedLeadId={selectedLead?.id}
