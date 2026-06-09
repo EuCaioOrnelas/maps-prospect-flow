@@ -3,8 +3,11 @@ import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
 import { type Lead, type PipelineStage, WHATSAPP_STATUS_COLORS, WHATSAPP_STATUS_LABELS } from '@/hooks/useCRM';
 import { KanbanColumn, type ColumnWidth } from './KanbanColumn';
 import { cn } from '@/lib/utils';
-import { Phone } from 'lucide-react';
+import { Phone, MessageCircle, User as UserIcon } from 'lucide-react';
 import { formatPhoneShort } from '@/lib/phoneUtils';
+import { useLeadScores } from '@/hooks/useLeadScores';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface KanbanBoardWithScrollProps {
   stages: PipelineStage[];
