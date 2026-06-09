@@ -38,8 +38,16 @@ import { CRMTabs } from "@/components/crm/CRMTabs";
 import { SalesKPIs } from "@/components/crm/SalesKPIs";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
 import { EditSaleDialog } from "@/components/crm/EditSaleDialog";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
 import type { Sale } from "@/hooks/useSales";
 import { toast } from "sonner";
+
+const initialsOf = (name?: string | null, email?: string | null) => {
+  const s = (name || email || "?").trim();
+  const parts = s.split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return s.slice(0, 2).toUpperCase();
+};
 
 
 const fmtMoney = (n: number) =>
