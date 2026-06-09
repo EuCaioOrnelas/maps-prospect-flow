@@ -169,20 +169,7 @@ const LeadCardComponent = ({
 
 
 
-      {/* Score — minimal label + number (progressbar fica como borda inferior) */}
-      {scoreData && scoreData.score_total > 0 && (() => {
-        const s = Math.max(0, Math.min(scoreData.score_total, 1000));
-        const fg = s >= 750 ? 'text-emerald-500' : s >= 500 ? 'text-blue-500' : s >= 250 ? 'text-orange-500' : 'text-red-500';
-        return (
-          <div
-            className="flex items-center gap-1.5 mb-2.5 cursor-pointer"
-            onClick={(e) => { e.stopPropagation(); navigate(`/crm/score?phone=${encodeURIComponent(lead.phone)}`); }}
-          >
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Score</span>
-            <span className={cn("text-xs font-semibold tabular-nums", fg)}>{s}</span>
-          </div>
-        );
-      })()}
+      {/* (Score movido para o rodapé do card) */}
 
       {/* Valor potencial — pill verde compacto */}
       {!hideValue && Number(lead.estimated_value) > 0 && (
@@ -232,14 +219,26 @@ const LeadCardComponent = ({
         )}
       </div>
 
-      {/* Score progressbar — borda inferior rente ao card */}
+      {/* Score footer — divisor suave + Score + número + progressbar */}
       {scoreData && scoreData.score_total > 0 && (() => {
         const s = Math.max(0, Math.min(scoreData.score_total, 1000));
         const pct = (s / 1000) * 100;
         const bg = s >= 750 ? 'bg-emerald-500' : s >= 500 ? 'bg-blue-500' : s >= 250 ? 'bg-orange-500' : 'bg-red-500';
+        const fg = s >= 750 ? 'text-emerald-500' : s >= 500 ? 'text-blue-500' : s >= 250 ? 'text-orange-500' : 'text-red-500';
         return (
-          <div className="absolute bottom-0 left-0 right-0 h-[3px] rounded-b-[18px] overflow-hidden bg-muted/40 pointer-events-none">
-            <div className={cn("h-full transition-[width] duration-700", bg)} style={{ width: `${pct}%` }} />
+          <div
+            className="-mx-5 -mb-5 mt-3 px-5 pt-2.5 pb-3 relative cursor-pointer rounded-b-[18px]"
+            onClick={(e) => { e.stopPropagation(); navigate(`/crm/score?phone=${encodeURIComponent(lead.phone)}`); }}
+          >
+            {/* divisor suave: forte no meio, fade nas pontas */}
+            <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Score</span>
+              <span className={cn("text-xs font-semibold tabular-nums", fg)}>{s}</span>
+              <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
+                <div className={cn("h-full rounded-full transition-[width] duration-700", bg)} style={{ width: `${pct}%` }} />
+              </div>
+            </div>
           </div>
         );
       })()}
