@@ -312,12 +312,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }, 500);
             }
 
-            // Update last_login_at on account_members (sub-user activity monitoring)
+            // Update last_login_at on account_members + register login event for monitoring
             if (event === 'SIGNED_IN') {
               supabase
-                .from('account_members')
-                .update({ last_login_at: new Date().toISOString() })
-                .eq('user_id', session.user.id)
+                .rpc('account_mark_member_login')
                 .then(({ error }) => {
                   if (error) console.debug('[AuthContext] last_login_at:', error.message);
                 });
@@ -387,6 +385,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           const data = await fetchProfile(session.user.id);
           setProfile(data);
+
+          supabase
+            .rpc('account_mark_member_login')
+            .then(({ error }) => {
+              if (error) console.debug('[AuthContext] initial last_login_at:', error.message);
+            });
 
           // Sync on initial load
           setTimeout(() => {

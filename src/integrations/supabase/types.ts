@@ -7880,10 +7880,19 @@ export type Database = {
           session_start: string
         }[]
       }
+      account_get_member_last_login: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       account_get_member_operational_stats: {
         Args: { _from: string; _to: string; _user_id: string }
         Returns: Json
       }
+      account_get_members_usage_summary: {
+        Args: { _from: string; _to: string }
+        Returns: Json
+      }
+      account_mark_member_login: { Args: never; Returns: undefined }
       admin_get_user_activity_sessions: {
         Args: { _from: string; _to: string; _user_id: string }
         Returns: {
