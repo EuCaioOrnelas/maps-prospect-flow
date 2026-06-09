@@ -1,20 +1,20 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Target,
-  Bot,
-  KanbanSquare,
-  MessageCircle,
-  Workflow,
-  BarChart3,
-  Check,
   ArrowRight,
   Handshake,
   Play,
   X,
-  LayoutDashboard,
+  Search,
+  Brain,
   Sparkles,
+  Send,
+  Bot,
+  RefreshCw,
+  CalendarCheck,
+  LayoutGrid,
+  ScanSearch,
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import LightThemeWrapper from "@/components/LightThemeWrapper";
@@ -23,9 +23,18 @@ import { Footer } from "@/components/landing/Footer";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import flowBuilderPreview from "@/assets/flow-builder-preview.png";
-import aiAgentFlowPreview from "@/assets/ai-agent-flow-preview.png";
-import whatsappMockup from "@/assets/whatsapp-phone-mockup-v2.png";
+
+const ProblemSection = lazy(() =>
+  import("@/components/sales/ProblemSection").then((m) => ({ default: m.ProblemSection })),
+);
+const OpportunitySection = lazy(() =>
+  import("@/components/sales/OpportunitySection").then((m) => ({ default: m.OpportunitySection })),
+);
+const FAQSection = lazy(() =>
+  import("@/components/landing/FAQSection").then((m) => ({ default: m.FAQSection })),
+);
+
+const SectionFallback = () => <div className="h-[40vh] w-full" aria-hidden="true" />;
 
 /* ------------------------------------------------------------------ */
 /*  Motion helpers                                                    */
@@ -36,13 +45,13 @@ const fadeUp = {
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+    transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
   },
 };
 
 const stagger = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.07 } },
+  show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
 };
 
 /* ------------------------------------------------------------------ */
@@ -87,47 +96,107 @@ const VideoModal = ({
 );
 
 /* ------------------------------------------------------------------ */
-/*  Section 1 — Hero + Vídeo                                          */
+/*  Hero — same background as LP Hero                                 */
 /* ------------------------------------------------------------------ */
 
+const HeroBackdrop = () => (
+  <>
+    {/* Base gradient */}
+    <div
+      className="absolute inset-0"
+      style={{
+        background:
+          "linear-gradient(180deg, hsl(158 35% 97.5%) 0%, hsl(210 30% 99%) 60%, hsl(var(--background)) 100%)",
+      }}
+    />
+    {/* Dotted texture */}
+    <div
+      className="absolute inset-0 pointer-events-none opacity-[0.18]"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)",
+        backgroundSize: "18px 18px",
+        maskImage:
+          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E\")",
+        WebkitMaskImage:
+          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E\")",
+        maskSize: "cover",
+        WebkitMaskSize: "cover",
+        maskPosition: "center",
+        WebkitMaskPosition: "center",
+      }}
+    />
+    {/* Soft primary glow */}
+    <div
+      className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1000px] md:w-[1200px] h-[1000px] md:h-[1200px] pointer-events-none -translate-y-1/2"
+      style={{
+        background:
+          "radial-gradient(ellipse at center, hsl(158 60% 55% / 0.06) 0%, hsl(158 60% 55% / 0.02) 45%, transparent 70%)",
+      }}
+    />
+    {/* Accent blobs */}
+    <div
+      className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full pointer-events-none opacity-50"
+      style={{
+        background:
+          "radial-gradient(circle, hsl(158 60% 55% / 0.05) 0%, transparent 65%)",
+      }}
+    />
+    <div
+      className="absolute -bottom-40 -left-32 w-[700px] h-[700px] rounded-full pointer-events-none opacity-40"
+      style={{
+        background:
+          "radial-gradient(circle, hsl(158 60% 55% / 0.04) 0%, transparent 65%)",
+      }}
+    />
+  </>
+);
+
 const Hero = ({ onWatch }: { onWatch: () => void }) => (
-  <section className="relative w-full pt-24 sm:pt-28 pb-10 sm:pb-14">
-    <div className="container mx-auto px-4 max-w-6xl">
+  <section className="relative w-full -mt-[72px] sm:-mt-[80px] pt-[104px] sm:pt-[120px] pb-12 sm:pb-16 overflow-hidden">
+    <HeroBackdrop />
+
+    <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative z-10">
       <motion.div
         initial="hidden"
         animate="show"
         variants={stagger}
-        className="text-center max-w-3xl mx-auto"
+        className="text-center max-w-4xl mx-auto"
       >
         <motion.span
           variants={fadeUp}
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold tracking-widest uppercase mb-4 bg-primary/10 text-primary"
+          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold tracking-widest uppercase mb-5 bg-primary/10 text-primary border border-primary/15"
         >
           <Sparkles size={12} /> Demonstração ao vivo
         </motion.span>
+
         <motion.h1
           variants={fadeUp}
-          className="font-display font-bold text-foreground leading-[1.05] tracking-tight text-[1.85rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.4rem]"
+          className="font-display font-bold text-foreground leading-[1.05] tracking-tight"
         >
-          Conheça a Wiize{" "}
-          <span className="text-shimmer-highlight font-extrabold">em ação.</span>
+          <span className="block text-[1.85rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.5rem]">
+            Conheça a
+          </span>
+          <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[2rem] sm:text-[2.8rem] md:text-[3.35rem] lg:text-[3.75rem] mt-1 sm:mt-2">
+            Wiize em ação
+          </span>
         </motion.h1>
+
         <motion.p
           variants={fadeUp}
-          className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed"
+          className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto"
         >
-          Veja como empresas estão utilizando Inteligência Comercial Assistida
-          para gerar oportunidades, automatizar processos e aumentar
-          produtividade.
+          Veja como empresas estão usando Inteligência Comercial Assistida para
+          gerar oportunidades, automatizar processos e aumentar produtividade.
         </motion.p>
       </motion.div>
 
-      {/* Vídeo — protagonista */}
+      {/* Video — protagonist */}
       <motion.div
-        initial={{ opacity: 0, y: 18 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.15 }}
-        className="mt-10 sm:mt-12 relative w-full rounded-3xl overflow-hidden border border-border bg-card shadow-2xl cursor-pointer group"
+        transition={{ duration: 0.65, delay: 0.25 }}
+        className="mt-10 sm:mt-12 relative w-full rounded-3xl overflow-hidden border border-border bg-card shadow-2xl cursor-pointer group max-w-5xl mx-auto"
         style={{ aspectRatio: "16 / 9" }}
         onClick={onWatch}
       >
@@ -136,7 +205,7 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
           alt="Demonstração Wiize"
           className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
@@ -155,102 +224,29 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
 );
 
 /* ------------------------------------------------------------------ */
-/*  Section 2 — O que você vai ver                                    */
+/*  Máquina integrada de geração de oportunidades                     */
 /* ------------------------------------------------------------------ */
 
-const items = [
-  { icon: Target, label: "Prospecção Inteligente" },
-  { icon: Bot, label: "Agente de IA Comercial" },
-  { icon: KanbanSquare, label: "CRM Comercial" },
-  { icon: MessageCircle, label: "WhatsApp Integrado" },
-  { icon: Workflow, label: "Fluxos de Automação" },
-  { icon: BarChart3, label: "Métricas e Performance" },
+const machineSteps = [
+  { icon: Search, title: "Captação por nicho", desc: "IA encontra empresas com perfil ideal por região e segmento." },
+  { icon: ScanSearch, title: "Análise profunda", desc: "Lê tamanho, demanda, maturidade e contexto de cada lead." },
+  { icon: Brain, title: "Diagnóstico IA", desc: "Identifica dores, necessidades e oportunidades reais." },
+  { icon: Sparkles, title: "Mensagem personalizada", desc: "Copy única gerada por IA para cada lead." },
+  { icon: Send, title: "Disparo inteligente", desc: "Envios pela Meta API Oficial, com cadência segura." },
+  { icon: Bot, title: "Atendimento 24/7", desc: "IA closer conduz, qualifica e responde sem pausas." },
+  { icon: RefreshCw, title: "Follow-up automático", desc: "Reengajamento contínuo de quem ia esfriar." },
+  { icon: CalendarCheck, title: "Conversão", desc: "Reuniões e oportunidades reais no pipeline." },
+  { icon: LayoutGrid, title: "CRM atualizado", desc: "Histórico centralizado, sem esforço manual." },
 ];
 
-const WhatYouSee = () => (
-  <section className="relative w-full py-16 sm:py-24 bg-secondary/30 border-y border-border">
-    <div className="container mx-auto px-4 max-w-6xl">
-      <SectionHeading
-        eyebrow="O que você vai ver"
-        title="Tudo o que a Wiize"
-        highlight="te entrega na prática"
-        highlightFit="tight"
-      />
-
-      <motion.div
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-60px" }}
-        variants={stagger}
-        className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5"
-      >
-        {items.map((it) => (
-          <motion.div
-            key={it.label}
-            variants={fadeUp}
-            className="flex items-center gap-3 p-4 sm:p-5 rounded-2xl bg-card border border-border hover:border-primary/30 transition-colors"
-          >
-            <div className="shrink-0 w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <it.icon size={20} />
-            </div>
-            <div className="flex items-center gap-2">
-              <Check size={14} className="text-primary shrink-0" />
-              <span className="text-sm sm:text-[15px] font-medium text-foreground">
-                {it.label}
-              </span>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-    </div>
-  </section>
-);
-
-/* ------------------------------------------------------------------ */
-/*  Section 3 — Explorar a plataforma (mockups)                       */
-/* ------------------------------------------------------------------ */
-
-const showcases = [
-  {
-    icon: LayoutDashboard,
-    title: "Dashboard",
-    image: aiAgentFlowPreview,
-    span: "lg:col-span-2 lg:row-span-2",
-  },
-  {
-    icon: KanbanSquare,
-    title: "CRM Comercial",
-    image: flowBuilderPreview,
-    span: "lg:col-span-2",
-  },
-  {
-    icon: Workflow,
-    title: "Fluxos",
-    image: flowBuilderPreview,
-    span: "",
-  },
-  {
-    icon: Bot,
-    title: "Agente de IA",
-    image: aiAgentFlowPreview,
-    span: "",
-  },
-  {
-    icon: MessageCircle,
-    title: "WhatsApp",
-    image: whatsappMockup,
-    span: "lg:col-span-2",
-  },
-];
-
-const ExplorePlatform = () => (
+const MachineSection = () => (
   <section className="relative w-full py-16 sm:py-24">
     <div className="container mx-auto px-4 max-w-6xl">
       <SectionHeading
-        eyebrow="Explorar a plataforma"
-        title="Veja o produto"
-        highlight="funcionando de verdade"
-        highlightFit="tight"
+        eyebrow="Máquina comercial"
+        title="Uma máquina integrada de"
+        highlight="geração de oportunidades"
+        description="Da captação ao fechamento, cada etapa do processo comercial conectada por dados, IA e automação — sem depender de operação manual."
       />
 
       <motion.div
@@ -258,24 +254,24 @@ const ExplorePlatform = () => (
         whileInView="show"
         viewport={{ once: true, margin: "-60px" }}
         variants={stagger}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-rows-[180px] sm:auto-rows-[220px] gap-4 sm:gap-5"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
       >
-        {showcases.map((s) => (
+        {machineSteps.map((s, i) => (
           <motion.div
             key={s.title}
             variants={fadeUp}
-            className={`group relative rounded-2xl overflow-hidden border border-border bg-card shadow-sm hover:shadow-xl hover:border-primary/30 transition-all ${s.span}`}
+            className="relative rounded-2xl border border-border bg-card p-5 sm:p-6 hover:border-primary/30 hover:shadow-md transition-all"
           >
-            <img
-              src={s.image}
-              alt={s.title}
-              className="absolute inset-0 w-full h-full object-cover object-top opacity-95 group-hover:scale-[1.02] transition-transform duration-500"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/10 to-transparent" />
-            <div className="absolute bottom-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/85 backdrop-blur border border-border">
-              <s.icon size={14} className="text-primary" />
-              <span className="text-xs font-semibold text-foreground">{s.title}</span>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <s.icon size={20} />
+              </div>
+              <span className="text-[11px] font-semibold text-muted-foreground tracking-widest uppercase">
+                Etapa {String(i + 1).padStart(2, "0")}
+              </span>
             </div>
+            <h3 className="font-semibold text-foreground text-base mb-1.5">{s.title}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
           </motion.div>
         ))}
       </motion.div>
@@ -284,7 +280,7 @@ const ExplorePlatform = () => (
 );
 
 /* ------------------------------------------------------------------ */
-/*  Section 4 — CTA                                                   */
+/*  Final CTA                                                         */
 /* ------------------------------------------------------------------ */
 
 const FinalCTA = () => (
@@ -300,26 +296,25 @@ const FinalCTA = () => (
         className="text-center"
       >
         <h2 className="font-display text-[1.75rem] sm:text-[2.25rem] md:text-[2.75rem] font-bold text-foreground leading-tight mb-7">
-          Pronto para aplicar isso{" "}
-          <span className="text-shimmer-highlight font-extrabold">na sua empresa?</span>
+          Pronto para escalar sua{" "}
+          <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">
+            operação comercial?
+          </span>
         </h2>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link to="/signup">
-            <Button variant="hero" size="lg" className="rounded-full group px-8 h-11">
-              Solicitar Acesso
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            <Button variant="hero" size="lg" className="rounded-full group px-8 h-12">
+              Escalar operação com Wiize
+              <ArrowRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
-          <Link to="/partners">
-            <Button
-              variant="outline"
-              size="lg"
-              className="rounded-full group px-8 h-11 border-border hover:bg-secondary"
-            >
-              <Handshake size={18} className="mr-1.5" />
-              Quero Ser Parceiro
-            </Button>
+          <Link
+            to="/partners"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
+          >
+            <Handshake size={15} />
+            Quero ser parceiro
           </Link>
         </div>
       </motion.div>
@@ -340,12 +335,18 @@ export default function Demonstracao() {
         title="Demonstração — Wiize"
         description="Veja a Wiize em ação. Tour pela plataforma de Inteligência Comercial Assistida: prospecção, CRM, IA, WhatsApp e fluxos."
       />
-      <div className="landing-light min-h-screen bg-background text-foreground">
+      <div className="landing-light min-h-screen bg-background text-foreground overflow-x-hidden">
         <Navbar />
         <main>
           <Hero onWatch={() => setVideoOpen(true)} />
-          <WhatYouSee />
-          <ExplorePlatform />
+          <Suspense fallback={<SectionFallback />}>
+            <ProblemSection />
+            <OpportunitySection />
+          </Suspense>
+          <MachineSection />
+          <Suspense fallback={<SectionFallback />}>
+            <FAQSection />
+          </Suspense>
           <FinalCTA />
         </main>
         <Footer />
